@@ -190,7 +190,9 @@ export class GameState {
                     id !== LOCATION_IDS.MERCURY
                 ),
                 seenCommodityMilestones: [], financeLog: [],
-                activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
+                activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
+                ownedShipIds: [SHIP_IDS.WANDERER],
+                officerRoster: [], // Expanded officer universe pool tracking
                 // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
                 // Added `upgrades: []` to the initial Wanderer state
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },
@@ -229,13 +231,14 @@ export class GameState {
             activeIntelDeal: null,
             // --- END VIRTUAL WORKBENCH ---
 
-            // --- VIRTUAL WORKBENCH: PHASE 1 SOL STATION ---
+            // --- VIRTUAL WORKBENCH: PHASE 1 SOL STATION PROGRESSION ---
             solStation: {
+                level: 1,
+                activeProject: {},
                 unlocked: false, // Default locked until acquired via endgame conditions
                 mode: "STABILITY", // Default safe mode
                 health: 100, // Aggregate health percentage
                 caches: solCaches, // NOW DYNAMICALLY POPULATED
-                roster: [], // Unlocked officer IDs
                 officers: [
                     { slotId: 1, assignedOfficerId: null },
                     { slotId: 2, assignedOfficerId: null },
@@ -244,6 +247,10 @@ export class GameState {
                 stockpile: {
                     credits: 0,
                     antimatter: 0
+                },
+                activeProjectBank: {
+                    "c_water_ice": 0,
+                    "credits": 0
                 }
             },
             // --- END VIRTUAL WORKBENCH ---

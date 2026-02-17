@@ -2,11 +2,12 @@
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js';
 import { COMMODITY_IDS } from '../data/constants.js';
+import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
 
-export const STATION_CONFIG = {
+// Converted hardcoded configuration to the mathematical floor
+export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
-    MAX_CACHE: 100000, 
-    BASE_UNIT_PRICE: 45, 
+    BASE_DECAY_K: 0.0000021, 
     EFFICIENCY_CLIFF: 0.5, 
     REAL_TIME_SECONDS_PER_DAY: 120, 
     MODES: {
@@ -62,7 +63,6 @@ export class SolStationService {
         console.log(`Current Day: ${currentDay}`);
 
         if (typeof station.lastProcessedDay === 'undefined') {
-            // FIX: Assume the station has been operating since Day 1, capturing all past history.
             console.log(`First visit. Initializing lastProcessedDay to 1 to simulate past activity.`);
             station.lastProcessedDay = 1;
             if (station.lastUpdateTime) delete station.lastUpdateTime;
@@ -77,7 +77,7 @@ export class SolStationService {
             return;
         }
 
-        const dt = daysMissed * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY;
+        const dt = daysMissed * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY;
         console.log(`Calculated delta-time (dt) in seconds: ${dt}`);
         
         const projectedState = this._calculateExactState(station, dt);
@@ -140,9 +140,9 @@ export class SolStationService {
             Object.assign(station, newState);
             
             this.localTimeAccumulator += dt;
-            if (this.localTimeAccumulator >= STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY) {
-                const daysToAdvance = Math.floor(this.localTimeAccumulator / STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY);
-                this.localTimeAccumulator -= (daysToAdvance * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY);
+            if (this.localTimeAccumulator >= LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY) {
+                const daysToAdvance = Math.floor(this.localTimeAccumulator / LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY);
+                this.localTimeAccumulator -= (daysToAdvance * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY);
                 
                 station.lastProcessedDay += daysToAdvance;
                 
@@ -167,21 +167,23 @@ export class SolStationService {
         const liveState = this.gameState.solStation;
         if (!liveState || !liveState.unlocked) return { k: 0, creditsPerSec: 0, amPerSec: 0 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
-        const buffs = this._calculateOfficerBuffs(liveState.officers);
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
-        const k = modeConfig.decayK * entropy;
+        const modeConfig = LEVEL_1_BASELINE.MODES[liveState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
+        const officerBuffs = this._calculateOfficerBuffs(liveState.officers);
+        const levelBuffs = this._calculateLevelBuffs(liveState.level || 1);
+        
+        const globalEntropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
+        const k_global = LEVEL_1_BASELINE.BASE_DECAY_K * globalEntropyMult;
         
         // Sanitize health to prevent NaN propagation
         const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
         const x0 = safeHealth / 100;
-        let efficiency = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
+        let efficiency = x0 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
 
-        const creditsPerSec = modeConfig.yieldCredits * (1 + buffs.creditMult) * efficiency;
-        const amPerSec = modeConfig.yieldAm * (1 + buffs.amMult) * efficiency;
+        const creditsPerSec = modeConfig.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult) * efficiency;
+        const amPerSec = modeConfig.yieldAm * (1 + officerBuffs.amMult + levelBuffs.amMult) * efficiency;
         
         return { 
-            k: isNaN(k) ? 0 : k, 
+            k: isNaN(k_global) ? 0 : k_global, 
             creditsPerSec: isNaN(creditsPerSec) ? 0 : creditsPerSec, 
             amPerSec: isNaN(amPerSec) ? 0 : amPerSec 
         };
@@ -199,54 +201,68 @@ export class SolStationService {
         const newState = JSON.parse(JSON.stringify(currentState));
         if (dt <= 0) return newState;
 
-        const modeConfig = STATION_CONFIG.MODES[newState.mode] || STATION_CONFIG.MODES.STABILITY;
+        const modeConfig = LEVEL_1_BASELINE.MODES[newState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
         const officerBuffs = this._calculateOfficerBuffs(newState.officers);
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
-        const k = modeConfig.decayK * entropy;
+        const levelBuffs = this._calculateLevelBuffs(newState.level || 1);
+        
+        // Decoupled Integral Global Entropy
+        const globalEntropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
+        const k_global = LEVEL_1_BASELINE.BASE_DECAY_K * globalEntropyMult;
 
         let totalFillRatio = 0;
         let activeCaches = 0;
 
         const validCaches = Object.entries(newState.caches || {}).filter(([id, cache]) => {
-            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache && cache.max > 0;
+            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache;
         });
 
         validCaches.forEach(([id, c]) => {
-            // Sanitize cache values
+            // Establish Baseline Max to ensure mathematically sound additive scaling
+            if (typeof c.baseMax === 'undefined') {
+                c.baseMax = c.max > 0 ? c.max : 100;
+            }
+            
+            const actualMax = c.baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
+            c.max = actualMax;
+            
+            // Immediately clamp current to prevent overflow if max dropped due to un-slotting
+            if (c.current > actualMax) {
+                c.current = actualMax; 
+            }
+
             const safeCurrent = isNaN(c.current) ? 0 : c.current;
-            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
-            totalFillRatio += (safeCurrent / safeMax);
+            const safeMax = isNaN(actualMax) || actualMax <= 0 ? 1 : actualMax;
+            
+            // Decoupled Specific Cache Decay using targeted friction
+            const specificBurnRed = officerBuffs.consumptionMods[id] || 0;
+            const k_specific = k_global * Math.max(0, (1 - specificBurnRed));
+            
+            c.current = safeCurrent * Math.exp(-k_specific * dt);
+            
+            totalFillRatio += (c.current / safeMax);
             activeCaches++;
         });
         
         let x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
         if (isNaN(x0)) x0 = 0;
 
-        // Diagnostic output for mathematical tracking
         if (dt > 2.0) {
-            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | k=${k}`);
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | k_global=${k_global}`);
         }
 
-        validCaches.forEach(([id, cache]) => {
-            const safeCurrent = isNaN(cache.current) ? 0 : cache.current;
-            const exactCache = safeCurrent * Math.exp(-k * dt);
-            cache.current = exactCache;
-        });
-
-        const x1 = x0 * Math.exp(-k * dt);
+        const x1 = x0 * Math.exp(-k_global * dt);
         newState.health = x1 * 100;
 
-        const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult);
-        const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult);
+        const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
+        const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult + levelBuffs.amMult);
 
-        const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k, dt);
-        const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k, dt);
+        const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k_global, dt);
+        const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k_global, dt);
 
         if (dt > 2.0) {
-            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Gen AM: ${generatedAm.toFixed(4)} | Final x1: ${x1.toFixed(4)}`);
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Final x1: ${x1.toFixed(4)}`);
         }
 
-        // Final Sanitize to ensure the stockpile is never poisoned
         const safeGeneratedCredits = isNaN(generatedCredits) ? 0 : generatedCredits;
         const safeGeneratedAm = isNaN(generatedAm) ? 0 : generatedAm;
         const safeCurrentCredits = isNaN(newState.stockpile.credits) ? 0 : newState.stockpile.credits;
@@ -254,33 +270,33 @@ export class SolStationService {
 
         newState.stockpile.credits = safeCurrentCredits + safeGeneratedCredits;
         newState.stockpile.antimatter = Math.min(
-            STATION_CONFIG.MAX_ANTIMATTER_STOCKPILE, 
+            LEVEL_1_BASELINE.MAX_ANTIMATTER_STOCKPILE, 
             safeCurrentAm + safeGeneratedAm
         );
 
-        newState.currentEfficiency = x1 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
+        newState.currentEfficiency = x1 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
 
         return newState;
     }
 
     _calculateYieldIntegral(yieldRate, x0, k, dt) {
         if (k === 0) {
-            const eff = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
+            const eff = x0 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
             return yieldRate * eff * dt;
         }
 
         const x1 = x0 * Math.exp(-k * dt);
 
-        if (x1 >= STATION_CONFIG.EFFICIENCY_CLIFF) {
+        if (x1 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF) {
             return yieldRate * (x0 / k) * (1 - Math.exp(-k * dt));
-        } else if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) {
+        } else if (x0 < LEVEL_1_BASELINE.EFFICIENCY_CLIFF) {
             return (yieldRate * Math.pow(x0, 2) / k) * (1 - Math.exp(-2 * k * dt));
         } else {
-            const t_cross = -Math.log(STATION_CONFIG.EFFICIENCY_CLIFF / x0) / k;
+            const t_cross = -Math.log(LEVEL_1_BASELINE.EFFICIENCY_CLIFF / x0) / k;
             const genBefore = yieldRate * (x0 / k) * (1 - Math.exp(-k * t_cross));
             
             const dt_remaining = dt - t_cross;
-            const genAfter = (yieldRate * Math.pow(STATION_CONFIG.EFFICIENCY_CLIFF, 2) / k) * (1 - Math.exp(-2 * k * dt_remaining));
+            const genAfter = (yieldRate * Math.pow(LEVEL_1_BASELINE.EFFICIENCY_CLIFF, 2) / k) * (1 - Math.exp(-2 * k * dt_remaining));
             
             return genBefore + genAfter;
         }
@@ -288,25 +304,31 @@ export class SolStationService {
 
     getDeathSpiralThreshold() {
         const station = this.gameState.solStation;
-        const modeConfig = STATION_CONFIG.MODES[station.mode];
+        const modeConfig = LEVEL_1_BASELINE.MODES[station.mode];
         const officerBuffs = this.getOfficerBuffs();
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
-        const k = modeConfig.decayK * entropy;
+        const levelBuffs = this._calculateLevelBuffs(station.level || 1);
         
-        const commerceYield = STATION_CONFIG.MODES.COMMERCE.yieldCredits * (1 + officerBuffs.creditMult);
-        if (commerceYield <= 0) return STATION_CONFIG.EFFICIENCY_CLIFF;
+        const entropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
+        const k_global = modeConfig.decayK * entropyMult;
+        
+        const commerceYield = LEVEL_1_BASELINE.MODES.COMMERCE.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
+        if (commerceYield <= 0) return LEVEL_1_BASELINE.EFFICIENCY_CLIFF;
 
-        const threshold = (k * STATION_CONFIG.MAX_CACHE * STATION_CONFIG.BASE_UNIT_PRICE) / (2 * commerceYield);
+        // Uses a baseline assumption of an average cache size for the generic threshold metric
+        const averageCacheSize = 5000; 
+        const threshold = (k_global * averageCacheSize * 45) / (2 * commerceYield);
         
-        return Math.max(0, Math.min(threshold, STATION_CONFIG.EFFICIENCY_CLIFF));
+        return Math.max(0, Math.min(threshold, LEVEL_1_BASELINE.EFFICIENCY_CLIFF));
     }
 
     getLiveState() {
         return this.gameState.solStation;
     }
 
+    // --- BUFF CALCULATION ENGINES ---
+
     _calculateOfficerBuffs(officersList) {
-        let total = { entropy: 0, creditMult: 0, amMult: 0 };
+        let total = { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: {} };
         if (!officersList) return total;
 
         officersList.forEach(slot => {
@@ -315,8 +337,38 @@ export class SolStationService {
                 total.entropy += (b.entropy || 0);
                 total.creditMult += (b.creditMult || 0);
                 total.amMult += (b.amMult || 0);
+                
+                if (b.capacityMods) {
+                    Object.entries(b.capacityMods).forEach(([res, val]) => {
+                        total.capacityMods[res] = (total.capacityMods[res] || 0) + val;
+                    });
+                }
+                if (b.consumptionMods) {
+                    Object.entries(b.consumptionMods).forEach(([res, val]) => {
+                        total.consumptionMods[res] = (total.consumptionMods[res] || 0) + val;
+                    });
+                }
             }
         });
+        return total;
+    }
+
+    _calculateLevelBuffs(level) {
+        let total = { creditMult: 0, amMult: 0, globalEntropyRed: 0, capacityMods: {} };
+        for (let i = 2; i <= level; i++) {
+            const reg = LEVEL_REGISTRY[i];
+            if (reg && reg.rewards && reg.rewards.stats) {
+                const s = reg.rewards.stats;
+                total.creditMult += (s.creditYieldMult || 0);
+                total.amMult += (s.amYieldMult || 0);
+                total.globalEntropyRed += (s.globalEntropyRed || 0);
+                if (s.cacheCapacity) {
+                    Object.entries(s.cacheCapacity).forEach(([res, val]) => {
+                        total.capacityMods[res] = (total.capacityMods[res] || 0) + val;
+                    });
+                }
+            }
+        }
         return total;
     }
 
@@ -324,28 +376,32 @@ export class SolStationService {
         return this._calculateOfficerBuffs(this.gameState.solStation.officers);
     }
 
-    _calculateEntropyFromBuffs(baseModeMult, buffs) {
+    _calculateEntropyFromBuffs(baseModeMult, officerBuffs, levelBuffs = {globalEntropyRed: 0}) {
         let multiplier = baseModeMult;
-        multiplier += buffs.entropy; 
+        multiplier += officerBuffs.entropy; 
+        multiplier -= levelBuffs.globalEntropyRed;
         return Math.max(0.1, multiplier);
     }
 
     calculateEntropy(baseModeMult) {
-        return this._calculateEntropyFromBuffs(baseModeMult, this.getOfficerBuffs());
+        const station = this.gameState.solStation;
+        return this._calculateEntropyFromBuffs(baseModeMult, this.getOfficerBuffs(), this._calculateLevelBuffs(station.level || 1));
     }
 
     setMode(newModeId) {
         this._syncTime();
         
-        if (STATION_CONFIG.MODES[newModeId]) {
+        if (LEVEL_1_BASELINE.MODES[newModeId]) {
             this.gameState.solStation.mode = newModeId;
             this.logger.info.player(this.gameState.day, 'STATION_MODE', `Sol Station mode switched to ${newModeId}`);
             this.gameState.setState({});
         }
     }
 
+    // --- INTERACTION & DONATION PIPELINES ---
+
     donateToCache(commodityId, quantity) {
-        this._syncTime();
+        this._syncTime(); // Automatically updates dynamically calculated maximums
 
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
@@ -456,41 +512,237 @@ export class SolStationService {
         return { success: true, message: `Collected ${msgParts.join(' & ')}.` };
     }
 
-    assignOfficer(slotId, officerId) {
+    // --- PROGRESSION PROJECTS ---
+
+    contributeToProject(resourceId, quantity) {
+        this._syncTime();
+        
+        const station = this.gameState.solStation;
+        const nextLevelData = LEVEL_REGISTRY[station.level + 1];
+        
+        if (!nextLevelData) return { success: false, message: "Maximum level reached." };
+        if (!nextLevelData.requirements[resourceId]) return { success: false, message: "Resource not required for active project." };
+        
+        const currentlyBanked = station.activeProjectBank[resourceId] || 0;
+        const requiredAmount = nextLevelData.requirements[resourceId];
+        
+        if (currentlyBanked >= requiredAmount) return { success: false, message: "Requirement already met." };
+        
+        let qtyToTake = Math.min(quantity, requiredAmount - currentlyBanked);
+        
+        if (resourceId === 'credits') {
+            if (this.gameState.player.credits < qtyToTake) return { success: false, message: "Insufficient credits." };
+            this.gameState.player.credits -= qtyToTake;
+            station.activeProjectBank[resourceId] = currentlyBanked + qtyToTake;
+        } else {
+            let totalFleetStock = 0;
+            for (const shipId of this.gameState.player.ownedShipIds) {
+                totalFleetStock += (this.gameState.player.inventories[shipId]?.[resourceId]?.quantity || 0);
+            }
+
+            if (totalFleetStock < qtyToTake) {
+                return { success: false, message: "Insufficient fleet cargo." };
+            }
+
+            const activeShipId = this.gameState.player.activeShipId;
+            const shipInventories = [];
+            for (const shipId of this.gameState.player.ownedShipIds) {
+                const qty = this.gameState.player.inventories[shipId]?.[resourceId]?.quantity || 0;
+                shipInventories.push({ shipId, qty });
+            }
+
+            shipInventories.sort((a, b) => {
+                if (a.shipId === activeShipId) return -1;
+                if (b.shipId === activeShipId) return 1;
+                return b.qty - a.qty; 
+            });
+
+            let remainingToDonate = qtyToTake;
+            for (const shipData of shipInventories) {
+                if (remainingToDonate <= 0) break;
+                const toRemove = Math.min(remainingToDonate, shipData.qty);
+                if (toRemove > 0) {
+                    const invItem = this.gameState.player.inventories[shipData.shipId][resourceId];
+                    invItem.quantity -= toRemove;
+                    if (invItem.quantity === 0) invItem.avgCost = 0;
+                    remainingToDonate -= toRemove;
+                }
+            }
+            
+            station.activeProjectBank[resourceId] = currentlyBanked + qtyToTake;
+        }
+
+        this.logger.info.player(this.gameState.day, 'STATION_PROJECT', `Contributed ${qtyToTake} ${resourceId} to Project.`);
+        this.checkProjectCompletion();
+        this.gameState.setState({});
+        return { success: true, message: `Contributed ${qtyToTake} to project.` };
+    }
+    
+    checkProjectCompletion() {
+        const station = this.gameState.solStation;
+        const nextLevelData = LEVEL_REGISTRY[station.level + 1];
+        if (!nextLevelData) return;
+        
+        let isComplete = true;
+        for (const [resId, reqQty] of Object.entries(nextLevelData.requirements)) {
+            if ((station.activeProjectBank[resId] || 0) < reqQty) {
+                isComplete = false;
+                break;
+            }
+        }
+        
+        if (isComplete) {
+            this.applyLevelUp();
+        }
+    }
+    
+    applyLevelUp() {
+        const station = this.gameState.solStation;
+        
+        station.activeProjectBank = {}; 
+        station.level++;
+        
+        // Mode unlocking per GDD Thresholds
+        if (!station.unlockedModes) station.unlockedModes = ["STABILITY"];
+        if (station.level >= 3 && !station.unlockedModes.includes("COMMERCE")) {
+            station.unlockedModes.push("COMMERCE");
+        }
+        if (station.level >= 5 && !station.unlockedModes.includes("PRODUCTION")) {
+            station.unlockedModes.push("PRODUCTION");
+        }
+        
+        // Mathematical slot unlocking (Every 5 levels starting at base 3 slots)
+        if (station.level % 5 === 0) {
+            const maxSlots = 3 + Math.floor(station.level / 5);
+            if (station.officers.length < maxSlots && maxSlots <= 10) {
+                station.officers.push({ slotId: station.officers.length + 1, assignedOfficerId: null });
+            }
+        }
+        
+        this.logger.info.system('SolStation', this.gameState.day, 'LEVEL_UP', `Sol Station upgraded to Level ${station.level}!`);
+    }
+
+    // --- LOAD BEARING OFFICER MANAGEMENT ---
+
+    /**
+     * Projects the mathematical fallout of removing an officer from a slot.
+     * Required by UI intercept for severe consequences like venting overflow inventory.
+     * @param {number|string} slotId 
+     * @returns {object} { safe: boolean, ventedCargo: object, netEntropyChange: number }
+     */
+    validateUnslotOfficer(slotId) {
+        const station = this.gameState.solStation;
+        const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
+        
+        if (slotIndex === -1 || !station.officers[slotIndex].assignedOfficerId) {
+            return { safe: true, ventedCargo: {}, netEntropyChange: 0 };
+        }
+
+        const currentOfficerBuffs = this._calculateOfficerBuffs(station.officers);
+        const levelBuffs = this._calculateLevelBuffs(station.level || 1);
+        
+        // Simulate removing the officer
+        const simulatedOfficers = JSON.parse(JSON.stringify(station.officers));
+        simulatedOfficers[slotIndex].assignedOfficerId = null;
+        const newOfficerBuffs = this._calculateOfficerBuffs(simulatedOfficers);
+
+        const modeMult = LEVEL_1_BASELINE.MODES[station.mode].entropyMult;
+        const currentEntropy = this._calculateEntropyFromBuffs(modeMult, currentOfficerBuffs, levelBuffs);
+        const newEntropy = this._calculateEntropyFromBuffs(modeMult, newOfficerBuffs, levelBuffs);
+        
+        const netEntropyChange = (newEntropy - currentEntropy); 
+
+        const ventedCargo = {};
+        let isSafe = true;
+
+        Object.entries(station.caches).forEach(([id, c]) => {
+            const baseMax = c.baseMax || c.max;
+            const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (newOfficerBuffs.capacityMods[id] || 0);
+            
+            if (c.current > newMax) {
+                ventedCargo[id] = Math.floor(c.current - newMax);
+                isSafe = false; // Overflow triggers explicit UI intervention
+            }
+        });
+
+        // E.g., a net entropy increase of 0.1 represents +10% base entropy
+        if (netEntropyChange >= 0.1) {
+            isSafe = false;
+        }
+
+        return { safe: isSafe, ventedCargo, netEntropyChange };
+    }
+
+    /**
+     * Executes officer assignment or removal.
+     * Includes an optional 'force' flag for un-slotting bypassing validation (if player approved).
+     * @param {number|string} slotId 
+     * @param {string|null} officerId 
+     * @param {boolean} force - Override safety checks on removal
+     * @returns {object} Standard payload, can return `requiresConfirmation` if validation fails.
+     */
+    assignOfficer(slotId, officerId, force = false) {
         this._syncTime();
 
         const station = this.gameState.solStation;
         const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
         
-        if (slotIndex === -1) return false;
+        if (slotIndex === -1) return { success: false, message: "Invalid slot." };
 
-        const officerName = officerId ? (OFFICERS[officerId]?.name || officerId) : "None";
-        const action = officerId ? "assigned" : "unassigned";
+        // Intercept Removal
+        if (!officerId && !force) {
+            const validation = this.validateUnslotOfficer(slotId);
+            if (!validation.safe) {
+                return { success: false, requiresConfirmation: true, payload: validation };
+            }
+        }
 
         station.officers[slotIndex].assignedOfficerId = officerId;
         
+        // Immediately enforce new capacities after un-slotting to execute venting
+        if (!officerId) {
+            const levelBuffs = this._calculateLevelBuffs(station.level || 1);
+            const officerBuffs = this._calculateOfficerBuffs(station.officers);
+            
+            Object.entries(station.caches).forEach(([id, c]) => {
+                const baseMax = c.baseMax || c.max;
+                const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
+                c.max = newMax;
+                if (c.current > newMax) {
+                    c.current = newMax; // Executes the permanent destruction of vented cargo
+                }
+            });
+        }
+
+        const officerName = officerId ? (OFFICERS[officerId]?.name || officerId) : "None";
+        const action = officerId ? "assigned" : "unassigned";
+        
         this.logger.info.player(this.gameState.day, 'OFFICER_ASSIGN', `Officer ${officerName} ${action} to Slot ${slotId}.`);
         this.gameState.setState({});
-        return true;
+        return { success: true };
     }
 
     getProjectedOutput() {
         const liveState = this.getLiveState();
         if(!liveState || !liveState.unlocked) return { credits: 0, antimatter: 0, entropy: 1 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
+        const modeConfig = LEVEL_1_BASELINE.MODES[liveState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
         
         const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
         const x0 = safeHealth / 100;
         let efficiency = x0;
-        if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) efficiency = 2 * Math.pow(x0, 2);
+        if (x0 < LEVEL_1_BASELINE.EFFICIENCY_CLIFF) efficiency = 2 * Math.pow(x0, 2);
 
-        const buffs = this._calculateOfficerBuffs(liveState.officers);
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
+        const officerBuffs = this._calculateOfficerBuffs(liveState.officers);
+        const levelBuffs = this._calculateLevelBuffs(liveState.level || 1);
+        const entropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
 
-        const credits = Math.floor(modeConfig.yieldCredits * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
-        const antimatter = (modeConfig.yieldAm * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY * (1 + buffs.amMult) * efficiency).toFixed(2);
+        const yieldCreditsBase = modeConfig.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
+        const yieldAmBase = modeConfig.yieldAm * (1 + officerBuffs.amMult + levelBuffs.amMult);
 
-        return { credits, antimatter, entropy };
+        const credits = Math.floor(yieldCreditsBase * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY * efficiency);
+        const antimatter = (yieldAmBase * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY * efficiency).toFixed(2);
+
+        return { credits, antimatter, entropy: entropyMult };
     }
 }

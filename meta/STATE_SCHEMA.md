@@ -65,6 +65,7 @@ Contains all progression, assets, and statistics for the user.
 |   `repair` | Number | Count of free hull repairs available. |
 | `activeShipId` | String | ID of the currently piloted ship. |
 | `ownedShipIds` | Array<String> | List of all ship IDs owned by the player. |
+| `officerRoster` | Array<String> | List of recruited officer IDs. |
 | `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[] }`. |
 | `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. |
 | `unlockedLicenseIds` | Array<String> | List of trade licenses owned. |
@@ -148,6 +149,9 @@ Manages the Endgame Engine mechanics.
 
 | Property | Type | Description |
 | --- | --- | --- |
+| `level` | Number | Current progression level (1-50). |
+| `activeProject` | Object | The currently active progression project requirements. |
+| `activeProjectBank` | Object | Incremental ledger of resources donated to the active project. |
 | `unlocked` | Boolean | Whether the player has acquired access (default: false). |
 | `mode` | String | Current mode: 'STABILITY', 'COMMERCE', 'PRODUCTION'. |
 | `health` | Number | Aggregate health (0-100) based on cache fill %. |
@@ -172,4 +176,3 @@ Manages the active concurrent missions and their granular progress.
 
 * `isCompletable`: Boolean flag indicating if all objectives are met.
 * `objectives`: Map of `objectiveId` -> `{ current, target }`.
-}

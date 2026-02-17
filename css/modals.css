@@ -1034,3 +1034,187 @@
     font-size: 0.8rem;
     color: #bfdbfe;
 }
+
+/* ========================================================================= */
+/* --- SOL STATION: PHASE 3 PROGRESSION & OFFICER UI --- */
+/* ========================================================================= */
+
+/* Level Styling Matrix */
+.sol-level-header {
+    font-size: 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.sol-level-white { color: #fff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
+.sol-level-green { color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
+.sol-level-blue { color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.8); }
+
+@keyframes pulse-gold { 0%, 100% { text-shadow: 0 0 10px rgba(250, 204, 21, 0.8); } 50% { text-shadow: 0 0 20px rgba(250, 204, 21, 1); } }
+.sol-level-gold { color: #facc15; animation: pulse-gold 2s infinite; }
+
+@keyframes pulse-orange { 0%, 100% { text-shadow: 0 0 12px rgba(249, 115, 22, 0.8); } 50% { text-shadow: 0 0 25px rgba(249, 115, 22, 1); } }
+.sol-level-orange { color: #f97316; animation: pulse-orange 1.5s infinite; }
+
+@keyframes pulse-red { 0%, 100% { text-shadow: 0 0 15px rgba(239, 68, 68, 0.9); } 50% { text-shadow: 0 0 30px rgba(239, 68, 68, 1); } }
+.sol-level-red { color: #ef4444; animation: pulse-red 1s infinite; }
+
+/* Dual-Column Officer Management */
+.officer-mgmt-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    max-height: 50vh;
+}
+
+@media (max-width: 768px) {
+    .officer-mgmt-container {
+        flex-direction: column;
+        max-height: 60vh;
+    }
+}
+
+.column-avail, .column-active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.col-title {
+    background: #1f2937;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    border-bottom: 1px solid #374151;
+    font-weight: bold;
+}
+
+.col-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Row Interaction States */
+.officer-mgmt-row {
+    display: flex;
+    align-items: center;
+    background: #111827;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.officer-mgmt-row.selected {
+    background: #1e3a8a;
+    border-color: #60a5fa;
+}
+
+.officer-mgmt-row.assigned {
+    background: rgba(30, 58, 138, 0.2);
+    border-color: #3b82f6;
+}
+
+.officer-mgmt-row.empty-slot {
+    background: rgba(255, 255, 255, 0.05);
+    border-style: dashed;
+    cursor: default;
+    opacity: 0.6;
+}
+
+.slot-indicator {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-right: 0.5rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
+
+.row-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.row-info .o-name { font-size: 0.85rem; font-weight: bold; }
+.row-info .o-role { font-size: 0.7rem; color: #60a5fa; }
+.row-info .o-buffs { font-size: 0.65rem; margin-top: 2px; }
+
+.btn-inline-assign, .btn-inline-remove {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-inline-remove {
+    background: #dc2626;
+}
+
+/* Engineering Project Modal UI */
+.eng-requirements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.eng-req-row {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+}
+
+.req-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.eng-progress-track {
+    width: 100%;
+    height: 8px;
+    background: #1f2937;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.eng-progress-fill {
+    height: 100%;
+    background: #60a5fa;
+    transition: width 0.3s;
+}
+
+.credit-stepper {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.credit-stepper input {
+    flex: 1;
+    background: #111827;
+    border: 1px solid #4b5563;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+}

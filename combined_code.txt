@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.56</title>
+    <title>Orbital Trading 35.57</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.56</p>
+            <p>Version 35.57</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3496,6 +3496,190 @@ card.
 .sol-directorate-btn .btn-subtitle {
     font-size: 0.8rem;
     color: #bfdbfe;
+}
+
+/* ========================================================================= */
+/* --- SOL STATION: PHASE 3 PROGRESSION & OFFICER UI --- */
+/* ========================================================================= */
+
+/* Level Styling Matrix */
+.sol-level-header {
+    font-size: 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.sol-level-white { color: #fff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
+.sol-level-green { color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
+.sol-level-blue { color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.8); }
+
+@keyframes pulse-gold { 0%, 100% { text-shadow: 0 0 10px rgba(250, 204, 21, 0.8); } 50% { text-shadow: 0 0 20px rgba(250, 204, 21, 1); } }
+.sol-level-gold { color: #facc15; animation: pulse-gold 2s infinite; }
+
+@keyframes pulse-orange { 0%, 100% { text-shadow: 0 0 12px rgba(249, 115, 22, 0.8); } 50% { text-shadow: 0 0 25px rgba(249, 115, 22, 1); } }
+.sol-level-orange { color: #f97316; animation: pulse-orange 1.5s infinite; }
+
+@keyframes pulse-red { 0%, 100% { text-shadow: 0 0 15px rgba(239, 68, 68, 0.9); } 50% { text-shadow: 0 0 30px rgba(239, 68, 68, 1); } }
+.sol-level-red { color: #ef4444; animation: pulse-red 1s infinite; }
+
+/* Dual-Column Officer Management */
+.officer-mgmt-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    max-height: 50vh;
+}
+
+@media (max-width: 768px) {
+    .officer-mgmt-container {
+        flex-direction: column;
+        max-height: 60vh;
+    }
+}
+
+.column-avail, .column-active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.col-title {
+    background: #1f2937;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    border-bottom: 1px solid #374151;
+    font-weight: bold;
+}
+
+.col-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Row Interaction States */
+.officer-mgmt-row {
+    display: flex;
+    align-items: center;
+    background: #111827;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.officer-mgmt-row.selected {
+    background: #1e3a8a;
+    border-color: #60a5fa;
+}
+
+.officer-mgmt-row.assigned {
+    background: rgba(30, 58, 138, 0.2);
+    border-color: #3b82f6;
+}
+
+.officer-mgmt-row.empty-slot {
+    background: rgba(255, 255, 255, 0.05);
+    border-style: dashed;
+    cursor: default;
+    opacity: 0.6;
+}
+
+.slot-indicator {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-right: 0.5rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
+
+.row-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.row-info .o-name { font-size: 0.85rem; font-weight: bold; }
+.row-info .o-role { font-size: 0.7rem; color: #60a5fa; }
+.row-info .o-buffs { font-size: 0.65rem; margin-top: 2px; }
+
+.btn-inline-assign, .btn-inline-remove {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-inline-remove {
+    background: #dc2626;
+}
+
+/* Engineering Project Modal UI */
+.eng-requirements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.eng-req-row {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+}
+
+.req-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.eng-progress-track {
+    width: 100%;
+    height: 8px;
+    background: #1f2937;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.eng-progress-fill {
+    height: 100%;
+    background: #60a5fa;
+    transition: width 0.3s;
+}
+
+.credit-stepper {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.credit-stepper input {
+    flex: 1;
+    background: #111827;
+    border: 1px solid #4b5563;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -11231,6 +11415,87 @@ export const RANDOM_EVENTS = [
 ];
 --- END OF FILE: ./js/data/events.js ---
 
+--- START OF FILE: ./js/data/solProgressionRegistry.js ---
+/**
+ * @fileoverview Registry for Sol Station progression levels (1-50).
+ * Defines the requirements and additive rewards for each station level up.
+ * Adheres to the Registry Pattern for data-driven progression.
+ */
+
+export const LEVEL_REGISTRY = {
+    // Level 1 is the baseline; progression upgrades begin at Level 2.
+    2: {
+        projectName: "Ice Reservoir Integration",
+        lore: "Expanding the thermal coolant buffers to allow for slightly higher reactor operating temperatures.",
+        requirements: {
+            "c_water_ice": 1000,
+            "credits": 50000
+        },
+        rewards: {
+            description: "+10,000 Water Ice Capacity, +5% Antimatter Yield",
+            stats: {
+                cacheCapacity: { "c_water_ice": 10000 },
+                amYieldMult: 0.05,
+                creditYieldMult: 0,
+                globalEntropyRed: 0
+            }
+        }
+    },
+    3: {
+        projectName: "Hull Plating Reinforcement",
+        lore: "Additional Plasteel cladding reduces micrometeoroid damage, lowering baseline entropy and permitting advanced trade operations.",
+        requirements: {
+            "c_plasteel": 2500,
+            "credits": 150000
+        },
+        rewards: {
+            description: "-2% Global Entropy, Unlocks COMMERCE Mode",
+            stats: {
+                cacheCapacity: {},
+                amYieldMult: 0,
+                creditYieldMult: 0,
+                globalEntropyRed: 0.02
+            }
+        }
+    },
+    4: {
+        projectName: "Advanced Robotics Bay",
+        lore: "Automated maintenance drones improve the efficiency of mechanical repairs and part replacements.",
+        requirements: {
+            "c_machine_parts": 800,
+            "credits": 300000
+        },
+        rewards: {
+            description: "+5,000 Machine Parts Capacity, +10% Credit Yield",
+            stats: {
+                cacheCapacity: { "c_machine_parts": 5000 },
+                amYieldMult: 0,
+                creditYieldMult: 0.10,
+                globalEntropyRed: 0
+            }
+        }
+    },
+    5: {
+        projectName: "Expanded Directorate Quarters",
+        lore: "Constructing high-end habitats to attract top-tier administrative and engineering talent to the station.",
+        requirements: {
+            "c_luxury_goods": 500,
+            "credits": 600000
+        },
+        rewards: {
+            description: "+1 Officer Slot, Unlocks PRODUCTION Mode",
+            // Note: Officer slot unlocks are mathematically hardcoded to Level % 5 === 0 in the logic layer.
+            stats: {
+                cacheCapacity: {},
+                amYieldMult: 0,
+                creditYieldMult: 0,
+                globalEntropyRed: 0
+            }
+        }
+    }
+};
+--- END OF FILE: ./js/data/solProgressionRegistry.js ---
+
 --- START OF FILE: ./js/data/news_flavor.js ---
 // js/data/news_flavor.js
 /**
@@ -11344,6 +11609,7 @@ export const MISSION_REGISTRY = {
 /**
  * @fileoverview Registry of all Sol Station Directorate officers.
  * Officers are acquired via missions and provide passive buffs to the station when assigned.
+ * Includes support for expanded modifiers: capacityMods and consumptionMods.
  */
 
 export const OFFICERS = {
@@ -11353,14 +11619,14 @@ export const OFFICERS = {
         name: "Cmdr. Harken",
         role: "Operations",
         description: "A veteran of the Jupiter run. Specialized in structural integrity and decay mitigation.",
-        buffs: { entropy: -0.05, creditMult: 0, amMult: 0 } // -5% Decay
+        buffs: { entropy: -0.05, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: {} } // -5% Decay
     },
     "off_ops_beta": {
         id: "off_ops_beta",
         name: "Lt. Syla",
         role: "Operations",
-        description: "Former station architect. Her maintenance algorithms are highly efficient.",
-        buffs: { entropy: -0.10, creditMult: 0, amMult: 0 } // -10% Decay
+        description: "Former station architect. Her maintenance algorithms are highly efficient at preserving Plasteel.",
+        buffs: { entropy: -0.05, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "c_plasteel": 0.15 } } // -5% Decay, -15% Plasteel Burn
     },
 
     // --- LOGISTICS (Credit Yield) ---
@@ -11369,14 +11635,14 @@ export const OFFICERS = {
         name: "Broker Krell",
         role: "Logistics",
         description: "A ruthless negotiator who squeezes every credit out of station commerce.",
-        buffs: { entropy: 0, creditMult: 0.15, amMult: 0 } // +15% Credits
+        buffs: { entropy: 0, creditMult: 0.15, amMult: 0, capacityMods: {}, consumptionMods: {} } // +15% Credits
     },
     "off_log_beta": {
         id: "off_log_beta",
         name: "Quartermaster Vance",
         role: "Logistics",
-        description: "Optimizes supply chains to maximize commercial throughput.",
-        buffs: { entropy: 0, creditMult: 0.25, amMult: 0 } // +25% Credits
+        description: "Optimizes supply chains to maximize commercial throughput and expand Ice storage.",
+        buffs: { entropy: 0, creditMult: 0.10, amMult: 0, capacityMods: { "c_water_ice": 25000 }, consumptionMods: {} } // +10% Credits, +25k Ice Capacity
     },
 
     // --- ENGINEERING (Antimatter Yield) ---
@@ -11385,14 +11651,14 @@ export const OFFICERS = {
         name: "Dr. Aris",
         role: "Engineering",
         description: "Particle physicist obsessed with maximizing collider efficiency.",
-        buffs: { entropy: 0, creditMult: 0, amMult: 0.10 } // +10% Antimatter
+        buffs: { entropy: 0, creditMult: 0, amMult: 0.10, capacityMods: {}, consumptionMods: {} } // +10% Antimatter
     },
     "off_eng_beta": {
         id: "off_eng_beta",
         name: "Chief O'Rin",
         role: "Engineering",
         description: "Pushing the reactor beyond safety limits is his specialty.",
-        buffs: { entropy: 0.05, creditMult: 0, amMult: 0.30 } // +30% Antimatter, but +5% Decay (Trade-off)
+        buffs: { entropy: 0.05, creditMult: 0, amMult: 0.30, capacityMods: {}, consumptionMods: {} } // +30% Antimatter, but +5% Decay (Trade-off)
     }
 };
 --- END OF FILE: ./js/data/officers.js ---
@@ -17843,7 +18109,8 @@ import { DB } from '../../data/database.js';
 import { OFFICERS } from '../../data/officers.js';
 import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
-import { AssetService } from '../AssetService.js'; 
+import { AssetService } from '../AssetService.js';
+import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 
 export class UISolStationControl {
     constructor(uiManager) {
@@ -17851,6 +18118,11 @@ export class UISolStationControl {
         this.animationFrameId = null;
         this.domCache = null; 
         this.lastRendered = {}; 
+        
+        // Local state for UI interaction
+        this.selectedOfficerId = null;
+        this.selectedSlotId = null;
+        this.lastTapTime = 0;
     }
 
     _getLiveStationState(gameState) {
@@ -17864,7 +18136,6 @@ export class UISolStationControl {
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
 
-        // SAFETY HOOK: Ensure engine is running if UI opens (fixes Load Game bypass)
         if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
             const svc = this.uiManager.simulationService.solStationService;
             if (!svc.trackingActive) {
@@ -17888,6 +18159,7 @@ export class UISolStationControl {
         if (existingRoot && isModalVisible) {
             existingRoot.outerHTML = contentHtml;
             this.domCache = null; 
+            this._bindLocalListeners(gameState);
             
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
@@ -17908,9 +18180,60 @@ export class UISolStationControl {
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm',
             });
+            setTimeout(() => this._bindLocalListeners(gameState), 50);
         }
         
         this._startRefreshLoop();
+    }
+
+    _bindLocalListeners(gameState) {
+        const root = document.getElementById('sol-dashboard-root');
+        if (!root) return;
+
+        // Clean up old listener to prevent memory leaks if re-rendering in place
+        if (this._clickHandler) {
+            root.removeEventListener('click', this._clickHandler);
+        }
+
+        this._clickHandler = (e) => {
+            const btn = e.target.closest('button[data-local-action]');
+            if (!btn) return;
+            e.preventDefault();
+            const action = btn.dataset.localAction;
+
+            const svc = this.uiManager.simulationService.solStationService;
+
+            if (action === 'open-officer-mgmt') {
+                this.showOfficerManagement(gameState);
+            } else if (action === 'open-engineering') {
+                this.showEngineeringModal(gameState);
+            } else if (action === 'eng-donate-max-credits') {
+                const reqs = LEVEL_REGISTRY[svc.gameState.solStation.level + 1].requirements;
+                const banked = svc.gameState.solStation.activeProjectBank['credits'] || 0;
+                const needed = reqs['credits'] - banked;
+                const available = svc.gameState.player.credits;
+                const input = document.getElementById('eng-credit-input');
+                if (input) input.value = Math.min(needed, available);
+            } else if (action === 'eng-contribute-credits') {
+                const input = document.getElementById('eng-credit-input');
+                const qty = parseInt(input?.value || 0, 10);
+                if (qty > 0) {
+                    const res = svc.contributeToProject('credits', qty);
+                    if (res.success) this.showEngineeringModal(svc.gameState);
+                }
+            } else if (action === 'eng-contribute-cargo') {
+                const commId = btn.dataset.commId;
+                const reqs = LEVEL_REGISTRY[svc.gameState.solStation.level + 1].requirements;
+                const banked = svc.gameState.solStation.activeProjectBank[commId] || 0;
+                const needed = reqs[commId] - banked;
+                if (needed > 0) {
+                    const res = svc.contributeToProject(commId, needed);
+                    if (res.success) this.showEngineeringModal(svc.gameState);
+                }
+            }
+        };
+
+        root.addEventListener('click', this._clickHandler);
     }
 
     _buildDomCache(root) {
@@ -17926,7 +18249,8 @@ export class UISolStationControl {
             credCollectBtn: root.querySelector('button[data-action="sol-claim-output"][data-type="credits"]'),
             modeBtns: Array.from(root.querySelectorAll('.mode-btn')),
             modeDesc: root.querySelector('.mode-description'),
-            caches: {}
+            caches: {},
+            engBars: {}
         };
 
         root.querySelectorAll('.sol-cache-row').forEach(row => {
@@ -17978,7 +18302,7 @@ export class UISolStationControl {
             lr.threshold = output.threshold;
         }
 
-        const amCurrent = Math.min(150, station.stockpile.antimatter); 
+        const amCurrent = Math.min(LEVEL_REGISTRY[1]?.MAX_ANTIMATTER_STOCKPILE || 150, station.stockpile.antimatter); 
         if (c.amCollectBtn) {
              c.amCollectBtn.disabled = amCurrent < 1; 
              c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
@@ -18032,10 +18356,8 @@ export class UISolStationControl {
 
             const station = svc.gameState.solStation;
             const rates = svc.getPerSecondRates();
-            
             const timeNow = Date.now();
             
-            // Hardened dtReal calculation to prevent Epoch 1.7 Billion Second Bug
             let dtReal = 0;
             if (svc.trackingActive && svc.lastCommitTime > 0) {
                 dtReal = Math.max(0, (timeNow - svc.lastCommitTime) / 1000);
@@ -18055,7 +18377,9 @@ export class UISolStationControl {
                     if (id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER) {
                         const cacheUi = this.domCache.caches[id];
                         if (cacheUi && cacheUi.text && cacheUi.bar) {
-                            const projectedVal = cache.current * Math.exp(-rates.k * dtReal);
+                            const specificBurnRed = svc.getOfficerBuffs().consumptionMods[id] || 0;
+                            const k_specific = rates.k * Math.max(0, (1 - specificBurnRed));
+                            const projectedVal = cache.current * Math.exp(-k_specific * dtReal);
                             cacheUi.text.textContent = `${Math.floor(projectedVal).toLocaleString()} / ${cache.max.toLocaleString()}`;
                             const fillPct = (projectedVal / cache.max) * 100;
                             cacheUi.bar.style.width = `${fillPct}%`;
@@ -18083,71 +18407,257 @@ export class UISolStationControl {
         this.domCache = null; 
     }
 
-    showOfficerRoster(slotId, gameState) {
-        const root = document.getElementById('sol-dashboard-root');
-        if (!root) return; 
+    // --- PHASE 3: OFFICER MANAGEMENT (DUAL COLUMN) ---
 
+    showOfficerManagement(gameState) {
         this._stopRefreshLoop();
+        const root = document.getElementById('sol-dashboard-root');
+        if (!root) return;
 
         const station = this._getLiveStationState(gameState);
-        const roster = station.roster || [];
-        const assignedIds = station.officers.map(s => s.assignedOfficerId).filter(id => id);
+        const roster = gameState.player.officerRoster || [];
+        const slots = station.officers;
+        const assignedIds = slots.map(s => s.assignedOfficerId).filter(id => id);
         const availableOfficers = roster.filter(id => !assignedIds.includes(id));
 
-        let listHtml = '';
-        if (availableOfficers.length === 0) {
-            listHtml = `<div class="text-center p-4 text-gray-400">No unassigned officers available.</div>`;
-        } else {
-            listHtml = availableOfficers.map(officerId => {
-                const officer = OFFICERS[officerId];
-                if (!officer) return '';
+        const availHtml = availableOfficers.length === 0 ? 
+            `<div class="text-center p-4 text-gray-500 text-sm">No officers available.</div>` :
+            availableOfficers.map(id => this._buildOfficerRowHtml(id, false)).join('');
+
+        const slotsHtml = slots.map(slot => {
+            if (slot.assignedOfficerId) {
+                return this._buildOfficerRowHtml(slot.assignedOfficerId, true, slot.slotId);
+            } else {
                 return `
-                    <div class="roster-card" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="${officerId}">
-                        <div class="officer-info">
-                            <div class="officer-name">${officer.name}</div>
-                            <div class="officer-role">${officer.role}</div>
-                        </div>
-                        <div class="officer-buffs">
-                            ${this._formatBuffs(officer.buffs)}
-                        </div>
-                        <button type="button" class="btn btn-sm btn-action">ASSIGN</button>
+                    <div class="officer-mgmt-row empty-slot" data-slot-id="${slot.slotId}">
+                        <div class="slot-indicator">SLOT ${slot.slotId}</div>
+                        <div class="empty-text">Empty</div>
                     </div>
                 `;
-            }).join('');
-        }
-
-        const currentAssignment = station.officers.find(s => s.slotId === parseInt(slotId));
-        let footerHtml = '';
-        if (currentAssignment && currentAssignment.assignedOfficerId) {
-            footerHtml = `
-                <div class="roster-footer">
-                    <button type="button" class="btn btn-red w-full" data-action="sol-assign-officer" data-slot-id="${slotId}" data-officer-id="null">
-                        UNASSIGN CURRENT OFFICER
-                    </button>
-                </div>
-            `;
-        }
+            }
+        }).join('');
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-center items-center mb-4">
-                <div class="section-title mb-0">SELECT OFFICER (SLOT ${slotId})</div>
+            <div class="sol-subview-header flex justify-between items-center mb-4">
+                <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="roster-list text-left">
-                ${listHtml}
+            <div class="officer-mgmt-container">
+                <div class="column-avail">
+                    <div class="col-title">AVAILABLE ROSTER</div>
+                    <div class="col-content">${availHtml}</div>
+                </div>
+                <div class="column-active">
+                    <div class="col-title">ACTIVE SLOTS</div>
+                    <div class="col-content">${slotsHtml}</div>
+                </div>
             </div>
-            ${footerHtml}
         `;
-
-        this.domCache = null; 
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.innerHTML = '&larr;'; 
+            footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
+            footerBtn.onclick = () => this.showDashboard(gameState);
+        }
+
+        // Setup double-tap and selection logic
+        const svc = this.uiManager.simulationService.solStationService;
+        
+        const handleInteraction = (e) => {
+            const row = e.target.closest('.officer-mgmt-row');
+            if (!row) return;
+
+            const now = Date.now();
+            const isDoubleTap = (now - this.lastTapTime < 350) && this.selectedOfficerId === row.dataset.officerId;
+            this.lastTapTime = now;
+
+            const isAssigned = row.classList.contains('assigned');
+            const officerId = row.dataset.officerId;
+            const slotId = row.dataset.slotId;
+
+            // Handle inline button clicks OR double taps
+            if (e.target.closest('.btn-inline-assign') || (isDoubleTap && !isAssigned)) {
+                // Assign first available empty slot
+                const emptySlot = slots.find(s => !s.assignedOfficerId);
+                if (emptySlot) {
+                    svc.assignOfficer(emptySlot.slotId, officerId);
+                    this.showOfficerManagement(svc.gameState);
+                }
+            } else if (e.target.closest('.btn-inline-remove') || (isDoubleTap && isAssigned)) {
+                // Request Un-slot
+                const res = svc.assignOfficer(slotId, null);
+                if (res.requiresConfirmation) {
+                    this.showUnslotWarningModal(slotId, officerId, res.payload, svc.gameState);
+                } else {
+                    this.showOfficerManagement(svc.gameState);
+                }
+            } else {
+                // Highlight logic
+                root.querySelectorAll('.officer-mgmt-row').forEach(r => r.classList.remove('selected'));
+                row.classList.add('selected');
+                this.selectedOfficerId = officerId;
+            }
+        };
+
+        // Use pointerup for better mobile responsiveness
+        root.removeEventListener('pointerup', this._mgmtHandler);
+        this._mgmtHandler = handleInteraction;
+        root.addEventListener('pointerup', this._mgmtHandler);
+    }
+
+    _buildOfficerRowHtml(officerId, isAssigned, slotId = null) {
+        const officer = OFFICERS[officerId];
+        if (!officer) return '';
+        const actionBtn = isAssigned ? 
+            `<button type="button" class="btn-inline-remove">REMOVE</button>` : 
+            `<button type="button" class="btn-inline-assign">ASSIGN</button>`;
+
+        return `
+            <div class="officer-mgmt-row ${isAssigned ? 'assigned' : 'avail'}" data-officer-id="${officerId}" ${slotId ? `data-slot-id="${slotId}"` : ''}>
+                ${isAssigned ? `<div class="slot-indicator">SLOT ${slotId}</div>` : ''}
+                <div class="row-info">
+                    <div class="o-name">${officer.name}</div>
+                    <div class="o-role">${officer.role}</div>
+                    <div class="o-buffs">${this._formatBuffs(officer.buffs, true)}</div>
+                </div>
+                <div class="row-action">${actionBtn}</div>
+            </div>
+        `;
+    }
+
+    // --- PHASE 3: ENGINEERING INTERFACE & WARNINGS ---
+
+    showEngineeringModal(gameState) {
+        this._stopRefreshLoop();
+        const root = document.getElementById('sol-dashboard-root');
+        if (!root) return;
+
+        const station = this._getLiveStationState(gameState);
+        const nextLevelData = LEVEL_REGISTRY[station.level + 1];
+
+        if (!nextLevelData) {
+            root.innerHTML = `<div class="text-center p-8"><h3 class="level-50-glow">STATION MAXIMIZED</h3></div>`;
+            return;
+        }
+
+        const reqs = nextLevelData.requirements;
+        const bank = station.activeProjectBank;
+
+        let reqsHtml = '';
+        Object.entries(reqs).forEach(([resId, reqQty]) => {
+            const bankedQty = bank[resId] || 0;
+            const pct = Math.min(100, (bankedQty / reqQty) * 100);
+            const isComplete = bankedQty >= reqQty;
+            
+            if (resId === 'credits') {
+                const playerCr = gameState.player.credits;
+                reqsHtml += `
+                    <div class="eng-req-row">
+                        <div class="req-header">
+                            <span>Credits</span>
+                            <span>${formatCredits(bankedQty, false)} / ${formatCredits(reqQty, false)}</span>
+                        </div>
+                        <div class="eng-progress-track"><div class="eng-progress-fill" style="width: ${pct}%; background-color: #10b981;"></div></div>
+                        ${!isComplete ? `
+                            <div class="credit-stepper">
+                                <input type="number" id="eng-credit-input" min="0" max="${Math.min(reqQty - bankedQty, playerCr)}" value="0" step="1000">
+                                <button type="button" class="btn-sm" data-local-action="eng-donate-max-credits">MAX</button>
+                                <button type="button" class="btn-sm btn-green" data-local-action="eng-contribute-credits">FUND</button>
+                            </div>
+                        ` : '<div class="text-green-400 text-sm font-bold mt-1 text-right">FUNDED</div>'}
+                    </div>
+                `;
+            } else {
+                const comm = DB.COMMODITIES.find(c => c.id === resId);
+                const pStock = gameState.player.ownedShipIds.reduce((total, id) => total + (gameState.player.inventories[id]?.[resId]?.quantity || 0), 0);
+                
+                reqsHtml += `
+                    <div class="eng-req-row">
+                        <div class="req-header">
+                            <span>${comm ? comm.name : resId}</span>
+                            <span>${bankedQty.toLocaleString()} / ${reqQty.toLocaleString()}</span>
+                        </div>
+                        <div class="eng-progress-track"><div class="eng-progress-fill" style="width: ${pct}%;"></div></div>
+                        ${!isComplete ? `
+                            <div class="flex justify-between items-center mt-1">
+                                <span class="text-xs text-gray-400">Fleet Stock: ${pStock.toLocaleString()}</span>
+                                <button type="button" class="btn-sm" data-local-action="eng-contribute-cargo" data-comm-id="${resId}" ${pStock <= 0 ? 'disabled' : ''}>DEPOSIT</button>
+                            </div>
+                        ` : '<div class="text-green-400 text-sm font-bold mt-1 text-right">SUPPLIED</div>'}
+                    </div>
+                `;
+            }
+        });
+
+        root.innerHTML = `
+            <div class="sol-subview-header flex justify-between items-center mb-4">
+                <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">ENGINEERING: PROJECT ${station.level + 1}</div>
+            </div>
+            <div class="eng-project-info mb-4">
+                <div class="text-lg font-bold mb-1">${nextLevelData.projectName}</div>
+                <div class="text-xs text-gray-400 italic mb-2">${nextLevelData.lore}</div>
+                <div class="text-sm text-blue-300">Reward: ${nextLevelData.rewards.description}</div>
+            </div>
+            <div class="eng-requirements-list">
+                ${reqsHtml}
+            </div>
+        `;
+
+        this._bindLocalListeners(gameState);
+
+        const footerBtn = document.querySelector('#event-button-container button');
+        if (footerBtn) {
+            footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
             footerBtn.onclick = () => this.showDashboard(gameState);
         }
     }
 
-    // --- HTML GENERATORS ---
+    showUnslotWarningModal(slotId, officerId, payload, gameState) {
+        const officer = OFFICERS[officerId];
+        let warningsHtml = '';
+
+        if (payload.netEntropyChange >= 0.1) {
+            warningsHtml += `<div class="warning-item text-red-400 font-bold mb-2">⚠ WARNING: Net Entropy will increase by +${Math.round(payload.netEntropyChange * 100)}%!</div>`;
+        }
+
+        const ventedKeys = Object.keys(payload.ventedCargo);
+        if (ventedKeys.length > 0) {
+            warningsHtml += `<div class="warning-item text-yellow-400 font-bold mb-2">⚠ WARNING: Capacity reduction will instantly vent and destroy:</div>`;
+            ventedKeys.forEach(k => {
+                const commName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
+                warningsHtml += `<div class="text-sm text-gray-300 ml-4">- ${payload.ventedCargo[k].toLocaleString()} units of ${commName}</div>`;
+            });
+        }
+
+        const modalHtml = `
+            <div id="unslot-warning-root" class="text-center">
+                <h3 class="text-xl font-bold text-red-500 mb-4">CRITICAL LOAD WARNING</h3>
+                <p class="mb-4 text-sm text-gray-300">Removing ${officer.name} will destabilize station operations.</p>
+                <div class="text-left bg-gray-900 border border-red-900 p-3 rounded mb-6">
+                    ${warningsHtml}
+                </div>
+                <div class="flex gap-4 justify-center">
+                    <button type="button" class="btn btn-red" id="btn-confirm-unslot">CONFIRM REMOVAL</button>
+                    <button type="button" class="btn btn-outline" id="btn-cancel-unslot">ABORT</button>
+                </div>
+            </div>
+        `;
+
+        // We temporarily replace the management view with the warning view.
+        const root = document.getElementById('sol-dashboard-root');
+        root.innerHTML = modalHtml;
+
+        document.getElementById('btn-confirm-unslot').onclick = () => {
+            const svc = this.uiManager.simulationService.solStationService;
+            svc.assignOfficer(slotId, null, true); // Force bypass validation
+            this.showOfficerManagement(svc.gameState);
+        };
+
+        document.getElementById('btn-cancel-unslot').onclick = () => {
+            this.showOfficerManagement(gameState);
+        };
+    }
+
+    // --- HTML GENERATORS (Updated for Phase 3) ---
 
     _buildDashboardHtml(gameState) {
         const station = this._getLiveStationState(gameState);
@@ -18159,15 +18669,31 @@ export class UISolStationControl {
         const amBgStyle = amBgImage ? `background-image: url('${amBgImage}'); opacity: 1; filter: none;` : '';
         const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
-        const amMax = 150;
+        const amMax = LEVEL_REGISTRY[1]?.MAX_ANTIMATTER_STOCKPILE || 150;
         const amCurrent = Math.min(amMax, stockpile.antimatter);
         const amFillPct = (amCurrent / amMax) * 100;
         const hasAm = amCurrent >= 1;
         const hasCredits = stockpile.credits > 0;
 
+        // Engineering Overview Prep
+        const nextLvl = LEVEL_REGISTRY[station.level + 1];
+        let engOverview = '<div class="text-center text-gray-500 text-xs">STATION MAXIMIZED</div>';
+        if (nextLvl) {
+            const reqs = Object.entries(nextLvl.requirements).map(([resId, qty]) => {
+                const banked = station.activeProjectBank[resId] || 0;
+                const name = resId === 'credits' ? 'Cr' : (DB.COMMODITIES.find(c => c.id === resId)?.name || resId);
+                return `${name}: ${banked >= qty ? '<span class="text-green-400">DONE</span>' : `${formatCredits(banked, false)}/${formatCredits(qty, false)}`}`;
+            }).join(' | ');
+            engOverview = `<div class="text-xs text-center text-blue-200 mt-1">${reqs}</div>`;
+        }
+
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
                 
+                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-center mb-2">
+                    SOL STATION LV. ${station.level}
+                </div>
+
                 <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health.toFixed(2)}%</span></div>
@@ -18228,9 +18754,9 @@ export class UISolStationControl {
                 <div class="sol-mode-control" style="margin-top: 0.75rem;">
                     <div class="section-title">OPERATIONAL MODE</div>
                     <div class="mode-toggle-group">
-                        ${this._renderModeButton('STABILITY', station.mode)}
-                        ${this._renderModeButton('COMMERCE', station.mode)}
-                        ${this._renderModeButton('PRODUCTION', station.mode)}
+                        ${this._renderModeButton('STABILITY', station.mode, station.unlockedModes)}
+                        ${this._renderModeButton('COMMERCE', station.mode, station.unlockedModes)}
+                        ${this._renderModeButton('PRODUCTION', station.mode, station.unlockedModes)}
                     </div>
                     <div class="mode-description">
                         ${this._getModeDescription(station.mode)}
@@ -18244,27 +18770,34 @@ export class UISolStationControl {
                     </div>
                 </div>
 
-                <div class="sol-officer-section">
-                    <div class="section-title">DIRECTORATE ASSIGNMENTS</div>
-                    <div class="officer-slot-container">
-                        ${this._renderOfficerSlots(gameState)}
-                    </div>
+                <div class="mt-4 pt-4 border-t border-gray-700">
+                    <button type="button" class="w-full bg-blue-900 border border-blue-500 text-white font-bold py-3 rounded uppercase tracking-wider shadow-lg" data-local-action="open-officer-mgmt">
+                        OFFICER MANAGEMENT
+                    </button>
+                </div>
+
+                <div class="mt-4 p-3 border border-gray-600 rounded cursor-pointer bg-gray-900 hover:bg-gray-800 transition-colors" data-local-action="open-engineering">
+                    <div class="text-xs text-gray-400 uppercase font-bold text-center">ENGINEERING BAY</div>
+                    ${nextLvl ? `<div class="text-center font-bold text-sm text-yellow-400 mt-1">${nextLvl.projectName}</div>` : ''}
+                    ${engOverview}
                 </div>
             </div>
         `;
     }
 
-    _renderModeButton(modeId, currentMode) {
+    _renderModeButton(modeId, currentMode, unlockedModes = ["STABILITY"]) {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
         const typeClass = modeId.toLowerCase(); 
+        const isLocked = !unlockedModes.includes(modeId);
         
         return `
             <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
-                    ${isActive ? 'disabled' : ''}>
-                ${modeId}
+                    ${isActive || isLocked ? 'disabled' : ''}
+                    style="${isLocked ? 'opacity: 0.3;' : ''}">
+                ${modeId} ${isLocked ? '🔒' : ''}
             </button>
         `;
     }
@@ -18309,7 +18842,6 @@ export class UISolStationControl {
                             <div class="sol-row-track-container" style="width: 100%;">
                                 <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
                                     <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
-                                    <div class="sol-threshold-marker" style="left: 20%;"></div>
                                     <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}</div>
                                 </div>
                             </div>
@@ -18329,40 +18861,24 @@ export class UISolStationControl {
             }).join('');
     }
 
-    _renderOfficerSlots(gameState) {
-        const station = this._getLiveStationState(gameState);
-        const slots = station.officers;
-        
-        return slots.map(slot => {
-            const officerId = slot.assignedOfficerId;
-            const officer = officerId ? OFFICERS[officerId] : null;
-
-            if (officer) {
-                return `
-                    <div class="officer-slot filled" data-action="sol-open-roster" data-slot-id="${slot.slotId}">
-                        <div class="slot-header">SLOT ${slot.slotId}</div>
-                        <div class="officer-name">${officer.name}</div>
-                        <div class="officer-role">${officer.role}</div>
-                        <div class="officer-buffs-mini">${this._formatBuffs(officer.buffs, true)}</div>
-                    </div>
-                `;
-            } else {
-                return `
-                    <div class="officer-slot empty" data-action="sol-open-roster" data-slot-id="${slot.slotId}">
-                        <div class="slot-header">SLOT ${slot.slotId}</div>
-                        <div class="empty-label">+ ASSIGN</div>
-                    </div>
-                `;
-            }
-        }).join('');
-    }
-
     _formatBuffs(buffs, mini = false) {
         const parts = [];
-        if (buffs.entropy !== 0) parts.push(`<span class="buff-entropy">${buffs.entropy > 0 ? '+' : ''}${Math.round(buffs.entropy * 100)}% Decay</span>`);
-        if (buffs.creditMult !== 0) parts.push(`<span class="buff-credits">+${Math.round(buffs.creditMult * 100)}% Credits</span>`);
-        if (buffs.amMult !== 0) parts.push(`<span class="buff-am">+${Math.round(buffs.amMult * 100)}% AM</span>`);
-        return parts.join(mini ? '<br>' : ' • ');
+        if (buffs.entropy !== 0) parts.push(`<span class="text-red-300">${buffs.entropy > 0 ? '+' : ''}${Math.round(buffs.entropy * 100)}% Decay</span>`);
+        if (buffs.creditMult !== 0) parts.push(`<span class="text-green-300">+${Math.round(buffs.creditMult * 100)}% Cr</span>`);
+        if (buffs.amMult !== 0) parts.push(`<span class="text-purple-300">+${Math.round(buffs.amMult * 100)}% AM</span>`);
+        
+        if (buffs.capacityMods) {
+            Object.keys(buffs.capacityMods).forEach(k => {
+                parts.push(`<span class="text-blue-300">+Cap</span>`);
+            });
+        }
+        if (buffs.consumptionMods) {
+            Object.keys(buffs.consumptionMods).forEach(k => {
+                parts.push(`<span class="text-yellow-300">-Burn</span>`);
+            });
+        }
+
+        return parts.join(mini ? ' ' : ' • ');
     }
 
     _calculateProjections(gameState) {
@@ -18387,6 +18903,15 @@ export class UISolStationControl {
         if (health >= 80) return '--ot-green-base';
         if (health >= 50) return '--ot-yellow-base';
         return '--ot-red-base';
+    }
+    
+    _getLevelStyleClass(level) {
+        if (level < 10) return 'sol-level-white';
+        if (level < 20) return 'sol-level-green';
+        if (level < 30) return 'sol-level-blue';
+        if (level < 40) return 'sol-level-gold';
+        if (level < 50) return 'sol-level-orange';
+        return 'sol-level-red';
     }
 }
 --- END OF FILE: ./js/services/ui/UISolStationControl.js ---
@@ -20634,7 +21159,9 @@ export class GameState {
                     id !== LOCATION_IDS.MERCURY
                 ),
                 seenCommodityMilestones: [], financeLog: [],
-                activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, ownedShipIds: [SHIP_IDS.WANDERER],
+                activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
+                ownedShipIds: [SHIP_IDS.WANDERER],
+                officerRoster: [], // Expanded officer universe pool tracking
                 // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
                 // Added `upgrades: []` to the initial Wanderer state
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },
@@ -20673,13 +21200,14 @@ export class GameState {
             activeIntelDeal: null,
             // --- END VIRTUAL WORKBENCH ---
 
-            // --- VIRTUAL WORKBENCH: PHASE 1 SOL STATION ---
+            // --- VIRTUAL WORKBENCH: PHASE 1 SOL STATION PROGRESSION ---
             solStation: {
+                level: 1,
+                activeProject: {},
                 unlocked: false, // Default locked until acquired via endgame conditions
                 mode: "STABILITY", // Default safe mode
                 health: 100, // Aggregate health percentage
                 caches: solCaches, // NOW DYNAMICALLY POPULATED
-                roster: [], // Unlocked officer IDs
                 officers: [
                     { slotId: 1, assignedOfficerId: null },
                     { slotId: 2, assignedOfficerId: null },
@@ -20688,6 +21216,10 @@ export class GameState {
                 stockpile: {
                     credits: 0,
                     antimatter: 0
+                },
+                activeProjectBank: {
+                    "c_water_ice": 0,
+                    "credits": 0
                 }
             },
             // --- END VIRTUAL WORKBENCH ---
@@ -20823,11 +21355,12 @@ export class GameState {
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js';
 import { COMMODITY_IDS } from '../data/constants.js';
+import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
 
-export const STATION_CONFIG = {
+// Converted hardcoded configuration to the mathematical floor
+export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
-    MAX_CACHE: 100000, 
-    BASE_UNIT_PRICE: 45, 
+    BASE_DECAY_K: 0.0000021, 
     EFFICIENCY_CLIFF: 0.5, 
     REAL_TIME_SECONDS_PER_DAY: 120, 
     MODES: {
@@ -20883,7 +21416,6 @@ export class SolStationService {
         console.log(`Current Day: ${currentDay}`);
 
         if (typeof station.lastProcessedDay === 'undefined') {
-            // FIX: Assume the station has been operating since Day 1, capturing all past history.
             console.log(`First visit. Initializing lastProcessedDay to 1 to simulate past activity.`);
             station.lastProcessedDay = 1;
             if (station.lastUpdateTime) delete station.lastUpdateTime;
@@ -20898,7 +21430,7 @@ export class SolStationService {
             return;
         }
 
-        const dt = daysMissed * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY;
+        const dt = daysMissed * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY;
         console.log(`Calculated delta-time (dt) in seconds: ${dt}`);
         
         const projectedState = this._calculateExactState(station, dt);
@@ -20961,9 +21493,9 @@ export class SolStationService {
             Object.assign(station, newState);
             
             this.localTimeAccumulator += dt;
-            if (this.localTimeAccumulator >= STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY) {
-                const daysToAdvance = Math.floor(this.localTimeAccumulator / STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY);
-                this.localTimeAccumulator -= (daysToAdvance * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY);
+            if (this.localTimeAccumulator >= LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY) {
+                const daysToAdvance = Math.floor(this.localTimeAccumulator / LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY);
+                this.localTimeAccumulator -= (daysToAdvance * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY);
                 
                 station.lastProcessedDay += daysToAdvance;
                 
@@ -20988,21 +21520,23 @@ export class SolStationService {
         const liveState = this.gameState.solStation;
         if (!liveState || !liveState.unlocked) return { k: 0, creditsPerSec: 0, amPerSec: 0 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
-        const buffs = this._calculateOfficerBuffs(liveState.officers);
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
-        const k = modeConfig.decayK * entropy;
+        const modeConfig = LEVEL_1_BASELINE.MODES[liveState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
+        const officerBuffs = this._calculateOfficerBuffs(liveState.officers);
+        const levelBuffs = this._calculateLevelBuffs(liveState.level || 1);
+        
+        const globalEntropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
+        const k_global = LEVEL_1_BASELINE.BASE_DECAY_K * globalEntropyMult;
         
         // Sanitize health to prevent NaN propagation
         const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
         const x0 = safeHealth / 100;
-        let efficiency = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
+        let efficiency = x0 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
 
-        const creditsPerSec = modeConfig.yieldCredits * (1 + buffs.creditMult) * efficiency;
-        const amPerSec = modeConfig.yieldAm * (1 + buffs.amMult) * efficiency;
+        const creditsPerSec = modeConfig.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult) * efficiency;
+        const amPerSec = modeConfig.yieldAm * (1 + officerBuffs.amMult + levelBuffs.amMult) * efficiency;
         
         return { 
-            k: isNaN(k) ? 0 : k, 
+            k: isNaN(k_global) ? 0 : k_global, 
             creditsPerSec: isNaN(creditsPerSec) ? 0 : creditsPerSec, 
             amPerSec: isNaN(amPerSec) ? 0 : amPerSec 
         };
@@ -21020,54 +21554,68 @@ export class SolStationService {
         const newState = JSON.parse(JSON.stringify(currentState));
         if (dt <= 0) return newState;
 
-        const modeConfig = STATION_CONFIG.MODES[newState.mode] || STATION_CONFIG.MODES.STABILITY;
+        const modeConfig = LEVEL_1_BASELINE.MODES[newState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
         const officerBuffs = this._calculateOfficerBuffs(newState.officers);
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
-        const k = modeConfig.decayK * entropy;
+        const levelBuffs = this._calculateLevelBuffs(newState.level || 1);
+        
+        // Decoupled Integral Global Entropy
+        const globalEntropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
+        const k_global = LEVEL_1_BASELINE.BASE_DECAY_K * globalEntropyMult;
 
         let totalFillRatio = 0;
         let activeCaches = 0;
 
         const validCaches = Object.entries(newState.caches || {}).filter(([id, cache]) => {
-            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache && cache.max > 0;
+            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache;
         });
 
         validCaches.forEach(([id, c]) => {
-            // Sanitize cache values
+            // Establish Baseline Max to ensure mathematically sound additive scaling
+            if (typeof c.baseMax === 'undefined') {
+                c.baseMax = c.max > 0 ? c.max : 100;
+            }
+            
+            const actualMax = c.baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
+            c.max = actualMax;
+            
+            // Immediately clamp current to prevent overflow if max dropped due to un-slotting
+            if (c.current > actualMax) {
+                c.current = actualMax; 
+            }
+
             const safeCurrent = isNaN(c.current) ? 0 : c.current;
-            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
-            totalFillRatio += (safeCurrent / safeMax);
+            const safeMax = isNaN(actualMax) || actualMax <= 0 ? 1 : actualMax;
+            
+            // Decoupled Specific Cache Decay using targeted friction
+            const specificBurnRed = officerBuffs.consumptionMods[id] || 0;
+            const k_specific = k_global * Math.max(0, (1 - specificBurnRed));
+            
+            c.current = safeCurrent * Math.exp(-k_specific * dt);
+            
+            totalFillRatio += (c.current / safeMax);
             activeCaches++;
         });
         
         let x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
         if (isNaN(x0)) x0 = 0;
 
-        // Diagnostic output for mathematical tracking
         if (dt > 2.0) {
-            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | k=${k}`);
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | k_global=${k_global}`);
         }
 
-        validCaches.forEach(([id, cache]) => {
-            const safeCurrent = isNaN(cache.current) ? 0 : cache.current;
-            const exactCache = safeCurrent * Math.exp(-k * dt);
-            cache.current = exactCache;
-        });
-
-        const x1 = x0 * Math.exp(-k * dt);
+        const x1 = x0 * Math.exp(-k_global * dt);
         newState.health = x1 * 100;
 
-        const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult);
-        const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult);
+        const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
+        const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult + levelBuffs.amMult);
 
-        const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k, dt);
-        const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k, dt);
+        const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k_global, dt);
+        const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k_global, dt);
 
         if (dt > 2.0) {
-            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Gen AM: ${generatedAm.toFixed(4)} | Final x1: ${x1.toFixed(4)}`);
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Final x1: ${x1.toFixed(4)}`);
         }
 
-        // Final Sanitize to ensure the stockpile is never poisoned
         const safeGeneratedCredits = isNaN(generatedCredits) ? 0 : generatedCredits;
         const safeGeneratedAm = isNaN(generatedAm) ? 0 : generatedAm;
         const safeCurrentCredits = isNaN(newState.stockpile.credits) ? 0 : newState.stockpile.credits;
@@ -21075,33 +21623,33 @@ export class SolStationService {
 
         newState.stockpile.credits = safeCurrentCredits + safeGeneratedCredits;
         newState.stockpile.antimatter = Math.min(
-            STATION_CONFIG.MAX_ANTIMATTER_STOCKPILE, 
+            LEVEL_1_BASELINE.MAX_ANTIMATTER_STOCKPILE, 
             safeCurrentAm + safeGeneratedAm
         );
 
-        newState.currentEfficiency = x1 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
+        newState.currentEfficiency = x1 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
 
         return newState;
     }
 
     _calculateYieldIntegral(yieldRate, x0, k, dt) {
         if (k === 0) {
-            const eff = x0 >= STATION_CONFIG.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
+            const eff = x0 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
             return yieldRate * eff * dt;
         }
 
         const x1 = x0 * Math.exp(-k * dt);
 
-        if (x1 >= STATION_CONFIG.EFFICIENCY_CLIFF) {
+        if (x1 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF) {
             return yieldRate * (x0 / k) * (1 - Math.exp(-k * dt));
-        } else if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) {
+        } else if (x0 < LEVEL_1_BASELINE.EFFICIENCY_CLIFF) {
             return (yieldRate * Math.pow(x0, 2) / k) * (1 - Math.exp(-2 * k * dt));
         } else {
-            const t_cross = -Math.log(STATION_CONFIG.EFFICIENCY_CLIFF / x0) / k;
+            const t_cross = -Math.log(LEVEL_1_BASELINE.EFFICIENCY_CLIFF / x0) / k;
             const genBefore = yieldRate * (x0 / k) * (1 - Math.exp(-k * t_cross));
             
             const dt_remaining = dt - t_cross;
-            const genAfter = (yieldRate * Math.pow(STATION_CONFIG.EFFICIENCY_CLIFF, 2) / k) * (1 - Math.exp(-2 * k * dt_remaining));
+            const genAfter = (yieldRate * Math.pow(LEVEL_1_BASELINE.EFFICIENCY_CLIFF, 2) / k) * (1 - Math.exp(-2 * k * dt_remaining));
             
             return genBefore + genAfter;
         }
@@ -21109,25 +21657,31 @@ export class SolStationService {
 
     getDeathSpiralThreshold() {
         const station = this.gameState.solStation;
-        const modeConfig = STATION_CONFIG.MODES[station.mode];
+        const modeConfig = LEVEL_1_BASELINE.MODES[station.mode];
         const officerBuffs = this.getOfficerBuffs();
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs);
-        const k = modeConfig.decayK * entropy;
+        const levelBuffs = this._calculateLevelBuffs(station.level || 1);
         
-        const commerceYield = STATION_CONFIG.MODES.COMMERCE.yieldCredits * (1 + officerBuffs.creditMult);
-        if (commerceYield <= 0) return STATION_CONFIG.EFFICIENCY_CLIFF;
+        const entropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
+        const k_global = modeConfig.decayK * entropyMult;
+        
+        const commerceYield = LEVEL_1_BASELINE.MODES.COMMERCE.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
+        if (commerceYield <= 0) return LEVEL_1_BASELINE.EFFICIENCY_CLIFF;
 
-        const threshold = (k * STATION_CONFIG.MAX_CACHE * STATION_CONFIG.BASE_UNIT_PRICE) / (2 * commerceYield);
+        // Uses a baseline assumption of an average cache size for the generic threshold metric
+        const averageCacheSize = 5000; 
+        const threshold = (k_global * averageCacheSize * 45) / (2 * commerceYield);
         
-        return Math.max(0, Math.min(threshold, STATION_CONFIG.EFFICIENCY_CLIFF));
+        return Math.max(0, Math.min(threshold, LEVEL_1_BASELINE.EFFICIENCY_CLIFF));
     }
 
     getLiveState() {
         return this.gameState.solStation;
     }
 
+    // --- BUFF CALCULATION ENGINES ---
+
     _calculateOfficerBuffs(officersList) {
-        let total = { entropy: 0, creditMult: 0, amMult: 0 };
+        let total = { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: {} };
         if (!officersList) return total;
 
         officersList.forEach(slot => {
@@ -21136,8 +21690,38 @@ export class SolStationService {
                 total.entropy += (b.entropy || 0);
                 total.creditMult += (b.creditMult || 0);
                 total.amMult += (b.amMult || 0);
+                
+                if (b.capacityMods) {
+                    Object.entries(b.capacityMods).forEach(([res, val]) => {
+                        total.capacityMods[res] = (total.capacityMods[res] || 0) + val;
+                    });
+                }
+                if (b.consumptionMods) {
+                    Object.entries(b.consumptionMods).forEach(([res, val]) => {
+                        total.consumptionMods[res] = (total.consumptionMods[res] || 0) + val;
+                    });
+                }
             }
         });
+        return total;
+    }
+
+    _calculateLevelBuffs(level) {
+        let total = { creditMult: 0, amMult: 0, globalEntropyRed: 0, capacityMods: {} };
+        for (let i = 2; i <= level; i++) {
+            const reg = LEVEL_REGISTRY[i];
+            if (reg && reg.rewards && reg.rewards.stats) {
+                const s = reg.rewards.stats;
+                total.creditMult += (s.creditYieldMult || 0);
+                total.amMult += (s.amYieldMult || 0);
+                total.globalEntropyRed += (s.globalEntropyRed || 0);
+                if (s.cacheCapacity) {
+                    Object.entries(s.cacheCapacity).forEach(([res, val]) => {
+                        total.capacityMods[res] = (total.capacityMods[res] || 0) + val;
+                    });
+                }
+            }
+        }
         return total;
     }
 
@@ -21145,28 +21729,32 @@ export class SolStationService {
         return this._calculateOfficerBuffs(this.gameState.solStation.officers);
     }
 
-    _calculateEntropyFromBuffs(baseModeMult, buffs) {
+    _calculateEntropyFromBuffs(baseModeMult, officerBuffs, levelBuffs = {globalEntropyRed: 0}) {
         let multiplier = baseModeMult;
-        multiplier += buffs.entropy; 
+        multiplier += officerBuffs.entropy; 
+        multiplier -= levelBuffs.globalEntropyRed;
         return Math.max(0.1, multiplier);
     }
 
     calculateEntropy(baseModeMult) {
-        return this._calculateEntropyFromBuffs(baseModeMult, this.getOfficerBuffs());
+        const station = this.gameState.solStation;
+        return this._calculateEntropyFromBuffs(baseModeMult, this.getOfficerBuffs(), this._calculateLevelBuffs(station.level || 1));
     }
 
     setMode(newModeId) {
         this._syncTime();
         
-        if (STATION_CONFIG.MODES[newModeId]) {
+        if (LEVEL_1_BASELINE.MODES[newModeId]) {
             this.gameState.solStation.mode = newModeId;
             this.logger.info.player(this.gameState.day, 'STATION_MODE', `Sol Station mode switched to ${newModeId}`);
             this.gameState.setState({});
         }
     }
 
+    // --- INTERACTION & DONATION PIPELINES ---
+
     donateToCache(commodityId, quantity) {
-        this._syncTime();
+        this._syncTime(); // Automatically updates dynamically calculated maximums
 
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
@@ -21277,42 +21865,238 @@ export class SolStationService {
         return { success: true, message: `Collected ${msgParts.join(' & ')}.` };
     }
 
-    assignOfficer(slotId, officerId) {
+    // --- PROGRESSION PROJECTS ---
+
+    contributeToProject(resourceId, quantity) {
+        this._syncTime();
+        
+        const station = this.gameState.solStation;
+        const nextLevelData = LEVEL_REGISTRY[station.level + 1];
+        
+        if (!nextLevelData) return { success: false, message: "Maximum level reached." };
+        if (!nextLevelData.requirements[resourceId]) return { success: false, message: "Resource not required for active project." };
+        
+        const currentlyBanked = station.activeProjectBank[resourceId] || 0;
+        const requiredAmount = nextLevelData.requirements[resourceId];
+        
+        if (currentlyBanked >= requiredAmount) return { success: false, message: "Requirement already met." };
+        
+        let qtyToTake = Math.min(quantity, requiredAmount - currentlyBanked);
+        
+        if (resourceId === 'credits') {
+            if (this.gameState.player.credits < qtyToTake) return { success: false, message: "Insufficient credits." };
+            this.gameState.player.credits -= qtyToTake;
+            station.activeProjectBank[resourceId] = currentlyBanked + qtyToTake;
+        } else {
+            let totalFleetStock = 0;
+            for (const shipId of this.gameState.player.ownedShipIds) {
+                totalFleetStock += (this.gameState.player.inventories[shipId]?.[resourceId]?.quantity || 0);
+            }
+
+            if (totalFleetStock < qtyToTake) {
+                return { success: false, message: "Insufficient fleet cargo." };
+            }
+
+            const activeShipId = this.gameState.player.activeShipId;
+            const shipInventories = [];
+            for (const shipId of this.gameState.player.ownedShipIds) {
+                const qty = this.gameState.player.inventories[shipId]?.[resourceId]?.quantity || 0;
+                shipInventories.push({ shipId, qty });
+            }
+
+            shipInventories.sort((a, b) => {
+                if (a.shipId === activeShipId) return -1;
+                if (b.shipId === activeShipId) return 1;
+                return b.qty - a.qty; 
+            });
+
+            let remainingToDonate = qtyToTake;
+            for (const shipData of shipInventories) {
+                if (remainingToDonate <= 0) break;
+                const toRemove = Math.min(remainingToDonate, shipData.qty);
+                if (toRemove > 0) {
+                    const invItem = this.gameState.player.inventories[shipData.shipId][resourceId];
+                    invItem.quantity -= toRemove;
+                    if (invItem.quantity === 0) invItem.avgCost = 0;
+                    remainingToDonate -= toRemove;
+                }
+            }
+            
+            station.activeProjectBank[resourceId] = currentlyBanked + qtyToTake;
+        }
+
+        this.logger.info.player(this.gameState.day, 'STATION_PROJECT', `Contributed ${qtyToTake} ${resourceId} to Project.`);
+        this.checkProjectCompletion();
+        this.gameState.setState({});
+        return { success: true, message: `Contributed ${qtyToTake} to project.` };
+    }
+    
+    checkProjectCompletion() {
+        const station = this.gameState.solStation;
+        const nextLevelData = LEVEL_REGISTRY[station.level + 1];
+        if (!nextLevelData) return;
+        
+        let isComplete = true;
+        for (const [resId, reqQty] of Object.entries(nextLevelData.requirements)) {
+            if ((station.activeProjectBank[resId] || 0) < reqQty) {
+                isComplete = false;
+                break;
+            }
+        }
+        
+        if (isComplete) {
+            this.applyLevelUp();
+        }
+    }
+    
+    applyLevelUp() {
+        const station = this.gameState.solStation;
+        
+        station.activeProjectBank = {}; 
+        station.level++;
+        
+        // Mode unlocking per GDD Thresholds
+        if (!station.unlockedModes) station.unlockedModes = ["STABILITY"];
+        if (station.level >= 3 && !station.unlockedModes.includes("COMMERCE")) {
+            station.unlockedModes.push("COMMERCE");
+        }
+        if (station.level >= 5 && !station.unlockedModes.includes("PRODUCTION")) {
+            station.unlockedModes.push("PRODUCTION");
+        }
+        
+        // Mathematical slot unlocking (Every 5 levels starting at base 3 slots)
+        if (station.level % 5 === 0) {
+            const maxSlots = 3 + Math.floor(station.level / 5);
+            if (station.officers.length < maxSlots && maxSlots <= 10) {
+                station.officers.push({ slotId: station.officers.length + 1, assignedOfficerId: null });
+            }
+        }
+        
+        this.logger.info.system('SolStation', this.gameState.day, 'LEVEL_UP', `Sol Station upgraded to Level ${station.level}!`);
+    }
+
+    // --- LOAD BEARING OFFICER MANAGEMENT ---
+
+    /**
+     * Projects the mathematical fallout of removing an officer from a slot.
+     * Required by UI intercept for severe consequences like venting overflow inventory.
+     * @param {number|string} slotId 
+     * @returns {object} { safe: boolean, ventedCargo: object, netEntropyChange: number }
+     */
+    validateUnslotOfficer(slotId) {
+        const station = this.gameState.solStation;
+        const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
+        
+        if (slotIndex === -1 || !station.officers[slotIndex].assignedOfficerId) {
+            return { safe: true, ventedCargo: {}, netEntropyChange: 0 };
+        }
+
+        const currentOfficerBuffs = this._calculateOfficerBuffs(station.officers);
+        const levelBuffs = this._calculateLevelBuffs(station.level || 1);
+        
+        // Simulate removing the officer
+        const simulatedOfficers = JSON.parse(JSON.stringify(station.officers));
+        simulatedOfficers[slotIndex].assignedOfficerId = null;
+        const newOfficerBuffs = this._calculateOfficerBuffs(simulatedOfficers);
+
+        const modeMult = LEVEL_1_BASELINE.MODES[station.mode].entropyMult;
+        const currentEntropy = this._calculateEntropyFromBuffs(modeMult, currentOfficerBuffs, levelBuffs);
+        const newEntropy = this._calculateEntropyFromBuffs(modeMult, newOfficerBuffs, levelBuffs);
+        
+        const netEntropyChange = (newEntropy - currentEntropy); 
+
+        const ventedCargo = {};
+        let isSafe = true;
+
+        Object.entries(station.caches).forEach(([id, c]) => {
+            const baseMax = c.baseMax || c.max;
+            const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (newOfficerBuffs.capacityMods[id] || 0);
+            
+            if (c.current > newMax) {
+                ventedCargo[id] = Math.floor(c.current - newMax);
+                isSafe = false; // Overflow triggers explicit UI intervention
+            }
+        });
+
+        // E.g., a net entropy increase of 0.1 represents +10% base entropy
+        if (netEntropyChange >= 0.1) {
+            isSafe = false;
+        }
+
+        return { safe: isSafe, ventedCargo, netEntropyChange };
+    }
+
+    /**
+     * Executes officer assignment or removal.
+     * Includes an optional 'force' flag for un-slotting bypassing validation (if player approved).
+     * @param {number|string} slotId 
+     * @param {string|null} officerId 
+     * @param {boolean} force - Override safety checks on removal
+     * @returns {object} Standard payload, can return `requiresConfirmation` if validation fails.
+     */
+    assignOfficer(slotId, officerId, force = false) {
         this._syncTime();
 
         const station = this.gameState.solStation;
         const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
         
-        if (slotIndex === -1) return false;
+        if (slotIndex === -1) return { success: false, message: "Invalid slot." };
 
-        const officerName = officerId ? (OFFICERS[officerId]?.name || officerId) : "None";
-        const action = officerId ? "assigned" : "unassigned";
+        // Intercept Removal
+        if (!officerId && !force) {
+            const validation = this.validateUnslotOfficer(slotId);
+            if (!validation.safe) {
+                return { success: false, requiresConfirmation: true, payload: validation };
+            }
+        }
 
         station.officers[slotIndex].assignedOfficerId = officerId;
         
+        // Immediately enforce new capacities after un-slotting to execute venting
+        if (!officerId) {
+            const levelBuffs = this._calculateLevelBuffs(station.level || 1);
+            const officerBuffs = this._calculateOfficerBuffs(station.officers);
+            
+            Object.entries(station.caches).forEach(([id, c]) => {
+                const baseMax = c.baseMax || c.max;
+                const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
+                c.max = newMax;
+                if (c.current > newMax) {
+                    c.current = newMax; // Executes the permanent destruction of vented cargo
+                }
+            });
+        }
+
+        const officerName = officerId ? (OFFICERS[officerId]?.name || officerId) : "None";
+        const action = officerId ? "assigned" : "unassigned";
+        
         this.logger.info.player(this.gameState.day, 'OFFICER_ASSIGN', `Officer ${officerName} ${action} to Slot ${slotId}.`);
         this.gameState.setState({});
-        return true;
+        return { success: true };
     }
 
     getProjectedOutput() {
         const liveState = this.getLiveState();
         if(!liveState || !liveState.unlocked) return { credits: 0, antimatter: 0, entropy: 1 };
         
-        const modeConfig = STATION_CONFIG.MODES[liveState.mode] || STATION_CONFIG.MODES.STABILITY;
+        const modeConfig = LEVEL_1_BASELINE.MODES[liveState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
         
         const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
         const x0 = safeHealth / 100;
         let efficiency = x0;
-        if (x0 < STATION_CONFIG.EFFICIENCY_CLIFF) efficiency = 2 * Math.pow(x0, 2);
+        if (x0 < LEVEL_1_BASELINE.EFFICIENCY_CLIFF) efficiency = 2 * Math.pow(x0, 2);
 
-        const buffs = this._calculateOfficerBuffs(liveState.officers);
-        const entropy = this._calculateEntropyFromBuffs(modeConfig.entropyMult, buffs);
+        const officerBuffs = this._calculateOfficerBuffs(liveState.officers);
+        const levelBuffs = this._calculateLevelBuffs(liveState.level || 1);
+        const entropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
 
-        const credits = Math.floor(modeConfig.yieldCredits * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY * (1 + buffs.creditMult) * efficiency);
-        const antimatter = (modeConfig.yieldAm * STATION_CONFIG.REAL_TIME_SECONDS_PER_DAY * (1 + buffs.amMult) * efficiency).toFixed(2);
+        const yieldCreditsBase = modeConfig.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
+        const yieldAmBase = modeConfig.yieldAm * (1 + officerBuffs.amMult + levelBuffs.amMult);
 
-        return { credits, antimatter, entropy };
+        const credits = Math.floor(yieldCreditsBase * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY * efficiency);
+        const antimatter = (yieldAmBase * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY * efficiency).toFixed(2);
+
+        return { credits, antimatter, entropy: entropyMult };
     }
 }
 --- END OF FILE: ./js/services/SolStationService.js ---
@@ -33560,7 +34344,7 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [35.56] - 2026-2-16
+# [35.57] - 2026-2-16
 -  fixed sol simulation time bug
 -  added sol simulation console debug messaging
 
@@ -37565,6 +38349,7 @@ Contains all progression, assets, and statistics for the user.
 |   `repair` | Number | Count of free hull repairs available. |
 | `activeShipId` | String | ID of the currently piloted ship. |
 | `ownedShipIds` | Array<String> | List of all ship IDs owned by the player. |
+| `officerRoster` | Array<String> | List of recruited officer IDs. |
 | `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[] }`. |
 | `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. |
 | `unlockedLicenseIds` | Array<String> | List of trade licenses owned. |
@@ -37648,6 +38433,9 @@ Manages the Endgame Engine mechanics.
 
 | Property | Type | Description |
 | --- | --- | --- |
+| `level` | Number | Current progression level (1-50). |
+| `activeProject` | Object | The currently active progression project requirements. |
+| `activeProjectBank` | Object | Incremental ledger of resources donated to the active project. |
 | `unlocked` | Boolean | Whether the player has acquired access (default: false). |
 | `mode` | String | Current mode: 'STABILITY', 'COMMERCE', 'PRODUCTION'. |
 | `health` | Number | Aggregate health (0-100) based on cache fill %. |
@@ -37672,7 +38460,6 @@ Manages the active concurrent missions and their granular progress.
 
 * `isCompletable`: Boolean flag indicating if all objectives are met.
 * `objectives`: Map of `objectiveId` -> `{ current, target }`.
-}
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
 --- START OF FILE: ./manifest.json ---
