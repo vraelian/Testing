@@ -133,14 +133,22 @@ export function renderServicesScreen(gameState, simulationService) {
         solStationButtonHtml = `
             <div class="flex justify-center mb-6 px-4">
                 <button class="w-full max-w-[600px] flex items-center justify-between" 
-                        style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 1px solid #60a5fa; border-radius: 8px; padding: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);" 
+                        style="background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; cursor: pointer; box-shadow: 0 0 15px rgba(252, 211, 77, 0.4);" 
                         data-action="open-sol-dashboard">
                     <div class="flex flex-col text-left">
-                        <span class="font-orbitron font-bold text-lg text-white tracking-widest">ORBITAL INTERFACE</span>
-                        <span class="text-xs text-blue-300">Manage Station Systems</span>
+                        <span class="font-orbitron font-bold text-lg text-white tracking-widest" style="text-shadow: 0 1px 3px rgba(0,0,0,0.8);">ORBITAL INTERFACE</span>
+                        <span class="text-xs text-yellow-100" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Manage Station Systems</span>
                     </div>
-                    <div class="font-orbitron font-bold text-3xl pr-2 ${levelClass}">
-                        Lv. ${stationLevel}
+                    <div class="flex flex-col items-center">
+                        <span class="text-[11px] text-yellow-300 uppercase tracking-widest font-mono mb-1" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Station Level</span>
+                        <div class="relative w-12 h-12 flex items-center justify-center">
+                            <svg class="absolute inset-0 w-full h-full opacity-80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4">
+                                <polygon points="50 3, 93 25, 93 75, 50 97, 7 75, 7 25" stroke="#fcd34d" stroke-width="3" fill="rgba(0,0,0,0.4)"/>
+                            </svg>
+                            <span class="font-orbitron font-bold text-2xl z-10 ${levelClass}" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
+                                ${stationLevel}
+                            </span>
+                        </div>
                     </div>
                 </button>
             </div>

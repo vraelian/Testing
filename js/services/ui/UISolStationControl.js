@@ -519,7 +519,7 @@ export class UISolStationControl {
 
         root.innerHTML = `
             <div class="sol-subview-header flex justify-center items-center mb-2 border-b border-gray-700 pb-2">
-                <div class="sol-level-header ${rarityColor} text-xl tracking-wider uppercase text-center w-full">${officer.name}</div>
+                <div class="sol-level-header ${rarityColor} text-[22px] tracking-wider uppercase text-center w-full">${officer.name}</div>
             </div>
             
             <div class="flex flex-col p-5 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
