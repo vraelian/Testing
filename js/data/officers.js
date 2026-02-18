@@ -64,5 +64,25 @@ export const OFFICERS = {
         description: "Pushing the reactor beyond safety limits is his specialty.",
         lore: "A mad genius who treats safety regulations as mere suggestions. He can push a reactor to extraordinary outputs, provided the station doesn't shake itself apart in the process.",
         buffs: { entropy: 0.05, creditMult: 0, amMult: 0.30, capacityMods: {}, consumptionMods: {} } // +30% Antimatter, but +5% Decay (Trade-off)
+    },
+
+    // --- TEST OFFICERS (Sol Station V1 Testing) ---
+    "off_test_logistics": {
+        id: "off_test_logistics",
+        name: "Chief Halloway",
+        role: "Logistics",
+        rarity: "common",
+        description: "[TEST] A specialist in hydrological storage solutions.",
+        lore: "Halloway spent twenty years managing water reserves on Ganymede. He brings that same efficient stacking protocol to Sol Station.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "water_ice": 60 }, consumptionMods: {} } // +30% Base Cap (Level 1)
+    },
+    "off_test_engineer": {
+        id: "off_test_engineer",
+        name: "Eng. Vance",
+        role: "Engineering",
+        rarity: "rare",
+        description: "[TEST] An expert in entropy reduction, but expensive to maintain.",
+        lore: "Vance's methods are incredibly effective at stabilizing the station's decay, but his salary requirements eat into the station's bottom line.",
+        buffs: { entropy: -0.10, creditMult: -0.05, amMult: 0, capacityMods: {}, consumptionMods: {} } // -10% Entropy, -5% Credits
     }
 };

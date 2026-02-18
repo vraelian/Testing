@@ -9,7 +9,24 @@ export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
     BASE_DECAY_K: 0.0000021, 
     EFFICIENCY_CLIFF: 0.5, 
-    REAL_TIME_SECONDS_PER_DAY: 120, 
+    REAL_TIME_SECONDS_PER_DAY: 120,
+    
+    // BASELINE COMMODITY CAPACITIES (The Floor)
+    baseCapacity: {
+        [COMMODITY_IDS.WATER_ICE]: 200,
+        [COMMODITY_IDS.PLASTEEL]: 180,
+        [COMMODITY_IDS.HYDROPONICS]: 160,
+        [COMMODITY_IDS.CYBERNETICS]: 140,
+        [COMMODITY_IDS.PROPELLANT]: 120,
+        [COMMODITY_IDS.PROCESSORS]: 100,
+        [COMMODITY_IDS.GRAPHENE_LATTICES]: 80,
+        [COMMODITY_IDS.CRYO_PODS]: 60,
+        [COMMODITY_IDS.ATMO_PROCESSORS]: 40,
+        [COMMODITY_IDS.CLONED_ORGANS]: 20,
+        [COMMODITY_IDS.XENO_GEOLOGICALS]: 10,
+        [COMMODITY_IDS.SENTIENT_AI]: 5
+    },
+
     MODES: {
         STABILITY: { 
             id: 'STABILITY', 
@@ -217,11 +234,12 @@ export class SolStationService {
         });
 
         validCaches.forEach(([id, c]) => {
-            // Establish Baseline Max to ensure mathematically sound additive scaling
-            if (typeof c.baseMax === 'undefined') {
-                c.baseMax = c.max > 0 ? c.max : 100;
+            // Establish Baseline Max using LEVEL_1_BASELINE or legacy backup
+            if (!c.baseMax) {
+                c.baseMax = LEVEL_1_BASELINE.baseCapacity[id] || 100;
             }
             
+            // Calculate effective max capacity
             const actualMax = c.baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
             c.max = actualMax;
             
@@ -574,14 +592,10 @@ export class SolStationService {
 
         this.logger.info.player(this.gameState.day, 'STATION_PROJECT', `Contributed ${qtyToTake} ${resourceId} to Project.`);
         
-        // [[MODIFIED]] Decoupled auto-leveling. Now just returns state.
-        // checkProjectCompletion() removed from here.
-        
         this.gameState.setState({});
         return { success: true, message: `Contributed ${qtyToTake} to project.` };
     }
     
-    // [[MODIFIED]] Explicit completion method for UI trigger
     completeActiveProject() {
         const station = this.gameState.solStation;
         const nextLevelData = LEVEL_REGISTRY[station.level + 1];
@@ -658,7 +672,7 @@ export class SolStationService {
         let isSafe = true;
 
         Object.entries(station.caches).forEach(([id, c]) => {
-            const baseMax = c.baseMax || c.max;
+            const baseMax = c.baseMax || LEVEL_1_BASELINE.baseCapacity[id] || 100;
             const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (newOfficerBuffs.capacityMods[id] || 0);
             
             if (c.current > newMax) {
@@ -707,7 +721,7 @@ export class SolStationService {
             const officerBuffs = this._calculateOfficerBuffs(station.officers);
             
             Object.entries(station.caches).forEach(([id, c]) => {
-                const baseMax = c.baseMax || c.max;
+                const baseMax = c.baseMax || LEVEL_1_BASELINE.baseCapacity[id] || 100;
                 const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
                 c.max = newMax;
                 if (c.current > newMax) {

@@ -77,6 +77,9 @@ export class UISolStationControl {
             this.domCache = null; 
             this._bindLocalListeners(gameState);
             
+            // --- UPDATE THEME DYNAMICALLY ---
+            this._applyLevelTheme(station.level);
+
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
@@ -96,12 +99,49 @@ export class UISolStationControl {
                 specialClass: 'sol-station-modal',
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm',
+                customSetup: (modal, closeHandler) => {
+                    // --- APPLY INITIAL THEME ---
+                    const content = modal.querySelector('.modal-content');
+                    if (content) {
+                        this._updateThemeClasses(content, station.level);
+                    }
+                }
             });
             setTimeout(() => this._bindLocalListeners(gameState), 50);
         }
         
         this._startRefreshLoop();
         this._restoreScrollPosition();
+    }
+
+    _updateThemeClasses(element, level) {
+        // Remove all potential theme classes first
+        element.classList.remove(
+            'sol-theme-white', 
+            'sol-theme-green', 
+            'sol-theme-blue', 
+            'sol-theme-gold', 
+            'sol-theme-orange', 
+            'sol-theme-red'
+        );
+
+        // Add the correct class
+        if (level < 10) element.classList.add('sol-theme-white');
+        else if (level < 20) element.classList.add('sol-theme-green');
+        else if (level < 30) element.classList.add('sol-theme-blue');
+        else if (level < 40) element.classList.add('sol-theme-gold');
+        else if (level < 50) element.classList.add('sol-theme-orange');
+        else element.classList.add('sol-theme-red');
+    }
+
+    _applyLevelTheme(level) {
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            const content = modal.querySelector('.modal-content');
+            if (content) {
+                this._updateThemeClasses(content, level);
+            }
+        }
     }
 
     _bindLocalListeners(gameState) {
@@ -492,10 +532,16 @@ export class UISolStationControl {
                     this.showOfficerManagement(svc.gameState);
                 }
             } else if (e.target.closest('.btn-inline-remove') || (isDoubleTap && isAssigned)) {
-                const res = svc.assignOfficer(slotId, null);
-                if (res.requiresConfirmation) {
-                    this.showUnslotWarningModal(slotId, officerId, res.payload, svc.gameState);
+                // --- PHASE 3: SEVERE WARNING INTERCEPT ---
+                // Validate un-slotting before executing
+                const validation = svc.validateUnslotOfficer(slotId);
+                
+                if (!validation.safe) {
+                    // Show warning if unsafe
+                    this.showUnslotWarningModal(slotId, officerId, validation, svc.gameState);
                 } else {
+                    // Proceed if safe
+                    svc.assignOfficer(slotId, null);
                     this.showOfficerManagement(svc.gameState);
                 }
             } else {
@@ -523,7 +569,6 @@ export class UISolStationControl {
         const actionBtn = isAssigned ? 
             `<button type="button" class="btn-inline-remove bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold py-1 px-2 rounded">REMOVE</button>` : 
             `<button type="button" class="btn-inline-assign bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-2 rounded">ASSIGN</button>`;
-
         const rarityColor = this._getRarityColorClass(officer.rarity);
         
         // Strip prefix title to ensure short name fits in UI
@@ -754,7 +799,7 @@ export class UISolStationControl {
             warningsHtml += `<div class="warning-item text-yellow-400 font-bold mb-2">⚠ WARNING: Capacity reduction will instantly vent and destroy:</div>`;
             ventedKeys.forEach(k => {
                 const commName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                warningsHtml += `<div class="text-sm text-gray-300 ml-4">- ${payload.ventedCargo[k].toLocaleString()} units of ${commName}</div>`;
+                warningsHtml += `<div class="text-sm text-gray-300 ml-4 font-mono text-red-500">- ${payload.ventedCargo[k].toLocaleString()} units of ${commName}</div>`;
             });
         }
 
@@ -777,6 +822,7 @@ export class UISolStationControl {
 
         document.getElementById('btn-confirm-unslot').onclick = () => {
             const svc = this.uiManager.simulationService.solStationService;
+            // Force removal
             svc.assignOfficer(slotId, null, true); 
             this.showOfficerManagement(svc.gameState);
         };
@@ -895,7 +941,7 @@ export class UISolStationControl {
                                 data-action="sol-claim-output"
                                 data-type="credits"
                                 style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a;"
-                                ${!hasCredits ? 'disabled' : ''}>
+                                 ${!hasCredits ? 'disabled' : ''}>
                             COLLECT
                         </button>
                     </div>
@@ -956,7 +1002,6 @@ export class UISolStationControl {
         const typeClass = modeId.toLowerCase(); 
         const isLocked = !unlockedModes.includes(modeId);
         
-        // Removed 🔒 text per feedback
         return `
             <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 

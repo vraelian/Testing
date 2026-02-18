@@ -568,6 +568,8 @@
     background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
     border: 1px solid #fbbf24;
     box-shadow: 0 0 30px rgba(251, 191, 36, 0.15);
+    /* Added transition for smooth theme switching */
+    transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
 /* Integrity Bar Fix */
@@ -758,4 +760,44 @@
 @keyframes sol-invisible-exit {
     0% { opacity: 0; }
     100% { opacity: 0; }
+}
+
+/* ========================================================================= */
+/* --- SOL STATION PROGRESSION THEMES (PHASE 3) --- */
+/* ========================================================================= */
+
+.sol-theme-white .modal-content {
+    background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%) !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.1) !important;
+}
+
+.sol-theme-green .modal-content {
+    background: radial-gradient(circle at center, #0f2e18 0%, #000000 100%) !important;
+    border: 1px solid rgba(0, 255, 100, 0.3) !important;
+    box-shadow: 0 0 25px rgba(0, 255, 100, 0.15) !important;
+}
+
+.sol-theme-blue .modal-content {
+    background: radial-gradient(circle at center, #0f1c2e 0%, #000000 100%) !important;
+    border: 1px solid rgba(0, 100, 255, 0.3) !important;
+    box-shadow: 0 0 25px rgba(0, 100, 255, 0.15) !important;
+}
+
+.sol-theme-gold .modal-content {
+    background: radial-gradient(circle at center, #2e240f 0%, #000000 100%) !important;
+    border: 1px solid rgba(255, 215, 0, 0.3) !important;
+    box-shadow: 0 0 25px rgba(255, 215, 0, 0.15) !important;
+}
+
+.sol-theme-orange .modal-content {
+    background: radial-gradient(circle at center, #2e150f 0%, #000000 100%) !important;
+    border: 1px solid rgba(255, 140, 0, 0.3) !important;
+    box-shadow: 0 0 25px rgba(255, 140, 0, 0.15) !important;
+}
+
+.sol-theme-red .modal-content {
+    background: radial-gradient(circle at center, #2e0f0f 0%, #000000 100%) !important;
+    border: 1px solid rgba(255, 50, 50, 0.4) !important;
+    box-shadow: 0 0 30px rgba(255, 50, 50, 0.2) !important;
 }
