@@ -1,7 +1,8 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS } from '../data/constants.js';
+// [[CHANGED]] Added LOCATION_IDS to imports
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
 // --- Screen Renderers ---
@@ -258,9 +259,8 @@ export class UIManager {
 
         const dateText = formatGameDateShort(gameState.day);
 
-        // --- PHASE 2 CHANGE: Sol Pulse Logic ---
-        const dateClass = currentLocationId === 'sol' ? 'date-text sol-date-pulse' : 'date-text';
-        // --- END PHASE 2 CHANGE ---
+        // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
+        const dateClass = currentLocationId === LOCATION_IDS.SUN ? 'date-text sol-date-pulse' : 'date-text';
 
         const contextBarHtml = `
             <div class="${containerClass}" style="background: ${theme.gradient}; color: ${theme.textColor};">
@@ -342,13 +342,12 @@ export class UIManager {
             if (dateSpan) {
                 dateSpan.textContent = dateText;
                 
-                // --- PHASE 2 CHANGE: Surgical Class Toggle ---
-                if (currentLocationId === 'sol') {
+                // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
+                if (currentLocationId === LOCATION_IDS.SUN) {
                     dateSpan.classList.add('sol-date-pulse');
                 } else {
                     dateSpan.classList.remove('sol-date-pulse');
                 }
-                // --- END PHASE 2 CHANGE ---
             }
 
             const creditSpan = existingContextBar.querySelector('.credit-text');
