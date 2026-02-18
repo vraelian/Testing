@@ -74,13 +74,18 @@ export function renderCargoScreen(gameState, simulationService) {
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         const locationColor = location?.navTheme?.borderColor || '#555';
 
+        // --- PHASE 1 CHANGE: Abbreviated Numbers for Capacity ---
+        const usedCapStr = formatAbbreviatedNumber(summary.usedCapacity);
+        const totalCapStr = formatAbbreviatedNumber(summary.totalCapacity);
+        // --- END PHASE 1 CHANGE ---
+
         if (summary.usedCapacity > 0) {
             const costStr = formatAbbreviatedNumber(summary.totalCostBasis);
             const localStr = formatAbbreviatedNumber(summary.totalLocalValue);
 
             bandHtml = `
                 <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: space-between;">
-                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${summary.usedCapacity}/${summary.totalCapacity}</span></div>
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${usedCapStr}/${totalCapStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
                     <div><span class="cargo-band-label">COST BASIS:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${costStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
@@ -92,7 +97,7 @@ export function renderCargoScreen(gameState, simulationService) {
                 <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: center;">
                     <span class="cargo-band-label">[ FLEET CARGO MANIFEST EMPTY ]</span>
                     <span class="cargo-band-pipe">|</span>
-                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">0/${summary.totalCapacity}</span></div>
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">0/${totalCapStr}</span></div>
                 </div>
             `;
         }

@@ -258,10 +258,14 @@ export class UIManager {
 
         const dateText = formatGameDateShort(gameState.day);
 
+        // --- PHASE 2 CHANGE: Sol Pulse Logic ---
+        const dateClass = currentLocationId === 'sol' ? 'date-text sol-date-pulse' : 'date-text';
+        // --- END PHASE 2 CHANGE ---
+
         const contextBarHtml = `
             <div class="${containerClass}" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
-                <span class="date-text">${dateText}</span>
+                <span class="${dateClass}">${dateText}</span>
                 <span class="credit-text ${creditClass}">${creditText}</span>
             </div>`;
 
@@ -335,7 +339,17 @@ export class UIManager {
             if (locSpan) locSpan.textContent = location?.name || 'In Transit';
 
             const dateSpan = existingContextBar.querySelector('.date-text');
-            if (dateSpan) dateSpan.textContent = dateText;
+            if (dateSpan) {
+                dateSpan.textContent = dateText;
+                
+                // --- PHASE 2 CHANGE: Surgical Class Toggle ---
+                if (currentLocationId === 'sol') {
+                    dateSpan.classList.add('sol-date-pulse');
+                } else {
+                    dateSpan.classList.remove('sol-date-pulse');
+                }
+                // --- END PHASE 2 CHANGE ---
+            }
 
             const creditSpan = existingContextBar.querySelector('.credit-text');
             if (creditSpan) {

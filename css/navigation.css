@@ -148,3 +148,17 @@ BULKHEAD NAVIGATION STYLES
     }
 }
 /* --- [[END]] DEPRECATED STYLES --- */
+
+
+/* --- PHASE 2: SOL DATE PULSE ANIMATION --- */
+@keyframes solPulse {
+    0% { text-shadow: 0 0 2px rgba(253, 224, 71, 0.3); opacity: 0.8; }
+    50% { text-shadow: 0 0 10px rgba(253, 224, 71, 0.8), 0 0 20px rgba(253, 224, 71, 0.4); opacity: 1; color: #fff; }
+    100% { text-shadow: 0 0 2px rgba(253, 224, 71, 0.3); opacity: 0.8; }
+}
+
+.sol-date-pulse {
+    animation: solPulse 2s infinite ease-in-out;
+    color: #fde047; /* Fallback/Base Yellow */
+    font-weight: 700;
+}
