@@ -713,3 +713,49 @@
     color: var(--ot-cyan-base, #08d9d6);
     text-shadow: 0 0 8px rgba(8, 217, 214, 0.6);
 }
+
+/* --- SOL STATION LEVEL UP ANIMATION --- */
+.sol-interface-levelup {
+    animation: sol-levelup-pulse 2.5s ease-in-out forwards;
+    z-index: 100; /* Ensure it pops */
+    position: relative;
+}
+
+@keyframes sol-levelup-pulse {
+    0% {
+        box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        border-color: #fcd34d;
+        transform: scale(1);
+    }
+    20% {
+         /* Wind up */
+        transform: scale(0.98);
+    }
+    50% {
+        /* PEAK */
+        box-shadow: 0 0 50px rgba(251, 191, 36, 1), 0 0 100px rgba(255, 255, 255, 0.8);
+        border-color: #ffffff;
+        background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%);
+        transform: scale(1.05);
+        filter: brightness(1.3);
+    }
+    100% {
+        /* Return to normal */
+        box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        border-color: #fcd34d;
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+/* --- FLASH FIX: SILENT EXIT --- */
+/* Forces the modal to be invisible instantly during the UI Manager's cleanup phase */
+.sol-station-modal.silent-exit.modal-hiding {
+    animation: sol-invisible-exit 0.01s linear forwards !important;
+    opacity: 0 !important;
+}
+
+@keyframes sol-invisible-exit {
+    0% { opacity: 0; }
+    100% { opacity: 0; }
+}

@@ -2,6 +2,14 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [35.69] - 2026-2-18
+-  added sol station level up animation
+-  bug fixes
+-  updated meta files
+
+# [35.67] - 2026-2-17
+-  added sol station debugging
+
 # [35.64] - 2026-2-17
 -  added officer interface to sol station
 -  added engineering interface to sol station

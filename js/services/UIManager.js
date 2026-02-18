@@ -352,6 +352,14 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
+        // [[FIX]] Reset Sol Station scroll memory if leaving Services screen
+        // This detects any state change where we were on Services but are now somewhere else.
+        if (previousState && 
+            previousState.activeScreen === SCREEN_IDS.SERVICES && 
+            gameState.activeScreen !== SCREEN_IDS.SERVICES) {
+            this.solStationControl.resetScrollMemory();
+        }
+
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.classList.remove('active-screen');

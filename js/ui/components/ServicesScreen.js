@@ -5,6 +5,8 @@
  * costs based on the current location and any active player perks.
  * * UPDATED: Includes Sol Station Orbital Interface entry point (Phase 3).
  * * UPDATED: Fleet Quick-Swap UI.
+ * * UPDATED: Added ID hooks for Level Up Animation.
+ * * FIX: Added type="button" to comply with ADR-026.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -132,7 +134,9 @@ export function renderServicesScreen(gameState, simulationService) {
     if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
         solStationButtonHtml = `
             <div class="flex justify-center mb-6 px-4">
-                <button class="w-full max-w-[600px] flex items-center justify-between" 
+                <button type="button" 
+                        id="btn-sol-orbital-interface" 
+                        class="w-full max-w-[600px] flex items-center justify-between" 
                         style="background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; cursor: pointer; box-shadow: 0 0 15px rgba(252, 211, 77, 0.4);" 
                         data-action="open-sol-dashboard">
                     <div class="flex flex-col text-left">
@@ -145,7 +149,7 @@ export function renderServicesScreen(gameState, simulationService) {
                             <svg class="absolute inset-0 w-full h-full opacity-80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4">
                                 <polygon points="50 3, 93 25, 93 75, 50 97, 7 75, 7 25" stroke="#fcd34d" stroke-width="3" fill="rgba(0,0,0,0.4)"/>
                             </svg>
-                            <span class="font-orbitron font-bold text-2xl z-10 ${levelClass}" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
+                            <span id="lbl-sol-level-indicator" class="font-orbitron font-bold text-2xl z-10 ${levelClass}" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
                                 ${stationLevel}
                             </span>
                         </div>

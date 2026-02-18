@@ -147,7 +147,9 @@
     width: 100%;
     max-width: 400px;
     margin: 0 auto 1.5rem auto;
-    padding: 4px;
+    
+    /* [[MODIFIED]] Reduced padding for compactness */
+    padding: 2px;
     
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
@@ -164,7 +166,9 @@
 .mission-tab-btn {
     flex: 1;
     position: relative;
-    padding: 0.4rem 0; /* Reduced from 0.6rem for ~30% height reduction */
+    
+    /* [[MODIFIED]] Reduced vertical padding for "Half-Height" appearance */
+    padding: 0.15rem 0; 
     
     background: transparent;
     border: none;
@@ -173,7 +177,10 @@
     color: rgba(255, 255, 255, 0.4);
     font-family: 'Oxanium', sans-serif;
     font-weight: 700;
-    font-size: 0.85rem;
+    
+    /* [[MODIFIED]] Slightly smaller font to fit tight vertical space */
+    font-size: 0.75rem;
+    
     text-transform: uppercase;
     letter-spacing: 0.1em;
     cursor: pointer;

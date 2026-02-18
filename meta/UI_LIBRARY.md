@@ -48,4 +48,4 @@ HTML<div class="objective-row-filled">
         <span>5/10</span>
     </div>
 </div>
-3. CSS Utilities.hidden: display: none !important. Used for toggling visibility..text-center: text-align: center..text-highlight: Applies the accent color to text..flex-row: display: flex; flex-direction: row;..flex-col: display: flex; flex-direction: column;..spacer: flex-grow: 1. Pushes flex items apart..scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
+3. CSS Utilities.hidden: display: none !important. Used for toggling visibility..text-center: text-align: center..text-highlight: Applies the accent color to text..flex-row: display: flex; flex-direction: row;..flex-col: display: flex; flex-direction: column;..spacer: flex-grow: 1. Pushes flex items apart..scroll-y: overflow-y: auto. Enables vertical scrolling within a container..silent-exit: Forces a modal to close instantly without an exit animation. Used for cinematic transitions.

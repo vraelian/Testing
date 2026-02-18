@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.57</title>
+    <title>Orbital Trading 35.64</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.57</p>
+            <p>Version 35.64</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -469,7 +469,9 @@
     width: 100%;
     max-width: 400px;
     margin: 0 auto 1.5rem auto;
-    padding: 4px;
+    
+    /* [[MODIFIED]] Reduced padding for compactness */
+    padding: 2px;
     
     background: rgba(0, 0, 0, 0.6);
     backdrop-filter: blur(8px);
@@ -486,7 +488,9 @@
 .mission-tab-btn {
     flex: 1;
     position: relative;
-    padding: 0.4rem 0; /* Reduced from 0.6rem for ~30% height reduction */
+    
+    /* [[MODIFIED]] Reduced vertical padding for "Half-Height" appearance */
+    padding: 0.15rem 0; 
     
     background: transparent;
     border: none;
@@ -495,7 +499,10 @@
     color: rgba(255, 255, 255, 0.4);
     font-family: 'Oxanium', sans-serif;
     font-weight: 700;
-    font-size: 0.85rem;
+    
+    /* [[MODIFIED]] Slightly smaller font to fit tight vertical space */
+    font-size: 0.75rem;
+    
     text-transform: uppercase;
     letter-spacing: 0.1em;
     cursor: pointer;
@@ -4548,6 +4555,52 @@ card.
     font-size: 1.5rem;
     color: var(--ot-cyan-base, #08d9d6);
     text-shadow: 0 0 8px rgba(8, 217, 214, 0.6);
+}
+
+/* --- SOL STATION LEVEL UP ANIMATION --- */
+.sol-interface-levelup {
+    animation: sol-levelup-pulse 2.5s ease-in-out forwards;
+    z-index: 100; /* Ensure it pops */
+    position: relative;
+}
+
+@keyframes sol-levelup-pulse {
+    0% {
+        box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        border-color: #fcd34d;
+        transform: scale(1);
+    }
+    20% {
+         /* Wind up */
+        transform: scale(0.98);
+    }
+    50% {
+        /* PEAK */
+        box-shadow: 0 0 50px rgba(251, 191, 36, 1), 0 0 100px rgba(255, 255, 255, 0.8);
+        border-color: #ffffff;
+        background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%);
+        transform: scale(1.05);
+        filter: brightness(1.3);
+    }
+    100% {
+        /* Return to normal */
+        box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
+        border-color: #fcd34d;
+        transform: scale(1);
+        filter: brightness(1);
+    }
+}
+
+/* --- FLASH FIX: SILENT EXIT --- */
+/* Forces the modal to be invisible instantly during the UI Manager's cleanup phase */
+.sol-station-modal.silent-exit.modal-hiding {
+    animation: sol-invisible-exit 0.01s linear forwards !important;
+    opacity: 0 !important;
+}
+
+@keyframes sol-invisible-exit {
+    0% { opacity: 0; }
+    100% { opacity: 0; }
 }
 --- END OF FILE: ./css/screens/services-screen.css ---
 
@@ -8894,6 +8947,8 @@ export function renderFinanceScreen(gameState) {
  * costs based on the current location and any active player perks.
  * * UPDATED: Includes Sol Station Orbital Interface entry point (Phase 3).
  * * UPDATED: Fleet Quick-Swap UI.
+ * * UPDATED: Added ID hooks for Level Up Animation.
+ * * FIX: Added type="button" to comply with ADR-026.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -9021,15 +9076,25 @@ export function renderServicesScreen(gameState, simulationService) {
     if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
         solStationButtonHtml = `
             <div class="flex justify-center mb-6 px-4">
-                <button class="w-full max-w-[600px] flex items-center justify-between" 
-                        style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 1px solid #60a5fa; border-radius: 8px; padding: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);" 
+                <button type="button" 
+                        id="btn-sol-orbital-interface" 
+                        class="w-full max-w-[600px] flex items-center justify-between" 
+                        style="background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); border: 1px solid #fcd34d; border-radius: 8px; padding: 1rem; cursor: pointer; box-shadow: 0 0 15px rgba(252, 211, 77, 0.4);" 
                         data-action="open-sol-dashboard">
                     <div class="flex flex-col text-left">
-                        <span class="font-orbitron font-bold text-lg text-white tracking-widest">ORBITAL INTERFACE</span>
-                        <span class="text-xs text-blue-300">Manage Station Systems</span>
+                        <span class="font-orbitron font-bold text-lg text-white tracking-widest" style="text-shadow: 0 1px 3px rgba(0,0,0,0.8);">ORBITAL INTERFACE</span>
+                        <span class="text-xs text-yellow-100" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Manage Station Systems</span>
                     </div>
-                    <div class="font-orbitron font-bold text-3xl pr-2 ${levelClass}">
-                        Lv. ${stationLevel}
+                    <div class="flex flex-col items-center">
+                        <span class="text-[11px] text-yellow-300 uppercase tracking-widest font-mono mb-1" style="text-shadow: 0 1px 2px rgba(0,0,0,0.8);">Station Level</span>
+                        <div class="relative w-12 h-12 flex items-center justify-center">
+                            <svg class="absolute inset-0 w-full h-full opacity-80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4">
+                                <polygon points="50 3, 93 25, 93 75, 50 97, 7 75, 7 25" stroke="#fcd34d" stroke-width="3" fill="rgba(0,0,0,0.4)"/>
+                            </svg>
+                            <span id="lbl-sol-level-indicator" class="font-orbitron font-bold text-2xl z-10 ${levelClass}" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
+                                ${stationLevel}
+                            </span>
+                        </div>
                     </div>
                 </button>
             </div>
@@ -18171,6 +18236,10 @@ export class UISolStationControl {
         // [[NEW]] Memory router to preserve scroll states across views
         this.currentView = null;
         this.scrollMemory = {};
+        
+        // Handler references for cleanup
+        this._clickHandler = null;
+        this._scrollHandler = null;
     }
 
     _getLiveStationState(gameState) {
@@ -18178,6 +18247,13 @@ export class UISolStationControl {
             return this.uiManager.simulationService.solStationService.getLiveState();
         }
         return gameState.solStation;
+    }
+
+    /**
+     * Resets the scroll memory. Call this when navigating away from the Services screen.
+     */
+    resetScrollMemory() {
+        this.scrollMemory = {};
     }
 
     showDashboard(gameState) {
@@ -18195,6 +18271,11 @@ export class UISolStationControl {
 
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
+        
+        // Safety Clean-up for Silent Exit flag
+        if (modalContainer) {
+            modalContainer.classList.remove('silent-exit');
+        }
         
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
@@ -18241,6 +18322,7 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
 
+        // --- 1. CLICK HANDLER ---
         if (this._clickHandler) {
             root.removeEventListener('click', this._clickHandler);
         }
@@ -18250,12 +18332,6 @@ export class UISolStationControl {
             if (!btn) return;
             e.preventDefault();
             const action = btn.dataset.localAction;
-
-            // Capture scroll before transition
-            const sc = document.getElementById('event-description');
-            if (sc && this.currentView) {
-                this.scrollMemory[this.currentView] = sc.scrollTop;
-            }
 
             const svc = this.uiManager.simulationService.solStationService;
 
@@ -18299,19 +18375,66 @@ export class UISolStationControl {
                 const modal = document.querySelector('.sol-station-modal');
                 if (modal) {
                     playBlockingAnimationAndRemove(modal, 'project-complete-dematerialize').then(() => {
+                        const oldLevel = svc.gameState.solStation.level;
                         const res = svc.completeActiveProject();
+                        
                         if (res.success) {
+                            // 1. Silent Exit Logic
+                            modal.classList.add('silent-exit');
                             this.uiManager.hideModal('event-modal');
-                            this.showDashboard(svc.gameState);
-                            const dashRoot = document.getElementById('sol-dashboard-root');
-                            if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
+                            
+                            // 2. Target the specific UI elements on the Services Screen
+                            const btn = document.getElementById('btn-sol-orbital-interface');
+                            const lbl = document.getElementById('lbl-sol-level-indicator');
+
+                            if (btn && lbl) {
+                                lbl.textContent = oldLevel;
+                                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                btn.classList.add('sol-interface-levelup');
+
+                                setTimeout(() => {
+                                    lbl.textContent = svc.gameState.solStation.level;
+                                    const newClass = this._getLevelStyleClass(svc.gameState.solStation.level);
+                                    lbl.className = `font-orbitron font-bold text-2xl z-10 ${newClass}`;
+                                }, 1200);
+
+                                setTimeout(() => {
+                                    btn.classList.remove('sol-interface-levelup');
+                                    this.showDashboard(svc.gameState);
+                                    const dashRoot = document.getElementById('sol-dashboard-root');
+                                    if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
+                                }, 2500);
+
+                            } else {
+                                this.showDashboard(svc.gameState);
+                                const dashRoot = document.getElementById('sol-dashboard-root');
+                                if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
+                            }
                         }
                     });
                 }
             }
         };
-
         root.addEventListener('click', this._clickHandler);
+
+        // --- 2. SCROLL HANDLER (LIVE CAPTURE) ---
+        const sc = document.getElementById('event-description');
+        if (sc) {
+            // Remove old listener if exists
+            if (this._scrollHandler) {
+                sc.removeEventListener('scroll', this._scrollHandler);
+            }
+
+            // Create new handler
+            this._scrollHandler = (e) => {
+                if (this.currentView) {
+                    this.scrollMemory[this.currentView] = e.target.scrollTop;
+                }
+            };
+
+            // Bind passive listener for performance
+            sc.addEventListener('scroll', this._scrollHandler, { passive: true });
+        }
     }
 
     _restoreScrollPosition() {
@@ -18493,6 +18616,13 @@ export class UISolStationControl {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
+        
+        // Clean up scroll listener to avoid leaks/stale references
+        const sc = document.getElementById('event-description');
+        if (sc && this._scrollHandler) {
+            sc.removeEventListener('scroll', this._scrollHandler);
+        }
+        
         this.domCache = null; 
     }
 
@@ -18668,7 +18798,7 @@ export class UISolStationControl {
 
         root.innerHTML = `
             <div class="sol-subview-header flex justify-center items-center mb-2 border-b border-gray-700 pb-2">
-                <div class="sol-level-header ${rarityColor} text-xl tracking-wider uppercase text-center w-full">${officer.name}</div>
+                <div class="sol-level-header ${rarityColor} text-[22px] tracking-wider uppercase text-center w-full">${officer.name}</div>
             </div>
             
             <div class="flex flex-col p-5 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
@@ -19756,6 +19886,7 @@ import { calculateInventoryUsed, skewedRandom } from '../utils.js';
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
+import { OFFICERS } from '../data/officers.js'; // Added to allow population of all officers
 
 // --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
@@ -20382,6 +20513,56 @@ ${logHistory}
                 }
             }},
             
+            // --- SOL STATION DEBUG TOOLS ---
+            levelUpSolStation: { name: 'Level Up Sol Station', type: 'button', handler: () => {
+                if (this.simulationService && this.simulationService.solStationService) {
+                    this.simulationService.solStationService.applyLevelUp();
+                    this.uiManager.createFloatingText('Sol Level Up', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                    this.gameState.setState({});
+                }
+            }},
+            addAllOfficers: { name: 'Add All Officers', type: 'button', handler: () => {
+                if (this.gameState.solStation && this.gameState.solStation.roster) {
+                    Object.keys(OFFICERS).forEach(id => {
+                        if (!this.gameState.solStation.roster.includes(id)) {
+                            this.gameState.solStation.roster.push(id);
+                        }
+                    });
+                    this.uiManager.createFloatingText('All Officers Added', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                    this.gameState.setState({});
+                }
+            }},
+            unlockAllOfficerSlots: { name: 'Unlock All Slots', type: 'button', handler: () => {
+                if (this.gameState.solStation && this.gameState.solStation.officers) {
+                    while(this.gameState.solStation.officers.length < 10) {
+                        this.gameState.solStation.officers.push({ slotId: this.gameState.solStation.officers.length + 1, assignedOfficerId: null });
+                    }
+                    this.uiManager.createFloatingText('All Slots Unlocked', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                    this.gameState.setState({});
+                }
+            }},
+            add1000AllItems: { name: '+1000 All Items', type: 'button', handler: () => {
+                const shipId = this.gameState.player.activeShipId;
+                if (!shipId) return;
+                
+                let inv = this.gameState.player.inventories[shipId];
+                if (!inv) {
+                    this.gameState.player.inventories[shipId] = {};
+                    inv = this.gameState.player.inventories[shipId];
+                }
+                
+                DB.COMMODITIES.forEach(c => {
+                    if (!inv[c.id]) {
+                        inv[c.id] = { quantity: 0, avgCost: 0 };
+                    }
+                    inv[c.id].quantity += 1000;
+                });
+                
+                this.uiManager.createFloatingText('+1000 Cargo Added', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+            }},
+            fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
+
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -20476,7 +20657,6 @@ ${logHistory}
             sootheEconomy: { name: 'Bullish Economy (Soothe)', type: 'button', handler: () => this.sootheEconomy() },
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
-            fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
 
             // --- [[START]] TUTORIAL TUNER ACTIONS ---
             generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
@@ -20560,6 +20740,15 @@ ${logHistory}
         // NEW: Mission Test
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
 
+        // --- NEW: Sol Station Debug Tools ---
+        const solFolder = this.gui.addFolder('Sol Station');
+        solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
+        solFolder.add(this.actions.addAllOfficers, 'handler').name(this.actions.addAllOfficers.name);
+        solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
+        solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
+        solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
+        // ------------------------------------
+
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
@@ -20620,7 +20809,6 @@ ${logHistory}
         this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
         this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
-        this.economyFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
@@ -29483,6 +29671,14 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
+        // [[FIX]] Reset Sol Station scroll memory if leaving Services screen
+        // This detects any state change where we were on Services but are now somewhere else.
+        if (previousState && 
+            previousState.activeScreen === SCREEN_IDS.SERVICES && 
+            gameState.activeScreen !== SCREEN_IDS.SERVICES) {
+            this.solStationControl.resetScrollMemory();
+        }
+
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.classList.remove('active-screen');
@@ -34617,6 +34813,19 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [35.69] - 2026-2-18
+-  added sol station level up animation
+-  bug fixes
+-  updated meta files
+
+# [35.67] - 2026-2-17
+-  added sol station debugging
+
+# [35.64] - 2026-2-17
+-  added officer interface to sol station
+-  added engineering interface to sol station
+-  sol station polish
+
 # [35.57] - 2026-2-16
 -  fixed sol simulation time bug
 -  added sol simulation console debug messaging
@@ -35642,7 +35851,7 @@ HTML<div class="objective-row-filled">
         <span>5/10</span>
     </div>
 </div>
-3. CSS Utilities.hidden: display: none !important. Used for toggling visibility..text-center: text-align: center..text-highlight: Applies the accent color to text..flex-row: display: flex; flex-direction: row;..flex-col: display: flex; flex-direction: column;..spacer: flex-grow: 1. Pushes flex items apart..scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
+3. CSS Utilities.hidden: display: none !important. Used for toggling visibility..text-center: text-align: center..text-highlight: Applies the accent color to text..flex-row: display: flex; flex-direction: row;..flex-col: display: flex; flex-direction: column;..spacer: flex-grow: 1. Pushes flex items apart..scroll-y: overflow-y: auto. Enables vertical scrolling within a container..silent-exit: Forces a modal to close instantly without an exit animation. Used for cinematic transitions.
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---

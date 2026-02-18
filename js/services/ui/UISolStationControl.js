@@ -22,6 +22,10 @@ export class UISolStationControl {
         // [[NEW]] Memory router to preserve scroll states across views
         this.currentView = null;
         this.scrollMemory = {};
+        
+        // Handler references for cleanup
+        this._clickHandler = null;
+        this._scrollHandler = null;
     }
 
     _getLiveStationState(gameState) {
@@ -29,6 +33,13 @@ export class UISolStationControl {
             return this.uiManager.simulationService.solStationService.getLiveState();
         }
         return gameState.solStation;
+    }
+
+    /**
+     * Resets the scroll memory. Call this when navigating away from the Services screen.
+     */
+    resetScrollMemory() {
+        this.scrollMemory = {};
     }
 
     showDashboard(gameState) {
@@ -46,6 +57,11 @@ export class UISolStationControl {
 
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
+        
+        // Safety Clean-up for Silent Exit flag
+        if (modalContainer) {
+            modalContainer.classList.remove('silent-exit');
+        }
         
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
@@ -92,6 +108,7 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
 
+        // --- 1. CLICK HANDLER ---
         if (this._clickHandler) {
             root.removeEventListener('click', this._clickHandler);
         }
@@ -101,12 +118,6 @@ export class UISolStationControl {
             if (!btn) return;
             e.preventDefault();
             const action = btn.dataset.localAction;
-
-            // Capture scroll before transition
-            const sc = document.getElementById('event-description');
-            if (sc && this.currentView) {
-                this.scrollMemory[this.currentView] = sc.scrollTop;
-            }
 
             const svc = this.uiManager.simulationService.solStationService;
 
@@ -150,19 +161,66 @@ export class UISolStationControl {
                 const modal = document.querySelector('.sol-station-modal');
                 if (modal) {
                     playBlockingAnimationAndRemove(modal, 'project-complete-dematerialize').then(() => {
+                        const oldLevel = svc.gameState.solStation.level;
                         const res = svc.completeActiveProject();
+                        
                         if (res.success) {
+                            // 1. Silent Exit Logic
+                            modal.classList.add('silent-exit');
                             this.uiManager.hideModal('event-modal');
-                            this.showDashboard(svc.gameState);
-                            const dashRoot = document.getElementById('sol-dashboard-root');
-                            if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
+                            
+                            // 2. Target the specific UI elements on the Services Screen
+                            const btn = document.getElementById('btn-sol-orbital-interface');
+                            const lbl = document.getElementById('lbl-sol-level-indicator');
+
+                            if (btn && lbl) {
+                                lbl.textContent = oldLevel;
+                                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                btn.classList.add('sol-interface-levelup');
+
+                                setTimeout(() => {
+                                    lbl.textContent = svc.gameState.solStation.level;
+                                    const newClass = this._getLevelStyleClass(svc.gameState.solStation.level);
+                                    lbl.className = `font-orbitron font-bold text-2xl z-10 ${newClass}`;
+                                }, 1200);
+
+                                setTimeout(() => {
+                                    btn.classList.remove('sol-interface-levelup');
+                                    this.showDashboard(svc.gameState);
+                                    const dashRoot = document.getElementById('sol-dashboard-root');
+                                    if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
+                                }, 2500);
+
+                            } else {
+                                this.showDashboard(svc.gameState);
+                                const dashRoot = document.getElementById('sol-dashboard-root');
+                                if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
+                            }
                         }
                     });
                 }
             }
         };
-
         root.addEventListener('click', this._clickHandler);
+
+        // --- 2. SCROLL HANDLER (LIVE CAPTURE) ---
+        const sc = document.getElementById('event-description');
+        if (sc) {
+            // Remove old listener if exists
+            if (this._scrollHandler) {
+                sc.removeEventListener('scroll', this._scrollHandler);
+            }
+
+            // Create new handler
+            this._scrollHandler = (e) => {
+                if (this.currentView) {
+                    this.scrollMemory[this.currentView] = e.target.scrollTop;
+                }
+            };
+
+            // Bind passive listener for performance
+            sc.addEventListener('scroll', this._scrollHandler, { passive: true });
+        }
     }
 
     _restoreScrollPosition() {
@@ -344,6 +402,13 @@ export class UISolStationControl {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
+        
+        // Clean up scroll listener to avoid leaks/stale references
+        const sc = document.getElementById('event-description');
+        if (sc && this._scrollHandler) {
+            sc.removeEventListener('scroll', this._scrollHandler);
+        }
+        
         this.domCache = null; 
     }
 
