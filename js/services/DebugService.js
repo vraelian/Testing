@@ -10,6 +10,7 @@ import { calculateInventoryUsed, skewedRandom } from '../utils.js';
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
+import { OFFICERS } from '../data/officers.js'; // Added to allow population of all officers
 
 // --- NEW PRESET MAPPING ---
 // Mapping preset names to their new [X%, Y%] values
@@ -636,6 +637,56 @@ ${logHistory}
                 }
             }},
             
+            // --- SOL STATION DEBUG TOOLS ---
+            levelUpSolStation: { name: 'Level Up Sol Station', type: 'button', handler: () => {
+                if (this.simulationService && this.simulationService.solStationService) {
+                    this.simulationService.solStationService.applyLevelUp();
+                    this.uiManager.createFloatingText('Sol Level Up', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                    this.gameState.setState({});
+                }
+            }},
+            addAllOfficers: { name: 'Add All Officers', type: 'button', handler: () => {
+                if (this.gameState.solStation && this.gameState.solStation.roster) {
+                    Object.keys(OFFICERS).forEach(id => {
+                        if (!this.gameState.solStation.roster.includes(id)) {
+                            this.gameState.solStation.roster.push(id);
+                        }
+                    });
+                    this.uiManager.createFloatingText('All Officers Added', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                    this.gameState.setState({});
+                }
+            }},
+            unlockAllOfficerSlots: { name: 'Unlock All Slots', type: 'button', handler: () => {
+                if (this.gameState.solStation && this.gameState.solStation.officers) {
+                    while(this.gameState.solStation.officers.length < 10) {
+                        this.gameState.solStation.officers.push({ slotId: this.gameState.solStation.officers.length + 1, assignedOfficerId: null });
+                    }
+                    this.uiManager.createFloatingText('All Slots Unlocked', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                    this.gameState.setState({});
+                }
+            }},
+            add1000AllItems: { name: '+1000 All Items', type: 'button', handler: () => {
+                const shipId = this.gameState.player.activeShipId;
+                if (!shipId) return;
+                
+                let inv = this.gameState.player.inventories[shipId];
+                if (!inv) {
+                    this.gameState.player.inventories[shipId] = {};
+                    inv = this.gameState.player.inventories[shipId];
+                }
+                
+                DB.COMMODITIES.forEach(c => {
+                    if (!inv[c.id]) {
+                        inv[c.id] = { quantity: 0, avgCost: 0 };
+                    }
+                    inv[c.id].quantity += 1000;
+                });
+                
+                this.uiManager.createFloatingText('+1000 Cargo Added', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+            }},
+            fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
+
             // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -730,7 +781,6 @@ ${logHistory}
             sootheEconomy: { name: 'Bullish Economy (Soothe)', type: 'button', handler: () => this.sootheEconomy() },
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
-            fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
 
             // --- [[START]] TUTORIAL TUNER ACTIONS ---
             generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
@@ -814,6 +864,15 @@ ${logHistory}
         // NEW: Mission Test
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
 
+        // --- NEW: Sol Station Debug Tools ---
+        const solFolder = this.gui.addFolder('Sol Station');
+        solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
+        solFolder.add(this.actions.addAllOfficers, 'handler').name(this.actions.addAllOfficers.name);
+        solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
+        solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
+        solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
+        // ------------------------------------
+
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
@@ -874,7 +933,6 @@ ${logHistory}
         this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
         this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
-        this.economyFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
