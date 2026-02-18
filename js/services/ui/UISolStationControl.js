@@ -18,6 +18,10 @@ export class UISolStationControl {
         this.selectedOfficerId = null;
         this.selectedSlotId = null;
         this.lastTapTime = 0;
+        
+        // [[NEW]] Memory router to preserve scroll states across views
+        this.currentView = null;
+        this.scrollMemory = {};
     }
 
     _getLiveStationState(gameState) {
@@ -28,6 +32,7 @@ export class UISolStationControl {
     }
 
     showDashboard(gameState) {
+        this.currentView = 'dashboard';
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
 
@@ -59,6 +64,7 @@ export class UISolStationControl {
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
+                footerBtn.style.display = ''; // Ensure visible
                 footerBtn.onclick = () => {
                     this._stopRefreshLoop();
                     this.uiManager.hideModal('event-modal');
@@ -79,6 +85,7 @@ export class UISolStationControl {
         }
         
         this._startRefreshLoop();
+        this._restoreScrollPosition();
     }
 
     _bindLocalListeners(gameState) {
@@ -94,6 +101,12 @@ export class UISolStationControl {
             if (!btn) return;
             e.preventDefault();
             const action = btn.dataset.localAction;
+
+            // Capture scroll before transition
+            const sc = document.getElementById('event-description');
+            if (sc && this.currentView) {
+                this.scrollMemory[this.currentView] = sc.scrollTop;
+            }
 
             const svc = this.uiManager.simulationService.solStationService;
 
@@ -141,7 +154,6 @@ export class UISolStationControl {
                         if (res.success) {
                             this.uiManager.hideModal('event-modal');
                             this.showDashboard(svc.gameState);
-                            // Apply 1-second fade-in to the dashboard root
                             const dashRoot = document.getElementById('sol-dashboard-root');
                             if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
                         }
@@ -153,9 +165,20 @@ export class UISolStationControl {
         root.addEventListener('click', this._clickHandler);
     }
 
+    _restoreScrollPosition() {
+        const targetScroll = this.scrollMemory[this.currentView] || 0;
+        const sc = document.getElementById('event-description');
+        if (sc) {
+            requestAnimationFrame(() => {
+                sc.scrollTop = targetScroll;
+            });
+        }
+    }
+
     _buildDomCache(root) {
         this.domCache = {
-            integrityLabel: root.querySelector('.sol-health-bar-label span'),
+            // [[FIXED]] Changed to nth-child div target based on new Health layout structure
+            integrityLabel: root.querySelector('.sol-health-bar-label > div:nth-child(2)'),
             integrityBar: root.querySelector('.sol-health-fill'),
             entropyVal: root.querySelector('[data-id="output-entropy"]'),
             thresholdMarker: root.querySelector('.sol-health-threshold-marker'),
@@ -327,6 +350,7 @@ export class UISolStationControl {
     // --- PHASE 3: OFFICER MANAGEMENT & DETAILS ---
 
     showOfficerManagement(gameState) {
+        this.currentView = 'officers';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
@@ -356,7 +380,6 @@ export class UISolStationControl {
             }
         }).join('');
 
-        // Removed negative margin-top to resolve clipping
         root.innerHTML = `
             <div class="sol-subview-header flex justify-between items-center mb-3">
                 <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
@@ -376,6 +399,7 @@ export class UISolStationControl {
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
             footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
+            footerBtn.style.display = ''; // Ensure visible
             footerBtn.onclick = () => this.showDashboard(gameState);
         }
 
@@ -393,7 +417,7 @@ export class UISolStationControl {
             const slotId = row.dataset.slotId;
 
             if (e.target.closest('[data-local-action="info-officer"]')) {
-                return;
+                return; // Handled by delegator
             }
 
             if (e.target.closest('.btn-inline-assign') || (isDoubleTap && !isAssigned)) {
@@ -423,6 +447,8 @@ export class UISolStationControl {
         root.removeEventListener('pointerup', this._mgmtHandler);
         this._mgmtHandler = handleInteraction;
         root.addEventListener('pointerup', this._mgmtHandler);
+
+        this._restoreScrollPosition();
     }
 
     _buildOfficerRowHtml(officerId, isAssigned, slotId = null) {
@@ -462,6 +488,7 @@ export class UISolStationControl {
     }
 
     showOfficerDetailModal(officerId, gameState) {
+        this.currentView = 'officerDetail';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
@@ -490,7 +517,6 @@ export class UISolStationControl {
             });
         }
 
-        // Removed negative margin-top and added centering classes
         root.innerHTML = `
             <div class="sol-subview-header flex justify-center items-center mb-2 border-b border-gray-700 pb-2">
                 <div class="sol-level-header ${rarityColor} text-xl tracking-wider uppercase text-center w-full">${officer.name}</div>
@@ -529,6 +555,7 @@ export class UISolStationControl {
         }
 
         this._bindLocalListeners(gameState);
+        this._restoreScrollPosition();
     }
 
     _getRarityColorClass(rarity) {
@@ -546,6 +573,7 @@ export class UISolStationControl {
     // --- PHASE 3: ENGINEERING INTERFACE & WARNINGS ---
 
     showEngineeringModal(gameState) {
+        this.currentView = 'engineering';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
@@ -641,9 +669,11 @@ export class UISolStationControl {
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
             footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
-            footerBtn.style.display = 'block';
+            footerBtn.style.display = '';
             footerBtn.onclick = () => this.showDashboard(gameState);
         }
+
+        this._restoreScrollPosition();
     }
 
     showUnslotWarningModal(slotId, officerId, payload, gameState) {
@@ -730,7 +760,6 @@ export class UISolStationControl {
             
             const descText = this._getProjectImpactDescription(nextLvl.rewards.stats);
 
-            // Added Review Button within the click delegator wrapper
             engOverview = `
                 <div style="display: flex; flex-direction: column; margin-top: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-transform: none; letter-spacing: normal;">
                     ${reqRows}
@@ -749,7 +778,10 @@ export class UISolStationControl {
 
                 <div class="sol-header-panel" style="display: flex; gap: 1rem; align-items: center; justify-content: space-between; margin-bottom: 0.75rem;">
                     <div class="sol-health-container" style="flex-grow: 1;">
-                        <div class="sol-health-bar-label">STATION HEALTH: <span class="${this._getHealthColorClass(station.health)}">${station.health.toFixed(2)}%</span></div>
+                        <div class="sol-health-bar-label" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 0.5rem;">
+                            <div style="font-size: 0.7rem; color: #9ca3af; letter-spacing: 1px;">STATION HEALTH</div>
+                            <div class="${this._getHealthColorClass(station.health)}" style="font-size: 1.25rem; font-weight: bold; line-height: 1;">${station.health.toFixed(2)}%</div>
+                        </div>
                         <div class="sol-health-track" style="position: relative;">
                             <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
                             <div class="sol-health-threshold-marker" style="position: absolute; top: -2px; bottom: -2px; width: 3px; background-color: transparent; z-index: 10; border-left: 2px solid #fff; box-shadow: -1px 0 2px #000; left: ${output.threshold}%;"></div>
@@ -859,13 +891,14 @@ export class UISolStationControl {
         const typeClass = modeId.toLowerCase(); 
         const isLocked = !unlockedModes.includes(modeId);
         
+        // Removed 🔒 text per feedback
         return `
             <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive || isLocked ? 'disabled' : ''}
                     style="${isLocked ? 'opacity: 0.3;' : ''}">
-                ${modeId} ${isLocked ? '🔒' : ''}
+                ${modeId}
             </button>
         `;
     }

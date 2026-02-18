@@ -118,16 +118,29 @@ export function renderServicesScreen(gameState, simulationService) {
     // --- PHASE 3: SOL STATION ENTRY POINT (UPDATED) ---
     // =========================================================================
     let solStationButtonHtml = '';
+    
+    // Resolve dynamic class styling based on Level Matrix logic
+    const stationLevel = gameState.solStation?.level || 1;
+    let levelClass = 'sol-level-white';
+    if (stationLevel >= 50) levelClass = 'sol-level-red';
+    else if (stationLevel >= 40) levelClass = 'sol-level-orange';
+    else if (stationLevel >= 30) levelClass = 'sol-level-gold';
+    else if (stationLevel >= 20) levelClass = 'sol-level-blue';
+    else if (stationLevel >= 10) levelClass = 'sol-level-green';
+
     // Show button if at Sun AND Station is unlocked
     if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
         solStationButtonHtml = `
-            <div class="flex justify-center mb-6">
-                <button class="sol-interface-btn" data-action="open-sol-dashboard">
-                    <div class="btn-content">
-                        <div class="btn-text">
-                            <span class="btn-title">ORBITAL INTERFACE</span>
-                            <span class="btn-subtitle">Manage Station Systems</span>
-                        </div>
+            <div class="flex justify-center mb-6 px-4">
+                <button class="w-full max-w-[600px] flex items-center justify-between" 
+                        style="background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%); border: 1px solid #60a5fa; border-radius: 8px; padding: 1rem; cursor: pointer; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);" 
+                        data-action="open-sol-dashboard">
+                    <div class="flex flex-col text-left">
+                        <span class="font-orbitron font-bold text-lg text-white tracking-widest">ORBITAL INTERFACE</span>
+                        <span class="text-xs text-blue-300">Manage Station Systems</span>
+                    </div>
+                    <div class="font-orbitron font-bold text-3xl pr-2 ${levelClass}">
+                        Lv. ${stationLevel}
                     </div>
                 </button>
             </div>

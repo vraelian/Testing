@@ -1219,7 +1219,7 @@
     font-family: monospace;
 }
 
-/* [[UPDATED]] Project Complete Dematerialization */
+/* [[UPDATED]] Clean Project Complete Dematerialization */
 .project-complete-dematerialize {
     animation: simpleFadeOut 2.5s linear forwards;
     pointer-events: none; /* Prevent clicks during exit */
@@ -1230,7 +1230,7 @@
     100% { opacity: 0; }
 }
 
-/* For the 1-second dashboard fade-in */
+/* [[NEW]] Dashboard Fade In Hook */
 .dashboard-fade-in {
     animation: fadeIn 1s ease-in forwards;
 }
