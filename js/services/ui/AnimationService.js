@@ -110,7 +110,8 @@ export function spawnFloatingText(targetElement, text, colorClass = 'text-white 
     floatEl.style.left = `${rect.left + (rect.width / 2)}px`;
     floatEl.style.top = `${rect.top}px`;
     floatEl.style.transform = 'translate(-50%, -50%)';
-    floatEl.style.transition = 'all 1s ease-out';
+    // [[UPDATED]] Duration increased from 1s to 1.5s per user request
+    floatEl.style.transition = 'all 1.5s ease-out';
     floatEl.style.opacity = '1';
     
     document.body.appendChild(floatEl);
@@ -119,14 +120,14 @@ export function spawnFloatingText(targetElement, text, colorClass = 'text-white 
     void floatEl.offsetWidth;
     
     // Animate up and fade out
-    floatEl.style.top = `${rect.top - 40}px`;
+    floatEl.style.top = `${rect.top - 60}px`; // Increased float distance slightly
     floatEl.style.opacity = '0';
     
-    // Cleanup after animation completes
+    // Cleanup after animation completes (1500ms)
     setTimeout(() => {
         if (floatEl.parentNode) {
             floatEl.parentNode.removeChild(floatEl);
         }
-    }, 1000);
+    }, 1500);
 }
 // --- [[END]] VIRTUAL WORKBENCH ---

@@ -573,27 +573,29 @@ export class SolStationService {
         }
 
         this.logger.info.player(this.gameState.day, 'STATION_PROJECT', `Contributed ${qtyToTake} ${resourceId} to Project.`);
-        this.checkProjectCompletion();
+        
+        // [[MODIFIED]] Decoupled auto-leveling. Now just returns state.
+        // checkProjectCompletion() removed from here.
+        
         this.gameState.setState({});
         return { success: true, message: `Contributed ${qtyToTake} to project.` };
     }
     
-    checkProjectCompletion() {
+    // [[MODIFIED]] Explicit completion method for UI trigger
+    completeActiveProject() {
         const station = this.gameState.solStation;
         const nextLevelData = LEVEL_REGISTRY[station.level + 1];
-        if (!nextLevelData) return;
+        if (!nextLevelData) return { success: false };
         
-        let isComplete = true;
+        // Validation check
         for (const [resId, reqQty] of Object.entries(nextLevelData.requirements)) {
             if ((station.activeProjectBank[resId] || 0) < reqQty) {
-                isComplete = false;
-                break;
+                return { success: false, message: "Project requirements not met." };
             }
         }
         
-        if (isComplete) {
-            this.applyLevelUp();
-        }
+        this.applyLevelUp();
+        return { success: true };
     }
     
     applyLevelUp() {

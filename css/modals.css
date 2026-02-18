@@ -1218,3 +1218,19 @@
     border-radius: 4px;
     font-family: monospace;
 }
+
+/* [[UPDATED]] Project Complete Dematerialization */
+.project-complete-dematerialize {
+    animation: simpleFadeOut 2.5s linear forwards;
+    pointer-events: none; /* Prevent clicks during exit */
+}
+
+@keyframes simpleFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* For the 1-second dashboard fade-in */
+.dashboard-fade-in {
+    animation: fadeIn 1s ease-in forwards;
+}
