@@ -101,10 +101,8 @@ export class UISolStationControl {
                 buttonClass: 'btn-dismiss-sm',
                 customSetup: (modal, closeHandler) => {
                     // --- APPLY INITIAL THEME ---
-                    const content = modal.querySelector('.modal-content');
-                    if (content) {
-                        this._updateThemeClasses(content, station.level);
-                    }
+                    // FIX: Apply theme to the Modal Container itself to match CSS selectors
+                    this._updateThemeClasses(modal, station.level);
                 }
             });
             setTimeout(() => this._bindLocalListeners(gameState), 50);
@@ -137,10 +135,8 @@ export class UISolStationControl {
     _applyLevelTheme(level) {
         const modal = document.getElementById('event-modal');
         if (modal) {
-            const content = modal.querySelector('.modal-content');
-            if (content) {
-                this._updateThemeClasses(content, level);
-            }
+            // FIX: Apply to the top-level container to match CSS selectors
+            this._updateThemeClasses(modal, level);
         }
     }
 
@@ -165,6 +161,8 @@ export class UISolStationControl {
                 this.showOfficerManagement(gameState);
             } else if (action === 'open-engineering') {
                 this.showEngineeringModal(gameState);
+            } else if (action === 'return-dashboard') {
+                this.showDashboard(gameState);
             } else if (action === 'info-officer') {
                 const officerId = btn.dataset.officerId;
                 if (officerId) this.showOfficerDetailModal(officerId, gameState);
@@ -489,7 +487,7 @@ export class UISolStationControl {
             <div class="sol-subview-header flex justify-between items-center mb-3">
                 <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container flex gap-2 w-full" style="height: 50vh; min-height: 350px;">
+            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 50vh; min-height: 350px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
                     <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
@@ -499,13 +497,17 @@ export class UISolStationControl {
                     <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${slotsHtml}</div>
                 </div>
             </div>
+            
+            <div class="flex justify-center mt-2 border-t border-gray-700 pt-3">
+                <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
+                    &larr; RETURN TO DASHBOARD
+                </button>
+            </div>
         `;
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
-            footerBtn.style.display = ''; // Ensure visible
-            footerBtn.onclick = () => this.showDashboard(gameState);
+            footerBtn.style.display = 'none'; // Hide generic modal footer
         }
 
         const svc = this.uiManager.simulationService.solStationService;
@@ -747,7 +749,12 @@ export class UISolStationControl {
             }
         });
 
-        const rewardsList = nextLevelData.rewards.description.split(', ').map(r => `<li class="ml-4 mb-1 text-blue-200 tracking-wide">${r.trim()}</li>`).join('');
+        // FIXED: Replaced <ul> bullet list with clean DIV rows and better font
+        const rewardsList = nextLevelData.rewards.description.split(', ').map(r => 
+            `<div class="mb-2 text-gray-300 font-sans tracking-wide border-l-2 border-blue-500 pl-2 py-1 bg-black/30 rounded-r text-sm">
+                ${r.trim()}
+             </div>`
+        ).join('');
 
         const completeBtn = allRequirementsMet 
             ? `<button class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 rounded text-xl shadow-lg animate-pulse mb-4 tracking-widest" data-local-action="eng-complete-project">COMPLETE PROJECT</button>`
@@ -761,10 +768,10 @@ export class UISolStationControl {
                 <div class="text-lg font-bold text-yellow-400 mb-1 tracking-wide">${nextLevelData.projectName}</div>
                 <div class="text-xs text-gray-400 italic mb-3 leading-relaxed border-b border-gray-700 pb-3">"${nextLevelData.lore}"</div>
                 
-                <div class="text-sm font-bold text-blue-300 mb-1"><span class="text-white text-xs bg-blue-900 px-1 rounded mr-2">REWARDS</span></div>
-                <ul class="list-disc text-xs text-gray-300 mb-1 pl-2">
+                <div class="text-sm font-bold text-blue-300 mb-2"><span class="text-white text-xs bg-blue-900 px-1 rounded mr-2">REWARDS</span></div>
+                <div class="flex flex-col gap-1 mb-1">
                     ${rewardsList}
-                </ul>
+                </div>
             </div>
             
             ${completeBtn}
@@ -772,15 +779,19 @@ export class UISolStationControl {
             <div class="eng-requirements-list">
                 ${reqsHtml}
             </div>
+            
+            <div class="flex justify-center mt-6 border-t border-gray-700 pt-4">
+                <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
+                    &larr; RETURN TO DASHBOARD
+                </button>
+            </div>
         `;
 
         this._bindLocalListeners(gameState);
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
-            footerBtn.style.display = '';
-            footerBtn.onclick = () => this.showDashboard(gameState);
+            footerBtn.style.display = 'none'; // Hide generic modal footer
         }
 
         this._restoreScrollPosition();

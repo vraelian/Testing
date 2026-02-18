@@ -15,23 +15,20 @@
 .themed-header-bar {
     position: relative;
     display: flex;
-    flex-direction: column; /* MODIFIED: Stack title and subtitle */
+    flex-direction: column; 
     justify-content: center;
-    align-items: center; /* MODIFIED: Center align content */
+    align-items: center; 
     
-    background-color: #0D1117; /* bg-[#0D1117] */
+    background-color: #0D1117; 
     border: 1px solid var(--theme-border-color, #334155);
-    border-radius: 0.375rem; /* rounded-md */
-    padding: 0.125rem; /* p-0.5 */
+    border-radius: 0.375rem; 
+    padding: 0.125rem; 
     
     width: 100%;
-    flex-shrink: 0; /* Prevent shrinking */
-    
-    /* VIRTUAL WORKBENCH: MODIFIED margin-bottom */
-    margin-bottom: 0.25rem; /* reduced from 0.75rem */
+    flex-shrink: 0; 
+    margin-bottom: 0.25rem; 
 }
 
-/* Selector to remove margin only from the ship-header's bar */
 .ship-services-panel .themed-header-bar {
     margin-bottom: 0;
 }
@@ -39,88 +36,72 @@
 .themed-header-title {
     position: relative; 
     z-index: 10;
-    flex: 1 1 0; /* flex-1 */
-    width: 100%; /* Ensure it spans the bar */
+    flex: 1 1 0; 
+    width: 100%; 
 
     font-family: 'Orbitron', sans-serif;
-    /* VIRTUAL WORKBENCH: Increased font size (Request A) */
-    font-size: 1.3rem; /* 20.8px */
+    font-size: 1.3rem; 
     font-weight: 700;
     
     color: var(--theme-text-color, #f0f0f0);
     background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
     box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
 
-    padding: 0.375rem 1rem; /* py-1.5 */
+    padding: 0.375rem 1rem; 
     
     text-transform: uppercase;
-    letter-spacing: 0.05em; /* tracking-wider */
+    letter-spacing: 0.05em; 
     text-align: center;
 
-    border-radius: 0.375rem; /* rounded-md */
-    
-    /* ADDED: Clip-path for inner bevel, matching intel screen */
+    border-radius: 0.375rem; 
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
-/* NEW: Ship Header Title (Request B & C) */
 .ship-header-title {
     position: relative; 
     z-index: 10;
     flex: 1 1 0;
     width: 100%;
-    font-family: 'Space Mono', monospace; /* MODIFIED: New Font */
-    font-size: 1.2rem; /* 19.2px */
+    font-family: 'Space Mono', monospace; 
+    font-size: 1.2rem; 
     font-weight: 700;
-    color: var(--theme-text-color, #f0f0f0); /* MODIFIED: Set color */
-    text-transform: uppercase; /* ADDED: All caps */
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* ADDED: Outline */
+    color: var(--theme-text-color, #f0f0f0); 
+    text-transform: uppercase; 
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
     background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
     box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
-    padding: 0.25rem 1rem; /* Smaller padding */
+    padding: 0.25rem 1rem; 
     letter-spacing: 0.05em;
     text-align: center;
     border-radius: 0.375rem;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
-
-/* REMOVED: .themed-header-subtitle (Request C) */
-
-/* NEW: Ship Services Panel (Request A & C) */
 .ship-services-panel {
-    background: rgba(13, 17, 23, 0.4); /* MODIFIED: Lighter background */
+    background: rgba(13, 17, 23, 0.4); 
     border: 1px solid var(--theme-border-color, #4a6a8a);
-    border-radius: 0.375rem; /* rounded-md */
-    /* Padding is handled by children */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+    border-radius: 0.375rem; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
 }
-/* --- END VIRTUAL WORKBENCH --- */
-
 
 .services-scroll-panel {
     overflow-y: auto;
-    scrollbar-width: none; /* For Firefox */
-    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
     padding: 0.25rem;
-    touch-action: pan-y; /* Allow vertical scrolling */
-    
-    /* VIRTUAL WORKBENCH: Added flex properties */
+    touch-action: pan-y; 
     flex-grow: 1;
     min-height: 0;
-    /* --- END VIRTUAL WORKBENCH --- */
 }
 .services-scroll-panel::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
+    display: none; 
 }
 
 /* Add New Styles for Overhauled Services Screen */
 
-/* Fonts (ensure these are loaded in index.html) */
 .font-orbitron { font-family: 'Orbitron', sans-serif; }
 .font-electrolize { font-family: 'Electrolize', sans-serif; }
 
-/* Text Outline Effect */
 .text-outline {
   text-shadow:
     -1px -1px 1px #000,
@@ -131,15 +112,12 @@
     0 0 8px var(--glow-color, rgba(0,0,0,0.8));
 }
 
-/* Engraved Text Effect */
 .engraved-text {
   text-shadow: 0 1px 1px rgba(0,0,0,0.6), 0 -1px 1px rgba(255,255,255,0.1);
 }
 
-/* Base Service Module Styling */
 .service-module {
   border: 1px solid rgba(var(--resource-color-rgb), 0.3);
-  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
   padding: 1rem;
   border-radius: 0.75rem;
@@ -149,43 +127,39 @@
     linear-gradient(#3a3a3a, #2a2a2a);
   background-size: 8px 8px, 100% 100%;
   box-shadow:
-    0 0 15px -3px rgba(var(--resource-color-rgb), 0.3), /* Subdued resource glow */
+    0 0 15px -3px rgba(var(--resource-color-rgb), 0.3), 
     inset 0 0 0 2px rgba(255,255,255,0.05),
     inset 0 0 15px rgba(0,0,0,1),
     0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* Active Service Module Glow */
 .service-module.active-service {
   border-color: rgba(var(--resource-color-rgb), 0.8);
   box-shadow:
-    0 0 25px -2px rgba(var(--resource-color-rgb), 0.7), /* Brighter active glow */
+    0 0 25px -2px rgba(var(--resource-color-rgb), 0.7), 
     inset 0 0 0 2px rgba(255,255,255,0.05),
     inset 0 0 15px rgba(0,0,0,1),
     0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* Progress Bar Housing */
 .bar-housing {
   background-color: rgba(0,0,0,0.4);
   padding: 0.5rem;
   border-radius: 0.5rem;
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
-  margin-bottom: 1rem; /* Added margin */
+  margin-bottom: 1rem; 
 }
 
 .progress-bar-container {
-   border-radius: 0.5rem; /* rounded-lg */
-   border-width: 1px; /* border */
+   border-radius: 0.5rem; 
+   border-width: 1px; 
    overflow: hidden;
    position: relative;
    background: rgba(10, 20, 30, 0.5);
    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-   /* MODIFIED: Added 400ms transition for smooth fade-out */
    transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
 }
 
-/* Active Border Pulse Animation */
 @keyframes pulse-border {
   0%, 100% {
     border-color: rgba(var(--resource-color-rgb), 0.3);
@@ -198,21 +172,17 @@
 }
 
 .progress-bar-container.active-pulse {
-   /* MODIFIED: Ensure animation is infinite */
    animation: pulse-border 3s ease-in-out infinite;
 }
 
-/* Progress Bar Fill Styling */
 .progress-bar-fill {
-  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: width 0.25s ease-out, filter 0.4s ease-out, box-shadow 0.4s ease-out, opacity 0.4s ease-out;
-  box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.5); /* Base glow using CSS var */
+  box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.5); 
   position: relative;
   overflow: hidden;
-  border-radius: 0.375rem; /* rounded-md */
+  border-radius: 0.375rem; 
 }
 
-/* MODIFIED: Added new animation for the fill bar itself */
 @keyframes pulse-glow {
   0%, 100% {
     filter: brightness(1.1);
@@ -225,22 +195,19 @@
 }
 
 .progress-bar-fill.filling {
-  /* MODIFIED: Ensure animation is infinite */
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
-/* Control Deck (Buttons and Price) */
 .control-deck {
   padding-top: 1rem;
 }
 
-/* Price Display Module */
 .price-display-module {
   background: linear-gradient(#2a2a2a, #1a1a1a);
-  border-radius: 0.75rem; /* rounded-xl */
+  border-radius: 0.75rem; 
   border: 2px solid #000;
   box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.1);
-  color: #a0a0a0; /* Default text color */
+  color: #a0a0a0; 
 }
 .price-display-module .price-label {
   letter-spacing: 0.05em;
@@ -250,30 +217,26 @@
   text-shadow: 0 0 4px var(--tw-shadow-color), 0 0 8px var(--tw-shadow-color);
 }
 
-/* Industrial Button Styling */
 .industrial-button {
-  border-radius: 0.75rem; /* rounded-xl */
+  border-radius: 0.75rem; 
   background: linear-gradient(180deg, #6b7280 0%, #374151 100%);
   border: 1px solid #1f2937;
   border-top-color: #9ca3af;
-  border-left-color: #6b7280; /* Corrected typo */
+  border-left-color: #6b7280; 
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 3px rgba(0,0,0,0.6);
   color: #e5e7eb;
   text-shadow: 0 -1px 1px rgba(0,0,0,0.6);
-  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: background 0.4s ease-out, box-shadow 0.4s ease-out, transform 0.1s ease-in-out;
 }
 
-/* MODIFIED: Changed selector to rely only on .holding class for persistent depressed state */
 .industrial-button.holding {
   background: linear-gradient(180deg, #374151 0%, #4b5563 100%);
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
-  transform: translateY(1px); /* Keep the pressed down visual */
+  transform: translateY(1px); 
 }
 
-/* MODIFIED: Added separate :active state for instant visual feedback on tap */
 .industrial-button:active {
-  transform: translateY(1px); /* Apply press down immediately */
+  transform: translateY(1px); 
 }
 
 .industrial-button:disabled {
@@ -284,13 +247,6 @@
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
 }
 
-/* Add styles for stepper active state if needed, though they might already exist */
-.qty-stepper.stepper-active {
-    /* Your existing stepper active styles */
-    /* Example: border-color: var(--active-primary); */
-}
-
-/* Button Text Colors */
 #refuel-btn .engraved-text {
   color: var(--ot-cyan-base, #08d9d6);
 }
@@ -299,7 +255,6 @@
   color: var(--ot-green-accent, #16a34a);
 }
 
-/* --- VIRTUAL WORKBENCH: SUB-NAVIGATION STYLES (TUNING SHOP) --- */
 .sub-nav-button {
     padding: 0.5rem 1.5rem;
     font-family: 'Orbitron', sans-serif;
@@ -307,9 +262,9 @@
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background: #1f2937; /* Default dark bg */
-    border: 1px solid #4b5563; /* Default gray border */
-    color: #9ca3af; /* Default text color */
+    background: #1f2937; 
+    border: 1px solid #4b5563; 
+    color: #9ca3af; 
     border-radius: 0.25rem;
     transition: all 0.2s ease-in-out;
     opacity: 0.7;
@@ -324,13 +279,10 @@
 .sub-nav-button.active {
     font-weight: 700;
     opacity: 1;
-    /* Note: Dynamic background/border colors are applied inline by the JS based on location theme */
     text-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 
-/* --- TUNING SHOP: LARGE PILL STYLES --- */
 .upgrade-shop-item {
-    /* Inherits .service-module basic styling */
     min-height: 100px;
     padding: 0.75rem;
     background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.3));
@@ -344,13 +296,9 @@
 
 .upgrade-shop-item button:hover:not(:disabled) {
     background-color: var(--item-color);
-    color: #000 !important; /* Force black text on hover */
+    color: #000 !important; 
     box-shadow: 0 0 10px var(--item-glow);
 }
-
-/* ========================================= */
-/* --- SOL STATION: MAINTENANCE CACHE OVERHAUL --- */
-/* ========================================= */
 
 .sol-cache-list {
     display: flex;
@@ -363,7 +311,7 @@
     position: relative;
     display: flex;
     align-items: center;
-    height: 64px; /* Fixed height for consistency */
+    height: 64px; 
     border: 1px solid #334155;
     background: #0f172a;
     overflow: hidden;
@@ -376,19 +324,17 @@
     border-color: #64748b;
 }
 
-/* Background Art Layer */
 .sol-cache-row-bg {
     position: absolute;
     inset: 0;
     background-size: cover;
     background-position: center;
-    opacity: 0.25; /* Subtle visibility */
-    filter: grayscale(100%); /* Desaturated for professional look */
+    opacity: 0.25; 
+    filter: grayscale(100%); 
     z-index: 0;
     pointer-events: none;
 }
 
-/* Content Container (On top of bg) */
 .sol-cache-content {
     position: relative;
     z-index: 1;
@@ -399,7 +345,6 @@
     gap: 1rem;
 }
 
-/* Item Name */
 .sol-row-name {
     width: 30%;
     font-family: 'Orbitron', sans-serif;
@@ -413,9 +358,8 @@
     text-align: left;
 }
 
-/* Progress Track Container */
 .sol-row-track-container {
-    flex-grow: 1; /* Takes up remaining middle space */
+    flex-grow: 1; 
     position: relative;
     height: 24px;
 }
@@ -430,28 +374,25 @@
     overflow: hidden;
 }
 
-/* FIX: Ensure fill height is 100% of parent */
 .sol-progress-fill {
     height: 100%; 
-    background-color: #fff; /* Overridden by inline style var() */
+    background-color: #fff; 
     width: 0%;
-    transition: width 0.4s ease-out; /* Added Transition */
+    transition: width 0.4s ease-out; 
     box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
 }
 
-/* The Low Threshold Marker (Red Line at 20%) */
 .sol-threshold-marker {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 2px;
-    background-color: #ef4444; /* Red-500 */
+    background-color: #ef4444; 
     box-shadow: 0 0 4px #ef4444;
     z-index: 5;
     opacity: 0.9;
 }
 
-/* Overlay Text on Bar */
 .sol-progress-text {
     position: absolute;
     inset: 0;
@@ -466,14 +407,12 @@
     z-index: 6;
 }
 
-/* Action Button Area */
 .sol-row-action {
     width: 15%;
     display: flex;
     justify-content: flex-end;
 }
 
-/* Deposit Button */
 .btn-deposit-all {
     background: linear-gradient(to bottom, #3b82f6, #2563eb);
     border: 1px solid #60a5fa;
@@ -507,9 +446,6 @@
     opacity: 0.5;
 }
 
-/* === SOL STATION NEW STYLES === */
-
-/* Golden Entry Button (Services Screen) */
 .sol-interface-btn {
     display: flex;
     align-items: center;
@@ -518,8 +454,8 @@
     max-width: 400px;
     padding: 0.75rem;
     
-    background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); /* Amber to Yellow */
-    border: 2px solid #fcd34d; /* Bright Yellow border */
+    background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); 
+    border: 2px solid #fcd34d; 
     border-radius: 6px;
     box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
     
@@ -568,14 +504,12 @@
     background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
     border: 1px solid #fbbf24;
     box-shadow: 0 0 30px rgba(251, 191, 36, 0.15);
-    /* Added transition for smooth theme switching */
     transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
-/* Integrity Bar Fix */
 .sol-health-track {
     width: 100%;
-    height: 12px; /* Needs explicit height */
+    height: 12px; 
     background: #1f2937;
     border: 1px solid #374151;
     border-radius: 2px;
@@ -584,10 +518,9 @@
 }
 .sol-health-fill {
     height: 100%;
-    transition: width 0.5s ease-in-out; /* Added Transition */
+    transition: width 0.5s ease-in-out; 
 }
 
-/* Output Container Encapsulation */
 .sol-output-container {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid #4b5563;
@@ -596,7 +529,6 @@
     margin-bottom: 0.75rem;
 }
 
-/* NEW: Flex Container for the buttons */
 .mode-toggle-group {
     display: flex;
     flex-direction: row;
@@ -605,7 +537,6 @@
     margin-bottom: 0.5rem;
 }
 
-/* Base Mode Button Styles */
 .mode-btn {
     flex: 1;
     min-width: 0;
@@ -626,25 +557,19 @@
     white-space: nowrap;
 }
 
-/* --- INACTIVE STATES --- */
-/* Defined Colors for Inactive state (dim but colored text) */
 .mode-btn.stability { color: #6b7280; border-color: #374151; }
-.mode-btn.commerce  { color: #0e7490; border-color: #164e63; } /* Muted Cyan */
-.mode-btn.production{ color: #7e22ce; border-color: #581c87; } /* Muted Purple */
-
-/* --- ACTIVE STATE OVERRIDES --- */
-/* We use !important on opacity/color to force override the browser's default :disabled styling */
+.mode-btn.commerce  { color: #0e7490; border-color: #164e63; } 
+.mode-btn.production{ color: #7e22ce; border-color: #581c87; } 
 
 .mode-btn.active,
 .mode-btn.active:disabled {
     background: #111827 !important;
-    border-color: #fbbf24 !important; /* GLOBAL: Golden Yellow Border for ALL active modes */
-    opacity: 1 !important; /* Fixes the "dim" issue */
-    filter: none !important; /* Fixes any grayscale filters */
+    border-color: #fbbf24 !important; 
+    opacity: 1 !important; 
+    filter: none !important; 
     cursor: default;
 }
 
-/* 1. STABILITY: White Glow */
 .mode-btn.stability.active,
 .mode-btn.stability.active:disabled {
     color: #ffffff !important;
@@ -652,7 +577,6 @@
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
-/* 2. COMMERCE: Cyan Glow */
 .mode-btn.commerce.active,
 .mode-btn.commerce.active:disabled {
     color: #22d3ee !important;
@@ -660,7 +584,6 @@
     box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
 }
 
-/* 3. PRODUCTION: Purple Glow */
 .mode-btn.production.active,
 .mode-btn.production.active:disabled {
     color: #d8b4fe !important;
@@ -668,17 +591,14 @@
     box-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
 }
 
-/* === OPTION 1: THE "SOLAR TREASURY" INCOME BAR === */
 .sol-credits-block {
-    /* Base Background with Radial Gradient (Option 1) */
     background: radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
-    /* Honeycomb Pattern (Option 1) */
     background-image: 
         radial-gradient(rgba(251, 191, 36, 0.15) 1px, transparent 1px),
         radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
     background-size: 16px 16px, 100% 100%;
     
-    border: 1px solid #78350f; /* Dark Amber Border */
+    border: 1px solid #78350f; 
     border-radius: 4px;
     padding: 0.5rem;
     display: flex;
@@ -687,7 +607,7 @@
     min-height: 70px;
     
     box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-    margin-bottom: 0.5rem; /* Ensure spacing if stacked */
+    margin-bottom: 0.5rem; 
 }
 
 .sol-credits-block .credits-info {
@@ -696,19 +616,17 @@
     justify-content: center;
 }
 
-/* Label: Metallic Gold + Wide Tracking (Option 1) */
 .sol-credits-block .credits-info .label {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.10rem;
     font-weight: 700;
-    color: #fbbf24; /* Metallic Gold */
-    letter-spacing: 0.2em; /* Wide tracking */
+    color: #fbbf24; 
+    letter-spacing: 0.2em; 
     text-transform: uppercase;
     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     margin-bottom: 2px;
 }
 
-/* Value: Cyan (Retained per instruction F) */
 .sol-credits-block .credits-info .value {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.5rem;
@@ -716,10 +634,9 @@
     text-shadow: 0 0 8px rgba(8, 217, 214, 0.6);
 }
 
-/* --- SOL STATION LEVEL UP ANIMATION --- */
 .sol-interface-levelup {
     animation: sol-levelup-pulse 2.5s ease-in-out forwards;
-    z-index: 100; /* Ensure it pops */
+    z-index: 100; 
     position: relative;
 }
 
@@ -730,11 +647,9 @@
         transform: scale(1);
     }
     20% {
-         /* Wind up */
         transform: scale(0.98);
     }
     50% {
-        /* PEAK */
         box-shadow: 0 0 50px rgba(251, 191, 36, 1), 0 0 100px rgba(255, 255, 255, 0.8);
         border-color: #ffffff;
         background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%);
@@ -742,7 +657,6 @@
         filter: brightness(1.3);
     }
     100% {
-        /* Return to normal */
         box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
         border-color: #fcd34d;
         transform: scale(1);
@@ -750,8 +664,6 @@
     }
 }
 
-/* --- FLASH FIX: SILENT EXIT --- */
-/* Forces the modal to be invisible instantly during the UI Manager's cleanup phase */
 .sol-station-modal.silent-exit.modal-hiding {
     animation: sol-invisible-exit 0.01s linear forwards !important;
     opacity: 0 !important;
@@ -763,41 +675,65 @@
 }
 
 /* ========================================================================= */
-/* --- SOL STATION PROGRESSION THEMES (PHASE 3) --- */
+/* --- SOL STATION PROGRESSION THEMES (PHASE 3 REVISED) --- */
 /* ========================================================================= */
 
+/* Lv 1-9: White/Light Blue */
 .sol-theme-white .modal-content {
-    background: radial-gradient(circle at center, #1a1a2e 0%, #000000 100%) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    box-shadow: 0 0 25px rgba(255, 255, 255, 0.1) !important;
+    background: radial-gradient(circle at center, #1e3a8a 0%, #000000 100%) !important;
+    border: 1px solid rgba(147, 197, 253, 0.6) !important;
+    box-shadow: 0 0 25px rgba(147, 197, 253, 0.3) !important;
+}
+.sol-theme-white .sol-level-header {
+    color: #bfdbfe; text-shadow: 0 0 10px rgba(191, 219, 254, 0.8);
 }
 
+/* Lv 10-19: Green/Black */
 .sol-theme-green .modal-content {
-    background: radial-gradient(circle at center, #0f2e18 0%, #000000 100%) !important;
-    border: 1px solid rgba(0, 255, 100, 0.3) !important;
-    box-shadow: 0 0 25px rgba(0, 255, 100, 0.15) !important;
+    background: radial-gradient(circle at center, #064e3b 0%, #020617 100%) !important;
+    border: 1px solid rgba(34, 197, 94, 0.6) !important;
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.3) !important;
+}
+.sol-theme-green .sol-level-header {
+    color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
 }
 
+/* Lv 20-29: Navy Blue/Black/Orange Accent */
 .sol-theme-blue .modal-content {
-    background: radial-gradient(circle at center, #0f1c2e 0%, #000000 100%) !important;
-    border: 1px solid rgba(0, 100, 255, 0.3) !important;
-    box-shadow: 0 0 25px rgba(0, 100, 255, 0.15) !important;
+    background: radial-gradient(circle at center, #172554 0%, #000000 100%) !important;
+    border: 1px solid rgba(249, 115, 22, 0.8) !important; /* Orange Border */
+    box-shadow: 0 0 25px rgba(249, 115, 22, 0.25) !important;
+}
+.sol-theme-blue .sol-level-header {
+    color: #fdba74; text-shadow: 0 0 10px rgba(251, 146, 60, 0.8);
 }
 
+/* Lv 30-39: Gold/Black/White Accent */
 .sol-theme-gold .modal-content {
-    background: radial-gradient(circle at center, #2e240f 0%, #000000 100%) !important;
-    border: 1px solid rgba(255, 215, 0, 0.3) !important;
-    box-shadow: 0 0 25px rgba(255, 215, 0, 0.15) !important;
+    background: radial-gradient(circle at center, #422006 0%, #000000 100%) !important;
+    border: 1px solid rgba(253, 224, 71, 0.8) !important;
+    box-shadow: 0 0 25px rgba(253, 224, 71, 0.3) !important;
+}
+.sol-theme-gold .sol-level-header {
+    color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
 }
 
+/* Lv 40-49: Orange/Black/Purple Accent */
 .sol-theme-orange .modal-content {
-    background: radial-gradient(circle at center, #2e150f 0%, #000000 100%) !important;
-    border: 1px solid rgba(255, 140, 0, 0.3) !important;
-    box-shadow: 0 0 25px rgba(255, 140, 0, 0.15) !important;
+    background: radial-gradient(circle at center, #431407 0%, #000000 100%) !important;
+    border: 1px solid rgba(192, 132, 252, 0.8) !important; /* Purple Border */
+    box-shadow: 0 0 25px rgba(168, 85, 247, 0.3) !important;
+}
+.sol-theme-orange .sol-level-header {
+    color: #e879f9; text-shadow: 0 0 10px rgba(216, 180, 254, 0.8);
 }
 
+/* Lv 50: Red/Black/Gold Accent */
 .sol-theme-red .modal-content {
-    background: radial-gradient(circle at center, #2e0f0f 0%, #000000 100%) !important;
-    border: 1px solid rgba(255, 50, 50, 0.4) !important;
-    box-shadow: 0 0 30px rgba(255, 50, 50, 0.2) !important;
+    background: radial-gradient(circle at center, #450a0a 0%, #000000 100%) !important;
+    border: 1px solid rgba(251, 191, 36, 1) !important; /* Gold Border */
+    box-shadow: 0 0 35px rgba(239, 68, 68, 0.4) !important;
+}
+.sol-theme-red .sol-level-header {
+    color: #fcd34d; text-shadow: 0 0 15px rgba(251, 191, 36, 1);
 }

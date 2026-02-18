@@ -216,6 +216,35 @@ export class SolStationService {
 
     _calculateExactState(currentState, dt) {
         const newState = JSON.parse(JSON.stringify(currentState));
+        
+        // --- 1. STRICT SLOT ENFORCEMENT ---
+        // Formula: 1 + floor(level / 5).
+        // Lv 1-4: 1 Slot. Lv 5-9: 2 Slots. Lv 10-14: 3 Slots.
+        const currentLevel = newState.level || 1;
+        const targetSlots = 1 + Math.floor(currentLevel / 5);
+        
+        // Cap max slots to prevent UI overflow (e.g. 11 max at lvl 50)
+        const maxAllowed = 12;
+        const slotsToHave = Math.min(targetSlots, maxAllowed);
+
+        // Ensure array is initialized
+        if (!newState.officers) newState.officers = [];
+        
+        // STRICT ALIGNMENT:
+        if (newState.officers.length < slotsToHave) {
+            // Grow: Add slots if level permits
+            while (newState.officers.length < slotsToHave) {
+                newState.officers.push({ 
+                    slotId: newState.officers.length + 1, 
+                    assignedOfficerId: null 
+                });
+            }
+        } else if (newState.officers.length > slotsToHave) {
+            // Shrink: Remove slots if level does NOT permit (fixes legacy saves)
+            // Warning: This destroys assignments in higher slots.
+            newState.officers = newState.officers.slice(0, slotsToHave);
+        }
+
         if (dt <= 0) return newState;
 
         const modeConfig = LEVEL_1_BASELINE.MODES[newState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
@@ -627,12 +656,15 @@ export class SolStationService {
             station.unlockedModes.push("PRODUCTION");
         }
         
-        // Mathematical slot unlocking (Every 5 levels starting at base 3 slots)
-        if (station.level % 5 === 0) {
-            const maxSlots = 3 + Math.floor(station.level / 5);
-            if (station.officers.length < maxSlots && maxSlots <= 10) {
+        // --- UPDATED SLOT LOGIC (Strict Alignment) ---
+        // Slots = 1 + floor(level/5)
+        const maxSlots = 1 + Math.floor(station.level / 5);
+        const slotsToHave = Math.min(maxSlots, 12);
+        
+        if (station.officers.length < slotsToHave) {
+             while (station.officers.length < slotsToHave) {
                 station.officers.push({ slotId: station.officers.length + 1, assignedOfficerId: null });
-            }
+             }
         }
         
         this.logger.info.system('SolStation', this.gameState.day, 'LEVEL_UP', `Sol Station upgraded to Level ${station.level}!`);
