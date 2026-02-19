@@ -30,6 +30,8 @@ This object buffers data during the async travel/event loop.
 * `travelTimeAddPercent`: Percentage modifier for trip duration.
 * `eventHullDamagePercent`: Accumulated hull damage from event outcomes.
 * `setTravelTime`: Hard override for travel duration (if > 0).
+* `convoyTaxDeduction`: Amount of resources/credits deducted due to fleet size during travel.
+* `blockadeActive`: Boolean flag indicating an active blockade event affecting the travel route or destination access.
 
 ---
 
@@ -65,9 +67,10 @@ Contains all progression, assets, and statistics for the user.
 |   `repair` | Number | Count of free hull repairs available. |
 | `activeShipId` | String | ID of the currently piloted ship. |
 | `ownedShipIds` | Array<String> | List of all ship IDs owned by the player. |
+| `fleet` | Object | Map of stored `shipId`s to their status, docked location, and specific cargo configurations. |
 | `officerRoster` | Array<String> | List of recruited officer IDs. |
 | `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[] }`. |
-| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. |
+| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
 | `unlockedLicenseIds` | Array<String> | List of trade licenses owned. |
 | `unlockedLocationIds` | Array<String> | List of locations visited/unlocked. |
 | `seenEvents` | Array<String> | List of unique Event IDs already triggered. |
@@ -106,6 +109,7 @@ Ephemeral data used to persist UI context across re-renders.
 | `hangarShipyardToggleState` | String | 'hangar' or 'shipyard'. |
 | `hangarActiveIndex` | Number | Index of the currently viewed ship in the carousel. |
 | `shipyardActiveIndex` | Number | Index of the currently viewed ship in the shipyard. |
+| `activeFleetIndex` | Number | Index tracking the currently selected ship within the player's stored fleet on the services screen. |
 | `activeIntelTab` | String | ID of the active Intel tab ('intel-codex-content' vs 'market'). |
 | `servicesTab` | String | ID of the active Services sub-tab ('supply' vs 'tuning'). |
 | `activeMissionTab` | String | ID of the active Mission tab ('terminal' vs 'log'). |
@@ -156,8 +160,10 @@ Manages the Endgame Engine mechanics.
 | `mode` | String | Current mode: 'STABILITY', 'COMMERCE', 'PRODUCTION'. |
 | `health` | Number | Aggregate health (0-100) based on cache fill %. |
 | `caches` | Object | Map of `tierX` -> `{ current, max }` for Tier 1-6. |
+| `engineering` | Object | State data for the engineering interface, including active systemic upgrades and layout configurations. |
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
+| `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed entropy and yields before JIT commits. |
 
 ---
 

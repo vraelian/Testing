@@ -602,3 +602,33 @@ Consequences:
 * **Pro:** Prevents "Speed" from acting as the ultimate armor stat.
 * **Pro:** Imbues "Time" with tangible, punitive weight, turning random event delays into real economic threats.
 * **Pro:** Creates a balanced risk/reward framework where flying faster directly correlates with higher maintenance costs.
+
+ADR-029: Deferred Simulation Logic & JIT Commits (Sol Station)
+Status: Accepted (2026-02-18)
+
+Context: Sol Station involves high-frequency calculations (Levels 1-50, rapid entropy ticking, view-model synchronization). Directly mutating the state and triggering UI re-renders on every simulation tick caused massive layout thrashing and performance degradation on mobile targets.
+
+Decision: Implemented a deferred state architecture using View-Model Interpolation and Just-In-Time (JIT) Commits.
+* The simulation now buffers entropy decay and resource yields internally without immediately forcing a global `GameState` flush.
+* Visual updates are interpolated by the view-model to maintain smooth UI.
+* State writes only occur JIT when strictly necessary (e.g., when the user leaves the screen or interacts).
+
+Consequences:
+* **Pro:** Drastically improves frame rate and performance by decoupling background math from the DOM render cycle.
+* **Pro:** Allows the station to process complex multi-variable equations smoothly.
+* **Con:** Adds complexity to state tracking, as UI must interpolate visual progress before the true state is officially committed.
+
+ADR-030: Fleet Management & The "Convoy Tax"
+Status: Accepted (2026-02-18)
+
+Context: The game originally restricted players to a single active ship. Transitioning to a fleet model required balancing the massive cargo and profit potential of multi-ship trading to prevent the economy from breaking and maintain the risk/reward structure.
+
+Decision: Implemented Fleet Trading and Storage with an associated "Convoy Tax".
+* Players can now retain multiple ships in a `fleet` and cycle through them on the Services screen.
+* Cargo values are aggregated using dynamic fleet cost averaging.
+* A "Convoy Tax" is assessed during travel, dynamically increasing resource burn based on the total number of ships traversing the route.
+
+Consequences:
+* **Pro:** Expands player progression, allowing for specialized ship collections and massive late-game arbitrage.
+* **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource/credit costs based on fleet size during travel, making massive fleets high-risk/high-reward.
+* **Pro:** Dynamic fleet cost averaging integrates smoothly into the existing inventory profit displays.

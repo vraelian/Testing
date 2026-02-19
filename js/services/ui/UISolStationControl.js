@@ -100,11 +100,8 @@ export class UISolStationControl {
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm',
                 customSetup: (modal, closeHandler) => {
-                    // --- APPLY INITIAL THEME ---
-                    const content = modal.querySelector('.modal-content');
-                    if (content) {
-                        this._updateThemeClasses(content, station.level);
-                    }
+                    // --- FIX: APPLY THEME DIRECTLY TO MODAL CONTAINER ---
+                    this._updateThemeClasses(modal, station.level);
                 }
             });
             setTimeout(() => this._bindLocalListeners(gameState), 50);
@@ -137,10 +134,8 @@ export class UISolStationControl {
     _applyLevelTheme(level) {
         const modal = document.getElementById('event-modal');
         if (modal) {
-            const content = modal.querySelector('.modal-content');
-            if (content) {
-                this._updateThemeClasses(content, level);
-            }
+            // FIX: Ensure this always targets the parent container
+            this._updateThemeClasses(modal, level);
         }
     }
 
@@ -165,6 +160,8 @@ export class UISolStationControl {
                 this.showOfficerManagement(gameState);
             } else if (action === 'open-engineering') {
                 this.showEngineeringModal(gameState);
+            } else if (action === 'return-dashboard') {
+                this.showDashboard(gameState);
             } else if (action === 'info-officer') {
                 const officerId = btn.dataset.officerId;
                 if (officerId) this.showOfficerDetailModal(officerId, gameState);
@@ -351,8 +348,6 @@ export class UISolStationControl {
             c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
         }
 
-        // --- FIXED: Ensure we check UNLOCKED status during update loop ---
-        // Previously, this loop would re-enable locked buttons if they weren't active
         if (lr.mode !== station.mode || !lr.hasCheckedLocks) {
             const unlocked = station.unlockedModes || ["STABILITY"];
             c.modeBtns.forEach(btn => {
@@ -361,17 +356,14 @@ export class UISolStationControl {
                 const isLocked = !unlocked.includes(mode);
                 
                 btn.className = `mode-btn ${mode.toLowerCase()} ${isActive ? 'active' : ''}`;
-                
-                // Button is disabled if it's the active mode OR if it's locked
                 btn.disabled = isActive || isLocked;
                 
-                // Strict visual enforcement for locked state
                 btn.style.opacity = isLocked ? '0.3' : '1';
                 btn.style.cursor = isLocked ? 'not-allowed' : (isActive ? 'default' : 'pointer');
             });
             if (c.modeDesc) c.modeDesc.innerHTML = this._getModeDescription(station.mode);
             lr.mode = station.mode;
-            lr.hasCheckedLocks = true; // Optimization flag
+            lr.hasCheckedLocks = true;
         }
 
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
@@ -454,7 +446,6 @@ export class UISolStationControl {
             this.animationFrameId = null;
         }
         
-        // Clean up scroll listener to avoid leaks/stale references
         const sc = document.getElementById('event-description');
         if (sc && this._scrollHandler) {
             sc.removeEventListener('scroll', this._scrollHandler);
@@ -462,8 +453,6 @@ export class UISolStationControl {
         
         this.domCache = null; 
     }
-
-    // --- PHASE 3: OFFICER MANAGEMENT & DETAILS ---
 
     showOfficerManagement(gameState) {
         this.currentView = 'officers';
@@ -520,7 +509,7 @@ export class UISolStationControl {
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.style.display = 'none'; // Hide generic modal footer
+            footerBtn.style.display = 'none'; 
         }
 
         const svc = this.uiManager.simulationService.solStationService;
@@ -537,7 +526,7 @@ export class UISolStationControl {
             const slotId = row.dataset.slotId;
 
             if (e.target.closest('[data-local-action="info-officer"]')) {
-                return; // Handled by delegator
+                return; 
             }
 
             if (e.target.closest('.btn-inline-assign') || (isDoubleTap && !isAssigned)) {
@@ -547,15 +536,11 @@ export class UISolStationControl {
                     this.showOfficerManagement(svc.gameState);
                 }
             } else if (e.target.closest('.btn-inline-remove') || (isDoubleTap && isAssigned)) {
-                // --- PHASE 3: SEVERE WARNING INTERCEPT ---
-                // Validate un-slotting before executing
                 const validation = svc.validateUnslotOfficer(slotId);
                 
                 if (!validation.safe) {
-                    // Show warning if unsafe
                     this.showUnslotWarningModal(slotId, officerId, validation, svc.gameState);
                 } else {
-                    // Proceed if safe
                     svc.assignOfficer(slotId, null);
                     this.showOfficerManagement(svc.gameState);
                 }
@@ -586,7 +571,6 @@ export class UISolStationControl {
             `<button type="button" class="btn-inline-assign bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-2 rounded">ASSIGN</button>`;
         const rarityColor = this._getRarityColorClass(officer.rarity);
         
-        // Strip prefix title to ensure short name fits in UI
         const nameParts = officer.name.split(' ');
         const shortName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : officer.name;
 
@@ -676,7 +660,7 @@ export class UISolStationControl {
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.style.display = 'none'; // Hide main dismiss button
+            footerBtn.style.display = 'none'; 
         }
 
         this._bindLocalListeners(gameState);
@@ -694,8 +678,6 @@ export class UISolStationControl {
             default: return 'text-white';
         }
     }
-
-    // --- PHASE 3: ENGINEERING INTERFACE & WARNINGS ---
 
     showEngineeringModal(gameState) {
         this.currentView = 'engineering';
@@ -762,7 +744,6 @@ export class UISolStationControl {
             }
         });
 
-        // FIXED: Replaced <ul> bullet list with clean DIV rows and better font
         const rewardsList = nextLevelData.rewards.description.split(', ').map(r => 
             `<div class="mb-2 text-gray-300 font-sans tracking-wide border-l-2 border-blue-500 pl-2 py-1 bg-black/30 rounded-r text-sm">
                 ${r.trim()}
@@ -804,7 +785,7 @@ export class UISolStationControl {
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.style.display = 'none'; // Hide generic modal footer
+            footerBtn.style.display = 'none'; 
         }
 
         this._restoreScrollPosition();
@@ -846,7 +827,6 @@ export class UISolStationControl {
 
         document.getElementById('btn-confirm-unslot').onclick = () => {
             const svc = this.uiManager.simulationService.solStationService;
-            // Force removal
             svc.assignOfficer(slotId, null, true); 
             this.showOfficerManagement(svc.gameState);
         };
@@ -855,8 +835,6 @@ export class UISolStationControl {
             this.showOfficerManagement(gameState);
         };
     }
-
-    // --- HTML GENERATORS ---
 
     _buildDashboardHtml(gameState) {
         const station = this._getLiveStationState(gameState);
@@ -907,7 +885,7 @@ export class UISolStationControl {
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
                 
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-center mb-2">
+                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-center mb-2 font-orbitron font-bold text-xl uppercase tracking-widest transition-colors duration-500">
                     SOL STATION LV. ${station.level}
                 </div>
 

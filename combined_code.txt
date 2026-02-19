@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 35.64</title>
+    <title>Orbital Trading 40.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 35.64</p>
+            <p>Version 40.00</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3854,27 +3854,24 @@ card.
 .text-yellow-400 { color: #facc15; }
 .text-red-500 { color: #ef4444; }
 
-/* --- VIRTUAL WORKBENCH: ADD INTEL-THEMED HEADER STYLES --- */
+/* --- THEMED HEADER --- */
 .themed-header-bar {
     position: relative;
     display: flex;
-    flex-direction: column; /* MODIFIED: Stack title and subtitle */
+    flex-direction: column; 
     justify-content: center;
-    align-items: center; /* MODIFIED: Center align content */
+    align-items: center; 
     
-    background-color: #0D1117; /* bg-[#0D1117] */
+    background-color: #0D1117; 
     border: 1px solid var(--theme-border-color, #334155);
-    border-radius: 0.375rem; /* rounded-md */
-    padding: 0.125rem; /* p-0.5 */
+    border-radius: 0.375rem; 
+    padding: 0.125rem; 
     
     width: 100%;
-    flex-shrink: 0; /* Prevent shrinking */
-    
-    /* VIRTUAL WORKBENCH: MODIFIED margin-bottom */
-    margin-bottom: 0.25rem; /* reduced from 0.75rem */
+    flex-shrink: 0; 
+    margin-bottom: 0.25rem; 
 }
 
-/* Selector to remove margin only from the ship-header's bar */
 .ship-services-panel .themed-header-bar {
     margin-bottom: 0;
 }
@@ -3882,88 +3879,72 @@ card.
 .themed-header-title {
     position: relative; 
     z-index: 10;
-    flex: 1 1 0; /* flex-1 */
-    width: 100%; /* Ensure it spans the bar */
+    flex: 1 1 0; 
+    width: 100%; 
 
     font-family: 'Orbitron', sans-serif;
-    /* VIRTUAL WORKBENCH: Increased font size (Request A) */
-    font-size: 1.3rem; /* 20.8px */
+    font-size: 1.3rem; 
     font-weight: 700;
     
     color: var(--theme-text-color, #f0f0f0);
     background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
     box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
 
-    padding: 0.375rem 1rem; /* py-1.5 */
+    padding: 0.375rem 1rem; 
     
     text-transform: uppercase;
-    letter-spacing: 0.05em; /* tracking-wider */
+    letter-spacing: 0.05em; 
     text-align: center;
 
-    border-radius: 0.375rem; /* rounded-md */
-    
-    /* ADDED: Clip-path for inner bevel, matching intel screen */
+    border-radius: 0.375rem; 
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
-/* NEW: Ship Header Title (Request B & C) */
 .ship-header-title {
     position: relative; 
     z-index: 10;
     flex: 1 1 0;
     width: 100%;
-    font-family: 'Space Mono', monospace; /* MODIFIED: New Font */
-    font-size: 1.2rem; /* 19.2px */
+    font-family: 'Space Mono', monospace; 
+    font-size: 1.2rem; 
     font-weight: 700;
-    color: var(--theme-text-color, #f0f0f0); /* MODIFIED: Set color */
-    text-transform: uppercase; /* ADDED: All caps */
-    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; /* ADDED: Outline */
+    color: var(--theme-text-color, #f0f0f0); 
+    text-transform: uppercase; 
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000; 
     background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
     box-shadow: 0 0 10px -2px var(--theme-border-color, #4a5568);
-    padding: 0.25rem 1rem; /* Smaller padding */
+    padding: 0.25rem 1rem; 
     letter-spacing: 0.05em;
     text-align: center;
     border-radius: 0.375rem;
     clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
 }
 
-
-/* REMOVED: .themed-header-subtitle (Request C) */
-
-/* NEW: Ship Services Panel (Request A & C) */
 .ship-services-panel {
-    background: rgba(13, 17, 23, 0.4); /* MODIFIED: Lighter background */
+    background: rgba(13, 17, 23, 0.4); 
     border: 1px solid var(--theme-border-color, #4a6a8a);
-    border-radius: 0.375rem; /* rounded-md */
-    /* Padding is handled by children */
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); /* shadow-lg */
+    border-radius: 0.375rem; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); 
 }
-/* --- END VIRTUAL WORKBENCH --- */
-
 
 .services-scroll-panel {
     overflow-y: auto;
-    scrollbar-width: none; /* For Firefox */
-    -ms-overflow-style: none; /* For Internet Explorer 10+ */
+    scrollbar-width: none; 
+    -ms-overflow-style: none; 
     padding: 0.25rem;
-    touch-action: pan-y; /* Allow vertical scrolling */
-    
-    /* VIRTUAL WORKBENCH: Added flex properties */
+    touch-action: pan-y; 
     flex-grow: 1;
     min-height: 0;
-    /* --- END VIRTUAL WORKBENCH --- */
 }
 .services-scroll-panel::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
+    display: none; 
 }
 
 /* Add New Styles for Overhauled Services Screen */
 
-/* Fonts (ensure these are loaded in index.html) */
 .font-orbitron { font-family: 'Orbitron', sans-serif; }
 .font-electrolize { font-family: 'Electrolize', sans-serif; }
 
-/* Text Outline Effect */
 .text-outline {
   text-shadow:
     -1px -1px 1px #000,
@@ -3974,15 +3955,12 @@ card.
     0 0 8px var(--glow-color, rgba(0,0,0,0.8));
 }
 
-/* Engraved Text Effect */
 .engraved-text {
   text-shadow: 0 1px 1px rgba(0,0,0,0.6), 0 -1px 1px rgba(255,255,255,0.1);
 }
 
-/* Base Service Module Styling */
 .service-module {
   border: 1px solid rgba(var(--resource-color-rgb), 0.3);
-  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
   padding: 1rem;
   border-radius: 0.75rem;
@@ -3992,43 +3970,39 @@ card.
     linear-gradient(#3a3a3a, #2a2a2a);
   background-size: 8px 8px, 100% 100%;
   box-shadow:
-    0 0 15px -3px rgba(var(--resource-color-rgb), 0.3), /* Subdued resource glow */
+    0 0 15px -3px rgba(var(--resource-color-rgb), 0.3), 
     inset 0 0 0 2px rgba(255,255,255,0.05),
     inset 0 0 15px rgba(0,0,0,1),
     0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* Active Service Module Glow */
 .service-module.active-service {
   border-color: rgba(var(--resource-color-rgb), 0.8);
   box-shadow:
-    0 0 25px -2px rgba(var(--resource-color-rgb), 0.7), /* Brighter active glow */
+    0 0 25px -2px rgba(var(--resource-color-rgb), 0.7), 
     inset 0 0 0 2px rgba(255,255,255,0.05),
     inset 0 0 15px rgba(0,0,0,1),
     0 1px 0 rgba(255,255,255,0.05);
 }
 
-/* Progress Bar Housing */
 .bar-housing {
   background-color: rgba(0,0,0,0.4);
   padding: 0.5rem;
   border-radius: 0.5rem;
   box-shadow: inset 0 2px 6px rgba(0,0,0,0.6);
-  margin-bottom: 1rem; /* Added margin */
+  margin-bottom: 1rem; 
 }
 
 .progress-bar-container {
-   border-radius: 0.5rem; /* rounded-lg */
-   border-width: 1px; /* border */
+   border-radius: 0.5rem; 
+   border-width: 1px; 
    overflow: hidden;
    position: relative;
    background: rgba(10, 20, 30, 0.5);
    box-shadow: inset 0 2px 5px rgba(0,0,0,0.5);
-   /* MODIFIED: Added 400ms transition for smooth fade-out */
    transition: border-color 0.4s ease-out, box-shadow 0.4s ease-out;
 }
 
-/* Active Border Pulse Animation */
 @keyframes pulse-border {
   0%, 100% {
     border-color: rgba(var(--resource-color-rgb), 0.3);
@@ -4041,21 +4015,17 @@ card.
 }
 
 .progress-bar-container.active-pulse {
-   /* MODIFIED: Ensure animation is infinite */
    animation: pulse-border 3s ease-in-out infinite;
 }
 
-/* Progress Bar Fill Styling */
 .progress-bar-fill {
-  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: width 0.25s ease-out, filter 0.4s ease-out, box-shadow 0.4s ease-out, opacity 0.4s ease-out;
-  box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.5); /* Base glow using CSS var */
+  box-shadow: 0 0 8px rgba(var(--resource-color-rgb), 0.5); 
   position: relative;
   overflow: hidden;
-  border-radius: 0.375rem; /* rounded-md */
+  border-radius: 0.375rem; 
 }
 
-/* MODIFIED: Added new animation for the fill bar itself */
 @keyframes pulse-glow {
   0%, 100% {
     filter: brightness(1.1);
@@ -4068,22 +4038,19 @@ card.
 }
 
 .progress-bar-fill.filling {
-  /* MODIFIED: Ensure animation is infinite */
   animation: pulse-glow 3s ease-in-out infinite;
 }
 
-/* Control Deck (Buttons and Price) */
 .control-deck {
   padding-top: 1rem;
 }
 
-/* Price Display Module */
 .price-display-module {
   background: linear-gradient(#2a2a2a, #1a1a1a);
-  border-radius: 0.75rem; /* rounded-xl */
+  border-radius: 0.75rem; 
   border: 2px solid #000;
   box-shadow: inset 0 0 8px rgba(0,0,0,0.8), 0 1px 0 rgba(255,255,255,0.1);
-  color: #a0a0a0; /* Default text color */
+  color: #a0a0a0; 
 }
 .price-display-module .price-label {
   letter-spacing: 0.05em;
@@ -4093,30 +4060,26 @@ card.
   text-shadow: 0 0 4px var(--tw-shadow-color), 0 0 8px var(--tw-shadow-color);
 }
 
-/* Industrial Button Styling */
 .industrial-button {
-  border-radius: 0.75rem; /* rounded-xl */
+  border-radius: 0.75rem; 
   background: linear-gradient(180deg, #6b7280 0%, #374151 100%);
   border: 1px solid #1f2937;
   border-top-color: #9ca3af;
-  border-left-color: #6b7280; /* Corrected typo */
+  border-left-color: #6b7280; 
   box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.25), 0 2px 3px rgba(0,0,0,0.6);
   color: #e5e7eb;
   text-shadow: 0 -1px 1px rgba(0,0,0,0.6);
-  /* MODIFIED: Added 400ms transition for smooth fade-out */
   transition: background 0.4s ease-out, box-shadow 0.4s ease-out, transform 0.1s ease-in-out;
 }
 
-/* MODIFIED: Changed selector to rely only on .holding class for persistent depressed state */
 .industrial-button.holding {
   background: linear-gradient(180deg, #374151 0%, #4b5563 100%);
   box-shadow: inset 0 1px 3px rgba(0,0,0,0.6);
-  transform: translateY(1px); /* Keep the pressed down visual */
+  transform: translateY(1px); 
 }
 
-/* MODIFIED: Added separate :active state for instant visual feedback on tap */
 .industrial-button:active {
-  transform: translateY(1px); /* Apply press down immediately */
+  transform: translateY(1px); 
 }
 
 .industrial-button:disabled {
@@ -4127,13 +4090,6 @@ card.
   box-shadow: inset 0 1px 2px rgba(0,0,0,0.5);
 }
 
-/* Add styles for stepper active state if needed, though they might already exist */
-.qty-stepper.stepper-active {
-    /* Your existing stepper active styles */
-    /* Example: border-color: var(--active-primary); */
-}
-
-/* Button Text Colors */
 #refuel-btn .engraved-text {
   color: var(--ot-cyan-base, #08d9d6);
 }
@@ -4142,7 +4098,6 @@ card.
   color: var(--ot-green-accent, #16a34a);
 }
 
-/* --- VIRTUAL WORKBENCH: SUB-NAVIGATION STYLES (TUNING SHOP) --- */
 .sub-nav-button {
     padding: 0.5rem 1.5rem;
     font-family: 'Orbitron', sans-serif;
@@ -4150,9 +4105,9 @@ card.
     font-weight: 500;
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    background: #1f2937; /* Default dark bg */
-    border: 1px solid #4b5563; /* Default gray border */
-    color: #9ca3af; /* Default text color */
+    background: #1f2937; 
+    border: 1px solid #4b5563; 
+    color: #9ca3af; 
     border-radius: 0.25rem;
     transition: all 0.2s ease-in-out;
     opacity: 0.7;
@@ -4167,13 +4122,10 @@ card.
 .sub-nav-button.active {
     font-weight: 700;
     opacity: 1;
-    /* Note: Dynamic background/border colors are applied inline by the JS based on location theme */
     text-shadow: 0 0 5px rgba(0,0,0,0.5);
 }
 
-/* --- TUNING SHOP: LARGE PILL STYLES --- */
 .upgrade-shop-item {
-    /* Inherits .service-module basic styling */
     min-height: 100px;
     padding: 0.75rem;
     background: linear-gradient(to right, rgba(0,0,0,0.6), rgba(0,0,0,0.3));
@@ -4187,12 +4139,12 @@ card.
 
 .upgrade-shop-item button:hover:not(:disabled) {
     background-color: var(--item-color);
-    color: #000 !important; /* Force black text on hover */
+    color: #000 !important; 
     box-shadow: 0 0 10px var(--item-glow);
 }
 
 /* ========================================= */
-/* --- SOL STATION: MAINTENANCE CACHE OVERHAUL --- */
+/* --- SOL STATION: MAINTENANCE CACHE --- */
 /* ========================================= */
 
 .sol-cache-list {
@@ -4206,7 +4158,7 @@ card.
     position: relative;
     display: flex;
     align-items: center;
-    height: 64px; /* Fixed height for consistency */
+    height: 64px; 
     border: 1px solid #334155;
     background: #0f172a;
     overflow: hidden;
@@ -4219,19 +4171,17 @@ card.
     border-color: #64748b;
 }
 
-/* Background Art Layer */
 .sol-cache-row-bg {
     position: absolute;
     inset: 0;
     background-size: cover;
     background-position: center;
-    opacity: 0.25; /* Subtle visibility */
-    filter: grayscale(100%); /* Desaturated for professional look */
+    opacity: 0.25; 
+    filter: grayscale(100%); 
     z-index: 0;
     pointer-events: none;
 }
 
-/* Content Container (On top of bg) */
 .sol-cache-content {
     position: relative;
     z-index: 1;
@@ -4242,7 +4192,6 @@ card.
     gap: 1rem;
 }
 
-/* Item Name */
 .sol-row-name {
     width: 30%;
     font-family: 'Orbitron', sans-serif;
@@ -4256,9 +4205,8 @@ card.
     text-align: left;
 }
 
-/* Progress Track Container */
 .sol-row-track-container {
-    flex-grow: 1; /* Takes up remaining middle space */
+    flex-grow: 1; 
     position: relative;
     height: 24px;
 }
@@ -4273,28 +4221,25 @@ card.
     overflow: hidden;
 }
 
-/* FIX: Ensure fill height is 100% of parent */
 .sol-progress-fill {
     height: 100%; 
-    background-color: #fff; /* Overridden by inline style var() */
+    background-color: #fff; 
     width: 0%;
-    transition: width 0.4s ease-out; /* Added Transition */
+    transition: width 0.4s ease-out; 
     box-shadow: inset 0 0 10px rgba(0,0,0,0.2);
 }
 
-/* The Low Threshold Marker (Red Line at 20%) */
 .sol-threshold-marker {
     position: absolute;
     top: 0;
     bottom: 0;
     width: 2px;
-    background-color: #ef4444; /* Red-500 */
+    background-color: #ef4444; 
     box-shadow: 0 0 4px #ef4444;
     z-index: 5;
     opacity: 0.9;
 }
 
-/* Overlay Text on Bar */
 .sol-progress-text {
     position: absolute;
     inset: 0;
@@ -4309,14 +4254,12 @@ card.
     z-index: 6;
 }
 
-/* Action Button Area */
 .sol-row-action {
     width: 15%;
     display: flex;
     justify-content: flex-end;
 }
 
-/* Deposit Button */
 .btn-deposit-all {
     background: linear-gradient(to bottom, #3b82f6, #2563eb);
     border: 1px solid #60a5fa;
@@ -4350,9 +4293,6 @@ card.
     opacity: 0.5;
 }
 
-/* === SOL STATION NEW STYLES === */
-
-/* Golden Entry Button (Services Screen) */
 .sol-interface-btn {
     display: flex;
     align-items: center;
@@ -4361,8 +4301,8 @@ card.
     max-width: 400px;
     padding: 0.75rem;
     
-    background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); /* Amber to Yellow */
-    border: 2px solid #fcd34d; /* Bright Yellow border */
+    background: linear-gradient(135deg, #b45309 0%, #fbbf24 100%); 
+    border: 2px solid #fcd34d; 
     border-radius: 6px;
     box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
     
@@ -4406,17 +4346,17 @@ card.
     opacity: 0.9;
 }
 
-/* Modal Theme: Sol Station Specific */
+/* Modal Theme: Default Setup */
 .sol-station-modal .modal-content {
     background: radial-gradient(circle at center, #1e1b4b 0%, #0f172a 100%);
     border: 1px solid #fbbf24;
     box-shadow: 0 0 30px rgba(251, 191, 36, 0.15);
+    transition: background 0.5s ease, border-color 0.5s ease, box-shadow 0.5s ease;
 }
 
-/* Integrity Bar Fix */
 .sol-health-track {
     width: 100%;
-    height: 12px; /* Needs explicit height */
+    height: 12px; 
     background: #1f2937;
     border: 1px solid #374151;
     border-radius: 2px;
@@ -4425,10 +4365,9 @@ card.
 }
 .sol-health-fill {
     height: 100%;
-    transition: width 0.5s ease-in-out; /* Added Transition */
+    transition: width 0.5s ease-in-out; 
 }
 
-/* Output Container Encapsulation */
 .sol-output-container {
     background: rgba(0, 0, 0, 0.3);
     border: 1px solid #4b5563;
@@ -4437,7 +4376,6 @@ card.
     margin-bottom: 0.75rem;
 }
 
-/* NEW: Flex Container for the buttons */
 .mode-toggle-group {
     display: flex;
     flex-direction: row;
@@ -4446,7 +4384,6 @@ card.
     margin-bottom: 0.5rem;
 }
 
-/* Base Mode Button Styles */
 .mode-btn {
     flex: 1;
     min-width: 0;
@@ -4467,25 +4404,19 @@ card.
     white-space: nowrap;
 }
 
-/* --- INACTIVE STATES --- */
-/* Defined Colors for Inactive state (dim but colored text) */
 .mode-btn.stability { color: #6b7280; border-color: #374151; }
-.mode-btn.commerce  { color: #0e7490; border-color: #164e63; } /* Muted Cyan */
-.mode-btn.production{ color: #7e22ce; border-color: #581c87; } /* Muted Purple */
-
-/* --- ACTIVE STATE OVERRIDES --- */
-/* We use !important on opacity/color to force override the browser's default :disabled styling */
+.mode-btn.commerce  { color: #0e7490; border-color: #164e63; } 
+.mode-btn.production{ color: #7e22ce; border-color: #581c87; } 
 
 .mode-btn.active,
 .mode-btn.active:disabled {
     background: #111827 !important;
-    border-color: #fbbf24 !important; /* GLOBAL: Golden Yellow Border for ALL active modes */
-    opacity: 1 !important; /* Fixes the "dim" issue */
-    filter: none !important; /* Fixes any grayscale filters */
+    border-color: #fbbf24 !important; 
+    opacity: 1 !important; 
+    filter: none !important; 
     cursor: default;
 }
 
-/* 1. STABILITY: White Glow */
 .mode-btn.stability.active,
 .mode-btn.stability.active:disabled {
     color: #ffffff !important;
@@ -4493,7 +4424,6 @@ card.
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.4);
 }
 
-/* 2. COMMERCE: Cyan Glow */
 .mode-btn.commerce.active,
 .mode-btn.commerce.active:disabled {
     color: #22d3ee !important;
@@ -4501,7 +4431,6 @@ card.
     box-shadow: 0 0 10px rgba(34, 211, 238, 0.4);
 }
 
-/* 3. PRODUCTION: Purple Glow */
 .mode-btn.production.active,
 .mode-btn.production.active:disabled {
     color: #d8b4fe !important;
@@ -4509,17 +4438,25 @@ card.
     box-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
 }
 
-/* === OPTION 1: THE "SOLAR TREASURY" INCOME BAR === */
+/* Ensure Locked Modes are Visually Distinct */
+.mode-btn:disabled:not(.active) {
+    background-color: #000;
+    border-color: #333;
+    color: #444;
+    cursor: not-allowed;
+    opacity: 0.3 !important; /* Force dimming */
+    filter: grayscale(100%);
+    box-shadow: none;
+}
+
 .sol-credits-block {
-    /* Base Background with Radial Gradient (Option 1) */
     background: radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
-    /* Honeycomb Pattern (Option 1) */
     background-image: 
         radial-gradient(rgba(251, 191, 36, 0.15) 1px, transparent 1px),
         radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
     background-size: 16px 16px, 100% 100%;
     
-    border: 1px solid #78350f; /* Dark Amber Border */
+    border: 1px solid #78350f; 
     border-radius: 4px;
     padding: 0.5rem;
     display: flex;
@@ -4528,7 +4465,7 @@ card.
     min-height: 70px;
     
     box-shadow: inset 0 0 20px rgba(0,0,0,0.5);
-    margin-bottom: 0.5rem; /* Ensure spacing if stacked */
+    margin-bottom: 0.5rem; 
 }
 
 .sol-credits-block .credits-info {
@@ -4537,19 +4474,17 @@ card.
     justify-content: center;
 }
 
-/* Label: Metallic Gold + Wide Tracking (Option 1) */
 .sol-credits-block .credits-info .label {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.10rem;
     font-weight: 700;
-    color: #fbbf24; /* Metallic Gold */
-    letter-spacing: 0.2em; /* Wide tracking */
+    color: #fbbf24; 
+    letter-spacing: 0.2em; 
     text-transform: uppercase;
     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
     margin-bottom: 2px;
 }
 
-/* Value: Cyan (Retained per instruction F) */
 .sol-credits-block .credits-info .value {
     font-family: 'Orbitron', sans-serif;
     font-size: 1.5rem;
@@ -4557,10 +4492,9 @@ card.
     text-shadow: 0 0 8px rgba(8, 217, 214, 0.6);
 }
 
-/* --- SOL STATION LEVEL UP ANIMATION --- */
 .sol-interface-levelup {
     animation: sol-levelup-pulse 2.5s ease-in-out forwards;
-    z-index: 100; /* Ensure it pops */
+    z-index: 100; 
     position: relative;
 }
 
@@ -4571,11 +4505,9 @@ card.
         transform: scale(1);
     }
     20% {
-         /* Wind up */
         transform: scale(0.98);
     }
     50% {
-        /* PEAK */
         box-shadow: 0 0 50px rgba(251, 191, 36, 1), 0 0 100px rgba(255, 255, 255, 0.8);
         border-color: #ffffff;
         background: linear-gradient(135deg, #d97706 0%, #fbbf24 100%);
@@ -4583,7 +4515,6 @@ card.
         filter: brightness(1.3);
     }
     100% {
-        /* Return to normal */
         box-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
         border-color: #fcd34d;
         transform: scale(1);
@@ -4591,8 +4522,6 @@ card.
     }
 }
 
-/* --- FLASH FIX: SILENT EXIT --- */
-/* Forces the modal to be invisible instantly during the UI Manager's cleanup phase */
 .sol-station-modal.silent-exit.modal-hiding {
     animation: sol-invisible-exit 0.01s linear forwards !important;
     opacity: 0 !important;
@@ -4602,6 +4531,96 @@ card.
     0% { opacity: 0; }
     100% { opacity: 0; }
 }
+
+/* ========================================================================= */
+/* --- SOL STATION PROGRESSION THEMES (FIXED MAPPING) --- */
+/* ========================================================================= */
+
+/* Lv 1-9: White / White Accent */
+.sol-theme-white .modal-content {
+    background: radial-gradient(circle at center, #222222 0%, #000000 100%) !important;
+    border: 1px solid #ffffff !important;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.3) !important;
+}
+.sol-theme-white .sol-level-header {
+    color: #ffffff !important; 
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Lv 10-19: Green / Black */
+.sol-theme-green .modal-content {
+    background: radial-gradient(circle at center, #064e3b 0%, #000000 100%) !important;
+    border: 1px solid #22c55e !important;
+    box-shadow: 0 0 25px rgba(34, 197, 94, 0.3) !important;
+}
+.sol-theme-green .sol-level-header {
+    color: #4ade80 !important; 
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.8) !important;
+}
+
+/* Lv 20-29: Blue / Black / Blue Accent */
+.sol-theme-blue .modal-content {
+    background: radial-gradient(circle at center, #172554 0%, #000000 100%) !important;
+    border: 1px solid #3b82f6 !important;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.3) !important;
+}
+.sol-theme-blue .sol-level-header {
+    color: #60a5fa !important; 
+    text-shadow: 0 0 10px rgba(96, 165, 250, 0.8) !important;
+}
+
+/* Lv 30-39: Gold / Yellow / Gold Accent */
+.sol-theme-gold .modal-content {
+    background: radial-gradient(circle at center, #422006 0%, #000000 100%) !important;
+    border: 1px solid #eab308 !important;
+    box-shadow: 0 0 25px rgba(234, 179, 8, 0.3) !important;
+}
+.sol-theme-gold .sol-level-header {
+    color: #facc15 !important; 
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.8) !important;
+}
+
+/* Lv 40-49: Orange / White / Orange Accent */
+.sol-theme-orange .modal-content {
+    background: radial-gradient(circle at center, #7c2d12 0%, #000000 100%) !important;
+    border: 1px solid #ffffff !important;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.3) !important;
+}
+.sol-theme-orange .sol-level-header {
+    color: #fb923c !important; 
+    text-shadow: 0 0 10px rgba(251, 146, 60, 0.8) !important;
+}
+
+/* Lv 50: Red / Gold / Red Accent */
+.sol-theme-red .modal-content {
+    background: radial-gradient(circle at center, #450a0a 0%, #000000 100%) !important;
+    border: 1px solid #facc15 !important;
+    box-shadow: 0 0 35px rgba(250, 204, 21, 0.4) !important;
+}
+.sol-theme-red .sol-level-header {
+    color: #ef4444 !important; 
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.8), 0 0 5px #fcd34d !important;
+}
+
+/* --- Level Hexagon Legibility Fix --- */
+#lbl-sol-level-indicator {
+    text-shadow: 
+        -1px -1px 0 #000,  
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0 2px 4px rgba(0,0,0,0.8) !important;
+    font-weight: 800 !important;
+    letter-spacing: 0.05em;
+}
+
+/* Force Hexagon text colors independently of modal wrapper */
+#lbl-sol-level-indicator.sol-level-white { color: #ffffff !important; }
+#lbl-sol-level-indicator.sol-level-green { color: #4ade80 !important; }
+#lbl-sol-level-indicator.sol-level-blue { color: #60a5fa !important; }
+#lbl-sol-level-indicator.sol-level-gold { color: #facc15 !important; }
+#lbl-sol-level-indicator.sol-level-orange { color: #fb923c !important; }
+#lbl-sol-level-indicator.sol-level-red { color: #ef4444 !important; }
 --- END OF FILE: ./css/screens/services-screen.css ---
 
 --- START OF FILE: ./css/screens/map-screen.css ---
@@ -7247,6 +7266,20 @@ BULKHEAD NAVIGATION STYLES
     }
 }
 /* --- [[END]] DEPRECATED STYLES --- */
+
+
+/* --- PHASE 2: SOL DATE PULSE ANIMATION --- */
+@keyframes solPulse {
+    0% { text-shadow: 0 0 2px rgba(253, 224, 71, 0.3); opacity: 0.8; }
+    50% { text-shadow: 0 0 10px rgba(253, 224, 71, 0.8), 0 0 20px rgba(253, 224, 71, 0.4); opacity: 1; color: #fff; }
+    100% { text-shadow: 0 0 2px rgba(253, 224, 71, 0.3); opacity: 0.8; }
+}
+
+.sol-date-pulse {
+    animation: solPulse 2s infinite ease-in-out;
+    color: #fde047; /* Fallback/Base Yellow */
+    font-weight: 700;
+}
 --- END OF FILE: ./css/navigation.css ---
 
 --- START OF FILE: ./css/orientation.css ---
@@ -9091,7 +9124,7 @@ export function renderServicesScreen(gameState, simulationService) {
                             <svg class="absolute inset-0 w-full h-full opacity-80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4">
                                 <polygon points="50 3, 93 25, 93 75, 50 97, 7 75, 7 25" stroke="#fcd34d" stroke-width="3" fill="rgba(0,0,0,0.4)"/>
                             </svg>
-                            <span id="lbl-sol-level-indicator" class="font-orbitron font-bold text-2xl z-10 ${levelClass}" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
+                            <span id="lbl-sol-level-indicator" class="font-orbitron font-bold text-2xl z-10 ${levelClass}">
                                 ${stationLevel}
                             </span>
                         </div>
@@ -9617,13 +9650,18 @@ export function renderCargoScreen(gameState, simulationService) {
         const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
         const locationColor = location?.navTheme?.borderColor || '#555';
 
+        // --- PHASE 1 CHANGE: Abbreviated Numbers for Capacity ---
+        const usedCapStr = formatAbbreviatedNumber(summary.usedCapacity);
+        const totalCapStr = formatAbbreviatedNumber(summary.totalCapacity);
+        // --- END PHASE 1 CHANGE ---
+
         if (summary.usedCapacity > 0) {
             const costStr = formatAbbreviatedNumber(summary.totalCostBasis);
             const localStr = formatAbbreviatedNumber(summary.totalLocalValue);
 
             bandHtml = `
                 <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: space-between;">
-                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${summary.usedCapacity}/${summary.totalCapacity}</span></div>
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${usedCapStr}/${totalCapStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
                     <div><span class="cargo-band-label">COST BASIS:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${costStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
@@ -9635,7 +9673,7 @@ export function renderCargoScreen(gameState, simulationService) {
                 <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: center;">
                     <span class="cargo-band-label">[ FLEET CARGO MANIFEST EMPTY ]</span>
                     <span class="cargo-band-pipe">|</span>
-                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">0/${summary.totalCapacity}</span></div>
+                    <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">0/${totalCapStr}</span></div>
                 </div>
             `;
         }
@@ -11515,78 +11553,169 @@ export const RANDOM_EVENTS = [
  * @fileoverview Registry for Sol Station progression levels (1-50).
  * Defines the requirements and additive rewards for each station level up.
  * Adheres to the Registry Pattern for data-driven progression.
+ * * VERSION 1 SCOPE: LEVELS 1-10 (The Construction Arc) + 11-50 Placeholders
+ * * Reward Key:
+ * - cacheCapacity: Specific integer increase to a commodity's max storage.
+ * - amYieldMult: Additive percentage to Antimatter generation (e.g. 0.05 = +5%).
+ * - creditYieldMult: Additive percentage to Credit generation.
+ * - globalEntropyRed: Subtractive percentage from Base Entropy (e.g. 0.02 = -2%).
  */
 
 export const LEVEL_REGISTRY = {
     // Level 1 is the baseline; progression upgrades begin at Level 2.
+    
     2: {
-        projectName: "Ice Reservoir Integration",
-        lore: "Expanding the thermal coolant buffers to allow for slightly higher reactor operating temperatures.",
-        requirements: {
-            "water_ice": 1000,
-            "credits": 50000
-        },
+        projectName: "Water Reservoir Integration",
+        lore: "Integrating expanded thermal coolant buffers allows the reactor to operate at higher baselines, increasing Antimatter yield.",
+        cost: 10000,
+        requirements: { "water_ice": 200 },
         rewards: {
-            description: "+10,000 Water Ice Capacity, +5% Antimatter Yield",
-            stats: {
-                cacheCapacity: { "water_ice": 10000 },
-                amYieldMult: 0.05,
-                creditYieldMult: 0,
-                globalEntropyRed: 0
-            }
+            description: "+60 Water Ice Cap (+30%), +5% Antimatter Yield",
+            stats: { cacheCapacity: { "water_ice": 60 }, amYieldMult: 0.05, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     3: {
         projectName: "Hull Plating Reinforcement",
-        lore: "Additional Plasteel cladding reduces micrometeoroid damage, lowering baseline entropy and permitting advanced trade operations.",
-        requirements: {
-            "plasteel": 2500,
-            "credits": 150000
-        },
+        lore: "Additional Plasteel cladding reduces micrometeoroid damage, lowering baseline entropy and permitting advanced commercial docking.",
+        cost: 15000,
+        requirements: { "plasteel": 180 },
         rewards: {
             description: "-2% Global Entropy, Unlocks COMMERCE Mode",
-            stats: {
-                cacheCapacity: {},
-                amYieldMult: 0,
-                creditYieldMult: 0,
-                globalEntropyRed: 0.02
-            }
+            stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0.02 },
+            unlocks: ["COMMERCE"]
         }
     },
     4: {
-        projectName: "Advanced Robotics Bay",
-        lore: "Automated maintenance drones improve the efficiency of mechanical repairs and part replacements.",
-        requirements: {
-            "processors": 800,
-            "credits": 300000
-        },
+        projectName: "Hydro-Garden Expansion",
+        lore: "Expanding the hydroponic rings increases biological life support capacity, preparing the station for a larger crew complement.",
+        cost: 25000,
+        requirements: { "hydroponics": 160 },
         rewards: {
-            description: "+5,000 Processors Capacity, +10% Credit Yield",
-            stats: {
-                cacheCapacity: { "processors": 5000 },
-                amYieldMult: 0,
-                creditYieldMult: 0.10,
-                globalEntropyRed: 0
-            }
+            description: "+48 Hydroponics Cap (+30%)",
+            stats: { cacheCapacity: { "hydroponics": 48 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     5: {
-        projectName: "Expanded Directorate Quarters",
-        lore: "Constructing high-end habitats to attract top-tier administrative and engineering talent to the station.",
-        requirements: {
-            "cybernetics": 500,
-            "credits": 600000
-        },
+        projectName: "Reactor Ignition Sequence",
+        lore: "Bringing the secondary fusion cores online. This massive power boost allows for industrial-scale production but requires specialized cybernetic oversight.",
+        cost: 40000,
+        requirements: { "cybernetics": 140 },
         rewards: {
-            description: "+1 Officer Slot, Unlocks PRODUCTION Mode",
-            // Note: Officer slot unlocks are mathematically hardcoded to Level % 5 === 0 in the logic layer.
-            stats: {
-                cacheCapacity: {},
-                amYieldMult: 0,
-                creditYieldMult: 0,
-                globalEntropyRed: 0
-            }
+            description: "+1 Officer Slot (Total: 2), Unlocks PRODUCTION Mode",
+            stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 },
+            unlocks: ["PRODUCTION"]
         }
+    },
+    6: {
+        projectName: "Aux. Silo A (Propellant)",
+        lore: "Constructing a dedicated external fuel silo to support increased traffic and refueling operations.",
+        cost: 60000,
+        requirements: { "propellant": 132 },
+        rewards: {
+            description: "+36 Refined Propellant Cap (+30%)",
+            stats: { cacheCapacity: { "propellant": 36 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+        }
+    },
+    7: {
+        projectName: "Aux. Silo B (Processors)",
+        lore: "Installing a super-cooled server farm to manage the station's increasing computational load.",
+        cost: 90000,
+        requirements: { "processors": 110 },
+        rewards: {
+            description: "+30 Neural Processor Cap (+30%)",
+            stats: { cacheCapacity: { "processors": 30 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+        }
+    },
+    8: {
+        projectName: "Cryo-Buffer Extension",
+        lore: "Reinforcing the cryo-stasis grid allows for the long-term storage of biological assets without degradation.",
+        cost: 130000,
+        requirements: { "hydroponics": 176 },
+        rewards: {
+            description: "+18 Cryo-Pod Cap (+30%)",
+            stats: { cacheCapacity: { "cryo_pods": 18 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+        }
+    },
+    9: {
+        projectName: "Atmo-Scrubber Retrofit",
+        lore: "Upgrading the atmospheric scrubbers with industrial-grade filters to handle the toxic byproducts of high-yield production.",
+        cost: 180000,
+        requirements: { "plasteel": 198 },
+        rewards: {
+            description: "+12 Atmo-Processor Cap (+30%)",
+            stats: { cacheCapacity: { "atmos_processors": 12 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+        }
+    },
+    10: {
+        projectName: "Directorate Wing Alpha",
+        lore: "Constructing the first major administrative wing. This command center coordinates trade fleets, boosting credit efficiency.",
+        cost: 250000,
+        requirements: { "propellant": 144, "graphene_lattices": 96 },
+        rewards: {
+            description: "+1 Officer Slot (Total: 3), +10% Credit Yield",
+            stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0.10, globalEntropyRed: 0 }
+        }
+    },
+
+    // --- EXPANDED PROGRESSION (Levels 11-50) ---
+    // Pattern: Costs scale ~1.3x - 1.4x. Requirements rotate.
+    // Rewards: Capacity/Yield alternated. Slots at 15, 20, 25...
+
+    11: { projectName: "Station Expansion L11", lore: "Expanding core infrastructure.", cost: 320000, requirements: { "water_ice": 400 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    12: { projectName: "Station Expansion L12", lore: "Reinforcing structural pylons.", cost: 410000, requirements: { "plasteel": 350 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    13: { projectName: "Station Expansion L13", lore: "Upgrading life support.", cost: 530000, requirements: { "hydroponics": 300 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    14: { projectName: "Station Expansion L14", lore: "Optimizing network nodes.", cost: 680000, requirements: { "cybernetics": 250 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    15: { projectName: "Directorate Wing Beta", lore: "A major administrative expansion.", cost: 850000, requirements: { "propellant": 300, "processors": 150 }, rewards: { description: "+1 Officer Slot (Total: 4)", stats: {} } },
+
+    16: { projectName: "Station Expansion L16", lore: "Deep space sensors.", cost: 1100000, requirements: { "graphene_lattices": 200 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    17: { projectName: "Station Expansion L17", lore: "Commercial docking bay.", cost: 1400000, requirements: { "water_ice": 600 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    18: { projectName: "Station Expansion L18", lore: "Advanced recycling.", cost: 1800000, requirements: { "plasteel": 500 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    19: { projectName: "Station Expansion L19", lore: "Cryo-storage optimization.", cost: 2300000, requirements: { "cryo_pods": 100 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    20: { projectName: "Directorate Wing Gamma", lore: "A command center upgrade.", cost: 3000000, requirements: { "cybernetics": 400, "cloned_organs": 50 }, rewards: { description: "+1 Officer Slot (Total: 5)", stats: {} } },
+
+    21: { projectName: "Station Expansion L21", lore: "Heavy industry fabrication.", cost: 3800000, requirements: { "propellant": 500 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    22: { projectName: "Station Expansion L22", lore: "Hull integrity mesh.", cost: 4800000, requirements: { "graphene_lattices": 300 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    23: { projectName: "Station Expansion L23", lore: "Reactor coolant loop.", cost: 6000000, requirements: { "water_ice": 1000 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    24: { projectName: "Station Expansion L24", lore: "Server farm redundancy.", cost: 7500000, requirements: { "processors": 300 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    25: { projectName: "Directorate Wing Delta", lore: "Strategic operations center.", cost: 9500000, requirements: { "plasteel": 1000, "atmos_processors": 100 }, rewards: { description: "+1 Officer Slot (Total: 6)", stats: {} } },
+
+    26: { projectName: "Station Expansion L26", lore: "Luxury habitat ring.", cost: 12000000, requirements: { "hydroponics": 800 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
+    27: { projectName: "Station Expansion L27", lore: "Advanced shield harmonics.", cost: 15000000, requirements: { "cybernetics": 600 }, rewards: { description: "-3% Global Entropy", stats: { globalEntropyRed: 0.03 } } },
+    28: { projectName: "Station Expansion L28", lore: "Particle accelerator.", cost: 19000000, requirements: { "propellant": 800 }, rewards: { description: "+8% Antimatter Yield", stats: { amYieldMult: 0.08 } } },
+    29: { projectName: "Station Expansion L29", lore: "Xeno-research lab.", cost: 24000000, requirements: { "xeno_geologicals": 50 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    30: { projectName: "Directorate Wing Epsilon", lore: "Interstellar logistics hub.", cost: 30000000, requirements: { "graphene_lattices": 500, "sentient_ai": 10 }, rewards: { description: "+1 Officer Slot (Total: 7)", stats: {} } },
+
+    31: { projectName: "Station Expansion L31", lore: "Solar array massive.", cost: 38000000, requirements: { "plasteel": 1500 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    32: { projectName: "Station Expansion L32", lore: "Automated repair drones.", cost: 47000000, requirements: { "processors": 500 }, rewards: { description: "-4% Global Entropy", stats: { globalEntropyRed: 0.04 } } },
+    33: { projectName: "Station Expansion L33", lore: "Trade federation embassy.", cost: 58000000, requirements: { "water_ice": 2000 }, rewards: { description: "+20% Credit Yield", stats: { creditYieldMult: 0.20 } } },
+    34: { projectName: "Station Expansion L34", lore: "Deep storage vaults.", cost: 72000000, requirements: { "propellant": 1200 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    35: { projectName: "Directorate Wing Zeta", lore: "High command nexus.", cost: 90000000, requirements: { "cybernetics": 1000, "cloned_organs": 200 }, rewards: { description: "+1 Officer Slot (Total: 8)", stats: {} } },
+
+    36: { projectName: "Station Expansion L36", lore: "Quantum comms array.", cost: 110000000, requirements: { "graphene_lattices": 800 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
+    37: { projectName: "Station Expansion L37", lore: "Antimatter containment V2.", cost: 135000000, requirements: { "plasteel": 2500 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
+    38: { projectName: "Station Expansion L38", lore: "Bio-dome complex.", cost: 165000000, requirements: { "hydroponics": 2000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    39: { projectName: "Station Expansion L39", lore: "AI synthesis core.", cost: 200000000, requirements: { "sentient_ai": 25 }, rewards: { description: "+25% Credit Yield", stats: { creditYieldMult: 0.25 } } },
+    40: { projectName: "Directorate Wing Eta", lore: "Orbital governance seat.", cost: 250000000, requirements: { "processors": 1000, "xeno_geologicals": 100 }, rewards: { description: "+1 Officer Slot (Total: 9)", stats: {} } },
+
+    41: { projectName: "Station Expansion L41", lore: "Dyson swarm prototypes.", cost: 310000000, requirements: { "graphene_lattices": 1200 }, rewards: { description: "+15% Antimatter Yield", stats: { amYieldMult: 0.15 } } },
+    42: { projectName: "Station Expansion L42", lore: "Adaptive hull geometry.", cost: 380000000, requirements: { "plasteel": 4000 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
+    43: { projectName: "Station Expansion L43", lore: "Inter-system gate.", cost: 460000000, requirements: { "propellant": 3000 }, rewards: { description: "+30% Credit Yield", stats: { creditYieldMult: 0.30 } } },
+    44: { projectName: "Station Expansion L44", lore: "Neural uplink grid.", cost: 550000000, requirements: { "cybernetics": 2000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    45: { projectName: "Directorate Wing Theta", lore: "System control authority.", cost: 650000000, requirements: { "sentient_ai": 50, "cloned_organs": 500 }, rewards: { description: "+1 Officer Slot (Total: 10)", stats: {} } },
+
+    46: { projectName: "Station Expansion L46", lore: "Reality anchor.", cost: 770000000, requirements: { "xeno_geologicals": 200 }, rewards: { description: "-10% Global Entropy", stats: { globalEntropyRed: 0.10 } } },
+    47: { projectName: "Station Expansion L47", lore: "Market manipulation matrix.", cost: 900000000, requirements: { "processors": 2000 }, rewards: { description: "+50% Credit Yield", stats: { creditYieldMult: 0.50 } } },
+    48: { projectName: "Station Expansion L48", lore: "Star-lifting drones.", cost: 1100000000, requirements: { "graphene_lattices": 2000 }, rewards: { description: "+20% Antimatter Yield", stats: { amYieldMult: 0.20 } } },
+    49: { projectName: "Station Expansion L49", lore: "Ascension Spire.", cost: 1350000000, requirements: { "plasteel": 8000 }, rewards: { description: "Maximum Efficiency", stats: { globalEntropyRed: 0.10 } } },
+    50: { 
+        projectName: "The Sol Citadel", 
+        lore: "The ultimate expression of orbital dominance. Sol Station is now the capital of the system.", 
+        cost: 2000000000, 
+        requirements: { "water_ice": 10000, "propellant": 5000, "sentient_ai": 100 }, 
+        rewards: { 
+            description: "+1 Officer Slot (Total: 11), +100% Credit Yield, +50% Antimatter Yield", 
+            stats: { creditYieldMult: 1.0, amYieldMult: 0.50 } 
+        } 
     }
 };
 --- END OF FILE: ./js/data/solProgressionRegistry.js ---
@@ -11767,6 +11896,26 @@ export const OFFICERS = {
         description: "Pushing the reactor beyond safety limits is his specialty.",
         lore: "A mad genius who treats safety regulations as mere suggestions. He can push a reactor to extraordinary outputs, provided the station doesn't shake itself apart in the process.",
         buffs: { entropy: 0.05, creditMult: 0, amMult: 0.30, capacityMods: {}, consumptionMods: {} } // +30% Antimatter, but +5% Decay (Trade-off)
+    },
+
+    // --- TEST OFFICERS (Sol Station V1 Testing) ---
+    "off_test_logistics": {
+        id: "off_test_logistics",
+        name: "Chief Halloway",
+        role: "Logistics",
+        rarity: "common",
+        description: "[TEST] A specialist in hydrological storage solutions.",
+        lore: "Halloway spent twenty years managing water reserves on Ganymede. He brings that same efficient stacking protocol to Sol Station.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "water_ice": 60 }, consumptionMods: {} } // +30% Base Cap (Level 1)
+    },
+    "off_test_engineer": {
+        id: "off_test_engineer",
+        name: "Eng. Vance",
+        role: "Engineering",
+        rarity: "rare",
+        description: "[TEST] An expert in entropy reduction, but expensive to maintain.",
+        lore: "Vance's methods are incredibly effective at stabilizing the station's decay, but his salary requirements eat into the station's bottom line.",
+        buffs: { entropy: -0.10, creditMult: -0.05, amMult: 0, capacityMods: {}, consumptionMods: {} } // -10% Entropy, -5% Credits
     }
 };
 --- END OF FILE: ./js/data/officers.js ---
@@ -18233,7 +18382,7 @@ export class UISolStationControl {
         this.selectedSlotId = null;
         this.lastTapTime = 0;
         
-        // [[NEW]] Memory router to preserve scroll states across views
+        // Memory router to preserve scroll states across views
         this.currentView = null;
         this.scrollMemory = {};
         
@@ -18291,6 +18440,9 @@ export class UISolStationControl {
             this.domCache = null; 
             this._bindLocalListeners(gameState);
             
+            // --- UPDATE THEME DYNAMICALLY ---
+            this._applyLevelTheme(station.level);
+
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
@@ -18310,12 +18462,44 @@ export class UISolStationControl {
                 specialClass: 'sol-station-modal',
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm',
+                customSetup: (modal, closeHandler) => {
+                    // --- FIX: APPLY THEME DIRECTLY TO MODAL CONTAINER ---
+                    this._updateThemeClasses(modal, station.level);
+                }
             });
             setTimeout(() => this._bindLocalListeners(gameState), 50);
         }
         
         this._startRefreshLoop();
         this._restoreScrollPosition();
+    }
+
+    _updateThemeClasses(element, level) {
+        // Remove all potential theme classes first
+        element.classList.remove(
+            'sol-theme-white', 
+            'sol-theme-green', 
+            'sol-theme-blue', 
+            'sol-theme-gold', 
+            'sol-theme-orange', 
+            'sol-theme-red'
+        );
+
+        // Add the correct class
+        if (level < 10) element.classList.add('sol-theme-white');
+        else if (level < 20) element.classList.add('sol-theme-green');
+        else if (level < 30) element.classList.add('sol-theme-blue');
+        else if (level < 40) element.classList.add('sol-theme-gold');
+        else if (level < 50) element.classList.add('sol-theme-orange');
+        else element.classList.add('sol-theme-red');
+    }
+
+    _applyLevelTheme(level) {
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            // FIX: Ensure this always targets the parent container
+            this._updateThemeClasses(modal, level);
+        }
     }
 
     _bindLocalListeners(gameState) {
@@ -18339,6 +18523,8 @@ export class UISolStationControl {
                 this.showOfficerManagement(gameState);
             } else if (action === 'open-engineering') {
                 this.showEngineeringModal(gameState);
+            } else if (action === 'return-dashboard') {
+                this.showDashboard(gameState);
             } else if (action === 'info-officer') {
                 const officerId = btn.dataset.officerId;
                 if (officerId) this.showOfficerDetailModal(officerId, gameState);
@@ -18449,7 +18635,6 @@ export class UISolStationControl {
 
     _buildDomCache(root) {
         this.domCache = {
-            // [[FIXED]] Changed to nth-child div target based on new Health layout structure
             integrityLabel: root.querySelector('.sol-health-bar-label > div:nth-child(2)'),
             integrityBar: root.querySelector('.sol-health-fill'),
             entropyVal: root.querySelector('[data-id="output-entropy"]'),
@@ -18526,15 +18711,22 @@ export class UISolStationControl {
             c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
         }
 
-        if (lr.mode !== station.mode) {
+        if (lr.mode !== station.mode || !lr.hasCheckedLocks) {
+            const unlocked = station.unlockedModes || ["STABILITY"];
             c.modeBtns.forEach(btn => {
                 const mode = btn.dataset.mode;
                 const isActive = mode === station.mode;
-                btn.className = `mode-btn ${mode.toLowerCase()} ${isActive ? 'active' : 'inactive'}`;
-                btn.disabled = isActive;
+                const isLocked = !unlocked.includes(mode);
+                
+                btn.className = `mode-btn ${mode.toLowerCase()} ${isActive ? 'active' : ''}`;
+                btn.disabled = isActive || isLocked;
+                
+                btn.style.opacity = isLocked ? '0.3' : '1';
+                btn.style.cursor = isLocked ? 'not-allowed' : (isActive ? 'default' : 'pointer');
             });
             if (c.modeDesc) c.modeDesc.innerHTML = this._getModeDescription(station.mode);
             lr.mode = station.mode;
+            lr.hasCheckedLocks = true;
         }
 
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
@@ -18617,7 +18809,6 @@ export class UISolStationControl {
             this.animationFrameId = null;
         }
         
-        // Clean up scroll listener to avoid leaks/stale references
         const sc = document.getElementById('event-description');
         if (sc && this._scrollHandler) {
             sc.removeEventListener('scroll', this._scrollHandler);
@@ -18625,8 +18816,6 @@ export class UISolStationControl {
         
         this.domCache = null; 
     }
-
-    // --- PHASE 3: OFFICER MANAGEMENT & DETAILS ---
 
     showOfficerManagement(gameState) {
         this.currentView = 'officers';
@@ -18663,7 +18852,7 @@ export class UISolStationControl {
             <div class="sol-subview-header flex justify-between items-center mb-3">
                 <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container flex gap-2 w-full" style="height: 50vh; min-height: 350px;">
+            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 50vh; min-height: 350px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
                     <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
@@ -18673,13 +18862,17 @@ export class UISolStationControl {
                     <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${slotsHtml}</div>
                 </div>
             </div>
+            
+            <div class="flex justify-center mt-2 border-t border-gray-700 pt-3">
+                <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
+                    &larr; RETURN TO DASHBOARD
+                </button>
+            </div>
         `;
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
-            footerBtn.style.display = ''; // Ensure visible
-            footerBtn.onclick = () => this.showDashboard(gameState);
+            footerBtn.style.display = 'none'; 
         }
 
         const svc = this.uiManager.simulationService.solStationService;
@@ -18696,7 +18889,7 @@ export class UISolStationControl {
             const slotId = row.dataset.slotId;
 
             if (e.target.closest('[data-local-action="info-officer"]')) {
-                return; // Handled by delegator
+                return; 
             }
 
             if (e.target.closest('.btn-inline-assign') || (isDoubleTap && !isAssigned)) {
@@ -18706,10 +18899,12 @@ export class UISolStationControl {
                     this.showOfficerManagement(svc.gameState);
                 }
             } else if (e.target.closest('.btn-inline-remove') || (isDoubleTap && isAssigned)) {
-                const res = svc.assignOfficer(slotId, null);
-                if (res.requiresConfirmation) {
-                    this.showUnslotWarningModal(slotId, officerId, res.payload, svc.gameState);
+                const validation = svc.validateUnslotOfficer(slotId);
+                
+                if (!validation.safe) {
+                    this.showUnslotWarningModal(slotId, officerId, validation, svc.gameState);
                 } else {
+                    svc.assignOfficer(slotId, null);
                     this.showOfficerManagement(svc.gameState);
                 }
             } else {
@@ -18737,10 +18932,8 @@ export class UISolStationControl {
         const actionBtn = isAssigned ? 
             `<button type="button" class="btn-inline-remove bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold py-1 px-2 rounded">REMOVE</button>` : 
             `<button type="button" class="btn-inline-assign bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-2 rounded">ASSIGN</button>`;
-
         const rarityColor = this._getRarityColorClass(officer.rarity);
         
-        // Strip prefix title to ensure short name fits in UI
         const nameParts = officer.name.split(' ');
         const shortName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : officer.name;
 
@@ -18830,7 +19023,7 @@ export class UISolStationControl {
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.style.display = 'none'; // Hide main dismiss button
+            footerBtn.style.display = 'none'; 
         }
 
         this._bindLocalListeners(gameState);
@@ -18848,8 +19041,6 @@ export class UISolStationControl {
             default: return 'text-white';
         }
     }
-
-    // --- PHASE 3: ENGINEERING INTERFACE & WARNINGS ---
 
     showEngineeringModal(gameState) {
         this.currentView = 'engineering';
@@ -18916,7 +19107,11 @@ export class UISolStationControl {
             }
         });
 
-        const rewardsList = nextLevelData.rewards.description.split(', ').map(r => `<li class="ml-4 mb-1 text-blue-200 tracking-wide">${r.trim()}</li>`).join('');
+        const rewardsList = nextLevelData.rewards.description.split(', ').map(r => 
+            `<div class="mb-2 text-gray-300 font-sans tracking-wide border-l-2 border-blue-500 pl-2 py-1 bg-black/30 rounded-r text-sm">
+                ${r.trim()}
+             </div>`
+        ).join('');
 
         const completeBtn = allRequirementsMet 
             ? `<button class="w-full bg-yellow-500 hover:bg-yellow-400 text-black font-bold py-4 rounded text-xl shadow-lg animate-pulse mb-4 tracking-widest" data-local-action="eng-complete-project">COMPLETE PROJECT</button>`
@@ -18930,10 +19125,10 @@ export class UISolStationControl {
                 <div class="text-lg font-bold text-yellow-400 mb-1 tracking-wide">${nextLevelData.projectName}</div>
                 <div class="text-xs text-gray-400 italic mb-3 leading-relaxed border-b border-gray-700 pb-3">"${nextLevelData.lore}"</div>
                 
-                <div class="text-sm font-bold text-blue-300 mb-1"><span class="text-white text-xs bg-blue-900 px-1 rounded mr-2">REWARDS</span></div>
-                <ul class="list-disc text-xs text-gray-300 mb-1 pl-2">
+                <div class="text-sm font-bold text-blue-300 mb-2"><span class="text-white text-xs bg-blue-900 px-1 rounded mr-2">REWARDS</span></div>
+                <div class="flex flex-col gap-1 mb-1">
                     ${rewardsList}
-                </ul>
+                </div>
             </div>
             
             ${completeBtn}
@@ -18941,15 +19136,19 @@ export class UISolStationControl {
             <div class="eng-requirements-list">
                 ${reqsHtml}
             </div>
+            
+            <div class="flex justify-center mt-6 border-t border-gray-700 pt-4">
+                <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
+                    &larr; RETURN TO DASHBOARD
+                </button>
+            </div>
         `;
 
         this._bindLocalListeners(gameState);
 
         const footerBtn = document.querySelector('#event-button-container button');
         if (footerBtn) {
-            footerBtn.innerHTML = '&larr; BACK TO DASHBOARD'; 
-            footerBtn.style.display = '';
-            footerBtn.onclick = () => this.showDashboard(gameState);
+            footerBtn.style.display = 'none'; 
         }
 
         this._restoreScrollPosition();
@@ -18968,7 +19167,7 @@ export class UISolStationControl {
             warningsHtml += `<div class="warning-item text-yellow-400 font-bold mb-2">⚠ WARNING: Capacity reduction will instantly vent and destroy:</div>`;
             ventedKeys.forEach(k => {
                 const commName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                warningsHtml += `<div class="text-sm text-gray-300 ml-4">- ${payload.ventedCargo[k].toLocaleString()} units of ${commName}</div>`;
+                warningsHtml += `<div class="text-sm text-gray-300 ml-4 font-mono text-red-500">- ${payload.ventedCargo[k].toLocaleString()} units of ${commName}</div>`;
             });
         }
 
@@ -18999,8 +19198,6 @@ export class UISolStationControl {
             this.showOfficerManagement(gameState);
         };
     }
-
-    // --- HTML GENERATORS ---
 
     _buildDashboardHtml(gameState) {
         const station = this._getLiveStationState(gameState);
@@ -19051,7 +19248,7 @@ export class UISolStationControl {
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
                 
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-center mb-2">
+                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-center mb-2 font-orbitron font-bold text-xl uppercase tracking-widest transition-colors duration-500">
                     SOL STATION LV. ${station.level}
                 </div>
 
@@ -19109,7 +19306,7 @@ export class UISolStationControl {
                                 data-action="sol-claim-output"
                                 data-type="credits"
                                 style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a;"
-                                ${!hasCredits ? 'disabled' : ''}>
+                                 ${!hasCredits ? 'disabled' : ''}>
                             COLLECT
                         </button>
                     </div>
@@ -19170,7 +19367,6 @@ export class UISolStationControl {
         const typeClass = modeId.toLowerCase(); 
         const isLocked = !unlockedModes.includes(modeId);
         
-        // Removed 🔒 text per feedback
         return `
             <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 
@@ -21821,7 +22017,24 @@ export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
     BASE_DECAY_K: 0.0000021, 
     EFFICIENCY_CLIFF: 0.5, 
-    REAL_TIME_SECONDS_PER_DAY: 120, 
+    REAL_TIME_SECONDS_PER_DAY: 120,
+    
+    // BASELINE COMMODITY CAPACITIES (The Floor)
+    baseCapacity: {
+        [COMMODITY_IDS.WATER_ICE]: 200,
+        [COMMODITY_IDS.PLASTEEL]: 180,
+        [COMMODITY_IDS.HYDROPONICS]: 160,
+        [COMMODITY_IDS.CYBERNETICS]: 140,
+        [COMMODITY_IDS.PROPELLANT]: 120,
+        [COMMODITY_IDS.PROCESSORS]: 100,
+        [COMMODITY_IDS.GRAPHENE_LATTICES]: 80,
+        [COMMODITY_IDS.CRYO_PODS]: 60,
+        [COMMODITY_IDS.ATMO_PROCESSORS]: 40,
+        [COMMODITY_IDS.CLONED_ORGANS]: 20,
+        [COMMODITY_IDS.XENO_GEOLOGICALS]: 10,
+        [COMMODITY_IDS.SENTIENT_AI]: 5
+    },
+
     MODES: {
         STABILITY: { 
             id: 'STABILITY', 
@@ -21871,6 +22084,8 @@ export class SolStationService {
         const station = this.gameState.solStation;
         if (!station || !station.unlocked) return;
 
+        this._syncUnlocksWithLevel(station);
+
         console.group(`[SOL_MATH_DEBUG] catchUpDays`);
         console.log(`Current Day: ${currentDay}`);
 
@@ -21902,6 +22117,12 @@ export class SolStationService {
 
     startLocalLiveLoop() {
         if (this.trackingActive) return;
+        
+        // Ensure state is valid before starting loop
+        if (this.gameState.solStation) {
+            this._syncUnlocksWithLevel(this.gameState.solStation);
+        }
+
         this.trackingActive = true;
         this.lastCommitTime = Date.now();
         this.localTimeAccumulator = 0;
@@ -22009,8 +22230,62 @@ export class SolStationService {
         }
     }
 
+    // --- HELPER: Strict Unlock Sync Logic ---
+    _syncUnlocksWithLevel(station) {
+        if (!station.unlockedModes) station.unlockedModes = ["STABILITY"];
+        
+        const level = station.level || 1;
+
+        // COMMERCE: Level 3+
+        if (level >= 3) {
+            if (!station.unlockedModes.includes("COMMERCE")) station.unlockedModes.push("COMMERCE");
+        } else {
+            // STRICT REMOVAL if level is too low (Fixes legacy saves)
+            station.unlockedModes = station.unlockedModes.filter(m => m !== "COMMERCE");
+            // If active mode was removed, reset to Stability
+            if (station.mode === "COMMERCE") station.mode = "STABILITY";
+        }
+
+        // PRODUCTION: Level 5+
+        if (level >= 5) {
+            if (!station.unlockedModes.includes("PRODUCTION")) station.unlockedModes.push("PRODUCTION");
+        } else {
+            // STRICT REMOVAL
+            station.unlockedModes = station.unlockedModes.filter(m => m !== "PRODUCTION");
+            // If active mode was removed, reset to Stability
+            if (station.mode === "PRODUCTION") station.mode = "STABILITY";
+        }
+    }
+
     _calculateExactState(currentState, dt) {
         const newState = JSON.parse(JSON.stringify(currentState));
+        
+        // --- 1. STRICT SLOT ENFORCEMENT ---
+        // Formula: 1 + floor(level / 5).
+        const currentLevel = newState.level || 1;
+        const targetSlots = 1 + Math.floor(currentLevel / 5);
+        
+        // Cap max slots to prevent UI overflow (e.g. 12 max)
+        const maxAllowed = 12;
+        const slotsToHave = Math.min(targetSlots, maxAllowed);
+
+        // Ensure array is initialized
+        if (!newState.officers) newState.officers = [];
+        
+        // STRICT ALIGNMENT:
+        if (newState.officers.length < slotsToHave) {
+            // Grow: Add slots if level permits
+            while (newState.officers.length < slotsToHave) {
+                newState.officers.push({ 
+                    slotId: newState.officers.length + 1, 
+                    assignedOfficerId: null 
+                });
+            }
+        } else if (newState.officers.length > slotsToHave) {
+            // Shrink: Remove slots if level does NOT permit (fixes legacy saves)
+            newState.officers = newState.officers.slice(0, slotsToHave);
+        }
+
         if (dt <= 0) return newState;
 
         const modeConfig = LEVEL_1_BASELINE.MODES[newState.mode] || LEVEL_1_BASELINE.MODES.STABILITY;
@@ -22029,11 +22304,12 @@ export class SolStationService {
         });
 
         validCaches.forEach(([id, c]) => {
-            // Establish Baseline Max to ensure mathematically sound additive scaling
-            if (typeof c.baseMax === 'undefined') {
-                c.baseMax = c.max > 0 ? c.max : 100;
+            // Establish Baseline Max using LEVEL_1_BASELINE or legacy backup
+            if (!c.baseMax) {
+                c.baseMax = LEVEL_1_BASELINE.baseCapacity[id] || 100;
             }
             
+            // Calculate effective max capacity
             const actualMax = c.baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
             c.max = actualMax;
             
@@ -22126,7 +22402,6 @@ export class SolStationService {
         const commerceYield = LEVEL_1_BASELINE.MODES.COMMERCE.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
         if (commerceYield <= 0) return LEVEL_1_BASELINE.EFFICIENCY_CLIFF;
 
-        // Uses a baseline assumption of an average cache size for the generic threshold metric
         const averageCacheSize = 5000; 
         const threshold = (k_global * averageCacheSize * 45) / (2 * commerceYield);
         
@@ -22213,7 +22488,7 @@ export class SolStationService {
     // --- INTERACTION & DONATION PIPELINES ---
 
     donateToCache(commodityId, quantity) {
-        this._syncTime(); // Automatically updates dynamically calculated maximums
+        this._syncTime(); 
 
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
@@ -22386,14 +22661,10 @@ export class SolStationService {
 
         this.logger.info.player(this.gameState.day, 'STATION_PROJECT', `Contributed ${qtyToTake} ${resourceId} to Project.`);
         
-        // [[MODIFIED]] Decoupled auto-leveling. Now just returns state.
-        // checkProjectCompletion() removed from here.
-        
         this.gameState.setState({});
         return { success: true, message: `Contributed ${qtyToTake} to project.` };
     }
     
-    // [[MODIFIED]] Explicit completion method for UI trigger
     completeActiveProject() {
         const station = this.gameState.solStation;
         const nextLevelData = LEVEL_REGISTRY[station.level + 1];
@@ -22416,21 +22687,17 @@ export class SolStationService {
         station.activeProjectBank = {}; 
         station.level++;
         
-        // Mode unlocking per GDD Thresholds
-        if (!station.unlockedModes) station.unlockedModes = ["STABILITY"];
-        if (station.level >= 3 && !station.unlockedModes.includes("COMMERCE")) {
-            station.unlockedModes.push("COMMERCE");
-        }
-        if (station.level >= 5 && !station.unlockedModes.includes("PRODUCTION")) {
-            station.unlockedModes.push("PRODUCTION");
-        }
+        this._syncUnlocksWithLevel(station);
         
-        // Mathematical slot unlocking (Every 5 levels starting at base 3 slots)
-        if (station.level % 5 === 0) {
-            const maxSlots = 3 + Math.floor(station.level / 5);
-            if (station.officers.length < maxSlots && maxSlots <= 10) {
+        // --- UPDATED SLOT LOGIC (Strict Alignment) ---
+        // Slots = 1 + floor(level/5)
+        const maxSlots = 1 + Math.floor(station.level / 5);
+        const slotsToHave = Math.min(maxSlots, 12);
+        
+        if (station.officers.length < slotsToHave) {
+             while (station.officers.length < slotsToHave) {
                 station.officers.push({ slotId: station.officers.length + 1, assignedOfficerId: null });
-            }
+             }
         }
         
         this.logger.info.system('SolStation', this.gameState.day, 'LEVEL_UP', `Sol Station upgraded to Level ${station.level}!`);
@@ -22470,7 +22737,7 @@ export class SolStationService {
         let isSafe = true;
 
         Object.entries(station.caches).forEach(([id, c]) => {
-            const baseMax = c.baseMax || c.max;
+            const baseMax = c.baseMax || LEVEL_1_BASELINE.baseCapacity[id] || 100;
             const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (newOfficerBuffs.capacityMods[id] || 0);
             
             if (c.current > newMax) {
@@ -22519,7 +22786,7 @@ export class SolStationService {
             const officerBuffs = this._calculateOfficerBuffs(station.officers);
             
             Object.entries(station.caches).forEach(([id, c]) => {
-                const baseMax = c.baseMax || c.max;
+                const baseMax = c.baseMax || LEVEL_1_BASELINE.baseCapacity[id] || 100;
                 const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
                 c.max = newMax;
                 if (c.current > newMax) {
@@ -29320,7 +29587,8 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS } from '../data/constants.js';
+// [[CHANGED]] Added LOCATION_IDS to imports
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
 // --- Screen Renderers ---
@@ -29577,10 +29845,13 @@ export class UIManager {
 
         const dateText = formatGameDateShort(gameState.day);
 
+        // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
+        const dateClass = currentLocationId === LOCATION_IDS.SUN ? 'date-text sol-date-pulse' : 'date-text';
+
         const contextBarHtml = `
             <div class="${containerClass}" style="background: ${theme.gradient}; color: ${theme.textColor};">
                 <span class="location-name-text">${location?.name || 'In Transit'}</span>
-                <span class="date-text">${dateText}</span>
+                <span class="${dateClass}">${dateText}</span>
                 <span class="credit-text ${creditClass}">${creditText}</span>
             </div>`;
 
@@ -29654,7 +29925,16 @@ export class UIManager {
             if (locSpan) locSpan.textContent = location?.name || 'In Transit';
 
             const dateSpan = existingContextBar.querySelector('.date-text');
-            if (dateSpan) dateSpan.textContent = dateText;
+            if (dateSpan) {
+                dateSpan.textContent = dateText;
+                
+                // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
+                if (currentLocationId === LOCATION_IDS.SUN) {
+                    dateSpan.classList.add('sol-date-pulse');
+                } else {
+                    dateSpan.classList.remove('sol-date-pulse');
+                }
+            }
 
             const creditSpan = existingContextBar.querySelector('.credit-text');
             if (creditSpan) {
@@ -34813,6 +35093,14 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [40.00] - 2026-2-18
+-  added glowing date to UI for Sol Station
+-  added progression to sol station 1-50
+-  added level themes to sol station
+-  sol station polish
+-  bug fixe
+-  updated meta files
+
 # [35.69] - 2026-2-18
 -  added sol station level up animation
 -  bug fixes
@@ -36178,12 +36466,13 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "deal-on-demand intel",
       "modular_ship_upgrades",
       "station_quirks",
-      "sol_station_management"
+      "sol_station_management",
+      "fleet_trading"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
   "key_concepts": {
-    "Sol_Station": "The endgame 'Engine'. A sovereign station orbiting the Sun that consumes vast amounts of commodities to generate Antimatter and Credits.",
+    "Sol_Station": "The endgame 'Engine'. A sovereign station orbiting the Sun that features progressive mechanics (Levels 1-50) and consumes vast amounts of commodities to generate Antimatter and Credits.",
     "Entropy_Mode": "The operational state of the Sol Station (Stability, Commerce, Production). Determines the trade-off between resource consumption (Decay) and output generation.",
     "Cache_Decay": "The daily loss of stored commodities at the Sol Station, driven by solar entropy. Must be countered by player donations.",
     "Antimatter": "A Tier 7 commodity generated exclusively by the Sol Station. Used for extreme wealth generation or high-tier crafting.",
@@ -36191,6 +36480,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
     "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
+    "Blockade_Events": "A specific class of dynamic events that restrict access to locations or severely penalize travel routes, altering standard arbitrage pathways.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
     "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
     "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice.",
@@ -36198,19 +36488,24 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
     "Destructive_Replacement": "The mechanic where installing a new upgrade into a full ship requires the permanent destruction (dismantling) of an existing upgrade. The old upgrade provides no refund.",
     "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station.",
-    "Directorate": "The roster of officers assigned to the Sol Station. Each assigned officer provides passive buffs to Entropy reduction, Credit yield, or Antimatter generation.",
+    "Directorate": "The roster of officers assigned to the Sol Station through the engineering interface. Each assigned officer provides passive buffs to Entropy reduction, Credit yield, or Antimatter generation.",
+    "Engineering_Interface": "A subsystem of the Sol Station dashboard allowing players to manage Directorate officers and view systemic upgrades.",
     "Station_Integrity": "The overall health percentage of the Sol Station, calculated as the average fill ratio of all Maintenance Caches. Efficiency drops significantly below 50%.",
-    "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity."
+    "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity.",
+    "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands.",
+    "Convoy_Tax": "An exponentially scaling fuel and credit penalty applied during travel to offset the mechanical advantages of operating massive multi-ship fleets.",
+    "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
+    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states."
   },
   "service_summaries": {
     "SolStationService": {
-      "description": "Manages the logic for the Sol Station endgame engine. Handles daily entropy decay calculations, resource consumption from caches, and the generation of Antimatter/Credits based on the active mode.",
+      "description": "Manages the logic for the Sol Station endgame engine. Handles Level 1-50 progression, deferred universe calculations, and JIT commits.",
       "dependencies": [
         "GameState",
         "Logger"
       ],
       "key_functions": {
-        "processTick": "Calculates daily decay and output generation.",
+        "processTick": "Calculates daily decay and output generation utilizing the deferred state buffer.",
         "setMode": "Switches the station's operating mode (Stability/Commerce/Production).",
         "donateToCache": "Transfers cargo from player ship to station maintenance caches.",
         "calculateEntropy": "Determines the current decay multiplier."
@@ -36309,7 +36604,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "GameAttributes"
       ],
       "key_functions": {
-        "buyItem": "Handles the logic for purchasing a commodity.",
+        "buyItem": "Handles the logic for purchasing a commodity, applying fleet cost averaging logic across the ships.",
         "sellItem": "Handles the logic for selling a commodity.",
         "validateBuyShip": "Validates if a ship purchase is possible.",
         "executeBuyShip": "Executes the state changes for purchasing a ship.",
@@ -36352,7 +36647,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       ],
       "key_functions": {
         "travelTo": "Validates and begins travel to a new location.",
-        "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
+        "initiateTravel": "Executes the core travel logic, assessing Convoy Taxes, consuming fuel, and applying events.",
         "resumeTravel": "Continues a pending travel action after an event."
       },
       "mutates_state": [
@@ -36535,7 +36830,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       }
     },
     "UISolStationControl": {
-      "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, and Officer Directorate UI.",
+      "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, Officer Directorate UI, and Engineering Interface.",
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "showDashboard": "Builds and displays the main Sol Station Dashboard modal.",
@@ -37296,7 +37591,7 @@ PlayerActionService (F034)
 
 Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
 
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs.
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs. Now orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
 
 Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
 
@@ -37310,281 +37605,12 @@ Dependencies: None.
 
 TravelService (F036)
 
-Responsibility: Manages the travel loop. Calculates fuel/time costs, triggers random events.
+Responsibility: Manages the travel loop. Calculates fuel/time costs, applies Convoy Taxes, and triggers random events.
 
 Key Behavior:
 * Uses GameState.TRAVEL_DATA for distances.
-* Pauses travel for event resolution.
-* Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
-* **Consumable Logic:** Handles the consumption of "Folded Space Drives" to execute instant travel (0 days, 0 fuel) via the `useFoldedDrive` argument.
-
-Dependencies: GameState, TimeService, RandomEventService.
-
-MarketService (F010)
-
-Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
-
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Triggers asset hydration when new ships are spawned in shipyards.
-
-Dependencies: GameState, IntelService, AssetService.
-
-IntelService (F057)
-
-Responsibility: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
-
-Key Behavior: Creates temporary activeIntelDeal objects in GameState that override market prices.
-
-Dependencies: GameState.
-
-TimeService (F035)
-
-Responsibility: Advances the calendar and manages long-term progression.
-
-Key Behavior:
-
-Triggers daily/weekly simulation ticks (Market, News).
-
-Manages the "3-Era Age Engine", applying procedural stat bonuses and world modifiers based on player age.
-
-Checks for debt interest, Intel expiration, and loan garnishment.
-
-Dependencies: GameState, MarketService.
-
-MissionService (F018)
-
-Responsibility: procedural mission generation and tracking.
-
-Key Behavior: Checks prerequisites (wealth, location) to offer missions. Tracks completion status.
-
-Dependencies: GameState.
-
-TutorialService (F016)
-
-Responsibility: Manages the state and flow of interactive tutorials (Logic Layer).
-
-Key Behavior:
-
-Checks game state/actions against triggers defined in tutorials.js.
-
-Manages activeBatchId and activeStepId.
-
-Enforces navLock in the GameState to restrict player movement during critical lessons.
-
-Delegates visual rendering to UIManager -> UITutorialManager.
-
-Dependencies: GameState, UIManager, SimulationService, js/data/tutorials.js.
-
-3. Event System Services (Event 2.0)
-RandomEventService
-
-Responsibility: The high-level coordinator for the random event system. Determines if an event occurs and which event is selected.
-
-Key Behavior: Filters the RANDOM_EVENTS registry based on current context (location, tags) and relative weights. Passes the selected event to the UI for display.
-
-Dependencies: GameState, ConditionEvaluator.
-
-ConditionEvaluator
-
-Responsibility: A stateless utility service that validates requirements.
-
-Key Behavior: Parses the requirements array of an event or choice (e.g., "Has Item: Water Ice > 5", "Has Perk: Navigator"). Returns true or false based on the current GameState.
-
-Dependencies: GameState (Read-only).
-
-OutcomeResolver
-
-Responsibility: Handles the logic of the player's choice.
-
-Key Behavior: Processes the resolution block of a selected choice. Determines the final outcome using Deterministic logic or Weighted RNG. Passes the result to eventEffectResolver for application.
-
-Dependencies: GameState, eventEffectResolver.
-
-DynamicValueResolver
-
-Responsibility: Calculates dynamic integer values for event effects based on game state context.
-
-Key Behavior: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties.
-
-Dependencies: GameState (Read-only), DB.
-
-eventEffectResolver
-
-Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome.
-
-Key Behavior: Routes effect types (e.g., MODIFY_FUEL, REMOVE_ITEM) to specific handler functions. Mutates GameState or pendingTravel accordingly. Pure state mutation only; does not handle game-over consequences.
-
-Dependencies: GameState, SimulationService, DynamicValueResolver.
-
-4. UI & Presentation Services
-UIManager (F017) [FACADE]
-
-Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers. Handles the main render loop and navigation bars.
-
-Key Behavior: Proxies requests from external services (like ActionClickHandler) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
-
-Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
-
-Controllers (Delegates):
-
-UIModalEngine: Manages the modal queue, priority processing, and dismissal logic.
-
-UITutorialManager: Manages the "Presentation Layer" of tutorials. Handles Popper.js instantiation, positioning of toast elements relative to targets, and rendering of SVG highlight overlays.
-
-UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
-
-UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel interactions.
-
-UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-
-UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
-
-UISolStationControl: Manages the Sol Station Dashboard, operational mode switching, cache grids, and the in-modal Officer Roster sub-view.
-
-IntelMarketRenderer (F058)
-
-Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content (Called by UIMissionControl).
-
-Dependencies: IntelService.
-
-NewsTickerService (F053)
-
-Responsibility: Manages the scrolling text bar content.
-
-Key Behavior: Implements V2 logic with dynamic message types (SYSTEM, INTEL, FLAVOR, ALERT, STORY, STATUS) and live data injection.
-
-Dependencies: GameState.
-
-AssetService (F065)
-
-Responsibility: Centralized path resolution and "Hydration" for visual assets.
-
-Dependencies: AssetStorageService, assets_config.js.
-
-AssetStorageService (F070)
-
-Responsibility: Low-level IndexedDB wrapper.
-
-Key Behavior: Manages the OrbitalAssetsDB. Stores raw Blob data to prevent iOS cache eviction.
-
-Dependencies: None (Native IndexedDB API).
-
-TravelAnimationService.js
-
-Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
-
-Dependencies: DB (Travel Visuals).
-
-5. Input & Event Handling
-EventManager (F015): The root listener. Binds global click/touch events.
-
-ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation and Travel initiation (including Consumable flags).
-
-HoldEventHandler (F041): Manages "press-and-hold" for Refuel/Repair using Pointer Events.
-
-CarouselEventHandler (F042): Manages swipe/drag for the Hangar.
-
-MarketEventHandler (F040): Manages the buy/sell sliders on market cards.
-
-TooltipHandler (F043): Manages hover states and popups for graphs and attribute pills.
-
-Effects
-EffectsManager.js: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
-
-BaseEffect.js: The abstract base class for all visual effects.
-
-Debug & Automation
-DebugService.js: Manages the debug panel (lil-gui), synchronizing its UI controls with the GameState and providing cheat/test functionalities. Triggers asset hydration for debug actions.
-
-bot/AutomatedPlayerService.js: Contains the AutomatedPlayer class, a state-machine-driven bot designed to stress-test the economy. It mimics a human player by directly calling service methods, bypassing the input layer.
-
-Static Data Files (js/data/)
-database.js: Aggregates and exports static game data imported from other modules.
-
-ship_database.js: Defines the static data for all player-tradable ships.
-
-assets_config.js: Defines configuration for ship asset variants.
-
-constants.js: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
-
-items.js: Defines the registry of Consumable Items (e.g., Folded Space Drives).
-
-age_events.js: Defines static data for narrative events triggered by game progression.
-
-events.js: (Facade) Aggregates all event categories into the master RANDOM_EVENTS registry.
-
-events_traffic.js: Encounters & Distress signals.
-
-events_entropy.js: System failures & maintenance issues.
-
-events_hazards.js: Environmental threats (Solar flares, Asteroids).
-
-events_bureaucracy.js: Customs, fines, and inspections.
-
-events_logistics.js: Cargo spoilage & storage issues.
-
-events_salvage.js: Derelict recovery & looting.
-
-events_opportunity.js: Trade deals & windfalls.
-
-events_story.js: Unique narrative encounters.
-
-missions.js: Defines static data for all player missions.
-
-tutorials.js: Defines static data for all tutorial batches and steps.
-
-flavorAds.js: Defines static, location-specific flavor text ads for the news ticker.
-
-intelMessages.js: Defines message templates for free and purchased market intel.
-
-intelContent.js: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
-
-eulaContent.js: Defines the static HTML content for the EULA modal.
-
-lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_REGISTRY.
-
-lore/lore_broadstrokes.js: Defines the base lore content.
-
-officers.js: Defines the registry of Sol Station Directorate officers and their buff stats.{
-type: file_update,
-fileName: meta/SERVICES.md,
-fullContent:
-Service Responsibility & Dependency Matrix
-Core Architecture
-SimulationService acts as the central Facade. It is the only service that the EventManager talks to directly for complex game actions. It coordinates the specialized services below and acts as the bridge for the Event System 2.0, handling Debug Event injection and high-level resolution orchestration.
-
-1. State Management
-GameState (F009)
-
-Responsibility: Single source of truth. Holds all mutable data (player, market, day, ships).
-
-Key Behavior: Emits notifications to subscribers (UIManager) whenever setState is called.
-
-Dependencies: None (Leaf node).
-
-2. Game Logic Services
-PlayerActionService (F034)
-
-Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
-
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs.
-
-Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
-
-GameAttributes (F069)
-
-Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
-
-Key Behavior: Provides definition objects for Upgrade IDs. Distinguishes between MOD_FUEL_BURN (Travel) and MOD_FUEL_PRICE (Station).
-
-Dependencies: None.
-
-TravelService (F036)
-
-Responsibility: Manages the travel loop. Calculates fuel/time costs, triggers random events.
-
-Key Behavior:
-* Uses GameState.TRAVEL_DATA for distances.
-* Pauses travel for event resolution.
+* Calculates and deducts the 'Convoy Tax' resource scaling based on active fleet size.
+* Pauses travel for event resolution, including Blockade events.
 * Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
 * **Consumable Logic:** Handles the consumption of "Folded Space Drives" to execute instant travel (0 days, 0 fuel) via the `useFoldedDrive` argument.
 
@@ -37646,6 +37672,17 @@ Enforces navLock in the GameState to restrict player movement during critical le
 Delegates visual rendering to UIManager -> UITutorialManager.
 
 Dependencies: GameState, UIManager, SimulationService, js/data/tutorials.js.
+
+SolStationService (F098)
+
+Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
+
+Key Behavior:
+* Manages progression from Level 1-50.
+* Implements deferred universe calculations and view-model interpolation to handle rapid ticking without layout thrashing.
+* Executes Just-In-Time (JIT) commits to accurately flush deferred state variables into the persistent GameState.
+
+Dependencies: GameState, Logger.
 
 3. Event System Services (Event 2.0)
 RandomEventService
@@ -37711,7 +37748,7 @@ UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Install
 
 UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
 
-UISolStationControl: Manages the Sol Station Dashboard, operational mode switching, cache grids, and the in-modal Officer Roster sub-view.
+UISolStationControl: Manages the Sol Station Dashboard, operational mode switching, cache grids, the in-modal Officer Roster sub-view, the Engineering Interface, and level-up animations.
 
 IntelMarketRenderer (F058)
 
@@ -37750,7 +37787,7 @@ Dependencies: DB (Travel Visuals).
 5. Input & Event Handling
 EventManager (F015): The root listener. Binds global click/touch events.
 
-ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation and Travel initiation (including Consumable flags).
+ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation, ship cycling interactions on the services screen, and Travel initiation (including Consumable flags).
 
 HoldEventHandler (F041): Manages "press-and-hold" for Refuel/Repair using Pointer Events.
 
@@ -37818,7 +37855,6 @@ lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_
 lore/lore_broadstrokes.js: Defines the base lore content.
 
 officers.js: Defines the registry of Sol Station Directorate officers and their buff stats.
-}
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -38426,6 +38462,36 @@ Consequences:
 * **Pro:** Prevents "Speed" from acting as the ultimate armor stat.
 * **Pro:** Imbues "Time" with tangible, punitive weight, turning random event delays into real economic threats.
 * **Pro:** Creates a balanced risk/reward framework where flying faster directly correlates with higher maintenance costs.
+
+ADR-029: Deferred Simulation Logic & JIT Commits (Sol Station)
+Status: Accepted (2026-02-18)
+
+Context: Sol Station involves high-frequency calculations (Levels 1-50, rapid entropy ticking, view-model synchronization). Directly mutating the state and triggering UI re-renders on every simulation tick caused massive layout thrashing and performance degradation on mobile targets.
+
+Decision: Implemented a deferred state architecture using View-Model Interpolation and Just-In-Time (JIT) Commits.
+* The simulation now buffers entropy decay and resource yields internally without immediately forcing a global `GameState` flush.
+* Visual updates are interpolated by the view-model to maintain smooth UI.
+* State writes only occur JIT when strictly necessary (e.g., when the user leaves the screen or interacts).
+
+Consequences:
+* **Pro:** Drastically improves frame rate and performance by decoupling background math from the DOM render cycle.
+* **Pro:** Allows the station to process complex multi-variable equations smoothly.
+* **Con:** Adds complexity to state tracking, as UI must interpolate visual progress before the true state is officially committed.
+
+ADR-030: Fleet Management & The "Convoy Tax"
+Status: Accepted (2026-02-18)
+
+Context: The game originally restricted players to a single active ship. Transitioning to a fleet model required balancing the massive cargo and profit potential of multi-ship trading to prevent the economy from breaking and maintain the risk/reward structure.
+
+Decision: Implemented Fleet Trading and Storage with an associated "Convoy Tax".
+* Players can now retain multiple ships in a `fleet` and cycle through them on the Services screen.
+* Cargo values are aggregated using dynamic fleet cost averaging.
+* A "Convoy Tax" is assessed during travel, dynamically increasing resource burn based on the total number of ships traversing the route.
+
+Consequences:
+* **Pro:** Expands player progression, allowing for specialized ship collections and massive late-game arbitrage.
+* **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource/credit costs based on fleet size during travel, making massive fleets high-risk/high-reward.
+* **Pro:** Dynamic fleet cost averaging integrates smoothly into the existing inventory profit displays.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -38627,9 +38693,9 @@ Separation of instant logic calculation, fuel/stranding checks, and delayed visu
 graph TD
     subgraph Initiation
         A[Launch Click] --> B[TravelService.initiateTravel];
-        B --> C{Sufficient Fuel for Base + Events?};
+        B --> C{Sufficient Fuel for Base + Events + Convoy Tax?};
         C -- No --> D[Stranding Protocol: Fuel=0, Add Time, Abort];
-        C -- Yes --> E[Deduct Resources, Apply Damage & Roll Events];
+        C -- Yes --> E[Deduct Resources & Tax, Apply Damage & Roll Events];
     end
 
     subgraph Visualization
@@ -38761,6 +38827,47 @@ graph TD
     subgraph Resolution
         J & K --> L[Execute Travel (Anim + State)];
     end
+
+2.13 Sol Station Deferred Simulation (JIT Commits)
+Flow for managing high-frequency logic calculations securely and smoothly.
+
+graph TD
+    subgraph Engine Tick
+        A[TimeService/SolStationService Ticks] --> B[Compute Entropy & Resource Generation];
+    end
+
+    subgraph Deferred State Loop
+        B --> C[Buffer Values in DeferredState];
+        C --> D[Interpolate Data for UI];
+        D --> E[Render View-Model using Interpolated Values];
+    end
+
+    subgraph Commit Phase
+        E --> F{User navigates away or confirms action?};
+        F -- Yes --> G[Execute JIT Commit];
+        G --> H[Flush Deferred Data into GameState];
+        H --> I[Perform standard render cycle];
+    end
+
+2.14 Fleet Management Flow
+Process for handling multi-ship arrays during arbitrage and travel.
+
+graph TD
+    subgraph Core
+        A[Player Triggers Cargo Transaction] --> B[PlayerActionService Evaluates Cost];
+    end
+    
+    subgraph Aggregation
+        B --> C[Compile capacities across Fleet];
+        C --> D[Dynamically Calculate Fleet Cost Averaging];
+        D --> E[Complete Transaction and Update Average Values];
+    end
+    
+    subgraph Travel Assessment
+        E --> F[Player Clicks Launch];
+        F --> G[TravelService counts active Ships in Fleet];
+        G --> H[Assess Scaling Convoy Tax against resources];
+    end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
@@ -38796,6 +38903,8 @@ This object buffers data during the async travel/event loop.
 * `travelTimeAddPercent`: Percentage modifier for trip duration.
 * `eventHullDamagePercent`: Accumulated hull damage from event outcomes.
 * `setTravelTime`: Hard override for travel duration (if > 0).
+* `convoyTaxDeduction`: Amount of resources/credits deducted due to fleet size during travel.
+* `blockadeActive`: Boolean flag indicating an active blockade event affecting the travel route or destination access.
 
 ---
 
@@ -38831,9 +38940,10 @@ Contains all progression, assets, and statistics for the user.
 |   `repair` | Number | Count of free hull repairs available. |
 | `activeShipId` | String | ID of the currently piloted ship. |
 | `ownedShipIds` | Array<String> | List of all ship IDs owned by the player. |
+| `fleet` | Object | Map of stored `shipId`s to their status, docked location, and specific cargo configurations. |
 | `officerRoster` | Array<String> | List of recruited officer IDs. |
 | `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[] }`. |
-| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. |
+| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
 | `unlockedLicenseIds` | Array<String> | List of trade licenses owned. |
 | `unlockedLocationIds` | Array<String> | List of locations visited/unlocked. |
 | `seenEvents` | Array<String> | List of unique Event IDs already triggered. |
@@ -38872,6 +38982,7 @@ Ephemeral data used to persist UI context across re-renders.
 | `hangarShipyardToggleState` | String | 'hangar' or 'shipyard'. |
 | `hangarActiveIndex` | Number | Index of the currently viewed ship in the carousel. |
 | `shipyardActiveIndex` | Number | Index of the currently viewed ship in the shipyard. |
+| `activeFleetIndex` | Number | Index tracking the currently selected ship within the player's stored fleet on the services screen. |
 | `activeIntelTab` | String | ID of the active Intel tab ('intel-codex-content' vs 'market'). |
 | `servicesTab` | String | ID of the active Services sub-tab ('supply' vs 'tuning'). |
 | `activeMissionTab` | String | ID of the active Mission tab ('terminal' vs 'log'). |
@@ -38922,8 +39033,10 @@ Manages the Endgame Engine mechanics.
 | `mode` | String | Current mode: 'STABILITY', 'COMMERCE', 'PRODUCTION'. |
 | `health` | Number | Aggregate health (0-100) based on cache fill %. |
 | `caches` | Object | Map of `tierX` -> `{ current, max }` for Tier 1-6. |
+| `engineering` | Object | State data for the engineering interface, including active systemic upgrades and layout configurations. |
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
+| `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed entropy and yields before JIT commits. |
 
 ---
 

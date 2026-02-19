@@ -11,12 +11,13 @@
       "deal-on-demand intel",
       "modular_ship_upgrades",
       "station_quirks",
-      "sol_station_management"
+      "sol_station_management",
+      "fleet_trading"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
   "key_concepts": {
-    "Sol_Station": "The endgame 'Engine'. A sovereign station orbiting the Sun that consumes vast amounts of commodities to generate Antimatter and Credits.",
+    "Sol_Station": "The endgame 'Engine'. A sovereign station orbiting the Sun that features progressive mechanics (Levels 1-50) and consumes vast amounts of commodities to generate Antimatter and Credits.",
     "Entropy_Mode": "The operational state of the Sol Station (Stability, Commerce, Production). Determines the trade-off between resource consumption (Decay) and output generation.",
     "Cache_Decay": "The daily loss of stored commodities at the Sol Station, driven by solar entropy. Must be countered by player donations.",
     "Antimatter": "A Tier 7 commodity generated exclusively by the Sol Station. Used for extreme wealth generation or high-tier crafting.",
@@ -24,6 +25,7 @@
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
     "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
     "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
+    "Blockade_Events": "A specific class of dynamic events that restrict access to locations or severely penalize travel routes, altering standard arbitrage pathways.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
     "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
     "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice.",
@@ -31,19 +33,24 @@
     "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
     "Destructive_Replacement": "The mechanic where installing a new upgrade into a full ship requires the permanent destruction (dismantling) of an existing upgrade. The old upgrade provides no refund.",
     "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station.",
-    "Directorate": "The roster of officers assigned to the Sol Station. Each assigned officer provides passive buffs to Entropy reduction, Credit yield, or Antimatter generation.",
+    "Directorate": "The roster of officers assigned to the Sol Station through the engineering interface. Each assigned officer provides passive buffs to Entropy reduction, Credit yield, or Antimatter generation.",
+    "Engineering_Interface": "A subsystem of the Sol Station dashboard allowing players to manage Directorate officers and view systemic upgrades.",
     "Station_Integrity": "The overall health percentage of the Sol Station, calculated as the average fill ratio of all Maintenance Caches. Efficiency drops significantly below 50%.",
-    "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity."
+    "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity.",
+    "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands.",
+    "Convoy_Tax": "An exponentially scaling fuel and credit penalty applied during travel to offset the mechanical advantages of operating massive multi-ship fleets.",
+    "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
+    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states."
   },
   "service_summaries": {
     "SolStationService": {
-      "description": "Manages the logic for the Sol Station endgame engine. Handles daily entropy decay calculations, resource consumption from caches, and the generation of Antimatter/Credits based on the active mode.",
+      "description": "Manages the logic for the Sol Station endgame engine. Handles Level 1-50 progression, deferred universe calculations, and JIT commits.",
       "dependencies": [
         "GameState",
         "Logger"
       ],
       "key_functions": {
-        "processTick": "Calculates daily decay and output generation.",
+        "processTick": "Calculates daily decay and output generation utilizing the deferred state buffer.",
         "setMode": "Switches the station's operating mode (Stability/Commerce/Production).",
         "donateToCache": "Transfers cargo from player ship to station maintenance caches.",
         "calculateEntropy": "Determines the current decay multiplier."
@@ -142,7 +149,7 @@
         "GameAttributes"
       ],
       "key_functions": {
-        "buyItem": "Handles the logic for purchasing a commodity.",
+        "buyItem": "Handles the logic for purchasing a commodity, applying fleet cost averaging logic across the ships.",
         "sellItem": "Handles the logic for selling a commodity.",
         "validateBuyShip": "Validates if a ship purchase is possible.",
         "executeBuyShip": "Executes the state changes for purchasing a ship.",
@@ -185,7 +192,7 @@
       ],
       "key_functions": {
         "travelTo": "Validates and begins travel to a new location.",
-        "initiateTravel": "Executes the core travel logic, consuming fuel and time.",
+        "initiateTravel": "Executes the core travel logic, assessing Convoy Taxes, consuming fuel, and applying events.",
         "resumeTravel": "Continues a pending travel action after an event."
       },
       "mutates_state": [
@@ -368,7 +375,7 @@
       }
     },
     "UISolStationControl": {
-      "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, and Officer Directorate UI.",
+      "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, Officer Directorate UI, and Engineering Interface.",
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "showDashboard": "Builds and displays the main Sol Station Dashboard modal.",

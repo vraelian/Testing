@@ -149,7 +149,7 @@ export function renderServicesScreen(gameState, simulationService) {
                             <svg class="absolute inset-0 w-full h-full opacity-80" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-width="4">
                                 <polygon points="50 3, 93 25, 93 75, 50 97, 7 75, 7 25" stroke="#fcd34d" stroke-width="3" fill="rgba(0,0,0,0.4)"/>
                             </svg>
-                            <span id="lbl-sol-level-indicator" class="font-orbitron font-bold text-2xl z-10 ${levelClass}" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8);">
+                            <span id="lbl-sol-level-indicator" class="font-orbitron font-bold text-2xl z-10 ${levelClass}">
                                 ${stationLevel}
                             </span>
                         </div>

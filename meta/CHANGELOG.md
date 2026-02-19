@@ -7,7 +7,8 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  added progression to sol station 1-50
 -  added level themes to sol station
 -  sol station polish
--  bug fixes 
+-  bug fixe
+-  updated meta files
 
 # [35.69] - 2026-2-18
 -  added sol station level up animation

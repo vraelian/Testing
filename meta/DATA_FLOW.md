@@ -196,9 +196,9 @@ Separation of instant logic calculation, fuel/stranding checks, and delayed visu
 graph TD
     subgraph Initiation
         A[Launch Click] --> B[TravelService.initiateTravel];
-        B --> C{Sufficient Fuel for Base + Events?};
+        B --> C{Sufficient Fuel for Base + Events + Convoy Tax?};
         C -- No --> D[Stranding Protocol: Fuel=0, Add Time, Abort];
-        C -- Yes --> E[Deduct Resources, Apply Damage & Roll Events];
+        C -- Yes --> E[Deduct Resources & Tax, Apply Damage & Roll Events];
     end
 
     subgraph Visualization
@@ -329,4 +329,45 @@ graph TD
     
     subgraph Resolution
         J & K --> L[Execute Travel (Anim + State)];
+    end
+
+2.13 Sol Station Deferred Simulation (JIT Commits)
+Flow for managing high-frequency logic calculations securely and smoothly.
+
+graph TD
+    subgraph Engine Tick
+        A[TimeService/SolStationService Ticks] --> B[Compute Entropy & Resource Generation];
+    end
+
+    subgraph Deferred State Loop
+        B --> C[Buffer Values in DeferredState];
+        C --> D[Interpolate Data for UI];
+        D --> E[Render View-Model using Interpolated Values];
+    end
+
+    subgraph Commit Phase
+        E --> F{User navigates away or confirms action?};
+        F -- Yes --> G[Execute JIT Commit];
+        G --> H[Flush Deferred Data into GameState];
+        H --> I[Perform standard render cycle];
+    end
+
+2.14 Fleet Management Flow
+Process for handling multi-ship arrays during arbitrage and travel.
+
+graph TD
+    subgraph Core
+        A[Player Triggers Cargo Transaction] --> B[PlayerActionService Evaluates Cost];
+    end
+    
+    subgraph Aggregation
+        B --> C[Compile capacities across Fleet];
+        C --> D[Dynamically Calculate Fleet Cost Averaging];
+        D --> E[Complete Transaction and Update Average Values];
+    end
+    
+    subgraph Travel Assessment
+        E --> F[Player Clicks Launch];
+        F --> G[TravelService counts active Ships in Fleet];
+        G --> H[Assess Scaling Convoy Tax against resources];
     end
