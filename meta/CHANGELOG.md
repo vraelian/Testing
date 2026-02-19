@@ -2,8 +2,12 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [35.70] - 2026-2-18
--  added glowing date to UI for Sol Station 
+# [40.00] - 2026-2-18
+-  added glowing date to UI for Sol Station
+-  added progression to sol station 1-50
+-  added level themes to sol station
+-  sol station polish
+-  bug fixes 
 
 # [35.69] - 2026-2-18
 -  added sol station level up animation
