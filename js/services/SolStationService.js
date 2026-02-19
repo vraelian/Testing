@@ -76,6 +76,8 @@ export class SolStationService {
         const station = this.gameState.solStation;
         if (!station || !station.unlocked) return;
 
+        this._syncUnlocksWithLevel(station);
+
         console.group(`[SOL_MATH_DEBUG] catchUpDays`);
         console.log(`Current Day: ${currentDay}`);
 
@@ -107,6 +109,12 @@ export class SolStationService {
 
     startLocalLiveLoop() {
         if (this.trackingActive) return;
+        
+        // Ensure state is valid before starting loop
+        if (this.gameState.solStation) {
+            this._syncUnlocksWithLevel(this.gameState.solStation);
+        }
+
         this.trackingActive = true;
         this.lastCommitTime = Date.now();
         this.localTimeAccumulator = 0;
@@ -214,16 +222,42 @@ export class SolStationService {
         }
     }
 
+    // --- HELPER: Strict Unlock Sync Logic ---
+    _syncUnlocksWithLevel(station) {
+        if (!station.unlockedModes) station.unlockedModes = ["STABILITY"];
+        
+        const level = station.level || 1;
+
+        // COMMERCE: Level 3+
+        if (level >= 3) {
+            if (!station.unlockedModes.includes("COMMERCE")) station.unlockedModes.push("COMMERCE");
+        } else {
+            // STRICT REMOVAL if level is too low (Fixes legacy saves)
+            station.unlockedModes = station.unlockedModes.filter(m => m !== "COMMERCE");
+            // If active mode was removed, reset to Stability
+            if (station.mode === "COMMERCE") station.mode = "STABILITY";
+        }
+
+        // PRODUCTION: Level 5+
+        if (level >= 5) {
+            if (!station.unlockedModes.includes("PRODUCTION")) station.unlockedModes.push("PRODUCTION");
+        } else {
+            // STRICT REMOVAL
+            station.unlockedModes = station.unlockedModes.filter(m => m !== "PRODUCTION");
+            // If active mode was removed, reset to Stability
+            if (station.mode === "PRODUCTION") station.mode = "STABILITY";
+        }
+    }
+
     _calculateExactState(currentState, dt) {
         const newState = JSON.parse(JSON.stringify(currentState));
         
         // --- 1. STRICT SLOT ENFORCEMENT ---
         // Formula: 1 + floor(level / 5).
-        // Lv 1-4: 1 Slot. Lv 5-9: 2 Slots. Lv 10-14: 3 Slots.
         const currentLevel = newState.level || 1;
         const targetSlots = 1 + Math.floor(currentLevel / 5);
         
-        // Cap max slots to prevent UI overflow (e.g. 11 max at lvl 50)
+        // Cap max slots to prevent UI overflow (e.g. 12 max)
         const maxAllowed = 12;
         const slotsToHave = Math.min(targetSlots, maxAllowed);
 
@@ -241,7 +275,6 @@ export class SolStationService {
             }
         } else if (newState.officers.length > slotsToHave) {
             // Shrink: Remove slots if level does NOT permit (fixes legacy saves)
-            // Warning: This destroys assignments in higher slots.
             newState.officers = newState.officers.slice(0, slotsToHave);
         }
 
@@ -361,7 +394,6 @@ export class SolStationService {
         const commerceYield = LEVEL_1_BASELINE.MODES.COMMERCE.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
         if (commerceYield <= 0) return LEVEL_1_BASELINE.EFFICIENCY_CLIFF;
 
-        // Uses a baseline assumption of an average cache size for the generic threshold metric
         const averageCacheSize = 5000; 
         const threshold = (k_global * averageCacheSize * 45) / (2 * commerceYield);
         
@@ -448,7 +480,7 @@ export class SolStationService {
     // --- INTERACTION & DONATION PIPELINES ---
 
     donateToCache(commodityId, quantity) {
-        this._syncTime(); // Automatically updates dynamically calculated maximums
+        this._syncTime(); 
 
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
@@ -647,14 +679,7 @@ export class SolStationService {
         station.activeProjectBank = {}; 
         station.level++;
         
-        // Mode unlocking per GDD Thresholds
-        if (!station.unlockedModes) station.unlockedModes = ["STABILITY"];
-        if (station.level >= 3 && !station.unlockedModes.includes("COMMERCE")) {
-            station.unlockedModes.push("COMMERCE");
-        }
-        if (station.level >= 5 && !station.unlockedModes.includes("PRODUCTION")) {
-            station.unlockedModes.push("PRODUCTION");
-        }
+        this._syncUnlocksWithLevel(station);
         
         // --- UPDATED SLOT LOGIC (Strict Alignment) ---
         // Slots = 1 + floor(level/5)

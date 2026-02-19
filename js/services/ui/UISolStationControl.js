@@ -19,7 +19,7 @@ export class UISolStationControl {
         this.selectedSlotId = null;
         this.lastTapTime = 0;
         
-        // [[NEW]] Memory router to preserve scroll states across views
+        // Memory router to preserve scroll states across views
         this.currentView = null;
         this.scrollMemory = {};
         
@@ -101,8 +101,10 @@ export class UISolStationControl {
                 buttonClass: 'btn-dismiss-sm',
                 customSetup: (modal, closeHandler) => {
                     // --- APPLY INITIAL THEME ---
-                    // FIX: Apply theme to the Modal Container itself to match CSS selectors
-                    this._updateThemeClasses(modal, station.level);
+                    const content = modal.querySelector('.modal-content');
+                    if (content) {
+                        this._updateThemeClasses(content, station.level);
+                    }
                 }
             });
             setTimeout(() => this._bindLocalListeners(gameState), 50);
@@ -135,8 +137,10 @@ export class UISolStationControl {
     _applyLevelTheme(level) {
         const modal = document.getElementById('event-modal');
         if (modal) {
-            // FIX: Apply to the top-level container to match CSS selectors
-            this._updateThemeClasses(modal, level);
+            const content = modal.querySelector('.modal-content');
+            if (content) {
+                this._updateThemeClasses(content, level);
+            }
         }
     }
 
@@ -161,8 +165,6 @@ export class UISolStationControl {
                 this.showOfficerManagement(gameState);
             } else if (action === 'open-engineering') {
                 this.showEngineeringModal(gameState);
-            } else if (action === 'return-dashboard') {
-                this.showDashboard(gameState);
             } else if (action === 'info-officer') {
                 const officerId = btn.dataset.officerId;
                 if (officerId) this.showOfficerDetailModal(officerId, gameState);
@@ -273,7 +275,6 @@ export class UISolStationControl {
 
     _buildDomCache(root) {
         this.domCache = {
-            // [[FIXED]] Changed to nth-child div target based on new Health layout structure
             integrityLabel: root.querySelector('.sol-health-bar-label > div:nth-child(2)'),
             integrityBar: root.querySelector('.sol-health-fill'),
             entropyVal: root.querySelector('[data-id="output-entropy"]'),
@@ -350,15 +351,27 @@ export class UISolStationControl {
             c.credCollectBtn.style.opacity = creds > 0 ? '1' : '0.5';
         }
 
-        if (lr.mode !== station.mode) {
+        // --- FIXED: Ensure we check UNLOCKED status during update loop ---
+        // Previously, this loop would re-enable locked buttons if they weren't active
+        if (lr.mode !== station.mode || !lr.hasCheckedLocks) {
+            const unlocked = station.unlockedModes || ["STABILITY"];
             c.modeBtns.forEach(btn => {
                 const mode = btn.dataset.mode;
                 const isActive = mode === station.mode;
-                btn.className = `mode-btn ${mode.toLowerCase()} ${isActive ? 'active' : 'inactive'}`;
-                btn.disabled = isActive;
+                const isLocked = !unlocked.includes(mode);
+                
+                btn.className = `mode-btn ${mode.toLowerCase()} ${isActive ? 'active' : ''}`;
+                
+                // Button is disabled if it's the active mode OR if it's locked
+                btn.disabled = isActive || isLocked;
+                
+                // Strict visual enforcement for locked state
+                btn.style.opacity = isLocked ? '0.3' : '1';
+                btn.style.cursor = isLocked ? 'not-allowed' : (isActive ? 'default' : 'pointer');
             });
             if (c.modeDesc) c.modeDesc.innerHTML = this._getModeDescription(station.mode);
             lr.mode = station.mode;
+            lr.hasCheckedLocks = true; // Optimization flag
         }
 
         const playerInventory = gameState.player.inventories[gameState.player.activeShipId];

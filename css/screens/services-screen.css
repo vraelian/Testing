@@ -11,7 +11,7 @@
 .text-yellow-400 { color: #facc15; }
 .text-red-500 { color: #ef4444; }
 
-/* --- VIRTUAL WORKBENCH: ADD INTEL-THEMED HEADER STYLES --- */
+/* --- THEMED HEADER --- */
 .themed-header-bar {
     position: relative;
     display: flex;
@@ -299,6 +299,10 @@
     color: #000 !important; 
     box-shadow: 0 0 10px var(--item-glow);
 }
+
+/* ========================================= */
+/* --- SOL STATION: MAINTENANCE CACHE --- */
+/* ========================================= */
 
 .sol-cache-list {
     display: flex;
@@ -591,6 +595,17 @@
     box-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
 }
 
+/* Ensure Locked Modes are Visually Distinct */
+.mode-btn:disabled:not(.active) {
+    background-color: #000;
+    border-color: #333;
+    color: #444;
+    cursor: not-allowed;
+    opacity: 0.3 !important; /* Force dimming */
+    filter: grayscale(100%);
+    box-shadow: none;
+}
+
 .sol-credits-block {
     background: radial-gradient(circle at center, rgba(180, 83, 9, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
     background-image: 
@@ -675,65 +690,83 @@
 }
 
 /* ========================================================================= */
-/* --- SOL STATION PROGRESSION THEMES (PHASE 3 REVISED) --- */
+/* --- SOL STATION PROGRESSION THEMES (PHASE 3 REVISED V2) --- */
 /* ========================================================================= */
 
-/* Lv 1-9: White/Light Blue */
+/* Lv 1-9: White / White Accent */
 .sol-theme-white .modal-content {
-    background: radial-gradient(circle at center, #1e3a8a 0%, #000000 100%) !important;
-    border: 1px solid rgba(147, 197, 253, 0.6) !important;
-    box-shadow: 0 0 25px rgba(147, 197, 253, 0.3) !important;
+    background: radial-gradient(circle at center, #333333 0%, #000000 100%) !important;
+    border: 1px solid #ffffff !important;
+    box-shadow: 0 0 25px rgba(255, 255, 255, 0.3) !important;
 }
 .sol-theme-white .sol-level-header {
-    color: #bfdbfe; text-shadow: 0 0 10px rgba(191, 219, 254, 0.8);
+    color: #ffffff; 
+    text-shadow: 0 0 10px rgba(255, 255, 255, 0.8);
 }
 
-/* Lv 10-19: Green/Black */
+/* Lv 10-19: Green / Black */
 .sol-theme-green .modal-content {
-    background: radial-gradient(circle at center, #064e3b 0%, #020617 100%) !important;
-    border: 1px solid rgba(34, 197, 94, 0.6) !important;
+    background: radial-gradient(circle at center, #064e3b 0%, #000000 100%) !important;
+    border: 1px solid #22c55e !important;
     box-shadow: 0 0 25px rgba(34, 197, 94, 0.3) !important;
 }
 .sol-theme-green .sol-level-header {
-    color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
+    color: #4ade80; 
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.8);
 }
 
-/* Lv 20-29: Navy Blue/Black/Orange Accent */
+/* Lv 20-29: Blue / Black / Blue Accent */
 .sol-theme-blue .modal-content {
     background: radial-gradient(circle at center, #172554 0%, #000000 100%) !important;
-    border: 1px solid rgba(249, 115, 22, 0.8) !important; /* Orange Border */
-    box-shadow: 0 0 25px rgba(249, 115, 22, 0.25) !important;
+    border: 1px solid #3b82f6 !important;
+    box-shadow: 0 0 25px rgba(59, 130, 246, 0.3) !important;
 }
 .sol-theme-blue .sol-level-header {
-    color: #fdba74; text-shadow: 0 0 10px rgba(251, 146, 60, 0.8);
+    color: #60a5fa; 
+    text-shadow: 0 0 10px rgba(96, 165, 250, 0.8);
 }
 
-/* Lv 30-39: Gold/Black/White Accent */
+/* Lv 30-39: Gold / Yellow / Gold Accent */
 .sol-theme-gold .modal-content {
     background: radial-gradient(circle at center, #422006 0%, #000000 100%) !important;
-    border: 1px solid rgba(253, 224, 71, 0.8) !important;
-    box-shadow: 0 0 25px rgba(253, 224, 71, 0.3) !important;
+    border: 1px solid #eab308 !important;
+    box-shadow: 0 0 25px rgba(234, 179, 8, 0.3) !important;
 }
 .sol-theme-gold .sol-level-header {
-    color: #ffffff; text-shadow: 0 0 10px rgba(255, 255, 255, 0.9);
+    color: #facc15; 
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.8);
 }
 
-/* Lv 40-49: Orange/Black/Purple Accent */
+/* Lv 40-49: Orange / White / Orange Accent */
 .sol-theme-orange .modal-content {
-    background: radial-gradient(circle at center, #431407 0%, #000000 100%) !important;
-    border: 1px solid rgba(192, 132, 252, 0.8) !important; /* Purple Border */
-    box-shadow: 0 0 25px rgba(168, 85, 247, 0.3) !important;
+    background: radial-gradient(circle at center, #7c2d12 0%, #000000 100%) !important;
+    border: 1px solid #f97316 !important;
+    box-shadow: 0 0 25px rgba(249, 115, 22, 0.3) !important;
 }
 .sol-theme-orange .sol-level-header {
-    color: #e879f9; text-shadow: 0 0 10px rgba(216, 180, 254, 0.8);
+    color: #fb923c; 
+    text-shadow: 0 0 10px rgba(251, 146, 60, 0.8);
 }
 
-/* Lv 50: Red/Black/Gold Accent */
+/* Lv 50: Red / Gold / Red Accent */
 .sol-theme-red .modal-content {
     background: radial-gradient(circle at center, #450a0a 0%, #000000 100%) !important;
-    border: 1px solid rgba(251, 191, 36, 1) !important; /* Gold Border */
+    border: 1px solid #ef4444 !important;
     box-shadow: 0 0 35px rgba(239, 68, 68, 0.4) !important;
 }
 .sol-theme-red .sol-level-header {
-    color: #fcd34d; text-shadow: 0 0 15px rgba(251, 191, 36, 1);
+    color: #ef4444; 
+    text-shadow: 0 0 15px rgba(239, 68, 68, 0.8), 0 0 5px #fcd34d;
+}
+
+/* --- Level Hexagon Legibility Fix --- */
+#lbl-sol-level-indicator {
+    text-shadow: 
+        -1px -1px 0 #000,  
+         1px -1px 0 #000,
+        -1px  1px 0 #000,
+         1px  1px 0 #000,
+         0 2px 4px rgba(0,0,0,0.8);
+    font-weight: 800 !important;
+    letter-spacing: 0.05em;
 }
