@@ -1,10 +1,7 @@
-{
-type: file_update,
-fileName: meta/ECONOMIC_BEHAVIOR.md,
-fullContent:
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 1/25/26, ver. 34.70
+Last Edit: 2/20/26, ver. Balance v2
+
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
 I. Core Price Mechanics Explained
@@ -13,7 +10,7 @@ Galactic Average: This is the foundational, system-wide average price for a comm
 Local Price Target: This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
 An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
 An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
-Mean Reversion: This is the "gravitational pull" (currently set to 4% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This new system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes.
+Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize.
 
 II. Local Price Influences by Location
 This is the full list of price influences for every market.
@@ -121,7 +118,7 @@ Example (Sell): Doubling a market's stock (a 2.0 ratio) will cause the price to 
 Example (Buy): Buying half a market's stock (a 0.5 ratio) will cause the price to spike by 25% after the 7-day delay.
 2. Force: Price Lock (The Core Loop)
 This is the system that makes market manipulation viable.
-Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 4% pull back to the local average) is disabled for a long duration.
+Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 2.5% pull back to the local average) is disabled for a long duration.
 Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item.
 Jan-Jun (Day 1-182): 75 to 120 days (2.5 - 4 months).
 Jul-Dec (Day 183-365): 105 to 195 days (3.5 - 6.5 months).
@@ -137,8 +134,8 @@ Effect: If all checks pass, isDepleted and depletionDay are set. For the next 7 
 4. Force: Inventory Replenishment (The Bottleneck)
 The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
 Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock.
-Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week.
-Effect: This slow 10% rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
+Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week. `MARKET_PRESSURE_DECAY` is tuned to 0.65, aggressively decaying artificial margins by the 4th consecutive trip (the 4-Trip Crash).
+Effect: This slow rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
 Role of marketPressure: The marketPressure variable (set during a trade) is now used exclusively by this system. Negative pressure (from player buying) will dynamically increase the market's targetStock, simulating the market adapting to new demand.
 5. Force: Market Memory (The Reset)
 The passive fail-safe that prevents the universe from being permanently altered.
@@ -156,19 +153,19 @@ V. Commodity Behavior
 (See existing file for full Commodity Tier list...)
 
 VI. Ship Upgrade Economy
-The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have fixed costs based on their Tier, but they directly influence a ship's resale value and the player's operating margins.
+The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have dynamic costs based on their Tier and the host ship, directly influencing a ship's resale value and the player's operating margins.
 
-1. Tiered Pricing Structure
-Upgrades are categorized into five tiers of rarity and power.
-Tier I (Common): 5,000 - 40,000 Credits. Entry-level modifications.
-Tier II (Rare): 15,000 - 120,000 Credits. Advanced specialized equipment.
-Tier III (Very Rare): 45,000 - 480,000 Credits. Experimental military-grade technology.
-Tier IV (Prototype): 270,000 - 12,500,000 Credits. Unstable, high-performance experimental tech.
-Tier V (Luminary): 810,000 - 25,000,000 Credits. Unique, "best-in-class" artifacts.
+1. Tiered Pricing Structure (Hybrid Formula)
+Upgrades utilize a Hybrid Pricing Formula: Fixed Base Cost + a percentage of the host ship's value. This ensures upgrades are affordable for early ships but serve as massive credit sinks for Capital vessels.
+Tier I (Basic): 5,000 + 5% Ship Value. Entry-level modifications.
+Tier II (Standard): 15,000 + 10% Ship Value. Advanced specialized equipment.
+Tier III (Advanced): 45,000 + 15% Ship Value. Experimental military-grade technology.
+Tier IV (Elite): 125,000 + 20% Ship Value. Unstable, high-performance experimental tech.
+Tier V (Experimental): 400,000 + 30% Ship Value. Unique, "best-in-class" artifacts.
 
 2. Resale Value Logic
-Ships are now valued based on the sum of their hull and their installed components.
-Base Calculation: (Ship Base Price + Sum of Installed Upgrade Values)
+Ships are valued based on the sum of their hull and their installed components.
+Base Calculation: (Ship Base Price + Sum of Installed Upgrade Purchase Values)
 Depreciation: The total is multiplied by the standard depreciation factor (0.75).
 Implication: Players do not lose the full cost of an upgrade when selling a ship; they recover 75% of the upgrade's value, making experimentation financially viable.
 Destructive Replacement: However, if a player installs an upgrade into a full slot (3/3), the replaced upgrade is destroyed (0% recovery).
@@ -179,7 +176,7 @@ Signal Hacker (Buy Price): Reduces purchase prices (Tier I: 0.5% -> Tier V: 3.3%
 Guild Badge (Sell Price): Increases sell prices (Tier I: 0.5% -> Tier V: 3.3%).
 Fuel Pass (Service Cost): Reduces refueling costs (Tier I: 10% -> Tier V: 50%).
 Syndicate Badge (Debt): Reduces monthly debt interest (Tier I: 20% -> Tier V: 66%).
-Engine Mod (Trade-Off): Increases travel speed (10-40%) but increases fuel consumption (15-60%).
+Engine Mod (Trade-Off): Increases travel speed (10-40%) but increases fuel consumption and hull stress (15-60%).
 
 VII. Service Economies & Quirks (See existing file...)
 
@@ -200,4 +197,3 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 * **Neptune (Military Logistics):** 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
 * **Kepler's Eye (Financial Hub):** 15% Discount on all financing and debt payments.
 * **Pluto (Fringe Outpost):** +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
-}

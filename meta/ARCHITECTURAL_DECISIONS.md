@@ -632,3 +632,20 @@ Consequences:
 * **Pro:** Expands player progression, allowing for specialized ship collections and massive late-game arbitrage.
 * **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource/credit costs based on fleet size during travel, making massive fleets high-risk/high-reward.
 * **Pro:** Dynamic fleet cost averaging integrates smoothly into the existing inventory profit displays.
+
+ADR-031: Balance v2 - Parametric Pacing & Volumetric Sinks
+Status: Accepted (2026-02-20)
+
+Context: Balance v1 suffered from "whack-a-mole" tuning, where adjusting one value broke the economy elsewhere. Late-game players experienced a "singularity" where profits grew exponentially into the trillions, rendering operating costs meaningless.
+
+Decision: A comprehensive, mathematically anchored parametric engine was implemented.
+1. The 120-Trip Anchor: Progression is strictly scaled so that optimal trading yields enough profit to afford the next tier of ship/upgrade in ~120 trips.
+2. Volumetric Sinks: Capital ships were given absurdly high HP/Fuel pools, turning percentage-based travel decay into a massive credit sink purely through scale.
+3. Hybrid Upgrade Pricing: Upgrades now cost `Base + (ShipValue * Tier%)`, ensuring they remain significant investments at all stages of the game.
+4. Wealth-Scaled Hazards: Flat event fines were replaced with percentage deductions of liquid wealth (capped at 9%).
+5. Supply Bottlenecks: T6 commodities are strictly hard-capped in system availability to prevent Capital ships from sequence-breaking the economy.
+
+Consequences:
+Pro: The economy is now self-regulating and easily tunable via global variables.
+Pro: Late-game players still experience loss aversion and operating friction.
+Pro: Removes the need for arbitrary "hard caps" on wealth.

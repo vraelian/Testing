@@ -31,6 +31,8 @@ Result: If Ratio is 0.5 (Half stock), Price increases by 25%.
 JavaScript
 FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation
 RandomFluctuation: ±5-10% daily noise.
+MEAN_REVERSION_STRENGTH: 0.025 (2.5% daily pull toward TargetPrice).
+MARKET_PRESSURE_DECAY: 0.65 (Decay rate for player-driven availability margins).
 
 2. Travel, Fuel & Entropy Formulas
 2.1 Fuel Consumption (Burn)
@@ -88,6 +90,13 @@ JavaScript
 NewShipValue = OldShipValue - DestroyedUpgradeValue + NewUpgradeValue
 Note: The DestroyedUpgradeValue is lost completely; it is not refunded.
 
+3.3 Upgrade Hardware Cost
+The dynamic cost formula for ship upgrades (Balance v2 Hybrid Pricing).
+
+JavaScript
+Cost = FixedBaseCost + (ShipBasePrice * TierMultiplier)
+TierMultiplier scales from 0.05 (Tier I) up to 0.30 (Tier V).
+
 4. Event System RNG
 4.1 Weighted Selection
 Events are chosen based on a "lottery ticket" system.
@@ -108,3 +117,10 @@ OutcomeRoll = Math.random() * 100
 Outcomes are defined with weight ranges (e.g., Success: 70, Fail: 30).
 
 If OutcomeRoll < 70, Success triggers.
+
+4.3 Wealth-Scaled Penalties
+For event fines and bureaucratic hazards, penalizing the player based on liquidity.
+
+JavaScript
+Penalty = LiquidCredits * HazardSeverity%
+(Hard capped at 9% for the most catastrophic outcomes to preserve progression feasibility).

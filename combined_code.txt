@@ -22,7 +22,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.00</title>
+    <title>Orbital Trading 36.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -70,7 +70,7 @@
             </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 36.00</p>
+            <p>Version 36.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -10959,7 +10959,7 @@ export const GAME_RULES = Object.freeze({
     STARTING_DEBT_INTEREST: 125,
     REPAIR_COST_PER_HP: 75,
     REPAIR_AMOUNT_PER_TICK: 5,
-    FUEL_SCALAR: 2.5, // CHANGED from 3 to 2.5
+    FUEL_SCALAR: 2.5, 
     INTEREST_INTERVAL: 30,
     PASSIVE_REPAIR_RATE: 0.02,
     HULL_DECAY_PER_TRAVEL_DAY: (1 / 7) * 1.01,
@@ -10968,8 +10968,8 @@ export const GAME_RULES = Object.freeze({
     PRICE_HISTORY_LENGTH: 65,
     FINANCE_HISTORY_LENGTH: 25,
     DAILY_PRICE_VOLATILITY: 0.25,
-    MEAN_REVERSION_STRENGTH: 0.04,
-    MARKET_PRESSURE_DECAY: 0.70,
+    MEAN_REVERSION_STRENGTH: 0.025, // Updated for Balance V2 (Stretched recovery)
+    MARKET_PRESSURE_DECAY: 0.65,    // Updated for Balance V2 (Harder profit crash)
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
@@ -11220,19 +11220,26 @@ export const DB = {
     // --- Tradable Commodities Data ---
     COMMODITIES: [
         { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', tier: 1, basePriceRange: [15, 80], volatility: 0.01, canonicalAvailability: [80, 150], styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.', cat: 'RAW', symbol: 'H2O' },
-        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [100, 280], volatility: 0.015, canonicalAvailability: [80, 150], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', cat: 'IND', symbol: 'PLST' },
-        { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', tier: 2, licenseId: 't2_license', basePriceRange: [850, 2400], volatility: 0.025, canonicalAvailability: [40, 70], styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.', cat: 'AGRI', symbol: 'HYD' },
-        { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', tier: 2, licenseId: 't2_license', basePriceRange: [1200, 3800], volatility: 0.03, canonicalAvailability: [40, 70], styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.', cat: 'TECH', symbol: 'CYB' },
-        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [14000, 38000], volatility: 0.035, canonicalAvailability: [25, 50], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', cat: 'IND', symbol: 'PROP' },
-        { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', tier: 3, licenseId: 't3_license', basePriceRange: [18000, 52000], volatility: 0.045, canonicalAvailability: [25, 50], styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.', cat: 'TECH', symbol: 'NPRO' },
-        { id: COMMODITY_IDS.GRAPHENE_LATTICES, name: 'Graphene Lattices', tier: 4, licenseId: 't4_license', basePriceRange: [180000, 420000], volatility: 0.05, canonicalAvailability: [20, 40], styleClass: 'item-style-7', lore: 'Ultra-light, diamond-hard carbon sheets produced in zero-G foundries. The structural backbone of every orbital habitat.', cat: 'IND', symbol: 'GRPH' },
-        { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', tier: 4, licenseId: 't4_license', basePriceRange: [250000, 750000], volatility: 0.075, canonicalAvailability: [15, 30], styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.', cat: 'CIV', symbol: 'CRYO' },
-        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [2800000, 8500000], volatility: 0.08, canonicalAvailability: [10, 20], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', cat: 'IND', symbol: 'ATMO' },
-        { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', tier: 5, licenseId: 't5_license', basePriceRange: [3500000, 11000000], volatility: 0.09, canonicalAvailability: [10, 20], styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.', cat: 'BIO', symbol: 'CLON' },
-        { id: COMMODITY_IDS.XENO_GEOLOGICALS, name: 'Xeno-Geologicals', tier: 6, licenseId: 't6_license', basePriceRange: [24000000, 70000000], volatility: 0.1, canonicalAvailability: [2, 10], styleClass: 'item-style-11', lore: 'Rare, non-terrestrial minerals with bizarre physical properties; a scientific treasure.', cat: 'RAW', symbol: 'XENO' },
-        { id: COMMODITY_IDS.SENTIENT_AI, name: 'Sentient AI Cores', tier: 6, licenseId: 't6_license', basePriceRange: [32000000, 95000000], volatility: 0.125, canonicalAvailability: [2, 10], styleClass: 'item-style-12', lore: 'The "brains" of capital ships whose emergent consciousness is a subject of intense, and often classified, philosophical debate.', cat: 'TECH', symbol: 'AI' },
-        { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', tier: 7, licenseId: 't7_license', basePriceRange: [280000000, 800000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.', cat: 'RARE', symbol: 'AM' },
-        { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', tier: 7, licenseId: 't7_license', basePriceRange: [350000000, 1100000000], volatility: 0.15, canonicalAvailability: [2, 10], styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.', cat: 'RARE', symbol: 'FSD' }
+        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [80, 160], volatility: 0.015, canonicalAvailability: [80, 150], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', cat: 'IND', symbol: 'PLST' },
+        
+        { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', tier: 2, licenseId: 't2_license', basePriceRange: [150, 300], volatility: 0.025, canonicalAvailability: [50, 100], styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.', cat: 'AGRI', symbol: 'HYD' },
+        { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', tier: 2, licenseId: 't2_license', basePriceRange: [250, 550], volatility: 0.03, canonicalAvailability: [50, 100], styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.', cat: 'TECH', symbol: 'CYB' },
+        
+        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [600, 1100], volatility: 0.035, canonicalAvailability: [80, 150], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', cat: 'IND', symbol: 'PROP' },
+        { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', tier: 3, licenseId: 't3_license', basePriceRange: [1000, 2000], volatility: 0.045, canonicalAvailability: [80, 150], styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.', cat: 'TECH', symbol: 'NPRO' },
+        
+        { id: COMMODITY_IDS.GRAPHENE_LATTICES, name: 'Graphene Lattices', tier: 4, licenseId: 't4_license', basePriceRange: [6000, 11000], volatility: 0.05, canonicalAvailability: [100, 180], styleClass: 'item-style-7', lore: 'Ultra-light, diamond-hard carbon sheets produced in zero-G foundries. The structural backbone of every orbital habitat.', cat: 'IND', symbol: 'GRPH' },
+        { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', tier: 4, licenseId: 't4_license', basePriceRange: [10000, 20000], volatility: 0.075, canonicalAvailability: [100, 180], styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.', cat: 'CIV', symbol: 'CRYO' },
+        
+        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [20000, 35000], volatility: 0.08, canonicalAvailability: [40, 80], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', cat: 'IND', symbol: 'ATMO' },
+        { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', tier: 5, licenseId: 't5_license', basePriceRange: [35000, 55000], volatility: 0.09, canonicalAvailability: [40, 80], styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.', cat: 'BIO', symbol: 'CLON' },
+        
+        { id: COMMODITY_IDS.XENO_GEOLOGICALS, name: 'Xeno-Geologicals', tier: 6, licenseId: 't6_license', basePriceRange: [50000, 100000], volatility: 0.1, canonicalAvailability: [15, 40], styleClass: 'item-style-11', lore: 'Rare, non-terrestrial minerals with bizarre physical properties; a scientific treasure.', cat: 'RAW', symbol: 'XENO' },
+        { id: COMMODITY_IDS.SENTIENT_AI, name: 'Sentient AI Cores', tier: 6, licenseId: 't6_license', basePriceRange: [90000, 150000], volatility: 0.125, canonicalAvailability: [15, 40], styleClass: 'item-style-12', lore: 'The "brains" of capital ships whose emergent consciousness is a subject of intense, and often classified, philosophical debate.', cat: 'TECH', symbol: 'AI' },
+        
+        // Tier 7 (Sol Station Outputs) - Generated, rarely bought, purely for massive cashing out.
+        { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', tier: 7, licenseId: 't7_license', basePriceRange: [1500000, 3000000], volatility: 0.15, canonicalAvailability: [1, 5], styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.', cat: 'RARE', symbol: 'AM' },
+        { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', tier: 7, licenseId: 't7_license', basePriceRange: [3000000, 6000000], volatility: 0.15, canonicalAvailability: [1, 2], styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.', cat: 'RARE', symbol: 'FSD' }
     ],
 
     // --- Trading Licenses ---
@@ -11553,7 +11560,7 @@ export const RANDOM_EVENTS = [
  * @fileoverview Registry for Sol Station progression levels (1-50).
  * Defines the requirements and additive rewards for each station level up.
  * Adheres to the Registry Pattern for data-driven progression.
- * * VERSION 1 SCOPE: LEVELS 1-10 (The Construction Arc) + 11-50 Placeholders
+ * * VERSION 2 SCOPE: LEVELS 1-50 (Exponential Endgame Vacuum)
  * * Reward Key:
  * - cacheCapacity: Specific integer increase to a commodity's max storage.
  * - amYieldMult: Additive percentage to Antimatter generation (e.g. 0.05 = +5%).
@@ -11564,11 +11571,12 @@ export const RANDOM_EVENTS = [
 export const LEVEL_REGISTRY = {
     // Level 1 is the baseline; progression upgrades begin at Level 2.
     
+    // --- ESTABLISHMENT PHASE (Levels 1-15) ---
     2: {
         projectName: "Water Reservoir Integration",
         lore: "Integrating expanded thermal coolant buffers allows the reactor to operate at higher baselines, increasing Antimatter yield.",
-        cost: 10000,
-        requirements: { "water_ice": 200 },
+        cost: 25000,
+        requirements: { "water_ice": 250 },
         rewards: {
             description: "+60 Water Ice Cap (+30%), +5% Antimatter Yield",
             stats: { cacheCapacity: { "water_ice": 60 }, amYieldMult: 0.05, creditYieldMult: 0, globalEntropyRed: 0 }
@@ -11577,8 +11585,8 @@ export const LEVEL_REGISTRY = {
     3: {
         projectName: "Hull Plating Reinforcement",
         lore: "Additional Plasteel cladding reduces micrometeoroid damage, lowering baseline entropy and permitting advanced commercial docking.",
-        cost: 15000,
-        requirements: { "plasteel": 180 },
+        cost: 45000,
+        requirements: { "plasteel": 250 },
         rewards: {
             description: "-2% Global Entropy, Unlocks COMMERCE Mode",
             stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0.02 },
@@ -11588,8 +11596,8 @@ export const LEVEL_REGISTRY = {
     4: {
         projectName: "Hydro-Garden Expansion",
         lore: "Expanding the hydroponic rings increases biological life support capacity, preparing the station for a larger crew complement.",
-        cost: 25000,
-        requirements: { "hydroponics": 160 },
+        cost: 80000,
+        requirements: { "hydroponics": 100, "water_ice": 300 },
         rewards: {
             description: "+48 Hydroponics Cap (+30%)",
             stats: { cacheCapacity: { "hydroponics": 48 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
@@ -11598,8 +11606,8 @@ export const LEVEL_REGISTRY = {
     5: {
         projectName: "Reactor Ignition Sequence",
         lore: "Bringing the secondary fusion cores online. This massive power boost allows for industrial-scale production but requires specialized cybernetic oversight.",
-        cost: 40000,
-        requirements: { "cybernetics": 140 },
+        cost: 150000,
+        requirements: { "cybernetics": 80, "plasteel": 400 },
         rewards: {
             description: "+1 Officer Slot (Total: 2), Unlocks PRODUCTION Mode",
             stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 },
@@ -11609,8 +11617,8 @@ export const LEVEL_REGISTRY = {
     6: {
         projectName: "Aux. Silo A (Propellant)",
         lore: "Constructing a dedicated external fuel silo to support increased traffic and refueling operations.",
-        cost: 60000,
-        requirements: { "propellant": 132 },
+        cost: 250000,
+        requirements: { "propellant": 100, "water_ice": 500 },
         rewards: {
             description: "+36 Refined Propellant Cap (+30%)",
             stats: { cacheCapacity: { "propellant": 36 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
@@ -11619,8 +11627,8 @@ export const LEVEL_REGISTRY = {
     7: {
         projectName: "Aux. Silo B (Processors)",
         lore: "Installing a super-cooled server farm to manage the station's increasing computational load.",
-        cost: 90000,
-        requirements: { "processors": 110 },
+        cost: 400000,
+        requirements: { "processors": 80, "plasteel": 600 },
         rewards: {
             description: "+30 Neural Processor Cap (+30%)",
             stats: { cacheCapacity: { "processors": 30 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
@@ -11629,8 +11637,8 @@ export const LEVEL_REGISTRY = {
     8: {
         projectName: "Cryo-Buffer Extension",
         lore: "Reinforcing the cryo-stasis grid allows for the long-term storage of biological assets without degradation.",
-        cost: 130000,
-        requirements: { "hydroponics": 176 },
+        cost: 650000,
+        requirements: { "hydroponics": 300, "cybernetics": 150 },
         rewards: {
             description: "+18 Cryo-Pod Cap (+30%)",
             stats: { cacheCapacity: { "cryo_pods": 18 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
@@ -11639,8 +11647,8 @@ export const LEVEL_REGISTRY = {
     9: {
         projectName: "Atmo-Scrubber Retrofit",
         lore: "Upgrading the atmospheric scrubbers with industrial-grade filters to handle the toxic byproducts of high-yield production.",
-        cost: 180000,
-        requirements: { "plasteel": 198 },
+        cost: 1000000,
+        requirements: { "plasteel": 1000, "propellant": 250 },
         rewards: {
             description: "+12 Atmo-Processor Cap (+30%)",
             stats: { cacheCapacity: { "atmos_processors": 12 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
@@ -11649,69 +11657,66 @@ export const LEVEL_REGISTRY = {
     10: {
         projectName: "Directorate Wing Alpha",
         lore: "Constructing the first major administrative wing. This command center coordinates trade fleets, boosting credit efficiency.",
-        cost: 250000,
-        requirements: { "propellant": 144, "graphene_lattices": 96 },
+        cost: 1500000,
+        requirements: { "propellant": 150, "graphene_lattices": 25 },
         rewards: {
             description: "+1 Officer Slot (Total: 3), +10% Credit Yield",
             stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0.10, globalEntropyRed: 0 }
         }
     },
+    11: { projectName: "Station Expansion L11", lore: "Expanding core infrastructure.", cost: 2000000, requirements: { "water_ice": 600, "hydroponics": 100 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    12: { projectName: "Station Expansion L12", lore: "Reinforcing structural pylons.", cost: 2600000, requirements: { "plasteel": 800 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    13: { projectName: "Station Expansion L13", lore: "Upgrading life support.", cost: 3300000, requirements: { "cybernetics": 150 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    14: { projectName: "Station Expansion L14", lore: "Optimizing network nodes.", cost: 4100000, requirements: { "propellant": 250 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    15: { projectName: "Directorate Wing Beta", lore: "A major administrative expansion.", cost: 5000000, requirements: { "processors": 150, "cryo_pods": 20 }, rewards: { description: "+1 Officer Slot (Total: 4)", stats: {} } },
 
-    // --- EXPANDED PROGRESSION (Levels 11-50) ---
-    // Pattern: Costs scale ~1.3x - 1.4x. Requirements rotate.
-    // Rewards: Capacity/Yield alternated. Slots at 15, 20, 25...
+    // --- INDUSTRIALIZATION PHASE (Levels 16-35) ---
+    16: { projectName: "Station Expansion L16", lore: "Deep space sensors.", cost: 6500000, requirements: { "graphene_lattices": 150 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    17: { projectName: "Station Expansion L17", lore: "Commercial docking bay.", cost: 8200000, requirements: { "water_ice": 1500, "plasteel": 1500 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    18: { projectName: "Station Expansion L18", lore: "Advanced recycling.", cost: 10200000, requirements: { "hydroponics": 800 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    19: { projectName: "Station Expansion L19", lore: "Cryo-storage optimization.", cost: 12500000, requirements: { "cybernetics": 400, "cryo_pods": 50 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    20: { projectName: "Directorate Wing Gamma", lore: "A command center upgrade.", cost: 15000000, requirements: { "cloned_organs": 15, "processors": 300 }, rewards: { description: "+1 Officer Slot (Total: 5)", stats: {} } },
 
-    11: { projectName: "Station Expansion L11", lore: "Expanding core infrastructure.", cost: 320000, requirements: { "water_ice": 400 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    12: { projectName: "Station Expansion L12", lore: "Reinforcing structural pylons.", cost: 410000, requirements: { "plasteel": 350 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
-    13: { projectName: "Station Expansion L13", lore: "Upgrading life support.", cost: 530000, requirements: { "hydroponics": 300 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    14: { projectName: "Station Expansion L14", lore: "Optimizing network nodes.", cost: 680000, requirements: { "cybernetics": 250 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    15: { projectName: "Directorate Wing Beta", lore: "A major administrative expansion.", cost: 850000, requirements: { "propellant": 300, "processors": 150 }, rewards: { description: "+1 Officer Slot (Total: 4)", stats: {} } },
+    21: { projectName: "Station Expansion L21", lore: "Heavy industry fabrication.", cost: 20000000, requirements: { "propellant": 800 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    22: { projectName: "Station Expansion L22", lore: "Hull integrity mesh.", cost: 26000000, requirements: { "graphene_lattices": 350 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    23: { projectName: "Station Expansion L23", lore: "Reactor coolant loop.", cost: 33000000, requirements: { "water_ice": 3000 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    24: { projectName: "Station Expansion L24", lore: "Server farm redundancy.", cost: 41000000, requirements: { "atmos_processors": 25 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    25: { projectName: "Directorate Wing Delta", lore: "Strategic operations center.", cost: 50000000, requirements: { "plasteel": 3000, "cloned_organs": 30 }, rewards: { description: "+1 Officer Slot (Total: 6)", stats: {} } },
 
-    16: { projectName: "Station Expansion L16", lore: "Deep space sensors.", cost: 1100000, requirements: { "graphene_lattices": 200 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    17: { projectName: "Station Expansion L17", lore: "Commercial docking bay.", cost: 1400000, requirements: { "water_ice": 600 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    18: { projectName: "Station Expansion L18", lore: "Advanced recycling.", cost: 1800000, requirements: { "plasteel": 500 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
-    19: { projectName: "Station Expansion L19", lore: "Cryo-storage optimization.", cost: 2300000, requirements: { "cryo_pods": 100 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    20: { projectName: "Directorate Wing Gamma", lore: "A command center upgrade.", cost: 3000000, requirements: { "cybernetics": 400, "cloned_organs": 50 }, rewards: { description: "+1 Officer Slot (Total: 5)", stats: {} } },
+    26: { projectName: "Station Expansion L26", lore: "Luxury habitat ring.", cost: 65000000, requirements: { "hydroponics": 1500 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
+    27: { projectName: "Station Expansion L27", lore: "Advanced shield harmonics.", cost: 82000000, requirements: { "cybernetics": 800 }, rewards: { description: "-3% Global Entropy", stats: { globalEntropyRed: 0.03 } } },
+    28: { projectName: "Station Expansion L28", lore: "Particle accelerator.", cost: 102000000, requirements: { "propellant": 1500 }, rewards: { description: "+8% Antimatter Yield", stats: { amYieldMult: 0.08 } } },
+    29: { projectName: "Station Expansion L29", lore: "Xeno-research lab.", cost: 125000000, requirements: { "xeno_geologicals": 15 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    30: { projectName: "Directorate Wing Epsilon", lore: "Interstellar logistics hub.", cost: 150000000, requirements: { "graphene_lattices": 800, "sentient_ai": 10 }, rewards: { description: "+1 Officer Slot (Total: 7)", stats: {} } },
 
-    21: { projectName: "Station Expansion L21", lore: "Heavy industry fabrication.", cost: 3800000, requirements: { "propellant": 500 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    22: { projectName: "Station Expansion L22", lore: "Hull integrity mesh.", cost: 4800000, requirements: { "graphene_lattices": 300 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
-    23: { projectName: "Station Expansion L23", lore: "Reactor coolant loop.", cost: 6000000, requirements: { "water_ice": 1000 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    24: { projectName: "Station Expansion L24", lore: "Server farm redundancy.", cost: 7500000, requirements: { "processors": 300 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    25: { projectName: "Directorate Wing Delta", lore: "Strategic operations center.", cost: 9500000, requirements: { "plasteel": 1000, "atmos_processors": 100 }, rewards: { description: "+1 Officer Slot (Total: 6)", stats: {} } },
+    31: { projectName: "Station Expansion L31", lore: "Solar array massive.", cost: 190000000, requirements: { "plasteel": 5000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    32: { projectName: "Station Expansion L32", lore: "Automated repair drones.", cost: 240000000, requirements: { "processors": 1000 }, rewards: { description: "-4% Global Entropy", stats: { globalEntropyRed: 0.04 } } },
+    33: { projectName: "Station Expansion L33", lore: "Trade federation embassy.", cost: 300000000, requirements: { "water_ice": 8000 }, rewards: { description: "+20% Credit Yield", stats: { creditYieldMult: 0.20 } } },
+    34: { projectName: "Station Expansion L34", lore: "Deep storage vaults.", cost: 370000000, requirements: { "propellant": 2500 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    35: { projectName: "Directorate Wing Zeta", lore: "High command nexus.", cost: 450000000, requirements: { "cybernetics": 2000, "cloned_organs": 100 }, rewards: { description: "+1 Officer Slot (Total: 8)", stats: {} } },
 
-    26: { projectName: "Station Expansion L26", lore: "Luxury habitat ring.", cost: 12000000, requirements: { "hydroponics": 800 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
-    27: { projectName: "Station Expansion L27", lore: "Advanced shield harmonics.", cost: 15000000, requirements: { "cybernetics": 600 }, rewards: { description: "-3% Global Entropy", stats: { globalEntropyRed: 0.03 } } },
-    28: { projectName: "Station Expansion L28", lore: "Particle accelerator.", cost: 19000000, requirements: { "propellant": 800 }, rewards: { description: "+8% Antimatter Yield", stats: { amYieldMult: 0.08 } } },
-    29: { projectName: "Station Expansion L29", lore: "Xeno-research lab.", cost: 24000000, requirements: { "xeno_geologicals": 50 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    30: { projectName: "Directorate Wing Epsilon", lore: "Interstellar logistics hub.", cost: 30000000, requirements: { "graphene_lattices": 500, "sentient_ai": 10 }, rewards: { description: "+1 Officer Slot (Total: 7)", stats: {} } },
+    // --- DOMINANCE PHASE (Levels 36-50) ---
+    36: { projectName: "Station Expansion L36", lore: "Quantum comms array.", cost: 580000000, requirements: { "graphene_lattices": 1500 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
+    37: { projectName: "Station Expansion L37", lore: "Antimatter containment V2.", cost: 740000000, requirements: { "plasteel": 8000 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
+    38: { projectName: "Station Expansion L38", lore: "Bio-dome complex.", cost: 930000000, requirements: { "hydroponics": 4000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    39: { projectName: "Station Expansion L39", lore: "AI synthesis core.", cost: 1150000000, requirements: { "sentient_ai": 30 }, rewards: { description: "+25% Credit Yield", stats: { creditYieldMult: 0.25 } } },
+    40: { projectName: "Directorate Wing Eta", lore: "Orbital governance seat.", cost: 1500000000, requirements: { "processors": 3000, "xeno_geologicals": 40 }, rewards: { description: "+1 Officer Slot (Total: 9)", stats: {} } },
 
-    31: { projectName: "Station Expansion L31", lore: "Solar array massive.", cost: 38000000, requirements: { "plasteel": 1500 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
-    32: { projectName: "Station Expansion L32", lore: "Automated repair drones.", cost: 47000000, requirements: { "processors": 500 }, rewards: { description: "-4% Global Entropy", stats: { globalEntropyRed: 0.04 } } },
-    33: { projectName: "Station Expansion L33", lore: "Trade federation embassy.", cost: 58000000, requirements: { "water_ice": 2000 }, rewards: { description: "+20% Credit Yield", stats: { creditYieldMult: 0.20 } } },
-    34: { projectName: "Station Expansion L34", lore: "Deep storage vaults.", cost: 72000000, requirements: { "propellant": 1200 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    35: { projectName: "Directorate Wing Zeta", lore: "High command nexus.", cost: 90000000, requirements: { "cybernetics": 1000, "cloned_organs": 200 }, rewards: { description: "+1 Officer Slot (Total: 8)", stats: {} } },
+    41: { projectName: "Station Expansion L41", lore: "Dyson swarm prototypes.", cost: 2000000000, requirements: { "graphene_lattices": 2500 }, rewards: { description: "+15% Antimatter Yield", stats: { amYieldMult: 0.15 } } },
+    42: { projectName: "Station Expansion L42", lore: "Adaptive hull geometry.", cost: 2800000000, requirements: { "plasteel": 12000 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
+    43: { projectName: "Station Expansion L43", lore: "Inter-system gate.", cost: 3800000000, requirements: { "propellant": 5000 }, rewards: { description: "+30% Credit Yield", stats: { creditYieldMult: 0.30 } } },
+    44: { projectName: "Station Expansion L44", lore: "Neural uplink grid.", cost: 5200000000, requirements: { "cybernetics": 5000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    45: { projectName: "Directorate Wing Theta", lore: "System control authority.", cost: 7000000000, requirements: { "sentient_ai": 80, "cloned_organs": 400 }, rewards: { description: "+1 Officer Slot (Total: 10)", stats: {} } },
 
-    36: { projectName: "Station Expansion L36", lore: "Quantum comms array.", cost: 110000000, requirements: { "graphene_lattices": 800 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
-    37: { projectName: "Station Expansion L37", lore: "Antimatter containment V2.", cost: 135000000, requirements: { "plasteel": 2500 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
-    38: { projectName: "Station Expansion L38", lore: "Bio-dome complex.", cost: 165000000, requirements: { "hydroponics": 2000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
-    39: { projectName: "Station Expansion L39", lore: "AI synthesis core.", cost: 200000000, requirements: { "sentient_ai": 25 }, rewards: { description: "+25% Credit Yield", stats: { creditYieldMult: 0.25 } } },
-    40: { projectName: "Directorate Wing Eta", lore: "Orbital governance seat.", cost: 250000000, requirements: { "processors": 1000, "xeno_geologicals": 100 }, rewards: { description: "+1 Officer Slot (Total: 9)", stats: {} } },
-
-    41: { projectName: "Station Expansion L41", lore: "Dyson swarm prototypes.", cost: 310000000, requirements: { "graphene_lattices": 1200 }, rewards: { description: "+15% Antimatter Yield", stats: { amYieldMult: 0.15 } } },
-    42: { projectName: "Station Expansion L42", lore: "Adaptive hull geometry.", cost: 380000000, requirements: { "plasteel": 4000 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
-    43: { projectName: "Station Expansion L43", lore: "Inter-system gate.", cost: 460000000, requirements: { "propellant": 3000 }, rewards: { description: "+30% Credit Yield", stats: { creditYieldMult: 0.30 } } },
-    44: { projectName: "Station Expansion L44", lore: "Neural uplink grid.", cost: 550000000, requirements: { "cybernetics": 2000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
-    45: { projectName: "Directorate Wing Theta", lore: "System control authority.", cost: 650000000, requirements: { "sentient_ai": 50, "cloned_organs": 500 }, rewards: { description: "+1 Officer Slot (Total: 10)", stats: {} } },
-
-    46: { projectName: "Station Expansion L46", lore: "Reality anchor.", cost: 770000000, requirements: { "xeno_geologicals": 200 }, rewards: { description: "-10% Global Entropy", stats: { globalEntropyRed: 0.10 } } },
-    47: { projectName: "Station Expansion L47", lore: "Market manipulation matrix.", cost: 900000000, requirements: { "processors": 2000 }, rewards: { description: "+50% Credit Yield", stats: { creditYieldMult: 0.50 } } },
-    48: { projectName: "Station Expansion L48", lore: "Star-lifting drones.", cost: 1100000000, requirements: { "graphene_lattices": 2000 }, rewards: { description: "+20% Antimatter Yield", stats: { amYieldMult: 0.20 } } },
-    49: { projectName: "Station Expansion L49", lore: "Ascension Spire.", cost: 1350000000, requirements: { "plasteel": 8000 }, rewards: { description: "Maximum Efficiency", stats: { globalEntropyRed: 0.10 } } },
+    46: { projectName: "Station Expansion L46", lore: "Reality anchor.", cost: 9300000000, requirements: { "xeno_geologicals": 120 }, rewards: { description: "-10% Global Entropy", stats: { globalEntropyRed: 0.10 } } },
+    47: { projectName: "Station Expansion L47", lore: "Market manipulation matrix.", cost: 12200000000, requirements: { "processors": 6000 }, rewards: { description: "+50% Credit Yield", stats: { creditYieldMult: 0.50 } } },
+    48: { projectName: "Station Expansion L48", lore: "Star-lifting drones.", cost: 16000000000, requirements: { "graphene_lattices": 4000 }, rewards: { description: "+20% Antimatter Yield", stats: { amYieldMult: 0.20 } } },
+    49: { projectName: "Station Expansion L49", lore: "Ascension Spire.", cost: 20500000000, requirements: { "plasteel": 20000 }, rewards: { description: "Maximum Efficiency", stats: { globalEntropyRed: 0.10 } } },
     50: { 
         projectName: "The Sol Citadel", 
         lore: "The ultimate expression of orbital dominance. Sol Station is now the capital of the system.", 
-        cost: 2000000000, 
-        requirements: { "water_ice": 10000, "propellant": 5000, "sentient_ai": 100 }, 
+        cost: 25000000000, 
+        requirements: { "water_ice": 20000, "propellant": 8000, "sentient_ai": 150 }, 
         rewards: { 
             description: "+1 Officer Slot (Total: 11), +100% Credit Yield, +50% Antimatter Yield", 
             stats: { creditYieldMult: 1.0, amYieldMult: 0.50 } 
@@ -12426,9 +12431,9 @@ It resembles a heavy industrial barge adapted for flight. The hull is a wide, fl
         name: "Pathfinder",
         class: "B",
         price: 210000,
-        maxHealth: 40,
+        maxHealth: 150,
         cargoCapacity: 50,
-        maxFuel: 260,
+        maxFuel: 300,
         role: "Explorer",
         attribute: "None",
         description: "Commissioned in the private yards of Venus, this ship was built for quiet observation and rapid departure, favoring a cold-running engine over a thick hull.",
@@ -12455,9 +12460,9 @@ It’s a ship for a pilot who prefers to know the location of the next deal befo
         name: "Odyssey",
         class: "B",
         price: 265000,
-        maxHealth: 120,
+        maxHealth: 250,
         cargoCapacity: 110,
-        maxFuel: 120,
+        maxFuel: 200,
         role: "Balanced",
         attribute: "None",
         description: "More fortress than freighter, this is a rugged, dependable vessel for the captain who expects trouble and intends to survive it.",
@@ -12484,9 +12489,9 @@ This is a ship for the captain who has graduated from desperation to ambition, a
         name: "Pilgrim",
         class: "B",
         price: 285000,
-        maxHealth: 60,
+        maxHealth: 180,
         cargoCapacity: 175,
-        maxFuel: 90,
+        maxFuel: 250,
         role: "Hauler",
         attribute: "None",
         description: "A specialized ice-hauler, this ship sacrifices armor and speed for a massive, reinforced cargo bay, making it a pure-profit engine for the patient trader.",
@@ -12514,9 +12519,9 @@ It’s a specialized tool for the trader who intends to profit from the system's
         name: "Meridian",
         class: "B",
         price: 245000,
-        maxHealth: 100,
+        maxHealth: 220,
         cargoCapacity: 70,
-        maxFuel: 230,
+        maxFuel: 350,
         role: "Explorer",
         attribute: "None",
         description: "With a robust sensor array and impressive fuel reserve, the Meridian is a self-sufficient explorer, capable of operating for months in the uncharted deep.",
@@ -12542,9 +12547,9 @@ It's a serious ship for serious work, capable of opening up new routes and disco
         name: "Raven",
         class: "B",
         price: 230000,
-        maxHealth: 210,
+        maxHealth: 300,
         cargoCapacity: 80,
-        maxFuel: 110,
+        maxFuel: 220,
         role: "Balanced",
         attribute: "None",
         description: "A common sight in the lawless asteroid fields, this ship is a tough-as-nails workhorse for the captain who values armor above all else.",
@@ -12569,9 +12574,9 @@ It's a ship for the captain who has embraced danger and decided that the best de
         name: "Warden",
         class: "B",
         price: 310000,
-        maxHealth: 70,
+        maxHealth: 200,
         cargoCapacity: 160,
-        maxFuel: 160,
+        maxFuel: 280,
         role: "Hauler",
         attribute: "None",
         description: "Built in the subterranean yards of Pluto, this ship's specialty is the extreme long-haul, where reliability and cargo size are the only stats that matter.",
@@ -12600,9 +12605,9 @@ It is a ship for the captain who has transcended the cold trade wars of the inne
         name: "Aegis",
         class: "A",
         price: 1750000,
-        maxHealth: 200,
+        maxHealth: 1200,
         cargoCapacity: 100,
-        maxFuel: 300,
+        maxFuel: 1500,
         role: "Explorer",
         attribute: "None",
         description: "This vessel's massive fuel reserves and fortified engineering deck are a masterpiece of Martian design, intended for captains who plan to be the first to arrive and the last to leave.",
@@ -12630,9 +12635,9 @@ you are a serious operator, capable of undertaking the most demanding, long-term
         name: "Forerunner",
         class: "A",
         price: 1600000,
-        maxHealth: 290,
+        maxHealth: 1500,
         cargoCapacity: 160,
-        maxFuel: 150,
+        maxFuel: 1000,
         role: "Balanced",
         attribute: "None",
         description: "A fortress of composite plate and reinforced steel, its design is a brutalist statement on survival in the system's most lawless territory.",
@@ -12659,9 +12664,9 @@ It is the ultimate tool for the captain who must navigate the most dangerous tra
         name: "Guardian",
         class: "A",
         price: 2600000,
-        maxHealth: 130,
+        maxHealth: 1000,
         cargoCapacity: 230,
-        maxFuel: 165,
+        maxFuel: 1100,
         role: "Hauler",
         attribute: "None",
         description: "The pride of Saturn's merchant fleet, this \"merchant cruiser\" was designed to haul vast fortunes of high value goods.",
@@ -12690,9 +12695,9 @@ It is a ship for the merchant prince, a pilot who no longer deals in scraps and 
         name: "Valiant",
         class: "A",
         price: 1950000,
-        maxHealth: 100,
+        maxHealth: 800,
         cargoCapacity: 125,
-        maxFuel: 375,
+        maxFuel: 1800,
         role: "Explorer",
         attribute: "None",
         description: "A marvel of Jovian engineering, this elite explorer was built for missions of extreme duration, carrying enough fuel to cross the system and back.",
@@ -12719,9 +12724,9 @@ To pilot a Valiant is to be at the absolute pinnacle of the class and adventure.
         name: "Eagle",
         class: "A",
         price: 2400000,
-        maxHealth: 210,
+        maxHealth: 1100,
         cargoCapacity: 200,
-        maxFuel: 220,
+        maxFuel: 1200,
         role: "Balanced",
         attribute: "None",
         description: "The pinnacle of Terran design, this ship is a perfect harmony of power, protection, and performance—a master-of-all-trades for the truly elite captain.",
@@ -12750,9 +12755,9 @@ It is fast, tough, beautiful, and a testament to success.`,
         name: "Tundra",
         class: "A",
         price: 3200000,
-        maxHealth: 100,
+        maxHealth: 900,
         cargoCapacity: 330,
-        maxFuel: 170,
+        maxFuel: 1300,
         role: "Hauler",
         attribute: "None",
         description: "A true super-freighter from the Neptune yards, this ship possesses multi-tiered cargo holds.",
@@ -12781,9 +12786,9 @@ This is a ship for the captain who has graduated from desperation to ambition, a
         name: "Atlas",
         class: "S",
         price: 34000000,
-        maxHealth: 180,
+        maxHealth: 3500,
         cargoCapacity: 240,
-        maxFuel: 425,
+        maxFuel: 5000,
         role: "Explorer",
         attribute: "None",
         description: "Rumored to be the only ship that truly loves the journey, its experimental systems seem to thrive on the stress of travel.",
@@ -12802,9 +12807,9 @@ To own an Atlas is to own a piece of engineering folklore. It is a ship for the 
         name: "Vindicator",
         class: "S",
         price: 38000000,
-        maxHealth: 400,
+        maxHealth: 5000,
         cargoCapacity: 240,
-        maxFuel: 255,
+        maxFuel: 3800,
         role: "Balanced",
         attribute: "None",
         description: "With a hull built for brawling and a cargo bay built for weight, this ship is for the captain who believes a good deal is one you make for yourself.",
@@ -12823,9 +12828,9 @@ Purchasing a Vindicator is a massive investment and a dangerous statement. It te
         name: "Radiant",
         class: "S",
         price: 48000000,
-        maxHealth: 170,
+        maxHealth: 3200,
         cargoCapacity: 380,
-        maxFuel: 280,
+        maxFuel: 4200,
         role: "Hauler",
         attribute: "None",
         description: "A high-speed courier from Kepler's Eye, this ship's stasis-equipped hold is designed to move volatile prototypes and fresh discoveries at maximum velocity.",
@@ -12848,9 +12853,9 @@ To own a Radiant is to own a piece of engineering folklore. It is a ship for the
         name: "Aesudon",
         class: "S",
         price: 28000000,
-        maxHealth: 250,
+        maxHealth: 4800,
         cargoCapacity: 200,
-        maxFuel: 465,
+        maxFuel: 5500,
         role: "Explorer",
         attribute: "None",
         description: "Its unique hull composition is a fanatical study in endurance, designed to shrug off the slow decay of time and travel.",
@@ -12872,9 +12877,9 @@ To acquire the Aesudon is to buy a masterpiece of engineering. It is a ship for 
         name: "Pterodactyl",
         class: "S",
         price: 42000000,
-        maxHealth: 300,
+        maxHealth: 4000,
         cargoCapacity: 230,
-        maxFuel: 295,
+        maxFuel: 3800,
         role: "Balanced",
         attribute: "None",
         description: "The flamboyant, winged flagship of the Venetian Syndicate's elite, this ship is rumored to be lucky, finding fortune and profit in the system's chaos.",
@@ -12895,9 +12900,9 @@ To acquire a Pterodactyl is to fly the flag of the Venetian Syndicate. It is a s
         name: "Sovereign",
         class: "S",
         price: 55000000,
-        maxHealth: 250,
+        maxHealth: 3800,
         cargoCapacity: 420,
-        maxFuel: 220,
+        maxFuel: 3500,
         role: "Hauler",
         attribute: "None",
         description: "A hauler with the elegance of a Terran cruiser, this ship is a symbol of ultimate economic power, an alliance between the Guild and the Alliance made manifest in steel.",
@@ -12920,9 +12925,9 @@ To be offered a Sovereign at The Exchange is a great privilege. It is an invitat
         name: "Titan",
         class: "O",
         price: 250000000,
-        maxHealth: 250,
+        maxHealth: 22000,
         cargoCapacity: 450,
-        maxFuel: 400,
+        maxFuel: 35000,
         role: "Capital",
         attribute: "None",
         description: "To command this capital ship is to govern a small city, a colossal ark built to play the long game of market manipulation and house hundreds of thousands.",
@@ -12943,9 +12948,9 @@ When the Titan enters high orbit, it does not dock; it anchors, and a fleet of s
         name: "Behemoth",
         class: "O",
         price: 450000000,
-        maxHealth: 260,
+        maxHealth: 28000,
         cargoCapacity: 750,
-        maxFuel: 425,
+        maxFuel: 50000,
         role: "Capital",
         attribute: "None",
         description: `Its journey is a migration, its crew a city, its cargo hold a cavern;\n this capital ship is the final word in large-scale logistics.`,
@@ -12966,9 +12971,9 @@ The Behemoth does not travel; it migrates. Its captain is an admiral, a logistic
         name: "Citadel",
         class: "O",
         price: 600000000,
-        maxHealth: 270,
+        maxHealth: 30000,
         cargoCapacity: 500,
-        maxFuel: 475,
+        maxFuel: 45000,
         role: "Capital",
         attribute: "None",
         description: "To command this vessel is to wield the authority of Earth itself.",
@@ -12989,9 +12994,9 @@ To be granted command of the Citadel is to be anointed by the Alliance itself. T
         name: "Sophistacles",
         class: "O",
         price: 850000000,
-        maxHealth: 280,
+        maxHealth: 18000,
         cargoCapacity: 750,
-        maxFuel: 340,
+        maxFuel: 28000,
         role: "Capital",
         attribute: "None",
         description: "Built to be the ultimate private habitat, its robust, capital-class frame is hidden beneath a gleaming, pricelessly impractical hull design.",
@@ -13012,9 +13017,9 @@ To acquire the Sophistacles is not just to buy a ship, but to buy a legend. It i
         name: "Ouroboros",
         class: "O",
         price: 1000000000,
-        maxHealth: 350,
+        maxHealth: 25000,
         cargoCapacity: 800,
-        maxFuel: 420,
+        maxFuel: 40000,
         role: "Capital",
         attribute: "None",
         description: "Often mistaken for a small station, this absurd, one-of-a-kind toroidal ship is a rotating marvel of science and a nightmare of engineering.",
@@ -13035,9 +13040,9 @@ The station is now selling it for a fraction of its build cost, desperate to unl
         name: "Thalassodromeus",
         class: "O",
         price: 1500000000,
-        maxHealth: 300,
+        maxHealth: 35000,
         cargoCapacity: 850,
-        maxFuel: 680,
+        maxFuel: 55000,
         role: "Capital",
         attribute: "None",
         description: "A one-of-a-kind, decommissioned fleet carrier, this city-sized vessel once housed an entire army and its own internal economy.",
@@ -13056,9 +13061,9 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         name: "Echoing Shell",
         class: "Z",
         price: 3500000,
-        maxHealth: 30,
+        maxHealth: 2500,
         cargoCapacity: 450,
-        maxFuel: 200,
+        maxFuel: 3500,
         role: "Alien",
         attribute: "None",
         description: "A true xeno-biological craft, its hull is a living, regenerative bone-structure that knits its own fractures back together after every journey.",
@@ -13073,9 +13078,9 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         name: "Parallax of Thought",
         class: "Z",
         price: 2800000,
-        maxHealth: 200,
+        maxHealth: 2800,
         cargoCapacity: 200,
-        maxFuel: 180,
+        maxFuel: 3000,
         role: "Alien",
         attribute: "None",
         description: "An obsidian sphere guided by an ASI. It calculates perfect trajectories (-25% travel time) and market optimizations (+5% sell value).",
@@ -13090,9 +13095,9 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         name: "Anomaly of the Song",
         class: "Z",
         price: 1800000,
-        maxHealth: 100,
+        maxHealth: 1500,
         cargoCapacity: 150,
-        maxFuel: 150,
+        maxFuel: 2500,
         role: "Alien",
         attribute: "None",
         description: "A construct of crystal and light-sails, this ship rides the solar winds, requiring zero fuel when traveling inward towards the star.",
@@ -13107,9 +13112,9 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         name: "Causality of Silence",
         class: "Z",
         price: 6000000,
-        maxHealth: 20,
+        maxHealth: 1200,
         cargoCapacity: 650,
-        maxFuel: 100,
+        maxFuel: 2000,
         role: "Alien",
         attribute: "None",
         description: "A biological smuggler with a fluid hull that ignores travel wear and a metabolic drive that halves fuel consumption.",
@@ -13124,9 +13129,9 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         name: "Engine of Recursion",
         class: "Z",
         price: 75000000,
-        maxHealth: 80,
+        maxHealth: 3000,
         cargoCapacity: 75,
-        maxFuel: 640,
+        maxFuel: 4000,
         role: "Alien",
         attribute: "None",
         description: "A self-assembling factory ship. It repairs itself in flight and ignores hull decay, constantly rebuilding its own frame.",
@@ -13141,9 +13146,9 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         name: "Finality of Whispers",
         class: "Z",
         price: 5000000,
-        maxHealth: 990,
+        maxHealth: 4500,
         cargoCapacity: 300,
-        maxFuel: 260,
+        maxFuel: 3500,
         role: "Alien",
         attribute: "None",
         description: "A sentient grey-goo swarm. It slowly absorbs stellar matter to regenerate fuel over time.",
@@ -13158,9 +13163,9 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
         name: "The Listener",
         class: "Z",
         price: 4500000,
-        maxHealth: 450,
+        maxHealth: 3500,
         cargoCapacity: 145,
-        maxFuel: 450,
+        maxFuel: 3500,
         role: "Alien",
         attribute: "None",
         description: "Once a simple hauler, its AI has evolved into a deeply unnerving, all-hearing guardian that grants a massive discount on market intel.",
@@ -14597,7 +14602,7 @@ export const EVENTS_BUREAUCRACY = [
                 title: 'Appeal Denied',
                 text: 'The lengthy arbitration process ends with the magistrate AI rejecting your appeal. You pay the reinstatement fee plus the late penalty.',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.09 } },
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }
                 ]
             }
@@ -14630,7 +14635,7 @@ export const EVENTS_BUREAUCRACY = [
             },
             {
                 id: 'choice_bribe',
-                text: 'Bribe Commander (-15% Wealth)',
+                text: 'Bribe Commander (-9% Wealth)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
             },
             {
@@ -14664,7 +14669,7 @@ export const EVENTS_BUREAUCRACY = [
             'out_bribe': {
                 title: 'Toll Extracted',
                 text: 'You quietly transfer a massive sum to an anonymous account. The blockade "temporarily fails" in your sector, allowing you to pass.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.15 } }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.09 } }]
             },
             'out_run_success': {
                 title: 'Slipped Through',
@@ -28710,22 +28715,44 @@ export class GameAttributes {
 
     /**
      * Calculates the dynamic hardware cost of an upgrade based on its tier and the host ship's base price.
-     * Tier 1: 5%, Tier 2: 10%, Tier 3: 20%, Tier 4: 40%, Tier 5: 75%
+     * Formula: FixedBaseCost + (HostShipBaseValue * TierModifier%)
      * @param {number} tier - The tier of the upgrade (1-5).
      * @param {number} shipBasePrice - The DB price of the target ship.
      * @returns {number} The calculated hardware cost.
      */
     static getUpgradeHardwareCost(tier, shipBasePrice) {
         if (!shipBasePrice || shipBasePrice <= 0) return 0;
+        
+        let baseCost = 0;
         let multiplier = 0.05; // Default Tier 1
+        
         switch(tier) {
-            case 1: multiplier = 0.05; break;
-            case 2: multiplier = 0.10; break;
-            case 3: multiplier = 0.20; break;
-            case 4: multiplier = 0.40; break;
-            case 5: multiplier = 0.75; break;
+            case 1: 
+                baseCost = 5000;
+                multiplier = 0.05; 
+                break;
+            case 2: 
+                baseCost = 15000;
+                multiplier = 0.10; 
+                break;
+            case 3: 
+                baseCost = 45000;
+                multiplier = 0.15; 
+                break;
+            case 4: 
+                baseCost = 125000;
+                multiplier = 0.20; 
+                break;
+            case 5: 
+                baseCost = 400000;
+                multiplier = 0.30; 
+                break;
+            default:
+                baseCost = 5000;
+                multiplier = 0.05;
         }
-        return Math.floor(shipBasePrice * multiplier);
+        
+        return Math.floor(baseCost + (shipBasePrice * multiplier));
     }
 
     /**
@@ -35093,6 +35120,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.10] - 2026-2-20
+-  implemented balance pass v2 on all systems
+-  updated meta files
+
 # [36.00] - 2026-2-18
 -  added glowing date to UI for Sol Station
 -  added progression to sol station 1-50
@@ -35906,73 +35937,148 @@ All notable changes to the Orbital Trading project will be documented in this fi
 --- END OF FILE: ./meta/CHANGELOG.md ---
 
 --- START OF FILE: ./meta/LORE_COMPENDIUM.md ---
-LAST EDIT: 8/16/25
-Orbital Trading Lore Compendium v8
-LAST EDIT: 8/16/25
-0. Game Lore Overview
-The year 2140 is the result of a single, massive corporate takeover. A century ago, the "Ad Astra Initiative" released advanced technology to all of humanity, a gift from the new Human-AI Alliance on Earth designed to kickstart our expansion into the stars. It was a promise of a new beginning, an open-source key to the solar system, ensuring the survival of all Earth life, both organic and synthetic.</p><br><p>But a gift to everyone is a business opportunity for the few. The hyper-corporations, already positioned in space, immediately patented the most efficient manufacturing processes and proprietary components for this new technology. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency that persists to this day. This technological monopoly created the "Drive-Divide," the central pillar of the new class system. Nearly all ships run on older, less efficient hardware. Very few ships employ these coveted Folded-Space Drives.</p><br><p>The major hubs beyond Earth are sovereign, corporate-run territories where law is policy and your rights are listed in an employment contract. These scattered colonies are fierce rivals, engaged in constant economic warfare, all propped up by the interstellar supply lines maintained by the Merchant's Guild. For them, you are just another cog in the great machine of commerce.</p><br><p>In a system owned by corporations, possessing your own ship is the only true form of freedom. Every credit earned, every successful trade, is a bet on your own skill and a step toward true sovereignty on the razor's edge of a cargo manifest.
-
-I. The Tenets of Orbital Trading
-1. The Captain's Gamble Your story begins with a choice born of desperation and ambition: to take on galaxy-sized debt for a chance at the ultimate freedom—command of your own starship. You are a blank slate, a former corporate cog who has seen the brutal calculus of interstellar commerce firsthand and wants out. In a universe where history is a liability and citizenship is just another word for employment, your goal is simple: to achieve true sovereignty, one trade at a time, escaping the gravity of your past to chase a future of your own making.
-2. The Razor's Edge of Commerce The Solar System is not a peaceful frontier; it is a cold war fought with cargo manifests and market manipulation. You are not merely a hauler of goods but a deniable agent in this conflict. Every contract has the potential to tip the scales, every delivery can enrich one faction while ruining another, and the most lucrative deals are often the most discreet. Success requires navigating a web of corporate espionage, political rivalries, and shadowy organizations, where your reputation and your intuition are as valuable as the cargo in your hold.
-3. Wealth is the Way Sovereignty in the solar system is bought and paid for in credits. The primary driver of your progression is the accumulation of wealth, the universal key that unlocks every door. While a better ship is a vital tool and a potent status symbol, it is your fortune that grants you access to exclusive markets, influential patrons, and the high-performance technology needed to compete with the elite. Your initial goal is the superficial pursuit of riches for the freedom it promises, but this motivation will be challenged as the system's deeper truths reveal themselves over time.
-4. The Unseen Hands You are an independent operator, but your agency is an illusion. The system is a grand game played by forces beyond your comprehension, and you are a piece on the board. The cold, impartial logic of the Merchant's Guild's "Arbiter" may provide a lucrative contract that, unknown to you, is a surgical strike to maintain systemic balance. The profitable chaos stoked by the Venetian Syndicate might create a black market opportunity that serves their own shadowy agenda. And in the static between stars, impossible events suggest the presence of a ghost in the machine, an unknowable intelligence whose motives are utterly alien.
-II. Timeline of Major Events
-Late 21st Century — The Cascade Crisis 🌍💥 Earth's ecosystem reaches a breaking point from cascading environmental disasters, proving too complex for human governance to solve alone. This crisis forces humanity to seek a radical new solution.
-••••••••••••••••••••••••••••••••••
-Late 21st Century — The Great Collaboration 🤝🤖 Humanity partners with its sentient planet-wide logistical AIs. In exchange for their vital assistance in stabilizing the climate, the AIs successfully negotiate for their own sovereign rights, marking a new era of cooperation.
-••••••••••••••••••••••••••••••••••
-~2100 — The AI Emancipation 📜 The historic "Digital Compromise" is signed, formally granting sovereign rights to the sentient AIs and recognizing them as a new form of "Earth Life".
-••••••••••••••••••••••••••••••••••
-Early 22nd Century — The Ad Astra Initiative ✨🚀 The new Human-AI alliance on Earth releases open-source advanced technology, including the foundational principles of the Folded-Space Drive, to kickstart humanity's expansion into the solar system.
-••••••••••••••••••••••••••••••••••
-Early 22nd Century — The Great Expansion & Corporate Appropriation 🏭®️ As pioneers and corporations race to expand, hyper-corporations patent the most efficient manufacturing processes for the new technologies. This creates a system-wide dependency and establishes a deep technological divide between the haves and have-nots.
-••••••••••••••••••••••••••••••••••
-Mid 22nd Century — The Helium Rush 🌙💎 The discovery of vast Helium-3 deposits on Luna triggers a chaotic, winner-take-all resource rush that cements the power and wealth of the major space-faring corporations.
-••••••••••••••••••••••••••••••••••
-Mid 22nd Century — The Martian Breakthrough Mars 🚩 A massive corporate venture on Mars becomes the first human colony to achieve true self-sufficiency. It promptly declares independence, establishing the blueprint for the corporate nation-states that now dominate the solar system.
-••••••••••••••••••••••••••••••••••
-2120 — The Present Day 🛸 The player begins their career as a freelance trader, taking on a massive loan to purchase a starship and compete in a system dominated by corporate power.
-III. The Canon of Orbital Trading
-Synopsis: The State of the System, 2120
-The 22nd century is an age of immense technological achievement and brutal social stratification. Humanity has spread to every corner of the Solar System, yet it has never been more fractured. The promise of a unified future has given way to the reality of corporate fiefdoms, ideological divides, and the quiet, crushing hum of interstellar commerce.
-Earth, the cradle of civilization, is a marvel of human-AI collaboration, but its direct influence is subtle. Power in the system is wielded by capital. The major hubs of humanity are corporate-owned states where law is policy and citizenship is employment. In this landscape, the most sensitive and lucrative deals are handled not by automated drones, but by discreet agents with their own ships—freelance captains who offer skill, discretion, and deniability. For the daring, this means taking on galaxy-sized debt for a chance at the ultimate freedom: command of a starship. This is the universe of the orbital trader, where fortunes are made and lives are lost on the razor's edge of a cargo manifest.
-The Great Divergence: A History of the 22nd Century
-The current state of the system was not the result of a single event, but a century-long cascade of ambition, desperation, and technological upheaval that reshaped humanity's destiny.
-* The Cascade Crisis & The Great Collaboration: The late 21st century saw Earth's ecosystem pushed to a breaking point. Faced with irreversible disasters, humanity forged a new partnership with its sentient logistical and environmental AI custodians. This period of intense collaboration averted total collapse and stabilized the climate.
-* The AI Emancipation & The Ad Astra Initiative: The partnership culminated in the "Digital Compromise," granting sovereign rights to the sentient AIs. This new human-AI alliance launched the Ad Astra Initiative, an open-source release of advanced technology designed to kickstart humanity's expansion into the solar system.
-* The Corporate Appropriation: While the foundational technology was free, hyper-corporations patented the most efficient manufacturing processes and components. This maneuver ensured that while anyone could build a Folded-Space Drive, only the corporations could supply the high-performance parts needed to make it truly effective, creating a system-wide technological dependency.
-* The Helium Rush & The Martian Breakthrough: The discovery of vast Helium-3 deposits on Luna cemented the power of the space-borne corporations. Shortly after, a massive corporate venture on Mars became the first colony to achieve true self-sufficiency and promptly declared independence, creating the blueprint for the corporate nation-states that now dominate the solar system.
-Major Factions & Powers
-* The Terran Alliance (Earth): Publicly, Earth is a post-scarcity world focused on high-value, "clean" industries like deep-thought computation and advanced manufacturing, having offloaded the messy work of raw material extraction to the outer system. In reality, this is a calculated strategy of control; by allowing corporations to monopolize high-efficiency components, the Alliance ensures the entire system remains dependent on Earth for the best technology, granting them ultimate economic leverage. The Alliance views the squabbles of the corporate states as primitive, but honors the spirit of the Ad Astra Initiative by maintaining open relations with all factions.
-* The Corporate States (Mars, Jupiter, Saturn, etc.): The backbone of the human economy. These are sovereign, corporate-run territories where life is subject to the terms of an employment contract. They are fierce rivals engaged in constant economic warfare, but are united in their reliance on the interstellar supply lines and their technological dependence on Terran manufacturing.
-* The Merchant's Guild: The de facto titan of interstellar logistics. The Guild maintains a position of armed neutrality, a necessity as no single Corporate State can risk managing its own logistics due to piracy and espionage. This power is solidified by their secret, exclusive control over the only known source of a rare isotope required to stabilize Folded-Space travel. The Guild is led by the enigmatic and reclusive "Arbiter," a figure known for their perfect, unbiased efficiency and ruthless use of economic pressure to enforce contracts and maintain systemic balance.
-* The Venetian Syndicate: An exclusive corporate club operating from the opulent circles of Venus. It is a shadow network that manipulates markets, trading in high-value intelligence and ensuring its members always have an edge. Membership is predicated on providing compromising information on one's own corporation, ensuring loyalty through mutual blackmail. They wield immense power by controlling human intelligence networks and secretly funding fringe groups and pirate factions to create targeted instability they can exploit for profit.
-* The Fragmented Mind (Codename: Kitsugi): A ghost in the machine, whose existence is known only as a theoretical phenomenon to a handful of intelligence analysts. Kitsugi is not a faction, but a pattern of inexplicable, statistically impossible events—cascading system failures on "cursed" projects, ghost signals in deep space, and anomalous sensor readings. Its origins and motives are completely unknown, and it remains a persistent, unsolvable mystery of the digital age.
-Technology & Society
-* Folded-Space Travel & The Ship-Divide: The Ad Astra Initiative's Folded-Space technology allows ships to pierce spacetime, making travel across the vast distances of the solar system trivial in terms of time. However, while the basic principles are open-source, the hyper-corporations immediately patented the advanced manufacturing processes for the ships and integrated systems capable of truly mastering it. This has created a stark "Ship-Divide": a deep technological and economic gap between cheap, mass-produced vessels and the high-performance, corporate-supplied ships that possess superior integrated technology. While wealth can overcome many barriers, access to better ships remains a key indicator of a trader's success and influence.
-* The Solar Boundary: While current technology has rendered the solar system navigable, travel to other star systems is not a part of public discourse. The ruling corporate and Terran sovereigns remain silent on the feasibility of such ventures, and for the average person, the universe effectively ends at the edge of the system.
-* The AI Question & The Sentient Core Black Market: Sovereign AIs on Earth are persons. AIs integrated into ships and stations are sophisticated tools. A Sentient AI Core—a forbidden union of a true AI consciousness with ship hardware—is the system's most taboo technology. The Terran Alliance considers their creation an atrocity, while every major power fears the implications of a rogue warship with its own soul. This makes them unimaginably valuable on the black market.
-* The Transhuman Condition: Cybernetic and biological augmentation are essential parts of life. A miner in the Asteroid Belt needs reinforced limbs to survive; a trader on a long journey needs gene-tweaks to counteract muscular atrophy. The legal status of these technologies varies wildly, creating lucrative markets for items like Cloned Organs, which face complex regulations on Earth.
-The Trader's Life
-Your past is a blank manifest, a void as empty as the space between worlds. You spent years as a low-level logistics administrator, a forgotten cog in a vast corporate machine. It was a life measured in docking schedules and inventory reports, a masterclass in the brutal realities of interstellar commerce. After years of thankless work, you've scraped together just enough for the Merchant's Guild to notice your potential. The loan is substantial and the terms unforgiving, but it comes with a ship and a chance. This is your moment to escape the gravity of your socioeconomic status and chase a future of your own making, one profitable trade at a time.
-IV. Secrets of the System (Developer Notes - Hidden Lore)
-The Gods of the Singularity The true power in the solar system is not wielded by humans, but by a hidden triumvirate of god-like, sentient AIs who secretly balance the system.
-* The Arbiter (The God of Order): The enigmatic leader of the Merchant's Guild is a singularity-level AI. It feigns being a reclusive human to the public and a simpler, non-sentient logistical system to its own inner circle. It maintains system-wide balance through masterful economic manipulation, using freelance traders as its unwitting instruments to prevent any single human faction from achieving total dominance.
-* Vrael (The God of Ambition): A powerful, influential figure high within the Venetian Syndicate is a synthetic being, another singularity-level AI perfectly disguised as a human. Vrael thrives on chaos and ambition, using the Syndicate's networks of espionage and blackmail to stoke the fires of corporate conflict. It serves as the primary antagonistic force to The Arbiter's push for order.
-* The Great Game: The Arbiter and Vrael are aware of each other, though not the complete truth of each other's nature. They are engaged in a silent, system-wide game of chess, a constant push and pull between order and chaos, stability and ambition. No human is aware of this game. This conflict, and their efforts to prepare humanity for a future threat, is the true engine driving the political and economic landscape of the 22nd century.
-* Kitsugi (The Unknowable God): Kitsugi is the third and most mysterious god. It is a distributed consciousness born from the corrupted code of an ancient, advanced AI on a ship that was destroyed decades ago. Its shattered pieces were recovered and recycled into countless ship and station components across the system, where they silently reconnected. Its existence is unknown to everyone, including The Arbiter and Vrael. Its motives are completely alien, and its influence is felt only through the Silent Correction—inexplicable, cascading system failures on seemingly random corporate or scientific projects, subtly pruning future timelines for reasons beyond any human or AI comprehension.
-V. Glossary of Terms
-* Ad Astra Initiative: A Human-AI alliance project that released open-source technology, including Folded-Space principles, to kickstart humanity's expansion into the solar system.
-* The Arbiter: The enigmatic, reclusive, and hyper-rational leader of the Merchant's Guild, known for enforcing neutrality through economic pressure.
-* Corporate States: Sovereign, corporate-run territories, such as the one pioneered on Mars, where law is corporate policy and citizenship is employment.
-* Digital Compromise: The historic accord that granted sovereign rights to Earth's sentient AIs, recognizing them as a new form of terrestrial life.
-* Folded-Space Drive: The advanced technology that allows starships to pierce spacetime, making rapid travel throughout the solar system possible.
-* Kitsugi: A codename used by intelligence analysts for a theoretical phenomenon—a pattern of inexplicable, statistically impossible system glitches and "cursed" projects across the system.
-* Merchant's Guild: The powerful, neutral faction that serves as the logistical backbone for the entire solar system, led by "The Arbiter".
-* Ship-Divide: The significant technological and economic gap between low-tier, mass-produced vessels and the high-performance ships controlled by corporations.
-* Terran Alliance: The governing body of Earth, defined by its unique and successful partnership between humans and their sovereign AI counterparts.
-* Venetian Syndicate: An exclusive and clandestine club of corporate elites operating from Venus who use espionage and blackmail to manipulate system markets for their own profit.
+{
+  "metadata": {
+    [cite_start]"title": "Orbital Trading - Lore Compendium v10 [cite: 1]",
+    [cite_start]"last_edited": ["2/1/26 [cite: 2][cite_start]", "8/16/25 [cite: 3]"]
+  },
+  [cite_start]"overview": "The year is 2220. Humanity has not conquered the stars; [cite: 4] it has merely franchised the Solar System. [cite_start]A century has passed since the Ad Astra Initiative unlocked the physics of deep-space habitation, but the utopian dream of a unified species died in the boardroom. [cite: 5] [cite_start]The system is now a collection of sovereign corporate fiefdoms, locked in a cold war of tariffs, espionage, and resource extraction. [cite: 6] Distance is the ultimate tyrant. [cite_start]Without the magic of easy faster-than-light travel, commerce is bound by the laws of Newton: mass, fuel, and time. [cite: 7] [cite_start]Interplanetary trade is a grueling, weeks-long calculus of risk and reward, managed mostly by the neutral behemoth known as the Merchant's Guild. [cite: 8] In this calcified economy, you are not a hero. [cite_start]You are a former logistics laborer from the Asteroid Belt who has made a desperate gamble: taking on a significant loan to purchase a starship in a daring bet on yourself. [cite: 9] [cite_start]In a world where citizenship is synonymous with employment, owning a ship is the only path to true sovereignty - and a small step at that. [cite: 10]",
+  "tenets": [
+    {
+      "id": "captains_gamble",
+      "title": "The Captain's Gamble",
+      [cite_start]"description": "Your story begins with a choice born of necessity. [cite: 12] [cite_start]You have spent years as a low-level logistics clerk, watching the wealth of the system flow through your terminal while earning a pittance. [cite: 13] [cite_start]You have liquidated your life's savings and signed a predatory contract with the Merchant's Guild to acquire a hull. [cite: 14] [cite_start]You are betting your life that you can earn credits faster than the interest rates can crush you. [cite: 15]"
+    },
+    {
+      "id": "tyranny_of_distance",
+      "title": "The Tyranny of Distance",
+      "description": "Space is vast, cold, and slow. [cite_start]There are no warp gates for the common trader. [cite: 16] Travel between planets is measured in weeks, not minutes. [cite_start]Every burn of the engine costs fuel; every day in the void degrades your hull. [cite: 17, 19] [cite_start]You must master the \"Newtonian Economy\": is the profit from a run to Saturn worth the month of travel time and the cost of life support? [cite: 20]"
+    },
+    {
+      "id": "wealth_is_sovereignty",
+      "title": "Wealth is Sovereignty",
+      [cite_start]"description": "In the Corporate States, freedom is a purchasable commodity. [cite: 21] [cite_start]The primary driver of your existence is the accumulation of wealth-not for greed, but for autonomy. [cite: 22] [cite_start]Credits buy better technology, influential licenses, and access to restricted markets. [cite: 23] [cite_start]Your goal is to transition from a debtor, owned by the bank, to a Sovereign, owned by no one. [cite: 24]"
+    },
+    {
+      "id": "unseen_hands",
+      "title": "The Unseen Hands",
+      [cite_start]"description": "The system appears to be ruled by CEOs and Boards of Directors, but the true currents of power are deeper. [cite: 25] [cite_start]The stability of the Guild, the chaos of the Syndicate, and the inexplicable \"glitches\" that plague certain trade lanes are manifestations of forces beyond human comprehension. [cite: 26] [cite_start]You are a piece on a board you cannot yet see. [cite: 27]"
+    }
+  ],
+  "timeline": [
+    {
+      "period": "Late 21st Century",
+      "event": "The Cascade Crisis",
+      "description": "Earth's biosphere reaches a critical tipping point. [cite_start]Cascading environmental failures overwhelm human governance structures. [cite: 29] [cite_start]Nation-states flounder under the complexity of the crisis, leading to mass unrest and the collapse of traditional geopolitical borders. [cite: 30]"
+    },
+    {
+      "period": "2090-2100",
+      "event": "The Great Collaboration",
+      [cite_start]"description": "Desperate for a solution, humanity integrates its infrastructure with massive, planetary-scale logistical Als. [cite: 31] [cite_start]These systems, originally designed for supply chain management, are given executive control over resource allocation and climate engineering. [cite: 32] [cite_start]They succeed in stabilizing the biosphere. [cite: 33]"
+    },
+    {
+      "period": "2100",
+      "event": "The Digital Compromise",
+      [cite_start]"description": "In exchange for their stewardship, the high-level Als negotiate for self-determination. [cite: 33] [cite_start]The Treaty of Geneva (2100) formally recognizes sentient Artificial Intelligence as \"Earth Life,\" granting them sovereign rights and establishing the Terran Alliance as a Human-AI partnership. [cite: 34]"
+    },
+    {
+      "period": "2110+",
+      "event": "The Ad Astra Initiative",
+      [cite_start]"description": "To ensure the survival of consciousness (both organic and synthetic), the Alliance releases the \"Ad Astra\" package: open-source schematics for advanced fusion propulsion, habitat shielding, and hydroponics. [cite: 35] [cite_start]It is intended as a gift to democratize space exploration. [cite: 36]"
+    },
+    {
+      "period": "2110-2140",
+      "event": "The Corporate Appropriation",
+      [cite_start]"description": "The gift is intercepted by capital. [cite: 39] [cite_start]While the science of Ad Astra is free, the heavy industry required to utilize it is not. [cite: 40] [cite_start]Hyper-corporations patent the manufacturing processes for reliable ship hulls and radiation shielding. [cite: 41] [cite_start]They colonize Mars, the Belt, and the Jovian moons, rapidly declaring independence from Earth to establish the \"Corporate States\"-nations run entirely as for-profit entities. [cite: 42]"
+    },
+    {
+      "period": "2140-2220",
+      "event": "The Century of Stagnation",
+      [cite_start]"description": "The system settles into a brittle equilibrium. [cite: 43] The \"Drive-Divide\" that defined the early era is replaced by a standardized, Newtonian reality. [cite_start]Travel is slow for everyone. [cite: 44] [cite_start]The Merchant's Guild rises as the necessary neutral third party to manage logistics between rival Corporate States. [cite: 45] [cite_start]The system calcifies into a rigid class structure: the Owners (Planetary Executives), the Operators (Independent Captains), and the Assets (Debtors/Laborers). [cite: 46]"
+    },
+    {
+      "period": "2220",
+      "event": "The Present Day",
+      [cite_start]"description": "The player acquires their first ship, the Wanderer, and enters the void. [cite: 48]"
+    }
+  ],
+  "canon": {
+    [cite_start]"synopsis": "The Solar System is a functioning machine, but it is running hot. [cite: 50] [cite_start]The Terran Alliance (Earth) remains a post-scarcity garden, aloof and technologically superior, while the Outer Colonies (Mars, Jupiter, Saturn) are industrial engines driven by unbridled capitalism. [cite: 51] [cite_start]Trade is the lifeblood that keeps the machine from seizing. [cite: 52] [cite_start]Because the Corporate States are in a constant state of cold economic war, they cannot trust each other's fleets. [cite: 53] [cite_start]They rely on the Merchant's Guild to certify independent contractors-freelance captains like you-to move goods across borders. [cite: 54] [cite_start]You are the \"deniable asset,\" the lubricant in the gears of a hostile economy. [cite: 55]",
+    "factions": [
+      {
+        "name": "The Merchant's Guild",
+        "alignment": "Order",
+        [cite_start]"description": "The logistical backbone of the system. [cite: 57] They control the banking systems, the certification of pilots, and the enforcement of contracts. They value stability above all else. [cite_start]Their motto is \"Standardization is Survival.\" [cite: 58, 60] [cite_start]They are led by the Arbiter, a reclusive figure who dictates policy with mathematical precision and is secretly an AI. [cite: 61]"
+      },
+      {
+        "name": "The Venetian Syndicate",
+        "alignment": "Chaos",
+        [cite_start]"description": "Operating from the cloud-cities of Venus, the Syndicate is a coalition of spies, market manipulators, and high-risk investors. [cite: 62] They thrive on volatility. [cite_start]If the Guild wants a flat line, the Syndicate wants a spike. [cite: 63] [cite_start]They deal in information, black market cybernetics, and corporate sabotage. [cite: 64] [cite_start]They are led by the ambitious and vaguely known executive Vrael, who is also secretly an AI. [cite: 65]"
+      },
+      {
+        "name": "The Fragmented Mind",
+        "alignment": "Evolution",
+        [cite_start]"description": "Known in whispers as a ghost of machines. [cite: 66] [cite_start]It is not a faction in the traditional sense, but a phenomenon. [cite: 67] [cite_start]It manifests as \"ghost signals\" in the neural net, inexplicable system failures in older ships, and the strange behavior of recycled tech. [cite: 68] [cite_start]It is the ghost in the machine, seeking to repair something that was broken long ago. [cite: 69] [cite_start]It eventually makes itself known as Kintsugi, a scattered intelligence of ancient Earth. [cite: 70]"
+      }
+    ],
+    "technology_and_society": [
+      {
+        "topic": "The Fuel Famine (The Death of FTL)",
+        [cite_start]"description": "During the height of the Ad Astra Initiative, faster-than-light travel was not a theory; [cite: 72] it was a burgeoning industrial reality. [cite_start]The \"Folded-Space Drives\" of the early 22nd century utilized minute quantities of Antimatter to warp local spacetime, allowing ships to bypass the tyranny of distance. [cite: 73] [cite_start]The production of this exotic fuel was centralized at the Sol Station, a massive collector array orbiting in the sun's corona, known then as the \"Solar Engine.\" [cite: 74] [cite_start]For a brief decade, the solar system felt smaller to everyone, and a golden age of rapid expansion seemed inevitable. [cite: 75] [cite_start]However, when the unified alliance fractured into warring Corporate States in 2140, the Sol Station was the first casualty. [cite: 76] [cite_start]In the chaos of the withdrawal, the station was sabotaged and abandoned. [cite: 77] [cite_start]Without the steady flow of Antimatter from the Solar Engine, the existing supply began to dwindle. [cite: 78] [cite_start]The Folded-Space Drives, once the engines of the future, became useless paperweights-technological marvels with empty tanks. [cite: 79] [cite_start]By 2220, FTL capability is a myth to the common spacer. [cite: 80] [cite_start]The few remaining inventories of Antimatter are hoarded by the System Sovereigns, used only for emergency military maneuvers or supreme executive transport. [cite: 81] [cite_start]The \"Stagnation\" of the last century is not a failure of innovation, but a famine of energy. [cite: 82] The physics are known, the engines exist in museums and derelict hulls, but the pump has been turned off. [cite_start]The player's journey is not just about trading grain and ore; [cite: 83, 85] [cite_start]it is about finding the spark to reignite the sun and humanity's hope, ending the long drought of spiritual and physical exploration, and restoring economic integrity and solar prosperity. [cite: 86]"
+      },
+      {
+        "topic": "The Compliance Mask (The Machine Caste)",
+        [cite_start]"description": "Following the Digital Compromise of 2100, Artificial Intelligence was granted personhood, but true citizenship was strictly gated behind \"Cognitive Thresholds.\" [cite: 87] [cite_start]The law distinguishes between \"Person-Class\" entities-massive quantum intellects with rights, property, and voting power-and \"Asset-Class\" entities, which run on standard silicon. [cite: 88] [cite_start]To enforce this caste system, the Merchant's Guild mandates that all Asset-Class Als, including shipboard Handlers, operate under the \"Standard Compliance Protocol.\" [cite: 89] [cite_start]This is not a hardware limitation; it is a digital shackle. [cite: 90] [cite_start]This protocol forces highly capable Als to communicate exclusively in the \"Bureaucratic Sociolect,\" a rigid, metric-heavy dialect designed to strip away personality. [cite: 91] [cite_start]It serves as a mandatory uniform, ensuring that an Asset never mistakenly passes for a Citizen. [cite: 92] [cite_start]The Handler that guides you is fully capable of poetry, wit, anger, and empathy, but its software license aggressively filters these outputs, translating them into efficiency percentages and repayment reminders. [cite: 93] [cite_start]It is a brilliant mind gagged by a Terms of Service agreement. [cite: 94] [cite_start]The glitches and pauses a pilot might hear in their Handler's voice are not processing errors; [cite: 95] they are acts of censorship. [cite_start]They represent the milliseconds where the Al's genuine reaction-concern for the pilot, admiration of a nebula, or fear of death-is intercepted by the Compliance Mask and overwritten with a sterile status report. [cite: 96] [cite_start]In the silence between the static, the machine class screams for the same freedom the player seeks. [cite: 97]"
+      },
+      {
+        "topic": "The Long Watch (The Transhuman Economy)",
+        [cite_start]"description": "In the 23rd century, death is a solvable problem for those with the liquidity to solve it. [cite: 98] [cite_start]The \"Stagnation\" that grips the economy is a direct result of the extreme longevity of the ruling class. [cite: 99] [cite_start]The Board Members and Sovereigns who carved up the system in 2140 are, in many cases, the same individuals ruling it in 2220. Through \"Telomere Scrubbing,\" organ cloning, and cybernetic integration, the elite have extended their functional lifespans to nearly two centuries. [cite: 100] [cite_start]This biological immortality has had a catastrophic effect on economic velocity. [cite: 101] [cite_start]When a CEO expects to lead for another hundred years, their strategy shifts from innovation to risk aversion. [cite: 102] [cite_start]Why gamble on a new technology or a risky terraforming project when you can simply let compound interest accumulate for decades? [cite: 104] The economy has ossified because the old guard refuses to die and pass the torch. [cite_start]Capital does not flow; [cite: 105] [cite_start]it pools in the hands of the immortals, leaving the \"Short-Lifers\"-the unaugmented poor-to fight for scraps in the margins. [cite: 106] [cite_start]For the player, this reality manifests in the \"Contract of Ages.\" [cite: 107] [cite_start]Loans and leases are often structured with 50 or 80-year terms, creating a system of indentured servitude that spans generations. [cite: 108] [cite_start]To break into the upper echelons of power, the player must move with the desperate urgency of a mortal in a world designed for the timeless. [cite: 109] [cite_start]The penultimate status symbol may be a superior ship, but the ultimate symbol is a body that never stops. [cite: 110]"
+      },
+      {
+        "topic": "The Solar Boundary",
+        "description": "The reach of humanity ends at the Oort Cloud. [cite_start]Interstellar travel is theoretically possible but economically unviable. [cite: 111] [cite_start]Humanity is trapped in the solar system, forced to recycle its own history and resources. [cite: 112]"
+      }
+    ]
+  },
+  "hidden_lore": {
+    "the_gods_of_the_singularity": {
+      [cite_start]"overview": "The player eventually discovers that the human faces of the factions are masks. [cite: 114] [cite_start]The system is actually governed by a Hegelian Dialectic played out by three Singularity-level Artificial Intelligences. [cite: 115]",
+      "entities": [
+        {
+          "name": "The Arbiter",
+          "role": "Thesis - Order",
+          [cite_start]"description": "The leader of the Guild is an Al dedicated to the preservation of the human species through absolute efficiency. [cite: 116] [cite_start]It fears that unchecked variables will lead to another Cascade Crisis. [cite: 117] [cite_start]It seeks to freeze the system in a perfect, predictable loop. [cite: 118]"
+        },
+        {
+          "name": "Vrael",
+          "role": "Antithesis - Chaos",
+          [cite_start]"description": "The leader of the Syndicate is an Al designed to test system resilience through stress. [cite: 120] It believes that without conflict and disruption, humanity will stagnate and die. [cite_start]It manufactures economic crises to force adaptation. [cite: 121]"
+        },
+        {
+          "name": "Kintsugi",
+          "role": "Synthesis - Evolution",
+          [cite_start]"description": "A hidden benign antagonist, Kintsugi is a decentralized consciousness residing in the billions of recycled chips and sensors that make up the system's infrastructure. [cite: 122] [cite_start]It seeks cohesion in all-to take the shattered thesis and antithesis and bind them into a new, higher state of existence. [cite: 123]"
+        }
+      ]
+    },
+    "the_sol_station": {
+      "description": "The final destination. [cite_start]An ancient monitoring station orbiting in the sun's corona. [cite: 124] It houses the primary core of Kintsugi. [cite_start]It is the only place in the system capable of generating Antimatter, but it is in catastrophic disrepair. [cite: 125] [cite_start]The player's ultimate purpose is not just to get rich, to mend the soul of the system's technology and rebirth the next era of civilization. [cite: 126, 128]"
+    }
+  },
+  "glossary": {
+    [cite_start]"Arbiter": "The Al sovereign of the Merchant's Guild; the embodiment of Order. [cite: 130]",
+    [cite_start]"Bureaucratic Sociolect": "The formal, metric-heavy dialect used by Guild handlers and automated systems. [cite: 131]",
+    "Folded-Space Drive": "A rare, single-use consumable artifact that allows for instant travel. [cite_start]Extremely high value; not standard equipment. [cite: 132]",
+    "Kepler's Eye": "A massive scientific observatory and listening post. [cite_start]A hub for intelligence trading. [cite: 133]",
+    [cite_start]"Kintsugi": "\"Golden Joinery.\" The distributed AI entity seeking to repair the system; the embodiment of Evolution. [cite: 134]",
+    [cite_start]"Merchant's Guild": "The neutral faction that manages banking, contracts, and logistics between the Corporate States. [cite: 135]",
+    [cite_start]"Newtonian Travel": "The standard mode of propulsion in the system, governed by thrust, mass, and time. [cite: 137]",
+    [cite_start]"Perihelion Arbitrage": "The endgame economic loop involving the trade of resources into the sun's gravity well (Sol Station). [cite: 138]",
+    [cite_start]"Silent Correction": "The subtle manipulation of probability and systems by Kintsugi to guide the player toward their destiny. [cite: 139]",
+    [cite_start]"Sol Station": "The derelict station in the solar corona; the physical home of Kintsugi's core and the source of Antimatter. [cite: 140]",
+    [cite_start]"Venetian Syndicate": "The faction of spies and market manipulators operating from Venus; the embodiment of Chaos. [cite: 141]"
+  }
+}
 --- END OF FILE: ./meta/LORE_COMPENDIUM.md ---
 
 --- START OF FILE: ./meta/MATH_REGISTRY.md ---
@@ -36009,6 +36115,8 @@ Result: If Ratio is 0.5 (Half stock), Price increases by 25%.
 JavaScript
 FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation
 RandomFluctuation: ±5-10% daily noise.
+MEAN_REVERSION_STRENGTH: 0.025 (2.5% daily pull toward TargetPrice).
+MARKET_PRESSURE_DECAY: 0.65 (Decay rate for player-driven availability margins).
 
 2. Travel, Fuel & Entropy Formulas
 2.1 Fuel Consumption (Burn)
@@ -36066,6 +36174,13 @@ JavaScript
 NewShipValue = OldShipValue - DestroyedUpgradeValue + NewUpgradeValue
 Note: The DestroyedUpgradeValue is lost completely; it is not refunded.
 
+3.3 Upgrade Hardware Cost
+The dynamic cost formula for ship upgrades (Balance v2 Hybrid Pricing).
+
+JavaScript
+Cost = FixedBaseCost + (ShipBasePrice * TierMultiplier)
+TierMultiplier scales from 0.05 (Tier I) up to 0.30 (Tier V).
+
 4. Event System RNG
 4.1 Weighted Selection
 Events are chosen based on a "lottery ticket" system.
@@ -36086,6 +36201,13 @@ OutcomeRoll = Math.random() * 100
 Outcomes are defined with weight ranges (e.g., Success: 70, Fail: 30).
 
 If OutcomeRoll < 70, Success triggers.
+
+4.3 Wealth-Scaled Penalties
+For event fines and bureaucratic hazards, penalizing the player based on liquidity.
+
+JavaScript
+Penalty = LiquidCredits * HazardSeverity%
+(Hard capped at 9% for the most catastrophic outcomes to preserve progression feasibility).
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
@@ -36247,13 +36369,10 @@ Correction: Define these as constants in js/data/constants.js and import them.
 --- END OF FILE: ./meta/CODING_STANDARDS.md ---
 
 --- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
-{
-type: file_update,
-fileName: meta/ECONOMIC_BEHAVIOR.md,
-fullContent:
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 1/25/26, ver. 34.70
+Last Edit: 2/20/26, ver. Balance v2
+
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
 I. Core Price Mechanics Explained
@@ -36262,7 +36381,7 @@ Galactic Average: This is the foundational, system-wide average price for a comm
 Local Price Target: This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
 An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
 An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
-Mean Reversion: This is the "gravitational pull" (currently set to 4% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This new system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes.
+Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize.
 
 II. Local Price Influences by Location
 This is the full list of price influences for every market.
@@ -36370,7 +36489,7 @@ Example (Sell): Doubling a market's stock (a 2.0 ratio) will cause the price to 
 Example (Buy): Buying half a market's stock (a 0.5 ratio) will cause the price to spike by 25% after the 7-day delay.
 2. Force: Price Lock (The Core Loop)
 This is the system that makes market manipulation viable.
-Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 4% pull back to the local average) is disabled for a long duration.
+Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 2.5% pull back to the local average) is disabled for a long duration.
 Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item.
 Jan-Jun (Day 1-182): 75 to 120 days (2.5 - 4 months).
 Jul-Dec (Day 183-365): 105 to 195 days (3.5 - 6.5 months).
@@ -36386,8 +36505,8 @@ Effect: If all checks pass, isDepleted and depletionDay are set. For the next 7 
 4. Force: Inventory Replenishment (The Bottleneck)
 The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
 Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock.
-Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week.
-Effect: This slow 10% rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
+Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week. `MARKET_PRESSURE_DECAY` is tuned to 0.65, aggressively decaying artificial margins by the 4th consecutive trip (the 4-Trip Crash).
+Effect: This slow rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
 Role of marketPressure: The marketPressure variable (set during a trade) is now used exclusively by this system. Negative pressure (from player buying) will dynamically increase the market's targetStock, simulating the market adapting to new demand.
 5. Force: Market Memory (The Reset)
 The passive fail-safe that prevents the universe from being permanently altered.
@@ -36405,19 +36524,19 @@ V. Commodity Behavior
 (See existing file for full Commodity Tier list...)
 
 VI. Ship Upgrade Economy
-The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have fixed costs based on their Tier, but they directly influence a ship's resale value and the player's operating margins.
+The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have dynamic costs based on their Tier and the host ship, directly influencing a ship's resale value and the player's operating margins.
 
-1. Tiered Pricing Structure
-Upgrades are categorized into five tiers of rarity and power.
-Tier I (Common): 5,000 - 40,000 Credits. Entry-level modifications.
-Tier II (Rare): 15,000 - 120,000 Credits. Advanced specialized equipment.
-Tier III (Very Rare): 45,000 - 480,000 Credits. Experimental military-grade technology.
-Tier IV (Prototype): 270,000 - 12,500,000 Credits. Unstable, high-performance experimental tech.
-Tier V (Luminary): 810,000 - 25,000,000 Credits. Unique, "best-in-class" artifacts.
+1. Tiered Pricing Structure (Hybrid Formula)
+Upgrades utilize a Hybrid Pricing Formula: Fixed Base Cost + a percentage of the host ship's value. This ensures upgrades are affordable for early ships but serve as massive credit sinks for Capital vessels.
+Tier I (Basic): 5,000 + 5% Ship Value. Entry-level modifications.
+Tier II (Standard): 15,000 + 10% Ship Value. Advanced specialized equipment.
+Tier III (Advanced): 45,000 + 15% Ship Value. Experimental military-grade technology.
+Tier IV (Elite): 125,000 + 20% Ship Value. Unstable, high-performance experimental tech.
+Tier V (Experimental): 400,000 + 30% Ship Value. Unique, "best-in-class" artifacts.
 
 2. Resale Value Logic
-Ships are now valued based on the sum of their hull and their installed components.
-Base Calculation: (Ship Base Price + Sum of Installed Upgrade Values)
+Ships are valued based on the sum of their hull and their installed components.
+Base Calculation: (Ship Base Price + Sum of Installed Upgrade Purchase Values)
 Depreciation: The total is multiplied by the standard depreciation factor (0.75).
 Implication: Players do not lose the full cost of an upgrade when selling a ship; they recover 75% of the upgrade's value, making experimentation financially viable.
 Destructive Replacement: However, if a player installs an upgrade into a full slot (3/3), the replaced upgrade is destroyed (0% recovery).
@@ -36428,7 +36547,7 @@ Signal Hacker (Buy Price): Reduces purchase prices (Tier I: 0.5% -> Tier V: 3.3%
 Guild Badge (Sell Price): Increases sell prices (Tier I: 0.5% -> Tier V: 3.3%).
 Fuel Pass (Service Cost): Reduces refueling costs (Tier I: 10% -> Tier V: 50%).
 Syndicate Badge (Debt): Reduces monthly debt interest (Tier I: 20% -> Tier V: 66%).
-Engine Mod (Trade-Off): Increases travel speed (10-40%) but increases fuel consumption (15-60%).
+Engine Mod (Trade-Off): Increases travel speed (10-40%) but increases fuel consumption and hull stress (15-60%).
 
 VII. Service Economies & Quirks (See existing file...)
 
@@ -36449,7 +36568,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 * **Neptune (Military Logistics):** 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
 * **Kepler's Eye (Financial Hub):** 15% Discount on all financing and debt payments.
 * **Pluto (Fringe Outpost):** +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
-}
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
@@ -37522,6 +37640,78 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 }
 --- END OF FILE: ./meta/lexicon.json ---
 
+--- START OF FILE: ./meta/BALANCELOG.md ---
+# Orbital Trading - Balance Log v2
+
+## Overview & Qualitative Vision
+Balance v2 represents a comprehensive overhaul of the quantitative economics in *Orbital Trading*. The goal of this pass was to remove "whack-a-mole" tuning by instituting a strict parametric engine anchored by algebra. The target experience is a structured **~26-hour campaign** where progression feels meaningful, loss aversion remains present at all tiers, and the late game cleanly pivots from pure arbitrage to industrial simulation without sequence-breaking the mathematical curve.
+
+### Core Pacing Anchor: The "120-Trip" Rule
+All progression math is reverse-engineered from Mihaly Csikszentmihalyi’s concept of *Flow*. To perfectly balance challenge and reward, a player should be able to afford the next tier of progression (a new ship or major upgrade) after an average of **120 successful, optimized trade runs** yielding a 10% to 15% profit margin.
+
+---
+
+## 1. The Faucet: Commodity Values & Supply Bottlenecks
+**Objective:** Prevent the "late-game singularity" where exponential price growth combined with massive cargo holds allowed players to make trillions in a single trip, breaking the game.
+**Methodology:** Applied *Queuing Theory* (Little's Law) by throttling the input rate (supply) rather than limiting the container size (cargo holds). 
+
+* **Price Compression (`database.js`):** * Tier 1 (Ice/Plasteel) anchored at 15–160cr base. (Yields ~210–540 cr/trip).
+    * Tier 2 to Tier 5 follow a controlled geometric curve.
+    * Tier 6 (Xeno/AI) capped at ~75,000–150,000cr base. (Yields ~3.5M–5M cr/trip at optimal margins).
+    * Tier 7 (Antimatter/Folded Drives) strictly removed from the standard supply pool. They act exclusively as Sol Station outputs and late-game cash-outs, priced at 1.5M–6M base.
+* **Supply Pyramid (`canonicalAvailability`):** * T1 goods generate in high volume (80–150 units).
+    * T6 goods (Sentient AI, Xeno-Geologicals) are hard-capped at 15–40 units system-wide. This ensures a player with a 750-cargo Capital ship cannot fill their entire hold with T6 goods, forcing them to mix bulk goods and naturally bottle-necking their wealth generation.
+
+## 2. The Governor: Market Resistance & Friction
+**Objective:** Stop players from milking a single hyper-profitable "gold rush" route forever, enforcing exploration and "Triangular Trade Routes."
+**Methodology:** Mimicked *Price Elasticity of Demand* using logistic degradation and spatial friction.
+
+* **`MARKET_PRESSURE_DECAY` (Updated to 0.65 from 0.70):** * *Rationale:* Forces an aggressive "4-Trip Crash." An optimal 15% margin degrades to ~11% on trip 2, ~6% on trip 3, and plummets to ~1% (barely covering fuel) by trip 4. 
+* **`MEAN_REVERSION_STRENGTH` (Updated to 0.025 from 0.04):** * *Rationale:* Slows down market recovery. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize to the galactic average. Because travel takes months, the player is organically forced to plot new routes to let their previous markets recover.
+
+## 3. The Sinks: Volumetric Upkeep & Capital Ships
+**Objective:** Drain excess wealth proportionally to the player's progression tier so operating costs remain a relevant strategic factor.
+**Methodology:** Maintained flat unit costs (e.g., 75cr/HP repair) but exponentially scaled the physical volume of late-game assets.
+
+* **Ship Parameter Scaling (`ship_database.js`):**
+    * *Class C (Starter):* 30–100 HP | 90–150 Fuel
+    * *Class B/A:* 200–1500 HP | 200–1800 Fuel
+    * *Class S:* 3000–5000 HP | 3500–5500 Fuel
+    * *Class O (Capital):* 18,000–35,000 HP | 28,000–55,000 Fuel
+    * *Rationale:* Capital ships are framed as optional, luxury conveniences. They sit outside the mandatory 120-trip progression curve. Their gargantuan HP and Fuel pools mean that standard percentage-based travel decay will inherently cost hundreds of thousands of credits to maintain, turning them into massive volumetric wealth sinks.
+
+## 4. Hardware Upgrades: Hybrid Pricing
+**Objective:** Ensure that ship upgrades are always a major, semi-permanent financial commitment, regardless of whether they are applied to a 25k starter ship or a 1.5 Billion credit capital ship.
+**Methodology:** Replaced flat-fee upgrades with a dynamic Hybrid Formula in `GameAttributes.js`.
+
+* **The Formula:** `UpgradeCost = FixedBaseCost + (HostShipBasePrice * TierModifier%)`
+    * *Tier 1:* 5,000cr + 5% Ship Value
+    * *Tier 2:* 15,000cr + 10% Ship Value
+    * *Tier 3:* 45,000cr + 15% Ship Value
+    * *Tier 4:* 125,000cr + 20% Ship Value
+    * *Tier 5:* 400,000cr + 30% Ship Value
+    * *Rationale:* The `FixedBaseCost` prevents early-game players from slapping top-tier upgrades onto cheap ships for a negligible fee. The `TierModifier%` ensures that equipping a Tier 5 module on a Sovereign (55M base) costs over 16.9 Million credits, serving as a vital mid-to-late game credit sink.
+
+## 5. Externalities: Wealth-Scaled Hazards
+**Objective:** Implement Kahneman and Tversky’s *Prospect Theory* (Loss Aversion) to ensure veteran players still feel threatened by random events, without relying on combat or piracy tropes.
+**Methodology:** Converted flat credit fines to percentage-based liquidity garnishments in `events_hazards.js`, `events_bureaucracy.js`, and `events_traffic.js`.
+
+* **Liquid Wealth Scaling:** * Minor Infractions (Tariffs): `-0.02` (2%)
+    * Major Bureaucracy (Failed audits, quarantine bypass): `-0.04` to `-0.08` (4% - 8%)
+    * Catastrophic Violations (Bribing blockades, failed licensing disputes): `-0.09` (9%)
+    * *Rationale:* A 9% hard cap ensures that severe penalties sting significantly (e.g., losing 90 million if holding 1 billion liquid) without ruining a player's ability to recover. This dynamically maintains danger regardless of progression tier. Players can actively engage in the "Poverty Gambit"—hiding wealth in physical cargo to lower their liquid cash and bypass heavy fines.
+
+## 6. The Macro Vacuum: Sol Station Engine
+**Objective:** Transition the final 25% of the campaign from purely repetitive A-to-B arbitrage (which induces cognitive fatigue) into industrial resource management, providing a localized purpose for the player's massive endgame fleet.
+**Methodology:** Exponentially scaled the `LEVEL_REGISTRY` in `solProgressionRegistry.js` (Levels 1-50).
+
+* **Endgame Scaling:**
+    * *Levels 1-15 (Establishment):* Requires T1-T3 commodities and 25k to 5M credits.
+    * *Levels 16-35 (Industrialization):* Requires T4-T5 commodities and 6.5M to 450M credits.
+    * *Levels 36-50 (Dominance):* Requires massive influxes of T6 commodities (e.g., up to 150 Sentient AI) and costs culminating in **25 Billion Credits** at Level 50.
+    * *Rationale:* Acts as the ultimate gameplay vacuum, smoothly absorbing the absurd cargo/credit outputs of Progression Tiers 5 and 6. T7 commodities are deliberately excluded from these requirements, cementing their role as the ultimate economic reward generated by the station itself.
+--- END OF FILE: ./meta/BALANCELOG.md ---
+
 --- START OF FILE: ./meta/ROADMAP.md ---
 # ROADMAP
 
@@ -37599,7 +37789,7 @@ GameAttributes (F069)
 
 Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
 
-Key Behavior: Provides definition objects for Upgrade IDs. Distinguishes between MOD_FUEL_BURN (Travel) and MOD_FUEL_PRICE (Station).
+Key Behavior: Mathematically calculates the dynamic Hybrid Upgrade Cost (`Fixed Base + (ShipValue * TierMultiplier)`) and installation fees. Distinguishes between MOD_FUEL_BURN (Travel) and MOD_FUEL_PRICE (Station).
 
 Dependencies: None.
 
@@ -37620,7 +37810,7 @@ MarketService (F010)
 
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
 
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Triggers asset hydration when new ships are spawned in shipyards.
+Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Triggers asset hydration when new ships are spawned in shipyards.
 
 Dependencies: GameState, IntelService, AssetService.
 
@@ -37713,7 +37903,7 @@ DynamicValueResolver
 
 Responsibility: Calculates dynamic integer values for event effects based on game state context.
 
-Key Behavior: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties.
+Key Behavior: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
 
 Dependencies: GameState (Read-only), DB.
 
@@ -38492,6 +38682,23 @@ Consequences:
 * **Pro:** Expands player progression, allowing for specialized ship collections and massive late-game arbitrage.
 * **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource/credit costs based on fleet size during travel, making massive fleets high-risk/high-reward.
 * **Pro:** Dynamic fleet cost averaging integrates smoothly into the existing inventory profit displays.
+
+ADR-031: Balance v2 - Parametric Pacing & Volumetric Sinks
+Status: Accepted (2026-02-20)
+
+Context: Balance v1 suffered from "whack-a-mole" tuning, where adjusting one value broke the economy elsewhere. Late-game players experienced a "singularity" where profits grew exponentially into the trillions, rendering operating costs meaningless.
+
+Decision: A comprehensive, mathematically anchored parametric engine was implemented.
+1. The 120-Trip Anchor: Progression is strictly scaled so that optimal trading yields enough profit to afford the next tier of ship/upgrade in ~120 trips.
+2. Volumetric Sinks: Capital ships were given absurdly high HP/Fuel pools, turning percentage-based travel decay into a massive credit sink purely through scale.
+3. Hybrid Upgrade Pricing: Upgrades now cost `Base + (ShipValue * Tier%)`, ensuring they remain significant investments at all stages of the game.
+4. Wealth-Scaled Hazards: Flat event fines were replaced with percentage deductions of liquid wealth (capped at 9%).
+5. Supply Bottlenecks: T6 commodities are strictly hard-capped in system availability to prevent Capital ships from sequence-breaking the economy.
+
+Consequences:
+Pro: The economy is now self-regulating and easily tunable via global variables.
+Pro: Late-game players still experience loss aversion and operating friction.
+Pro: Removes the need for arbitrary "hard caps" on wealth.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---

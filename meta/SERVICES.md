@@ -24,7 +24,7 @@ GameAttributes (F069)
 
 Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
 
-Key Behavior: Provides definition objects for Upgrade IDs. Distinguishes between MOD_FUEL_BURN (Travel) and MOD_FUEL_PRICE (Station).
+Key Behavior: Mathematically calculates the dynamic Hybrid Upgrade Cost (`Fixed Base + (ShipValue * TierMultiplier)`) and installation fees. Distinguishes between MOD_FUEL_BURN (Travel) and MOD_FUEL_PRICE (Station).
 
 Dependencies: None.
 
@@ -45,7 +45,7 @@ MarketService (F010)
 
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
 
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Triggers asset hydration when new ships are spawned in shipyards.
+Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Triggers asset hydration when new ships are spawned in shipyards.
 
 Dependencies: GameState, IntelService, AssetService.
 
@@ -138,7 +138,7 @@ DynamicValueResolver
 
 Responsibility: Calculates dynamic integer values for event effects based on game state context.
 
-Key Behavior: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties.
+Key Behavior: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
 
 Dependencies: GameState (Read-only), DB.
 
