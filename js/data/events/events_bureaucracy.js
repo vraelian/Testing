@@ -218,7 +218,7 @@ export const EVENTS_BUREAUCRACY = [
                 title: 'Appeal Denied',
                 text: 'The lengthy arbitration process ends with the magistrate AI rejecting your appeal. You pay the reinstatement fee plus the late penalty.',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.10 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.09 } },
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }
                 ]
             }
@@ -251,7 +251,7 @@ export const EVENTS_BUREAUCRACY = [
             },
             {
                 id: 'choice_bribe',
-                text: 'Bribe Commander (-15% Wealth)',
+                text: 'Bribe Commander (-9% Wealth)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
             },
             {
@@ -285,7 +285,7 @@ export const EVENTS_BUREAUCRACY = [
             'out_bribe': {
                 title: 'Toll Extracted',
                 text: 'You quietly transfer a massive sum to an anonymous account. The blockade "temporarily fails" in your sector, allowing you to pass.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.15 } }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.09 } }]
             },
             'out_run_success': {
                 title: 'Slipped Through',

@@ -807,22 +807,44 @@ export class GameAttributes {
 
     /**
      * Calculates the dynamic hardware cost of an upgrade based on its tier and the host ship's base price.
-     * Tier 1: 5%, Tier 2: 10%, Tier 3: 20%, Tier 4: 40%, Tier 5: 75%
+     * Formula: FixedBaseCost + (HostShipBaseValue * TierModifier%)
      * @param {number} tier - The tier of the upgrade (1-5).
      * @param {number} shipBasePrice - The DB price of the target ship.
      * @returns {number} The calculated hardware cost.
      */
     static getUpgradeHardwareCost(tier, shipBasePrice) {
         if (!shipBasePrice || shipBasePrice <= 0) return 0;
+        
+        let baseCost = 0;
         let multiplier = 0.05; // Default Tier 1
+        
         switch(tier) {
-            case 1: multiplier = 0.05; break;
-            case 2: multiplier = 0.10; break;
-            case 3: multiplier = 0.20; break;
-            case 4: multiplier = 0.40; break;
-            case 5: multiplier = 0.75; break;
+            case 1: 
+                baseCost = 5000;
+                multiplier = 0.05; 
+                break;
+            case 2: 
+                baseCost = 15000;
+                multiplier = 0.10; 
+                break;
+            case 3: 
+                baseCost = 45000;
+                multiplier = 0.15; 
+                break;
+            case 4: 
+                baseCost = 125000;
+                multiplier = 0.20; 
+                break;
+            case 5: 
+                baseCost = 400000;
+                multiplier = 0.30; 
+                break;
+            default:
+                baseCost = 5000;
+                multiplier = 0.05;
         }
-        return Math.floor(shipBasePrice * multiplier);
+        
+        return Math.floor(baseCost + (shipBasePrice * multiplier));
     }
 
     /**
