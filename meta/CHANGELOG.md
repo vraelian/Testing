@@ -2,6 +2,12 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.16] - 2026-2-20
+-  added save/load system
+-  added import/export save file system
+-  added options screen and menu
+-  splash screen polish
+
 # [36.10] - 2026-2-20
 -  implemented balance pass v2 on all systems
 -  updated meta files

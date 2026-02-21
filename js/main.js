@@ -62,6 +62,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const splashNewGameMenu = document.getElementById('splash-new-game-menu');
     const splashLoadGameMenu = document.getElementById('splash-load-game-menu');
     const splashOptionsMenu = document.getElementById('splash-options-menu');
+    const splashDataMenu = document.getElementById('splash-data-menu');
     
     const mainNewGameBtn = document.getElementById('main-new-game-btn');
     const mainLoadGameBtn = document.getElementById('main-load-game-btn');
@@ -70,9 +71,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const newGameBackBtn = document.getElementById('new-game-back-btn');
     const loadGameBackBtn = document.getElementById('load-game-back-btn');
     const optionsBackBtn = document.getElementById('options-back-btn');
+    const optionsDataBtn = document.getElementById('options-data-btn');
+    const dataBackBtn = document.getElementById('data-back-btn');
     
     const exportSavesBtn = document.getElementById('export-saves-btn');
-    const exportDataTextarea = document.getElementById('export-data-textarea');
     const importSavesBtn = document.getElementById('import-saves-btn');
     const importDataTextarea = document.getElementById('import-data-textarea');
     const optionsStatusMessage = document.getElementById('options-status-message');
@@ -90,6 +92,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let pendingSlotAction = null; 
     let cachedExportCode = "";
+    let importConfirmState = false;
 
     // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
     if (navigator.storage && navigator.storage.persist) {
@@ -183,10 +186,11 @@ document.addEventListener('DOMContentLoaded', () => {
         splashNewGameMenu.classList.add('hidden');
         splashLoadGameMenu.classList.add('hidden');
         splashOptionsMenu.classList.add('hidden');
+        if (splashDataMenu) splashDataMenu.classList.add('hidden');
 
         // Hide title header if we need ultra-compact screen (like Options)
         if (splashTitleHeader) {
-            if (viewId === 'options') {
+            if (viewId === 'options' || viewId === 'data') {
                 splashTitleHeader.classList.add('hidden');
             } else {
                 splashTitleHeader.classList.remove('hidden');
@@ -196,8 +200,9 @@ document.addEventListener('DOMContentLoaded', () => {
         if (viewId === 'main') splashMainMenu.classList.remove('hidden');
         else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
         else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
-        else if (viewId === 'options') {
-            splashOptionsMenu.classList.remove('hidden');
+        else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
+        else if (viewId === 'data') {
+            splashDataMenu.classList.remove('hidden');
             preGenerateExportCode();
         }
     }
@@ -205,14 +210,17 @@ document.addEventListener('DOMContentLoaded', () => {
     mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });
     mainLoadGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('load'); });
     mainOptionsBtn.addEventListener('click', () => showSplashView('options'));
+    optionsDataBtn.addEventListener('click', () => showSplashView('data'));
     
     newGameBackBtn.addEventListener('click', () => showSplashView('main'));
     loadGameBackBtn.addEventListener('click', () => showSplashView('main'));
-    optionsBackBtn.addEventListener('click', () => {
+    optionsBackBtn.addEventListener('click', () => showSplashView('main'));
+    
+    dataBackBtn.addEventListener('click', () => {
         importDataTextarea.value = '';
-        if (exportDataTextarea) exportDataTextarea.value = '';
         cachedExportCode = "";
-        showSplashView('main');
+        resetImportButton();
+        showSplashView('options');
     });
 
     // --- BASE64 HELPER UTILITIES (Prevents payload truncation & handles Unicode backwards-compatibility) ---
@@ -246,9 +254,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     async function preGenerateExportCode() {
-        if (exportDataTextarea) {
-            exportDataTextarea.value = "Generating backup code...";
-        }
         try {
             const allSaves = {};
             const slots = ['slot_1', 'slot_2', 'slot_3'];
@@ -259,21 +264,15 @@ document.addEventListener('DOMContentLoaded', () => {
             
             if (Object.keys(allSaves).length === 0) {
                 cachedExportCode = "";
-                if (exportDataTextarea) exportDataTextarea.value = "No saves found to export.";
                 return;
             }
 
             const jsonString = JSON.stringify(allSaves);
             // Uses unified Base64 encoder ensuring minimal footprint and valid parsing
             cachedExportCode = utf8ToBase64(jsonString);
-            
-            if (exportDataTextarea) {
-                exportDataTextarea.value = cachedExportCode;
-            }
         } catch (error) {
             console.error("[Backup] Pre-generation failed:", error);
             cachedExportCode = "";
-            if (exportDataTextarea) exportDataTextarea.value = "Error generating backup code.";
         }
     }
 
@@ -283,16 +282,28 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        const triggerSuccessVisuals = () => {
+            exportSavesBtn.textContent = 'Save Code Copied!';
+            exportSavesBtn.classList.remove('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
+            exportSavesBtn.classList.add('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
+            
+            setTimeout(() => {
+                exportSavesBtn.textContent = 'Export Save Code';
+                exportSavesBtn.classList.add('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
+                exportSavesBtn.classList.remove('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
+            }, 2000);
+        };
+
         try {
             // Clipboard API (Works on HTTPS/Localhost)
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(cachedExportCode).then(() => {
-                    showOptionsStatus('Backup Code copied to clipboard!');
+                    triggerSuccessVisuals();
                 }).catch(err => {
-                    fallbackCopyTextToClipboard();
+                    fallbackCopyTextToClipboard(triggerSuccessVisuals);
                 });
             } else {
-                fallbackCopyTextToClipboard();
+                fallbackCopyTextToClipboard(triggerSuccessVisuals);
             }
         } catch (error) {
             console.error("[Backup] Copy failed:", error);
@@ -300,29 +311,51 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    function fallbackCopyTextToClipboard() {
-        if (exportDataTextarea) {
-            exportDataTextarea.select();
-            // Removed 99,999 constraint to prevent truncation on large saves
-            exportDataTextarea.setSelectionRange(0, exportDataTextarea.value.length); 
-            try {
-                const successful = document.execCommand("copy");
-                if (successful) {
-                    showOptionsStatus('Backup Code copied to clipboard!');
-                } else {
-                    showOptionsStatus('Copy failed. Try manually copying the text.', true);
-                }
-            } catch (err) {
+    function fallbackCopyTextToClipboard(successCallback) {
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = cachedExportCode;
+        tempTextArea.style.top = "0";
+        tempTextArea.style.left = "0";
+        tempTextArea.style.position = "fixed";
+        document.body.appendChild(tempTextArea);
+        tempTextArea.focus();
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, 9999999); 
+        try {
+            const successful = document.execCommand("copy");
+            if (successful && successCallback) {
+                successCallback();
+            } else {
                 showOptionsStatus('Copy failed. Try manually copying the text.', true);
             }
+        } catch (err) {
+            showOptionsStatus('Copy failed. Try manually copying the text.', true);
         }
+        document.body.removeChild(tempTextArea);
     }
+
+    function resetImportButton() {
+        importConfirmState = false;
+        importSavesBtn.textContent = 'Import Save Code';
+        importSavesBtn.classList.add('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
+        importSavesBtn.classList.remove('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
+    }
+
+    importDataTextarea.addEventListener('input', resetImportButton);
 
     importSavesBtn.addEventListener('click', async () => {
         // Strip all whitespace/newlines that might be introduced by textarea or iOS pasting
         const b64Data = importDataTextarea.value.replace(/\s+/g, '');
         if (!b64Data) {
             showOptionsStatus('Please paste a backup code first.', true);
+            return;
+        }
+
+        if (!importConfirmState) {
+            importConfirmState = true;
+            importSavesBtn.textContent = 'OVERWRITE & IMPORT?';
+            importSavesBtn.classList.remove('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
+            importSavesBtn.classList.add('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
             return;
         }
 
@@ -353,6 +386,8 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (error) {
             console.error("[Backup] Import failed:", error);
             showOptionsStatus('Invalid backup code format.', true);
+        } finally {
+            resetImportButton();
         }
     });
 
