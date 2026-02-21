@@ -45,8 +45,11 @@
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 text-center bg-[#0c101d]">
         <button id="debug-start-btn" class="btn" data-action="debug-simple-start">D</button>
         <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg">
-            <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
-            <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
+            
+            <div id="splash-title-header">
+                <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
+                <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
+            </div>
           
             <div id="splash-main-menu" class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
                 <button id="main-new-game-btn" class="btn btn-header btn-pulse w-full">New Game</button>
@@ -75,25 +78,30 @@
                 <button id="load-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
             </div>
 
-            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
-                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Options & Backup</h3>
+            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-4xl mx-auto">
                 
-                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4 mb-2">
-                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Export Data</h4>
-                    <p class="text-sm text-gray-400 mb-4">Create a backup code of all your current save slots. Save this code somewhere safe.</p>
-                    <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700">Copy Backup Code to Clipboard</button>
+                <div class="w-full flex flex-col sm:flex-row gap-4">
+                    <div class="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg p-3 flex flex-col relative">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-lg text-cyan-300 font-orbitron">Export Saves</h4>
+                        </div>
+                        <textarea id="export-data-textarea" class="w-full h-32 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-400 font-roboto-mono mb-3" readonly placeholder="Generating backup code..."></textarea>
+                        <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700 mt-auto py-2">Copy Backup Code</button>
+                    </div>
+
+                    <div class="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg p-3 flex flex-col relative">
+                        <div class="flex justify-between items-center mb-2">
+                            <h4 class="text-lg text-cyan-300 font-orbitron">Import Saves</h4>
+                            <span class="text-xs font-bold text-red-400 uppercase tracking-wider">Overwrites Data</span>
+                        </div>
+                        <textarea id="import-data-textarea" class="w-full h-32 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-3 focus:border-cyan-500" placeholder="Paste Base64 backup code here..."></textarea>
+                        <button id="import-saves-btn" class="btn w-full bg-red-900/30 hover:bg-red-800/50 border-red-700 mt-auto py-2">Restore from Backup</button>
+                    </div>
                 </div>
 
-                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4">
-                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Import Data</h4>
-                    <p class="text-sm text-gray-400 mb-2">Paste a backup code here to restore your saves. <span class="text-red-400 font-bold">This will overwrite current slots!</span></p>
-                    <textarea id="import-data-textarea" class="w-full h-24 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-2 focus:border-cyan-500" placeholder="Paste Base64 backup code here..."></textarea>
-                    <button id="import-saves-btn" class="btn w-full bg-red-900/30 hover:bg-red-800/50 border-red-700">Restore from Backup</button>
-                </div>
+                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0 m-0"></p>
 
-                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0"></p>
-
-                <button id="options-back-btn" class="btn mt-2 w-full max-w-xs">Return to Main Menu</button>
+                <button id="options-back-btn" class="btn w-full max-w-xs mt-1 py-2">Return to Main Menu</button>
             </div>
         </div>
 

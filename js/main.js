@@ -48,6 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- App Initialization Definitions ---
     const splashScreen = document.getElementById('splash-screen');
+    const splashTitleHeader = document.getElementById('splash-title-header');
     const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; 
 
@@ -71,6 +72,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const optionsBackBtn = document.getElementById('options-back-btn');
     
     const exportSavesBtn = document.getElementById('export-saves-btn');
+    const exportDataTextarea = document.getElementById('export-data-textarea');
     const importSavesBtn = document.getElementById('import-saves-btn');
     const importDataTextarea = document.getElementById('import-data-textarea');
     const optionsStatusMessage = document.getElementById('options-status-message');
@@ -87,6 +89,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteCancelBtn = document.getElementById('delete-cancel-btn');
 
     let pendingSlotAction = null; 
+    let cachedExportCode = "";
 
     // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
     if (navigator.storage && navigator.storage.persist) {
@@ -181,10 +184,22 @@ document.addEventListener('DOMContentLoaded', () => {
         splashLoadGameMenu.classList.add('hidden');
         splashOptionsMenu.classList.add('hidden');
 
+        // Hide title header if we need ultra-compact screen (like Options)
+        if (splashTitleHeader) {
+            if (viewId === 'options') {
+                splashTitleHeader.classList.add('hidden');
+            } else {
+                splashTitleHeader.classList.remove('hidden');
+            }
+        }
+
         if (viewId === 'main') splashMainMenu.classList.remove('hidden');
         else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
         else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
-        else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
+        else if (viewId === 'options') {
+            splashOptionsMenu.classList.remove('hidden');
+            preGenerateExportCode();
+        }
     }
 
     mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });
@@ -195,19 +210,45 @@ document.addEventListener('DOMContentLoaded', () => {
     loadGameBackBtn.addEventListener('click', () => showSplashView('main'));
     optionsBackBtn.addEventListener('click', () => {
         importDataTextarea.value = '';
+        if (exportDataTextarea) exportDataTextarea.value = '';
+        cachedExportCode = "";
         showSplashView('main');
     });
+
+    // --- BASE64 HELPER UTILITIES (Prevents payload truncation & handles Unicode backwards-compatibility) ---
+    function utf8ToBase64(str) {
+        // Fast, native encoding that handles Unicode without bloating
+        return window.btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function base64ToUtf8(b64) {
+        const decodedRaw = window.atob(b64);
+        try {
+            // Modern, efficient unescape mechanism
+            return decodeURIComponent(escape(decodedRaw));
+        } catch (e) {
+            // Legacy Fallback: Recovers saves exported from the very first V1 implementation
+            try {
+                return decodeURIComponent(decodedRaw);
+            } catch (legacyErr) {
+                return decodedRaw; 
+            }
+        }
+    }
 
     // --- PHASE 3: BACKUP & RESTORE PIPELINE ---
     function showOptionsStatus(message, isError = false) {
         optionsStatusMessage.textContent = message;
-        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'}`;
+        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'} m-0`;
         setTimeout(() => {
             optionsStatusMessage.classList.replace('opacity-100', 'opacity-0');
         }, 4000);
     }
 
-    exportSavesBtn.addEventListener('click', async () => {
+    async function preGenerateExportCode() {
+        if (exportDataTextarea) {
+            exportDataTextarea.value = "Generating backup code...";
+        }
         try {
             const allSaves = {};
             const slots = ['slot_1', 'slot_2', 'slot_3'];
@@ -217,43 +258,77 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (Object.keys(allSaves).length === 0) {
-                showOptionsStatus('No saves found to export.', true);
+                cachedExportCode = "";
+                if (exportDataTextarea) exportDataTextarea.value = "No saves found to export.";
                 return;
             }
 
-            // Encode to handle Unicode characters before converting to Base64
             const jsonString = JSON.stringify(allSaves);
-            const base64String = btoa(encodeURIComponent(jsonString));
+            // Uses unified Base64 encoder ensuring minimal footprint and valid parsing
+            cachedExportCode = utf8ToBase64(jsonString);
             
-            // Clipboard API (Works on HTTPS/Localhost)
-            if (navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(base64String);
-                showOptionsStatus('Backup Code copied to clipboard!');
-            } else {
-                // Fallback for older WebViews
-                const tempTextArea = document.createElement("textarea");
-                tempTextArea.value = base64String;
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempTextArea);
-                showOptionsStatus('Backup Code copied to clipboard! (Fallback)');
+            if (exportDataTextarea) {
+                exportDataTextarea.value = cachedExportCode;
             }
         } catch (error) {
-            console.error("[Backup] Export failed:", error);
-            showOptionsStatus('Export failed. Check console.', true);
+            console.error("[Backup] Pre-generation failed:", error);
+            cachedExportCode = "";
+            if (exportDataTextarea) exportDataTextarea.value = "Error generating backup code.";
+        }
+    }
+
+    exportSavesBtn.addEventListener('click', () => {
+        if (!cachedExportCode) {
+            showOptionsStatus('No valid backup code available.', true);
+            return;
+        }
+
+        try {
+            // Clipboard API (Works on HTTPS/Localhost)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(cachedExportCode).then(() => {
+                    showOptionsStatus('Backup Code copied to clipboard!');
+                }).catch(err => {
+                    fallbackCopyTextToClipboard();
+                });
+            } else {
+                fallbackCopyTextToClipboard();
+            }
+        } catch (error) {
+            console.error("[Backup] Copy failed:", error);
+            showOptionsStatus('Copy failed. Try manually copying the text.', true);
         }
     });
 
+    function fallbackCopyTextToClipboard() {
+        if (exportDataTextarea) {
+            exportDataTextarea.select();
+            // Removed 99,999 constraint to prevent truncation on large saves
+            exportDataTextarea.setSelectionRange(0, exportDataTextarea.value.length); 
+            try {
+                const successful = document.execCommand("copy");
+                if (successful) {
+                    showOptionsStatus('Backup Code copied to clipboard!');
+                } else {
+                    showOptionsStatus('Copy failed. Try manually copying the text.', true);
+                }
+            } catch (err) {
+                showOptionsStatus('Copy failed. Try manually copying the text.', true);
+            }
+        }
+    }
+
     importSavesBtn.addEventListener('click', async () => {
-        const b64Data = importDataTextarea.value.trim();
+        // Strip all whitespace/newlines that might be introduced by textarea or iOS pasting
+        const b64Data = importDataTextarea.value.replace(/\s+/g, '');
         if (!b64Data) {
             showOptionsStatus('Please paste a backup code first.', true);
             return;
         }
 
         try {
-            const jsonString = decodeURIComponent(atob(b64Data));
+            // Decode cleanly via the unified decoder to ensure legacy compatibility
+            const jsonString = base64ToUtf8(b64Data);
             const parsedSaves = JSON.parse(jsonString);
             
             const slots = ['slot_1', 'slot_2', 'slot_3'];
@@ -271,6 +346,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 importDataTextarea.value = '';
                 showOptionsStatus(`Successfully restored ${importedCount} save(s)!`);
                 await refreshSlotUI(); // Refresh UI to show the imported slots
+                preGenerateExportCode(); // Update the export field with newly loaded data
             } else {
                 showOptionsStatus('Invalid backup code. No valid saves found.', true);
             }
