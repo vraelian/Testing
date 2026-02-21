@@ -14,52 +14,33 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
-// --- [[START]] PHASE 4 IMPORTS ---
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
 import { SHIP_IDS } from './data/constants.js'; 
-// --- [[END]] PHASE 4 IMPORTS ---
 
-/**
- * This function now manages both app height and "letterbox" scaling.
- * It sets the --app-height variable for the body and dynamically scales
- * the game-container down if the visual viewport is too short.
- */
 const setAppHeight = () => {
     const gameContainer = document.getElementById('game-container');
     if (!gameContainer) return;
 
-    // This is the *true* available height, including notch/browser UI.
     const visualHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     
-    // Set the body height to the *full* inner height (PWA/standalone height)
-    // or the visual viewport height (browser). 100dvh in CSS handles this mostly,
-    // but this JS variable is a robust override.
     document.documentElement.style.setProperty('--app-height', `${visualHeight}px`);
 
-    // --- SCALING LOGIC ---
-    // We define the DESIGN TARGET height (iPhone Pro Max).
-    // If the screen is shorter, we scale the container down.
-    const DESIGN_TARGET_HEIGHT = 926; // iPhone 14/13 Pro Max logical height
+    const DESIGN_TARGET_HEIGHT = 926;
 
     if (visualHeight < DESIGN_TARGET_HEIGHT) {
-        // The screen is too short, we must scale down.
-        const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT; // e.g., 667px / 926px = 0.72
+        const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT; 
         
-        // Set height to the *design* height, then scale it
         gameContainer.style.height = `${DESIGN_TARGET_HEIGHT}px`;
         gameContainer.style.transform = `scale(${scaleFactor})`;
         gameContainer.style.transformOrigin = 'top center';
         
-        // Align the scaled container to the top of the flex-box body
-        document.body.style.alignItems = 'flex-start'; // <-- MODIFIED
+        document.body.style.alignItems = 'flex-start';
     } else {
-        // The screen is tall enough, no scaling needed.
         gameContainer.style.transform = 'none';
-        gameContainer.style.height = '100dvh'; // Use dynamic height
+        gameContainer.style.height = '100dvh';
         
-        // Re-center the container vertically (for desktop/tall devices)
-        document.body.style.alignItems = 'center'; // <-- MODIFIED
+        document.body.style.alignItems = 'center'; 
     }
 };
 
@@ -68,7 +49,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- App Initialization Definitions ---
     const splashScreen = document.getElementById('splash-screen');
     const debugStartButton = document.getElementById('debug-start-btn');
-    const DEV_MODE = true; // Guard for development features.
+    const DEV_MODE = true; 
 
     const uiManager = new UIManager(Logger);
 
@@ -79,13 +60,21 @@ document.addEventListener('DOMContentLoaded', () => {
     const splashMainMenu = document.getElementById('splash-main-menu');
     const splashNewGameMenu = document.getElementById('splash-new-game-menu');
     const splashLoadGameMenu = document.getElementById('splash-load-game-menu');
+    const splashOptionsMenu = document.getElementById('splash-options-menu');
     
     const mainNewGameBtn = document.getElementById('main-new-game-btn');
     const mainLoadGameBtn = document.getElementById('main-load-game-btn');
+    const mainOptionsBtn = document.getElementById('main-options-btn');
     
     const newGameBackBtn = document.getElementById('new-game-back-btn');
     const loadGameBackBtn = document.getElementById('load-game-back-btn');
+    const optionsBackBtn = document.getElementById('options-back-btn');
     
+    const exportSavesBtn = document.getElementById('export-saves-btn');
+    const importSavesBtn = document.getElementById('import-saves-btn');
+    const importDataTextarea = document.getElementById('import-data-textarea');
+    const optionsStatusMessage = document.getElementById('options-status-message');
+
     const newGameSlotsContainer = document.getElementById('new-game-slots');
     const loadGameSlotsContainer = document.getElementById('load-game-slots');
 
@@ -97,13 +86,23 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
     const deleteCancelBtn = document.getElementById('delete-cancel-btn');
 
-    let pendingSlotAction = null; // Stores intent during confirmation modals { action: 'overwrite'|'delete', slotId: string }
+    let pendingSlotAction = null; 
+
+    // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().then(granted => {
+            if (granted) {
+                console.log("[Storage] Persistent storage granted by the browser.");
+            } else {
+                console.warn("[Storage] Persistent storage not granted. Subject to browser eviction.");
+            }
+        });
+    }
 
     // --- PHASE 4: BACKGROUND ASSET HYDRATION & DB INIT ---
-    // Initialize the Asset Locker and Save Storage concurrently
     Promise.all([AssetService.init(), saveStorageService._initDB()]).then(() => {
         AssetService.hydrateBootAssets();
-        refreshSlotUI(); // Populate V4 Save Slots
+        refreshSlotUI(); 
     }).catch(err => console.warn("[Main] Storage Initialization failed:", err));
 
     // --- V4 SAVE SYSTEM: Slot Rendering Logic ---
@@ -128,7 +127,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const newSlotBtn = document.createElement('button');
             if (data) {
-                // Populated Slot (New Game Menu -> Triggers Overwrite Warning)
                 newSlotBtn.className = 'save-slot-btn';
                 newSlotBtn.innerHTML = `
                     <span class="text-lg text-cyan-300 font-orbitron mb-1">Slot ${slotNumber}</span>
@@ -140,7 +138,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 newSlotWrapper.appendChild(newSlotBtn);
                 newSlotWrapper.appendChild(deleteBtn);
             } else {
-                // Empty Slot
                 newSlotBtn.className = 'save-slot-btn empty-slot';
                 newSlotBtn.innerHTML = `<span class="text-lg font-orbitron">Empty Slot</span>`;
                 newSlotBtn.onclick = () => executeStartGame('new', slotId);
@@ -148,7 +145,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             newGameSlotsContainer.appendChild(newSlotWrapper);
 
-            // 2. Build Load Game Slot (Only if populated)
+            // 2. Build Load Game Slot
             if (data) {
                 const loadSlotWrapper = document.createElement('div');
                 loadSlotWrapper.className = 'save-slot-wrapper';
@@ -182,17 +179,106 @@ document.addEventListener('DOMContentLoaded', () => {
         splashMainMenu.classList.add('hidden');
         splashNewGameMenu.classList.add('hidden');
         splashLoadGameMenu.classList.add('hidden');
+        splashOptionsMenu.classList.add('hidden');
 
         if (viewId === 'main') splashMainMenu.classList.remove('hidden');
         else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
         else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
+        else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
     }
 
-    // Navigation Bindings
     mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });
     mainLoadGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('load'); });
+    mainOptionsBtn.addEventListener('click', () => showSplashView('options'));
+    
     newGameBackBtn.addEventListener('click', () => showSplashView('main'));
     loadGameBackBtn.addEventListener('click', () => showSplashView('main'));
+    optionsBackBtn.addEventListener('click', () => {
+        importDataTextarea.value = '';
+        showSplashView('main');
+    });
+
+    // --- PHASE 3: BACKUP & RESTORE PIPELINE ---
+    function showOptionsStatus(message, isError = false) {
+        optionsStatusMessage.textContent = message;
+        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'}`;
+        setTimeout(() => {
+            optionsStatusMessage.classList.replace('opacity-100', 'opacity-0');
+        }, 4000);
+    }
+
+    exportSavesBtn.addEventListener('click', async () => {
+        try {
+            const allSaves = {};
+            const slots = ['slot_1', 'slot_2', 'slot_3'];
+            for (const slotId of slots) {
+                const payload = await saveStorageService.loadGame(slotId);
+                if (payload) allSaves[slotId] = payload;
+            }
+            
+            if (Object.keys(allSaves).length === 0) {
+                showOptionsStatus('No saves found to export.', true);
+                return;
+            }
+
+            // Encode to handle Unicode characters before converting to Base64
+            const jsonString = JSON.stringify(allSaves);
+            const base64String = btoa(encodeURIComponent(jsonString));
+            
+            // Clipboard API (Works on HTTPS/Localhost)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(base64String);
+                showOptionsStatus('Backup Code copied to clipboard!');
+            } else {
+                // Fallback for older WebViews
+                const tempTextArea = document.createElement("textarea");
+                tempTextArea.value = base64String;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempTextArea);
+                showOptionsStatus('Backup Code copied to clipboard! (Fallback)');
+            }
+        } catch (error) {
+            console.error("[Backup] Export failed:", error);
+            showOptionsStatus('Export failed. Check console.', true);
+        }
+    });
+
+    importSavesBtn.addEventListener('click', async () => {
+        const b64Data = importDataTextarea.value.trim();
+        if (!b64Data) {
+            showOptionsStatus('Please paste a backup code first.', true);
+            return;
+        }
+
+        try {
+            const jsonString = decodeURIComponent(atob(b64Data));
+            const parsedSaves = JSON.parse(jsonString);
+            
+            const slots = ['slot_1', 'slot_2', 'slot_3'];
+            let importedCount = 0;
+            
+            for (const slotId of slots) {
+                if (parsedSaves[slotId] && parsedSaves[slotId].state) {
+                    // This call securely syncs to IDB and the native iOS bridge
+                    await saveStorageService.saveGame(slotId, parsedSaves[slotId]);
+                    importedCount++;
+                }
+            }
+
+            if (importedCount > 0) {
+                importDataTextarea.value = '';
+                showOptionsStatus(`Successfully restored ${importedCount} save(s)!`);
+                await refreshSlotUI(); // Refresh UI to show the imported slots
+            } else {
+                showOptionsStatus('Invalid backup code. No valid saves found.', true);
+            }
+        } catch (error) {
+            console.error("[Backup] Import failed:", error);
+            showOptionsStatus('Invalid backup code format.', true);
+        }
+    });
 
     // --- V4 SAVE SYSTEM: Warning Modals Logic ---
     function showOverwriteWarning(slotId) {
@@ -241,7 +327,6 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Isolated EULA Gatekeeper
     function checkEula() {
         if (!eulaCheckbox || !eulaContainer) return false;
         if (!eulaCheckbox.checked) {
@@ -252,7 +337,6 @@ document.addEventListener('DOMContentLoaded', () => {
         return true;
     }
 
-    // Set the app height on initial load and whenever the viewport changes.
     setAppHeight(); 
     
     if (window.visualViewport) {
@@ -264,17 +348,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- V4 SAVE SYSTEM: Execution Pipeline ---
     async function executeStartGame(type, slotId, isSimpleStart = false) {
-        // Trigger fade animation
         splashScreen.classList.add('splash-screen-hiding');
         
         let payload = null;
         if (type === 'load') {
             payload = await saveStorageService.loadGame(slotId);
-            // Fallback safety if the payload goes missing between render and click
             if (!payload) type = 'new';
         }
 
-        // Pre-Flight Hydration Hook
         try {
             if (type === 'load' && payload) {
                 AssetService.hydrateGameAssets(payload.state);
@@ -287,7 +368,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn("[Main] Pre-flight hydration warning:", e);
         }
 
-        // Wait for the animation to finish before starting the heavy game loop.
         splashScreen.addEventListener('animationend', () => {
             splashScreen.style.display = 'none';
             startGame({ type, slotId, payload, isSimpleStart }, uiManager, Logger);
@@ -303,12 +383,8 @@ document.addEventListener('DOMContentLoaded', () => {
     /**
      * Instantiates all core game services, establishes their dependencies,
      * loads saved data or starts a new game, and binds all necessary event listeners.
-     * @param {object} initData - V4 INIT SCHEMA: { type: 'new'|'load', slotId: string, payload: object|null, isSimpleStart: boolean }
-     * @param {UIManager} uiManager - The pre-instantiated UIManager.
-     * @param {Logger} logger - The Logger instance.
      */
     function startGame(initData, uiManager, logger) {
-        // --- Service Instantiation ---
         const gameState = new GameState();
         const newsTickerService = new NewsTickerService(gameState); 
         const missionService = new MissionService(gameState, uiManager, logger);
@@ -322,7 +398,6 @@ document.addEventListener('DOMContentLoaded', () => {
             uiManager.setDebugService(debugService);
         }
         
-        // --- Dependency Injection ---
         uiManager.setNewsTickerService(newsTickerService); 
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
@@ -332,19 +407,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, logger);
         uiManager.setEventManager(eventManager);
         
-        // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
 
-        // --- V4 SAVE SYSTEM: Game Initialization ---
         const hasSave = initData.type === 'load' && initData.payload;
 
         if (hasSave) {
-            // Apply loaded payload using deep merge backwards compatibility
             gameState.importMergedState(initData.payload);
         } else {
-            // Fresh start
             gameState.startNewGame('');
-            gameState.slotId = initData.slotId; // Ensure slot association for background auto-saves
+            gameState.slotId = initData.slotId; 
 
             if (initData.isSimpleStart && debugService) {
                 debugService.simpleStart();
@@ -354,10 +425,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         }
 
-        // --- Bindings ---
         eventManager.bindEvents();
         
-        // --- CONSOLE EXPOSURE ---
         if (DEV_MODE || true) {
             window.game = {
                 gameState,
@@ -369,19 +438,14 @@ document.addEventListener('DOMContentLoaded', () => {
             console.log("Game services exposed to window.game");
         }
 
-        // --- Post-Init Rendering ---
         if (hasSave || initData.isSimpleStart) {
             uiManager.showGameContainer(); 
-            
-            // Populate the news ticker *before* the first render to prevent "first tap" re-render bug.
             newsTickerService.onLocationChange();
-            
             uiManager.render(gameState.getState());
         }
         
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
 
-        // Final Hydration check ensures any dynamically requested assets in loaded state are caught
         AssetService.hydrateGameAssets(gameState.getState());
     }
 });

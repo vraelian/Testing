@@ -14,16 +14,11 @@ const commodityStyleMap = {
     'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
     'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
     'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
-    // CHANGED: Cybernetics - Brightened to Light Zinc for readability on dark backgrounds
     'item-style-4':  { hex: '#a1a1aa', gradient: 'linear-gradient(45deg, #a1a1aa, #52525b)' },
     'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
-    // CHANGED: Neural Processors - Brightened to Electric Indigo for contrast
     'item-style-6':  { hex: '#818cf8', gradient: 'linear-gradient(45deg, #6366f1, #4338ca)' },
-    // CHANGED: Graphene Lattices - Brightened to Steel Grey/Slate 300
     'item-style-7':  { hex: '#cbd5e1', gradient: 'linear-gradient(45deg, #94a3b8, #475569)' }, 
-    // CHANGED: Cryo-Sleep Pods - Brightened to Neon Cyan for contrast
     'item-style-8':  { hex: '#22d3ee', gradient: 'linear-gradient(45deg, #06b6d4, #155e75)' },
-    // CHANGED: Atmo Processors - Brightened to Bright Amber/Bronze
     'item-style-9':  { hex: '#f59e0b', gradient: 'linear-gradient(45deg, #d97706, #b45309)' },
     'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
     'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
@@ -34,8 +29,6 @@ const commodityStyleMap = {
 
 /**
  * Retrieves the style object for a given commodity style class.
- * @param {string} styleClass - The style class of the commodity.
- * @returns {{hex: string, gradient: string}} The style object.
  */
 export function getCommodityStyle(styleClass) {
     return commodityStyleMap[styleClass] || { hex: '#a8a29e', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
@@ -43,10 +36,6 @@ export function getCommodityStyle(styleClass) {
 
 /**
  * Formats a number into a compact, human-readable string with appropriate suffixes (k, M, B, T).
- * Specifically designed to maintain layout integrity on tight mobile displays by abbreviating large values.
- * Example: -12345 becomes '-12.3k'.
- * @param {number} amount The numeric value to format.
- * @returns {string} The formatted abbreviated string.
  */
 export function formatAbbreviatedNumber(amount) {
     const isNegative = amount < 0;
@@ -75,25 +64,17 @@ export function formatAbbreviatedNumber(amount) {
 
 /**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
- * This function now correctly handles negative values.
- * Example: -12345 becomes '⌬ -12.3k'.
- * @param {number} amount The numeric value to format.
- * @param {boolean} [withSymbol=true] - Whether to prepend the '⌬ ' symbol.
- * @returns {string} The formatted credit string.
  */
 export function formatCredits(amount, withSymbol = true) {
     const isNegative = amount < 0;
     const num = Math.abs(Math.floor(amount));
-    // --- VIRTUAL WORKBENCH: REVERTED TO STANDARD SPACE ---
     const prefix = withSymbol ? '⌬ ' : '';
-    // --- END VIRTUAL WORKBENCH ---
     const sign = isNegative ? '-' : '';
 
     let formattedNumber;
-    // --- VIRTUAL WORKBENCH START: Phase 1 (Universal Abbreviation) ---
-    if (num >= 1e18) { // Numbers >= 1 Quintillion
+    if (num >= 1e18) {
         formattedNumber = `${(num).toExponential(1)}`;
-    } else if (num >= 1e15) { // Numbers >= 1 Quadrillion
+    } else if (num >= 1e15) {
         formattedNumber = `${parseFloat((num / 1e15).toFixed(2)).toString()}Q`;
     } else if (num >= 1e12) {
         formattedNumber = `${parseFloat((num / 1e12).toFixed(2)).toString()}T`;
@@ -106,17 +87,12 @@ export function formatCredits(amount, withSymbol = true) {
     } else {
         formattedNumber = num.toLocaleString();
     }
-    // --- VIRTUAL WORKBENCH END: Phase 1 (Universal Abbreviation) ---
 
     return `${prefix}${sign}${formattedNumber}`;
 }
 
-
 /**
  * Calculates the total number of cargo units currently used in a given inventory object.
- * @param {object} inventory - The inventory object to calculate, where keys are commodity IDs
- * and values are objects containing a 'quantity' property.
- * @returns {number} The total sum of all item quantities in the inventory.
  */
 export function calculateInventoryUsed(inventory) {
      if (!inventory) return 0;
@@ -125,8 +101,6 @@ export function calculateInventoryUsed(inventory) {
 
 /**
  * Returns the correct ordinal suffix (st, nd, rd, th) for a given day of the month.
- * @param {number} day - The day of the month.
- * @returns {string} The ordinal suffix.
  * @private
  */
 function getDaySuffix(day) {
@@ -141,9 +115,6 @@ function getDaySuffix(day) {
 
 /**
  * Converts an absolute day number from the start of the game into a formatted date string.
- * Example: 'Monday, January 1st, 2140'.
- * @param {number} dayNumber - The absolute day number of the game.
- * @returns {string} The fully formatted date string.
  */
 export function getDateFromDay(dayNumber) {
     const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
@@ -164,8 +135,6 @@ export function getDateFromDay(dayNumber) {
 
 /**
  * Converts an absolute day number into a short date string (DD/MM/YYYY).
- * @param {number} dayNumber - The absolute day number.
- * @returns {string} The formatted date string (e.g., "01/01/2140").
  */
 export function formatGameDateShort(dayNumber) {
     const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
@@ -183,7 +152,6 @@ export function formatGameDateShort(dayNumber) {
     const day = dayOfYear + 1;
     const month = monthIndex + 1;
     
-    // Pad with leading zeros
     const dStr = day.toString().padStart(2, '0');
     const mStr = month.toString().padStart(2, '0');
     
@@ -192,28 +160,16 @@ export function formatGameDateShort(dayNumber) {
 
 /**
  * Generates a random integer between a min and max value, skewed towards the lower end.
- * This is useful for creating distributions where lower values are more common.
- * @param {number} min - The minimum possible value (inclusive).
- * @param {number} max - The maximum possible value (inclusive).
- * @returns {number} The skewed random integer.
  */
 export function skewedRandom(min, max) {
-    let rand = (Math.random() + Math.random() + Math.random()) / 3; // Average of 3 rolls biases towards the mean (0.5).
-    return Math.floor(min + (max - min) * Math.pow(rand, 0.5)); // Squaring the root further biases towards the lower end.
+    let rand = (Math.random() + Math.random() + Math.random()) / 3; 
+    return Math.floor(min + (max - min) * Math.pow(rand, 0.5)); 
 }
 
 /**
  * Generates the HTML for the MKT and P/L indicators on a market card.
- * This centralized function ensures consistent and accurate indicator rendering.
- * @param {object} data - An object containing all necessary data for rendering.
- * @param {number} data.price - The current market buy price.
- * @param {number} data.sellPrice - The effective sell price (after diminishing returns).
- * @param {number} data.galacticAvg - The galactic average price for the commodity.
- * @param {object} data.playerItem - The player's inventory data for this commodity (can be null).
- * @returns {string} The HTML string for the indicator pills.
  */
 export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem }) {
-    // Market vs Galactic Average Indicator (MKT)
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct >= 0 ? '+' : '';
@@ -225,7 +181,6 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
 
     let plIndicatorHtml = '';
     
-    // Profit/Loss Indicator (P/L)
     if (playerItem && playerItem.avgCost > 0) {
         const spreadPerUnit = sellPrice - playerItem.avgCost;
         
@@ -241,11 +196,25 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
 
+// --- V4 SAVE SYSTEM: SMART ARRAY UNION DEFINITIONS ---
+// Arrays that should dynamically expand to include new codebase defaults
+// instead of being strictly overwritten by an old save file.
+const UNION_ARRAYS = [
+    'unlockedLocationIds', 
+    'unlockedLicenseIds', 
+    'seenEvents', 
+    'seenCommodityMilestones', 
+    'seenBatchIds', 
+    'skippedTutorialBatches', 
+    'officerRoster'
+];
+
 /**
  * Recursively merges a source object into a target object.
- * Arrays are entirely replaced by the source array to prevent orphaned data or indexing bugs.
+ * Arrays are entirely replaced by the source array to prevent orphaned data or indexing bugs,
+ * UNLESS the array key is defined in UNION_ARRAYS, in which case it is intelligently merged.
  * Primitives are safely overwritten.
- * * @param {Object} target - The base object (usually a fresh default game state).
+ * @param {Object} target - The base object (usually a fresh default game state).
  * @param {Object} source - The object to merge in (usually the loaded save data payload).
  * @returns {Object} The mutated target object.
  */
@@ -266,7 +235,17 @@ export function deepMerge(target, source) {
             if (source[key] === null) {
                 target[key] = null;
             } else if (Array.isArray(source[key])) {
-                target[key] = source[key].slice(); 
+                
+                // --- PHASE 2: SMART ARRAY UNION ---
+                if (Array.isArray(target[key]) && UNION_ARRAYS.includes(key)) {
+                    // Create a strict Set union of target (new code defaults) and source (old save)
+                    // This prevents players from losing access to newly added base game content.
+                    target[key] = [...new Set([...target[key], ...source[key]])];
+                } else {
+                    // Strict overwrite for structural arrays (e.g. active missions, owned ships)
+                    target[key] = source[key].slice(); 
+                }
+
             } else if (typeof source[key] === 'object') {
                 if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
                     target[key] = {};

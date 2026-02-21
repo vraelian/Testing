@@ -5,16 +5,10 @@
     <meta charset="UTF-8">
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
-        // This function will catch any uncaught JavaScript error.
         var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
-        
-        // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
-     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
-        
-        // Prevent the browser's default error handling.
         return true;
       };
     </script>
@@ -30,7 +24,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/navigation.css">
-    <link rel="stylesheet" href="./css/news-ticker.css"> <link rel="stylesheet" href="./css/modals.css">
+    <link rel="stylesheet" href="./css/news-ticker.css"> 
+    <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/missions.css">
     <link rel="stylesheet" href="./css/tutorial.css">
@@ -56,7 +51,7 @@
             <div id="splash-main-menu" class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
                 <button id="main-new-game-btn" class="btn btn-header btn-pulse w-full">New Game</button>
                 <button id="main-load-game-btn" class="btn btn-header w-full" disabled>Load Game</button>
-                <button class="btn btn-header w-full" disabled>Options</button>
+                <button id="main-options-btn" class="btn btn-header w-full">Options</button>
                 
                 <div id="eula-container" class="mt-8 text-center text-gray-400">
                     <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
@@ -78,6 +73,27 @@
                 <div id="load-game-slots" class="w-full flex flex-col gap-3">
                     </div>
                 <button id="load-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
+            </div>
+
+            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Options & Backup</h3>
+                
+                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4 mb-2">
+                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Export Data</h4>
+                    <p class="text-sm text-gray-400 mb-4">Create a backup code of all your current save slots. Save this code somewhere safe.</p>
+                    <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700">Copy Backup Code to Clipboard</button>
+                </div>
+
+                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4">
+                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Import Data</h4>
+                    <p class="text-sm text-gray-400 mb-2">Paste a backup code here to restore your saves. <span class="text-red-400 font-bold">This will overwrite current slots!</span></p>
+                    <textarea id="import-data-textarea" class="w-full h-24 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-2 focus:border-cyan-500" placeholder="Paste Base64 backup code here..."></textarea>
+                    <button id="import-saves-btn" class="btn w-full bg-red-900/30 hover:bg-red-800/50 border-red-700">Restore from Backup</button>
+                </div>
+
+                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0"></p>
+
+                <button id="options-back-btn" class="btn mt-2 w-full max-w-xs">Return to Main Menu</button>
             </div>
         </div>
 
@@ -340,7 +356,7 @@
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { // Corrected arrow function syntax
+            window.addEventListener('load', () => { 
                 navigator.serviceWorker.register('./sw.js').then(registration => {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                 }, err => {

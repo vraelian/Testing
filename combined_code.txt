@@ -6,16 +6,10 @@
     <meta charset="UTF-8">
     <script>
       window.onerror = function(message, source, lineno, colno, error) {
-        // This function will catch any uncaught JavaScript error.
         var fullMessage = "Message: " + message + "\nSource: " + source + "\nLine: " + lineno + "\nColumn: " + colno;
-        
-        // Check if the webkit message handler exists and send the error message to our Swift code.
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.errorObserver) {
-     
           window.webkit.messageHandlers.errorObserver.postMessage(fullMessage);
         }
-        
-        // Prevent the browser's default error handling.
         return true;
       };
     </script>
@@ -31,7 +25,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/navigation.css">
-    <link rel="stylesheet" href="./css/news-ticker.css"> <link rel="stylesheet" href="./css/modals.css">
+    <link rel="stylesheet" href="./css/news-ticker.css"> 
+    <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/missions.css">
     <link rel="stylesheet" href="./css/tutorial.css">
@@ -50,29 +45,85 @@
 
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 text-center bg-[#0c101d]">
         <button id="debug-start-btn" class="btn" data-action="debug-simple-start">D</button>
-        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg btn-pulse">
+        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg">
             <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
             <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
           
-    
-            <div class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
-                <button id="start-game-btn" class="btn btn-header btn-pulse w-full">Start Game</button>
-                <button class="btn btn-header w-full" disabled="">Load Game</button>
-                <button class="btn btn-header w-full" disabled="">Options</button>
+            <div id="splash-main-menu" class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
+                <button id="main-new-game-btn" class="btn btn-header btn-pulse w-full">New Game</button>
+                <button id="main-load-game-btn" class="btn btn-header w-full" disabled>Load Game</button>
+                <button id="main-options-btn" class="btn btn-header w-full">Options</button>
+                
+                <div id="eula-container" class="mt-8 text-center text-gray-400">
+                    <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
+                    <label for="eula-checkbox" class="ml-2 align-middle">
+                        I accept the <a href="#" id="eula-link" data-action="show_eula_modal" class="text-cyan-300 hover:text-cyan-100 underline">EULA</a>
+                    </label>
+                </div>
             </div>
     
-            <div id="eula-container" class="mt-8 text-center text-gray-400">
-                <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
-                <label for="eula-checkbox" class="ml-2 align-middle">
-                    I accept the <a href="#" id="eula-link" data-action="show_eula_modal" class="text-cyan-300 hover:text-cyan-100 underline">EULA</a>
-                </label>
+            <div id="splash-new-game-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Select Save Slot</h3>
+                <div id="new-game-slots" class="w-full flex flex-col gap-3">
+                    </div>
+                <button id="new-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
             </div>
+
+            <div id="splash-load-game-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Load Save</h3>
+                <div id="load-game-slots" class="w-full flex flex-col gap-3">
+                    </div>
+                <button id="load-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
             </div>
+
+            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Options & Backup</h3>
+                
+                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4 mb-2">
+                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Export Data</h4>
+                    <p class="text-sm text-gray-400 mb-4">Create a backup code of all your current save slots. Save this code somewhere safe.</p>
+                    <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700">Copy Backup Code to Clipboard</button>
+                </div>
+
+                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4">
+                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Import Data</h4>
+                    <p class="text-sm text-gray-400 mb-2">Paste a backup code here to restore your saves. <span class="text-red-400 font-bold">This will overwrite current slots!</span></p>
+                    <textarea id="import-data-textarea" class="w-full h-24 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-2 focus:border-cyan-500" placeholder="Paste Base64 backup code here..."></textarea>
+                    <button id="import-saves-btn" class="btn w-full bg-red-900/30 hover:bg-red-800/50 border-red-700">Restore from Backup</button>
+                </div>
+
+                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0"></p>
+
+                <button id="options-back-btn" class="btn mt-2 w-full max-w-xs">Return to Main Menu</button>
+            </div>
+        </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
             <p>Version 36.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
+    </div>
+
+    <div id="splash-overwrite-modal" class="modal-backdrop hidden z-[60]">
+        <div class="modal-content border-red-900 bg-red-950/90 text-center">
+            <h3 class="text-2xl font-orbitron mb-4 text-red-400">Warning: Overwrite Save?</h3>
+            <p class="mb-6 text-lg text-gray-300">This slot contains an existing save. Starting a new game here will permanently delete this progress. Proceed?</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="overwrite-confirm-btn" class="btn bg-red-800 hover:bg-red-700 text-white border-red-600">Overwrite</button>
+                <button id="overwrite-cancel-btn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="splash-delete-modal" class="modal-backdrop hidden z-[60]">
+        <div class="modal-content border-red-900 bg-red-950/90 text-center">
+            <h3 class="text-2xl font-orbitron mb-4 text-red-400">Confirm Deletion</h3>
+            <p class="mb-6 text-lg text-gray-300">Are you sure you want to permanently delete this save file? This cannot be undone.</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="delete-confirm-btn" class="btn bg-red-800 hover:bg-red-700 text-white border-red-600">Delete</button>
+                <button id="delete-cancel-btn" class="btn">Cancel</button>
+            </div>
+        </div>
     </div>
     
     <div id="save-toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-cyan-500/80 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50">Checkpoint Saved</div>
@@ -306,7 +357,7 @@
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => { // Corrected arrow function syntax
+            window.addEventListener('load', () => { 
                 navigator.serviceWorker.register('./sw.js').then(registration => {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
                 }, err => {
@@ -1767,6 +1818,80 @@ display: flex;
     padding: 0.25rem 0.5rem;
     font-size: 0.8rem;
 }
+
+/* --- V4 SAVE SYSTEM: Slot UI Styling --- */
+.save-slot-wrapper {
+    display: flex;
+    gap: 0.5rem;
+    width: 100%;
+    align-items: stretch;
+}
+
+.save-slot-btn {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem;
+    text-align: center;
+    background-color: #1e293b;
+    border: 1px solid #334155;
+    border-radius: 8px;
+    transition: all 0.2s ease-in-out;
+    cursor: pointer;
+}
+
+.save-slot-btn:hover:not(:disabled) {
+    background-color: #2a3a50;
+    border-color: #475569;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+}
+
+.save-slot-btn.empty-slot {
+    border-style: dashed;
+    border-color: #475569;
+    background-color: #0f172a;
+    color: #94a3b8;
+}
+
+.save-slot-btn.empty-slot:hover:not(:disabled) {
+    border-color: #64748b;
+    color: #cbd5e1;
+}
+
+.save-slot-metadata {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    pointer-events: none;
+}
+
+.save-slot-metadata-hl {
+    color: #67e8f9;
+}
+
+.delete-slot-btn {
+    flex-shrink: 0;
+    width: 48px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: #450a0a;
+    border: 1px solid #7f1d1d;
+    border-radius: 8px;
+    color: #fca5a5;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+.delete-slot-btn:hover {
+    background-color: #7f1d1d;
+    color: #fecaca;
+    transform: scale(1.05);
+}
+/* --- END SAVE SYSTEM --- */
 
 #restart-game-container .btn {
     padding: 0.3rem 0.6rem;
@@ -10006,151 +10131,331 @@ import { PlayerActionService } from './services/player/PlayerActionService.js';
 import { TimeService } from './services/world/TimeService.js';
 import { TravelService } from './services/world/TravelService.js';
 
-// --- [[START]] PHASE 4 IMPORT ---
 import { AssetService } from './services/AssetService.js';
+import { saveStorageService } from './services/SaveStorageService.js';
 import { SHIP_IDS } from './data/constants.js'; 
-// --- [[END]] PHASE 4 IMPORT ---
 
-/**
- * This function now manages both app height and "letterbox" scaling.
- * It sets the --app-height variable for the body and dynamically scales
- * the game-container down if the visual viewport is too short.
- */
 const setAppHeight = () => {
     const gameContainer = document.getElementById('game-container');
     if (!gameContainer) return;
 
-    // This is the *true* available height, including notch/browser UI.
     const visualHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
     
-    // Set the body height to the *full* inner height (PWA/standalone height)
-    // or the visual viewport height (browser). 100dvh in CSS handles this mostly,
-    // but this JS variable is a robust override.
     document.documentElement.style.setProperty('--app-height', `${visualHeight}px`);
 
-    // --- SCALING LOGIC ---
-    // We define the DESIGN TARGET height (iPhone Pro Max).
-    // If the screen is shorter, we scale the container down.
-    const DESIGN_TARGET_HEIGHT = 926; // iPhone 14/13 Pro Max logical height
+    const DESIGN_TARGET_HEIGHT = 926;
 
     if (visualHeight < DESIGN_TARGET_HEIGHT) {
-        // The screen is too short, we must scale down.
-        const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT; // e.g., 667px / 926px = 0.72
+        const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT; 
         
-        // Set height to the *design* height, then scale it
         gameContainer.style.height = `${DESIGN_TARGET_HEIGHT}px`;
         gameContainer.style.transform = `scale(${scaleFactor})`;
         gameContainer.style.transformOrigin = 'top center';
         
-        // Align the scaled container to the top of the flex-box body
-        document.body.style.alignItems = 'flex-start'; // <-- MODIFIED
+        document.body.style.alignItems = 'flex-start';
     } else {
-        // The screen is tall enough, no scaling needed.
         gameContainer.style.transform = 'none';
-        gameContainer.style.height = '100dvh'; // Use dynamic height
+        gameContainer.style.height = '100dvh';
         
-        // Re-center the container vertically (for desktop/tall devices)
-        document.body.style.alignItems = 'center'; // <-- MODIFIED
+        document.body.style.alignItems = 'center'; 
     }
 };
 
-
 document.addEventListener('DOMContentLoaded', () => {
-    // --- [[START]] PHASE 4: BACKGROUND ASSET HYDRATION ---
-    // Initialize the Asset Locker immediately.
-    AssetService.init().then(() => {
-        // Phase 1 Optimization: Start loading Commodity/Location art 
-        // immediately on Boot (Title Screen).
-        AssetService.hydrateBootAssets();
-    }).catch(err => console.warn("[Main] Asset Locker failed to initialize:", err));
-    // --- [[END]] PHASE 4: BACKGROUND ASSET HYDRATION ---
 
-    // --- App Initialization ---
+    // --- App Initialization Definitions ---
     const splashScreen = document.getElementById('splash-screen');
-    const startButton = document.getElementById('start-game-btn');
     const debugStartButton = document.getElementById('debug-start-btn');
-    const DEV_MODE = true; // Guard for development features.
+    const DEV_MODE = true; 
 
-    // [[START]] VIRTUAL WORKBENCH (EULA Logic)
-    
-    // 1. Instantiate UI Manager and Logger early
-    // These are needed to show the EULA modal *before* the game starts.
     const uiManager = new UIManager(Logger);
 
     const eulaCheckbox = document.getElementById('eula-checkbox');
     const eulaContainer = document.getElementById('eula-container');
 
-    // 2. Add standalone listener for EULA link on splash screen
-    if (splashScreen) {
-        splashScreen.addEventListener('click', (e) => {
-            const actionTarget = e.target.closest('[data-action]');
-            if (actionTarget) {
-                const action = actionTarget.dataset.action;
-                if (action === 'show_eula_modal') {
-                    e.preventDefault();
-                    uiManager.showEulaModal();
-                }
+    // --- V4 SAVE SYSTEM: UI Element Hooks ---
+    const splashMainMenu = document.getElementById('splash-main-menu');
+    const splashNewGameMenu = document.getElementById('splash-new-game-menu');
+    const splashLoadGameMenu = document.getElementById('splash-load-game-menu');
+    const splashOptionsMenu = document.getElementById('splash-options-menu');
+    
+    const mainNewGameBtn = document.getElementById('main-new-game-btn');
+    const mainLoadGameBtn = document.getElementById('main-load-game-btn');
+    const mainOptionsBtn = document.getElementById('main-options-btn');
+    
+    const newGameBackBtn = document.getElementById('new-game-back-btn');
+    const loadGameBackBtn = document.getElementById('load-game-back-btn');
+    const optionsBackBtn = document.getElementById('options-back-btn');
+    
+    const exportSavesBtn = document.getElementById('export-saves-btn');
+    const importSavesBtn = document.getElementById('import-saves-btn');
+    const importDataTextarea = document.getElementById('import-data-textarea');
+    const optionsStatusMessage = document.getElementById('options-status-message');
+
+    const newGameSlotsContainer = document.getElementById('new-game-slots');
+    const loadGameSlotsContainer = document.getElementById('load-game-slots');
+
+    const overwriteModal = document.getElementById('splash-overwrite-modal');
+    const overwriteConfirmBtn = document.getElementById('overwrite-confirm-btn');
+    const overwriteCancelBtn = document.getElementById('overwrite-cancel-btn');
+
+    const deleteModal = document.getElementById('splash-delete-modal');
+    const deleteConfirmBtn = document.getElementById('delete-confirm-btn');
+    const deleteCancelBtn = document.getElementById('delete-cancel-btn');
+
+    let pendingSlotAction = null; 
+
+    // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
+    if (navigator.storage && navigator.storage.persist) {
+        navigator.storage.persist().then(granted => {
+            if (granted) {
+                console.log("[Storage] Persistent storage granted by the browser.");
+            } else {
+                console.warn("[Storage] Persistent storage not granted. Subject to browser eviction.");
             }
         });
     }
 
-    // 3. Add cleanup listener for the pulse animation
+    // --- PHASE 4: BACKGROUND ASSET HYDRATION & DB INIT ---
+    Promise.all([AssetService.init(), saveStorageService._initDB()]).then(() => {
+        AssetService.hydrateBootAssets();
+        refreshSlotUI(); 
+    }).catch(err => console.warn("[Main] Storage Initialization failed:", err));
+
+    // --- V4 SAVE SYSTEM: Slot Rendering Logic ---
+    async function refreshSlotUI() {
+        const metadataList = await saveStorageService.getAllSaveMetadata();
+
+        // Unlock Load Game button if saves exist
+        mainLoadGameBtn.disabled = metadataList.length === 0;
+
+        newGameSlotsContainer.innerHTML = '';
+        loadGameSlotsContainer.innerHTML = '';
+
+        const slotIds = ['slot_1', 'slot_2', 'slot_3'];
+        
+        slotIds.forEach(slotId => {
+            const data = metadataList.find(s => s.slotId === slotId);
+            const slotNumber = slotId.split('_')[1];
+
+            // 1. Build New Game Slot
+            const newSlotWrapper = document.createElement('div');
+            newSlotWrapper.className = 'save-slot-wrapper';
+            
+            const newSlotBtn = document.createElement('button');
+            if (data) {
+                newSlotBtn.className = 'save-slot-btn';
+                newSlotBtn.innerHTML = `
+                    <span class="text-lg text-cyan-300 font-orbitron mb-1">Slot ${slotNumber}</span>
+                    <span class="save-slot-metadata">[${data.metadata.realDate}] | [<span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span>] | [${data.metadata.shipName}]</span>
+                `;
+                newSlotBtn.onclick = () => showOverwriteWarning(slotId);
+
+                const deleteBtn = createDeleteButton(slotId);
+                newSlotWrapper.appendChild(newSlotBtn);
+                newSlotWrapper.appendChild(deleteBtn);
+            } else {
+                newSlotBtn.className = 'save-slot-btn empty-slot';
+                newSlotBtn.innerHTML = `<span class="text-lg font-orbitron">Empty Slot</span>`;
+                newSlotBtn.onclick = () => executeStartGame('new', slotId);
+                newSlotWrapper.appendChild(newSlotBtn);
+            }
+            newGameSlotsContainer.appendChild(newSlotWrapper);
+
+            // 2. Build Load Game Slot
+            if (data) {
+                const loadSlotWrapper = document.createElement('div');
+                loadSlotWrapper.className = 'save-slot-wrapper';
+
+                const loadSlotBtn = document.createElement('button');
+                loadSlotBtn.className = 'save-slot-btn';
+                loadSlotBtn.innerHTML = `
+                    <span class="text-lg text-cyan-300 font-orbitron mb-1">Slot ${slotNumber}</span>
+                    <span class="save-slot-metadata">[${data.metadata.realDate}] | [<span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span>] | [${data.metadata.shipName}]</span>
+                `;
+                loadSlotBtn.onclick = () => executeStartGame('load', slotId);
+
+                const deleteBtn = createDeleteButton(slotId);
+                loadSlotWrapper.appendChild(loadSlotBtn);
+                loadSlotWrapper.appendChild(deleteBtn);
+                loadGameSlotsContainer.appendChild(loadSlotWrapper);
+            }
+        });
+    }
+
+    function createDeleteButton(slotId) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-slot-btn';
+        deleteBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+        deleteBtn.onclick = () => showDeleteWarning(slotId);
+        return deleteBtn;
+    }
+
+    // --- V4 SAVE SYSTEM: Menu State Machine Transitions ---
+    function showSplashView(viewId) {
+        splashMainMenu.classList.add('hidden');
+        splashNewGameMenu.classList.add('hidden');
+        splashLoadGameMenu.classList.add('hidden');
+        splashOptionsMenu.classList.add('hidden');
+
+        if (viewId === 'main') splashMainMenu.classList.remove('hidden');
+        else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
+        else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
+        else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
+    }
+
+    mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });
+    mainLoadGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('load'); });
+    mainOptionsBtn.addEventListener('click', () => showSplashView('options'));
+    
+    newGameBackBtn.addEventListener('click', () => showSplashView('main'));
+    loadGameBackBtn.addEventListener('click', () => showSplashView('main'));
+    optionsBackBtn.addEventListener('click', () => {
+        importDataTextarea.value = '';
+        showSplashView('main');
+    });
+
+    // --- PHASE 3: BACKUP & RESTORE PIPELINE ---
+    function showOptionsStatus(message, isError = false) {
+        optionsStatusMessage.textContent = message;
+        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'}`;
+        setTimeout(() => {
+            optionsStatusMessage.classList.replace('opacity-100', 'opacity-0');
+        }, 4000);
+    }
+
+    exportSavesBtn.addEventListener('click', async () => {
+        try {
+            const allSaves = {};
+            const slots = ['slot_1', 'slot_2', 'slot_3'];
+            for (const slotId of slots) {
+                const payload = await saveStorageService.loadGame(slotId);
+                if (payload) allSaves[slotId] = payload;
+            }
+            
+            if (Object.keys(allSaves).length === 0) {
+                showOptionsStatus('No saves found to export.', true);
+                return;
+            }
+
+            // Encode to handle Unicode characters before converting to Base64
+            const jsonString = JSON.stringify(allSaves);
+            const base64String = btoa(encodeURIComponent(jsonString));
+            
+            // Clipboard API (Works on HTTPS/Localhost)
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                await navigator.clipboard.writeText(base64String);
+                showOptionsStatus('Backup Code copied to clipboard!');
+            } else {
+                // Fallback for older WebViews
+                const tempTextArea = document.createElement("textarea");
+                tempTextArea.value = base64String;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempTextArea);
+                showOptionsStatus('Backup Code copied to clipboard! (Fallback)');
+            }
+        } catch (error) {
+            console.error("[Backup] Export failed:", error);
+            showOptionsStatus('Export failed. Check console.', true);
+        }
+    });
+
+    importSavesBtn.addEventListener('click', async () => {
+        const b64Data = importDataTextarea.value.trim();
+        if (!b64Data) {
+            showOptionsStatus('Please paste a backup code first.', true);
+            return;
+        }
+
+        try {
+            const jsonString = decodeURIComponent(atob(b64Data));
+            const parsedSaves = JSON.parse(jsonString);
+            
+            const slots = ['slot_1', 'slot_2', 'slot_3'];
+            let importedCount = 0;
+            
+            for (const slotId of slots) {
+                if (parsedSaves[slotId] && parsedSaves[slotId].state) {
+                    // This call securely syncs to IDB and the native iOS bridge
+                    await saveStorageService.saveGame(slotId, parsedSaves[slotId]);
+                    importedCount++;
+                }
+            }
+
+            if (importedCount > 0) {
+                importDataTextarea.value = '';
+                showOptionsStatus(`Successfully restored ${importedCount} save(s)!`);
+                await refreshSlotUI(); // Refresh UI to show the imported slots
+            } else {
+                showOptionsStatus('Invalid backup code. No valid saves found.', true);
+            }
+        } catch (error) {
+            console.error("[Backup] Import failed:", error);
+            showOptionsStatus('Invalid backup code format.', true);
+        }
+    });
+
+    // --- V4 SAVE SYSTEM: Warning Modals Logic ---
+    function showOverwriteWarning(slotId) {
+        pendingSlotAction = { action: 'overwrite', slotId };
+        overwriteModal.classList.remove('hidden');
+    }
+
+    function showDeleteWarning(slotId) {
+        pendingSlotAction = { action: 'delete', slotId };
+        deleteModal.classList.remove('hidden');
+    }
+
+    overwriteCancelBtn.onclick = () => { overwriteModal.classList.add('hidden'); pendingSlotAction = null; };
+    deleteCancelBtn.onclick = () => { deleteModal.classList.add('hidden'); pendingSlotAction = null; };
+
+    overwriteConfirmBtn.onclick = () => {
+        overwriteModal.classList.add('hidden');
+        if (pendingSlotAction && pendingSlotAction.action === 'overwrite') {
+            executeStartGame('new', pendingSlotAction.slotId);
+        }
+    };
+
+    deleteConfirmBtn.onclick = async () => {
+        deleteModal.classList.add('hidden');
+        if (pendingSlotAction && pendingSlotAction.action === 'delete') {
+            await saveStorageService.deleteGame(pendingSlotAction.slotId);
+            await refreshSlotUI();
+            pendingSlotAction = null;
+        }
+    };
+
+    // EULA Link Binding
+    if (splashScreen) {
+        splashScreen.addEventListener('click', (e) => {
+            const actionTarget = e.target.closest('[data-action]');
+            if (actionTarget && actionTarget.dataset.action === 'show_eula_modal') {
+                e.preventDefault();
+                uiManager.showEulaModal();
+            }
+        });
+    }
+
     if (eulaContainer) {
         eulaContainer.addEventListener('animationend', () => {
             eulaContainer.classList.remove('pulse-eula-warning');
         });
     }
 
-    // 4. Create check function that wraps the start logic
-    const checkEulaAndStart = (startFn) => {
-        if (!eulaCheckbox || !eulaContainer) {
-            console.error("EULA elements not found!");
-            return;
-        }
-
+    function checkEula() {
+        if (!eulaCheckbox || !eulaContainer) return false;
         if (!eulaCheckbox.checked) {
-            // Trigger pulse animation
             eulaContainer.classList.remove('pulse-eula-warning');
-            // Timeout ensures the class removal is processed, allowing the animation to re-trigger
-            setTimeout(() => {
-                eulaContainer.classList.add('pulse-eula-warning');
-            }, 10);
-            
-            return; // Stop the function
+            setTimeout(() => eulaContainer.classList.add('pulse-eula-warning'), 10);
+            return false;
         }
+        return true;
+    }
 
-        // --- [[START]] PRE-FLIGHT HYDRATION ---
-        // Optimization: Kick off critical asset loading NOW (async),
-        // but DO NOT block the UI thread with the full game initialization yet.
-        try {
-            const tempState = new GameState();
-            // We only hydrate if there's a save to read preferences/ships from.
-            // If it's a new game, the defaults (Boot Assets) are usually sufficient.
-            if (tempState.loadGame()) {
-                AssetService.hydrateGameAssets(tempState.getState());
-            }
-        } catch (e) {
-            console.warn("[Main] Pre-flight hydration warning:", e);
-        }
-        // --- [[END]] PRE-FLIGHT HYDRATION ---
-
-        // EULA is checked, trigger fade animation
-        splashScreen.classList.add('splash-screen-hiding');
-        
-        // Wait for the animation to finish before starting the heavy game loop.
-        // This ensures the 2-second fade is smooth and visually complete.
-        splashScreen.addEventListener('animationend', () => {
-            splashScreen.style.display = 'none';
-            startFn();
-        }, { once: true });
-    };
-    // [[END]] VIRTUAL WORKBENCH (EULA Logic)
-
-    // Set the app height on initial load and whenever the viewport changes.
-    setAppHeight(); // MODIFIED: Re-enabled
+    setAppHeight(); 
     
-    // The visualViewport API is a more reliable way to track viewport changes on mobile.
-    // MODIFIED: Re-enabled
     if (window.visualViewport) {
         window.visualViewport.addEventListener('resize', setAppHeight);
         window.visualViewport.addEventListener('scroll', setAppHeight);
@@ -10158,37 +10463,48 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', setAppHeight);
     }
 
+    // --- V4 SAVE SYSTEM: Execution Pipeline ---
+    async function executeStartGame(type, slotId, isSimpleStart = false) {
+        splashScreen.classList.add('splash-screen-hiding');
+        
+        let payload = null;
+        if (type === 'load') {
+            payload = await saveStorageService.loadGame(slotId);
+            if (!payload) type = 'new';
+        }
 
+        try {
+            if (type === 'load' && payload) {
+                AssetService.hydrateGameAssets(payload.state);
+            } else {
+                const tempState = new GameState();
+                tempState.startNewGame('');
+                AssetService.hydrateGameAssets(tempState.getState());
+            }
+        } catch (e) {
+            console.warn("[Main] Pre-flight hydration warning:", e);
+        }
 
-    // Set up the main start button to initialize and begin the game.
-    startButton.addEventListener('click', () => {
-        // [[START]] VIRTUAL WORKBENCH (EULA Logic)
-        // 5. Pass the original startGame function as a callback, along with pre-built uiManager
-        checkEulaAndStart(() => startGame(false, uiManager, Logger));
-        // [[END]] VIRTUAL WORKBENCH (EULA Logic)
-    }, { once: false }); // Set once to false to allow re-checking
+        splashScreen.addEventListener('animationend', () => {
+            splashScreen.style.display = 'none';
+            startGame({ type, slotId, payload, isSimpleStart }, uiManager, Logger);
+        }, { once: true });
+    }
     
     debugStartButton.addEventListener('click', () => {
-        // [[START]] VIRTUAL WORKBENCH (EULA Logic)
-        // 5. Pass the debug start function as a callback, along with pre-built uiManager
-        checkEulaAndStart(() => startGame(true, uiManager, Logger));
-        // [[END]] VIRTUAL WORKBENCH (EULA Logic)
-    }, { once: false }); // Set once to false to allow re-checking
+        if (checkEula()) {
+            executeStartGame('new', 'slot_1', true);
+        }
+    });
 
     /**
      * Instantiates all core game services, establishes their dependencies,
      * loads saved data or starts a new game, and binds all necessary event listeners.
-     * @param {boolean} isSimpleStart
-     * @param {UIManager} uiManager - The pre-instantiated UIManager.
-     * @param {Logger} logger - The Logger instance.
      */
-    function startGame(isSimpleStart = false, uiManager, logger) {
-        // --- Service Instantiation ---
+    function startGame(initData, uiManager, logger) {
         const gameState = new GameState();
-        // uiManager and logger are now passed in, no need to instantiate.
-        const newsTickerService = new NewsTickerService(gameState); // INSTANTIATE
+        const newsTickerService = new NewsTickerService(gameState); 
         const missionService = new MissionService(gameState, uiManager, logger);
-        // MODIFIED: Pass newsTickerService to SimulationService
         const simulationService = new SimulationService(gameState, uiManager, logger, newsTickerService);
         const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, logger);
         let debugService = null;
@@ -10196,44 +10512,38 @@ document.addEventListener('DOMContentLoaded', () => {
         if (DEV_MODE) {
             debugService = new DebugService(gameState, simulationService, uiManager, logger);
             debugService.init();
-            // --- [[START]] TUTORIAL TUNER WIRING ---
             uiManager.setDebugService(debugService);
-            // --- [[END]] TUTORIAL TUNER WIRING ---
         }
         
-        // --- Dependency Injection ---
-        uiManager.setNewsTickerService(newsTickerService); // INJECT
+        uiManager.setNewsTickerService(newsTickerService); 
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
         simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
-        // REMOVED: TimeService injection (now handled by SimService)
         missionService.setSimulationService(simulationService);
         const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, logger);
-        // MODIFIED: Inject EventManager into UIManager for post-render bindings
         uiManager.setEventManager(eventManager);
         
-        // --- Link GameState to UIManager for automatic re-rendering ---
         gameState.subscribe(() => uiManager.render(gameState.getState()));
 
-        // --- Game Initialization ---
-        const hasSave = gameState.loadGame();
-        if (!hasSave) {
-            if (isSimpleStart && debugService) {
-                gameState.startNewGame('');
+        const hasSave = initData.type === 'load' && initData.payload;
+
+        if (hasSave) {
+            gameState.importMergedState(initData.payload);
+        } else {
+            gameState.startNewGame('');
+            gameState.slotId = initData.slotId; 
+
+            if (initData.isSimpleStart && debugService) {
                 debugService.simpleStart();
             } else {
-                gameState.startNewGame('');
                 simulationService.timeService.advanceDays(7);
                 simulationService.startIntroSequence();
             }
         }
 
-        // --- Bindings ---
         eventManager.bindEvents();
         
-        // --- [[START]] CONSOLE EXPOSURE ---
-        // Expose services to the window for debugging/testing
         if (DEV_MODE || true) {
             window.game = {
                 gameState,
@@ -10244,35 +10554,18 @@ document.addEventListener('DOMContentLoaded', () => {
             };
             console.log("Game services exposed to window.game");
         }
-        // --- [[END]] CONSOLE EXPOSURE ---
 
-        if (hasSave || isSimpleStart) {
+        if (hasSave || initData.isSimpleStart) {
             uiManager.showGameContainer(); 
-            
-            // --- [[START]] MODIFICATION ---
-            // Populate the news ticker *before* the first render.
-            // This prevents the "first tap" re-render bug.
             newsTickerService.onLocationChange();
-            // --- [[END]] MODIFICATION ---
-
             uiManager.render(gameState.getState());
         }
         
-        // --- [[START]] MODIFICATION ---
-        // MOVED: The call to onLocationChange() was moved up to before the first render.
-        // --- [[END]] MODIFICATION ---
-        
         tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
 
-        // --- [[START]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
-        // Now that GameState is loaded/initialized, we trigger the comprehensive
-        // hydration logic again. This is redundant but safe (cache hits) and handles 
-        // any new state created during startNewGame.
         AssetService.hydrateGameAssets(gameState.getState());
-        // --- [[END]] PHASE 4: INTELLIGENT ASSET HYDRATION ---
     }
 });
-
 --- END OF FILE: ./js/main.js ---
 
 --- START OF FILE: ./js/utils.js ---
@@ -10292,16 +10585,11 @@ const commodityStyleMap = {
     'item-style-1':  { hex: '#60a5fa', gradient: 'linear-gradient(45deg, #3b82f6, #1e3a8a)' },
     'item-style-2':  { hex: '#a3a3a3', gradient: 'linear-gradient(45deg, #737373, #262626)' },
     'item-style-3':  { hex: '#22c55e', gradient: 'linear-gradient(45deg, #16a34a, #14532d)' },
-    // CHANGED: Cybernetics - Brightened to Light Zinc for readability on dark backgrounds
     'item-style-4':  { hex: '#a1a1aa', gradient: 'linear-gradient(45deg, #a1a1aa, #52525b)' },
     'item-style-5':  { hex: '#c084fc', gradient: 'linear-gradient(45deg, #a855f7, #6b21a8)' },
-    // CHANGED: Neural Processors - Brightened to Electric Indigo for contrast
     'item-style-6':  { hex: '#818cf8', gradient: 'linear-gradient(45deg, #6366f1, #4338ca)' },
-    // CHANGED: Graphene Lattices - Brightened to Steel Grey/Slate 300
     'item-style-7':  { hex: '#cbd5e1', gradient: 'linear-gradient(45deg, #94a3b8, #475569)' }, 
-    // CHANGED: Cryo-Sleep Pods - Brightened to Neon Cyan for contrast
     'item-style-8':  { hex: '#22d3ee', gradient: 'linear-gradient(45deg, #06b6d4, #155e75)' },
-    // CHANGED: Atmo Processors - Brightened to Bright Amber/Bronze
     'item-style-9':  { hex: '#f59e0b', gradient: 'linear-gradient(45deg, #d97706, #b45309)' },
     'item-style-10': { hex: '#fb7185', gradient: 'linear-gradient(45deg, #f43f5e, #9f1239)' },
     'item-style-11': { hex: '#a78bfa', gradient: 'linear-gradient(165deg, #a78bfa, #312e81, #1e3a8a)' },
@@ -10312,8 +10600,6 @@ const commodityStyleMap = {
 
 /**
  * Retrieves the style object for a given commodity style class.
- * @param {string} styleClass - The style class of the commodity.
- * @returns {{hex: string, gradient: string}} The style object.
  */
 export function getCommodityStyle(styleClass) {
     return commodityStyleMap[styleClass] || { hex: '#a8a29e', gradient: 'linear-gradient(45deg, #52525b, #18181b)' };
@@ -10321,10 +10607,6 @@ export function getCommodityStyle(styleClass) {
 
 /**
  * Formats a number into a compact, human-readable string with appropriate suffixes (k, M, B, T).
- * Specifically designed to maintain layout integrity on tight mobile displays by abbreviating large values.
- * Example: -12345 becomes '-12.3k'.
- * @param {number} amount The numeric value to format.
- * @returns {string} The formatted abbreviated string.
  */
 export function formatAbbreviatedNumber(amount) {
     const isNegative = amount < 0;
@@ -10353,25 +10635,17 @@ export function formatAbbreviatedNumber(amount) {
 
 /**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
- * This function now correctly handles negative values.
- * Example: -12345 becomes '⌬ -12.3k'.
- * @param {number} amount The numeric value to format.
- * @param {boolean} [withSymbol=true] - Whether to prepend the '⌬ ' symbol.
- * @returns {string} The formatted credit string.
  */
 export function formatCredits(amount, withSymbol = true) {
     const isNegative = amount < 0;
     const num = Math.abs(Math.floor(amount));
-    // --- VIRTUAL WORKBENCH: REVERTED TO STANDARD SPACE ---
     const prefix = withSymbol ? '⌬ ' : '';
-    // --- END VIRTUAL WORKBENCH ---
     const sign = isNegative ? '-' : '';
 
     let formattedNumber;
-    // --- VIRTUAL WORKBENCH START: Phase 1 (Universal Abbreviation) ---
-    if (num >= 1e18) { // Numbers >= 1 Quintillion
+    if (num >= 1e18) {
         formattedNumber = `${(num).toExponential(1)}`;
-    } else if (num >= 1e15) { // Numbers >= 1 Quadrillion
+    } else if (num >= 1e15) {
         formattedNumber = `${parseFloat((num / 1e15).toFixed(2)).toString()}Q`;
     } else if (num >= 1e12) {
         formattedNumber = `${parseFloat((num / 1e12).toFixed(2)).toString()}T`;
@@ -10384,17 +10658,12 @@ export function formatCredits(amount, withSymbol = true) {
     } else {
         formattedNumber = num.toLocaleString();
     }
-    // --- VIRTUAL WORKBENCH END: Phase 1 (Universal Abbreviation) ---
 
     return `${prefix}${sign}${formattedNumber}`;
 }
 
-
 /**
  * Calculates the total number of cargo units currently used in a given inventory object.
- * @param {object} inventory - The inventory object to calculate, where keys are commodity IDs
- * and values are objects containing a 'quantity' property.
- * @returns {number} The total sum of all item quantities in the inventory.
  */
 export function calculateInventoryUsed(inventory) {
      if (!inventory) return 0;
@@ -10403,8 +10672,6 @@ export function calculateInventoryUsed(inventory) {
 
 /**
  * Returns the correct ordinal suffix (st, nd, rd, th) for a given day of the month.
- * @param {number} day - The day of the month.
- * @returns {string} The ordinal suffix.
  * @private
  */
 function getDaySuffix(day) {
@@ -10419,9 +10686,6 @@ function getDaySuffix(day) {
 
 /**
  * Converts an absolute day number from the start of the game into a formatted date string.
- * Example: 'Monday, January 1st, 2140'.
- * @param {number} dayNumber - The absolute day number of the game.
- * @returns {string} The fully formatted date string.
  */
 export function getDateFromDay(dayNumber) {
     const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
@@ -10442,8 +10706,6 @@ export function getDateFromDay(dayNumber) {
 
 /**
  * Converts an absolute day number into a short date string (DD/MM/YYYY).
- * @param {number} dayNumber - The absolute day number.
- * @returns {string} The formatted date string (e.g., "01/01/2140").
  */
 export function formatGameDateShort(dayNumber) {
     const year = DATE_CONFIG.START_YEAR + Math.floor((dayNumber - 1) / 365);
@@ -10461,7 +10723,6 @@ export function formatGameDateShort(dayNumber) {
     const day = dayOfYear + 1;
     const month = monthIndex + 1;
     
-    // Pad with leading zeros
     const dStr = day.toString().padStart(2, '0');
     const mStr = month.toString().padStart(2, '0');
     
@@ -10470,28 +10731,16 @@ export function formatGameDateShort(dayNumber) {
 
 /**
  * Generates a random integer between a min and max value, skewed towards the lower end.
- * This is useful for creating distributions where lower values are more common.
- * @param {number} min - The minimum possible value (inclusive).
- * @param {number} max - The maximum possible value (inclusive).
- * @returns {number} The skewed random integer.
  */
 export function skewedRandom(min, max) {
-    let rand = (Math.random() + Math.random() + Math.random()) / 3; // Average of 3 rolls biases towards the mean (0.5).
-    return Math.floor(min + (max - min) * Math.pow(rand, 0.5)); // Squaring the root further biases towards the lower end.
+    let rand = (Math.random() + Math.random() + Math.random()) / 3; 
+    return Math.floor(min + (max - min) * Math.pow(rand, 0.5)); 
 }
 
 /**
  * Generates the HTML for the MKT and P/L indicators on a market card.
- * This centralized function ensures consistent and accurate indicator rendering.
- * @param {object} data - An object containing all necessary data for rendering.
- * @param {number} data.price - The current market buy price.
- * @param {number} data.sellPrice - The effective sell price (after diminishing returns).
- * @param {number} data.galacticAvg - The galactic average price for the commodity.
- * @param {object} data.playerItem - The player's inventory data for this commodity (can be null).
- * @returns {string} The HTML string for the indicator pills.
  */
 export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem }) {
-    // Market vs Galactic Average Indicator (MKT)
     const marketDiff = price - galacticAvg;
     const marketPct = galacticAvg > 0 ? Math.round((marketDiff / galacticAvg) * 100) : 0;
     const marketSign = marketPct >= 0 ? '+' : '';
@@ -10503,7 +10752,6 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
 
     let plIndicatorHtml = '';
     
-    // Profit/Loss Indicator (P/L)
     if (playerItem && playerItem.avgCost > 0) {
         const spreadPerUnit = sellPrice - playerItem.avgCost;
         
@@ -10517,6 +10765,69 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
     }
 
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
+}
+
+// --- V4 SAVE SYSTEM: SMART ARRAY UNION DEFINITIONS ---
+// Arrays that should dynamically expand to include new codebase defaults
+// instead of being strictly overwritten by an old save file.
+const UNION_ARRAYS = [
+    'unlockedLocationIds', 
+    'unlockedLicenseIds', 
+    'seenEvents', 
+    'seenCommodityMilestones', 
+    'seenBatchIds', 
+    'skippedTutorialBatches', 
+    'officerRoster'
+];
+
+/**
+ * Recursively merges a source object into a target object.
+ * Arrays are entirely replaced by the source array to prevent orphaned data or indexing bugs,
+ * UNLESS the array key is defined in UNION_ARRAYS, in which case it is intelligently merged.
+ * Primitives are safely overwritten.
+ * @param {Object} target - The base object (usually a fresh default game state).
+ * @param {Object} source - The object to merge in (usually the loaded save data payload).
+ * @returns {Object} The mutated target object.
+ */
+export function deepMerge(target, source) {
+    if (target === null || typeof target !== 'object') {
+        return source;
+    }
+    if (source === null || typeof source !== 'object') {
+        return source;
+    }
+
+    if (Array.isArray(source)) {
+        return source.slice(); 
+    }
+
+    for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            if (source[key] === null) {
+                target[key] = null;
+            } else if (Array.isArray(source[key])) {
+                
+                // --- PHASE 2: SMART ARRAY UNION ---
+                if (Array.isArray(target[key]) && UNION_ARRAYS.includes(key)) {
+                    // Create a strict Set union of target (new code defaults) and source (old save)
+                    // This prevents players from losing access to newly added base game content.
+                    target[key] = [...new Set([...target[key], ...source[key]])];
+                } else {
+                    // Strict overwrite for structural arrays (e.g. active missions, owned ships)
+                    target[key] = source[key].slice(); 
+                }
+
+            } else if (typeof source[key] === 'object') {
+                if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+                    target[key] = {};
+                }
+                target[key] = deepMerge(target[key], source[key]);
+            } else {
+                target[key] = source[key];
+            }
+        }
+    }
+    return target;
 }
 --- END OF FILE: ./js/utils.js ---
 
@@ -21630,7 +21941,7 @@ export class RandomEventService {
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js';
-import { skewedRandom } from '../utils.js';
+import { skewedRandom, deepMerge } from '../utils.js';
 
 /**
  * Procedurally generates the travel data matrix, calculating the time and fuel cost
@@ -21715,7 +22026,6 @@ export class GameState {
     setState(partialState) {
         Object.assign(this, partialState);
         this._notify();
-        // this.saveGame(); // NOTE: Saving is currently disabled.
     }
     
     /**
@@ -21723,44 +22033,95 @@ export class GameState {
      * @returns {object} A JSON-serialized and parsed copy of the game state.
      */
     getState() {
-        return JSON.parse(JSON.stringify(this));
+        const copy = JSON.parse(JSON.stringify(this));
+        
+        // V4 FIX: Prevent functions in the subscribers array from being serialized into [null].
+        // This ensures the saved state remains purely data-driven.
+        delete copy.subscribers;
+        
+        return copy;
+    }
+
+    /**
+     * V4 SAVE SYSTEM: Serializes the state and strictly scrubs ephemeral properties
+     * to prevent soft-locks when loading (e.g. pending travel loops or broken DOM states).
+     * @returns {object} A sanitized, deep copy of the game state.
+     */
+    exportState() {
+        const stateCopy = this.getState();
+        
+        // Strip ephemeral properties
+        stateCopy.pendingTravel = null;
+        stateCopy.introSequenceActive = false;
+        
+        // Revert UI state to safe defaults
+        stateCopy.uiState = {
+            marketCardMinimized: {},
+            hangarShipyardToggleState: 'shipyard',
+            hangarActiveIndex: 0,
+            shipyardActiveIndex: 0,
+            activeIntelTab: 'intel-codex-content',
+            servicesTab: 'supply',
+            activeMissionTab: 'terminal'
+        };
+
+        return stateCopy;
+    }
+
+    /**
+     * V4 SAVE SYSTEM: Loads a game utilizing the "Deep Merge" backwards-compatibility strategy.
+     * Generates a fully up-to-date state schema, then paints the saved data over it.
+     * @param {object} savedPayload - The full payload loaded from IndexedDB.
+     * @returns {boolean} True if successfully loaded.
+     */
+    importMergedState(savedPayload) {
+        if (!savedPayload || !savedPayload.state) return false;
+
+        // 1. Generate a fresh, up-to-date state baseline using the player's saved name
+        const playerName = savedPayload.state.player?.name || "Captain";
+        this.startNewGame(playerName);
+
+        // V4 FIX: Sanitize the incoming payload to strip any corrupted [null] subscriber 
+        // arrays generated by previous bugged saves.
+        if (savedPayload.state.subscribers) {
+            delete savedPayload.state.subscribers;
+        }
+
+        // Cache the live event subscribers so they aren't destroyed during the merge operation.
+        const activeSubscribers = this.subscribers;
+
+        // 2. Deep merge the saved data over the fresh baseline
+        const mergedState = deepMerge(this.getState(), savedPayload.state);
+        
+        // 3. Apply merged state and slot association
+        Object.assign(this, mergedState);
+        this.slotId = savedPayload.slotId;
+        
+        // Restore the live subscribers
+        this.subscribers = activeSubscribers;
+
+        // 4. Regenerate derived arrays to guarantee map accuracy across patches
+        this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
+
+        this._notify();
+        return true;
     }
 
     /**
      * Saves the current game state to localStorage.
-     * NOTE: This functionality is currently disabled.
+     * NOTE: This functionality is currently disabled in favor of V4 Save System.
      */
     saveGame() {
-        // try {
-        //     const stateToSave = { ...this };
-        //     delete stateToSave.subscribers;
-        //     localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
-        // } catch (error) {
-        //     console.error("Error saving game state:", error);
-        // }
+        // Obsolete
     }
 
     /**
      * Loads the game state from localStorage.
-     * NOTE: This functionality is currently disabled and will always start a new game.
+     * NOTE: This functionality is currently disabled in favor of V4 Save System.
      * @returns {boolean} True if a game was successfully loaded, false otherwise.
      */
     loadGame() {
         return false;
-        // try {
-        //     const serializedState = localStorage.getItem(SAVE_KEY);
-        //     if (serializedState === null) return false;
-            
-        //     const loadedState = JSON.parse(serializedState);
-        //     Object.assign(this, loadedState);
-        //     this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
-        //     this._notify();
-        //     return true;
-        // } catch (error) {
-        //     console.warn("Could not parse save data. Starting new game.", error);
-        //     localStorage.removeItem(SAVE_KEY);
-        //     return false;
-        // }
     }
 
     /**
@@ -21796,6 +22157,7 @@ export class GameState {
         });
 
         const initialState = {
+            slotId: null, // V4 SYSTEM: Track active save slot
             day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
             subNavCollapsed: false,
             introSequenceActive: true,
@@ -21819,6 +22181,7 @@ export class GameState {
                     id !== LOCATION_IDS.MERCURY
                 ),
                 seenCommodityMilestones: [], financeLog: [],
+                seenAutoSaveNotice: false, // V4 SYSTEM: Notification flag
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
@@ -25033,6 +25396,10 @@ export class TravelService {
             }
             // -------------------------------------------------
 
+            // --- V4 SAVE SYSTEM: INVISIBLE AUTO-SAVE ON ARRIVAL ---
+            this.simulationService.saveGame();
+            // ------------------------------------------------------
+
             if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else {
@@ -26123,6 +26490,7 @@ import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
+import { saveStorageService } from './SaveStorageService.js';
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
@@ -26210,6 +26578,47 @@ export class SimulationService {
     setMissionService(missionService) {
         this.missionService = missionService;
         this.playerActionService.missionService = missionService;
+    }
+
+    // --- V4 SAVE SYSTEM DELEGATION ---
+
+    /**
+     * Executes an invisible, non-blocking auto-save.
+     * Retrieves the serialized state, builds metadata, and pushes to IndexedDB.
+     */
+    async saveGame() {
+        if (!this.gameState.slotId) return; // Prevent saving if slot association is missing
+
+        try {
+            const stateToSave = this.gameState.exportState();
+            const activeShipId = stateToSave.player.activeShipId;
+            const shipName = DB.SHIPS[activeShipId]?.name || "Unknown";
+            
+            const payload = {
+                version: "36.10", // Schema tracking
+                slotId: this.gameState.slotId,
+                metadata: {
+                    realDate: new Date().toLocaleDateString(),
+                    inGameDay: stateToSave.day,
+                    creditsFormatted: formatCredits(stateToSave.player.credits),
+                    shipName: shipName
+                },
+                state: stateToSave
+            };
+
+            // Execute asynchronous save
+            await saveStorageService.saveGame(this.gameState.slotId, payload);
+            this.logger.info.system('SimulationService', this.gameState.day, 'SAVE_COMPLETE', `Auto-saved to ${this.gameState.slotId}`);
+
+            // One-Time Notification on first successful save post-tutorial
+            if (!this.gameState.player.seenAutoSaveNotice && !this.gameState.introSequenceActive) {
+                this.gameState.player.seenAutoSaveNotice = true;
+                this.uiManager.queueModal('event-modal', 'Auto-Save Enabled', 'Notice: Orbital Trading automatically saves your progress in the background every time you arrive safely at a station.');
+                this.gameState.setState({});
+            }
+        } catch (error) {
+            this.logger.error('SimulationService', `Background auto-save failed: ${error.message}`);
+        }
     }
 
     // --- EVENT SYSTEM 2.0 METHODS ---
@@ -26831,9 +27240,6 @@ export class SimulationService {
         if (this.missionService) {
              this.missionService.checkTriggers();
         }
-
-        // 5. Save State (Auto-save)
-        // this.gameState.saveGame();
         
         this.gameState.setState({}); // Trigger UI update
     }
@@ -32099,6 +32505,189 @@ export class AutomatedPlayer {
     }
 }
 --- END OF FILE: ./js/services/bot/AutomatedPlayerService.js ---
+
+--- START OF FILE: ./js/services/SaveStorageService.js ---
+// js/services/SaveStorageService.js
+
+/**
+ * @fileoverview Service for managing game saves using IndexedDB with a 
+ * bulletproof iOS Native Bridge fallback.
+ */
+
+class SaveStorageService {
+    constructor() {
+        this.dbName = 'OrbitalSavesDB';
+        this.storeName = 'saves';
+        this.version = 1;
+        this.db = null;
+        this.initPromise = this._initDB();
+    }
+
+    async _initDB() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.version);
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(this.storeName)) {
+                    db.createObjectStore(this.storeName, { keyPath: 'slotId' });
+                }
+            };
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve();
+            };
+
+            request.onerror = (event) => {
+                console.error('SaveStorageService: IndexedDB initialization failed', event.target.error);
+                reject(event.target.error);
+            };
+        });
+    }
+
+    /**
+     * Saves the game payload to the specified slot in both IndexedDB and iOS Native Storage.
+     */
+    async saveGame(slotId, payload) {
+        await this.initPromise;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const dataToSave = { ...payload, slotId };
+            
+            const request = store.put(dataToSave);
+
+            request.onsuccess = () => {
+                // --- PHASE 1: iOS NATIVE BRIDGE (DUAL-WRITE) ---
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosSaveBackup) {
+                    try {
+                        window.webkit.messageHandlers.iosSaveBackup.postMessage({
+                            slotId: slotId,
+                            payload: JSON.stringify(dataToSave)
+                        });
+                        console.log(`[iOS Bridge] Slot ${slotId} backed up to native UserDefaults.`);
+                    } catch(e) {
+                        console.warn("[iOS Bridge] Failed to send backup to native layer", e);
+                    }
+                }
+                
+                // Keep local fallback synced
+                if (!window.__IOS_SAVES) window.__IOS_SAVES = {};
+                window.__IOS_SAVES[slotId] = dataToSave;
+                
+                resolve();
+            };
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    /**
+     * Loads a game save. Prioritizes the indestructible iOS Native Storage if available.
+     */
+    async loadGame(slotId) {
+        // --- PHASE 1: iOS NATIVE BRIDGE (HEALING FALLBACK) ---
+        // Native saves are injected directly into the window at boot by Swift.
+        if (window.__IOS_SAVES && window.__IOS_SAVES[slotId]) {
+            try {
+                console.log(`[iOS Bridge] Loading slot ${slotId} from unbreakable native storage.`);
+                const nativeSave = typeof window.__IOS_SAVES[slotId] === 'string' 
+                    ? JSON.parse(window.__IOS_SAVES[slotId]) 
+                    : window.__IOS_SAVES[slotId];
+                
+                // Heal IndexedDB silently in the background
+                this._syncToIndexedDB(nativeSave);
+                return nativeSave;
+            } catch (e) {
+                console.error("[iOS Bridge] Failed to parse native iOS save:", e);
+            }
+        }
+
+        // Standard IndexedDB Load
+        await this.initPromise;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.get(slotId);
+
+            request.onsuccess = (event) => resolve(event.target.result || null);
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    /**
+     * Deletes a game save from both environments.
+     */
+    async deleteGame(slotId) {
+        await this.initPromise;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.delete(slotId);
+
+            request.onsuccess = () => {
+                // --- PHASE 1: iOS NATIVE BRIDGE ---
+                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosDeleteBackup) {
+                    window.webkit.messageHandlers.iosDeleteBackup.postMessage(slotId);
+                }
+                if (window.__IOS_SAVES) delete window.__IOS_SAVES[slotId];
+                resolve();
+            };
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    /**
+     * Retrieves metadata for the Splash Screen by safely merging Native and IDB data.
+     */
+    async getAllSaveMetadata() {
+        await this.initPromise;
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction([this.storeName], 'readonly');
+            const store = transaction.objectStore(this.storeName);
+            const request = store.getAll();
+
+            request.onsuccess = (event) => {
+                let indexedDBSaves = event.target.result || [];
+                let metadataMap = new Map();
+                
+                // 1. Log IDB saves
+                indexedDBSaves.forEach(save => {
+                    metadataMap.set(save.slotId, { slotId: save.slotId, version: save.version, metadata: save.metadata });
+                });
+
+                // 2. Overwrite/Rescue with Native iOS saves (survives IDB wipe)
+                if (window.__IOS_SAVES) {
+                    for (const [slotId, data] of Object.entries(window.__IOS_SAVES)) {
+                        try {
+                            const nativeSave = typeof data === 'string' ? JSON.parse(data) : data;
+                            metadataMap.set(slotId, { slotId: nativeSave.slotId, version: nativeSave.version, metadata: nativeSave.metadata });
+                        } catch(e) {}
+                    }
+                }
+
+                resolve(Array.from(metadataMap.values()));
+            };
+            request.onerror = (e) => reject(e.target.error);
+        });
+    }
+
+    /**
+     * Helper to push a native save back into IDB if IDB was cleared by the OS.
+     * @private
+     */
+    async _syncToIndexedDB(savePayload) {
+        await this.initPromise;
+        return new Promise((resolve) => {
+            const transaction = this.db.transaction([this.storeName], 'readwrite');
+            const store = transaction.objectStore(this.storeName);
+            store.put(savePayload).onsuccess = resolve;
+        });
+    }
+}
+
+export const saveStorageService = new SaveStorageService();
+--- END OF FILE: ./js/services/SaveStorageService.js ---
 
 --- START OF FILE: ./js/services/IntelService.js ---
 // js/services/IntelService.js
