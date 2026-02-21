@@ -40,7 +40,9 @@
     "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands.",
     "Convoy_Tax": "An exponentially scaling fuel and credit penalty applied during travel to offset the mechanical advantages of operating massive multi-ship fleets.",
     "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
-    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states."
+    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states.",
+    "Dual-Write_Native_Bridge": "The persistence strategy that concurrently saves data to the browser's IndexedDB and the iOS native layer via WebKit message handlers, preventing save loss from cache eviction.",
+    "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data."
   },
   "service_summaries": {
     "SolStationService": {
@@ -389,6 +391,20 @@
       "key_functions": {
         "saveAsset": "Stores a blob in IDB.",
         "getAsset": "Retrieves a blob from IDB."
+      },
+      "mutates_state": []
+    },
+    "SaveStorageService": {
+      "description": "Manages game saves using IndexedDB with a bulletproof iOS Native Bridge fallback. Implements a dual-write architecture for indestructible persistence.",
+      "dependencies": [
+        "IndexedDB",
+        "WebKit Message Handlers"
+      ],
+      "key_functions": {
+        "saveGame": "Saves payload to IDB and native iOS.",
+        "loadGame": "Loads save, prioritizing native iOS fallback and healing IDB.",
+        "getAllSaveMetadata": "Retrieves and merges save metadata for the splash screen.",
+        "deleteGame": "Removes save from both IDB and native iOS."
       },
       "mutates_state": []
     },
@@ -1062,6 +1078,11 @@
       "path": "./js/data/officers.js",
       "role": "DATA_DEFINITION",
       "description": "Registry of Sol Station Directorate officers and their stats."
+    },
+    "F101": {
+      "path": "./js/services/SaveStorageService.js",
+      "role": "PERSISTENCE_SERVICE",
+      "description": "Service for managing game saves using IndexedDB with an iOS Native Bridge fallback."
     }
   }
 }

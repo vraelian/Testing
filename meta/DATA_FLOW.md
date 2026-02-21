@@ -371,3 +371,25 @@ graph TD
         F --> G[TravelService counts active Ships in Fleet];
         G --> H[Assess Scaling Convoy Tax against resources];
     end
+
+2.15 Game State Persistence & Dual-Write Storage
+Flow for saving and loading game data, utilizing an iOS native bridge to prevent IndexedDB cache eviction.
+
+graph TD
+    subgraph Save Operation
+        A1[User Saves Game] --> B1[SaveStorageService.saveGame];
+        B1 --> C1[Write to IndexedDB];
+        C1 --> D1{Is iOS WebKit Bridge Active?};
+        D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
+        D1 -- No --> F1[End Save];
+        E1 --> F1;
+    end
+
+    subgraph Load Operation
+        A2[User Loads Game / Boot] --> B2[SaveStorageService.loadGame];
+        B2 --> C2{Is window.__IOS_SAVES present?};
+        C2 -- Yes --> D2[Parse Native Save Data];
+        D2 --> E2[Background: Heal IndexedDB];
+        C2 -- No --> F2[Read from IndexedDB];
+        E2 & F2 --> G2[Hydrate GameState];
+    end

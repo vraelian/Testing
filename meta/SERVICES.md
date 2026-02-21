@@ -203,6 +203,14 @@ Key Behavior: Manages the OrbitalAssetsDB. Stores raw Blob data to prevent iOS c
 
 Dependencies: None (Native IndexedDB API).
 
+SaveStorageService (F101)
+
+Responsibility: Manages game saves using a dual-write architecture for indestructible persistence.
+
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB (OrbitalSavesDB) while concurrently broadcasting to the iOS native layer (Swift UserDefaults) via WebKit message handlers. Prioritizes indestructible iOS native saves during hydration to silently heal wiped IndexedDB data.
+
+Dependencies: Native IndexedDB API, WebKit Message Handlers.
+
 TravelAnimationService.js
 
 Responsibility: Manages the high-fidelity visual transition during travel via Canvas.

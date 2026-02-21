@@ -33,6 +33,18 @@ export class ActionClickHandler {
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
+        // --- V4 AUTO-ADVANCE INTERCEPTION ---
+        let v4TargetMatch = false;
+        const activeBatchId = state.tutorials.activeBatchId;
+        const activeStepId = state.tutorials.activeStepId;
+        
+        if (activeBatchId && activeStepId) {
+            const step = DB.TUTORIAL_DATA[activeBatchId].steps.find(s => s.stepId === activeStepId);
+            if (step && step.targetSelector && actionTarget.matches(step.targetSelector)) {
+                v4TargetMatch = true;
+            }
+        }
+
         const { action, ...dataset } = actionTarget.dataset;
         let actionData = null; 
 
@@ -494,7 +506,13 @@ export class ActionClickHandler {
             }
         }
 
-        if (actionData) {
+        // --- V4 AUTO-ADVANCE EXECUTION ---
+        if (v4TargetMatch && !this.tutorialService._isAdvancing) {
+            this.tutorialService._isAdvancing = true;
+            this.tutorialService.advanceStep().finally(() => { 
+                this.tutorialService._isAdvancing = false; 
+            });
+        } else if (actionData) {
             this.tutorialService.checkState(actionData);
         }
     }

@@ -649,3 +649,20 @@ Consequences:
 Pro: The economy is now self-regulating and easily tunable via global variables.
 Pro: Late-game players still experience loss aversion and operating friction.
 Pro: Removes the need for arbitrary "hard caps" on wealth.
+
+ADR-032: Dual-Write iOS Native Persistence Bridge
+Status: Accepted (2026-02-20)
+
+Context: On iOS devices (the primary target platform via WKWebView/PWA), the operating system aggressively evicts web cache, IndexedDB, and LocalStorage data to save space. This resulted in devastating, unpredictable loss of player save data. Standard browser storage mechanisms proved insufficiently durable for a persistent game.
+
+Decision: Implemented a dual-write persistence architecture via `SaveStorageService.js`.
+* **Primary Storage (Web):** Saves are still written to IndexedDB (`OrbitalSavesDB`) to support standard browser play and development.
+* **Native Bridge (iOS):** Concurrently, the save payload is stringified and broadcast to the native Swift layer via `window.webkit.messageHandlers.iosSaveBackup`.
+* **Indestructible Fallback:** Swift stores this data in the native `UserDefaults`, completely immune to WebKit cache eviction.
+* **Silent Healing:** On load, the game checks for the native injected fallback (`window.__IOS_SAVES`). If found, it prioritizes this data and silently rewrites it back into IndexedDB to repair the wiped web state.
+
+Consequences:
+* **Pro:** Perfect save retention on iOS; saves survive OS-level cache purges and app updates.
+* **Pro:** Seamless background healing means the player never knows their web data was actually wiped.
+* **Pro:** Maintains full compatibility with standard desktop web browsers (they gracefully ignore the iOS bridge).
+* **Con:** Introduces slight overhead in serializing large state objects and requires native Swift code maintenance (`ViewController.swift`).

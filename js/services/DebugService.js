@@ -10,19 +10,7 @@ import { calculateInventoryUsed, skewedRandom } from '../utils.js';
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
-import { OFFICERS } from '../data/officers.js'; // Added to allow population of all officers
-
-// --- NEW PRESET MAPPING ---
-// Mapping preset names to their new [X%, Y%] values
-const TUTORIAL_PRESETS_PERCENT = {
-    topCenter: [50, 15], 
-    top34Center: [50, 30],
-    vertHorizCenter: [50, 50],
-    bottom34Center: [50, 70],
-    bottomCenter: [50, 85],
-    bottomLeft: [15, 85],
-    topLeft: [15, 15],
-};
+import { OFFICERS } from '../data/officers.js'; 
 
 // --- EPHEMERAL DEBUG MISSIONS ---
 // These are injected into DB.MISSIONS at runtime for testing purposes.
@@ -122,6 +110,9 @@ export class DebugService {
         this.diagElements = {};
         this.actions = {};
         
+        // V4: Bind inspector click to maintain `this` context
+        this._boundInspectorClick = this._handleInspectorClick.bind(this);
+        
         // --- State for GUI controllers ---
         this.debugState = {
             creditsToAdd: 100000,
@@ -146,24 +137,11 @@ export class DebugService {
             // [[DEBUG FLAG STATE]]
             alwaysTriggerEvents: false,
 
-            // Tutorial Tuner State
-            ttStepId: 'None',
-            ttAnchor: 'N/A',
-            ttPlacement: 'auto',
-            ttOffsetDistance: 0,
-            ttOffsetSkidding: 0,
-            ttPercentX: 50,
-            ttPercentY: 50,
-            ttWidth: 0,
-            ttHeight: 0,
-            ttGeneratedCode: ''
+            // V4 Tutorial Tuner State
+            inspectorActive: false,
         }; 
-        // --- End State ---
 
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
-
-        // References to GUI controllers and folders for enabling/disabling
-         this.tutorialPositionalControllers = {};
     }
 
     /**
@@ -565,6 +543,104 @@ ${logHistory}
         }
     }
 
+    // --- V4 TUTORIAL INSPECTOR ACTIONS ---
+    
+    _toggleInspector(isActive) {
+        this.debugState.inspectorActive = isActive;
+        if (isActive) {
+            document.addEventListener('click', this._boundInspectorClick, { capture: true });
+            this.logger.warn('DebugService', 'Tutorial Inspector ACTIVE. Clicks are intercepted.');
+        } else {
+            document.removeEventListener('click', this._boundInspectorClick, { capture: true });
+            this.logger.info.system('DebugService', 'Tutorial Inspector INACTIVE.');
+        }
+    }
+
+    _handleInspectorClick(e) {
+        if (!this.debugState.inspectorActive) return;
+        
+        e.preventDefault();
+        e.stopPropagation();
+
+        let target = e.target;
+        let selector = null;
+
+        while (target && target !== document.body) {
+            if (target.hasAttribute('data-tut-target')) {
+                selector = `[data-tut-target='${target.getAttribute('data-tut-target')}']`;
+                break;
+            } else if (target.id) {
+                selector = `#${target.id}`;
+                break;
+            }
+            target = target.parentElement;
+        }
+
+        if (selector) {
+            const boilerplate = `{
+    "stepId": "new_step",
+    "text": "Instruction text here.",
+    "completion": { "type": "INFO" },
+    "nextStepId": null,
+    "isSkippable": true,
+    "targetSelector": "${selector}",
+    "useSpotlight": true,
+    "allowClickThrough": false,
+    "theme": "default"
+}`;
+            console.log(`[Tutorial Inspector] Target Found:\n${boilerplate}`);
+            if (navigator && navigator.clipboard) {
+                navigator.clipboard.writeText(boilerplate).then(() => {
+                    this.uiManager.createFloatingText('Copied Selector JSON', e.clientX, e.clientY, '#4ade80');
+                }).catch(err => console.error('Clipboard error', err));
+            }
+        } else {
+            console.log(`[Tutorial Inspector] No valid targetable element found.`);
+            this.uiManager.createFloatingText('No selector found', e.clientX, e.clientY, '#f87171');
+        }
+    }
+
+    _forceNextTutorialStep() {
+        if (this.simulationService && this.simulationService.tutorialService) {
+            this.simulationService.tutorialService.advanceStep();
+            this.uiManager.createFloatingText('Forced Next Step', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+        }
+    }
+
+    _resetTutorialState() {
+        this.gameState.tutorials.seenBatchIds = [];
+        this.gameState.tutorials.skippedTutorialBatches = [];
+        this.gameState.tutorials.activeBatchId = null;
+        this.gameState.tutorials.activeStepId = null;
+        this.gameState.tutorials.navLock = null;
+        
+        if (this.uiManager && this.uiManager.tutorialManager) {
+            this.uiManager.tutorialManager.hideTutorialToast();
+        }
+        
+        this.gameState.setState({});
+        this.uiManager.createFloatingText('Tutorials Reset', window.innerWidth/2, window.innerHeight/2, '#facc15');
+    }
+
+    _testDummyToast() {
+        if (!this.uiManager || !this.uiManager.tutorialManager) return;
+        
+        const dummyStep = {
+            stepId: 'dummy_test',
+            text: '<b>Constraint Test</b><br><br>' + 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(15),
+            completion: { type: 'INFO' },
+            theme: 'default',
+            targetSelector: null 
+        };
+        
+        this.uiManager.tutorialManager.showTutorialToast({
+            step: dummyStep,
+            onSkip: () => this.uiManager.tutorialManager.hideTutorialToast(),
+            onNext: () => this.uiManager.tutorialManager.hideTutorialToast(),
+            gameState: this.gameState.getState()
+        });
+    }
+
     /**
      * @private
      */
@@ -782,17 +858,10 @@ ${logHistory}
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
 
-            // --- [[START]] TUTORIAL TUNER ACTIONS ---
-            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
-            // --- Presets (Now using keys from TUTORIAL_PRESETS_PERCENT) ---
-            presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset('topCenter') },
-            presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('top34Center') },
-             presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
-            presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('bottom34Center') },
-            presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset('bottomCenter') },
-            presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset('bottomLeft') },
-            presetTopLeft: { name: 'Top Left', type: 'button', handler: () => this._applyTutorialPreset('topLeft') },
-            // --- [[END]] TUTORIAL TUNER ACTIONS ---
+            // --- V4 TUTORIAL INSPECTOR ACTIONS ---
+            forceNextStep: { name: 'Force Next Step', type: 'button', handler: () => this._forceNextTutorialStep() },
+            resetTutorials: { name: 'Reset Tutorials', type: 'button', handler: () => this._resetTutorialState() },
+            testDummyToast: { name: 'Test Dummy Toast', type: 'button', handler: () => this._testDummyToast() }
         };
     }
 
@@ -976,44 +1045,18 @@ ${logHistory}
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
-        // --- [[START]] TUTORIAL TUNER FOLDER ---
+        // --- V4 TUTORIAL INSPECTOR FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
         tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
-
-        tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
-        tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
-
-        // --- Size Tuners ---
-        tutorialFolder.add(this.debugState, 'ttWidth', 0, 800, 10).name('Width (0=auto)').onChange(() => this._handleTutorialTune());
-        tutorialFolder.add(this.debugState, 'ttHeight', 0, 800, 10).name('Height (0=auto)').onChange(() => this._handleTutorialTune());
-
-        // --- Position Tuners (Conditional) ---
-        // Store references to controllers
-        this.tutorialPositionalControllers.percentX = tutorialFolder.add(this.debugState, 'ttPercentX', 0, 100, 1).name('X %').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.percentY = tutorialFolder.add(this.debugState, 'ttPercentY', 0, 100, 1).name('Y %').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.placement = tutorialFolder.add(this.debugState, 'ttPlacement').name('Placement (Elem)').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.distance = tutorialFolder.add(this.debugState, 'ttOffsetDistance', -500, 500, 1).name('Distance (Elem)').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.skidding = tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding (Elem)').onChange(() => this._handleTutorialTune());
-
-        // --- Position Presets ---
-        const presetFolder = tutorialFolder.addFolder('Position Presets');
-        presetFolder.add(this.actions.presetTopCenter, 'handler').name(this.actions.presetTopCenter.name);
-        presetFolder.add(this.actions.presetTop34Center, 'handler').name(this.actions.presetTop34Center.name);
-        presetFolder.add(this.actions.presetVertHorizCenter, 'handler').name(this.actions.presetVertHorizCenter.name);
-        presetFolder.add(this.actions.presetBottom34Center, 'handler').name(this.actions.presetBottom34Center.name);
-        presetFolder.add(this.actions.presetBottomCenter, 'handler').name(this.actions.presetBottomCenter.name);
-        presetFolder.add(this.actions.presetBottomLeft, 'handler').name(this.actions.presetBottomLeft.name);
-        presetFolder.add(this.actions.presetTopLeft, 'handler').name(this.actions.presetTopLeft.name);
-        // ** Store reference to the FOLDER INSTANCE itself **
-        this.tutorialPositionalControllers.presetFolder = presetFolder;
-
-        // --- Code Generator ---
-        tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
-        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen();
-
-        // Initial state update for controls
-        this._updateTutorialControlVisibility(false); // Assume initially no step is active
-        // --- [[END]] TUTORIAL TUNER FOLDER ---
+        
+        tutorialFolder.add(this.debugState, 'inspectorActive')
+            .name('Toggle Inspector')
+            .onChange((val) => this._toggleInspector(val));
+            
+        tutorialFolder.add(this.actions.forceNextStep, 'handler').name(this.actions.forceNextStep.name);
+        tutorialFolder.add(this.actions.resetTutorials, 'handler').name(this.actions.resetTutorials.name);
+        tutorialFolder.add(this.actions.testDummyToast, 'handler').name(this.actions.testDummyToast.name);
+        // ------------------------------------
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
@@ -1029,256 +1072,4 @@ ${logHistory}
 
         this.gui.folders.forEach(folder => folder.close());
     }
-
-    // --- [[START]] TUTORIAL TUNER METHODS ---
-
-    /**
-     * Parses a size value (e.g., 'auto', '300px', 300) into a number for the slider.
-     * @param {string|number|undefined} sizeValue - The value from the step definition.
-     * @returns {number} A number, with 0 representing 'auto'.
-     * @private
-     */
-    _parseSize(sizeValue) {
-        if (!sizeValue || sizeValue === 'auto') return 0;
-        if (typeof sizeValue === 'number') return sizeValue;
-        if (typeof sizeValue === 'string') {
-            const parsed = parseInt(sizeValue, 10);
-            return isNaN(parsed) ? 0 : parsed;
-        }
-        return 0;
-    }
-
-    /**
-     * Applies a position preset to the tuner sliders based on anchoring mode.
-     * @param {string} presetKey - Key corresponding to TUTORIAL_PRESETS_PERCENT.
-     * @private
-     */
-    _applyTutorialPreset(presetKey) {
-        const isOverlayAnchor = this.debugState.ttAnchor === 'body'; // Using 'body' as proxy for overlay
-
-        if (isOverlayAnchor) {
-            const percentValues = TUTORIAL_PRESETS_PERCENT[presetKey];
-            if (percentValues) {
-                this.debugState.ttPercentX = percentValues[0];
-                this.debugState.ttPercentY = percentValues[1];
-                this.tutorialPositionalControllers.percentX?.updateDisplay();
-                this.tutorialPositionalControllers.percentY?.updateDisplay();
-            } else {
-                 this.logger.warn('DebugService', `Preset key "${presetKey}" not found for percentage presets.`);
-            }
-         } else {
-            // Placeholder: Need to define offset presets if required for element anchors
-            this.logger.warn('DebugService', 'Offset presets not yet defined for element anchors.');
-            // Example:
-            // const offsetValues = TUTORIAL_PRESETS_OFFSET[presetKey];
-            // if (offsetValues) {
-            //     this.debugState.ttOffsetSkidding = offsetValues[0];
-            //     this.debugState.ttOffsetDistance = offsetValues[1];
-            //     this.tutorialPositionalControllers.skidding?.updateDisplay();
-            //     this.tutorialPositionalControllers.distance?.updateDisplay();
-            // }
-        }
-
-        // Trigger UI update
-        this._handleTutorialTune();
-    }
-
-    /**
-     * Shows/hides tutorial tuner controls based on anchor type using lil-gui methods.
-     * @param {boolean} isOverlayAnchor - True if the toast should use percentage positioning.
-     * @private
-     */
-    _updateTutorialControlVisibility(isOverlayAnchor) {
-         // Helper function using lil-gui's show() / hide()
-         const setVisibility = (controller, shouldShow) => {
-             if (controller) {
-                 controller.show(shouldShow);
-             }
-         };
-
-         // Percentage controls
-         setVisibility(this.tutorialPositionalControllers.percentX, isOverlayAnchor);
-         setVisibility(this.tutorialPositionalControllers.percentY, isOverlayAnchor);
-
-         // Popper offset controls
-         setVisibility(this.tutorialPositionalControllers.placement, !isOverlayAnchor);
-         setVisibility(this.tutorialPositionalControllers.distance, !isOverlayAnchor);
-         setVisibility(this.tutorialPositionalControllers.skidding, !isOverlayAnchor);
-
-         // Preset folder visibility (Show only for overlay anchors for now)
-         if (this.tutorialPositionalControllers.presetFolder) {
-              this.tutorialPositionalControllers.presetFolder.show(isOverlayAnchor);
-         }
-     }
-
-
-    /**
-     * Populates the Tutorial Tuner with the active step's data.
-     * Called by UIManager when a toast is shown.
-     * @param {object} step - The tutorial step object.
-     */
-    setActiveTutorialStep(step) {
-        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
-        const isOverlayAnchor = step.anchorElement === 'body'; // Use 'body' to signify overlay anchor
-
-        // Reset generated code
-        this.debugState.ttGeneratedCode = '';
-
-        // Update state
-        this.debugState.ttStepId = step.stepId;
-        this.debugState.ttAnchor = step.anchorElement; // Keep original anchor for info
-        this.debugState.ttWidth = this._parseSize(step.size?.width) || 0;
-        this.debugState.ttHeight = this._parseSize(step.size?.height) || 0;
-
-        if (isOverlayAnchor) {
-            // Use percentage position from step or default to center
-            this.debugState.ttPercentX = step.positionX ?? 50;
-            this.debugState.ttPercentY = step.positionY ?? 50;
-            // Reset/default Popper values for clarity
-            this.debugState.ttPlacement = 'auto';
-            this.debugState.ttOffsetDistance = 0;
-            this.debugState.ttOffsetSkidding = 0;
-        } else {
-            // Use Popper settings from step or defaults
-            const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
-            let skidding = 0;
-            let distance = 0;
-
-            if (typeof offsetMod?.options?.offset === 'function') {
-                this.logger.warn('DebugService', `Offset function used for ${step.stepId}. Tuner defaults to [0, 10].`);
-                distance = 10; // Default distance for element anchors
-            } else if (Array.isArray(offsetMod?.options?.offset)) {
-                skidding = offsetMod.options.offset[0] || 0;
-                distance = offsetMod.options.offset[1] || 0;
-            } else {
-                 distance = 10; // Default distance if no offset defined
-            }
-
-            this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || 'auto';
-            this.debugState.ttOffsetDistance = distance;
-            this.debugState.ttOffsetSkidding = skidding;
-            // Reset/default percentage values
-            this.debugState.ttPercentX = 50;
-            this.debugState.ttPercentY = 50;
-        }
-
-        // Update visibility of controls AFTER setting state
-         this._updateTutorialControlVisibility(isOverlayAnchor);
-
-        // Manually update displays for all relevant controllers
-        // This ensures sliders reflect the loaded step's values
-        Object.values(this.tutorialPositionalControllers).forEach(controllerOrFolder => {
-             // Check if it's a controller (has updateDisplay) or the folder (doesn't)
-             if (controllerOrFolder && typeof controllerOrFolder.updateDisplay === 'function') {
-                 controllerOrFolder.updateDisplay();
-             }
-         });
-         // Also update size controllers
-         this.gui.controllers.find(c => c.property === 'ttWidth')?.updateDisplay();
-         this.gui.controllers.find(c => c.property === 'ttHeight')?.updateDisplay();
-
-    }
-
-    /**
-     * Clears and resets the Tutorial Tuner.
-     * Called by UIManager when a toast is hidden.
-     */
-    clearActiveTutorialStep() {
-        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
-
-        // Reset all state properties to their defaults
-        this.debugState.ttStepId = 'None';
-        this.debugState.ttAnchor = 'N/A';
-        this.debugState.ttPlacement = 'auto';
-        this.debugState.ttOffsetDistance = 0;
-        this.debugState.ttOffsetSkidding = 0;
-        this.debugState.ttPercentX = 50;
-        this.debugState.ttPercentY = 50;
-        this.debugState.ttWidth = 0;
-        this.debugState.ttHeight = 0;
-        this.debugState.ttGeneratedCode = '';
-
-        // Hide conditional controls
-        this._updateTutorialControlVisibility(false);
-    }
-
-    /**
-     * Handles live tuning input from the debug panel.
-     * @private
-     */
-    _handleTutorialTune() {
-        if (!this.uiManager) return;
-
-        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
-        this.logger.info.system('DebugService', `Tune event (Overlay: ${isOverlayAnchor}): X%=${this.debugState.ttPercentX}, Y%=${this.debugState.ttPercentY}, Place=${this.debugState.ttPlacement}, Dist=${this.debugState.ttOffsetDistance}, Skid=${this.debugState.ttOffsetSkidding}`);
-
-        this.uiManager.updateTutorialPopper({
-            isOverlayAnchor: isOverlayAnchor, // Pass mode to UIManager
-            // Size
-            width: Number(this.debugState.ttWidth) || 0,
-            height: Number(this.debugState.ttHeight) || 0,
-            // Percentage Position (if overlay)
-            percentX: Number(this.debugState.ttPercentX) || 50,
-            percentY: Number(this.debugState.ttPercentY) || 50,
-            // Popper Position (if element)
-            placement: this.debugState.ttPlacement,
-            distance: Number(this.debugState.ttOffsetDistance) || 0,
-            skidding: Number(this.debugState.ttOffsetSkidding) || 0,
-        });
-    }
-
-    /**
-     * Generates the code string from the current tuner state.
-     * Outputs either percentage or Popper options based on anchor type.
-     * @private
-     */
-    _generateTutorialCode() {
-        this.logger.info.system('DebugService', 'Generating tutorial code...');
-        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
-
-        // Size String (common)
-        const hasSize = this.debugState.ttWidth > 0 || this.debugState.ttHeight > 0;
-        const widthVal = this.debugState.ttWidth > 0 ? `'${this.debugState.ttWidth}px'` : "'auto'";
-        const heightVal = this.debugState.ttHeight > 0 ? `'${this.debugState.ttHeight}px'` : "'auto'";
-        const sizeString = hasSize ? `
-size: { width: ${widthVal}, height: ${heightVal} },` : '';
-
-        let positionString = '';
-        if (isOverlayAnchor) {
-            // Generate Percentage Position Code
-             // Make sure anchorElement is 'body'
-             positionString = `
-anchorElement: 'body',`; // Explicitly set anchor
-             // Only add percentages if not default (50, 50)
-            if (this.debugState.ttPercentX !== 50 || this.debugState.ttPercentY !== 50) {
-                 positionString += `
-positionX: ${this.debugState.ttPercentX},
-positionY: ${this.debugState.ttPercentY},`;
-            }
-
-        } else {
-            // Generate Popper Options Code
-             // Add anchorElement only if it's NOT body
-             if (this.debugState.ttAnchor !== 'body') {
-                 positionString = `
-anchorElement: '${this.debugState.ttAnchor}',`;
-             }
-            positionString += `
-placement: '${this.debugState.ttPlacement}',
-popperOptions: {
-    modifiers: [
-        { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
-        // Add other modifiers here if needed in the future
-    ]
-}`;
-        }
-
-        // Construct final code, removing potential trailing comma before a closing brace
-         let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
-        code = code.replace(/,\s*(\}|$)/g, '$1'); // Regex to remove trailing comma
-
-        this.debugState.ttGeneratedCode = code;
-    }
-
-    // --- [[END]] TUTORIAL TUNER METHODS ---
 }

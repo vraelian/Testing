@@ -89,8 +89,9 @@ export function renderMissionsScreen(gameState, missionService) {
             return r.type.toUpperCase();
         }).join(', ');
 
+        // V4: Added data-tut-target
         return `
-            <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+            <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}" data-tut-target="mission-card-${mission.id}">
                 <div class="mission-meta-row">
                     <span class="mission-type-badge">${mission.type}</span>
                     <span class="mission-host-label">${mission.host}</span>
@@ -212,8 +213,9 @@ export function renderMissionsScreen(gameState, missionService) {
         `;
 
         // [[UPDATED]] Added typeClass to the list
+        // V4: Added data-tut-target
         return `
-            <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
+            <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}" data-tut-target="mission-card-${mission.id}">
                 ${starIcon}
                 <div class="mission-meta-row pl-6"> <span class="mission-type-badge">ACTIVE CONTRACT</span>
                      <span class="mission-host-label">${mission.host}</span>

@@ -1,323 +1,245 @@
 // js/services/ui/UITutorialManager.js
-import { DB } from '../../data/database.js';
+
+/**
+ * @fileoverview Domain Controller for the interactive tutorial system.
+ * Handles dual-mode rendering (Safe Zone vs Targeted), the Ghost Hunter 
+ * MutationObserver for virtualized lists, and Spotlight masking.
+ */
 
 export class UITutorialManager {
     /**
-     * @param {import('../UIManager.js').UIManager} manager
+     * @param {import('../UIManager.js').UIManager} uiManager The master UI Facade.
      */
-    constructor(manager) {
-        this.manager = manager;
+    constructor(uiManager) {
+        this.uiManager = uiManager;
+        
+        // State tracking for cleanup
         this.popperInstance = null;
-        this.activeHighlightConfig = null;
+        this.mutationObserver = null;
+        this.ghostHunterTimeout = null;
+        this.activeTargetElement = null;
+        this.activeToastElement = null;
+        this.activeSpotlightMask = null;
+
+        this._initSafeZone();
     }
 
     /**
-     * Displays a tutorial toast/popup.
-     * @param {object} params
-     * @param {object} params.step - The tutorial step object.
-     * @param {Function} params.onSkip - Callback for skip.
-     * @param {Function} params.onNext - Callback for next.
-     * @param {object} params.gameState - Current game state.
+     * Ensures the Safe Zone container exists in the DOM for Mode A rendering.
+     * @private
+     */
+    _initSafeZone() {
+        let safeZone = document.getElementById('tt-safe-zone');
+        if (!safeZone) {
+            safeZone = document.createElement('div');
+            safeZone.id = 'tt-safe-zone';
+            safeZone.className = 'tt-safe-zone';
+            document.body.appendChild(safeZone);
+        }
+        this.safeZone = safeZone;
+    }
+
+    /**
+     * Renders a tutorial step based on the V4 Schema.
+     * @param {Object} config - { step, onSkip, onNext, gameState }
      */
     showTutorialToast({ step, onSkip, onNext, gameState }) {
-        const toast = this.manager.cache.tutorialToastContainer;
-        const arrow = toast.querySelector('#tt-arrow');
-        const isOverlayAnchor = step.anchorElement === 'body';
-        let referenceEl;
+        this.hideTutorialToast(); // Clean up any existing toasts
+
+        // 1. Build the Toast DOM Element
+        const toast = document.createElement('div');
+        toast.className = `tt-window tt-theme-${step.theme || 'default'}`;
+        toast.id = 'tutorial-toast-container';
+
+        // Header & Minimize Toggle
+        const header = document.createElement('div');
+        header.className = 'tt-header';
         
-        if (isOverlayAnchor) {
-            referenceEl = this.manager.cache.tutorialAnchorOverlay; 
+        const toggleBtn = document.createElement('button');
+        toggleBtn.className = 'tt-toggle-btn';
+        toggleBtn.innerHTML = '&minus;';
+        toggleBtn.title = "Toggle Minimize";
+        toggleBtn.onclick = (e) => {
+            e.stopPropagation();
+            toast.classList.toggle('tt-minimized');
+            toggleBtn.innerHTML = toast.classList.contains('tt-minimized') ? '&plus;' : '&minus;';
+        };
+        header.appendChild(toggleBtn);
+        toast.appendChild(header);
+
+        // Body Content
+        const body = document.createElement('div');
+        body.className = 'tt-scrollable';
+        body.innerHTML = step.text;
+        toast.appendChild(body);
+
+        // Declarative Advance Arrow (Only for non-action steps)
+        if (step.completion && step.completion.type === 'INFO') {
+            const nextArrow = document.createElement('button');
+            nextArrow.className = 'tt-next-arrow';
+            nextArrow.onclick = (e) => {
+                e.stopPropagation();
+                onNext();
+            };
+            toast.appendChild(nextArrow);
+        }
+
+        this.activeToastElement = toast;
+
+        // 2. Determine Render Mode
+        if (!step.targetSelector) {
+            // Mode A: Safe Zone Fallback
+            this.safeZone.appendChild(toast);
         } else {
-            referenceEl = document.querySelector(step.anchorElement);
-            if (!referenceEl) {
-                this.manager.logger.error('UITutorialManager', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
-                referenceEl = this.manager.cache.tutorialAnchorOverlay; 
+            // Mode B: Targeted Anchoring
+            const targetEl = document.querySelector(step.targetSelector);
+            
+            if (targetEl) {
+                this._applyTargetedToast(targetEl, step, toast);
+            } else {
+                this._huntForGhostElement(step, toast);
             }
         }
-        
-        if (this.popperInstance) {
-            this.popperInstance.destroy();
-            this.popperInstance = null;
-        }
+    }
 
-        let processedText = step.text;
-        if (processedText.includes('{shipName}')) {
-            const activeShipId = gameState.player.activeShipId;
-            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; 
-            processedText = processedText.replace(/{shipName}/g, shipName);
-        }
+    /**
+     * Applies Spotlight, attaches to DOM, and boots Popper.js for a found element.
+     * @private
+     */
+    _applyTargetedToast(targetEl, step, toast) {
+        this.activeTargetElement = targetEl;
 
-        if (processedText.includes('{playerName}')) {
-            const playerName = gameState.player.name || 'Captain'; 
-            processedText = processedText.replace(/{playerName}/g, playerName);
-        }
-
-        this.manager.cache.tutorialToastText.innerHTML = processedText;
-
-        const initialWidth = step.size?.width || 'auto';
-        const initialHeight = step.size?.height || 'auto';
-        toast.style.width = initialWidth;
-        toast.style.height = initialHeight;
-        
-        if (isOverlayAnchor) {
-            const posX = step.positionX ?? 50; 
-            const posY = step.positionY ?? 50; 
-            toast.style.left = `${posX}%`;
-            toast.style.top = `${posY}%`;
-            toast.style.transform = 'translate(-50%, -50%)'; 
-            arrow.style.display = 'none'; 
-            toast.removeAttribute('data-popper-placement'); 
+        // Apply Spotlight Shield if requested
+        if (step.useSpotlight) {
+            this.activeSpotlightMask = document.createElement('div');
+            this.activeSpotlightMask.className = 'tut-spotlight-mask';
             
-        } else {
-            toast.style.left = ''; 
-            toast.style.top = '';
-            toast.style.transform = ''; 
+            if (step.allowClickThrough) {
+                this.activeSpotlightMask.classList.add('tut-allow-click');
+            }
             
-            arrow.style.display = 'block'; 
+            document.body.appendChild(this.activeSpotlightMask);
 
-            const defaultOptions = { 
+            // Yield to parent stacking contexts (like carousel items)
+            const elevateEl = targetEl.closest('.carousel-item') || targetEl;
+            elevateEl.classList.add('tut-spotlight-target');
+            this.activeTargetElement = elevateEl; // Track the elevated element for cleanup
+        }
+
+        // Setup Popper.js
+        const arrow = document.createElement('div');
+        arrow.className = 'tt-popper-arrow';
+        arrow.setAttribute('data-popper-arrow', '');
+        toast.appendChild(arrow);
+
+        document.body.appendChild(toast);
+
+        // Standard Popper v2 initialization
+        if (window.Popper) {
+            this.popperInstance = window.Popper.createPopper(targetEl, toast, {
                 placement: 'auto',
                 modifiers: [
-                    { name: 'offset', options: { offset: [0, 10] } }, 
-                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
-                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
-                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
-                ]
-            };
-            
-            const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
-            let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
-            if (stepOffsetMod) {
-                baseModifiers.push(stepOffsetMod); 
-            } else {
-                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
-            }
-     
-            if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
-
-            const finalOptions = {
-                placement: step.placement || step.popperOptions?.placement || defaultOptions.placement,
-                modifiers: baseModifiers
-            };
-
-            this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
-        }
-
-        toast.classList.remove('hidden');
-        const isInfoStep = step.completion.type === 'INFO';
-        this.manager.cache.tutorialToastNextBtn.classList.toggle('hidden', !isInfoStep);
-        if (isInfoStep) {
-            this.manager.cache.tutorialToastNextBtn.onclick = onNext;
-        }
-        const showSkipButton = false; 
-        this.manager.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
-        this.manager.cache.tutorialToastSkipBtn.onclick = onSkip;
-        this.manager.cache.tutorialToastText.scrollTop = 0;
-        
-        if (this.manager.debugService) {
-            this.manager.debugService.setActiveTutorialStep(step); 
-        }
-    }
-
-    /**
-     * Hides the tutorial toast and cleans up Popper instance.
-     */
-    hideTutorialToast() {
-        this.manager.cache.tutorialToastContainer.classList.add('hidden');
-        if (this.popperInstance) {
-            this.popperInstance.destroy();
-            this.popperInstance = null;
-        }
-        this.applyTutorialHighlight(null);
-        
-        if (this.manager.debugService) {
-            this.manager.debugService.clearActiveTutorialStep();
-        }
-    }
-
-    /**
-     * Dynamically updates the Popper position for the active toast.
-     * @param {object} newOptions 
-     */
-    updateTutorialPopper(newOptions) {
-        const toast = this.manager.cache.tutorialToastContainer;
-        const arrow = toast.querySelector('#tt-arrow');
-        const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
-
-        toast.style.width = width > 0 ? `${width}px` : 'auto';
-        toast.style.height = height > 0 ? `${height}px` : 'auto';
-
-        if (isOverlayAnchor) {
-            if (this.popperInstance) {
-                this.popperInstance.destroy();
-                this.popperInstance = null;
-                toast.removeAttribute('data-popper-placement'); 
-                toast.style.transform = ''; 
-            }
-            
-            toast.style.left = `${percentX}%`;
-            toast.style.top = `${percentY}%`;
-            toast.style.transform = 'translate(-50%, -50%)'; 
-            arrow.style.display = 'none';
-
+                    { name: 'offset', options: { offset: [0, 12] } },
+                    { name: 'preventOverflow', options: { padding: 10 } },
+                    { name: 'arrow', options: { element: arrow } }
+                ],
+            });
         } else {
-            toast.style.left = ''; 
-            toast.style.top = ''; 
-            toast.style.transform = ''; 
-            arrow.style.display = 'block';
-
-            const popperUpdateOptions = {
-                placement: placement,
-                modifiers: [
-                    { name: 'offset', options: { offset: [skidding, distance] } },
-                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
-                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
-                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
-                ]
-            };
-
-            if (this.popperInstance) {
-                this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
-                    this.manager.logger.error('UITutorialManager', 'Error updating Popper options:', e);
-                });
-            } else {
-                this.manager.logger.warn('UITutorialManager', 'Popper instance needed but not found during update. Re-trigger toast if anchor type changed.');
-            }
+            console.warn("Popper.js not found. Falling back to Safe Zone.");
+            this.safeZone.appendChild(toast);
         }
     }
 
     /**
-     * Applies the visual highlights (spotlights/arrows) for the tutorial.
-     * @param {Array} highlightConfig 
-     */
-    applyTutorialHighlight(highlightConfig) {
-        this.activeHighlightConfig = highlightConfig;
-        this._renderHighlightsFromConfig(this.activeHighlightConfig);
-    }
-
-    /**
-     * Internal renderer for highlight SVG elements.
+     * The Ghost Hunter: Waits for virtualized elements to mount via MutationObserver.
      * @private
-     * @param {Array} highlightConfig 
      */
-    _renderHighlightsFromConfig(highlightConfig) {
-        const overlay = this.manager.cache.tutorialHighlightOverlay;
-        if (!overlay) return;
+    _huntForGhostElement(step, toast) {
+        console.log(`[Ghost Hunter] Initiating search for: ${step.targetSelector}`);
 
-        overlay.innerHTML = ''; 
-        if (!highlightConfig) {
-            overlay.classList.add('hidden');
-            return;
+        // Set 4-second expiration
+        this.ghostHunterTimeout = setTimeout(() => {
+            console.error(`[Ghost Hunter] Timeout reached. Target not found: ${step.targetSelector}. Aborting step visual.`);
+            this.hideTutorialToast();
+        }, 4000);
+
+        // Force scroll on known generic carousels if targetIndex is provided
+        if (step.targetIndex !== undefined) {
+            const carousels = document.querySelectorAll('.carousel-inner');
+            carousels.forEach(c => {
+                // Rough programmatic scroll to trigger intersection observers
+                c.scrollLeft = step.targetIndex * 300; 
+            });
         }
 
-        overlay.classList.remove('hidden');
-
-        highlightConfig.forEach(cue => {
-            const el = document.createElement('div');
-            el.className = 'tutorial-cue';
-            el.style.left = `${cue.x}px`;
-            el.style.top = `${cue.y}px`;
-            el.style.width = `${cue.width}px`;
-            el.style.height = `${cue.height}px`;
-            el.style.transform = `rotate(${cue.rotation}deg)`;
-            el.style.opacity = cue.style.opacity;
-
-            if (cue.style.animation !== 'None') {
-                el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+        this.mutationObserver = new MutationObserver((mutations, obs) => {
+            const targetEl = document.querySelector(step.targetSelector);
+            if (targetEl) {
+                console.log(`[Ghost Hunter] Target acquired: ${step.targetSelector}`);
+                clearTimeout(this.ghostHunterTimeout);
+                obs.disconnect();
+                this._applyTargetedToast(targetEl, step, toast);
             }
+        });
 
-            let content = '';
-            if (cue.type === 'Shape') {
-                content = `
-                    <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
-                        ${cue.shapeType === 'Rectangle' ?
-                            `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
-                            `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
-                        }
-                    </svg>`;
-            } else if (cue.type === 'Arrow') {
-                content = `
-                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
-                        <defs>
-                            <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
-                            </marker>
-                        </defs>
-                        <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
-                    </svg>
-                `;
-            } else if (cue.type === 'Spotlight') {
-                el.style.borderRadius = '50%';
-                el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
-            }
-
-            el.innerHTML = content;
-            const animatedChild = el.querySelector('svg');
-            if (animatedChild && cue.style.animation !== 'None') {
-                animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
-                animatedChild.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
-                animatedChild.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
-                animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
-            }
-
-            overlay.appendChild(el);
+        this.mutationObserver.observe(document.body, {
+            childList: true,
+            subtree: true,
+            attributes: true // Catch elements removing 'hidden' classes
         });
     }
 
     /**
-     * Shows the "Skip Tutorial" confirmation modal.
-     * @param {Function} onConfirm 
+     * Triggers the positive feedback visual sequence.
+     * Returns a promise to allow the TutorialService to await the animation.
+     * @returns {Promise<void>}
      */
-    showSkipTutorialModal(onConfirm) {
-        const modal = this.manager.cache.skipTutorialModal;
-        modal.classList.remove('hidden');
-
-        const confirmHandler = () => {
-            onConfirm();
-            this.manager.hideModal('skip-tutorial-modal');
-        };
-
-        const cancelHandler = () => {
-            this.manager.hideModal('skip-tutorial-modal');
-        };
-
-        this.manager.cache.skipTutorialConfirmBtn.onclick = confirmHandler;
-        this.manager.cache.skipTutorialCancelBtn.onclick = cancelHandler;
+    triggerTutorialSuccessShimmer() {
+        return new Promise((resolve) => {
+            if (this.activeToastElement) {
+                this.activeToastElement.classList.add('tt-shimmer-success');
+                setTimeout(() => resolve(), 1000);
+            } else {
+                resolve();
+            }
+        });
     }
 
     /**
-     * Shows the Tutorial Log (History) modal.
-     * @param {object} params
-     * @param {Array} params.seenBatches 
-     * @param {Function} params.onSelect 
+     * Completely removes all tutorial visual elements and observers from the DOM.
      */
-    showTutorialLogModal({ seenBatches, onSelect }) {
-        const logModal = document.getElementById('tutorial-log-modal');
-        const list = document.getElementById('tutorial-log-list');
-
-        if (!logModal || !list) {
-            this.manager.logger.error('UITutorialManager', 'Tutorial log modal elements not found in DOM.');
-            return;
+    hideTutorialToast() {
+        // Clear Ghost Hunter tools
+        if (this.ghostHunterTimeout) {
+            clearTimeout(this.ghostHunterTimeout);
+            this.ghostHunterTimeout = null;
+        }
+        if (this.mutationObserver) {
+            this.mutationObserver.disconnect();
+            this.mutationObserver = null;
         }
 
-        list.innerHTML = '';
-
-        if (seenBatches.length === 0) {
-            list.innerHTML = `<li class="text-gray-400 p-2 text-center">No tutorials viewed yet.</li>`;
-        } else {
-            seenBatches.forEach(batchId => {
-                const batchData = DB.TUTORIAL_DATA[batchId];
-                if (batchData) {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
-                    li.onclick = () => {
-                        logModal.classList.remove('visible');
-                        onSelect(batchId);
-                    };
-                    list.appendChild(li);
-                }
-            });
+        // Destroy Popper
+        if (this.popperInstance) {
+            this.popperInstance.destroy();
+            this.popperInstance = null;
         }
-        logModal.classList.add('visible');
+
+        // Remove DOM Toast
+        if (this.activeToastElement && this.activeToastElement.parentNode) {
+            this.activeToastElement.parentNode.removeChild(this.activeToastElement);
+        }
+        this.activeToastElement = null;
+
+        // Clean up Spotlight Mask & Z-Index overrides
+        if (this.activeSpotlightMask && this.activeSpotlightMask.parentNode) {
+            this.activeSpotlightMask.parentNode.removeChild(this.activeSpotlightMask);
+        }
+        this.activeSpotlightMask = null;
+
+        if (this.activeTargetElement) {
+            this.activeTargetElement.classList.remove('tut-spotlight-target');
+            this.activeTargetElement = null;
+        }
     }
 }

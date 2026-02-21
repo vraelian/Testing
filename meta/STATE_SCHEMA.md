@@ -182,3 +182,20 @@ Manages the active concurrent missions and their granular progress.
 
 * `isCompletable`: Boolean flag indicating if all objectives are met.
 * `objectives`: Map of `objectiveId` -> `{ current, target }`.
+
+---
+
+## 9. Serialized Save Structure
+
+When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `slotId` | String | The primary key identifier for the save slot (e.g., 'auto', 'slot1'). |
+| `version` | Number | The schema version of the save file to handle future migrations. |
+| `metadata` | Object | Lightweight summary data used for rendering the splash/load screen without parsing the entire gamestate. |
+|   `day` | Number | The game day the save occurred. |
+|   `credits` | Number | The player's wealth at the time of saving. |
+|   `locationId` | String | The player's location. |
+|   `timestamp` | Number | Standard UNIX epoch timestamp of the save event. |
+| `...payload` | Object | The full, stringified (or direct, depending on bridge) `GameState` root object unpacked into the save object. |
