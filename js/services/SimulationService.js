@@ -8,6 +8,7 @@ import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
+import { saveStorageService } from './SaveStorageService.js';
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
 import { PlayerActionService } from './player/PlayerActionService.js';
@@ -95,6 +96,47 @@ export class SimulationService {
     setMissionService(missionService) {
         this.missionService = missionService;
         this.playerActionService.missionService = missionService;
+    }
+
+    // --- V4 SAVE SYSTEM DELEGATION ---
+
+    /**
+     * Executes an invisible, non-blocking auto-save.
+     * Retrieves the serialized state, builds metadata, and pushes to IndexedDB.
+     */
+    async saveGame() {
+        if (!this.gameState.slotId) return; // Prevent saving if slot association is missing
+
+        try {
+            const stateToSave = this.gameState.exportState();
+            const activeShipId = stateToSave.player.activeShipId;
+            const shipName = DB.SHIPS[activeShipId]?.name || "Unknown";
+            
+            const payload = {
+                version: "36.10", // Schema tracking
+                slotId: this.gameState.slotId,
+                metadata: {
+                    realDate: new Date().toLocaleDateString(),
+                    inGameDay: stateToSave.day,
+                    creditsFormatted: formatCredits(stateToSave.player.credits),
+                    shipName: shipName
+                },
+                state: stateToSave
+            };
+
+            // Execute asynchronous save
+            await saveStorageService.saveGame(this.gameState.slotId, payload);
+            this.logger.info.system('SimulationService', this.gameState.day, 'SAVE_COMPLETE', `Auto-saved to ${this.gameState.slotId}`);
+
+            // One-Time Notification on first successful save post-tutorial
+            if (!this.gameState.player.seenAutoSaveNotice && !this.gameState.introSequenceActive) {
+                this.gameState.player.seenAutoSaveNotice = true;
+                this.uiManager.queueModal('event-modal', 'Auto-Save Enabled', 'Notice: Orbital Trading automatically saves your progress in the background every time you arrive safely at a station.');
+                this.gameState.setState({});
+            }
+        } catch (error) {
+            this.logger.error('SimulationService', `Background auto-save failed: ${error.message}`);
+        }
     }
 
     // --- EVENT SYSTEM 2.0 METHODS ---
@@ -716,9 +758,6 @@ export class SimulationService {
         if (this.missionService) {
              this.missionService.checkTriggers();
         }
-
-        // 5. Save State (Auto-save)
-        // this.gameState.saveGame();
         
         this.gameState.setState({}); // Trigger UI update
     }

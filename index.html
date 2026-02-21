@@ -49,29 +49,64 @@
 
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 text-center bg-[#0c101d]">
         <button id="debug-start-btn" class="btn" data-action="debug-simple-start">D</button>
-        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg btn-pulse">
+        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg">
             <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
             <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
           
-    
-            <div class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
-                <button id="start-game-btn" class="btn btn-header btn-pulse w-full">Start Game</button>
-                <button class="btn btn-header w-full" disabled="">Load Game</button>
-                <button class="btn btn-header w-full" disabled="">Options</button>
+            <div id="splash-main-menu" class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
+                <button id="main-new-game-btn" class="btn btn-header btn-pulse w-full">New Game</button>
+                <button id="main-load-game-btn" class="btn btn-header w-full" disabled>Load Game</button>
+                <button class="btn btn-header w-full" disabled>Options</button>
+                
+                <div id="eula-container" class="mt-8 text-center text-gray-400">
+                    <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
+                    <label for="eula-checkbox" class="ml-2 align-middle">
+                        I accept the <a href="#" id="eula-link" data-action="show_eula_modal" class="text-cyan-300 hover:text-cyan-100 underline">EULA</a>
+                    </label>
+                </div>
             </div>
     
-            <div id="eula-container" class="mt-8 text-center text-gray-400">
-                <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
-                <label for="eula-checkbox" class="ml-2 align-middle">
-                    I accept the <a href="#" id="eula-link" data-action="show_eula_modal" class="text-cyan-300 hover:text-cyan-100 underline">EULA</a>
-                </label>
+            <div id="splash-new-game-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Select Save Slot</h3>
+                <div id="new-game-slots" class="w-full flex flex-col gap-3">
+                    </div>
+                <button id="new-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
             </div>
+
+            <div id="splash-load-game-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Load Save</h3>
+                <div id="load-game-slots" class="w-full flex flex-col gap-3">
+                    </div>
+                <button id="load-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
             </div>
+        </div>
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
             <p>Version 36.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
+    </div>
+
+    <div id="splash-overwrite-modal" class="modal-backdrop hidden z-[60]">
+        <div class="modal-content border-red-900 bg-red-950/90 text-center">
+            <h3 class="text-2xl font-orbitron mb-4 text-red-400">Warning: Overwrite Save?</h3>
+            <p class="mb-6 text-lg text-gray-300">This slot contains an existing save. Starting a new game here will permanently delete this progress. Proceed?</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="overwrite-confirm-btn" class="btn bg-red-800 hover:bg-red-700 text-white border-red-600">Overwrite</button>
+                <button id="overwrite-cancel-btn" class="btn">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="splash-delete-modal" class="modal-backdrop hidden z-[60]">
+        <div class="modal-content border-red-900 bg-red-950/90 text-center">
+            <h3 class="text-2xl font-orbitron mb-4 text-red-400">Confirm Deletion</h3>
+            <p class="mb-6 text-lg text-gray-300">Are you sure you want to permanently delete this save file? This cannot be undone.</p>
+            <div class="mt-6 flex justify-center gap-4">
+                <button id="delete-confirm-btn" class="btn bg-red-800 hover:bg-red-700 text-white border-red-600">Delete</button>
+                <button id="delete-cancel-btn" class="btn">Cancel</button>
+            </div>
+        </div>
     </div>
     
     <div id="save-toast" class="hidden fixed top-5 left-1/2 -translate-x-1/2 bg-cyan-500/80 text-white px-6 py-2 rounded-lg shadow-lg transition-all duration-300 pointer-events-none z-50">Checkpoint Saved</div>

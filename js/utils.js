@@ -240,3 +240,42 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
 
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
+
+/**
+ * Recursively merges a source object into a target object.
+ * Arrays are entirely replaced by the source array to prevent orphaned data or indexing bugs.
+ * Primitives are safely overwritten.
+ * * @param {Object} target - The base object (usually a fresh default game state).
+ * @param {Object} source - The object to merge in (usually the loaded save data payload).
+ * @returns {Object} The mutated target object.
+ */
+export function deepMerge(target, source) {
+    if (target === null || typeof target !== 'object') {
+        return source;
+    }
+    if (source === null || typeof source !== 'object') {
+        return source;
+    }
+
+    if (Array.isArray(source)) {
+        return source.slice(); 
+    }
+
+    for (const key in source) {
+        if (Object.prototype.hasOwnProperty.call(source, key)) {
+            if (source[key] === null) {
+                target[key] = null;
+            } else if (Array.isArray(source[key])) {
+                target[key] = source[key].slice(); 
+            } else if (typeof source[key] === 'object') {
+                if (!target[key] || typeof target[key] !== 'object' || Array.isArray(target[key])) {
+                    target[key] = {};
+                }
+                target[key] = deepMerge(target[key], source[key]);
+            } else {
+                target[key] = source[key];
+            }
+        }
+    }
+    return target;
+}

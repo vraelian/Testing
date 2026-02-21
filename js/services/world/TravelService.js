@@ -431,6 +431,10 @@ export class TravelService {
             }
             // -------------------------------------------------
 
+            // --- V4 SAVE SYSTEM: INVISIBLE AUTO-SAVE ON ARRIVAL ---
+            this.simulationService.saveGame();
+            // ------------------------------------------------------
+
             if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else {

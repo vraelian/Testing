@@ -2,7 +2,7 @@
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js';
-import { skewedRandom } from '../utils.js';
+import { skewedRandom, deepMerge } from '../utils.js';
 
 /**
  * Procedurally generates the travel data matrix, calculating the time and fuel cost
@@ -87,7 +87,6 @@ export class GameState {
     setState(partialState) {
         Object.assign(this, partialState);
         this._notify();
-        // this.saveGame(); // NOTE: Saving is currently disabled.
     }
     
     /**
@@ -99,40 +98,73 @@ export class GameState {
     }
 
     /**
+     * V4 SAVE SYSTEM: Serializes the state and strictly scrubs ephemeral properties
+     * to prevent soft-locks when loading (e.g. pending travel loops or broken DOM states).
+     * @returns {object} A sanitized, deep copy of the game state.
+     */
+    exportState() {
+        const stateCopy = this.getState();
+        
+        // Strip ephemeral properties
+        stateCopy.pendingTravel = null;
+        stateCopy.introSequenceActive = false;
+        
+        // Revert UI state to safe defaults
+        stateCopy.uiState = {
+            marketCardMinimized: {},
+            hangarShipyardToggleState: 'shipyard',
+            hangarActiveIndex: 0,
+            shipyardActiveIndex: 0,
+            activeIntelTab: 'intel-codex-content',
+            servicesTab: 'supply',
+            activeMissionTab: 'terminal'
+        };
+
+        return stateCopy;
+    }
+
+    /**
+     * V4 SAVE SYSTEM: Loads a game utilizing the "Deep Merge" backwards-compatibility strategy.
+     * Generates a fully up-to-date state schema, then paints the saved data over it.
+     * @param {object} savedPayload - The full payload loaded from IndexedDB.
+     * @returns {boolean} True if successfully loaded.
+     */
+    importMergedState(savedPayload) {
+        if (!savedPayload || !savedPayload.state) return false;
+
+        // 1. Generate a fresh, up-to-date state baseline using the player's saved name
+        const playerName = savedPayload.state.player?.name || "Captain";
+        this.startNewGame(playerName);
+
+        // 2. Deep merge the saved data over the fresh baseline
+        const mergedState = deepMerge(this.getState(), savedPayload.state);
+        
+        // 3. Apply merged state and slot association
+        Object.assign(this, mergedState);
+        this.slotId = savedPayload.slotId;
+
+        // 4. Regenerate derived arrays to guarantee map accuracy across patches
+        this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
+
+        this._notify();
+        return true;
+    }
+
+    /**
      * Saves the current game state to localStorage.
-     * NOTE: This functionality is currently disabled.
+     * NOTE: This functionality is currently disabled in favor of V4 Save System.
      */
     saveGame() {
-        // try {
-        //     const stateToSave = { ...this };
-        //     delete stateToSave.subscribers;
-        //     localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
-        // } catch (error) {
-        //     console.error("Error saving game state:", error);
-        // }
+        // Obsolete
     }
 
     /**
      * Loads the game state from localStorage.
-     * NOTE: This functionality is currently disabled and will always start a new game.
+     * NOTE: This functionality is currently disabled in favor of V4 Save System.
      * @returns {boolean} True if a game was successfully loaded, false otherwise.
      */
     loadGame() {
         return false;
-        // try {
-        //     const serializedState = localStorage.getItem(SAVE_KEY);
-        //     if (serializedState === null) return false;
-            
-        //     const loadedState = JSON.parse(serializedState);
-        //     Object.assign(this, loadedState);
-        //     this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
-        //     this._notify();
-        //     return true;
-        // } catch (error) {
-        //     console.warn("Could not parse save data. Starting new game.", error);
-        //     localStorage.removeItem(SAVE_KEY);
-        //     return false;
-        // }
     }
 
     /**
@@ -168,6 +200,7 @@ export class GameState {
         });
 
         const initialState = {
+            slotId: null, // V4 SYSTEM: Track active save slot
             day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
             subNavCollapsed: false,
             introSequenceActive: true,
@@ -191,6 +224,7 @@ export class GameState {
                     id !== LOCATION_IDS.MERCURY
                 ),
                 seenCommodityMilestones: [], financeLog: [],
+                seenAutoSaveNotice: false, // V4 SYSTEM: Notification flag
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
