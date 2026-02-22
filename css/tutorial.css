@@ -9,14 +9,14 @@
     left: 50%;
     transform: translateX(-50%);
     z-index: 10005; /* Elevated safely above game modals and masks */
-    pointer-events: none; /* Allow clicks to pass through the container itself */
+    pointer-events: none; 
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 .tt-safe-zone > * {
-    pointer-events: auto; /* Re-enable clicks for the toast content */
+    pointer-events: auto; 
 }
 
 /* Core Toast Window Constraints & Base Styling */
@@ -89,13 +89,15 @@
     overscroll-behavior: contain; /* Prevent parent document from scrolling */
     -webkit-overflow-scrolling: touch; /* Force native iOS scrolling behavior */
     
+    padding-bottom: 1.5rem; /* Push text up so short paragraphs clear the fade */
+    
     /* Hide native chrome/safari scrollbars */
     scrollbar-width: none; /* Firefox */
     -ms-overflow-style: none; /* IE/Edge */
     
-    /* Gradient fade for scroll affordance */
-    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    /* Gradient fade for scroll affordance (Sharpened to 88%) */
+    -webkit-mask-image: linear-gradient(to bottom, black 88%, transparent 100%);
+    mask-image: linear-gradient(to bottom, black 88%, transparent 100%);
 }
 
 .tt-scrollable::-webkit-scrollbar {
@@ -110,13 +112,13 @@
 }
 
 .tt-theme-guild {
-    border-color: #d4af37; /* Gold narrative accents */
+    border-color: #d4af37; 
     box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.1), 0 4px 15px rgba(0,0,0,0.5);
     color: #fff9e6;
 }
 
 .tt-theme-syndicate {
-    border-color: #9d00ff; /* Violet narrative accents */
+    border-color: #9d00ff; 
     box-shadow: inset 0 0 15px rgba(157, 0, 255, 0.1), 0 4px 15px rgba(0,0,0,0.5);
     color: #f0e6ff;
 }
@@ -128,12 +130,12 @@
     inset: 0;
     background-color: rgba(0, 0, 0, 0.2);
     z-index: 9998; /* Below toast, above game */
-    pointer-events: auto; /* Default to rigid gate blocking outside clicks */
+    pointer-events: auto; 
     transition: opacity 0.3s ease;
 }
 
 .tut-spotlight-mask.tut-allow-click {
-    pointer-events: none; /* Yield to clicks if configured for simple direction */
+    pointer-events: none; 
 }
 
 .tut-spotlight-target {

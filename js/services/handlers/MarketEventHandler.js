@@ -50,8 +50,11 @@ export class MarketEventHandler {
         
         if (activeBatchId && activeStepId) {
             const step = DB.TUTORIAL_DATA[activeBatchId].steps.find(s => s.stepId === activeStepId);
-            if (step && step.targetSelector && actionTarget.matches(step.targetSelector)) {
-                v4TargetMatch = true;
+            // Only force auto-advance if the completion type explicitly demands a raw UI click
+            if (step && step.completion && step.completion.type === 'UI_EVENT') {
+                if (step.targetSelector && actionTarget.matches(step.targetSelector)) {
+                    v4TargetMatch = true;
+                }
             }
         }
 

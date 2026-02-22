@@ -107,8 +107,6 @@ export class UITutorialManager {
      * @private
      */
     _applyTargetedToast(targetEl, step, toast) {
-        this.activeTargetElement = targetEl;
-
         // Apply Spotlight Shield if requested
         if (step.useSpotlight) {
             this.activeSpotlightMask = document.createElement('div');
@@ -120,8 +118,17 @@ export class UITutorialManager {
             
             document.body.appendChild(this.activeSpotlightMask);
 
-            // Yield to parent stacking contexts (like carousel items)
-            const elevateEl = targetEl.closest('.carousel-item') || targetEl;
+            // Stacking Context Escape Hatch
+            // Detect if the target is buried inside a transform trap (like a carousel)
+            let elevateEl = targetEl;
+            if (targetEl.closest('.carousel-container')) {
+                elevateEl = targetEl.closest('.carousel-container');
+            } else if (targetEl.closest('.item-card-container')) {
+                elevateEl = targetEl.closest('.item-card-container');
+            } else if (targetEl.closest('.mission-card')) {
+                elevateEl = targetEl.closest('.mission-card');
+            }
+
             elevateEl.classList.add('tut-spotlight-target');
             this.activeTargetElement = elevateEl; // Track the elevated element for cleanup
         }
