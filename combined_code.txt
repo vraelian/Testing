@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.16</title>
+    <title>Orbital Trading 36.10</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -45,17 +45,14 @@
 
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 text-center bg-[#0c101d]">
         <button id="debug-start-btn" class="btn" data-action="debug-simple-start">D</button>
-        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg panel-pulse-gold">
-            
-            <div id="splash-title-header">
-                <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
-                <p class="text-xl md:text-xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
-            </div>
+        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg">
+            <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
+            <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
           
             <div id="splash-main-menu" class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
-                <button id="main-new-game-btn" class="btn btn-header w-[70%] py-3">New Game</button>
-                <button id="main-load-game-btn" class="btn btn-header w-[70%] py-3" disabled>Load Game</button>
-                <button id="main-options-btn" class="btn btn-header w-[70%] py-3">Options</button>
+                <button id="main-new-game-btn" class="btn btn-header btn-pulse w-full">New Game</button>
+                <button id="main-load-game-btn" class="btn btn-header w-full" disabled>Load Game</button>
+                <button id="main-options-btn" class="btn btn-header w-full">Options</button>
                 
                 <div id="eula-container" class="mt-8 text-center text-gray-400">
                     <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
@@ -79,40 +76,30 @@
                 <button id="load-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
             </div>
 
-            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
-                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">OPTIONS</h3>
-                <button id="options-data-btn" class="btn btn-header w-full">Export/Import Saved Game</button>
-                <button id="options-back-btn" class="btn btn-header w-full mt-6">Return to Main Menu</button>
-            </div>
-
-            <div id="splash-data-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-4xl mx-auto">
-                <div class="w-full flex flex-col sm:flex-row gap-4">
-                    
-                    <div class="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg p-3 flex flex-col relative">
-                        <div class="flex justify-center items-center mb-6 mt-2">
-                            <h4 class="text-lg text-cyan-300 font-orbitron text-center">Export Save</h4>
-                        </div>
-                        <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700 mt-auto py-4 transition-colors duration-300">Export Save Code</button>
-                    </div>
-
-                    <div class="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg p-3 flex flex-col relative text-center">
-                        <h4 class="text-lg text-cyan-300 font-orbitron mb-1 mt-2">Import Save Code</h4>
-                        <span class="text-xs font-bold text-red-400 uppercase tracking-wider block mb-4">OVERWRITES ALL SAVE FILES!</span>
-                        <textarea id="import-data-textarea" class="w-full h-16 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-3 focus:border-cyan-500 resize-none mx-auto text-center" placeholder="Paste Base64 Export Save code here..."></textarea>
-                        <button id="import-saves-btn" class="btn w-full bg-blue-900/30 hover:bg-blue-800/50 border-blue-700 mt-auto py-2 transition-colors duration-300">Import Save Code</button>
-                    </div>
-
+            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Options & Backup</h3>
+                
+                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4 mb-2">
+                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Export Data</h4>
+                    <p class="text-sm text-gray-400 mb-4">Create a backup code of all your current save slots. Save this code somewhere safe.</p>
+                    <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700">Copy Backup Code to Clipboard</button>
                 </div>
 
-                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0 m-0"></p>
+                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4">
+                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Import Data</h4>
+                    <p class="text-sm text-gray-400 mb-2">Paste a backup code here to restore your saves. <span class="text-red-400 font-bold">This will overwrite current slots!</span></p>
+                    <textarea id="import-data-textarea" class="w-full h-24 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-2 focus:border-cyan-500" placeholder="Paste Base64 backup code here..."></textarea>
+                    <button id="import-saves-btn" class="btn w-full bg-red-900/30 hover:bg-red-800/50 border-red-700">Restore from Backup</button>
+                </div>
 
-                <button id="data-back-btn" class="btn w-full max-w-xs mt-1 py-2">Return to Options</button>
+                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0"></p>
+
+                <button id="options-back-btn" class="btn mt-2 w-full max-w-xs">Return to Main Menu</button>
             </div>
         </div>
 
-        <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
-            <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.16</p>
+        <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
+            <p>Version 36.10</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1158,189 +1145,219 @@
 --- START OF FILE: ./css/tutorial.css ---
 /* css/tutorial.css */
 
-/* --- TUTORIAL SYSTEM V4 --- */
+/* --- [[START]] NEW THEMED STYLES --- */
 
-/* Mode A: The "Safe Zone" Fallback */
-.tt-safe-zone {
-    position: fixed;
-    bottom: 20%;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 9999;
-    pointer-events: none; /* Allow clicks to pass through the container itself */
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.tt-safe-zone > * {
-    pointer-events: auto; /* Re-enable clicks for the toast content */
-}
-
-/* Core Toast Window Constraints & Base Styling */
-.tt-window {
-    background-color: rgba(18, 24, 39, 0.95);
+#tutorial-toast-container {
+    /* New background: dark, slightly transparent, blurred */
+    background-color: rgba(18, 24, 39, 0.9); /* A color between modal bg and game bg */
     backdrop-filter: blur(8px);
     -webkit-backdrop-filter: blur(8px);
-    border: 1px solid #7a9ac0;
-    border-radius: 8px;
-    padding: 1rem;
-    color: var(--color-text-primary, #d0d8e8);
-    font-family: 'Exo 2', 'Oxanium', sans-serif;
-    font-size: 0.9rem;
-    line-height: 1.5;
-    z-index: 9999;
-    
-    /* Strict V4 Dimensional Constraints */
-    width: max-content;
-    max-width: 350px;
-    max-height: 200px;
-    
+
+    color: var(--color-text-primary, #d0d8e8); /* Default to global text color */
+
+    /* New border: Apply sci-fi-frame styles */
+    border: 1px solid #2a3a5a;
+    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.3); /* Add outer shadow */
+    border-radius: 8px; /* Standard border radius */
+
+    /* --- [[START]] WIDTH FIX --- */
+    min-width: 200px;
+    max-width: min(600px, 90vw); /* Generous max-width, responsive */
+    /* --- [[END]] WIDTH FIX --- */
+
+    z-index: 999; /* Ensure toast is above anchor overlay */
+    padding: 1rem; /* Simplified padding */
+    /* MODIFIED: Add a little extra bottom padding for the arrow */
+    padding-bottom: 1.5rem;
+    position: fixed; /* Changed from absolute for percentage positioning */
+    transform: translate(-50%, -50%); /* Center based on top/left percentages */
+}
+
+/* NEW: Styles for the anchor overlay */
+#tutorial-anchor-overlay {
+    position: fixed;
+    inset: 0; /* Cover the whole viewport */
+    z-index: 998; /* Below toast, above game content */
+    pointer-events: none; /* Allow clicks to pass through */
+}
+
+/* Pseudo-elements for sci-fi-frame corners */
+#tutorial-toast-container::before,
+#tutorial-toast-container::after {
+    content: '';
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    border-color: #7a9ac0; /* Match default sci-fi-frame color */
+    border-style: solid;
+    transition: border-color 0.3s;
+}
+#tutorial-toast-container::before {
+    top: -1px;
+    left: -1px;
+    border-width: 2px 0 0 2px;
+    border-top-left-radius: 8px; /* Top-left corner */
+}
+#tutorial-toast-container::after {
+    bottom: -1px;
+    right: -1px;
+    border-width: 0 2px 2px 0;
+    border-bottom-right-radius: 8px; /* Bottom-right corner */
+}
+
+/* Apply flexbox layout only when the toast is visible */
+#tutorial-toast-container:not(.hidden) {
     display: flex;
     flex-direction: column;
-    transition: max-height 0.3s ease, padding 0.3s ease, opacity 0.3s ease;
-    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.5);
 }
 
-/* Header & Minimization Toggle */
-.tt-header {
-    display: flex;
-    justify-content: flex-end;
-    margin-bottom: 0.5rem;
-    transition: margin 0.3s ease;
-}
-
-.tt-toggle-btn {
-    background: none;
-    border: none;
-    color: #7a9ac0;
-    cursor: pointer;
-    font-size: 1.2rem;
-    line-height: 0.8;
-    padding: 0 4px;
-    transition: color 0.2s;
-}
-
-.tt-toggle-btn:hover {
-    color: #ffffff;
-}
-
-.tt-window.tt-minimized .tt-scrollable {
-    max-height: 0;
-    margin: 0;
-    padding: 0;
-    opacity: 0;
-    overflow: hidden;
-}
-
-.tt-window.tt-minimized .tt-header {
-    margin-bottom: 0;
-}
-
-/* Scrollable Text Area & Affordance Mask */
-.tt-scrollable {
-    overflow-y: auto;
+#tutorial-toast-text {
+    text-align: left;
+    /* MODIFIED: Force scrollbar to exist */
+    overflow-y: scroll !important;
     flex-grow: 1;
-    transition: max-height 0.3s ease, opacity 0.3s ease;
-    
-    /* Hide native chrome/safari scrollbars */
-    scrollbar-width: none; /* Firefox */
-    -ms-overflow-style: none; /* IE/Edge */
-    
-    /* Gradient fade for scroll affordance */
-    -webkit-mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
-    mask-image: linear-gradient(to bottom, black 80%, transparent 100%);
+    max-height: 150px; /* Adjust as needed, maybe based on height slider? */
+    /* MODIFIED: Remove padding for deleted skip button */
+    padding-right: 0.5rem;
+    font-family: 'Exo 2', sans-serif; /* Update font */
+    font-size: 0.9rem; /* Slightly larger for readability */
+    line-height: 1.5; /* Increased line height */
+    color: var(--color-text-secondary);
+
+    /* MODIFIED: Add Firefox scrollbar styles just in case */
+    scrollbar-width: thin !important;
+    scrollbar-color: var(--color-accent-yellow, #f7b731) #332a0e !important;
 }
 
-.tt-scrollable::-webkit-scrollbar {
-    display: none; /* Chrome/Safari */
-}
-
-/* --- Thematic Customizations --- */
-
-.tt-theme-default {
-    border-color: #7a9ac0;
-    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.5);
-}
-
-.tt-theme-guild {
-    border-color: #d4af37; /* Gold narrative accents */
-    box-shadow: inset 0 0 15px rgba(212, 175, 55, 0.1), 0 4px 15px rgba(0,0,0,0.5);
-    color: #fff9e6;
-}
-
-.tt-theme-syndicate {
-    border-color: #9d00ff; /* Violet narrative accents */
-    box-shadow: inset 0 0 15px rgba(157, 0, 255, 0.1), 0 4px 15px rgba(0,0,0,0.5);
-    color: #f0e6ff;
-}
-
-/* --- Spotlight Mask & Yielding --- */
-
-.tut-spotlight-mask {
+#tutorial-highlight-overlay {
     position: fixed;
-    inset: 0;
-    background-color: rgba(0, 0, 0, 0.2);
-    z-index: 9998; /* Below toast, above game */
-    pointer-events: auto; /* Default to rigid gate blocking outside clicks */
-    transition: opacity 0.3s ease;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 997; /* Below anchor overlay */
 }
 
-.tut-spotlight-mask.tut-allow-click {
-    pointer-events: none; /* Yield to clicks if configured for simple direction */
+/* Style for individual highlight cues within the overlay */
+.tutorial-cue {
+    position: absolute;
 }
 
-.tut-spotlight-target {
-    z-index: 10000 !important; /* Pierce the mask */
-    position: relative; /* Ensure z-index takes effect */
+
+/* --- [[START]] POPPER.JS ARROW STYLES --- */
+/* Adjusted arrow background and border */
+#tt-arrow,
+#tt-arrow::before {
+    position: absolute;
+    width: 8px;
+    height: 8px;
+    background: rgba(18, 24, 39, 0.9); /* Match new toast background */
 }
 
-/* --- Positive Feedback Shimmer --- */
-
-@keyframes shimmer-success {
-    0% { box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 0 0px rgba(0, 255, 100, 0); border-color: inherit; }
-    50% { box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 0 20px rgba(0, 255, 100, 0.8); border-color: #00ff64; }
-    100% { box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 0 0px rgba(0, 255, 100, 0); border-color: inherit; }
+#tt-arrow {
+    visibility: hidden;
 }
 
-.tt-shimmer-success {
-    animation: shimmer-success 1s ease-out forwards !important;
+#tt-arrow::before {
+    visibility: visible;
+    content: '';
+    transform: rotate(45deg);
 }
 
-/* --- Declarative Advance Arrow --- */
+/* Arrow border to match sci-fi-frame border */
+#tutorial-toast-container[data-popper-placement^='top'] > #tt-arrow {
+    bottom: -4px;
+    border-bottom: 1px solid #7a9ac0; /* Match new border color */
+    border-right: 1px solid #7a9ac0;
+}
 
+#tutorial-toast-container[data-popper-placement^='bottom'] > #tt-arrow {
+    top: -4px;
+    border-top: 1px solid #7a9ac0; /* Match new border color */
+    border-left: 1px solid #7a9ac0;
+}
+
+#tutorial-toast-container[data-popper-placement^='left'] > #tt-arrow {
+    right: -4px;
+    border-top: 1px solid #7a9ac0; /* Match new border color */
+    border-right: 1px solid #7a9ac0;
+}
+
+#tutorial-toast-container[data-popper-placement^='right'] > #tt-arrow {
+    left: -4px;
+    border-bottom: 1px solid #7a9ac0; /* Match new border color */
+    border-left: 1px solid #7a9ac0;
+}
+/* --- [[END]] POPPER.JS ARROW STYLES --- */
+
+
+/* --- [[START]] NEW CONTROL BUTTON STYLES --- */
+
+/* REMOVED: .tt-controls-container */
+/* REMOVED: #tutorial-toast-skip-btn */
+
+/* NEW: Pulse animation for the new text-based arrow */
 @keyframes pulse-glow-text {
-    0% { color: var(--color-accent-yellow, #f7b731); filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731)); }
-    50% { color: var(--color-accent-yellow-light, #f8d775); filter: drop-shadow(0 0 10px var(--color-accent-yellow-light, #f8d775)); }
-    100% { color: var(--color-accent-yellow, #f7b731); filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731)); }
+    0% {
+        color: var(--color-accent-yellow, #f7b731);
+        filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731));
+    }
+    50% {
+        color: var(--color-accent-yellow-light, #f8d775);
+        filter: drop-shadow(0 0 10px var(--color-accent-yellow-light, #f8d775));
+    }
+    100% {
+        color: var(--color-accent-yellow, #f7b731);
+        filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731));
+    }
 }
 
+/* MODIFIED: 'Next' arrow now uses a text character */
 .tt-next-arrow {
-    align-self: flex-end;
-    margin-top: 8px;
+    position: absolute;
+    /* MODIFIED: Positioned to be nested on the border, adjusted position */
+    bottom: -12px; /* -5px + 10px */
+    right: -9px; /* 5px + 10px */
+
+    /* MODIFIED: Hide the original '➤' from JS */
+    font-size: 0;
+    line-height: 0;
+
+    /* MODIFIED: Remove all old styles (bg, border, etc) */
     background: none;
     border: none;
+    width: auto;
+    height: auto;
     padding: 0;
+    border-radius: 0; /* Override old style */
+    color: transparent; /* Override old style */
+
     cursor: pointer;
-    z-index: 11;
+    user-select: none;
+    z-index: 11; /* Above corner pseudo-element */
     transition: transform 0.2s ease;
 }
 
+/* NEW: Use ::before to inject the new arrow character */
 .tt-next-arrow::before {
     content: '➜';
-    font-size: 24px;
+    /* MODIFIED: 15% larger */
+    font-size: 30px;
     line-height: 1;
+
+    /* MODIFIED: Apply color and pulse animation here */
     color: var(--color-accent-yellow, #f7b731);
     animation: pulse-glow-text 2.5s infinite ease-in-out;
     transition: all 0.2s ease;
-    display: inline-block;
 }
 
 .tt-next-arrow:hover {
-    transform: scale(1.1);
+    transform: scale(1.1); /* Scale the whole container */
 }
 
 .tt-next-arrow:hover::before {
+    /* MODIFIED: Stop animation, show static bright glow */
     animation: none;
     color: var(--color-accent-yellow-light, #f8d775);
     filter: drop-shadow(0 0 12px var(--color-accent-yellow-light, #f8d775));
@@ -1350,35 +1367,41 @@
     display: none;
 }
 
-/* --- Mode B: Popper.js Arrow overrides --- */
+/* --- [[END]] NEW CONTROL BUTTON STYLES --- */
 
-.tt-popper-arrow,
-.tt-popper-arrow::before {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: rgba(18, 24, 39, 0.95);
+
+/* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
+/* MODIFIED: Increased specificity and added !important to override conflicts */
+#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar {
+    width: 8px !important;
+    background-color: transparent !important;
 }
 
-.tt-popper-arrow {
-    visibility: hidden;
+#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar-track {
+    background: #332a0e !important;
+    border-radius: 4px !important;
+    /* Add inner shadow for depth */
+    box-shadow: inset 0 0 3px rgba(0,0,0,0.5) !important;
 }
 
-.tt-popper-arrow::before {
-    visibility: visible;
-    content: '';
-    transform: rotate(45deg);
+#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar-thumb {
+    background-color: var(--color-accent-yellow, #f7b731) !important;
+    border-radius: 4px !important;
+    border: 1px solid var(--color-accent-yellow-light, #f8d775) !important;
 }
 
-.tt-window[data-popper-placement^='top'] > .tt-popper-arrow { bottom: -4px; border-bottom: 1px solid inherit; border-right: 1px solid inherit; }
-.tt-window[data-popper-placement^='bottom'] > .tt-popper-arrow { top: -4px; border-top: 1px solid inherit; border-left: 1px solid inherit; }
-.tt-window[data-popper-placement^='left'] > .tt-popper-arrow { right: -4px; border-top: 1px solid inherit; border-right: 1px solid inherit; }
-.tt-window[data-popper-placement^='right'] > .tt-popper-arrow { left: -4px; border-bottom: 1px solid inherit; border-left: 1px solid inherit; }
+#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar-thumb:hover {
+    background-color: var(--color-accent-yellow-light, #f8d775) !important;
+    border-color: #fff !important;
+    box-shadow: 0 0 5px var(--color-accent-yellow-light, #f8d775) !important;
+}
+/* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
 
-/* Lore tooltip styles (Legacy preservation) */
-.lore-container { display: inline-block; position: relative; }
+/* Lore tooltip styles remain the same */
+.lore-container { /* ... */ }
 .lore-tooltip { /* ... */ }
 .tutorial-tooltip { /* ... */ }
+/* ... (rest of lore styles) ... */
 --- END OF FILE: ./css/tutorial.css ---
 
 --- START OF FILE: ./css/hud.css ---
@@ -1700,21 +1723,15 @@ body {
     position: absolute;
     bottom: 1rem;
     left: 1rem;
-    width: 24px;
-    height: 24px;
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    font-size: 0.75rem;
+    font-size: 1.2rem;
     font-family: 'Orbitron', sans-serif;
-    background-color: #4a5568;
+background-color: #4a5568;
     color: #1a202c;
-    border: 1px solid #2d3748;
+    border: 2px solid #2d3748;
     z-index: 100;
-    opacity: 0.3;
-    transition: opacity 0.2s ease-in-out;
-}
-
-#debug-start-btn:hover {
-    opacity: 0.8;
 }
 
 .font-orbitron {
@@ -2167,10 +2184,6 @@ BUTTON GLOW --- */
 
 .btn-pulse-gold {
     animation: pulse-gold-border 2s infinite;
-}
-
-.panel-pulse-gold {
-    animation: pulse-gold-border 4s infinite ease-in-out;
 }
 
 .btn-pulse {
@@ -8714,9 +8727,8 @@ export function renderMissionsScreen(gameState, missionService) {
             return r.type.toUpperCase();
         }).join(', ');
 
-        // V4: Added data-tut-target
         return `
-            <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}" data-tut-target="mission-card-${mission.id}">
+            <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
                 <div class="mission-meta-row">
                     <span class="mission-type-badge">${mission.type}</span>
                     <span class="mission-host-label">${mission.host}</span>
@@ -8838,9 +8850,8 @@ export function renderMissionsScreen(gameState, missionService) {
         `;
 
         // [[UPDATED]] Added typeClass to the list
-        // V4: Added data-tut-target
         return `
-            <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}" data-tut-target="mission-card-${mission.id}">
+            <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
                 ${starIcon}
                 <div class="mission-meta-row pl-6"> <span class="mission-type-badge">ACTIVE CONTRACT</span>
                      <span class="mission-host-label">${mission.host}</span>
@@ -10154,7 +10165,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- App Initialization Definitions ---
     const splashScreen = document.getElementById('splash-screen');
-    const splashTitleHeader = document.getElementById('splash-title-header');
     const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; 
 
@@ -10168,7 +10178,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const splashNewGameMenu = document.getElementById('splash-new-game-menu');
     const splashLoadGameMenu = document.getElementById('splash-load-game-menu');
     const splashOptionsMenu = document.getElementById('splash-options-menu');
-    const splashDataMenu = document.getElementById('splash-data-menu');
     
     const mainNewGameBtn = document.getElementById('main-new-game-btn');
     const mainLoadGameBtn = document.getElementById('main-load-game-btn');
@@ -10177,8 +10186,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const newGameBackBtn = document.getElementById('new-game-back-btn');
     const loadGameBackBtn = document.getElementById('load-game-back-btn');
     const optionsBackBtn = document.getElementById('options-back-btn');
-    const optionsDataBtn = document.getElementById('options-data-btn');
-    const dataBackBtn = document.getElementById('data-back-btn');
     
     const exportSavesBtn = document.getElementById('export-saves-btn');
     const importSavesBtn = document.getElementById('import-saves-btn');
@@ -10197,8 +10204,6 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteCancelBtn = document.getElementById('delete-cancel-btn');
 
     let pendingSlotAction = null; 
-    let cachedExportCode = "";
-    let importConfirmState = false;
 
     // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
     if (navigator.storage && navigator.storage.persist) {
@@ -10292,74 +10297,34 @@ document.addEventListener('DOMContentLoaded', () => {
         splashNewGameMenu.classList.add('hidden');
         splashLoadGameMenu.classList.add('hidden');
         splashOptionsMenu.classList.add('hidden');
-        if (splashDataMenu) splashDataMenu.classList.add('hidden');
-
-        // Hide title header if we need ultra-compact screen (like Options)
-        if (splashTitleHeader) {
-            if (viewId === 'options' || viewId === 'data') {
-                splashTitleHeader.classList.add('hidden');
-            } else {
-                splashTitleHeader.classList.remove('hidden');
-            }
-        }
 
         if (viewId === 'main') splashMainMenu.classList.remove('hidden');
         else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
         else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
         else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
-        else if (viewId === 'data') {
-            splashDataMenu.classList.remove('hidden');
-            preGenerateExportCode();
-        }
     }
 
     mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });
     mainLoadGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('load'); });
     mainOptionsBtn.addEventListener('click', () => showSplashView('options'));
-    optionsDataBtn.addEventListener('click', () => showSplashView('data'));
     
     newGameBackBtn.addEventListener('click', () => showSplashView('main'));
     loadGameBackBtn.addEventListener('click', () => showSplashView('main'));
-    optionsBackBtn.addEventListener('click', () => showSplashView('main'));
-    
-    dataBackBtn.addEventListener('click', () => {
+    optionsBackBtn.addEventListener('click', () => {
         importDataTextarea.value = '';
-        cachedExportCode = "";
-        resetImportButton();
-        showSplashView('options');
+        showSplashView('main');
     });
-
-    // --- BASE64 HELPER UTILITIES (Prevents payload truncation & handles Unicode backwards-compatibility) ---
-    function utf8ToBase64(str) {
-        // Fast, native encoding that handles Unicode without bloating
-        return window.btoa(unescape(encodeURIComponent(str)));
-    }
-
-    function base64ToUtf8(b64) {
-        const decodedRaw = window.atob(b64);
-        try {
-            // Modern, efficient unescape mechanism
-            return decodeURIComponent(escape(decodedRaw));
-        } catch (e) {
-            // Legacy Fallback: Recovers saves exported from the very first V1 implementation
-            try {
-                return decodeURIComponent(decodedRaw);
-            } catch (legacyErr) {
-                return decodedRaw; 
-            }
-        }
-    }
 
     // --- PHASE 3: BACKUP & RESTORE PIPELINE ---
     function showOptionsStatus(message, isError = false) {
         optionsStatusMessage.textContent = message;
-        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'} m-0`;
+        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'}`;
         setTimeout(() => {
             optionsStatusMessage.classList.replace('opacity-100', 'opacity-0');
         }, 4000);
     }
 
-    async function preGenerateExportCode() {
+    exportSavesBtn.addEventListener('click', async () => {
         try {
             const allSaves = {};
             const slots = ['slot_1', 'slot_2', 'slot_3'];
@@ -10369,105 +10334,43 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (Object.keys(allSaves).length === 0) {
-                cachedExportCode = "";
+                showOptionsStatus('No saves found to export.', true);
                 return;
             }
 
+            // Encode to handle Unicode characters before converting to Base64
             const jsonString = JSON.stringify(allSaves);
-            // Uses unified Base64 encoder ensuring minimal footprint and valid parsing
-            cachedExportCode = utf8ToBase64(jsonString);
-        } catch (error) {
-            console.error("[Backup] Pre-generation failed:", error);
-            cachedExportCode = "";
-        }
-    }
-
-    exportSavesBtn.addEventListener('click', () => {
-        if (!cachedExportCode) {
-            showOptionsStatus('No valid backup code available.', true);
-            return;
-        }
-
-        const triggerSuccessVisuals = () => {
-            exportSavesBtn.textContent = 'Save Code Copied!';
-            exportSavesBtn.classList.remove('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
-            exportSavesBtn.classList.add('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
+            const base64String = btoa(encodeURIComponent(jsonString));
             
-            setTimeout(() => {
-                exportSavesBtn.textContent = 'Export Save Code';
-                exportSavesBtn.classList.add('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
-                exportSavesBtn.classList.remove('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
-            }, 2000);
-        };
-
-        try {
             // Clipboard API (Works on HTTPS/Localhost)
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                navigator.clipboard.writeText(cachedExportCode).then(() => {
-                    triggerSuccessVisuals();
-                }).catch(err => {
-                    fallbackCopyTextToClipboard(triggerSuccessVisuals);
-                });
+                await navigator.clipboard.writeText(base64String);
+                showOptionsStatus('Backup Code copied to clipboard!');
             } else {
-                fallbackCopyTextToClipboard(triggerSuccessVisuals);
+                // Fallback for older WebViews
+                const tempTextArea = document.createElement("textarea");
+                tempTextArea.value = base64String;
+                document.body.appendChild(tempTextArea);
+                tempTextArea.select();
+                document.execCommand("copy");
+                document.body.removeChild(tempTextArea);
+                showOptionsStatus('Backup Code copied to clipboard! (Fallback)');
             }
         } catch (error) {
-            console.error("[Backup] Copy failed:", error);
-            showOptionsStatus('Copy failed. Try manually copying the text.', true);
+            console.error("[Backup] Export failed:", error);
+            showOptionsStatus('Export failed. Check console.', true);
         }
     });
 
-    function fallbackCopyTextToClipboard(successCallback) {
-        const tempTextArea = document.createElement("textarea");
-        tempTextArea.value = cachedExportCode;
-        tempTextArea.style.top = "0";
-        tempTextArea.style.left = "0";
-        tempTextArea.style.position = "fixed";
-        document.body.appendChild(tempTextArea);
-        tempTextArea.focus();
-        tempTextArea.select();
-        tempTextArea.setSelectionRange(0, 9999999); 
-        try {
-            const successful = document.execCommand("copy");
-            if (successful && successCallback) {
-                successCallback();
-            } else {
-                showOptionsStatus('Copy failed. Try manually copying the text.', true);
-            }
-        } catch (err) {
-            showOptionsStatus('Copy failed. Try manually copying the text.', true);
-        }
-        document.body.removeChild(tempTextArea);
-    }
-
-    function resetImportButton() {
-        importConfirmState = false;
-        importSavesBtn.textContent = 'Import Save Code';
-        importSavesBtn.classList.add('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
-        importSavesBtn.classList.remove('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
-    }
-
-    importDataTextarea.addEventListener('input', resetImportButton);
-
     importSavesBtn.addEventListener('click', async () => {
-        // Strip all whitespace/newlines that might be introduced by textarea or iOS pasting
-        const b64Data = importDataTextarea.value.replace(/\s+/g, '');
+        const b64Data = importDataTextarea.value.trim();
         if (!b64Data) {
             showOptionsStatus('Please paste a backup code first.', true);
             return;
         }
 
-        if (!importConfirmState) {
-            importConfirmState = true;
-            importSavesBtn.textContent = 'OVERWRITE & IMPORT?';
-            importSavesBtn.classList.remove('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
-            importSavesBtn.classList.add('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
-            return;
-        }
-
         try {
-            // Decode cleanly via the unified decoder to ensure legacy compatibility
-            const jsonString = base64ToUtf8(b64Data);
+            const jsonString = decodeURIComponent(atob(b64Data));
             const parsedSaves = JSON.parse(jsonString);
             
             const slots = ['slot_1', 'slot_2', 'slot_3'];
@@ -10485,15 +10388,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 importDataTextarea.value = '';
                 showOptionsStatus(`Successfully restored ${importedCount} save(s)!`);
                 await refreshSlotUI(); // Refresh UI to show the imported slots
-                preGenerateExportCode(); // Update the export field with newly loaded data
             } else {
                 showOptionsStatus('Invalid backup code. No valid saves found.', true);
             }
         } catch (error) {
             console.error("[Backup] Import failed:", error);
             showOptionsStatus('Invalid backup code format.', true);
-        } finally {
-            resetImportButton();
         }
     });
 
@@ -13926,34 +13826,36 @@ export const TUTS_INTRO = {
             {
                 stepId: 'hangar_1',
                 text: "Welcome to the <b>Shipyard</b> on <b>Mars!</b><br><br>Every station has a port from which you can trade ships and manage your <b>Hangar</b>.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 16,
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: 'hangar_2',
-                isSkippable: true,
-                targetSelector: null, // Safe Zone
-                theme: 'default'
+                isSkippable: true
             },
             {
                 stepId: 'hangar_2',
                 text: "Now that you've borrowed <b class='hl-yellow font-bold'>extra credits</b>, you can buy your first ship!<br><br>Select one of the options in the <b>Shipyard</b>. Choose carefully...",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 17,
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.BUY_SHIP },
                 nextStepId: 'hangar_3',
                 isSkippable: true,
-                unlockPurchase: true,
-                targetSelector: '[data-action="buy-ship"]', // Will attach to the first purchase button found
-                useSpotlight: true,
-                allowClickThrough: false,
-                theme: 'default'
+                unlockPurchase: true
             },
             {
                 stepId: 'hangar_3',
                 text: 'This is your <b>Hangar</b>. From here you can manage all the ships you own. Select your new ship and <b class="hl-yellow font-bold">Board</b> it to make it your active vessel.',
+                size: { width: '400px', height: '110px' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 12,
                 completion: { type: TUTORIAL_ACTION_TYPES.ACTION, action: ACTION_IDS.SELECT_SHIP },
                 nextStepId: null,
-                isSkippable: false,
-                targetSelector: '[data-action="select-ship"]', // Attaches to the board button
-                useSpotlight: true,
-                allowClickThrough: false,
-                theme: 'default'
+                isSkippable: false
             }
         ]
     },
@@ -13965,20 +13867,24 @@ export const TUTS_INTRO = {
             {
                 stepId: 'finance_1',
                 text: "That was a big purchase, but don't worry - you've still got some <b class='hl-yellow font-bold'>credits</b> left over!<br><br>Your transaction history and debts can be viewed on the <b>Finance</b> tab within <b>Data</b>.",
+                size: { width: '400px', height: '120px' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 16,
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: 'finance_2',
-                isSkippable: false,
-                targetSelector: null, // Safe Zone
-                theme: 'default'
+                isSkippable: false
             },
             {
                 stepId: 'finance_2',
                 text: "Dont forget, your debt to the <b class='hl-yellow font-bold'>Merchant's Guild</b> is due in <b class='hl-red font-bold'>3 years</b>.<br><br>You will need to earn <b class='hl-yellow font-bold'>credits</b> to <b>pay off your debt</b>!",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 16,
                 completion: { type: TUTORIAL_ACTION_TYPES.INFO },
                 nextStepId: null,
-                isSkippable: false,
-                targetSelector: null, // Safe Zone
-                theme: 'guild' // Guild theme for narrative flavor
+                isSkippable: false
             }
         ]
     },
@@ -13991,154 +13897,164 @@ export const TUTS_INTRO = {
             {
                 "stepId": "mission_1_1",
                 "text": "This is the <b>Mission Terminal</b>.<br><br>Check the <b>Missions</b> tab often for opportunities to earn <b class='hl-yellow font-bold'>credits</b> and improve your reputation.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 88,
                 "completion": { "type": "INFO" },
                 "nextStepId": "mission_1_2",
-                "isSkippable": false,
-                "targetSelector": null, // Safe Zone
-                "theme": "default"
+                "isSkippable": false
             },
             {
                 "stepId": "mission_1_2",
                 "text": "A freelancer at the <b>Mars</b> station has put in a <b>Delivery</b> request. Select the mission '<b>Milk Run to Luna</b>' to view more details.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 88,
                 "completion": { "type": "ACTION", "action": "show-mission-modal" },
                 "nextStepId": "mission_1_3",
-                "isSkippable": false,
-                "targetSelector": "[data-tut-target='mission-card-mission_tutorial_01']",
-                "useSpotlight": true,
-                "allowClickThrough": false,
-                "theme": "default"
+                "isSkippable": false
             },
             {
                 "stepId": "mission_1_3",
                 "text": "The freelancer can't pay, but he's giving you the <b>remaining cargo</b>. Accept the contract.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 88,
                 "completion": { "type": "ACTION", "action": "accept-mission" },
                 "nextStepId": "mission_1_4",
-                "isSkippable": false,
-                "targetSelector": "[data-action='accept-mission']", // Targets the modal accept button
-                "useSpotlight": true,
-                "allowClickThrough": false,
-                "theme": "default"
+                "isSkippable": false
             },
             {
                 "stepId": "mission_1_4",
                 "text": "Mission accepted!<br><br>The contract is now <b>active</b> and the cargo as been loaded onto your ship, the <b>{shipName}</b>.<br><br>The freelancer has also loaded extra <b>Plasteel</b> which you can sell for <b class='hl-yellow font-bold'>credits</b>.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 80,
                 "completion": { "type": "INFO" },
                 "nextStepId": "mission_1_5",
-                "isSkippable": false,
-                "targetSelector": null, // Safe Zone
-                "theme": "default"
+                "isSkippable": false
             },
             {
                 "stepId": "mission_1_5",
                 "text": "This mission must be completed on the <b>Moon</b>, but you are presently docked at <b>Mars</b>! Therefore, it's time for the maiden voyage of your new ship, the <b>{shipName}</b>!<br><br>On the <b>nav bar</b> at the top, select the <b>Ship</b> tab, then the <b>Navigation</b> tab.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 32,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "navigation" },
                 "nextStepId": "mission_1_6",
                 "isSkippable": false,
-                "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" },
-                "targetSelector": "[data-tut-target='nav-tab-navigation']",
-                "useSpotlight": true,
-                "allowClickThrough": false,
-                "theme": "default"
+                "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation" }
             },
             {
                 "stepId": "mission_1_6",
                 "text": "From here you can travel to other stations in the system. This will cost you <b>time</b>, <b class='hl-blue'>fuel</b>, and wear on the <b class='hl-green'>hull</b> of your ship.<br><br>Select the <b>Moon</b> to lift off from <b>Mars</b>.",
+                size: { width: '400px', height: '170px' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 83,
                 "completion": { "type": "ACTION", "action": "travel" },
                 "nextStepId": "mission_1_7",
                 "isSkippable": false,
-                "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" },
-                "targetSelector": "[data-tut-target='nav-card-loc_luna']",
-                "useSpotlight": true,
-                "allowClickThrough": false,
-                "theme": "default"
+                "navLock": { "navId": NAV_IDS.SHIP, "screenId": "navigation", "enabledElementQuery": "[data-location-id='loc_luna']" }
             },
             {
                 "stepId": "mission_1_7",
                 "text": "You've arrived and docked at the <b>Moon</b> station!<br><br>It's time to deliver the <b>Plasteel</b>. Select the active mission and <b>deliver the Plasteel</b>.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 82,
                 "completion": { "type": "ACTION", "action": "complete-mission" },
                 "nextStepId": "mission_1_8",
                 "isSkippable": false,
-                "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" },
-                "targetSelector": "[data-tut-target='mission-card-mission_tutorial_01']",
-                "useSpotlight": true,
-                "allowClickThrough": false,
-                "theme": "default"
+                "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" }
             },
             {
                 "stepId": "mission_1_8",
                 "text": "Mission complete!<br><br>However, favors don't pay off <b class='hl-yellow font-bold'>Guild</b> loans. You're going to need more <b class='hl-yellow font-bold'>credits</b>.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 30,
                 "completion": { "type": "INFO" },
                 "nextStepId": "mission_2_1",
-                "isSkippable": false,
-                "targetSelector": null, // Safe Zone
-                "theme": "guild"
+                "isSkippable": false
             },
             {
                 "stepId": "mission_2_1",
                 "text": "The <i>best way to make money</i> is to play the markets yourself by <b class='hl-green font-bold'>buying low and selling high</b>.<br><br>Select the <b>Starport</b> tab, then the <b>Market</b> tab.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 30,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "market" },
                 "nextStepId": "mission_2_2",
                 "isSkippable": false,
-                "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" },
-                "targetSelector": "[data-tut-target='nav-tab-market']",
-                "useSpotlight": true,
-                "allowClickThrough": false,
-                "theme": "default"
+                "navLock": { "navId": NAV_IDS.STARPORT, "screenId": "market" }
             },
             {
                 "stepId": "mission_2_2",
                 "text": "This is the <b>Moon Market</b>.<br>On each commodity you will find a wealth of information to aid your trading.<br><br>The <b class='hl-green font-bold'>MKT</b> indicator will inform you of <b class='hl-green font-bold'>prices higher or lower than average.</b> Selecting the price will reveal past performance.<br><br>Select the <b class='hl-yellow font-bold'>Buy/Sell toggle</b> to transition to sale mode, and then sell your single unit of <b>Plasteel</b>.",
+                size: { width: '400px', height: '150px' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 67,
                 "completion": { "type": "ACTION", "action": "sell-item", "goodId": "plasteel" },
                 "nextStepId": "mission_2_3",
-                "isSkippable": false,
-                "targetSelector": "[data-tut-target='market-card-plasteel']",
-                "useSpotlight": true,
-                "allowClickThrough": true, // Allow clicking the toggle and sell buttons
-                "theme": "default"
+                "isSkippable": false
             },
             {
                 "stepId": "mission_2_3",
                 "text": "<b class='hl-green font-bold'>Pure profit</b>!<br><br>However, you still need more <b class='hl-yellow font-bold'>credits</b>! Return to the <b>Mission Terminal</b> by selecting the <b>Data</b> tab.",
+                size: { width: '400px', height: '150px' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 71,
                 "completion": { "type": "SCREEN_LOAD", "screenId": "missions" },
                 "nextStepId": "mission_2_4",
                 "isSkippable": false,
-                "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" },
-                "targetSelector": "[data-tut-target='nav-tab-missions']",
-                "useSpotlight": true,
-                "allowClickThrough": false,
-                "theme": "default"
+                "navLock": { "navId": NAV_IDS.DATA, "screenId": "missions" }
             },
             {
                 "stepId": "mission_2_4",
                 "text": "This mission offers a <b class='hl-yellow font-bold'>credit</b> reward.<br><br>Accept the mission, <b>Martian Resupply</b>.",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 82,
                 "completion": { "type": "ACTION", "action": "accept-mission", "missionId": "mission_tutorial_02" },
                 "nextStepId": "mission_3_1",
-                "isSkippable": false,
-                "targetSelector": "[data-tut-target='mission-card-mission_tutorial_02']",
-                "useSpotlight": true,
-                "allowClickThrough": false, // Click handles showing the modal, modal logic handles the rest.
-                "theme": "default"
+                "isSkippable": false
             },
             {
                 "stepId": "mission_3_1",
                 "text": "To complete this mission you will need to <b>travel to Mars</b> after you have purchased <b>two Plasteel</b> from any <b>Market</b>.<br><br>After you have acquired the <b>Plasteel</b>, visit the <b>Mission</b> tab on <b>Mars</b> to submit the cargo and complete the mission. ",
+                size: { width: '400px', height: '160px' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 83,
                 "completion": { "type": "ACTION", "action": "complete-mission", "missionId": "mission_tutorial_02" },
                 "nextStepId": "mission_final",
                 "isSkippable": false,
-                "navLock": null,
-                "targetSelector": null, // Safe Zone
-                "theme": "default"
+                "navLock": null
             },
             {
                 "stepId": "mission_final",
                 "text": "Well done Captain {playerName}, you have successfully completed trades across the <b>Moon</b> and <b>Mars</b>.<br><br>Continue to trade commodities for <b class='hl-green font-bold'>favorable margins</b> and complete missions to unlock additional opportunities.<br><br><b>The Solar System awaits</b>!",
+                size: { width: '400px', height: 'auto' },
+                anchorElement: 'body',
+                positionX: 50,
+                positionY: 22,
                 "completion": { "type": "INFO" },
                 "nextStepId": null,
                 "isSkippable": false,
                 "buttonText": "Complete Tutorial",
-                "navLock": null,
-                "targetSelector": null, // Safe Zone
-                "theme": "default"
+                "navLock": null
             }
         ]
     }
@@ -17394,248 +17310,326 @@ export class UIEventControl {
 
 --- START OF FILE: ./js/services/ui/UITutorialManager.js ---
 // js/services/ui/UITutorialManager.js
-
-/**
- * @fileoverview Domain Controller for the interactive tutorial system.
- * Handles dual-mode rendering (Safe Zone vs Targeted), the Ghost Hunter 
- * MutationObserver for virtualized lists, and Spotlight masking.
- */
+import { DB } from '../../data/database.js';
 
 export class UITutorialManager {
     /**
-     * @param {import('../UIManager.js').UIManager} uiManager The master UI Facade.
+     * @param {import('../UIManager.js').UIManager} manager
      */
-    constructor(uiManager) {
-        this.uiManager = uiManager;
-        
-        // State tracking for cleanup
+    constructor(manager) {
+        this.manager = manager;
         this.popperInstance = null;
-        this.mutationObserver = null;
-        this.ghostHunterTimeout = null;
-        this.activeTargetElement = null;
-        this.activeToastElement = null;
-        this.activeSpotlightMask = null;
-
-        this._initSafeZone();
+        this.activeHighlightConfig = null;
     }
 
     /**
-     * Ensures the Safe Zone container exists in the DOM for Mode A rendering.
-     * @private
-     */
-    _initSafeZone() {
-        let safeZone = document.getElementById('tt-safe-zone');
-        if (!safeZone) {
-            safeZone = document.createElement('div');
-            safeZone.id = 'tt-safe-zone';
-            safeZone.className = 'tt-safe-zone';
-            document.body.appendChild(safeZone);
-        }
-        this.safeZone = safeZone;
-    }
-
-    /**
-     * Renders a tutorial step based on the V4 Schema.
-     * @param {Object} config - { step, onSkip, onNext, gameState }
+     * Displays a tutorial toast/popup.
+     * @param {object} params
+     * @param {object} params.step - The tutorial step object.
+     * @param {Function} params.onSkip - Callback for skip.
+     * @param {Function} params.onNext - Callback for next.
+     * @param {object} params.gameState - Current game state.
      */
     showTutorialToast({ step, onSkip, onNext, gameState }) {
-        this.hideTutorialToast(); // Clean up any existing toasts
-
-        // 1. Build the Toast DOM Element
-        const toast = document.createElement('div');
-        toast.className = `tt-window tt-theme-${step.theme || 'default'}`;
-        toast.id = 'tutorial-toast-container';
-
-        // Header & Minimize Toggle
-        const header = document.createElement('div');
-        header.className = 'tt-header';
+        const toast = this.manager.cache.tutorialToastContainer;
+        const arrow = toast.querySelector('#tt-arrow');
+        const isOverlayAnchor = step.anchorElement === 'body';
+        let referenceEl;
         
-        const toggleBtn = document.createElement('button');
-        toggleBtn.className = 'tt-toggle-btn';
-        toggleBtn.innerHTML = '&minus;';
-        toggleBtn.title = "Toggle Minimize";
-        toggleBtn.onclick = (e) => {
-            e.stopPropagation();
-            toast.classList.toggle('tt-minimized');
-            toggleBtn.innerHTML = toast.classList.contains('tt-minimized') ? '&plus;' : '&minus;';
-        };
-        header.appendChild(toggleBtn);
-        toast.appendChild(header);
-
-        // Body Content
-        const body = document.createElement('div');
-        body.className = 'tt-scrollable';
-        body.innerHTML = step.text;
-        toast.appendChild(body);
-
-        // Declarative Advance Arrow (Only for non-action steps)
-        if (step.completion && step.completion.type === 'INFO') {
-            const nextArrow = document.createElement('button');
-            nextArrow.className = 'tt-next-arrow';
-            nextArrow.onclick = (e) => {
-                e.stopPropagation();
-                onNext();
-            };
-            toast.appendChild(nextArrow);
-        }
-
-        this.activeToastElement = toast;
-
-        // 2. Determine Render Mode
-        if (!step.targetSelector) {
-            // Mode A: Safe Zone Fallback
-            this.safeZone.appendChild(toast);
+        if (isOverlayAnchor) {
+            referenceEl = this.manager.cache.tutorialAnchorOverlay; 
         } else {
-            // Mode B: Targeted Anchoring
-            const targetEl = document.querySelector(step.targetSelector);
-            
-            if (targetEl) {
-                this._applyTargetedToast(targetEl, step, toast);
-            } else {
-                this._huntForGhostElement(step, toast);
+            referenceEl = document.querySelector(step.anchorElement);
+            if (!referenceEl) {
+                this.manager.logger.error('UITutorialManager', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
+                referenceEl = this.manager.cache.tutorialAnchorOverlay; 
             }
         }
-    }
-
-    /**
-     * Applies Spotlight, attaches to DOM, and boots Popper.js for a found element.
-     * @private
-     */
-    _applyTargetedToast(targetEl, step, toast) {
-        this.activeTargetElement = targetEl;
-
-        // Apply Spotlight Shield if requested
-        if (step.useSpotlight) {
-            this.activeSpotlightMask = document.createElement('div');
-            this.activeSpotlightMask.className = 'tut-spotlight-mask';
-            
-            if (step.allowClickThrough) {
-                this.activeSpotlightMask.classList.add('tut-allow-click');
-            }
-            
-            document.body.appendChild(this.activeSpotlightMask);
-
-            // Yield to parent stacking contexts (like carousel items)
-            const elevateEl = targetEl.closest('.carousel-item') || targetEl;
-            elevateEl.classList.add('tut-spotlight-target');
-            this.activeTargetElement = elevateEl; // Track the elevated element for cleanup
-        }
-
-        // Setup Popper.js
-        const arrow = document.createElement('div');
-        arrow.className = 'tt-popper-arrow';
-        arrow.setAttribute('data-popper-arrow', '');
-        toast.appendChild(arrow);
-
-        document.body.appendChild(toast);
-
-        // Standard Popper v2 initialization
-        if (window.Popper) {
-            this.popperInstance = window.Popper.createPopper(targetEl, toast, {
-                placement: 'auto',
-                modifiers: [
-                    { name: 'offset', options: { offset: [0, 12] } },
-                    { name: 'preventOverflow', options: { padding: 10 } },
-                    { name: 'arrow', options: { element: arrow } }
-                ],
-            });
-        } else {
-            console.warn("Popper.js not found. Falling back to Safe Zone.");
-            this.safeZone.appendChild(toast);
-        }
-    }
-
-    /**
-     * The Ghost Hunter: Waits for virtualized elements to mount via MutationObserver.
-     * @private
-     */
-    _huntForGhostElement(step, toast) {
-        console.log(`[Ghost Hunter] Initiating search for: ${step.targetSelector}`);
-
-        // Set 4-second expiration
-        this.ghostHunterTimeout = setTimeout(() => {
-            console.error(`[Ghost Hunter] Timeout reached. Target not found: ${step.targetSelector}. Aborting step visual.`);
-            this.hideTutorialToast();
-        }, 4000);
-
-        // Force scroll on known generic carousels if targetIndex is provided
-        if (step.targetIndex !== undefined) {
-            const carousels = document.querySelectorAll('.carousel-inner');
-            carousels.forEach(c => {
-                // Rough programmatic scroll to trigger intersection observers
-                c.scrollLeft = step.targetIndex * 300; 
-            });
-        }
-
-        this.mutationObserver = new MutationObserver((mutations, obs) => {
-            const targetEl = document.querySelector(step.targetSelector);
-            if (targetEl) {
-                console.log(`[Ghost Hunter] Target acquired: ${step.targetSelector}`);
-                clearTimeout(this.ghostHunterTimeout);
-                obs.disconnect();
-                this._applyTargetedToast(targetEl, step, toast);
-            }
-        });
-
-        this.mutationObserver.observe(document.body, {
-            childList: true,
-            subtree: true,
-            attributes: true // Catch elements removing 'hidden' classes
-        });
-    }
-
-    /**
-     * Triggers the positive feedback visual sequence.
-     * Returns a promise to allow the TutorialService to await the animation.
-     * @returns {Promise<void>}
-     */
-    triggerTutorialSuccessShimmer() {
-        return new Promise((resolve) => {
-            if (this.activeToastElement) {
-                this.activeToastElement.classList.add('tt-shimmer-success');
-                setTimeout(() => resolve(), 1000);
-            } else {
-                resolve();
-            }
-        });
-    }
-
-    /**
-     * Completely removes all tutorial visual elements and observers from the DOM.
-     */
-    hideTutorialToast() {
-        // Clear Ghost Hunter tools
-        if (this.ghostHunterTimeout) {
-            clearTimeout(this.ghostHunterTimeout);
-            this.ghostHunterTimeout = null;
-        }
-        if (this.mutationObserver) {
-            this.mutationObserver.disconnect();
-            this.mutationObserver = null;
-        }
-
-        // Destroy Popper
+        
         if (this.popperInstance) {
             this.popperInstance.destroy();
             this.popperInstance = null;
         }
 
-        // Remove DOM Toast
-        if (this.activeToastElement && this.activeToastElement.parentNode) {
-            this.activeToastElement.parentNode.removeChild(this.activeToastElement);
+        let processedText = step.text;
+        if (processedText.includes('{shipName}')) {
+            const activeShipId = gameState.player.activeShipId;
+            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; 
+            processedText = processedText.replace(/{shipName}/g, shipName);
         }
-        this.activeToastElement = null;
 
-        // Clean up Spotlight Mask & Z-Index overrides
-        if (this.activeSpotlightMask && this.activeSpotlightMask.parentNode) {
-            this.activeSpotlightMask.parentNode.removeChild(this.activeSpotlightMask);
+        if (processedText.includes('{playerName}')) {
+            const playerName = gameState.player.name || 'Captain'; 
+            processedText = processedText.replace(/{playerName}/g, playerName);
         }
-        this.activeSpotlightMask = null;
 
-        if (this.activeTargetElement) {
-            this.activeTargetElement.classList.remove('tut-spotlight-target');
-            this.activeTargetElement = null;
+        this.manager.cache.tutorialToastText.innerHTML = processedText;
+
+        const initialWidth = step.size?.width || 'auto';
+        const initialHeight = step.size?.height || 'auto';
+        toast.style.width = initialWidth;
+        toast.style.height = initialHeight;
+        
+        if (isOverlayAnchor) {
+            const posX = step.positionX ?? 50; 
+            const posY = step.positionY ?? 50; 
+            toast.style.left = `${posX}%`;
+            toast.style.top = `${posY}%`;
+            toast.style.transform = 'translate(-50%, -50%)'; 
+            arrow.style.display = 'none'; 
+            toast.removeAttribute('data-popper-placement'); 
+            
+        } else {
+            toast.style.left = ''; 
+            toast.style.top = '';
+            toast.style.transform = ''; 
+            
+            arrow.style.display = 'block'; 
+
+            const defaultOptions = { 
+                placement: 'auto',
+                modifiers: [
+                    { name: 'offset', options: { offset: [0, 10] } }, 
+                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
+                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
+                ]
+            };
+            
+            const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+            let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
+            if (stepOffsetMod) {
+                baseModifiers.push(stepOffsetMod); 
+            } else {
+                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
+            }
+     
+            if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
+
+            const finalOptions = {
+                placement: step.placement || step.popperOptions?.placement || defaultOptions.placement,
+                modifiers: baseModifiers
+            };
+
+            this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
         }
+
+        toast.classList.remove('hidden');
+        const isInfoStep = step.completion.type === 'INFO';
+        this.manager.cache.tutorialToastNextBtn.classList.toggle('hidden', !isInfoStep);
+        if (isInfoStep) {
+            this.manager.cache.tutorialToastNextBtn.onclick = onNext;
+        }
+        const showSkipButton = false; 
+        this.manager.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
+        this.manager.cache.tutorialToastSkipBtn.onclick = onSkip;
+        this.manager.cache.tutorialToastText.scrollTop = 0;
+        
+        if (this.manager.debugService) {
+            this.manager.debugService.setActiveTutorialStep(step); 
+        }
+    }
+
+    /**
+     * Hides the tutorial toast and cleans up Popper instance.
+     */
+    hideTutorialToast() {
+        this.manager.cache.tutorialToastContainer.classList.add('hidden');
+        if (this.popperInstance) {
+            this.popperInstance.destroy();
+            this.popperInstance = null;
+        }
+        this.applyTutorialHighlight(null);
+        
+        if (this.manager.debugService) {
+            this.manager.debugService.clearActiveTutorialStep();
+        }
+    }
+
+    /**
+     * Dynamically updates the Popper position for the active toast.
+     * @param {object} newOptions 
+     */
+    updateTutorialPopper(newOptions) {
+        const toast = this.manager.cache.tutorialToastContainer;
+        const arrow = toast.querySelector('#tt-arrow');
+        const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
+
+        toast.style.width = width > 0 ? `${width}px` : 'auto';
+        toast.style.height = height > 0 ? `${height}px` : 'auto';
+
+        if (isOverlayAnchor) {
+            if (this.popperInstance) {
+                this.popperInstance.destroy();
+                this.popperInstance = null;
+                toast.removeAttribute('data-popper-placement'); 
+                toast.style.transform = ''; 
+            }
+            
+            toast.style.left = `${percentX}%`;
+            toast.style.top = `${percentY}%`;
+            toast.style.transform = 'translate(-50%, -50%)'; 
+            arrow.style.display = 'none';
+
+        } else {
+            toast.style.left = ''; 
+            toast.style.top = ''; 
+            toast.style.transform = ''; 
+            arrow.style.display = 'block';
+
+            const popperUpdateOptions = {
+                placement: placement,
+                modifiers: [
+                    { name: 'offset', options: { offset: [skidding, distance] } },
+                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
+                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
+                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
+                ]
+            };
+
+            if (this.popperInstance) {
+                this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
+                    this.manager.logger.error('UITutorialManager', 'Error updating Popper options:', e);
+                });
+            } else {
+                this.manager.logger.warn('UITutorialManager', 'Popper instance needed but not found during update. Re-trigger toast if anchor type changed.');
+            }
+        }
+    }
+
+    /**
+     * Applies the visual highlights (spotlights/arrows) for the tutorial.
+     * @param {Array} highlightConfig 
+     */
+    applyTutorialHighlight(highlightConfig) {
+        this.activeHighlightConfig = highlightConfig;
+        this._renderHighlightsFromConfig(this.activeHighlightConfig);
+    }
+
+    /**
+     * Internal renderer for highlight SVG elements.
+     * @private
+     * @param {Array} highlightConfig 
+     */
+    _renderHighlightsFromConfig(highlightConfig) {
+        const overlay = this.manager.cache.tutorialHighlightOverlay;
+        if (!overlay) return;
+
+        overlay.innerHTML = ''; 
+        if (!highlightConfig) {
+            overlay.classList.add('hidden');
+            return;
+        }
+
+        overlay.classList.remove('hidden');
+
+        highlightConfig.forEach(cue => {
+            const el = document.createElement('div');
+            el.className = 'tutorial-cue';
+            el.style.left = `${cue.x}px`;
+            el.style.top = `${cue.y}px`;
+            el.style.width = `${cue.width}px`;
+            el.style.height = `${cue.height}px`;
+            el.style.transform = `rotate(${cue.rotation}deg)`;
+            el.style.opacity = cue.style.opacity;
+
+            if (cue.style.animation !== 'None') {
+                el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+            }
+
+            let content = '';
+            if (cue.type === 'Shape') {
+                content = `
+                    <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
+                        ${cue.shapeType === 'Rectangle' ?
+                            `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
+                            `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
+                        }
+                    </svg>`;
+            } else if (cue.type === 'Arrow') {
+                content = `
+                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
+                        <defs>
+                            <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
+                            </marker>
+                        </defs>
+                        <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
+                    </svg>
+                `;
+            } else if (cue.type === 'Spotlight') {
+                el.style.borderRadius = '50%';
+                el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
+            }
+
+            el.innerHTML = content;
+            const animatedChild = el.querySelector('svg');
+            if (animatedChild && cue.style.animation !== 'None') {
+                animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
+                animatedChild.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
+                animatedChild.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
+                animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
+            }
+
+            overlay.appendChild(el);
+        });
+    }
+
+    /**
+     * Shows the "Skip Tutorial" confirmation modal.
+     * @param {Function} onConfirm 
+     */
+    showSkipTutorialModal(onConfirm) {
+        const modal = this.manager.cache.skipTutorialModal;
+        modal.classList.remove('hidden');
+
+        const confirmHandler = () => {
+            onConfirm();
+            this.manager.hideModal('skip-tutorial-modal');
+        };
+
+        const cancelHandler = () => {
+            this.manager.hideModal('skip-tutorial-modal');
+        };
+
+        this.manager.cache.skipTutorialConfirmBtn.onclick = confirmHandler;
+        this.manager.cache.skipTutorialCancelBtn.onclick = cancelHandler;
+    }
+
+    /**
+     * Shows the Tutorial Log (History) modal.
+     * @param {object} params
+     * @param {Array} params.seenBatches 
+     * @param {Function} params.onSelect 
+     */
+    showTutorialLogModal({ seenBatches, onSelect }) {
+        const logModal = document.getElementById('tutorial-log-modal');
+        const list = document.getElementById('tutorial-log-list');
+
+        if (!logModal || !list) {
+            this.manager.logger.error('UITutorialManager', 'Tutorial log modal elements not found in DOM.');
+            return;
+        }
+
+        list.innerHTML = '';
+
+        if (seenBatches.length === 0) {
+            list.innerHTML = `<li class="text-gray-400 p-2 text-center">No tutorials viewed yet.</li>`;
+        } else {
+            seenBatches.forEach(batchId => {
+                const batchData = DB.TUTORIAL_DATA[batchId];
+                if (batchData) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
+                    li.onclick = () => {
+                        logModal.classList.remove('visible');
+                        onSelect(batchId);
+                    };
+                    list.appendChild(li);
+                }
+            });
+        }
+        logModal.classList.add('visible');
     }
 }
 --- END OF FILE: ./js/services/ui/UITutorialManager.js ---
@@ -20404,7 +20398,19 @@ import { calculateInventoryUsed, skewedRandom } from '../utils.js';
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
-import { OFFICERS } from '../data/officers.js'; 
+import { OFFICERS } from '../data/officers.js'; // Added to allow population of all officers
+
+// --- NEW PRESET MAPPING ---
+// Mapping preset names to their new [X%, Y%] values
+const TUTORIAL_PRESETS_PERCENT = {
+    topCenter: [50, 15], 
+    top34Center: [50, 30],
+    vertHorizCenter: [50, 50],
+    bottom34Center: [50, 70],
+    bottomCenter: [50, 85],
+    bottomLeft: [15, 85],
+    topLeft: [15, 15],
+};
 
 // --- EPHEMERAL DEBUG MISSIONS ---
 // These are injected into DB.MISSIONS at runtime for testing purposes.
@@ -20504,9 +20510,6 @@ export class DebugService {
         this.diagElements = {};
         this.actions = {};
         
-        // V4: Bind inspector click to maintain `this` context
-        this._boundInspectorClick = this._handleInspectorClick.bind(this);
-        
         // --- State for GUI controllers ---
         this.debugState = {
             creditsToAdd: 100000,
@@ -20531,11 +20534,24 @@ export class DebugService {
             // [[DEBUG FLAG STATE]]
             alwaysTriggerEvents: false,
 
-            // V4 Tutorial Tuner State
-            inspectorActive: false,
+            // Tutorial Tuner State
+            ttStepId: 'None',
+            ttAnchor: 'N/A',
+            ttPlacement: 'auto',
+            ttOffsetDistance: 0,
+            ttOffsetSkidding: 0,
+            ttPercentX: 50,
+            ttPercentY: 50,
+            ttWidth: 0,
+            ttHeight: 0,
+            ttGeneratedCode: ''
         }; 
+        // --- End State ---
 
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
+
+        // References to GUI controllers and folders for enabling/disabling
+         this.tutorialPositionalControllers = {};
     }
 
     /**
@@ -20937,104 +20953,6 @@ ${logHistory}
         }
     }
 
-    // --- V4 TUTORIAL INSPECTOR ACTIONS ---
-    
-    _toggleInspector(isActive) {
-        this.debugState.inspectorActive = isActive;
-        if (isActive) {
-            document.addEventListener('click', this._boundInspectorClick, { capture: true });
-            this.logger.warn('DebugService', 'Tutorial Inspector ACTIVE. Clicks are intercepted.');
-        } else {
-            document.removeEventListener('click', this._boundInspectorClick, { capture: true });
-            this.logger.info.system('DebugService', 'Tutorial Inspector INACTIVE.');
-        }
-    }
-
-    _handleInspectorClick(e) {
-        if (!this.debugState.inspectorActive) return;
-        
-        e.preventDefault();
-        e.stopPropagation();
-
-        let target = e.target;
-        let selector = null;
-
-        while (target && target !== document.body) {
-            if (target.hasAttribute('data-tut-target')) {
-                selector = `[data-tut-target='${target.getAttribute('data-tut-target')}']`;
-                break;
-            } else if (target.id) {
-                selector = `#${target.id}`;
-                break;
-            }
-            target = target.parentElement;
-        }
-
-        if (selector) {
-            const boilerplate = `{
-    "stepId": "new_step",
-    "text": "Instruction text here.",
-    "completion": { "type": "INFO" },
-    "nextStepId": null,
-    "isSkippable": true,
-    "targetSelector": "${selector}",
-    "useSpotlight": true,
-    "allowClickThrough": false,
-    "theme": "default"
-}`;
-            console.log(`[Tutorial Inspector] Target Found:\n${boilerplate}`);
-            if (navigator && navigator.clipboard) {
-                navigator.clipboard.writeText(boilerplate).then(() => {
-                    this.uiManager.createFloatingText('Copied Selector JSON', e.clientX, e.clientY, '#4ade80');
-                }).catch(err => console.error('Clipboard error', err));
-            }
-        } else {
-            console.log(`[Tutorial Inspector] No valid targetable element found.`);
-            this.uiManager.createFloatingText('No selector found', e.clientX, e.clientY, '#f87171');
-        }
-    }
-
-    _forceNextTutorialStep() {
-        if (this.simulationService && this.simulationService.tutorialService) {
-            this.simulationService.tutorialService.advanceStep();
-            this.uiManager.createFloatingText('Forced Next Step', window.innerWidth/2, window.innerHeight/2, '#4ade80');
-        }
-    }
-
-    _resetTutorialState() {
-        this.gameState.tutorials.seenBatchIds = [];
-        this.gameState.tutorials.skippedTutorialBatches = [];
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.navLock = null;
-        
-        if (this.uiManager && this.uiManager.tutorialManager) {
-            this.uiManager.tutorialManager.hideTutorialToast();
-        }
-        
-        this.gameState.setState({});
-        this.uiManager.createFloatingText('Tutorials Reset', window.innerWidth/2, window.innerHeight/2, '#facc15');
-    }
-
-    _testDummyToast() {
-        if (!this.uiManager || !this.uiManager.tutorialManager) return;
-        
-        const dummyStep = {
-            stepId: 'dummy_test',
-            text: '<b>Constraint Test</b><br><br>' + 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(15),
-            completion: { type: 'INFO' },
-            theme: 'default',
-            targetSelector: null 
-        };
-        
-        this.uiManager.tutorialManager.showTutorialToast({
-            step: dummyStep,
-            onSkip: () => this.uiManager.tutorialManager.hideTutorialToast(),
-            onNext: () => this.uiManager.tutorialManager.hideTutorialToast(),
-            gameState: this.gameState.getState()
-        });
-    }
-
     /**
      * @private
      */
@@ -21252,10 +21170,17 @@ ${logHistory}
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
 
-            // --- V4 TUTORIAL INSPECTOR ACTIONS ---
-            forceNextStep: { name: 'Force Next Step', type: 'button', handler: () => this._forceNextTutorialStep() },
-            resetTutorials: { name: 'Reset Tutorials', type: 'button', handler: () => this._resetTutorialState() },
-            testDummyToast: { name: 'Test Dummy Toast', type: 'button', handler: () => this._testDummyToast() }
+            // --- [[START]] TUTORIAL TUNER ACTIONS ---
+            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
+            // --- Presets (Now using keys from TUTORIAL_PRESETS_PERCENT) ---
+            presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset('topCenter') },
+            presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('top34Center') },
+             presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
+            presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('bottom34Center') },
+            presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset('bottomCenter') },
+            presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset('bottomLeft') },
+            presetTopLeft: { name: 'Top Left', type: 'button', handler: () => this._applyTutorialPreset('topLeft') },
+            // --- [[END]] TUTORIAL TUNER ACTIONS ---
         };
     }
 
@@ -21439,18 +21364,44 @@ ${logHistory}
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
-        // --- V4 TUTORIAL INSPECTOR FOLDER ---
+        // --- [[START]] TUTORIAL TUNER FOLDER ---
         const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
         tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
-        
-        tutorialFolder.add(this.debugState, 'inspectorActive')
-            .name('Toggle Inspector')
-            .onChange((val) => this._toggleInspector(val));
-            
-        tutorialFolder.add(this.actions.forceNextStep, 'handler').name(this.actions.forceNextStep.name);
-        tutorialFolder.add(this.actions.resetTutorials, 'handler').name(this.actions.resetTutorials.name);
-        tutorialFolder.add(this.actions.testDummyToast, 'handler').name(this.actions.testDummyToast.name);
-        // ------------------------------------
+
+        tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
+        tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
+
+        // --- Size Tuners ---
+        tutorialFolder.add(this.debugState, 'ttWidth', 0, 800, 10).name('Width (0=auto)').onChange(() => this._handleTutorialTune());
+        tutorialFolder.add(this.debugState, 'ttHeight', 0, 800, 10).name('Height (0=auto)').onChange(() => this._handleTutorialTune());
+
+        // --- Position Tuners (Conditional) ---
+        // Store references to controllers
+        this.tutorialPositionalControllers.percentX = tutorialFolder.add(this.debugState, 'ttPercentX', 0, 100, 1).name('X %').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.percentY = tutorialFolder.add(this.debugState, 'ttPercentY', 0, 100, 1).name('Y %').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.placement = tutorialFolder.add(this.debugState, 'ttPlacement').name('Placement (Elem)').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.distance = tutorialFolder.add(this.debugState, 'ttOffsetDistance', -500, 500, 1).name('Distance (Elem)').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.skidding = tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding (Elem)').onChange(() => this._handleTutorialTune());
+
+        // --- Position Presets ---
+        const presetFolder = tutorialFolder.addFolder('Position Presets');
+        presetFolder.add(this.actions.presetTopCenter, 'handler').name(this.actions.presetTopCenter.name);
+        presetFolder.add(this.actions.presetTop34Center, 'handler').name(this.actions.presetTop34Center.name);
+        presetFolder.add(this.actions.presetVertHorizCenter, 'handler').name(this.actions.presetVertHorizCenter.name);
+        presetFolder.add(this.actions.presetBottom34Center, 'handler').name(this.actions.presetBottom34Center.name);
+        presetFolder.add(this.actions.presetBottomCenter, 'handler').name(this.actions.presetBottomCenter.name);
+        presetFolder.add(this.actions.presetBottomLeft, 'handler').name(this.actions.presetBottomLeft.name);
+        presetFolder.add(this.actions.presetTopLeft, 'handler').name(this.actions.presetTopLeft.name);
+        // ** Store reference to the FOLDER INSTANCE itself **
+        this.tutorialPositionalControllers.presetFolder = presetFolder;
+
+        // --- Code Generator ---
+        tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
+        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen();
+
+        // Initial state update for controls
+        this._updateTutorialControlVisibility(false); // Assume initially no step is active
+        // --- [[END]] TUTORIAL TUNER FOLDER ---
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
@@ -21466,6 +21417,258 @@ ${logHistory}
 
         this.gui.folders.forEach(folder => folder.close());
     }
+
+    // --- [[START]] TUTORIAL TUNER METHODS ---
+
+    /**
+     * Parses a size value (e.g., 'auto', '300px', 300) into a number for the slider.
+     * @param {string|number|undefined} sizeValue - The value from the step definition.
+     * @returns {number} A number, with 0 representing 'auto'.
+     * @private
+     */
+    _parseSize(sizeValue) {
+        if (!sizeValue || sizeValue === 'auto') return 0;
+        if (typeof sizeValue === 'number') return sizeValue;
+        if (typeof sizeValue === 'string') {
+            const parsed = parseInt(sizeValue, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        return 0;
+    }
+
+    /**
+     * Applies a position preset to the tuner sliders based on anchoring mode.
+     * @param {string} presetKey - Key corresponding to TUTORIAL_PRESETS_PERCENT.
+     * @private
+     */
+    _applyTutorialPreset(presetKey) {
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body'; // Using 'body' as proxy for overlay
+
+        if (isOverlayAnchor) {
+            const percentValues = TUTORIAL_PRESETS_PERCENT[presetKey];
+            if (percentValues) {
+                this.debugState.ttPercentX = percentValues[0];
+                this.debugState.ttPercentY = percentValues[1];
+                this.tutorialPositionalControllers.percentX?.updateDisplay();
+                this.tutorialPositionalControllers.percentY?.updateDisplay();
+            } else {
+                 this.logger.warn('DebugService', `Preset key "${presetKey}" not found for percentage presets.`);
+            }
+         } else {
+            // Placeholder: Need to define offset presets if required for element anchors
+            this.logger.warn('DebugService', 'Offset presets not yet defined for element anchors.');
+            // Example:
+            // const offsetValues = TUTORIAL_PRESETS_OFFSET[presetKey];
+            // if (offsetValues) {
+            //     this.debugState.ttOffsetSkidding = offsetValues[0];
+            //     this.debugState.ttOffsetDistance = offsetValues[1];
+            //     this.tutorialPositionalControllers.skidding?.updateDisplay();
+            //     this.tutorialPositionalControllers.distance?.updateDisplay();
+            // }
+        }
+
+        // Trigger UI update
+        this._handleTutorialTune();
+    }
+
+    /**
+     * Shows/hides tutorial tuner controls based on anchor type using lil-gui methods.
+     * @param {boolean} isOverlayAnchor - True if the toast should use percentage positioning.
+     * @private
+     */
+    _updateTutorialControlVisibility(isOverlayAnchor) {
+         // Helper function using lil-gui's show() / hide()
+         const setVisibility = (controller, shouldShow) => {
+             if (controller) {
+                 controller.show(shouldShow);
+             }
+         };
+
+         // Percentage controls
+         setVisibility(this.tutorialPositionalControllers.percentX, isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.percentY, isOverlayAnchor);
+
+         // Popper offset controls
+         setVisibility(this.tutorialPositionalControllers.placement, !isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.distance, !isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.skidding, !isOverlayAnchor);
+
+         // Preset folder visibility (Show only for overlay anchors for now)
+         if (this.tutorialPositionalControllers.presetFolder) {
+              this.tutorialPositionalControllers.presetFolder.show(isOverlayAnchor);
+         }
+     }
+
+
+    /**
+     * Populates the Tutorial Tuner with the active step's data.
+     * Called by UIManager when a toast is shown.
+     * @param {object} step - The tutorial step object.
+     */
+    setActiveTutorialStep(step) {
+        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
+        const isOverlayAnchor = step.anchorElement === 'body'; // Use 'body' to signify overlay anchor
+
+        // Reset generated code
+        this.debugState.ttGeneratedCode = '';
+
+        // Update state
+        this.debugState.ttStepId = step.stepId;
+        this.debugState.ttAnchor = step.anchorElement; // Keep original anchor for info
+        this.debugState.ttWidth = this._parseSize(step.size?.width) || 0;
+        this.debugState.ttHeight = this._parseSize(step.size?.height) || 0;
+
+        if (isOverlayAnchor) {
+            // Use percentage position from step or default to center
+            this.debugState.ttPercentX = step.positionX ?? 50;
+            this.debugState.ttPercentY = step.positionY ?? 50;
+            // Reset/default Popper values for clarity
+            this.debugState.ttPlacement = 'auto';
+            this.debugState.ttOffsetDistance = 0;
+            this.debugState.ttOffsetSkidding = 0;
+        } else {
+            // Use Popper settings from step or defaults
+            const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+            let skidding = 0;
+            let distance = 0;
+
+            if (typeof offsetMod?.options?.offset === 'function') {
+                this.logger.warn('DebugService', `Offset function used for ${step.stepId}. Tuner defaults to [0, 10].`);
+                distance = 10; // Default distance for element anchors
+            } else if (Array.isArray(offsetMod?.options?.offset)) {
+                skidding = offsetMod.options.offset[0] || 0;
+                distance = offsetMod.options.offset[1] || 0;
+            } else {
+                 distance = 10; // Default distance if no offset defined
+            }
+
+            this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || 'auto';
+            this.debugState.ttOffsetDistance = distance;
+            this.debugState.ttOffsetSkidding = skidding;
+            // Reset/default percentage values
+            this.debugState.ttPercentX = 50;
+            this.debugState.ttPercentY = 50;
+        }
+
+        // Update visibility of controls AFTER setting state
+         this._updateTutorialControlVisibility(isOverlayAnchor);
+
+        // Manually update displays for all relevant controllers
+        // This ensures sliders reflect the loaded step's values
+        Object.values(this.tutorialPositionalControllers).forEach(controllerOrFolder => {
+             // Check if it's a controller (has updateDisplay) or the folder (doesn't)
+             if (controllerOrFolder && typeof controllerOrFolder.updateDisplay === 'function') {
+                 controllerOrFolder.updateDisplay();
+             }
+         });
+         // Also update size controllers
+         this.gui.controllers.find(c => c.property === 'ttWidth')?.updateDisplay();
+         this.gui.controllers.find(c => c.property === 'ttHeight')?.updateDisplay();
+
+    }
+
+    /**
+     * Clears and resets the Tutorial Tuner.
+     * Called by UIManager when a toast is hidden.
+     */
+    clearActiveTutorialStep() {
+        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
+
+        // Reset all state properties to their defaults
+        this.debugState.ttStepId = 'None';
+        this.debugState.ttAnchor = 'N/A';
+        this.debugState.ttPlacement = 'auto';
+        this.debugState.ttOffsetDistance = 0;
+        this.debugState.ttOffsetSkidding = 0;
+        this.debugState.ttPercentX = 50;
+        this.debugState.ttPercentY = 50;
+        this.debugState.ttWidth = 0;
+        this.debugState.ttHeight = 0;
+        this.debugState.ttGeneratedCode = '';
+
+        // Hide conditional controls
+        this._updateTutorialControlVisibility(false);
+    }
+
+    /**
+     * Handles live tuning input from the debug panel.
+     * @private
+     */
+    _handleTutorialTune() {
+        if (!this.uiManager) return;
+
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
+        this.logger.info.system('DebugService', `Tune event (Overlay: ${isOverlayAnchor}): X%=${this.debugState.ttPercentX}, Y%=${this.debugState.ttPercentY}, Place=${this.debugState.ttPlacement}, Dist=${this.debugState.ttOffsetDistance}, Skid=${this.debugState.ttOffsetSkidding}`);
+
+        this.uiManager.updateTutorialPopper({
+            isOverlayAnchor: isOverlayAnchor, // Pass mode to UIManager
+            // Size
+            width: Number(this.debugState.ttWidth) || 0,
+            height: Number(this.debugState.ttHeight) || 0,
+            // Percentage Position (if overlay)
+            percentX: Number(this.debugState.ttPercentX) || 50,
+            percentY: Number(this.debugState.ttPercentY) || 50,
+            // Popper Position (if element)
+            placement: this.debugState.ttPlacement,
+            distance: Number(this.debugState.ttOffsetDistance) || 0,
+            skidding: Number(this.debugState.ttOffsetSkidding) || 0,
+        });
+    }
+
+    /**
+     * Generates the code string from the current tuner state.
+     * Outputs either percentage or Popper options based on anchor type.
+     * @private
+     */
+    _generateTutorialCode() {
+        this.logger.info.system('DebugService', 'Generating tutorial code...');
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
+
+        // Size String (common)
+        const hasSize = this.debugState.ttWidth > 0 || this.debugState.ttHeight > 0;
+        const widthVal = this.debugState.ttWidth > 0 ? `'${this.debugState.ttWidth}px'` : "'auto'";
+        const heightVal = this.debugState.ttHeight > 0 ? `'${this.debugState.ttHeight}px'` : "'auto'";
+        const sizeString = hasSize ? `
+size: { width: ${widthVal}, height: ${heightVal} },` : '';
+
+        let positionString = '';
+        if (isOverlayAnchor) {
+            // Generate Percentage Position Code
+             // Make sure anchorElement is 'body'
+             positionString = `
+anchorElement: 'body',`; // Explicitly set anchor
+             // Only add percentages if not default (50, 50)
+            if (this.debugState.ttPercentX !== 50 || this.debugState.ttPercentY !== 50) {
+                 positionString += `
+positionX: ${this.debugState.ttPercentX},
+positionY: ${this.debugState.ttPercentY},`;
+            }
+
+        } else {
+            // Generate Popper Options Code
+             // Add anchorElement only if it's NOT body
+             if (this.debugState.ttAnchor !== 'body') {
+                 positionString = `
+anchorElement: '${this.debugState.ttAnchor}',`;
+             }
+            positionString += `
+placement: '${this.debugState.ttPlacement}',
+popperOptions: {
+    modifiers: [
+        { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
+        // Add other modifiers here if needed in the future
+    ]
+}`;
+        }
+
+        // Construct final code, removing potential trailing comma before a closing brace
+         let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
+        code = code.replace(/,\s*(\}|$)/g, '$1'); // Regex to remove trailing comma
+
+        this.debugState.ttGeneratedCode = code;
+    }
+
+    // --- [[END]] TUTORIAL TUNER METHODS ---
 }
 --- END OF FILE: ./js/services/DebugService.js ---
 
@@ -27895,9 +28098,6 @@ export class TutorialService {
         this.logger = logger;
         this.activeBatchId = null;
         this.activeStepId = null;
-        
-        // V4: Concurrency lock to prevent multiple triggers during the shimmer delay
-        this._isAdvancing = false; 
 
         // Create a map of screenId -> navId for easy lookup when tutorials need to force navigation.
         this.screenToNavMap = {};
@@ -27913,18 +28113,14 @@ export class TutorialService {
      * This is the main entry point for the tutorial system, called after player actions or screen loads.
      * @param {object} [actionData=null] Data about the action that just occurred (e.g., { type: 'ACTION', action: 'buy-ship' }).
      */
-    async checkState(actionData = null) {
-        if (this._isAdvancing) return; // Prevent double execution while shimmer plays
-
+    checkState(actionData = null) {
         // If a tutorial is currently active, check if the action completes the current step.
         if (this.activeBatchId && this.activeStepId) {
             const batch = DB.TUTORIAL_DATA[this.activeBatchId];
             const step = batch.steps.find(s => s.stepId === this.activeStepId);
 
             if (step && this._matchesCondition(step.completion, actionData)) {
-                this._isAdvancing = true;
-                await this.advanceStep();
-                this._isAdvancing = false;
+                this.advanceStep();
             }
             return;
         }
@@ -27996,20 +28192,12 @@ export class TutorialService {
     /**
      * Advances the tutorial to the next step in the current batch, or ends the batch if it's the final step.
      */
-    async advanceStep() {
+    advanceStep() {
         if (!this.activeStepId || !this.activeBatchId) return;
 
         const batch = DB.TUTORIAL_DATA[this.activeBatchId];
         const currentStep = batch.steps.find(s => s.stepId === this.activeStepId);
         
-        // V4: Trigger Positive Feedback Shimmer
-        if (typeof this.uiManager.triggerTutorialSuccessShimmer === 'function') {
-            await this.uiManager.triggerTutorialSuccessShimmer();
-        } else {
-            // Fallback delay until Phase 3 controller is implemented
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-
         this.uiManager.hideTutorialToast();
 
         if (currentStep && currentStep.nextStepId) {
@@ -28038,10 +28226,8 @@ export class TutorialService {
             return;
         }
 
-        // V4: Apply navigation lock based on targetSelector & allowClickThrough
-        if (step.allowClickThrough === false && step.targetSelector) {
-            this.gameState.tutorials.navLock = { targetSelector: step.targetSelector };
-        } else if (step.hasOwnProperty('navLock')) {
+        // Apply navigation lock based on tutorial data.
+        if (step.hasOwnProperty('navLock')) {
             // A step can explicitly define its own lock (or null to unlock).
             this.gameState.tutorials.navLock = step.navLock;
         } else if (batch.navLock) {
@@ -28061,10 +28247,7 @@ export class TutorialService {
         this.uiManager.showTutorialToast({
             step: step,
             onSkip: () => this.uiManager.showSkipTutorialModal(() => this.skipActiveTutorial()),
-            onNext: () => {
-                this._isAdvancing = true;
-                this.advanceStep().finally(() => { this._isAdvancing = false; });
-            },
+            onNext: () => this.advanceStep(),
             gameState: this.gameState.getState()
         });
         
@@ -28114,12 +28297,6 @@ export class TutorialService {
         switch (condition.type) {
             case TUTORIAL_ACTION_TYPES.SCREEN_LOAD:
                 return condition.screenId === actionData.screenId;
-            case 'UI_EVENT':
-                // V4 Schema Support for distinct DOM/UI interactions
-                return condition.event === actionData.event && condition.target === actionData.target;
-            case 'STATE_CHANGE':
-                // V4 Schema Support for logic-layer state mutations
-                return condition.stateKey === actionData.stateKey && condition.value === actionData.value;
             case TUTORIAL_ACTION_TYPES.ACTION:
                 if (condition.action === ACTION_IDS.SET_SCREEN && actionData.action === ACTION_IDS.SET_SCREEN) {
                     return condition.navId === actionData.navId && condition.screenId === actionData.screenId;
@@ -32842,7 +33019,6 @@ export class IntelService {
  */
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS } from '../../data/constants.js';
-import { DB } from '../../data/database.js';
 
 export class MarketEventHandler {
     /**
@@ -32878,20 +33054,6 @@ export class MarketEventHandler {
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
     handleClick(e, actionTarget) {
-        const state = this.gameState.getState();
-
-        // --- V4 AUTO-ADVANCE INTERCEPTION ---
-        let v4TargetMatch = false;
-        const activeBatchId = state.tutorials.activeBatchId;
-        const activeStepId = state.tutorials.activeStepId;
-        
-        if (activeBatchId && activeStepId) {
-            const step = DB.TUTORIAL_DATA[activeBatchId].steps.find(s => s.stepId === activeStepId);
-            if (step && step.targetSelector && actionTarget.matches(step.targetSelector)) {
-                v4TargetMatch = true;
-            }
-        }
-
         const { action } = actionTarget.dataset;
 
         switch (action) {
@@ -32902,14 +33064,6 @@ export class MarketEventHandler {
             case ACTION_IDS.DECREMENT:
                 this._performMarketAction(actionTarget, action, e);
                 break;
-        }
-
-        // --- V4 AUTO-ADVANCE EXECUTION ---
-        if (v4TargetMatch && !this.simulationService.tutorialService._isAdvancing) {
-            this.simulationService.tutorialService._isAdvancing = true;
-            this.simulationService.tutorialService.advanceStep().finally(() => { 
-                this.simulationService.tutorialService._isAdvancing = false; 
-            });
         }
     }
 
@@ -33721,18 +33875,6 @@ export class ActionClickHandler {
         const state = this.gameState.getState();
         if (actionTarget.hasAttribute('disabled')) return;
 
-        // --- V4 AUTO-ADVANCE INTERCEPTION ---
-        let v4TargetMatch = false;
-        const activeBatchId = state.tutorials.activeBatchId;
-        const activeStepId = state.tutorials.activeStepId;
-        
-        if (activeBatchId && activeStepId) {
-            const step = DB.TUTORIAL_DATA[activeBatchId].steps.find(s => s.stepId === activeStepId);
-            if (step && step.targetSelector && actionTarget.matches(step.targetSelector)) {
-                v4TargetMatch = true;
-            }
-        }
-
         const { action, ...dataset } = actionTarget.dataset;
         let actionData = null; 
 
@@ -34194,13 +34336,7 @@ export class ActionClickHandler {
             }
         }
 
-        // --- V4 AUTO-ADVANCE EXECUTION ---
-        if (v4TargetMatch && !this.tutorialService._isAdvancing) {
-            this.tutorialService._isAdvancing = true;
-            this.tutorialService.advanceStep().finally(() => { 
-                this.tutorialService._isAdvancing = false; 
-            });
-        } else if (actionData) {
+        if (actionData) {
             this.tutorialService.checkState(actionData);
         }
     }
@@ -35572,12 +35708,6 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
-
-# [36.16] - 2026-2-20
--  added save/load system
--  added import/export save file system
--  added options screen and menu
--  splash screen polish
 
 # [36.10] - 2026-2-20
 -  implemented balance pass v2 on all systems
@@ -37072,9 +37202,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands.",
     "Convoy_Tax": "An exponentially scaling fuel and credit penalty applied during travel to offset the mechanical advantages of operating massive multi-ship fleets.",
     "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
-    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states.",
-    "Dual-Write_Native_Bridge": "The persistence strategy that concurrently saves data to the browser's IndexedDB and the iOS native layer via WebKit message handlers, preventing save loss from cache eviction.",
-    "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data."
+    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states."
   },
   "service_summaries": {
     "SolStationService": {
@@ -37423,20 +37551,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "key_functions": {
         "saveAsset": "Stores a blob in IDB.",
         "getAsset": "Retrieves a blob from IDB."
-      },
-      "mutates_state": []
-    },
-    "SaveStorageService": {
-      "description": "Manages game saves using IndexedDB with a bulletproof iOS Native Bridge fallback. Implements a dual-write architecture for indestructible persistence.",
-      "dependencies": [
-        "IndexedDB",
-        "WebKit Message Handlers"
-      ],
-      "key_functions": {
-        "saveGame": "Saves payload to IDB and native iOS.",
-        "loadGame": "Loads save, prioritizing native iOS fallback and healing IDB.",
-        "getAllSaveMetadata": "Retrieves and merges save metadata for the splash screen.",
-        "deleteGame": "Removes save from both IDB and native iOS."
       },
       "mutates_state": []
     },
@@ -38110,11 +38224,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "path": "./js/data/officers.js",
       "role": "DATA_DEFINITION",
       "description": "Registry of Sol Station Directorate officers and their stats."
-    },
-    "F101": {
-      "path": "./js/services/SaveStorageService.js",
-      "role": "PERSISTENCE_SERVICE",
-      "description": "Service for managing game saves using IndexedDB with an iOS Native Bridge fallback."
     }
   }
 }
@@ -38447,14 +38556,6 @@ Responsibility: Low-level IndexedDB wrapper.
 Key Behavior: Manages the OrbitalAssetsDB. Stores raw Blob data to prevent iOS cache eviction.
 
 Dependencies: None (Native IndexedDB API).
-
-SaveStorageService (F101)
-
-Responsibility: Manages game saves using a dual-write architecture for indestructible persistence.
-
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB (OrbitalSavesDB) while concurrently broadcasting to the iOS native layer (Swift UserDefaults) via WebKit message handlers. Prioritizes indestructible iOS native saves during hydration to silently heal wiped IndexedDB data.
-
-Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
 TravelAnimationService.js
 
@@ -39187,23 +39288,6 @@ Consequences:
 Pro: The economy is now self-regulating and easily tunable via global variables.
 Pro: Late-game players still experience loss aversion and operating friction.
 Pro: Removes the need for arbitrary "hard caps" on wealth.
-
-ADR-032: Dual-Write iOS Native Persistence Bridge
-Status: Accepted (2026-02-20)
-
-Context: On iOS devices (the primary target platform via WKWebView/PWA), the operating system aggressively evicts web cache, IndexedDB, and LocalStorage data to save space. This resulted in devastating, unpredictable loss of player save data. Standard browser storage mechanisms proved insufficiently durable for a persistent game.
-
-Decision: Implemented a dual-write persistence architecture via `SaveStorageService.js`.
-* **Primary Storage (Web):** Saves are still written to IndexedDB (`OrbitalSavesDB`) to support standard browser play and development.
-* **Native Bridge (iOS):** Concurrently, the save payload is stringified and broadcast to the native Swift layer via `window.webkit.messageHandlers.iosSaveBackup`.
-* **Indestructible Fallback:** Swift stores this data in the native `UserDefaults`, completely immune to WebKit cache eviction.
-* **Silent Healing:** On load, the game checks for the native injected fallback (`window.__IOS_SAVES`). If found, it prioritizes this data and silently rewrites it back into IndexedDB to repair the wiped web state.
-
-Consequences:
-* **Pro:** Perfect save retention on iOS; saves survive OS-level cache purges and app updates.
-* **Pro:** Seamless background healing means the player never knows their web data was actually wiped.
-* **Pro:** Maintains full compatibility with standard desktop web browsers (they gracefully ignore the iOS bridge).
-* **Con:** Introduces slight overhead in serializing large state objects and requires native Swift code maintenance (`ViewController.swift`).
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -39580,28 +39664,6 @@ graph TD
         F --> G[TravelService counts active Ships in Fleet];
         G --> H[Assess Scaling Convoy Tax against resources];
     end
-
-2.15 Game State Persistence & Dual-Write Storage
-Flow for saving and loading game data, utilizing an iOS native bridge to prevent IndexedDB cache eviction.
-
-graph TD
-    subgraph Save Operation
-        A1[User Saves Game] --> B1[SaveStorageService.saveGame];
-        B1 --> C1[Write to IndexedDB];
-        C1 --> D1{Is iOS WebKit Bridge Active?};
-        D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
-        D1 -- No --> F1[End Save];
-        E1 --> F1;
-    end
-
-    subgraph Load Operation
-        A2[User Loads Game / Boot] --> B2[SaveStorageService.loadGame];
-        B2 --> C2{Is window.__IOS_SAVES present?};
-        C2 -- Yes --> D2[Parse Native Save Data];
-        D2 --> E2[Background: Heal IndexedDB];
-        C2 -- No --> F2[Read from IndexedDB];
-        E2 & F2 --> G2[Hydrate GameState];
-    end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
@@ -39789,23 +39851,6 @@ Manages the active concurrent missions and their granular progress.
 
 * `isCompletable`: Boolean flag indicating if all objectives are met.
 * `objectives`: Map of `objectiveId` -> `{ current, target }`.
-
----
-
-## 9. Serialized Save Structure
-
-When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge.
-
-| Property | Type | Description |
-| --- | --- | --- |
-| `slotId` | String | The primary key identifier for the save slot (e.g., 'auto', 'slot1'). |
-| `version` | Number | The schema version of the save file to handle future migrations. |
-| `metadata` | Object | Lightweight summary data used for rendering the splash/load screen without parsing the entire gamestate. |
-|   `day` | Number | The game day the save occurred. |
-|   `credits` | Number | The player's wealth at the time of saving. |
-|   `locationId` | String | The player's location. |
-|   `timestamp` | Number | Standard UNIX epoch timestamp of the save event. |
-| `...payload` | Object | The full, stringified (or direct, depending on bridge) `GameState` root object unpacked into the save object. |
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
 --- START OF FILE: ./manifest.json ---

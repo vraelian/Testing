@@ -4,13 +4,25 @@
  * the lil-gui developer panel for real-time testing and manipulation of the game state.
  */
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, ACTION_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
-import { OFFICERS } from '../data/officers.js'; 
+import { OFFICERS } from '../data/officers.js'; // Added to allow population of all officers
+
+// --- NEW PRESET MAPPING ---
+// Mapping preset names to their new [X%, Y%] values
+const TUTORIAL_PRESETS_PERCENT = {
+    topCenter: [50, 15], 
+    top34Center: [50, 30],
+    vertHorizCenter: [50, 50],
+    bottom34Center: [50, 70],
+    bottomCenter: [50, 85],
+    bottomLeft: [15, 85],
+    topLeft: [15, 15],
+};
 
 // --- EPHEMERAL DEBUG MISSIONS ---
 // These are injected into DB.MISSIONS at runtime for testing purposes.
@@ -110,11 +122,6 @@ export class DebugService {
         this.diagElements = {};
         this.actions = {};
         
-        // V4: Bind inspector events to maintain `this` context
-        this._boundInspectorClick = this._handleInspectorClick.bind(this);
-        this._boundInspectorHover = this._handleInspectorHover.bind(this);
-        this._boundInspectorOut = this._handleInspectorOut.bind(this);
-        
         // --- State for GUI controllers ---
         this.debugState = {
             creditsToAdd: 100000,
@@ -139,26 +146,24 @@ export class DebugService {
             // [[DEBUG FLAG STATE]]
             alwaysTriggerEvents: false,
 
-            // V4 Tutorial Maker State
-            inspectorActive: false,
-            draftTutorialBatch: {
-                id: 'draft_batch',
-                title: 'Draft Tutorial',
-                triggerType: 'SCREEN_LOAD',
-                triggerTarget: 'market',
-                triggerValue: 1000, // Used for STATE_CHANGE triggers
-                navLock: true,
-                steps: []
-            },
-            draftStepText: 'Instruction text here.',
-            draftStepCompletion: 'INFO',
-            draftStepTheme: 'default',
-            draftStepSpotlight: true,
-            draftStepClickThrough: false,
-            draftStepSkippable: true
+            // Tutorial Tuner State
+            ttStepId: 'None',
+            ttAnchor: 'N/A',
+            ttPlacement: 'auto',
+            ttOffsetDistance: 0,
+            ttOffsetSkidding: 0,
+            ttPercentX: 50,
+            ttPercentY: 50,
+            ttWidth: 0,
+            ttHeight: 0,
+            ttGeneratedCode: ''
         }; 
+        // --- End State ---
 
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
+
+        // References to GUI controllers and folders for enabling/disabling
+         this.tutorialPositionalControllers = {};
     }
 
     /**
@@ -560,252 +565,6 @@ ${logHistory}
         }
     }
 
-    // --- V4 TUTORIAL INSPECTOR & MAKER ACTIONS ---
-    
-    _toggleInspector(isActive) {
-        this.debugState.inspectorActive = isActive;
-        if (isActive) {
-            document.addEventListener('click', this._boundInspectorClick, { capture: true });
-            document.addEventListener('mouseover', this._boundInspectorHover, { capture: true });
-            document.addEventListener('mouseout', this._boundInspectorOut, { capture: true });
-            
-            // Inject dynamic stylesheet for visual feedback if missing
-            if (!document.getElementById('tut-maker-styles')) {
-                const style = document.createElement('style');
-                style.id = 'tut-maker-styles';
-                style.textContent = '.tut-inspector-hover { outline: 3px dashed #ef4444 !important; outline-offset: 2px !important; cursor: crosshair !important; box-shadow: 0 0 10px #ef4444 !important; z-index: 99999; }';
-                document.head.appendChild(style);
-            }
-            
-            this.logger.warn('DebugService', 'Tutorial Maker ACTIVE. Clicks are intercepted to draft steps.');
-        } else {
-            document.removeEventListener('click', this._boundInspectorClick, { capture: true });
-            document.removeEventListener('mouseover', this._boundInspectorHover, { capture: true });
-            document.removeEventListener('mouseout', this._boundInspectorOut, { capture: true });
-            
-            // Clear any stuck hover classes
-            document.querySelectorAll('.tut-inspector-hover').forEach(el => el.classList.remove('tut-inspector-hover'));
-            this.logger.info.system('DebugService', 'Tutorial Maker INACTIVE.');
-        }
-    }
-
-    _handleInspectorHover(e) {
-        if (e.target.closest('.lil-gui') || e.target.closest('#debug-panel')) return;
-        e.target.classList.add('tut-inspector-hover');
-    }
-
-    _handleInspectorOut(e) {
-        e.target.classList.remove('tut-inspector-hover');
-    }
-
-    _handleInspectorClick(e) {
-        if (!this.debugState.inspectorActive) return;
-        
-        // Fix: Exclude the debug menu from inspector clicks
-        if (e.target.closest('.lil-gui') || e.target.closest('#debug-panel')) return;
-        
-        e.preventDefault();
-        e.stopPropagation();
-
-        let target = e.target;
-        let selector = null;
-
-        while (target && target !== document.body) {
-            if (target.hasAttribute('data-tut-target')) {
-                selector = `[data-tut-target='${target.getAttribute('data-tut-target')}']`;
-                break;
-            } else if (target.id && !target.id.includes('screen')) { 
-                // Ignore structural background containers
-                selector = `#${target.id}`;
-                break;
-            } else if (target.hasAttribute('data-action')) {
-                selector = `[data-action='${target.getAttribute('data-action')}']`;
-                break;
-            }
-            target = target.parentElement;
-        }
-
-        if (selector) {
-            const stepCount = this.debugState.draftTutorialBatch.steps.length;
-            const newStep = {
-                stepId: `step_${stepCount + 1}`,
-                text: this.debugState.draftStepText,
-                completion: { type: this.debugState.draftStepCompletion },
-                nextStepId: null, // Linked on export
-                isSkippable: this.debugState.draftStepSkippable,
-                targetSelector: selector, 
-                useSpotlight: this.debugState.draftStepSpotlight,
-                allowClickThrough: this.debugState.draftStepClickThrough,
-                theme: this.debugState.draftStepTheme
-            };
-
-            this.debugState.draftTutorialBatch.steps.push(newStep);
-            
-            console.log(`[Tutorial Maker] Target Step added:\n${JSON.stringify(newStep, null, 2)}`);
-            this.uiManager.createFloatingText(`Target Step ${stepCount + 1} Drafted`, e.clientX, e.clientY, '#4ade80');
-            
-            // Clean up hover class
-            e.target.classList.remove('tut-inspector-hover');
-            
-        } else {
-            console.log(`[Tutorial Maker] No valid targetable element found.`);
-            this.uiManager.createFloatingText('Invalid Target. Use Add Safe Zone button instead.', e.clientX, e.clientY, '#f87171');
-        }
-    }
-    
-    _addSafeZoneStep() {
-        const stepCount = this.debugState.draftTutorialBatch.steps.length;
-        const newStep = {
-            stepId: `step_${stepCount + 1}`,
-            text: this.debugState.draftStepText,
-            completion: { type: this.debugState.draftStepCompletion },
-            nextStepId: null,
-            isSkippable: this.debugState.draftStepSkippable,
-            targetSelector: null,
-            useSpotlight: this.debugState.draftStepSpotlight,
-            allowClickThrough: this.debugState.draftStepClickThrough,
-            theme: this.debugState.draftStepTheme
-        };
-
-        this.debugState.draftTutorialBatch.steps.push(newStep);
-        console.log(`[Tutorial Maker] Safe Zone Step added:\n${JSON.stringify(newStep, null, 2)}`);
-        this.uiManager.createFloatingText(`Safe Zone Step ${stepCount + 1} Drafted`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
-    }
-
-    _undoLastStep() {
-        if (this.debugState.draftTutorialBatch.steps.length > 0) {
-            this.debugState.draftTutorialBatch.steps.pop();
-            this.uiManager.createFloatingText('Last Step Removed', window.innerWidth/2, window.innerHeight/2, '#facc15');
-        }
-    }
-
-    _testDraftStep() {
-        if (!this.uiManager || !this.uiManager.tutorialManager) return;
-        const steps = this.debugState.draftTutorialBatch.steps;
-        if (steps.length === 0) {
-            this.uiManager.createFloatingText('No steps drafted to test!', window.innerWidth/2, window.innerHeight/2, '#f87171');
-            return;
-        }
-        const stepToTest = steps[steps.length - 1]; 
-        
-        this.uiManager.tutorialManager.showTutorialToast({
-            step: stepToTest,
-            onSkip: () => this.uiManager.tutorialManager.hideTutorialToast(),
-            onNext: () => this.uiManager.tutorialManager.hideTutorialToast(),
-            gameState: this.gameState.getState()
-        });
-    }
-    
-    _testFullBatch() {
-        const batch = this.debugState.draftTutorialBatch;
-        if (batch.steps.length === 0) {
-            this.uiManager.createFloatingText('No steps drafted to test!', window.innerWidth/2, window.innerHeight/2, '#f87171');
-            return;
-        }
-        
-        // Create a deep copy and properly link the steps sequentially
-        const linkedSteps = JSON.parse(JSON.stringify(batch.steps));
-        for (let i = 0; i < linkedSteps.length; i++) {
-            if (i < linkedSteps.length - 1) {
-                linkedSteps[i].nextStepId = linkedSteps[i+1].stepId;
-            } else {
-                linkedSteps[i].nextStepId = null;
-            }
-        }
-        
-        // Inject temporarily into the database
-        DB.TUTORIAL_DATA['DRAFT_TEST'] = {
-            title: batch.title,
-            trigger: { type: 'INFO' }, // Override trigger so it doesn't auto-fire, just manual
-            navLock: batch.navLock,
-            steps: linkedSteps
-        };
-        
-        // Clear any active tutorials first
-        this._resetTutorialState();
-        
-        // Trigger it
-        this.simulationService.tutorialService.triggerBatch('DRAFT_TEST');
-        this.uiManager.createFloatingText('Testing Draft Batch', window.innerWidth/2, window.innerHeight/2, '#4ade80');
-    }
-
-    _buildExportObject() {
-        const batch = this.debugState.draftTutorialBatch;
-        
-        // Link steps sequentially
-        const steps = JSON.parse(JSON.stringify(batch.steps));
-        for (let i = 0; i < steps.length; i++) {
-            if (i < steps.length - 1) {
-                steps[i].nextStepId = steps[i+1].stepId;
-            } else {
-                steps[i].nextStepId = null;
-            }
-        }
-
-        return {
-            title: batch.title,
-            trigger: { 
-                type: batch.triggerType, 
-                ...(batch.triggerType === 'SCREEN_LOAD' && { screenId: batch.triggerTarget }),
-                ...(batch.triggerType === 'ACTION' && { action: batch.triggerTarget }),
-                ...(batch.triggerType === 'STATE_CHANGE' && { stateKey: batch.triggerTarget, value: batch.triggerValue })
-            },
-            navLock: batch.navLock,
-            steps: steps
-        };
-    }
-
-    _exportDraftBatch() {
-        if (this.debugState.draftTutorialBatch.steps.length === 0) {
-            this.logger.warn('DebugService', 'Cannot export empty batch.');
-            return;
-        }
-
-        const exportObj = this._buildExportObject();
-        const exportString = `"${this.debugState.draftTutorialBatch.id}": ${JSON.stringify(exportObj, null, 4)},`;
-        
-        if (navigator && navigator.clipboard) {
-            navigator.clipboard.writeText(exportString).then(() => {
-                this.uiManager.createFloatingText('Batch Exported to Clipboard', window.innerWidth/2, window.innerHeight/2, '#4ade80');
-            }).catch(err => console.error('Clipboard error', err));
-        }
-        console.log(`[Tutorial Maker] Export:\n${exportString}`);
-    }
-    
-    _printDraftToConsole() {
-        if (this.debugState.draftTutorialBatch.steps.length === 0) {
-            this.logger.warn('DebugService', 'Cannot print empty batch.');
-            return;
-        }
-        
-        const exportObj = this._buildExportObject();
-        console.log('%c--- TUTORIAL DRAFT ---', 'color: #4ade80; font-weight: bold; font-size: 14px;');
-        console.dir(exportObj, { depth: null });
-        this.uiManager.createFloatingText('Draft Printed to Console', window.innerWidth/2, window.innerHeight/2, '#4ade80');
-    }
-
-    _forceNextTutorialStep() {
-        if (this.simulationService && this.simulationService.tutorialService) {
-            this.simulationService.tutorialService.advanceStep();
-            this.uiManager.createFloatingText('Forced Next Step', window.innerWidth/2, window.innerHeight/2, '#4ade80');
-        }
-    }
-
-    _resetTutorialState() {
-        this.gameState.tutorials.seenBatchIds = [];
-        this.gameState.tutorials.skippedTutorialBatches = [];
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.navLock = null;
-        
-        if (this.uiManager && this.uiManager.tutorialManager) {
-            this.uiManager.tutorialManager.hideTutorialToast();
-        }
-        
-        this.gameState.setState({});
-        this.uiManager.createFloatingText('Tutorials Reset', window.innerWidth/2, window.innerHeight/2, '#facc15');
-    }
-
     /**
      * @private
      */
@@ -939,11 +698,13 @@ ${logHistory}
                 AssetService.hydrateAllShips(this.gameState.player.visualSeed);
                 this.gameState.setState({});
             }},
+            // --- [GEMINI] NEW ACTION: CYCLE SHIP PICS ---
             cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
                 this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
                 this.gameState.setState({}); // Force re-render
                 this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
+            // --------------------------------------------
             
             // --- MODIFIED: Advance Time now forces refresh using the correct method ---
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
@@ -1021,19 +782,17 @@ ${logHistory}
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
 
-            // --- V4 TUTORIAL MAKER ACTIONS ---
-            addSafeZoneStep: { name: 'Add Safe Zone Step', type: 'button', handler: () => this._addSafeZoneStep() },
-            testDraftStep: { name: 'Test Last Step', type: 'button', handler: () => this._testDraftStep() },
-            testFullBatch: { name: 'Test Full Batch', type: 'button', handler: () => this._testFullBatch() },
-            undoLastStep: { name: 'Undo Last Step', type: 'button', handler: () => this._undoLastStep() },
-            clearDraft: { name: 'Clear Draft', type: 'button', handler: () => {
-                this.debugState.draftTutorialBatch.steps = [];
-                this.uiManager.createFloatingText('Draft Cleared', window.innerWidth/2, window.innerHeight/2, '#facc15');
-            }},
-            printDraft: { name: 'Print Draft to Console', type: 'button', handler: () => this._printDraftToConsole() },
-            exportDraftBatch: { name: 'Export Batch to Clipboard', type: 'button', handler: () => this._exportDraftBatch() },
-            forceNextStep: { name: 'Force Next Step', type: 'button', handler: () => this._forceNextTutorialStep() },
-            resetTutorials: { name: 'Reset Tutorials', type: 'button', handler: () => this._resetTutorialState() }
+            // --- [[START]] TUTORIAL TUNER ACTIONS ---
+            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
+            // --- Presets (Now using keys from TUTORIAL_PRESETS_PERCENT) ---
+            presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset('topCenter') },
+            presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('top34Center') },
+             presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
+            presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('bottom34Center') },
+            presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset('bottomCenter') },
+            presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset('bottomLeft') },
+            presetTopLeft: { name: 'Top Left', type: 'button', handler: () => this._applyTutorialPreset('topLeft') },
+            // --- [[END]] TUTORIAL TUNER ACTIONS ---
         };
     }
 
@@ -1094,29 +853,27 @@ ${logHistory}
      * @private
      */
     buildGui() {
-        // --- CREATE MASTER FOLDERS ---
-        const simStateFolder = this.gui.addFolder('Simulation State');
-        const toolsFolder = this.gui.addFolder('Tools & Triggers');
-        const metaFolder = this.gui.addFolder('Meta & Dev');
-
-        // --- TOOLS & TRIGGERS FOLDER ---
-        const flowFolder = toolsFolder.addFolder('Game Flow');
+        const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
+        // MOVED FROM ECONOMY: Unlock All
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
+        // NEW: Sol Testing
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
+        // NEW: Mission Test
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
 
-        // --- SIMULATION STATE FOLDER ---
-        const solFolder = simStateFolder.addFolder('Sol Station');
+        // --- NEW: Sol Station Debug Tools ---
+        const solFolder = this.gui.addFolder('Sol Station');
         solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
         solFolder.add(this.actions.addAllOfficers, 'handler').name(this.actions.addAllOfficers.name);
         solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
         solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
         solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
+        // ------------------------------------
 
-        const playerFolder = simStateFolder.addFolder('Player');
+        const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
@@ -1125,9 +882,10 @@ ${logHistory}
         playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
         playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
 
-        const shipFolder = simStateFolder.addFolder('Ship');
+        const shipFolder = this.gui.addFolder('Ship');
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
         
+        // Populate Commodity Dropdown for "Give Item"
         const commodityOptions = DB.COMMODITIES.reduce((acc, c) => ({...acc, [c.name]: c.id}), {});
         shipFolder.add(this.debugState, 'selectedCommodityToAdd', commodityOptions).name('Item Type');
         shipFolder.add(this.debugState, 'quantityToAdd', 1, 1000, 1).name('Quantity');
@@ -1145,8 +903,10 @@ ${logHistory}
         shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
 
-        // --- TOOLS & TRIGGERS FOLDER (Continued) ---
-        const attributesFolder = toolsFolder.addFolder('Game Attributes');
+        // --- GAME ATTRIBUTES FOLDER ---
+        const attributesFolder = this.gui.addFolder('Game Attributes');
+        
+        // Populate Upgrade Dropdown
         const upgradeIds = GameAttributes.getAllUpgradeIds();
         const upgradeOptions = upgradeIds.reduce((acc, id) => {
             const def = GameAttributes.getDefinition(id);
@@ -1160,42 +920,49 @@ ${logHistory}
             
         attributesFolder.add(this.actions.applyRandomUpgrades, 'handler').name('Apply 3 Random');
         attributesFolder.add(this.actions.removeAllUpgrades, 'handler').name('Remove All');
+        // ------------------------------
 
-        const worldFolder = toolsFolder.addFolder('World & Time');
+        const worldFolder = this.gui.addFolder('World & Time');
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
 
-        // --- SIMULATION STATE FOLDER (Continued) ---
-        this.economyFolder = simStateFolder.addFolder('Economy'); 
+        this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
+        // [REQ] New Economy Tools
         this.economyFolder.add(this.actions.resetEconomyMemory, 'handler').name(this.actions.resetEconomyMemory.name);
         this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
         this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
 
-        // --- TOOLS & TRIGGERS FOLDER (Continued) ---
-        const triggerFolder = toolsFolder.addFolder('Triggers');
+        const triggerFolder = this.gui.addFolder('Triggers');
         
+        // --- UPDATED EVENT SELECTOR (UPDATED) ---
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
 
+        // [[NEW DEBUG TOGGLE]]
         triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
             .name('Always Trigger (100%)')
             .onChange(val => {
+                // Directly modify the flag on the live service instance
                 if (this.simulationService && this.simulationService.travelService) {
                     this.simulationService.travelService.debugAlwaysTriggerEvents = val;
                 }
             });
+        // -----------------------------------------------------
         
+        // [FIX] Add check if AGE_EVENTS are populated before reducing
         if (DB.AGE_EVENTS.length > 0) {
             const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
             triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
             triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
         
+        // --- UPDATED MISSION OPTIONS (Include injected missions) ---
         const missionOptions = Object.values(DB.MISSIONS)
             .sort((a, b) => {
+                // Sort [DEBUG] missions to top
                 const aIsDebug = a.id.startsWith('debug_');
                 const bIsDebug = b.id.startsWith('debug_');
                 if (aIsDebug && !bIsDebug) return -1;
@@ -1204,52 +971,51 @@ ${logHistory}
             })
             .reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
 
+        // Always show mission controls
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
-        // --- META & DEV FOLDER ---
-        const tutorialFolder = metaFolder.addFolder('Tutorial Maker');
-        tutorialFolder.domElement.classList.add('tutorial-maker-folder');
-        
-        const combinedTargets = {};
-        Object.keys(SCREEN_IDS).forEach(k => combinedTargets[`Screen: ${SCREEN_IDS[k]}`] = SCREEN_IDS[k]);
-        Object.keys(ACTION_IDS).forEach(k => combinedTargets[`Action: ${ACTION_IDS[k]}`] = ACTION_IDS[k]);
-        combinedTargets['State: credits (credits)'] = 'credits';
-        combinedTargets['State: playerAge (playerAge)'] = 'playerAge';
-        
-        tutorialFolder.add(this.debugState.draftTutorialBatch, 'id').name('Batch ID');
-        tutorialFolder.add(this.debugState.draftTutorialBatch, 'title').name('Batch Title');
-        tutorialFolder.add(this.debugState.draftTutorialBatch, 'triggerType', ['SCREEN_LOAD', 'ACTION', 'STATE_CHANGE']).name('Trigger Type');
-        tutorialFolder.add(this.debugState.draftTutorialBatch, 'triggerTarget', combinedTargets).name('Trigger Target');
-        tutorialFolder.add(this.debugState.draftTutorialBatch, 'triggerValue').name('Trigger Value (State)');
-        tutorialFolder.add(this.debugState.draftTutorialBatch, 'navLock').name('Batch NavLock');
+        // --- [[START]] TUTORIAL TUNER FOLDER ---
+        const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
+        tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
 
-        tutorialFolder.add(this.debugState, 'draftStepText').name('Next Step Text');
-        tutorialFolder.add(this.debugState, 'draftStepCompletion', ['INFO', 'UI_EVENT', 'ACTION']).name('Completion Type');
-        tutorialFolder.add(this.debugState, 'draftStepTheme', ['default', 'guild', 'syndicate']).name('Theme');
-        tutorialFolder.add(this.debugState, 'draftStepSpotlight').name('Use Spotlight');
-        tutorialFolder.add(this.debugState, 'draftStepClickThrough').name('Allow Click Through');
-        tutorialFolder.add(this.debugState, 'draftStepSkippable').name('Is Skippable');
+        tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
+        tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
 
-        tutorialFolder.add(this.actions.addSafeZoneStep, 'handler').name(this.actions.addSafeZoneStep.name);
-        tutorialFolder.add(this.debugState, 'inspectorActive')
-            .name('Toggle Target Inspector')
-            .onChange((val) => this._toggleInspector(val));
-            
-        tutorialFolder.add(this.debugState.draftTutorialBatch.steps, 'length').name('Drafted Steps').listen();
+        // --- Size Tuners ---
+        tutorialFolder.add(this.debugState, 'ttWidth', 0, 800, 10).name('Width (0=auto)').onChange(() => this._handleTutorialTune());
+        tutorialFolder.add(this.debugState, 'ttHeight', 0, 800, 10).name('Height (0=auto)').onChange(() => this._handleTutorialTune());
 
-        tutorialFolder.add(this.actions.testDraftStep, 'handler').name(this.actions.testDraftStep.name);
-        tutorialFolder.add(this.actions.testFullBatch, 'handler').name(this.actions.testFullBatch.name);
-        tutorialFolder.add(this.actions.undoLastStep, 'handler').name(this.actions.undoLastStep.name);
-        tutorialFolder.add(this.actions.clearDraft, 'handler').name(this.actions.clearDraft.name);
-        tutorialFolder.add(this.actions.printDraft, 'handler').name(this.actions.printDraft.name);
-        tutorialFolder.add(this.actions.exportDraftBatch, 'handler').name(this.actions.exportDraftBatch.name);
+        // --- Position Tuners (Conditional) ---
+        // Store references to controllers
+        this.tutorialPositionalControllers.percentX = tutorialFolder.add(this.debugState, 'ttPercentX', 0, 100, 1).name('X %').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.percentY = tutorialFolder.add(this.debugState, 'ttPercentY', 0, 100, 1).name('Y %').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.placement = tutorialFolder.add(this.debugState, 'ttPlacement').name('Placement (Elem)').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.distance = tutorialFolder.add(this.debugState, 'ttOffsetDistance', -500, 500, 1).name('Distance (Elem)').onChange(() => this._handleTutorialTune());
+        this.tutorialPositionalControllers.skidding = tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding (Elem)').onChange(() => this._handleTutorialTune());
 
-        tutorialFolder.add(this.actions.forceNextStep, 'handler').name(this.actions.forceNextStep.name);
-        tutorialFolder.add(this.actions.resetTutorials, 'handler').name(this.actions.resetTutorials.name);
+        // --- Position Presets ---
+        const presetFolder = tutorialFolder.addFolder('Position Presets');
+        presetFolder.add(this.actions.presetTopCenter, 'handler').name(this.actions.presetTopCenter.name);
+        presetFolder.add(this.actions.presetTop34Center, 'handler').name(this.actions.presetTop34Center.name);
+        presetFolder.add(this.actions.presetVertHorizCenter, 'handler').name(this.actions.presetVertHorizCenter.name);
+        presetFolder.add(this.actions.presetBottom34Center, 'handler').name(this.actions.presetBottom34Center.name);
+        presetFolder.add(this.actions.presetBottomCenter, 'handler').name(this.actions.presetBottomCenter.name);
+        presetFolder.add(this.actions.presetBottomLeft, 'handler').name(this.actions.presetBottomLeft.name);
+        presetFolder.add(this.actions.presetTopLeft, 'handler').name(this.actions.presetTopLeft.name);
+        // ** Store reference to the FOLDER INSTANCE itself **
+        this.tutorialPositionalControllers.presetFolder = presetFolder;
 
-        const automationFolder = metaFolder.addFolder('Automation & Logging');
+        // --- Code Generator ---
+        tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
+        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen();
+
+        // Initial state update for controls
+        this._updateTutorialControlVisibility(false); // Assume initially no step is active
+        // --- [[END]] TUTORIAL TUNER FOLDER ---
+
+        const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
@@ -1261,12 +1027,258 @@ ${logHistory}
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
         automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
 
-        // Close all master folders and sub-folders by default
-        this.gui.folders.forEach(masterFolder => {
-            masterFolder.close();
-            if (masterFolder.folders) {
-                masterFolder.folders.forEach(subFolder => subFolder.close());
+        this.gui.folders.forEach(folder => folder.close());
+    }
+
+    // --- [[START]] TUTORIAL TUNER METHODS ---
+
+    /**
+     * Parses a size value (e.g., 'auto', '300px', 300) into a number for the slider.
+     * @param {string|number|undefined} sizeValue - The value from the step definition.
+     * @returns {number} A number, with 0 representing 'auto'.
+     * @private
+     */
+    _parseSize(sizeValue) {
+        if (!sizeValue || sizeValue === 'auto') return 0;
+        if (typeof sizeValue === 'number') return sizeValue;
+        if (typeof sizeValue === 'string') {
+            const parsed = parseInt(sizeValue, 10);
+            return isNaN(parsed) ? 0 : parsed;
+        }
+        return 0;
+    }
+
+    /**
+     * Applies a position preset to the tuner sliders based on anchoring mode.
+     * @param {string} presetKey - Key corresponding to TUTORIAL_PRESETS_PERCENT.
+     * @private
+     */
+    _applyTutorialPreset(presetKey) {
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body'; // Using 'body' as proxy for overlay
+
+        if (isOverlayAnchor) {
+            const percentValues = TUTORIAL_PRESETS_PERCENT[presetKey];
+            if (percentValues) {
+                this.debugState.ttPercentX = percentValues[0];
+                this.debugState.ttPercentY = percentValues[1];
+                this.tutorialPositionalControllers.percentX?.updateDisplay();
+                this.tutorialPositionalControllers.percentY?.updateDisplay();
+            } else {
+                 this.logger.warn('DebugService', `Preset key "${presetKey}" not found for percentage presets.`);
             }
+         } else {
+            // Placeholder: Need to define offset presets if required for element anchors
+            this.logger.warn('DebugService', 'Offset presets not yet defined for element anchors.');
+            // Example:
+            // const offsetValues = TUTORIAL_PRESETS_OFFSET[presetKey];
+            // if (offsetValues) {
+            //     this.debugState.ttOffsetSkidding = offsetValues[0];
+            //     this.debugState.ttOffsetDistance = offsetValues[1];
+            //     this.tutorialPositionalControllers.skidding?.updateDisplay();
+            //     this.tutorialPositionalControllers.distance?.updateDisplay();
+            // }
+        }
+
+        // Trigger UI update
+        this._handleTutorialTune();
+    }
+
+    /**
+     * Shows/hides tutorial tuner controls based on anchor type using lil-gui methods.
+     * @param {boolean} isOverlayAnchor - True if the toast should use percentage positioning.
+     * @private
+     */
+    _updateTutorialControlVisibility(isOverlayAnchor) {
+         // Helper function using lil-gui's show() / hide()
+         const setVisibility = (controller, shouldShow) => {
+             if (controller) {
+                 controller.show(shouldShow);
+             }
+         };
+
+         // Percentage controls
+         setVisibility(this.tutorialPositionalControllers.percentX, isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.percentY, isOverlayAnchor);
+
+         // Popper offset controls
+         setVisibility(this.tutorialPositionalControllers.placement, !isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.distance, !isOverlayAnchor);
+         setVisibility(this.tutorialPositionalControllers.skidding, !isOverlayAnchor);
+
+         // Preset folder visibility (Show only for overlay anchors for now)
+         if (this.tutorialPositionalControllers.presetFolder) {
+              this.tutorialPositionalControllers.presetFolder.show(isOverlayAnchor);
+         }
+     }
+
+
+    /**
+     * Populates the Tutorial Tuner with the active step's data.
+     * Called by UIManager when a toast is shown.
+     * @param {object} step - The tutorial step object.
+     */
+    setActiveTutorialStep(step) {
+        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
+        const isOverlayAnchor = step.anchorElement === 'body'; // Use 'body' to signify overlay anchor
+
+        // Reset generated code
+        this.debugState.ttGeneratedCode = '';
+
+        // Update state
+        this.debugState.ttStepId = step.stepId;
+        this.debugState.ttAnchor = step.anchorElement; // Keep original anchor for info
+        this.debugState.ttWidth = this._parseSize(step.size?.width) || 0;
+        this.debugState.ttHeight = this._parseSize(step.size?.height) || 0;
+
+        if (isOverlayAnchor) {
+            // Use percentage position from step or default to center
+            this.debugState.ttPercentX = step.positionX ?? 50;
+            this.debugState.ttPercentY = step.positionY ?? 50;
+            // Reset/default Popper values for clarity
+            this.debugState.ttPlacement = 'auto';
+            this.debugState.ttOffsetDistance = 0;
+            this.debugState.ttOffsetSkidding = 0;
+        } else {
+            // Use Popper settings from step or defaults
+            const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
+            let skidding = 0;
+            let distance = 0;
+
+            if (typeof offsetMod?.options?.offset === 'function') {
+                this.logger.warn('DebugService', `Offset function used for ${step.stepId}. Tuner defaults to [0, 10].`);
+                distance = 10; // Default distance for element anchors
+            } else if (Array.isArray(offsetMod?.options?.offset)) {
+                skidding = offsetMod.options.offset[0] || 0;
+                distance = offsetMod.options.offset[1] || 0;
+            } else {
+                 distance = 10; // Default distance if no offset defined
+            }
+
+            this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || 'auto';
+            this.debugState.ttOffsetDistance = distance;
+            this.debugState.ttOffsetSkidding = skidding;
+            // Reset/default percentage values
+            this.debugState.ttPercentX = 50;
+            this.debugState.ttPercentY = 50;
+        }
+
+        // Update visibility of controls AFTER setting state
+         this._updateTutorialControlVisibility(isOverlayAnchor);
+
+        // Manually update displays for all relevant controllers
+        // This ensures sliders reflect the loaded step's values
+        Object.values(this.tutorialPositionalControllers).forEach(controllerOrFolder => {
+             // Check if it's a controller (has updateDisplay) or the folder (doesn't)
+             if (controllerOrFolder && typeof controllerOrFolder.updateDisplay === 'function') {
+                 controllerOrFolder.updateDisplay();
+             }
+         });
+         // Also update size controllers
+         this.gui.controllers.find(c => c.property === 'ttWidth')?.updateDisplay();
+         this.gui.controllers.find(c => c.property === 'ttHeight')?.updateDisplay();
+
+    }
+
+    /**
+     * Clears and resets the Tutorial Tuner.
+     * Called by UIManager when a toast is hidden.
+     */
+    clearActiveTutorialStep() {
+        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
+
+        // Reset all state properties to their defaults
+        this.debugState.ttStepId = 'None';
+        this.debugState.ttAnchor = 'N/A';
+        this.debugState.ttPlacement = 'auto';
+        this.debugState.ttOffsetDistance = 0;
+        this.debugState.ttOffsetSkidding = 0;
+        this.debugState.ttPercentX = 50;
+        this.debugState.ttPercentY = 50;
+        this.debugState.ttWidth = 0;
+        this.debugState.ttHeight = 0;
+        this.debugState.ttGeneratedCode = '';
+
+        // Hide conditional controls
+        this._updateTutorialControlVisibility(false);
+    }
+
+    /**
+     * Handles live tuning input from the debug panel.
+     * @private
+     */
+    _handleTutorialTune() {
+        if (!this.uiManager) return;
+
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
+        this.logger.info.system('DebugService', `Tune event (Overlay: ${isOverlayAnchor}): X%=${this.debugState.ttPercentX}, Y%=${this.debugState.ttPercentY}, Place=${this.debugState.ttPlacement}, Dist=${this.debugState.ttOffsetDistance}, Skid=${this.debugState.ttOffsetSkidding}`);
+
+        this.uiManager.updateTutorialPopper({
+            isOverlayAnchor: isOverlayAnchor, // Pass mode to UIManager
+            // Size
+            width: Number(this.debugState.ttWidth) || 0,
+            height: Number(this.debugState.ttHeight) || 0,
+            // Percentage Position (if overlay)
+            percentX: Number(this.debugState.ttPercentX) || 50,
+            percentY: Number(this.debugState.ttPercentY) || 50,
+            // Popper Position (if element)
+            placement: this.debugState.ttPlacement,
+            distance: Number(this.debugState.ttOffsetDistance) || 0,
+            skidding: Number(this.debugState.ttOffsetSkidding) || 0,
         });
     }
+
+    /**
+     * Generates the code string from the current tuner state.
+     * Outputs either percentage or Popper options based on anchor type.
+     * @private
+     */
+    _generateTutorialCode() {
+        this.logger.info.system('DebugService', 'Generating tutorial code...');
+        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
+
+        // Size String (common)
+        const hasSize = this.debugState.ttWidth > 0 || this.debugState.ttHeight > 0;
+        const widthVal = this.debugState.ttWidth > 0 ? `'${this.debugState.ttWidth}px'` : "'auto'";
+        const heightVal = this.debugState.ttHeight > 0 ? `'${this.debugState.ttHeight}px'` : "'auto'";
+        const sizeString = hasSize ? `
+size: { width: ${widthVal}, height: ${heightVal} },` : '';
+
+        let positionString = '';
+        if (isOverlayAnchor) {
+            // Generate Percentage Position Code
+             // Make sure anchorElement is 'body'
+             positionString = `
+anchorElement: 'body',`; // Explicitly set anchor
+             // Only add percentages if not default (50, 50)
+            if (this.debugState.ttPercentX !== 50 || this.debugState.ttPercentY !== 50) {
+                 positionString += `
+positionX: ${this.debugState.ttPercentX},
+positionY: ${this.debugState.ttPercentY},`;
+            }
+
+        } else {
+            // Generate Popper Options Code
+             // Add anchorElement only if it's NOT body
+             if (this.debugState.ttAnchor !== 'body') {
+                 positionString = `
+anchorElement: '${this.debugState.ttAnchor}',`;
+             }
+            positionString += `
+placement: '${this.debugState.ttPlacement}',
+popperOptions: {
+    modifiers: [
+        { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
+        // Add other modifiers here if needed in the future
+    ]
+}`;
+        }
+
+        // Construct final code, removing potential trailing comma before a closing brace
+         let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
+        code = code.replace(/,\s*(\}|$)/g, '$1'); // Regex to remove trailing comma
+
+        this.debugState.ttGeneratedCode = code;
+    }
+
+    // --- [[END]] TUTORIAL TUNER METHODS ---
 }

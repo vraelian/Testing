@@ -166,7 +166,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     }
 
     return `
-    <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}" data-tut-target="market-card-${good.id}">
+    <div class="item-card-container ${isMinimized ? 'minimized' : ''}" id="item-card-container-${good.id}">
         ${buttonHtml}
         <div class="rounded-lg border ${good.styleClass}${customClass} transition-colors shadow-md" style="${customBackgroundStyle}">
             ${cardContentHtml}

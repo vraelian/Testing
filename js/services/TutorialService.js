@@ -26,9 +26,6 @@ export class TutorialService {
         this.logger = logger;
         this.activeBatchId = null;
         this.activeStepId = null;
-        
-        // V4: Concurrency lock to prevent multiple triggers during the shimmer delay
-        this._isAdvancing = false; 
 
         // Create a map of screenId -> navId for easy lookup when tutorials need to force navigation.
         this.screenToNavMap = {};
@@ -44,18 +41,14 @@ export class TutorialService {
      * This is the main entry point for the tutorial system, called after player actions or screen loads.
      * @param {object} [actionData=null] Data about the action that just occurred (e.g., { type: 'ACTION', action: 'buy-ship' }).
      */
-    async checkState(actionData = null) {
-        if (this._isAdvancing) return; // Prevent double execution while shimmer plays
-
+    checkState(actionData = null) {
         // If a tutorial is currently active, check if the action completes the current step.
         if (this.activeBatchId && this.activeStepId) {
             const batch = DB.TUTORIAL_DATA[this.activeBatchId];
             const step = batch.steps.find(s => s.stepId === this.activeStepId);
 
             if (step && this._matchesCondition(step.completion, actionData)) {
-                this._isAdvancing = true;
-                await this.advanceStep();
-                this._isAdvancing = false;
+                this.advanceStep();
             }
             return;
         }
@@ -127,20 +120,12 @@ export class TutorialService {
     /**
      * Advances the tutorial to the next step in the current batch, or ends the batch if it's the final step.
      */
-    async advanceStep() {
+    advanceStep() {
         if (!this.activeStepId || !this.activeBatchId) return;
 
         const batch = DB.TUTORIAL_DATA[this.activeBatchId];
         const currentStep = batch.steps.find(s => s.stepId === this.activeStepId);
         
-        // V4: Trigger Positive Feedback Shimmer
-        if (typeof this.uiManager.triggerTutorialSuccessShimmer === 'function') {
-            await this.uiManager.triggerTutorialSuccessShimmer();
-        } else {
-            // Fallback delay until Phase 3 controller is implemented
-            await new Promise(resolve => setTimeout(resolve, 1000));
-        }
-
         this.uiManager.hideTutorialToast();
 
         if (currentStep && currentStep.nextStepId) {
@@ -169,10 +154,8 @@ export class TutorialService {
             return;
         }
 
-        // V4: Apply navigation lock based on targetSelector & allowClickThrough
-        if (step.allowClickThrough === false && step.targetSelector) {
-            this.gameState.tutorials.navLock = { targetSelector: step.targetSelector };
-        } else if (step.hasOwnProperty('navLock')) {
+        // Apply navigation lock based on tutorial data.
+        if (step.hasOwnProperty('navLock')) {
             // A step can explicitly define its own lock (or null to unlock).
             this.gameState.tutorials.navLock = step.navLock;
         } else if (batch.navLock) {
@@ -192,10 +175,7 @@ export class TutorialService {
         this.uiManager.showTutorialToast({
             step: step,
             onSkip: () => this.uiManager.showSkipTutorialModal(() => this.skipActiveTutorial()),
-            onNext: () => {
-                this._isAdvancing = true;
-                this.advanceStep().finally(() => { this._isAdvancing = false; });
-            },
+            onNext: () => this.advanceStep(),
             gameState: this.gameState.getState()
         });
         
@@ -245,12 +225,6 @@ export class TutorialService {
         switch (condition.type) {
             case TUTORIAL_ACTION_TYPES.SCREEN_LOAD:
                 return condition.screenId === actionData.screenId;
-            case 'UI_EVENT':
-                // V4 Schema Support for distinct DOM/UI interactions
-                return condition.event === actionData.event && condition.target === actionData.target;
-            case 'STATE_CHANGE':
-                // V4 Schema Support for logic-layer state mutations
-                return condition.stateKey === actionData.stateKey && condition.value === actionData.value;
             case TUTORIAL_ACTION_TYPES.ACTION:
                 if (condition.action === ACTION_IDS.SET_SCREEN && actionData.action === ACTION_IDS.SET_SCREEN) {
                     return condition.navId === actionData.navId && condition.screenId === actionData.screenId;

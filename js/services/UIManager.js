@@ -1,6 +1,7 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
+// [[CHANGED]] Added LOCATION_IDS to imports
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
@@ -20,7 +21,7 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 
-// --- Domain Controllers (The Switchboard) ---
+// --- [[NEW]] Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
 import { UITutorialManager } from './ui/UITutorialManager.js';
 import { UIMarketControl } from './ui/UIMarketControl.js';
@@ -258,6 +259,7 @@ export class UIManager {
 
         const dateText = formatGameDateShort(gameState.day);
 
+        // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
         const dateClass = currentLocationId === LOCATION_IDS.SUN ? 'date-text sol-date-pulse' : 'date-text';
 
         const contextBarHtml = `
@@ -319,7 +321,7 @@ export class UIManager {
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
-                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" data-tut-target="nav-tab-${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');
@@ -327,6 +329,7 @@ export class UIManager {
         const existingContextBar = this.cache.navBar.querySelector('.context-bar');
         const existingNavWrapper = this.cache.navBar.querySelector('.nav-wrapper');
 
+        // Surgical DOM Update to prevent CSS animation restart
         if (existingContextBar && existingNavWrapper) {
             existingContextBar.className = containerClass;
             existingContextBar.style.background = theme.gradient;
@@ -339,6 +342,7 @@ export class UIManager {
             if (dateSpan) {
                 dateSpan.textContent = dateText;
                 
+                // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
                 if (currentLocationId === LOCATION_IDS.SUN) {
                     dateSpan.classList.add('sol-date-pulse');
                 } else {
@@ -361,6 +365,8 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
+        // [[FIX]] Reset Sol Station scroll memory if leaving Services screen
+        // This detects any state change where we were on Services but are now somewhere else.
         if (previousState && 
             previousState.activeScreen === SCREEN_IDS.SERVICES && 
             gameState.activeScreen !== SCREEN_IDS.SERVICES) {
@@ -389,12 +395,15 @@ export class UIManager {
                 if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
+                // Delegate: Market Control
                 this.marketControl.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
                 break;
             case SCREEN_IDS.HANGAR:
+                // Expanded Full Render condition for Boarding/Buy/Sell
+                // Added check for tutorial step change to trigger refresh for button unlock
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
@@ -405,6 +414,7 @@ export class UIManager {
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
                 }
+                // Delegate: Hangar Control (Updates)
                 this.hangarControl.updateHangarScreen(gameState);
                 break;
             case SCREEN_IDS.MISSIONS:
@@ -417,12 +427,14 @@ export class UIManager {
                 if (!previousState || previousState.activeScreen !== SCREEN_IDS.INTEL) {
                      this.cache.intelScreen.innerHTML = renderIntelScreen();
                 }
+                // Delegate: Event Control (Lore Buttons)
                 this.eventControl._renderCodexButtons(this.cache.intelScreen);
 
                 if (this.intelMarketRenderer) {
                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) this.intelMarketRenderer.render(marketContentEl, gameState);
                 }
+                // Delegate: Mission Control (Tabs)
                 this.missionControl.updateIntelTab(gameState.uiState.activeIntelTab);
                 break;
         }
@@ -470,7 +482,6 @@ export class UIManager {
     applyTutorialHighlight(...args) { this.tutorialManager.applyTutorialHighlight(...args); }
     showSkipTutorialModal(...args) { this.tutorialManager.showSkipTutorialModal(...args); }
     showTutorialLogModal(...args) { this.tutorialManager.showTutorialLogModal(...args); }
-    triggerTutorialSuccessShimmer(...args) { return this.tutorialManager.triggerTutorialSuccessShimmer(...args); }
 
     // --- Market Control ---
     updateMarketScreen(...args) { this.marketControl.updateMarketScreen(...args); }

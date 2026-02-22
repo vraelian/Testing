@@ -5,7 +5,6 @@
  */
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { ACTION_IDS } from '../../data/constants.js';
-import { DB } from '../../data/database.js';
 
 export class MarketEventHandler {
     /**
@@ -41,23 +40,6 @@ export class MarketEventHandler {
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
     handleClick(e, actionTarget) {
-        const state = this.gameState.getState();
-
-        // --- V4 AUTO-ADVANCE INTERCEPTION ---
-        let v4TargetMatch = false;
-        const activeBatchId = state.tutorials.activeBatchId;
-        const activeStepId = state.tutorials.activeStepId;
-        
-        if (activeBatchId && activeStepId) {
-            const step = DB.TUTORIAL_DATA[activeBatchId].steps.find(s => s.stepId === activeStepId);
-            // Only force auto-advance if the completion type explicitly demands a raw UI click
-            if (step && step.completion && step.completion.type === 'UI_EVENT') {
-                if (step.targetSelector && actionTarget.matches(step.targetSelector)) {
-                    v4TargetMatch = true;
-                }
-            }
-        }
-
         const { action } = actionTarget.dataset;
 
         switch (action) {
@@ -68,14 +50,6 @@ export class MarketEventHandler {
             case ACTION_IDS.DECREMENT:
                 this._performMarketAction(actionTarget, action, e);
                 break;
-        }
-
-        // --- V4 AUTO-ADVANCE EXECUTION ---
-        if (v4TargetMatch && !this.simulationService.tutorialService._isAdvancing) {
-            this.simulationService.tutorialService._isAdvancing = true;
-            this.simulationService.tutorialService.advanceStep().finally(() => { 
-                this.simulationService.tutorialService._isAdvancing = false; 
-            });
         }
     }
 
