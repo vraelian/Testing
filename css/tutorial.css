@@ -8,7 +8,7 @@
     bottom: 20%;
     left: 50%;
     transform: translateX(-50%);
-    z-index: 9999;
+    z-index: 10005; /* Elevated safely above game modals and masks */
     pointer-events: none; /* Allow clicks to pass through the container itself */
     display: flex;
     flex-direction: column;
@@ -31,7 +31,8 @@
     font-family: 'Exo 2', 'Oxanium', sans-serif;
     font-size: 0.9rem;
     line-height: 1.5;
-    z-index: 9999;
+    z-index: 10005; /* Elevated safely above game modals and spotlight mask targets */
+    pointer-events: auto; /* Guarantee interactivity */
     
     /* Strict V4 Dimensional Constraints */
     width: max-content;
@@ -84,6 +85,9 @@
     overflow-y: auto;
     flex-grow: 1;
     transition: max-height 0.3s ease, opacity 0.3s ease;
+    pointer-events: auto;
+    overscroll-behavior: contain; /* Prevent parent document from scrolling */
+    -webkit-overflow-scrolling: touch; /* Force native iOS scrolling behavior */
     
     /* Hide native chrome/safari scrollbars */
     scrollbar-width: none; /* Firefox */
