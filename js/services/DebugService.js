@@ -4,7 +4,7 @@
  * the lil-gui developer panel for real-time testing and manipulation of the game state.
  */
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, ACTION_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
@@ -110,8 +110,10 @@ export class DebugService {
         this.diagElements = {};
         this.actions = {};
         
-        // V4: Bind inspector click to maintain `this` context
+        // V4: Bind inspector events to maintain `this` context
         this._boundInspectorClick = this._handleInspectorClick.bind(this);
+        this._boundInspectorHover = this._handleInspectorHover.bind(this);
+        this._boundInspectorOut = this._handleInspectorOut.bind(this);
         
         // --- State for GUI controllers ---
         this.debugState = {
@@ -137,8 +139,23 @@ export class DebugService {
             // [[DEBUG FLAG STATE]]
             alwaysTriggerEvents: false,
 
-            // V4 Tutorial Tuner State
+            // V4 Tutorial Maker State
             inspectorActive: false,
+            draftTutorialBatch: {
+                id: 'draft_batch',
+                title: 'Draft Tutorial',
+                triggerType: 'SCREEN_LOAD',
+                triggerTarget: 'market',
+                triggerValue: 1000, // Used for STATE_CHANGE triggers
+                navLock: true,
+                steps: []
+            },
+            draftStepText: 'Instruction text here.',
+            draftStepCompletion: 'INFO',
+            draftStepTheme: 'default',
+            draftStepSpotlight: true,
+            draftStepClickThrough: false,
+            draftStepSkippable: true
         }; 
 
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
@@ -543,21 +560,49 @@ ${logHistory}
         }
     }
 
-    // --- V4 TUTORIAL INSPECTOR ACTIONS ---
+    // --- V4 TUTORIAL INSPECTOR & MAKER ACTIONS ---
     
     _toggleInspector(isActive) {
         this.debugState.inspectorActive = isActive;
         if (isActive) {
             document.addEventListener('click', this._boundInspectorClick, { capture: true });
-            this.logger.warn('DebugService', 'Tutorial Inspector ACTIVE. Clicks are intercepted.');
+            document.addEventListener('mouseover', this._boundInspectorHover, { capture: true });
+            document.addEventListener('mouseout', this._boundInspectorOut, { capture: true });
+            
+            // Inject dynamic stylesheet for visual feedback if missing
+            if (!document.getElementById('tut-maker-styles')) {
+                const style = document.createElement('style');
+                style.id = 'tut-maker-styles';
+                style.textContent = '.tut-inspector-hover { outline: 3px dashed #ef4444 !important; outline-offset: 2px !important; cursor: crosshair !important; box-shadow: 0 0 10px #ef4444 !important; z-index: 99999; }';
+                document.head.appendChild(style);
+            }
+            
+            this.logger.warn('DebugService', 'Tutorial Maker ACTIVE. Clicks are intercepted to draft steps.');
         } else {
             document.removeEventListener('click', this._boundInspectorClick, { capture: true });
-            this.logger.info.system('DebugService', 'Tutorial Inspector INACTIVE.');
+            document.removeEventListener('mouseover', this._boundInspectorHover, { capture: true });
+            document.removeEventListener('mouseout', this._boundInspectorOut, { capture: true });
+            
+            // Clear any stuck hover classes
+            document.querySelectorAll('.tut-inspector-hover').forEach(el => el.classList.remove('tut-inspector-hover'));
+            this.logger.info.system('DebugService', 'Tutorial Maker INACTIVE.');
         }
+    }
+
+    _handleInspectorHover(e) {
+        if (e.target.closest('.lil-gui') || e.target.closest('#debug-panel')) return;
+        e.target.classList.add('tut-inspector-hover');
+    }
+
+    _handleInspectorOut(e) {
+        e.target.classList.remove('tut-inspector-hover');
     }
 
     _handleInspectorClick(e) {
         if (!this.debugState.inspectorActive) return;
+        
+        // Fix: Exclude the debug menu from inspector clicks
+        if (e.target.closest('.lil-gui') || e.target.closest('#debug-panel')) return;
         
         e.preventDefault();
         e.stopPropagation();
@@ -569,35 +614,174 @@ ${logHistory}
             if (target.hasAttribute('data-tut-target')) {
                 selector = `[data-tut-target='${target.getAttribute('data-tut-target')}']`;
                 break;
-            } else if (target.id) {
+            } else if (target.id && !target.id.includes('screen')) { 
+                // Ignore structural background containers
                 selector = `#${target.id}`;
+                break;
+            } else if (target.hasAttribute('data-action')) {
+                selector = `[data-action='${target.getAttribute('data-action')}']`;
                 break;
             }
             target = target.parentElement;
         }
 
         if (selector) {
-            const boilerplate = `{
-    "stepId": "new_step",
-    "text": "Instruction text here.",
-    "completion": { "type": "INFO" },
-    "nextStepId": null,
-    "isSkippable": true,
-    "targetSelector": "${selector}",
-    "useSpotlight": true,
-    "allowClickThrough": false,
-    "theme": "default"
-}`;
-            console.log(`[Tutorial Inspector] Target Found:\n${boilerplate}`);
-            if (navigator && navigator.clipboard) {
-                navigator.clipboard.writeText(boilerplate).then(() => {
-                    this.uiManager.createFloatingText('Copied Selector JSON', e.clientX, e.clientY, '#4ade80');
-                }).catch(err => console.error('Clipboard error', err));
-            }
+            const stepCount = this.debugState.draftTutorialBatch.steps.length;
+            const newStep = {
+                stepId: `step_${stepCount + 1}`,
+                text: this.debugState.draftStepText,
+                completion: { type: this.debugState.draftStepCompletion },
+                nextStepId: null, // Linked on export
+                isSkippable: this.debugState.draftStepSkippable,
+                targetSelector: selector, 
+                useSpotlight: this.debugState.draftStepSpotlight,
+                allowClickThrough: this.debugState.draftStepClickThrough,
+                theme: this.debugState.draftStepTheme
+            };
+
+            this.debugState.draftTutorialBatch.steps.push(newStep);
+            
+            console.log(`[Tutorial Maker] Target Step added:\n${JSON.stringify(newStep, null, 2)}`);
+            this.uiManager.createFloatingText(`Target Step ${stepCount + 1} Drafted`, e.clientX, e.clientY, '#4ade80');
+            
+            // Clean up hover class
+            e.target.classList.remove('tut-inspector-hover');
+            
         } else {
-            console.log(`[Tutorial Inspector] No valid targetable element found.`);
-            this.uiManager.createFloatingText('No selector found', e.clientX, e.clientY, '#f87171');
+            console.log(`[Tutorial Maker] No valid targetable element found.`);
+            this.uiManager.createFloatingText('Invalid Target. Use Add Safe Zone button instead.', e.clientX, e.clientY, '#f87171');
         }
+    }
+    
+    _addSafeZoneStep() {
+        const stepCount = this.debugState.draftTutorialBatch.steps.length;
+        const newStep = {
+            stepId: `step_${stepCount + 1}`,
+            text: this.debugState.draftStepText,
+            completion: { type: this.debugState.draftStepCompletion },
+            nextStepId: null,
+            isSkippable: this.debugState.draftStepSkippable,
+            targetSelector: null,
+            useSpotlight: this.debugState.draftStepSpotlight,
+            allowClickThrough: this.debugState.draftStepClickThrough,
+            theme: this.debugState.draftStepTheme
+        };
+
+        this.debugState.draftTutorialBatch.steps.push(newStep);
+        console.log(`[Tutorial Maker] Safe Zone Step added:\n${JSON.stringify(newStep, null, 2)}`);
+        this.uiManager.createFloatingText(`Safe Zone Step ${stepCount + 1} Drafted`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
+    }
+
+    _undoLastStep() {
+        if (this.debugState.draftTutorialBatch.steps.length > 0) {
+            this.debugState.draftTutorialBatch.steps.pop();
+            this.uiManager.createFloatingText('Last Step Removed', window.innerWidth/2, window.innerHeight/2, '#facc15');
+        }
+    }
+
+    _testDraftStep() {
+        if (!this.uiManager || !this.uiManager.tutorialManager) return;
+        const steps = this.debugState.draftTutorialBatch.steps;
+        if (steps.length === 0) {
+            this.uiManager.createFloatingText('No steps drafted to test!', window.innerWidth/2, window.innerHeight/2, '#f87171');
+            return;
+        }
+        const stepToTest = steps[steps.length - 1]; 
+        
+        this.uiManager.tutorialManager.showTutorialToast({
+            step: stepToTest,
+            onSkip: () => this.uiManager.tutorialManager.hideTutorialToast(),
+            onNext: () => this.uiManager.tutorialManager.hideTutorialToast(),
+            gameState: this.gameState.getState()
+        });
+    }
+    
+    _testFullBatch() {
+        const batch = this.debugState.draftTutorialBatch;
+        if (batch.steps.length === 0) {
+            this.uiManager.createFloatingText('No steps drafted to test!', window.innerWidth/2, window.innerHeight/2, '#f87171');
+            return;
+        }
+        
+        // Create a deep copy and properly link the steps sequentially
+        const linkedSteps = JSON.parse(JSON.stringify(batch.steps));
+        for (let i = 0; i < linkedSteps.length; i++) {
+            if (i < linkedSteps.length - 1) {
+                linkedSteps[i].nextStepId = linkedSteps[i+1].stepId;
+            } else {
+                linkedSteps[i].nextStepId = null;
+            }
+        }
+        
+        // Inject temporarily into the database
+        DB.TUTORIAL_DATA['DRAFT_TEST'] = {
+            title: batch.title,
+            trigger: { type: 'INFO' }, // Override trigger so it doesn't auto-fire, just manual
+            navLock: batch.navLock,
+            steps: linkedSteps
+        };
+        
+        // Clear any active tutorials first
+        this._resetTutorialState();
+        
+        // Trigger it
+        this.simulationService.tutorialService.triggerBatch('DRAFT_TEST');
+        this.uiManager.createFloatingText('Testing Draft Batch', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+    }
+
+    _buildExportObject() {
+        const batch = this.debugState.draftTutorialBatch;
+        
+        // Link steps sequentially
+        const steps = JSON.parse(JSON.stringify(batch.steps));
+        for (let i = 0; i < steps.length; i++) {
+            if (i < steps.length - 1) {
+                steps[i].nextStepId = steps[i+1].stepId;
+            } else {
+                steps[i].nextStepId = null;
+            }
+        }
+
+        return {
+            title: batch.title,
+            trigger: { 
+                type: batch.triggerType, 
+                ...(batch.triggerType === 'SCREEN_LOAD' && { screenId: batch.triggerTarget }),
+                ...(batch.triggerType === 'ACTION' && { action: batch.triggerTarget }),
+                ...(batch.triggerType === 'STATE_CHANGE' && { stateKey: batch.triggerTarget, value: batch.triggerValue })
+            },
+            navLock: batch.navLock,
+            steps: steps
+        };
+    }
+
+    _exportDraftBatch() {
+        if (this.debugState.draftTutorialBatch.steps.length === 0) {
+            this.logger.warn('DebugService', 'Cannot export empty batch.');
+            return;
+        }
+
+        const exportObj = this._buildExportObject();
+        const exportString = `"${this.debugState.draftTutorialBatch.id}": ${JSON.stringify(exportObj, null, 4)},`;
+        
+        if (navigator && navigator.clipboard) {
+            navigator.clipboard.writeText(exportString).then(() => {
+                this.uiManager.createFloatingText('Batch Exported to Clipboard', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+            }).catch(err => console.error('Clipboard error', err));
+        }
+        console.log(`[Tutorial Maker] Export:\n${exportString}`);
+    }
+    
+    _printDraftToConsole() {
+        if (this.debugState.draftTutorialBatch.steps.length === 0) {
+            this.logger.warn('DebugService', 'Cannot print empty batch.');
+            return;
+        }
+        
+        const exportObj = this._buildExportObject();
+        console.log('%c--- TUTORIAL DRAFT ---', 'color: #4ade80; font-weight: bold; font-size: 14px;');
+        console.dir(exportObj, { depth: null });
+        this.uiManager.createFloatingText('Draft Printed to Console', window.innerWidth/2, window.innerHeight/2, '#4ade80');
     }
 
     _forceNextTutorialStep() {
@@ -620,25 +804,6 @@ ${logHistory}
         
         this.gameState.setState({});
         this.uiManager.createFloatingText('Tutorials Reset', window.innerWidth/2, window.innerHeight/2, '#facc15');
-    }
-
-    _testDummyToast() {
-        if (!this.uiManager || !this.uiManager.tutorialManager) return;
-        
-        const dummyStep = {
-            stepId: 'dummy_test',
-            text: '<b>Constraint Test</b><br><br>' + 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '.repeat(15),
-            completion: { type: 'INFO' },
-            theme: 'default',
-            targetSelector: null 
-        };
-        
-        this.uiManager.tutorialManager.showTutorialToast({
-            step: dummyStep,
-            onSkip: () => this.uiManager.tutorialManager.hideTutorialToast(),
-            onNext: () => this.uiManager.tutorialManager.hideTutorialToast(),
-            gameState: this.gameState.getState()
-        });
     }
 
     /**
@@ -774,13 +939,11 @@ ${logHistory}
                 AssetService.hydrateAllShips(this.gameState.player.visualSeed);
                 this.gameState.setState({});
             }},
-            // --- [GEMINI] NEW ACTION: CYCLE SHIP PICS ---
             cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
                 this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
                 this.gameState.setState({}); // Force re-render
                 this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
-            // --------------------------------------------
             
             // --- MODIFIED: Advance Time now forces refresh using the correct method ---
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
@@ -858,10 +1021,19 @@ ${logHistory}
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
 
-            // --- V4 TUTORIAL INSPECTOR ACTIONS ---
+            // --- V4 TUTORIAL MAKER ACTIONS ---
+            addSafeZoneStep: { name: 'Add Safe Zone Step', type: 'button', handler: () => this._addSafeZoneStep() },
+            testDraftStep: { name: 'Test Last Step', type: 'button', handler: () => this._testDraftStep() },
+            testFullBatch: { name: 'Test Full Batch', type: 'button', handler: () => this._testFullBatch() },
+            undoLastStep: { name: 'Undo Last Step', type: 'button', handler: () => this._undoLastStep() },
+            clearDraft: { name: 'Clear Draft', type: 'button', handler: () => {
+                this.debugState.draftTutorialBatch.steps = [];
+                this.uiManager.createFloatingText('Draft Cleared', window.innerWidth/2, window.innerHeight/2, '#facc15');
+            }},
+            printDraft: { name: 'Print Draft to Console', type: 'button', handler: () => this._printDraftToConsole() },
+            exportDraftBatch: { name: 'Export Batch to Clipboard', type: 'button', handler: () => this._exportDraftBatch() },
             forceNextStep: { name: 'Force Next Step', type: 'button', handler: () => this._forceNextTutorialStep() },
-            resetTutorials: { name: 'Reset Tutorials', type: 'button', handler: () => this._resetTutorialState() },
-            testDummyToast: { name: 'Test Dummy Toast', type: 'button', handler: () => this._testDummyToast() }
+            resetTutorials: { name: 'Reset Tutorials', type: 'button', handler: () => this._resetTutorialState() }
         };
     }
 
@@ -922,27 +1094,29 @@ ${logHistory}
      * @private
      */
     buildGui() {
-        const flowFolder = this.gui.addFolder('Game Flow');
+        // --- CREATE MASTER FOLDERS ---
+        const simStateFolder = this.gui.addFolder('Simulation State');
+        const toolsFolder = this.gui.addFolder('Tools & Triggers');
+        const metaFolder = this.gui.addFolder('Meta & Dev');
+
+        // --- TOOLS & TRIGGERS FOLDER ---
+        const flowFolder = toolsFolder.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
-        // MOVED FROM ECONOMY: Unlock All
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
-        // NEW: Sol Testing
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
-        // NEW: Mission Test
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
 
-        // --- NEW: Sol Station Debug Tools ---
-        const solFolder = this.gui.addFolder('Sol Station');
+        // --- SIMULATION STATE FOLDER ---
+        const solFolder = simStateFolder.addFolder('Sol Station');
         solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
         solFolder.add(this.actions.addAllOfficers, 'handler').name(this.actions.addAllOfficers.name);
         solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
         solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
         solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
-        // ------------------------------------
 
-        const playerFolder = this.gui.addFolder('Player');
+        const playerFolder = simStateFolder.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
         playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
         playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
@@ -951,10 +1125,9 @@ ${logHistory}
         playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
         playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
 
-        const shipFolder = this.gui.addFolder('Ship');
+        const shipFolder = simStateFolder.addFolder('Ship');
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
         
-        // Populate Commodity Dropdown for "Give Item"
         const commodityOptions = DB.COMMODITIES.reduce((acc, c) => ({...acc, [c.name]: c.id}), {});
         shipFolder.add(this.debugState, 'selectedCommodityToAdd', commodityOptions).name('Item Type');
         shipFolder.add(this.debugState, 'quantityToAdd', 1, 1000, 1).name('Quantity');
@@ -972,10 +1145,8 @@ ${logHistory}
         shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
 
-        // --- GAME ATTRIBUTES FOLDER ---
-        const attributesFolder = this.gui.addFolder('Game Attributes');
-        
-        // Populate Upgrade Dropdown
+        // --- TOOLS & TRIGGERS FOLDER (Continued) ---
+        const attributesFolder = toolsFolder.addFolder('Game Attributes');
         const upgradeIds = GameAttributes.getAllUpgradeIds();
         const upgradeOptions = upgradeIds.reduce((acc, id) => {
             const def = GameAttributes.getDefinition(id);
@@ -989,49 +1160,42 @@ ${logHistory}
             
         attributesFolder.add(this.actions.applyRandomUpgrades, 'handler').name('Apply 3 Random');
         attributesFolder.add(this.actions.removeAllUpgrades, 'handler').name('Remove All');
-        // ------------------------------
 
-        const worldFolder = this.gui.addFolder('World & Time');
+        const worldFolder = toolsFolder.addFolder('World & Time');
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
         worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
 
-        this.economyFolder = this.gui.addFolder('Economy'); 
+        // --- SIMULATION STATE FOLDER (Continued) ---
+        this.economyFolder = simStateFolder.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        // [REQ] New Economy Tools
         this.economyFolder.add(this.actions.resetEconomyMemory, 'handler').name(this.actions.resetEconomyMemory.name);
         this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
         this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
 
-        const triggerFolder = this.gui.addFolder('Triggers');
+        // --- TOOLS & TRIGGERS FOLDER (Continued) ---
+        const triggerFolder = toolsFolder.addFolder('Triggers');
         
-        // --- UPDATED EVENT SELECTOR (UPDATED) ---
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
 
-        // [[NEW DEBUG TOGGLE]]
         triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
             .name('Always Trigger (100%)')
             .onChange(val => {
-                // Directly modify the flag on the live service instance
                 if (this.simulationService && this.simulationService.travelService) {
                     this.simulationService.travelService.debugAlwaysTriggerEvents = val;
                 }
             });
-        // -----------------------------------------------------
         
-        // [FIX] Add check if AGE_EVENTS are populated before reducing
         if (DB.AGE_EVENTS.length > 0) {
             const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
             triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
             triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
         
-        // --- UPDATED MISSION OPTIONS (Include injected missions) ---
         const missionOptions = Object.values(DB.MISSIONS)
             .sort((a, b) => {
-                // Sort [DEBUG] missions to top
                 const aIsDebug = a.id.startsWith('debug_');
                 const bIsDebug = b.id.startsWith('debug_');
                 if (aIsDebug && !bIsDebug) return -1;
@@ -1040,25 +1204,52 @@ ${logHistory}
             })
             .reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
 
-        // Always show mission controls
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
-        // --- V4 TUTORIAL INSPECTOR FOLDER ---
-        const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
-        tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
+        // --- META & DEV FOLDER ---
+        const tutorialFolder = metaFolder.addFolder('Tutorial Maker');
+        tutorialFolder.domElement.classList.add('tutorial-maker-folder');
         
+        const combinedTargets = {};
+        Object.keys(SCREEN_IDS).forEach(k => combinedTargets[`Screen: ${SCREEN_IDS[k]}`] = SCREEN_IDS[k]);
+        Object.keys(ACTION_IDS).forEach(k => combinedTargets[`Action: ${ACTION_IDS[k]}`] = ACTION_IDS[k]);
+        combinedTargets['State: credits (credits)'] = 'credits';
+        combinedTargets['State: playerAge (playerAge)'] = 'playerAge';
+        
+        tutorialFolder.add(this.debugState.draftTutorialBatch, 'id').name('Batch ID');
+        tutorialFolder.add(this.debugState.draftTutorialBatch, 'title').name('Batch Title');
+        tutorialFolder.add(this.debugState.draftTutorialBatch, 'triggerType', ['SCREEN_LOAD', 'ACTION', 'STATE_CHANGE']).name('Trigger Type');
+        tutorialFolder.add(this.debugState.draftTutorialBatch, 'triggerTarget', combinedTargets).name('Trigger Target');
+        tutorialFolder.add(this.debugState.draftTutorialBatch, 'triggerValue').name('Trigger Value (State)');
+        tutorialFolder.add(this.debugState.draftTutorialBatch, 'navLock').name('Batch NavLock');
+
+        tutorialFolder.add(this.debugState, 'draftStepText').name('Next Step Text');
+        tutorialFolder.add(this.debugState, 'draftStepCompletion', ['INFO', 'UI_EVENT', 'ACTION']).name('Completion Type');
+        tutorialFolder.add(this.debugState, 'draftStepTheme', ['default', 'guild', 'syndicate']).name('Theme');
+        tutorialFolder.add(this.debugState, 'draftStepSpotlight').name('Use Spotlight');
+        tutorialFolder.add(this.debugState, 'draftStepClickThrough').name('Allow Click Through');
+        tutorialFolder.add(this.debugState, 'draftStepSkippable').name('Is Skippable');
+
+        tutorialFolder.add(this.actions.addSafeZoneStep, 'handler').name(this.actions.addSafeZoneStep.name);
         tutorialFolder.add(this.debugState, 'inspectorActive')
-            .name('Toggle Inspector')
+            .name('Toggle Target Inspector')
             .onChange((val) => this._toggleInspector(val));
             
+        tutorialFolder.add(this.debugState.draftTutorialBatch.steps, 'length').name('Drafted Steps').listen();
+
+        tutorialFolder.add(this.actions.testDraftStep, 'handler').name(this.actions.testDraftStep.name);
+        tutorialFolder.add(this.actions.testFullBatch, 'handler').name(this.actions.testFullBatch.name);
+        tutorialFolder.add(this.actions.undoLastStep, 'handler').name(this.actions.undoLastStep.name);
+        tutorialFolder.add(this.actions.clearDraft, 'handler').name(this.actions.clearDraft.name);
+        tutorialFolder.add(this.actions.printDraft, 'handler').name(this.actions.printDraft.name);
+        tutorialFolder.add(this.actions.exportDraftBatch, 'handler').name(this.actions.exportDraftBatch.name);
+
         tutorialFolder.add(this.actions.forceNextStep, 'handler').name(this.actions.forceNextStep.name);
         tutorialFolder.add(this.actions.resetTutorials, 'handler').name(this.actions.resetTutorials.name);
-        tutorialFolder.add(this.actions.testDummyToast, 'handler').name(this.actions.testDummyToast.name);
-        // ------------------------------------
 
-        const automationFolder = this.gui.addFolder('Automation & Logging');
+        const automationFolder = metaFolder.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
@@ -1070,6 +1261,12 @@ ${logHistory}
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
         automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
 
-        this.gui.folders.forEach(folder => folder.close());
+        // Close all master folders and sub-folders by default
+        this.gui.folders.forEach(masterFolder => {
+            masterFolder.close();
+            if (masterFolder.folders) {
+                masterFolder.folders.forEach(subFolder => subFolder.close());
+            }
+        });
     }
 }
