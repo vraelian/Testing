@@ -5,7 +5,7 @@
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
-import { NAV_IDS, SCREEN_IDS, SHIP_IDS } from '../../data/constants.js';
+import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 
 export class IntroService {
     /**
@@ -31,7 +31,7 @@ export class IntroService {
         if (!this.gameState.introSequenceActive) return;
         this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
         
-        // Set the initial state for the intro
+        // Set the initial state for the intro (strips debug/default items)
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
         this.gameState.player.shipStates = {};
@@ -85,25 +85,14 @@ export class IntroService {
     }
 
     /**
-     * Continues the intro sequence after a tutorial batch is completed.
-     * @param {string} completedBatchId - The ID of the tutorial batch that just finished.
-     */
-    continueAfterTutorial(completedBatchId) {
-        if (completedBatchId === 'intro_hangar') {
-            this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
-            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
-        } else if (completedBatchId === 'intro_finance') {
-             this._end();
-        }
-    }
-
-    /**
      * Displays the next modal in the introduction sequence.
      * @private
      */
     _showNextModal() {
         const step = DB.INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
-        if (!step) {
+        
+        // Skip the old "final" modal as it relied on the player having a ship from the deprecated tutorial
+        if (!step || step.id === 'final') {
             this._end();
             return;
         }
@@ -187,7 +176,6 @@ export class IntroService {
             button.id = 'intro-submit-btn'; 
             button.disabled = true;
             
-            // Note: The click logic for this button is handled in handleIntroClick
             button.onclick = null; 
 
             input.oninput = () => {
@@ -202,13 +190,11 @@ export class IntroService {
     }
 
     /**
-     * Manages the animated sequence for loan processing.
+     * Manages the animated sequence for loan processing and triggers the game launch.
      * @private
      */
     _startProcessingSequence() {
         const showApprovalModal = () => {
-            // [FIX] UNLOCK HERE: The processing animation is done. 
-            // We must release the lock so the "Accept Transfer" button works.
             this._transitioning = false;
 
             const title = 'Loan Approved';
@@ -224,14 +210,9 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
+                // Graceful delay to let the floating text play before routing to the game
                 setTimeout(() => {
-                    this.uiManager.showGameContainer();
-                    
-                    this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
-                    
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                    
-                    this._transitioning = false; 
+                    this._end();
                 }, 2000);
             };
 
@@ -263,25 +244,26 @@ export class IntroService {
     }
 
     /**
-     * Finalizes the intro sequence.
+     * Finalizes the intro sequence and transitions control to the core render loop.
      * @private
      */
     _end() {
+        // Drop the hard UI lock
         this.gameState.introSequenceActive = false;
         this._transitioning = false;
         
-        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
-        const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
-        const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
-        const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
-    
-        this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
-    
-        this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
-             this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
-        }, { buttonText: buttonText });
+        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Shipyard.');
         
+        // Default the Hangar screen to "Shipyard" so they can buy their ship
+        this.gameState.uiState.hangarShipyardToggleState = 'shipyard';
+
+        // Reveal the main layout
+        this.uiManager.showGameContainer();
+        
+        // Set context to the Hangar/Shipyard screen
+        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+        
+        // Force the master render cycle to execute, naturally triggering the Help Modal
         this.uiManager.render(this.gameState.getState());
     }
 }

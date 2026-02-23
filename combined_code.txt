@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.10</title>
+    <title>Orbital Trading 36.16</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -26,10 +26,10 @@
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/navigation.css">
     <link rel="stylesheet" href="./css/news-ticker.css"> 
+    <link rel="stylesheet" href="./css/help-system.css">
     <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/missions.css">
-    <link rel="stylesheet" href="./css/tutorial.css">
     <link rel="stylesheet" href="./css/debug.css">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
@@ -45,14 +45,17 @@
 
     <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 text-center bg-[#0c101d]">
         <button id="debug-start-btn" class="btn" data-action="debug-simple-start">D</button>
-        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg">
-            <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
-            <p class="text-xl md:text-2xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
+        <div class="max-w-3xl w-full panel-border border border-slate-700 bg-black/30 p-8 md:p-12 rounded-lg panel-pulse-gold">
+            
+            <div id="splash-title-header">
+                <h1 class="text-6xl md:text-7xl font-orbitron font-bold text-cyan-300 mb-2">Orbital Trading</h1>
+                <p class="text-xl md:text-xl text-gray-400 mb-16"><span class="hl">A game of heliocentric adventure & arbitrage</span></p>
+            </div>
           
             <div id="splash-main-menu" class="flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
-                <button id="main-new-game-btn" class="btn btn-header btn-pulse w-full">New Game</button>
-                <button id="main-load-game-btn" class="btn btn-header w-full" disabled>Load Game</button>
-                <button id="main-options-btn" class="btn btn-header w-full">Options</button>
+                <button id="main-new-game-btn" class="btn btn-header w-[70%] py-3">New Game</button>
+                <button id="main-load-game-btn" class="btn btn-header w-[70%] py-3" disabled>Load Game</button>
+                <button id="main-options-btn" class="btn btn-header w-[70%] py-3">Options</button>
                 
                 <div id="eula-container" class="mt-8 text-center text-gray-400">
                     <input type="checkbox" id="eula-checkbox" class="align-middle form-checkbox h-5 w-5 bg-slate-900 border-slate-600 text-cyan-500 rounded focus:ring-cyan-500">
@@ -76,30 +79,40 @@
                 <button id="load-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
             </div>
 
-            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
-                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Options & Backup</h3>
-                
-                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4 mb-2">
-                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Export Data</h4>
-                    <p class="text-sm text-gray-400 mb-4">Create a backup code of all your current save slots. Save this code somewhere safe.</p>
-                    <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700">Copy Backup Code to Clipboard</button>
+            <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">OPTIONS</h3>
+                <button id="options-data-btn" class="btn btn-header w-full">Export/Import Saved Game</button>
+                <button id="options-back-btn" class="btn btn-header w-full mt-6">Return to Main Menu</button>
+            </div>
+
+            <div id="splash-data-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-4xl mx-auto">
+                <div class="w-full flex flex-col sm:flex-row gap-4">
+                    
+                    <div class="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg p-3 flex flex-col relative">
+                        <div class="flex justify-center items-center mb-6 mt-2">
+                            <h4 class="text-lg text-cyan-300 font-orbitron text-center">Export Save</h4>
+                        </div>
+                        <button id="export-saves-btn" class="btn w-full bg-cyan-900/30 hover:bg-cyan-800/50 border-cyan-700 mt-auto py-4 transition-colors duration-300">Export Save Code</button>
+                    </div>
+
+                    <div class="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg p-3 flex flex-col relative text-center">
+                        <h4 class="text-lg text-cyan-300 font-orbitron mb-1 mt-2">Import Save Code</h4>
+                        <span class="text-xs font-bold text-red-400 uppercase tracking-wider block mb-4">OVERWRITES ALL SAVE FILES!</span>
+                        <textarea id="import-data-textarea" class="w-full h-16 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-3 focus:border-cyan-500 resize-none mx-auto text-center" placeholder="Paste Base64 Export Save code here..."></textarea>
+                        <button id="import-saves-btn" class="btn w-full bg-blue-900/30 hover:bg-blue-800/50 border-blue-700 mt-auto py-2 transition-colors duration-300">Import Save Code</button>
+                    </div>
+
                 </div>
 
-                <div class="w-full bg-slate-800/50 border border-slate-600 rounded-lg p-4">
-                    <h4 class="text-lg text-gray-300 font-orbitron mb-2">Import Data</h4>
-                    <p class="text-sm text-gray-400 mb-2">Paste a backup code here to restore your saves. <span class="text-red-400 font-bold">This will overwrite current slots!</span></p>
-                    <textarea id="import-data-textarea" class="w-full h-24 bg-slate-900 border border-slate-700 rounded p-2 text-xs text-gray-300 font-roboto-mono mb-2 focus:border-cyan-500" placeholder="Paste Base64 backup code here..."></textarea>
-                    <button id="import-saves-btn" class="btn w-full bg-red-900/30 hover:bg-red-800/50 border-red-700">Restore from Backup</button>
-                </div>
+                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0 m-0"></p>
 
-                <p id="options-status-message" class="h-6 text-sm font-roboto-mono text-cyan-300 transition-opacity opacity-0"></p>
-
-                <button id="options-back-btn" class="btn mt-2 w-full max-w-xs">Return to Main Menu</button>
+                <button id="data-back-btn" class="btn w-full max-w-xs mt-1 py-2">Return to Options</button>
             </div>
         </div>
 
-        <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full">
-            <p>Version 36.10</p>
+        <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
+            <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
+            <p>Version 36.16</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -137,7 +150,6 @@
         <div id="top-bar-container">
             <header id="header-main" class="relative">
                 <div id="nav-bar"></div>
-    
                 <div id="news-ticker-bar"></div> <div id="sub-nav-bar"></div>
             </header>
             <div id="sticky-bar"></div>
@@ -146,14 +158,11 @@
         <div class="main-content-wrapper px-4 md:px-8 pb-4 md:pb-8">
             <div id="main-content">
                 <div id="map-screen" class="screen"></div>
-  
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
-               
                 <div id="market-screen" class="screen"></div>
                 <div id="cargo-screen" class="screen"></div>
                 <div id="hangar-screen" class="screen"></div>
-
                 <div id="missions-screen" class="screen"></div>
                 <div id="finance-screen" class="screen"></div>
                 <div id="intel-screen" class="screen"></div>
@@ -167,7 +176,6 @@
                         <h3 id="mission-modal-title" class="text-xl font-orbitron mb-1"></h3>
                         <p id="mission-modal-type" class="mission-type"></p>
                     </div>
-                    
                 </div>
                 <p id="mission-modal-description" class="my-4 text-gray-300"></p>
                 <div id="mission-modal-objectives"></div>
@@ -179,7 +187,6 @@
              <div class="modal-content">
                 <div id="map-modal-content-container">
                 </div>
-     
              </div>
         </div>
     </main>
@@ -289,27 +296,6 @@
                </div>
        </div>
     </div>
-    <div id="tutorial-anchor-overlay" class="fixed inset-0 z-30 pointer-events-none"></div>
-
-    <div id="tutorial-toast-container" class="hidden fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto">
-        <div id="tt-arrow" data-popper-arrow></div>
-        <div class="tt-controls-container">
-            <button id="tutorial-toast-skip-btn" class="absolute top-1 right-2 text-2xl font-bold opacity-70 hover:opacity-1.01">×</button>
-            <button id="tutorial-toast-next-btn" class="tt-next-arrow hidden">›</button>
-        </div>
-        <p id="tutorial-toast-text" class="text-lg pr-6"></p>
-        </div>
-    
-    <div id="skip-tutorial-modal" class="modal-backdrop hidden">
-         <div class="modal-content">
-            <h3 id="skip-tutorial-title" class="text-2xl font-orbitron mb-4">Skip Tutorial?</h3>
-            <p id="skip-tutorial-description" class="mb-6 text-lg">Are you sure you want to skip the rest of this tutorial? You can replay it later from the tutorial log.</p>
-            <div id="skip-tutorial-button-container" class="mt-6 flex justify-center gap-4">
-                 <button id="skip-tutorial-confirm-btn" class="btn bg-red-800/80">Yes, Skip</button>
-                 <button id="skip-tutorial-cancel-btn" class="btn">No, Cancel</button>
-            </div>
-        </div>
-    </div>
 
     <div id="ship-detail-modal" class="modal-backdrop hidden">
         <div id="ship-detail-content" class="modal-content">
@@ -329,7 +315,6 @@
     <div id="graph-tooltip"></div>
     <div id="generic-tooltip" class="generic-tooltip"></div>
     
-    <div id="tutorial-highlight-overlay" class="hidden"></div>
     <div id="orientation-overlay">Please rotate your device to portrait mode.</div>
 
     <div id="diagnostic-overlay" class="hidden">
@@ -347,13 +332,8 @@
             <p><strong>Day:</strong> <span id="diag-day"></span></p>
             <p><strong>Nav/Screen:</strong> <span id="diag-nav-screen"></span></p>
         </div>
-        <div class="diag-section">
-            <p><strong>Tutorial Batch:</strong> <span id="diag-tutorial-batch"></span></p>
-            <p><strong>Tutorial Step:</strong> <span id="diag-tutorial-step"></span></D></p>
-        </div>
     </div>
 
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -1723,15 +1703,21 @@ body {
     position: absolute;
     bottom: 1rem;
     left: 1rem;
-    width: 40px;
-    height: 40px;
+    width: 24px;
+    height: 24px;
     border-radius: 50%;
-    font-size: 1.2rem;
+    font-size: 0.75rem;
     font-family: 'Orbitron', sans-serif;
-background-color: #4a5568;
+    background-color: #4a5568;
     color: #1a202c;
-    border: 2px solid #2d3748;
+    border: 1px solid #2d3748;
     z-index: 100;
+    opacity: 0.3;
+    transition: opacity 0.2s ease-in-out;
+}
+
+#debug-start-btn:hover {
+    opacity: 0.8;
 }
 
 .font-orbitron {
@@ -2184,6 +2170,10 @@ BUTTON GLOW --- */
 
 .btn-pulse-gold {
     animation: pulse-gold-border 2s infinite;
+}
+
+.panel-pulse-gold {
+    animation: pulse-gold-border 4s infinite ease-in-out;
 }
 
 .btn-pulse {
@@ -7407,6 +7397,162 @@ BULKHEAD NAVIGATION STYLES
 }
 --- END OF FILE: ./css/navigation.css ---
 
+--- START OF FILE: ./css/help-system.css ---
+/* css/help-system.css */
+
+.global-help-anchor {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(45, 55, 72, 0.6);
+    color: #fff;
+    border: 1px solid rgba(122, 154, 192, 0.5);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50; /* Above normal UI, below modals */
+    opacity: 0.5;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.global-help-anchor:hover, .global-help-anchor:active {
+    opacity: 1;
+    background-color: rgba(45, 55, 72, 0.9);
+}
+
+.help-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 60; /* Above standard modals, below critical travel animations */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.help-modal-container {
+    width: 90vw;
+    max-width: 400px;
+    aspect-ratio: 1 / 1;
+    background-color: #1a1a1a;
+    border: 1px solid #666;
+    filter: drop-shadow(0 0 10px rgba(100, 100, 100, 0.5));
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.help-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #333;
+    background-color: #222;
+}
+
+.help-modal-title {
+    font-family: 'Orbitron', sans-serif;
+    color: #ccc;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.help-modal-close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    opacity: 0.8;
+}
+
+.help-modal-close-btn:hover {
+    opacity: 1;
+}
+
+.help-modal-viewport {
+    flex-grow: 1;
+    width: 100%;
+    overflow: hidden; /* Enforce compartmentalization */
+    position: relative;
+}
+
+.help-slide-track {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
+    touch-action: pan-x; /* Strict horizontal panning expectation on mobile */
+}
+
+.help-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden; /* No vertical scrolling allowed */
+    justify-content: center; /* Center content aesthetically */
+}
+
+.help-slide h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #60a5fa;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.help-slide p {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #d0d8e8;
+    text-align: center;
+}
+
+.help-modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem;
+    gap: 8px;
+    background-color: #222;
+    border-top: 1px solid #333;
+    min-height: 36px;
+}
+
+.help-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #444;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.help-dot.active {
+    background-color: #fff;
+    box-shadow: 0 0 5px #fff;
+}
+--- END OF FILE: ./css/help-system.css ---
+
 --- START OF FILE: ./css/orientation.css ---
 /* css/orientation.css */
 #orientation-overlay {
@@ -8001,7 +8147,7 @@ function _getUpgradePillStyle(definition, tier, color) {
  * @returns {string} The HTML content for the Hangar screen.
  */
 export function renderHangarScreen(gameState, simulationService) {
-    const { uiState, player, tutorials } = gameState;
+    const { uiState, player } = gameState;
 
     // Determine the current mode (Hangar or Shipyard)
     const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
@@ -8238,7 +8384,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         <div class="col-span-2 flex flex-col justify-between">
             ${infoPanel}
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
@@ -8257,7 +8403,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             </div>
             
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
@@ -8361,7 +8507,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
  * Renders the appropriate action buttons (Hangar or Shipyard).
  * @private
  */
-function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorials) {
+function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
     if (isHangarMode) {
         const isActive = player.activeShipId === shipId;
         const canSell = player.ownedShipIds.length > 1 && !isActive;
@@ -8383,9 +8529,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         `;
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
-        const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
-        const isPurchaseLocked = tutorials.activeBatchId === 'intro_hangar' && !activeStep?.unlockPurchase;
-        const isDisabled = !canAfford || isPurchaseLocked;
+        const isDisabled = !canAfford;
         
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
@@ -8513,20 +8657,8 @@ import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
-    const { navLock } = tutorials;
+    const { player, currentLocationId, TRAVEL_DATA } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
-
-    const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
-    const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
-
-    let enabledLocationId = null;
-    if (enabledElementQuery) {
-        const match = enabledElementQuery.match(/\[data-location-id='(.*?)'\]/);
-        if (match && match[1]) {
-            enabledLocationId = match[1];
-        }
-    }
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
     const activeShipId = player.activeShipId;
@@ -8604,13 +8736,10 @@ export function renderNavigationScreen(gameState) {
                         if (isFreeFuel) displayFuel = 0;
                     }
 
-                    const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;
-                    const disabledClass = isDisabled ? 'disabled-location' : '';
-                    
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                     data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}" 
+                                     data-action="show-launch-modal" data-location-id="${location.id}" ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
@@ -9977,7 +10106,7 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * @private
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
-    const { player, market, currentLocationId, tutorials, uiState } = gameState;
+    const { player, market, currentLocationId, uiState } = gameState;
     
     // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
     let totalQty = 0;
@@ -10003,10 +10132,6 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const marketStock = market.inventory[currentLocationId]?.[good.id];
 
     const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
-
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
-    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
-    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = fleetItem ? fleetItem.quantity : '0';
@@ -10047,7 +10172,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
         const initialMode = marketTransactionState[good.id]?.mode || 'buy';
 
         const transactionControlsHtml = `
-             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
+             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}">
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
                     <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>
@@ -10120,7 +10245,6 @@ import { GameState } from './services/GameState.js';
 import { SimulationService } from './services/SimulationService.js';
 import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
-import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
@@ -10165,6 +10289,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- App Initialization Definitions ---
     const splashScreen = document.getElementById('splash-screen');
+    const splashTitleHeader = document.getElementById('splash-title-header');
     const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; 
 
@@ -10178,6 +10303,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const splashNewGameMenu = document.getElementById('splash-new-game-menu');
     const splashLoadGameMenu = document.getElementById('splash-load-game-menu');
     const splashOptionsMenu = document.getElementById('splash-options-menu');
+    const splashDataMenu = document.getElementById('splash-data-menu');
     
     const mainNewGameBtn = document.getElementById('main-new-game-btn');
     const mainLoadGameBtn = document.getElementById('main-load-game-btn');
@@ -10186,6 +10312,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const newGameBackBtn = document.getElementById('new-game-back-btn');
     const loadGameBackBtn = document.getElementById('load-game-back-btn');
     const optionsBackBtn = document.getElementById('options-back-btn');
+    const optionsDataBtn = document.getElementById('options-data-btn');
+    const dataBackBtn = document.getElementById('data-back-btn');
     
     const exportSavesBtn = document.getElementById('export-saves-btn');
     const importSavesBtn = document.getElementById('import-saves-btn');
@@ -10204,6 +10332,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const deleteCancelBtn = document.getElementById('delete-cancel-btn');
 
     let pendingSlotAction = null; 
+    let cachedExportCode = "";
+    let importConfirmState = false;
 
     // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
     if (navigator.storage && navigator.storage.persist) {
@@ -10297,34 +10427,74 @@ document.addEventListener('DOMContentLoaded', () => {
         splashNewGameMenu.classList.add('hidden');
         splashLoadGameMenu.classList.add('hidden');
         splashOptionsMenu.classList.add('hidden');
+        if (splashDataMenu) splashDataMenu.classList.add('hidden');
+
+        // Hide title header if we need ultra-compact screen (like Options)
+        if (splashTitleHeader) {
+            if (viewId === 'options' || viewId === 'data') {
+                splashTitleHeader.classList.add('hidden');
+            } else {
+                splashTitleHeader.classList.remove('hidden');
+            }
+        }
 
         if (viewId === 'main') splashMainMenu.classList.remove('hidden');
         else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
         else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
         else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
+        else if (viewId === 'data') {
+            splashDataMenu.classList.remove('hidden');
+            preGenerateExportCode();
+        }
     }
 
     mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });
     mainLoadGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('load'); });
     mainOptionsBtn.addEventListener('click', () => showSplashView('options'));
+    optionsDataBtn.addEventListener('click', () => showSplashView('data'));
     
     newGameBackBtn.addEventListener('click', () => showSplashView('main'));
     loadGameBackBtn.addEventListener('click', () => showSplashView('main'));
-    optionsBackBtn.addEventListener('click', () => {
+    optionsBackBtn.addEventListener('click', () => showSplashView('main'));
+    
+    dataBackBtn.addEventListener('click', () => {
         importDataTextarea.value = '';
-        showSplashView('main');
+        cachedExportCode = "";
+        resetImportButton();
+        showSplashView('options');
     });
+
+    // --- BASE64 HELPER UTILITIES (Prevents payload truncation & handles Unicode backwards-compatibility) ---
+    function utf8ToBase64(str) {
+        // Fast, native encoding that handles Unicode without bloating
+        return window.btoa(unescape(encodeURIComponent(str)));
+    }
+
+    function base64ToUtf8(b64) {
+        const decodedRaw = window.atob(b64);
+        try {
+            // Modern, efficient unescape mechanism
+            return decodeURIComponent(escape(decodedRaw));
+        } catch (e) {
+            // Legacy Fallback: Recovers saves exported from the very first V1 implementation
+            try {
+                return decodeURIComponent(decodedRaw);
+            } catch (legacyErr) {
+                return decodedRaw; 
+            }
+        }
+    }
 
     // --- PHASE 3: BACKUP & RESTORE PIPELINE ---
     function showOptionsStatus(message, isError = false) {
         optionsStatusMessage.textContent = message;
-        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'}`;
+        optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'} m-0`;
         setTimeout(() => {
             optionsStatusMessage.classList.replace('opacity-100', 'opacity-0');
         }, 4000);
     }
 
-    exportSavesBtn.addEventListener('click', async () => {
+    async function preGenerateExportCode() {
         try {
             const allSaves = {};
             const slots = ['slot_1', 'slot_2', 'slot_3'];
@@ -10334,43 +10504,105 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             
             if (Object.keys(allSaves).length === 0) {
-                showOptionsStatus('No saves found to export.', true);
+                cachedExportCode = "";
                 return;
             }
 
-            // Encode to handle Unicode characters before converting to Base64
             const jsonString = JSON.stringify(allSaves);
-            const base64String = btoa(encodeURIComponent(jsonString));
+            // Uses unified Base64 encoder ensuring minimal footprint and valid parsing
+            cachedExportCode = utf8ToBase64(jsonString);
+        } catch (error) {
+            console.error("[Backup] Pre-generation failed:", error);
+            cachedExportCode = "";
+        }
+    }
+
+    exportSavesBtn.addEventListener('click', () => {
+        if (!cachedExportCode) {
+            showOptionsStatus('No valid backup code available.', true);
+            return;
+        }
+
+        const triggerSuccessVisuals = () => {
+            exportSavesBtn.textContent = 'Save Code Copied!';
+            exportSavesBtn.classList.remove('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
+            exportSavesBtn.classList.add('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
             
+            setTimeout(() => {
+                exportSavesBtn.textContent = 'Export Save Code';
+                exportSavesBtn.classList.add('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
+                exportSavesBtn.classList.remove('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
+            }, 2000);
+        };
+
+        try {
             // Clipboard API (Works on HTTPS/Localhost)
             if (navigator.clipboard && navigator.clipboard.writeText) {
-                await navigator.clipboard.writeText(base64String);
-                showOptionsStatus('Backup Code copied to clipboard!');
+                navigator.clipboard.writeText(cachedExportCode).then(() => {
+                    triggerSuccessVisuals();
+                }).catch(err => {
+                    fallbackCopyTextToClipboard(triggerSuccessVisuals);
+                });
             } else {
-                // Fallback for older WebViews
-                const tempTextArea = document.createElement("textarea");
-                tempTextArea.value = base64String;
-                document.body.appendChild(tempTextArea);
-                tempTextArea.select();
-                document.execCommand("copy");
-                document.body.removeChild(tempTextArea);
-                showOptionsStatus('Backup Code copied to clipboard! (Fallback)');
+                fallbackCopyTextToClipboard(triggerSuccessVisuals);
             }
         } catch (error) {
-            console.error("[Backup] Export failed:", error);
-            showOptionsStatus('Export failed. Check console.', true);
+            console.error("[Backup] Copy failed:", error);
+            showOptionsStatus('Copy failed. Try manually copying the text.', true);
         }
     });
 
+    function fallbackCopyTextToClipboard(successCallback) {
+        const tempTextArea = document.createElement("textarea");
+        tempTextArea.value = cachedExportCode;
+        tempTextArea.style.top = "0";
+        tempTextArea.style.left = "0";
+        tempTextArea.style.position = "fixed";
+        document.body.appendChild(tempTextArea);
+        tempTextArea.focus();
+        tempTextArea.select();
+        tempTextArea.setSelectionRange(0, 9999999); 
+        try {
+            const successful = document.execCommand("copy");
+            if (successful && successCallback) {
+                successCallback();
+            } else {
+                showOptionsStatus('Copy failed. Try manually copying the text.', true);
+            }
+        } catch (err) {
+            showOptionsStatus('Copy failed. Try manually copying the text.', true);
+        }
+        document.body.removeChild(tempTextArea);
+    }
+
+    function resetImportButton() {
+        importConfirmState = false;
+        importSavesBtn.textContent = 'Import Save Code';
+        importSavesBtn.classList.add('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
+        importSavesBtn.classList.remove('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
+    }
+
+    importDataTextarea.addEventListener('input', resetImportButton);
+
     importSavesBtn.addEventListener('click', async () => {
-        const b64Data = importDataTextarea.value.trim();
+        // Strip all whitespace/newlines that might be introduced by textarea or iOS pasting
+        const b64Data = importDataTextarea.value.replace(/\s+/g, '');
         if (!b64Data) {
             showOptionsStatus('Please paste a backup code first.', true);
             return;
         }
 
+        if (!importConfirmState) {
+            importConfirmState = true;
+            importSavesBtn.textContent = 'OVERWRITE & IMPORT?';
+            importSavesBtn.classList.remove('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
+            importSavesBtn.classList.add('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
+            return;
+        }
+
         try {
-            const jsonString = decodeURIComponent(atob(b64Data));
+            // Decode cleanly via the unified decoder to ensure legacy compatibility
+            const jsonString = base64ToUtf8(b64Data);
             const parsedSaves = JSON.parse(jsonString);
             
             const slots = ['slot_1', 'slot_2', 'slot_3'];
@@ -10388,12 +10620,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 importDataTextarea.value = '';
                 showOptionsStatus(`Successfully restored ${importedCount} save(s)!`);
                 await refreshSlotUI(); // Refresh UI to show the imported slots
+                preGenerateExportCode(); // Update the export field with newly loaded data
             } else {
                 showOptionsStatus('Invalid backup code. No valid saves found.', true);
             }
         } catch (error) {
             console.error("[Backup] Import failed:", error);
             showOptionsStatus('Invalid backup code format.', true);
+        } finally {
+            resetImportButton();
         }
     });
 
@@ -10506,7 +10741,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const newsTickerService = new NewsTickerService(gameState); 
         const missionService = new MissionService(gameState, uiManager, logger);
         const simulationService = new SimulationService(gameState, uiManager, logger, newsTickerService);
-        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, logger);
         let debugService = null;
 
         if (DEV_MODE) {
@@ -10518,10 +10752,9 @@ document.addEventListener('DOMContentLoaded', () => {
         uiManager.setNewsTickerService(newsTickerService); 
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
-        simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, logger);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, debugService, logger);
         uiManager.setEventManager(eventManager);
         
         gameState.subscribe(() => uiManager.render(gameState.getState()));
@@ -10561,8 +10794,6 @@ document.addEventListener('DOMContentLoaded', () => {
             uiManager.render(gameState.getState());
         }
         
-        tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
-
         AssetService.hydrateGameAssets(gameState.getState());
     }
 });
@@ -16192,6 +16423,61 @@ export const EULA_CONTENT = `
 `;
 --- END OF FILE: ./js/data/eulaContent.js ---
 
+--- START OF FILE: ./js/data/helpRegistry.js ---
+// js/data/helpRegistry.js
+
+/**
+ * Facade registry for the Contextual Help Modal System.
+ * Keys match the defined game contexts. Values are arrays of HTML strings representing individual slides.
+ */
+export const HELP_REGISTRY = {
+    'map': [
+        `<div class="help-slide"><h3>Solar Map</h3><p>Select a destination to view its distance and market data.</p></div>`
+    ],
+    'navigation': [
+        `<div class="help-slide"><h3>Navigation</h3><p>Review travel costs and initiate your journey. Make sure you have enough fuel before launching.</p></div>`
+    ],
+    'cargo': [
+        `<div class="help-slide"><h3>Cargo Hold</h3><p>Manage your fleet's combined inventories and review fleet cost averages here.</p></div>`
+    ],
+    'market': [
+        `<div class="help-slide"><h3>Local Market</h3><p>Buy low and sell high. Prices evolve dynamically based on supply, demand, and your trading actions.</p></div>`,
+        `<div class="help-slide"><h3>Market Pressure</h3><p>Massive trades create market pressure, delaying inventory replenishment and stabilizing prices.</p></div>`
+    ],
+    'services-supply': [
+        `<div class="help-slide"><h3>Supply Services</h3><p>Refuel your fleet and repair hull damage here.</p></div>`
+    ],
+    'services-tuning': [
+        `<div class="help-slide"><h3>Tuning Shop</h3><p>Purchase and install modular upgrades to enhance your ship's capabilities.</p></div>`
+    ],
+    'services-supply-sol': [
+        `<div class="help-slide"><h3>Sol Station Supply</h3><p>Refuel and repair your ships as usual.</p></div>`,
+        `<div class="help-slide"><h3>Endgame Maintenance</h3><p>The intense gravity and radiation of Sol Station requires constant resource donations to maintain structural integrity.</p></div>`
+    ],
+    'shipyard-shipyard': [
+        `<div class="help-slide"><h3>Shipyard</h3><p>Purchase new hulls. Your current ship's upgrades are factored into its trade-in value when purchasing.</p></div>`
+    ],
+    'shipyard-hangar': [
+        `<div class="help-slide"><h3>Hangar</h3><p>View your active ship's stats and currently installed upgrades.</p></div>`
+    ],
+    'missions-terminal': [
+        `<div class="help-slide"><h3>Mission Terminal</h3><p>Accept lucrative contracts. Ensure you have the required cargo capacity before accepting a delivery.</p></div>`
+    ],
+    'missions-log': [
+        `<div class="help-slide"><h3>Mission Log</h3><p>Track your active objectives and their completion status.</p></div>`
+    ],
+    'finance': [
+        `<div class="help-slide"><h3>Finances</h3><p>Manage your debt and view your net worth milestones.</p></div>`
+    ],
+    'intel-codex': [
+        `<div class="help-slide"><h3>The Codex</h3><p>Review discovered lore and narrative logs here.</p></div>`
+    ],
+    'intel-market': [
+        `<div class="help-slide"><h3>Data Broker</h3><p>Purchase temporary, guaranteed market advantages at specific locations. You may only have one active deal at a time.</p></div>`
+    ]
+};
+--- END OF FILE: ./js/data/helpRegistry.js ---
+
 --- START OF FILE: ./js/services/ui/UIMissionControl.js ---
 // js/services/ui/UIMissionControl.js
 import { DB } from '../../data/database.js';
@@ -17988,6 +18274,252 @@ export class UIMarketControl {
     }
 }
 --- END OF FILE: ./js/services/ui/UIMarketControl.js ---
+
+--- START OF FILE: ./js/services/ui/UIHelpManager.js ---
+// js/services/ui/UIHelpManager.js
+import { HELP_REGISTRY } from '../../data/helpRegistry.js';
+
+/**
+ * @class UIHelpManager
+ * @description Domain Controller responsible for the Contextual Help Modal System.
+ * Handles DOM injection, micro-pagination, and rendering of contextual tutorial slides.
+ */
+export class UIHelpManager {
+    /**
+     * @param {import('../UIManager.js').UIManager} uiManager 
+     */
+    constructor(uiManager) {
+        this.uiManager = uiManager;
+        this.isVisible = false;
+        this.currentContext = null;
+        this.currentPageIndex = 0;
+        this.pages = [];
+
+        this._injectDOM();
+        this._cacheDOM();
+        this._bindEvents();
+    }
+
+    /**
+     * Injects the Help System's structural DOM elements directly into the game-container.
+     * Uses type="button" to satisfy defensive interaction protocols.
+     * @private
+     */
+    _injectDOM() {
+        const gameContainer = document.getElementById('game-container');
+        if (!gameContainer) return;
+
+        // Inject the persistent global anchor opposite the debug start button
+        const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
+        gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
+
+        // Inject the fixed-aspect-ratio modal skeleton
+        const modalHTML = `
+            <div id="help-modal-overlay" class="help-modal-overlay hidden">
+                <div class="help-modal-container">
+                    <div class="help-modal-header">
+                        <span class="help-modal-title">DATABANK</span>
+                        <button type="button" id="help-modal-close-btn" class="help-modal-close-btn" data-action="close-help">-</button>
+                    </div>
+                    <div class="help-modal-viewport">
+                        <div id="help-slide-track" class="help-slide-track"></div>
+                    </div>
+                    <div id="help-modal-footer" class="help-modal-footer"></div>
+                </div>
+            </div>
+        `;
+        gameContainer.insertAdjacentHTML('beforeend', modalHTML);
+    }
+
+    /**
+     * Caches references to the newly injected DOM elements.
+     * @private
+     */
+    _cacheDOM() {
+        this.anchorBtn = document.getElementById('global-help-anchor');
+        this.overlay = document.getElementById('help-modal-overlay');
+        this.closeBtn = document.getElementById('help-modal-close-btn');
+        this.slideTrack = document.getElementById('help-slide-track');
+        this.footer = document.getElementById('help-modal-footer');
+    }
+
+    /**
+     * Binds swipe gesture logic and local UI interactions.
+     * @private
+     */
+    _bindEvents() {
+        // Backdrop dismissal 
+        if (this.overlay) {
+            this.overlay.addEventListener('pointerdown', (e) => {
+                if (e.target === this.overlay) {
+                    this.hideModal();
+                }
+            });
+        }
+
+        let startX = 0;
+        let currentX = 0;
+        let isDragging = false;
+
+        if (this.slideTrack) {
+            // Touch events for mobile (raw touch events bypass browser pan-x cancellation)
+            this.slideTrack.addEventListener('touchstart', (e) => {
+                if (e.touches.length > 1) return; // Ignore multi-touch
+                isDragging = true;
+                startX = e.touches[0].clientX;
+                currentX = e.touches[0].clientX;
+                this.slideTrack.style.transition = 'none'; // Remove snap transition during drag
+            }, { passive: true });
+
+            this.slideTrack.addEventListener('touchmove', (e) => {
+                if (!isDragging) return;
+                currentX = e.touches[0].clientX;
+                const deltaX = currentX - startX;
+                
+                // Allow vertical bleed to pass through, but handle horizontal visual drag
+                const containerWidth = this.slideTrack.clientWidth || 1;
+                const deltaPercent = (deltaX / containerWidth) * 100;
+                const baseTranslate = -(this.currentPageIndex * 100);
+                
+                this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
+            }, { passive: true });
+
+            const endTouch = () => {
+                if (!isDragging) return;
+                isDragging = false;
+                this.slideTrack.style.transition = 'transform 0.3s ease-in-out';
+                
+                const deltaX = currentX - startX;
+                const threshold = 40; // Pixels required to commit to a slide change
+                
+                if (deltaX < -threshold && this.currentPageIndex < this.pages.length - 1) {
+                    this.nextPage();
+                } else if (deltaX > threshold && this.currentPageIndex > 0) {
+                    this.prevPage();
+                } else {
+                    this._applyTransform(); // Snap back if threshold not met
+                }
+            };
+
+            this.slideTrack.addEventListener('touchend', endTouch);
+            this.slideTrack.addEventListener('touchcancel', endTouch);
+
+            // Mouse events for desktop simulation
+            this.slideTrack.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                startX = e.clientX;
+                currentX = e.clientX;
+                this.slideTrack.style.transition = 'none';
+            });
+            
+            window.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                currentX = e.clientX;
+                const deltaX = currentX - startX;
+                const containerWidth = this.slideTrack.clientWidth || 1;
+                const deltaPercent = (deltaX / containerWidth) * 100;
+                const baseTranslate = -(this.currentPageIndex * 100);
+                this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
+            });
+            
+            window.addEventListener('mouseup', endTouch);
+        }
+    }
+
+    /**
+     * Renders and displays the Help Modal specifically for a given context.
+     * @param {string} contextId - The registry key mapping to the contextual slides.
+     * @param {number} [startingPageIndex=0] - Which slide to auto-paginate to upon opening.
+     */
+    showModal(contextId, startingPageIndex = 0) {
+        if (!HELP_REGISTRY[contextId]) return;
+
+        this.currentContext = contextId;
+        this.pages = HELP_REGISTRY[contextId];
+        this.currentPageIndex = Math.min(startingPageIndex, this.pages.length - 1);
+
+        this._renderSlides();
+        this._updatePagination();
+        this._applyTransform();
+
+        this.overlay.classList.remove('hidden');
+        this.isVisible = true;
+        
+        // Ensure anchor toggle icon disappears while modal is active
+        if (this.anchorBtn) this.anchorBtn.style.display = 'none';
+    }
+
+    /**
+     * Hides the Help Modal and restores the global anchor.
+     */
+    hideModal() {
+        if (this.overlay) this.overlay.classList.add('hidden');
+        this.isVisible = false;
+        if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+    }
+
+    /**
+     * Populates the slide track container with the HTML payload.
+     * @private
+     */
+    _renderSlides() {
+        if (this.slideTrack) {
+            this.slideTrack.innerHTML = this.pages.join('');
+        }
+    }
+
+    /**
+     * Rebuilds the pagination indicator dots based on page count.
+     * @private
+     */
+    _updatePagination() {
+        if (!this.footer) return;
+        if (this.pages.length <= 1) {
+            this.footer.innerHTML = '';
+            return;
+        }
+        
+        const dots = this.pages.map((_, index) => {
+            return `<div class="help-dot ${index === this.currentPageIndex ? 'active' : ''}"></div>`;
+        }).join('');
+        
+        this.footer.innerHTML = dots;
+    }
+
+    /**
+     * Translates the slide track via CSS to show the active slide index.
+     * @private
+     */
+    _applyTransform() {
+        if (this.slideTrack) {
+            const translateX = -(this.currentPageIndex * 100);
+            this.slideTrack.style.transform = `translateX(${translateX}%)`;
+        }
+    }
+
+    /**
+     * Advances to the next slide if one exists.
+     */
+    nextPage() {
+        if (this.currentPageIndex < this.pages.length - 1) {
+            this.currentPageIndex++;
+            this._applyTransform();
+            this._updatePagination();
+        }
+    }
+
+    /**
+     * Retreats to the previous slide if one exists.
+     */
+    prevPage() {
+        if (this.currentPageIndex > 0) {
+            this.currentPageIndex--;
+            this._applyTransform();
+            this._updatePagination();
+        }
+    }
+}
+--- END OF FILE: ./js/services/ui/UIHelpManager.js ---
 
 --- START OF FILE: ./js/services/ui/TravelAnimationService.js ---
 // js/services/ui/TravelAnimationService.js
@@ -20398,22 +20930,9 @@ import { calculateInventoryUsed, skewedRandom } from '../utils.js';
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
-import { OFFICERS } from '../data/officers.js'; // Added to allow population of all officers
-
-// --- NEW PRESET MAPPING ---
-// Mapping preset names to their new [X%, Y%] values
-const TUTORIAL_PRESETS_PERCENT = {
-    topCenter: [50, 15], 
-    top34Center: [50, 30],
-    vertHorizCenter: [50, 50],
-    bottom34Center: [50, 70],
-    bottomCenter: [50, 85],
-    bottomLeft: [15, 85],
-    topLeft: [15, 15],
-};
+import { OFFICERS } from '../data/officers.js';
 
 // --- EPHEMERAL DEBUG MISSIONS ---
-// These are injected into DB.MISSIONS at runtime for testing purposes.
 const DEBUG_MISSIONS = {
     'debug_kitchen_sink': {
         id: 'debug_kitchen_sink',
@@ -20510,7 +21029,6 @@ export class DebugService {
         this.diagElements = {};
         this.actions = {};
         
-        // --- State for GUI controllers ---
         this.debugState = {
             creditsToAdd: 100000,
             creditsToReduce: 100000,
@@ -20519,52 +21037,26 @@ export class DebugService {
             daysToAdvance: 7,
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
             selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
-            // Default to first debug mission if available
             selectedMission: 'debug_kitchen_sink',
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
             logLevel: 'INFO',
             
-            // Ship Debugging
             selectedUpgrade: null, 
             selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
             quantityToAdd: 10,
-            
-            // [[DEBUG FLAG STATE]]
-            alwaysTriggerEvents: false,
-
-            // Tutorial Tuner State
-            ttStepId: 'None',
-            ttAnchor: 'N/A',
-            ttPlacement: 'auto',
-            ttOffsetDistance: 0,
-            ttOffsetSkidding: 0,
-            ttPercentX: 50,
-            ttPercentY: 50,
-            ttWidth: 0,
-            ttHeight: 0,
-            ttGeneratedCode: ''
+            alwaysTriggerEvents: false
         }; 
-        // --- End State ---
 
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
-
-        // References to GUI controllers and folders for enabling/disabling
-         this.tutorialPositionalControllers = {};
     }
 
-    /**
-     * Initializes the debug panel.
-     */
     init() {
         if (this.gui) return;
         
-        // --- INJECTION START ---
-        // Inject debug missions into the runtime database
         Object.assign(DB.MISSIONS, DEBUG_MISSIONS);
         this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
-        // --- INJECTION END ---
 
         this._cacheDiagElements();
         this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
@@ -20574,17 +21066,8 @@ export class DebugService {
         this._startDiagLoop();
     }
 
-    /**
-     * Handles key presses forwarded from the EventManager.
-     * @param {string} key
-     */
-    handleKeyPress(key) {
-        // No longer needed as all shortcuts are removed.
-    }
+    handleKeyPress(key) {}
 
-    /**
-     * Toggles the visibility of the debug panel UI.
-     */
     toggleVisibility() {
         if (!this.gui) return;
         this.active = !this.active;
@@ -20599,9 +21082,6 @@ export class DebugService {
         }
     }
 
-    /**
-     * Gathers and copies a bug report to the clipboard.
-     */
     generateBugReport() {
         const logHistory = this.logger.getLogHistory();
         const gameState = this.gameState.getState();
@@ -20630,16 +21110,9 @@ ${logHistory}
             });
     }
 
-    // --- GAME FLOW & CHEAT METHODS ---
-
-    /**
-     * Internal helper to unlock all endgame locations and features.
-     * @private
-     */
     _unlockEndgame() {
         const { player, solStation } = this.gameState;
         
-        // Unlock Mercury and Sun if not present
         if (!player.unlockedLocationIds.includes(LOCATION_IDS.MERCURY)) {
             player.unlockedLocationIds.push(LOCATION_IDS.MERCURY);
         }
@@ -20647,7 +21120,6 @@ ${logHistory}
             player.unlockedLocationIds.push(LOCATION_IDS.SUN);
         }
 
-        // Unlock Sol Station Interface
         if (solStation) {
             solStation.unlocked = true;
         }
@@ -20656,11 +21128,6 @@ ${logHistory}
     godMode() {
         this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
-        this.simulationService.tutorialService.activeBatchId = null;
-        this.simulationService.tutorialService.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
 
         this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
 
@@ -20672,7 +21139,6 @@ ${logHistory}
         this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
         this.gameState.player.unlockedLocationIds = DB.MARKETS.map(m => m.id);
 
-        // [REQ] Ensure Endgame Unlocks
         this._unlockEndgame();
 
         this.uiManager.showGameContainer();
@@ -20682,18 +21148,13 @@ ${logHistory}
     }
 
     simpleStart() {
-         this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
+        this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
-        this.simulationService.tutorialService.activeBatchId = null;
-        this.simulationService.tutorialService.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = Object.keys(DB.TUTORIAL_DATA);
+
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
         this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
         
-        // HYDRATION: Pre-load EVERYTHING for testing purposes
         const seed = this.gameState.player.visualSeed;
         AssetService.hydrateAllShips(seed);
         AssetService.hydrateAllCommodities(seed);
@@ -20705,14 +21166,8 @@ ${logHistory}
     }
 
     skipToHangarTutorial() {
-        this.logger.warn('DebugService', 'SKIP TO HANGAR TUTORIAL ACTIVATED.');
+        this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
         this.gameState.introSequenceActive = true;
-
-        this.simulationService.tutorialService.activeBatchId = null;
-        this.simulationService.tutorialService.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.skippedTutorialBatches = [];
 
         this.gameState.player.credits = 25000;
         this.gameState.player.ownedShipIds = [];
@@ -20722,11 +21177,9 @@ ${logHistory}
 
         this.uiManager.showGameContainer();
         this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-        this.simulationService.tutorialService.triggerBatch('intro_hangar', 'hangar_1');
         this.gameState.setState({});
     }
 
-    // --- NEW SHIP-SPECIFIC HANDLERS ---
     deductHull(amount) {
          const ship = this.simulationService._getActiveShip();
         if (ship) {
@@ -20789,10 +21242,6 @@ ${logHistory}
         }
     }
 
-    /**
-     * Gives a specific item and quantity to the active ship.
-     * [REQ] Added for precise debugging.
-     */
     giveItemToShip() {
         const ship = this.simulationService._getActiveShip();
         const inventory = this.simulationService._getActiveInventory();
@@ -20825,24 +21274,19 @@ ${logHistory}
             this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
         }
     }
-
-    // --- GAME ATTRIBUTES DEBUG METHODS ---
     
     installSelectedUpgrade(upgradeId) {
         if (!upgradeId) return;
         const activeShip = this.simulationService._getActiveShip();
         if (!activeShip) return;
 
-        // Force install (bypass cost check in debugging)
         const shipState = this.gameState.player.shipStates[activeShip.id];
         if (!shipState.upgrades) shipState.upgrades = [];
         
-        // Don't duplicate if already exists (unless we want to test stacking, but UI might look weird)
-        // For now, let's allow stacking as per spec "Upgrades are not unique"
         if (shipState.upgrades.length < 3) {
             shipState.upgrades.push(upgradeId);
             this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
-            this.gameState.setState({}); // Re-render
+            this.gameState.setState({}); 
         } else {
             this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
         }
@@ -20853,10 +21297,8 @@ ${logHistory}
         if (!activeShip) return;
         const shipState = this.gameState.player.shipStates[activeShip.id];
         
-        // 1. Clear existing
         shipState.upgrades = [];
 
-        // 2. Pick 3 random
         const allIds = GameAttributes.getAllUpgradeIds();
         if (allIds.length === 0) return;
 
@@ -20879,8 +21321,6 @@ ${logHistory}
         this.gameState.setState({});
     }
 
-    // --- NEW ECONOMIC MANIPULATION TOOLS ---
-
     resetEconomyMemory() {
         const { market } = this.gameState;
         DB.MARKETS.forEach(loc => {
@@ -20901,7 +21341,6 @@ ${logHistory}
     }
 
     sootheEconomy() {
-        // Force minimum prices (Bullish for player buying)
         const { market } = this.gameState;
         DB.MARKETS.forEach(loc => {
             DB.COMMODITIES.forEach(c => {
@@ -20914,7 +21353,6 @@ ${logHistory}
     }
 
     riotEconomy() {
-        // Force maximum prices (Bearish for player buying, good for selling)
         const { market } = this.gameState;
         DB.MARKETS.forEach(loc => {
             DB.COMMODITIES.forEach(c => {
@@ -20940,9 +21378,6 @@ ${logHistory}
         this.gameState.setState({});
     }
 
-    /**
-     * Fills all Sol Station maintenance caches to max capacity.
-     */
     fillSolCaches() {
         if (this.gameState.solStation && this.gameState.solStation.caches) {
             Object.values(this.gameState.solStation.caches).forEach(cache => {
@@ -20953,14 +21388,11 @@ ${logHistory}
         }
     }
 
-    /**
-     * @private
-     */
     _registerDebugActions() {
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
-             skipToHangarTutorial: { name: 'Skip to Hangar Tutorial', type: 'button', handler: () => this.skipToHangarTutorial() },
+             skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
                 this.simulationService.timeService._checkMilestones();
@@ -20971,19 +21403,16 @@ ${logHistory}
                 this.simulationService._checkGameOverConditions();
                 this.gameState.setState({});
             }},
-            // --- NEW: Set Age Action ---
             setAge: { name: 'Set Age', type: 'button', handler: () => {
                 this.gameState.player.playerAge = this.debugState.targetAge;
                 this.logger.warn('DebugService', `Player age manually set to ${this.debugState.targetAge}.`);
                 
-                // Trigger the birthday event logic for the new age to ensure the modal/bonuses fire
                 if (this.simulationService.timeService) {
                     this.simulationService.timeService._handleBirthday(this.debugState.targetAge);
                 }
 
                 this.gameState.setState({});
             }},
-            // ---------------------------
              payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
                 if (this.debugState.selectedLocation) {
@@ -20996,28 +21425,20 @@ ${logHistory}
                 this.gameState.player.revealedTier = 7;
                 this.gameState.player.unlockedLicenseIds = Object.keys(DB.LICENSES);
                 
-                // [REQ] Ensure Endgame Unlocks
                 this._unlockEndgame();
 
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Unlocked: Maps, Licenses, Tiers, Sol Station', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
             
-            // NEW: SOL TESTING BUTTON
             solTesting: { name: 'Sol Testing', type: 'button', handler: () => {
-                // 1. Unlock All (including station/endgame)
                 this.actions.unlockAll.handler();
-                // 2. God Mode
                 this.actions.godMode.handler();
-                // 3. Teleport to Sun
                 this.gameState.currentLocationId = LOCATION_IDS.SUN;
-                // 4. [OBSOLETE] startRealTimeSimulation() was removed. The new JIT engine 
-                //    automatically calculates the correct state upon arrival.
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Sol Testing Initiated', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
             
-            // NEW: MISSION TESTING BUTTON
             missionTest: { name: 'Mission Test', type: 'button', handler: () => {
                 if (this.simulationService && this.simulationService.missionService) {
                     this.simulationService.missionService.injectTestMissions();
@@ -21025,7 +21446,6 @@ ${logHistory}
                 }
             }},
             
-            // --- SOL STATION DEBUG TOOLS ---
             levelUpSolStation: { name: 'Level Up Sol Station', type: 'button', handler: () => {
                 if (this.simulationService && this.simulationService.solStationService) {
                     this.simulationService.solStationService.applyLevelUp();
@@ -21075,47 +21495,36 @@ ${logHistory}
             }},
             fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
 
-            // --- [[END]] PHASE 3 ---
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
                     if (!this.gameState.player.ownedShipIds.includes(shipId)) {
                          this.simulationService.addShipToHangar(shipId);
                     }
                 });
-                // HYDRATION: Ensure all added ships are loaded
                 AssetService.hydrateAllShips(this.gameState.player.visualSeed);
                 this.gameState.setState({});
             }},
-            // --- [GEMINI] NEW ACTION: CYCLE SHIP PICS ---
             cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
                 this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
-                this.gameState.setState({}); // Force re-render
+                this.gameState.setState({}); 
                 this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
-            // --------------------------------------------
             
-            // --- MODIFIED: Advance Time now forces refresh using the correct method ---
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
                 this.simulationService.timeService.advanceDays(this.debugState.daysToAdvance);
-                // [REQ] Trigger FULL UI re-render (render instead of setState)
-                // This ensures components with explicit update loops (like Sol Dashboard) refresh
                 this.uiManager.render(this.gameState.getState());
             }},
-            // ------------------------------------------------------------------------
 
             replenishStock: { name: 'Replenish All Stock', type: 'button', handler: () => {
                  this.simulationService.marketService.replenishMarketInventory();
                 this.gameState.setState({});
             }},
             
-            // --- UPDATED EVENT TRIGGER (UPDATED) ---
             triggerRandomEvent: { name: 'Trigger Random Event', type: 'button', handler: () => {
-                // Now uses the Force Trigger method in Simulation Service
                 if (this.debugState.selectedRandomEvent) {
                      this.simulationService.forceTriggerEvent(this.debugState.selectedRandomEvent);
                 }
             }},
-            // ---------------------------------------
 
             triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
                 const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
@@ -21123,16 +21532,14 @@ ${logHistory}
                     this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
                 }
             }},
-            // --- NEW FORCE MISSION HANDLERS ---
             forceAcceptMission: { name: 'Force Accept Mission', type: 'button', handler: () => {
                 if (this.debugState.selectedMission) {
-                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission, true); // Force = True
+                    this.simulationService.missionService.acceptMission(this.debugState.selectedMission, true); 
                 }
             }},
             forceCompleteMission: { name: 'Force Complete Mission', type: 'button', handler: () => {
-                 this.simulationService.missionService.completeActiveMission(true); // Force = True
+                 this.simulationService.missionService.completeActiveMission(true); 
             }},
-            // ----------------------------------
 
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
@@ -21148,7 +21555,6 @@ ${logHistory}
             }},
             stopBot: { name: 'Stop AUTOTRADER-01', type: 'button', handler: () => this.bot.stop() },
 
-            // NEW & MOVED SHIP ACTIONS
             fillShipyard: { name: 'Fill Shipyard w/ All Ships', type: 'button', handler: () => this.fillShipyard() },
             deductHull20: { name: 'Deduct 20 Hull', type: 'button', handler: () => this.deductHull(20) },
             restoreHull: { name: 'Restore Hull', type: 'button', handler: () => this.restoreHull() },
@@ -21157,30 +21563,15 @@ ${logHistory}
             restoreFuel: { name: 'Restore Fuel', type: 'button', handler: () => this.restoreFuel() },
             removeAllCargo: { name: 'Remove All Cargo', type: 'button', handler: () => this.removeAllCargo() },
             
-            // [REQ] Precise Item Giving
             giveItemToShip: { name: 'Give Item', type: 'button', handler: () => this.giveItemToShip() },
 
-            // GAME ATTRIBUTES ACTIONS
             applyRandomUpgrades: { name: 'Apply 3 Random Upgrades', type: 'button', handler: () => this.applyRandomUpgrades() },
             removeAllUpgrades: { name: 'Remove All Upgrades', type: 'button', handler: () => this.removeAllUpgrades() },
 
-            // [REQ] Economy Actions
             resetEconomyMemory: { name: 'Reset Econ Memory', type: 'button', handler: () => this.resetEconomyMemory() },
             sootheEconomy: { name: 'Bullish Economy (Soothe)', type: 'button', handler: () => this.sootheEconomy() },
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
-
-            // --- [[START]] TUTORIAL TUNER ACTIONS ---
-            generateTutorialCode: { name: 'Generate Code', type: 'button', handler: () => this._generateTutorialCode() },
-            // --- Presets (Now using keys from TUTORIAL_PRESETS_PERCENT) ---
-            presetTopCenter: { name: 'Top Center', type: 'button', handler: () => this._applyTutorialPreset('topCenter') },
-            presetTop34Center: { name: 'Top 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('top34Center') },
-             presetVertHorizCenter: { name: 'V/H Center', type: 'button', handler: () => this._applyTutorialPreset('vertHorizCenter') },
-            presetBottom34Center: { name: 'Bottom 3/4 Center', type: 'button', handler: () => this._applyTutorialPreset('bottom34Center') },
-            presetBottomCenter: { name: 'Bottom Center', type: 'button', handler: () => this._applyTutorialPreset('bottomCenter') },
-            presetBottomLeft: { name: 'Bottom Left', type: 'button', handler: () => this._applyTutorialPreset('bottomLeft') },
-            presetTopLeft: { name: 'Top Left', type: 'button', handler: () => this._applyTutorialPreset('topLeft') },
-            // --- [[END]] TUTORIAL TUNER ACTIONS ---
         };
     }
 
@@ -21197,9 +21588,7 @@ ${logHistory}
             pixelRatio: document.getElementById('diag-pixel-ratio'),
             displayMode: document.getElementById('diag-display-mode'),
             day: document.getElementById('diag-day'),
-            navScreen: document.getElementById('diag-nav-screen'),
-            tutorialBatch: document.getElementById('diag-tutorial-batch'),
-             tutorialStep: document.getElementById('diag-tutorial-step'),
+            navScreen: document.getElementById('diag-nav-screen')
         };
     }
 
@@ -21217,24 +21606,22 @@ ${logHistory}
         const state = this.gameState.getState();
         const gameContainer = document.getElementById('game-container');
 
-        this.diagElements.winW.textContent = window.innerWidth;
-        this.diagElements.winH.textContent = window.innerHeight;
+        if(this.diagElements.winW) this.diagElements.winW.textContent = window.innerWidth;
+        if(this.diagElements.winH) this.diagElements.winH.textContent = window.innerHeight;
 
         if (window.visualViewport) {
-            this.diagElements.visualVpW.textContent = Math.round(window.visualViewport.width);
-            this.diagElements.visualVpH.textContent = Math.round(window.visualViewport.height);
+            if(this.diagElements.visualVpW) this.diagElements.visualVpW.textContent = Math.round(window.visualViewport.width);
+            if(this.diagElements.visualVpH) this.diagElements.visualVpH.textContent = Math.round(window.visualViewport.height);
         }
 
-        this.diagElements.gameW.textContent = gameContainer.clientWidth;
-        this.diagElements.gameH.textContent = gameContainer.clientHeight;
-        this.diagElements.bodyW.textContent = document.body.clientWidth;
-        this.diagElements.bodyH.textContent = document.body.clientHeight;
-        this.diagElements.pixelRatio.textContent = window.devicePixelRatio.toFixed(2);
-        this.diagElements.displayMode.textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser';
-        this.diagElements.day.textContent = state.day;
-        this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
-        this.diagElements.tutorialBatch.textContent = state.tutorials.activeBatchId || 'none';
-        this.diagElements.tutorialStep.textContent = state.tutorials.activeStepId || 'none';
+        if(this.diagElements.gameW) this.diagElements.gameW.textContent = gameContainer.clientWidth;
+        if(this.diagElements.gameH) this.diagElements.gameH.textContent = gameContainer.clientHeight;
+        if(this.diagElements.bodyW) this.diagElements.bodyW.textContent = document.body.clientWidth;
+        if(this.diagElements.bodyH) this.diagElements.bodyH.textContent = document.body.clientHeight;
+        if(this.diagElements.pixelRatio) this.diagElements.pixelRatio.textContent = window.devicePixelRatio.toFixed(2);
+        if(this.diagElements.displayMode) this.diagElements.displayMode.textContent = window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser';
+        if(this.diagElements.day) this.diagElements.day.textContent = state.day;
+        if(this.diagElements.navScreen) this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
     }
 
     /**
@@ -21245,21 +21632,16 @@ ${logHistory}
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
-        // MOVED FROM ECONOMY: Unlock All
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
-        // NEW: Sol Testing
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
-        // NEW: Mission Test
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
 
-        // --- NEW: Sol Station Debug Tools ---
         const solFolder = this.gui.addFolder('Sol Station');
         solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
         solFolder.add(this.actions.addAllOfficers, 'handler').name(this.actions.addAllOfficers.name);
         solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
         solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
         solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
-        // ------------------------------------
 
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
@@ -21273,7 +21655,6 @@ ${logHistory}
         const shipFolder = this.gui.addFolder('Ship');
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
         
-        // Populate Commodity Dropdown for "Give Item"
         const commodityOptions = DB.COMMODITIES.reduce((acc, c) => ({...acc, [c.name]: c.id}), {});
         shipFolder.add(this.debugState, 'selectedCommodityToAdd', commodityOptions).name('Item Type');
         shipFolder.add(this.debugState, 'quantityToAdd', 1, 1000, 1).name('Quantity');
@@ -21291,10 +21672,8 @@ ${logHistory}
         shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
         shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
 
-        // --- GAME ATTRIBUTES FOLDER ---
         const attributesFolder = this.gui.addFolder('Game Attributes');
         
-        // Populate Upgrade Dropdown
         const upgradeIds = GameAttributes.getAllUpgradeIds();
         const upgradeOptions = upgradeIds.reduce((acc, id) => {
             const def = GameAttributes.getDefinition(id);
@@ -21308,7 +21687,6 @@ ${logHistory}
             
         attributesFolder.add(this.actions.applyRandomUpgrades, 'handler').name('Apply 3 Random');
         attributesFolder.add(this.actions.removeAllUpgrades, 'handler').name('Remove All');
-        // ------------------------------
 
         const worldFolder = this.gui.addFolder('World & Time');
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
@@ -21316,7 +21694,6 @@ ${logHistory}
 
         this.economyFolder = this.gui.addFolder('Economy'); 
         this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        // [REQ] New Economy Tools
         this.economyFolder.add(this.actions.resetEconomyMemory, 'handler').name(this.actions.resetEconomyMemory.name);
         this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
@@ -21324,33 +21701,26 @@ ${logHistory}
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
-        // --- UPDATED EVENT SELECTOR (UPDATED) ---
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
 
-        // [[NEW DEBUG TOGGLE]]
         triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
             .name('Always Trigger (100%)')
             .onChange(val => {
-                // Directly modify the flag on the live service instance
                 if (this.simulationService && this.simulationService.travelService) {
                     this.simulationService.travelService.debugAlwaysTriggerEvents = val;
                 }
             });
-        // -----------------------------------------------------
         
-        // [FIX] Add check if AGE_EVENTS are populated before reducing
         if (DB.AGE_EVENTS.length > 0) {
             const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
             triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
             triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
         
-        // --- UPDATED MISSION OPTIONS (Include injected missions) ---
         const missionOptions = Object.values(DB.MISSIONS)
             .sort((a, b) => {
-                // Sort [DEBUG] missions to top
                 const aIsDebug = a.id.startsWith('debug_');
                 const bIsDebug = b.id.startsWith('debug_');
                 if (aIsDebug && !bIsDebug) return -1;
@@ -21359,49 +21729,10 @@ ${logHistory}
             })
             .reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
 
-        // Always show mission controls
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
-        // --- [[START]] TUTORIAL TUNER FOLDER ---
-        const tutorialFolder = this.gui.addFolder('Tutorial Tuner');
-        tutorialFolder.domElement.classList.add('tutorial-tuner-folder');
-
-        tutorialFolder.add(this.debugState, 'ttStepId').name('Step ID').listen().disable();
-        tutorialFolder.add(this.debugState, 'ttAnchor').name('Anchor').listen().disable();
-
-        // --- Size Tuners ---
-        tutorialFolder.add(this.debugState, 'ttWidth', 0, 800, 10).name('Width (0=auto)').onChange(() => this._handleTutorialTune());
-        tutorialFolder.add(this.debugState, 'ttHeight', 0, 800, 10).name('Height (0=auto)').onChange(() => this._handleTutorialTune());
-
-        // --- Position Tuners (Conditional) ---
-        // Store references to controllers
-        this.tutorialPositionalControllers.percentX = tutorialFolder.add(this.debugState, 'ttPercentX', 0, 100, 1).name('X %').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.percentY = tutorialFolder.add(this.debugState, 'ttPercentY', 0, 100, 1).name('Y %').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.placement = tutorialFolder.add(this.debugState, 'ttPlacement').name('Placement (Elem)').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.distance = tutorialFolder.add(this.debugState, 'ttOffsetDistance', -500, 500, 1).name('Distance (Elem)').onChange(() => this._handleTutorialTune());
-        this.tutorialPositionalControllers.skidding = tutorialFolder.add(this.debugState, 'ttOffsetSkidding', -500, 500, 1).name('Skidding (Elem)').onChange(() => this._handleTutorialTune());
-
-        // --- Position Presets ---
-        const presetFolder = tutorialFolder.addFolder('Position Presets');
-        presetFolder.add(this.actions.presetTopCenter, 'handler').name(this.actions.presetTopCenter.name);
-        presetFolder.add(this.actions.presetTop34Center, 'handler').name(this.actions.presetTop34Center.name);
-        presetFolder.add(this.actions.presetVertHorizCenter, 'handler').name(this.actions.presetVertHorizCenter.name);
-        presetFolder.add(this.actions.presetBottom34Center, 'handler').name(this.actions.presetBottom34Center.name);
-        presetFolder.add(this.actions.presetBottomCenter, 'handler').name(this.actions.presetBottomCenter.name);
-        presetFolder.add(this.actions.presetBottomLeft, 'handler').name(this.actions.presetBottomLeft.name);
-        presetFolder.add(this.actions.presetTopLeft, 'handler').name(this.actions.presetTopLeft.name);
-        // ** Store reference to the FOLDER INSTANCE itself **
-        this.tutorialPositionalControllers.presetFolder = presetFolder;
-
-        // --- Code Generator ---
-        tutorialFolder.add(this.actions.generateTutorialCode, 'handler').name(this.actions.generateTutorialCode.name);
-        tutorialFolder.add(this.debugState, 'ttGeneratedCode').name('Code').listen();
-
-        // Initial state update for controls
-        this._updateTutorialControlVisibility(false); // Assume initially no step is active
-        // --- [[END]] TUTORIAL TUNER FOLDER ---
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
@@ -21417,258 +21748,6 @@ ${logHistory}
 
         this.gui.folders.forEach(folder => folder.close());
     }
-
-    // --- [[START]] TUTORIAL TUNER METHODS ---
-
-    /**
-     * Parses a size value (e.g., 'auto', '300px', 300) into a number for the slider.
-     * @param {string|number|undefined} sizeValue - The value from the step definition.
-     * @returns {number} A number, with 0 representing 'auto'.
-     * @private
-     */
-    _parseSize(sizeValue) {
-        if (!sizeValue || sizeValue === 'auto') return 0;
-        if (typeof sizeValue === 'number') return sizeValue;
-        if (typeof sizeValue === 'string') {
-            const parsed = parseInt(sizeValue, 10);
-            return isNaN(parsed) ? 0 : parsed;
-        }
-        return 0;
-    }
-
-    /**
-     * Applies a position preset to the tuner sliders based on anchoring mode.
-     * @param {string} presetKey - Key corresponding to TUTORIAL_PRESETS_PERCENT.
-     * @private
-     */
-    _applyTutorialPreset(presetKey) {
-        const isOverlayAnchor = this.debugState.ttAnchor === 'body'; // Using 'body' as proxy for overlay
-
-        if (isOverlayAnchor) {
-            const percentValues = TUTORIAL_PRESETS_PERCENT[presetKey];
-            if (percentValues) {
-                this.debugState.ttPercentX = percentValues[0];
-                this.debugState.ttPercentY = percentValues[1];
-                this.tutorialPositionalControllers.percentX?.updateDisplay();
-                this.tutorialPositionalControllers.percentY?.updateDisplay();
-            } else {
-                 this.logger.warn('DebugService', `Preset key "${presetKey}" not found for percentage presets.`);
-            }
-         } else {
-            // Placeholder: Need to define offset presets if required for element anchors
-            this.logger.warn('DebugService', 'Offset presets not yet defined for element anchors.');
-            // Example:
-            // const offsetValues = TUTORIAL_PRESETS_OFFSET[presetKey];
-            // if (offsetValues) {
-            //     this.debugState.ttOffsetSkidding = offsetValues[0];
-            //     this.debugState.ttOffsetDistance = offsetValues[1];
-            //     this.tutorialPositionalControllers.skidding?.updateDisplay();
-            //     this.tutorialPositionalControllers.distance?.updateDisplay();
-            // }
-        }
-
-        // Trigger UI update
-        this._handleTutorialTune();
-    }
-
-    /**
-     * Shows/hides tutorial tuner controls based on anchor type using lil-gui methods.
-     * @param {boolean} isOverlayAnchor - True if the toast should use percentage positioning.
-     * @private
-     */
-    _updateTutorialControlVisibility(isOverlayAnchor) {
-         // Helper function using lil-gui's show() / hide()
-         const setVisibility = (controller, shouldShow) => {
-             if (controller) {
-                 controller.show(shouldShow);
-             }
-         };
-
-         // Percentage controls
-         setVisibility(this.tutorialPositionalControllers.percentX, isOverlayAnchor);
-         setVisibility(this.tutorialPositionalControllers.percentY, isOverlayAnchor);
-
-         // Popper offset controls
-         setVisibility(this.tutorialPositionalControllers.placement, !isOverlayAnchor);
-         setVisibility(this.tutorialPositionalControllers.distance, !isOverlayAnchor);
-         setVisibility(this.tutorialPositionalControllers.skidding, !isOverlayAnchor);
-
-         // Preset folder visibility (Show only for overlay anchors for now)
-         if (this.tutorialPositionalControllers.presetFolder) {
-              this.tutorialPositionalControllers.presetFolder.show(isOverlayAnchor);
-         }
-     }
-
-
-    /**
-     * Populates the Tutorial Tuner with the active step's data.
-     * Called by UIManager when a toast is shown.
-     * @param {object} step - The tutorial step object.
-     */
-    setActiveTutorialStep(step) {
-        this.logger.info.system('DebugService', `Setting active tutorial step: ${step.stepId}`);
-        const isOverlayAnchor = step.anchorElement === 'body'; // Use 'body' to signify overlay anchor
-
-        // Reset generated code
-        this.debugState.ttGeneratedCode = '';
-
-        // Update state
-        this.debugState.ttStepId = step.stepId;
-        this.debugState.ttAnchor = step.anchorElement; // Keep original anchor for info
-        this.debugState.ttWidth = this._parseSize(step.size?.width) || 0;
-        this.debugState.ttHeight = this._parseSize(step.size?.height) || 0;
-
-        if (isOverlayAnchor) {
-            // Use percentage position from step or default to center
-            this.debugState.ttPercentX = step.positionX ?? 50;
-            this.debugState.ttPercentY = step.positionY ?? 50;
-            // Reset/default Popper values for clarity
-            this.debugState.ttPlacement = 'auto';
-            this.debugState.ttOffsetDistance = 0;
-            this.debugState.ttOffsetSkidding = 0;
-        } else {
-            // Use Popper settings from step or defaults
-            const offsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
-            let skidding = 0;
-            let distance = 0;
-
-            if (typeof offsetMod?.options?.offset === 'function') {
-                this.logger.warn('DebugService', `Offset function used for ${step.stepId}. Tuner defaults to [0, 10].`);
-                distance = 10; // Default distance for element anchors
-            } else if (Array.isArray(offsetMod?.options?.offset)) {
-                skidding = offsetMod.options.offset[0] || 0;
-                distance = offsetMod.options.offset[1] || 0;
-            } else {
-                 distance = 10; // Default distance if no offset defined
-            }
-
-            this.debugState.ttPlacement = step.placement || step.popperOptions?.placement || 'auto';
-            this.debugState.ttOffsetDistance = distance;
-            this.debugState.ttOffsetSkidding = skidding;
-            // Reset/default percentage values
-            this.debugState.ttPercentX = 50;
-            this.debugState.ttPercentY = 50;
-        }
-
-        // Update visibility of controls AFTER setting state
-         this._updateTutorialControlVisibility(isOverlayAnchor);
-
-        // Manually update displays for all relevant controllers
-        // This ensures sliders reflect the loaded step's values
-        Object.values(this.tutorialPositionalControllers).forEach(controllerOrFolder => {
-             // Check if it's a controller (has updateDisplay) or the folder (doesn't)
-             if (controllerOrFolder && typeof controllerOrFolder.updateDisplay === 'function') {
-                 controllerOrFolder.updateDisplay();
-             }
-         });
-         // Also update size controllers
-         this.gui.controllers.find(c => c.property === 'ttWidth')?.updateDisplay();
-         this.gui.controllers.find(c => c.property === 'ttHeight')?.updateDisplay();
-
-    }
-
-    /**
-     * Clears and resets the Tutorial Tuner.
-     * Called by UIManager when a toast is hidden.
-     */
-    clearActiveTutorialStep() {
-        this.logger.info.system('DebugService', 'Clearing active tutorial step.');
-
-        // Reset all state properties to their defaults
-        this.debugState.ttStepId = 'None';
-        this.debugState.ttAnchor = 'N/A';
-        this.debugState.ttPlacement = 'auto';
-        this.debugState.ttOffsetDistance = 0;
-        this.debugState.ttOffsetSkidding = 0;
-        this.debugState.ttPercentX = 50;
-        this.debugState.ttPercentY = 50;
-        this.debugState.ttWidth = 0;
-        this.debugState.ttHeight = 0;
-        this.debugState.ttGeneratedCode = '';
-
-        // Hide conditional controls
-        this._updateTutorialControlVisibility(false);
-    }
-
-    /**
-     * Handles live tuning input from the debug panel.
-     * @private
-     */
-    _handleTutorialTune() {
-        if (!this.uiManager) return;
-
-        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
-        this.logger.info.system('DebugService', `Tune event (Overlay: ${isOverlayAnchor}): X%=${this.debugState.ttPercentX}, Y%=${this.debugState.ttPercentY}, Place=${this.debugState.ttPlacement}, Dist=${this.debugState.ttOffsetDistance}, Skid=${this.debugState.ttOffsetSkidding}`);
-
-        this.uiManager.updateTutorialPopper({
-            isOverlayAnchor: isOverlayAnchor, // Pass mode to UIManager
-            // Size
-            width: Number(this.debugState.ttWidth) || 0,
-            height: Number(this.debugState.ttHeight) || 0,
-            // Percentage Position (if overlay)
-            percentX: Number(this.debugState.ttPercentX) || 50,
-            percentY: Number(this.debugState.ttPercentY) || 50,
-            // Popper Position (if element)
-            placement: this.debugState.ttPlacement,
-            distance: Number(this.debugState.ttOffsetDistance) || 0,
-            skidding: Number(this.debugState.ttOffsetSkidding) || 0,
-        });
-    }
-
-    /**
-     * Generates the code string from the current tuner state.
-     * Outputs either percentage or Popper options based on anchor type.
-     * @private
-     */
-    _generateTutorialCode() {
-        this.logger.info.system('DebugService', 'Generating tutorial code...');
-        const isOverlayAnchor = this.debugState.ttAnchor === 'body';
-
-        // Size String (common)
-        const hasSize = this.debugState.ttWidth > 0 || this.debugState.ttHeight > 0;
-        const widthVal = this.debugState.ttWidth > 0 ? `'${this.debugState.ttWidth}px'` : "'auto'";
-        const heightVal = this.debugState.ttHeight > 0 ? `'${this.debugState.ttHeight}px'` : "'auto'";
-        const sizeString = hasSize ? `
-size: { width: ${widthVal}, height: ${heightVal} },` : '';
-
-        let positionString = '';
-        if (isOverlayAnchor) {
-            // Generate Percentage Position Code
-             // Make sure anchorElement is 'body'
-             positionString = `
-anchorElement: 'body',`; // Explicitly set anchor
-             // Only add percentages if not default (50, 50)
-            if (this.debugState.ttPercentX !== 50 || this.debugState.ttPercentY !== 50) {
-                 positionString += `
-positionX: ${this.debugState.ttPercentX},
-positionY: ${this.debugState.ttPercentY},`;
-            }
-
-        } else {
-            // Generate Popper Options Code
-             // Add anchorElement only if it's NOT body
-             if (this.debugState.ttAnchor !== 'body') {
-                 positionString = `
-anchorElement: '${this.debugState.ttAnchor}',`;
-             }
-            positionString += `
-placement: '${this.debugState.ttPlacement}',
-popperOptions: {
-    modifiers: [
-        { name: 'offset', options: { offset: [${this.debugState.ttOffsetSkidding}, ${this.debugState.ttOffsetDistance}] } }
-        // Add other modifiers here if needed in the future
-    ]
-}`;
-        }
-
-        // Construct final code, removing potential trailing comma before a closing brace
-         let code = `// --- ${this.debugState.ttStepId} ---${sizeString}${positionString}`;
-        code = code.replace(/,\s*(\}|$)/g, '$1'); // Regex to remove trailing comma
-
-        this.debugState.ttGeneratedCode = code;
-    }
-
-    // --- [[END]] TUTORIAL TUNER METHODS ---
 }
 --- END OF FILE: ./js/services/DebugService.js ---
 
@@ -22248,11 +22327,7 @@ export class GameState {
             // --- END VIRTUAL WORKBENCH ---
 
             tutorials: {
-                activeBatchId: null,
-                activeStepId: null,
-                seenBatchIds: [],
-                skippedTutorialBatches: [],
-                navLock: null
+                seenHelpContexts: []
             },
             missions: {
                 // --- MISSION SYSTEM 2.0 (Phase 1) ---
@@ -25968,7 +26043,7 @@ export class TimeService {
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
-import { NAV_IDS, SCREEN_IDS, SHIP_IDS } from '../../data/constants.js';
+import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 
 export class IntroService {
     /**
@@ -25994,7 +26069,7 @@ export class IntroService {
         if (!this.gameState.introSequenceActive) return;
         this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
         
-        // Set the initial state for the intro
+        // Set the initial state for the intro (strips debug/default items)
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
         this.gameState.player.shipStates = {};
@@ -26048,25 +26123,14 @@ export class IntroService {
     }
 
     /**
-     * Continues the intro sequence after a tutorial batch is completed.
-     * @param {string} completedBatchId - The ID of the tutorial batch that just finished.
-     */
-    continueAfterTutorial(completedBatchId) {
-        if (completedBatchId === 'intro_hangar') {
-            this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.FINANCE);
-            this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_FINANCE' });
-        } else if (completedBatchId === 'intro_finance') {
-             this._end();
-        }
-    }
-
-    /**
      * Displays the next modal in the introduction sequence.
      * @private
      */
     _showNextModal() {
         const step = DB.INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
-        if (!step) {
+        
+        // Skip the old "final" modal as it relied on the player having a ship from the deprecated tutorial
+        if (!step || step.id === 'final') {
             this._end();
             return;
         }
@@ -26150,7 +26214,6 @@ export class IntroService {
             button.id = 'intro-submit-btn'; 
             button.disabled = true;
             
-            // Note: The click logic for this button is handled in handleIntroClick
             button.onclick = null; 
 
             input.oninput = () => {
@@ -26165,13 +26228,11 @@ export class IntroService {
     }
 
     /**
-     * Manages the animated sequence for loan processing.
+     * Manages the animated sequence for loan processing and triggers the game launch.
      * @private
      */
     _startProcessingSequence() {
         const showApprovalModal = () => {
-            // [FIX] UNLOCK HERE: The processing animation is done. 
-            // We must release the lock so the "Accept Transfer" button works.
             this._transitioning = false;
 
             const title = 'Loan Approved';
@@ -26187,14 +26248,9 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
+                // Graceful delay to let the floating text play before routing to the game
                 setTimeout(() => {
-                    this.uiManager.showGameContainer();
-                    
-                    this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_HANGAR' });
-                    
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                    
-                    this._transitioning = false; 
+                    this._end();
                 }, 2000);
             };
 
@@ -26226,25 +26282,26 @@ export class IntroService {
     }
 
     /**
-     * Finalizes the intro sequence.
+     * Finalizes the intro sequence and transitions control to the core render loop.
      * @private
      */
     _end() {
+        // Drop the hard UI lock
         this.gameState.introSequenceActive = false;
         this._transitioning = false;
         
-        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete.');
-        const finalStep = DB.INTRO_SEQUENCE_V1.modals.find(s => s.id === 'final');
-        const shipName = DB.SHIPS[this.gameState.player.activeShipId].name;
-        const buttonText = finalStep.buttonText.replace('{shipName}', shipName);
-    
-        this.gameState.tutorials.navLock = { navId: NAV_IDS.DATA, screenId: SCREEN_IDS.FINANCE };
-    
-        this.uiManager.queueModal('event-modal', finalStep.title, finalStep.description, () => {
-             this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-             this.simulationService.tutorialService.checkState({ type: 'ACTION', action: 'INTRO_START_MISSIONS' });
-        }, { buttonText: buttonText });
+        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Shipyard.');
         
+        // Default the Hangar screen to "Shipyard" so they can buy their ship
+        this.gameState.uiState.hangarShipyardToggleState = 'shipyard';
+
+        // Reveal the main layout
+        this.uiManager.showGameContainer();
+        
+        // Set context to the Hangar/Shipyard screen
+        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+        
+        // Force the master render cycle to execute, naturally triggering the Help Modal
         this.uiManager.render(this.gameState.getState());
     }
 }
@@ -26518,9 +26575,7 @@ export class SimulationService {
         this.uiManager = uiManager;
         this.logger = logger;
         this.newsTickerService = newsTickerService; 
-        this.tutorialService = null; 
         this.missionService = null;  
-        
         this.intelService = null; 
 
          // Instantiate all services
@@ -26532,43 +26587,23 @@ export class SimulationService {
 
         // --- EVENT SYSTEM 2.0 ---
         this.randomEventService = new RandomEventService();
-        // ------------------------
 
         // --- SOL STATION SERVICE ---
         this.solStationService = new SolStationService(gameState, logger);
-        // Inject into TimeService for daily tick processing
         this.timeService.solStationService = this.solStationService;
-        // Inject TimeService into SolStationService for the local live loop
         this.solStationService.setTimeService(this.timeService);
-        // ---------------------------
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         
-        // Inject intelService into services that depend on it
         this.timeService.intelService = this.intelService;
         this.uiManager.setIntelService(this.intelService); 
-
-        // Inject cross-dependencies that couldn't be set in constructors
         this.timeService.simulationService = this;
-        
-        // Inject self into UIManager to allow UI Controls to trigger active ticks
         this.uiManager.setSimulationService(this);
-        
         this.newsTickerService.setServices(this, this.marketService);
 
-        // --- INITIALIZATION CHECK ---
-        // If the game loads and we are already at Sol Station, start the heartbeat.
         if (this.gameState.currentLocationId === 'sol') {
             this.solStationService.startLocalLiveLoop();
         }
-    }
-
-    /**
-     * Injects the TutorialService after all services have been instantiated.
-     * @param {import('./TutorialService.js').TutorialService} tutorialService
-     */
-    setTutorialService(tutorialService) {
-        this.tutorialService = tutorialService;
     }
 
     /**
@@ -26650,8 +26685,6 @@ export class SimulationService {
             });
         }
         
-        // Pass the event to the UI Manager to display the modal
-        // The modal will call back to resolveEventChoice
         this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
             this.resolveEventChoice(eventId, choiceId);
         });
@@ -26663,15 +26696,11 @@ export class SimulationService {
      * @param {string} choiceId 
      */
     resolveEventChoice(eventId, choiceId) {
-        // 1. Calculate Outcome
         const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this);
-        
         if (!result) return;
 
-        // 2. Apply Effects
         this._applyEventEffects(result.effects);
 
-        // 3. Show Result Modal with Post-Check Callback
         this.uiManager.showEventResultModal(
             result.title, 
             result.text, 
@@ -26688,25 +26717,18 @@ export class SimulationService {
         const ship = this._getActiveShip();
         if (!ship) return;
 
-        // 1. Check Destruction (Hull <= 0)
         if (ship.health <= 0) {
-            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null; // Clear any pending travel state
-            
+            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null;
             if (this.travelService) {
                 this.travelService._handleShipDestruction(ship.id);
             }
             return;
         }
 
-        // 2. Check Fuel Depletion (Fuel <= 0) -> Tow Back Logic
         if (ship.fuel <= 0) {
-            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null; // Clear pending travel
-            
-            // Ensure fuel is exactly 0
+            if (this.gameState.pendingTravel) this.gameState.pendingTravel = null;
             this.gameState.player.shipStates[ship.id].fuel = 0;
-            
             this.logger.info.player(this.gameState.day, 'EVENT_FAIL', `Ship ran out of fuel (Forced Event). Towed back to port.`);
-            
             const locId = this.gameState.currentLocationId;
             const location = DB.MARKETS.find(m => m.id === locId);
             const locName = location ? location.name : "Port";
@@ -26717,7 +26739,7 @@ export class SimulationService {
                 `Your engines sputter and die. A passing freighter tows you back to <b>${locName}</b>.`
             );
             
-            this.gameState.setState({}); // Refresh UI
+            this.gameState.setState({});
         }
     }
 
@@ -26737,12 +26759,10 @@ export class SimulationService {
                     break;
                 case 'EFF_HULL':
                     const s = this._getActiveShip();
-                    // value is negative for damage
                     if(s) this.gameState.player.shipStates[s.id].health = Math.max(0, Math.min(s.maxHealth, s.health + eff.value));
                     break;
                 case 'EFF_TRAVEL_TIME':
                 case 'EFF_MODIFY_TRAVEL':
-                     // Check if pendingTravel exists to prevent crash (e.g. debug trigger)
                      if (this.gameState.pendingTravel) {
                         this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
                     }
@@ -26759,20 +26779,12 @@ export class SimulationService {
                         invRem[eff.target].quantity = Math.max(0, invRem[eff.target].quantity - eff.value);
                     }
                     break;
-                case 'EFF_ADD_RANDOM_CARGO':
-                    // Add random tier 1-3 commodity logic here if needed, or handle in service
-                    break;
-                case 'EFF_LOSE_RANDOM_CARGO':
-                    // Logic handled in resolver or here
-                    break;
             }
         });
-        this.gameState.setState({}); // Commit changes
+        this.gameState.setState({}); 
     }
 
     // --- FACADE METHODS ---
-    // These methods provide a clean API to the EventManager and other high-level services,
-    // delegating the actual work to the specialized services.
 
     // IntroService Delegation
     startIntroSequence() { this.introService.start(); }
@@ -26783,81 +26795,47 @@ export class SimulationService {
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
     
-    /**
-     * Orchestrates buying a ship: Validates, plays animation, then executes.
-     * @param {string} shipId
-     * @param {Event} event
-     */
     async buyShip(shipId, event) {
-        
-        // 1. Validate
         const validation = this.playerActionService.validateBuyShip(shipId);
         if (!validation.success) {
             this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
             return null;
         }
 
-        // 2. Find the button that was clicked
         const purchaseButton = event.target.closest('.action-button');
-
-        // 3. Trigger the BLOCKING 1-second glow
         if (purchaseButton) {
             await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
         }
-        
-        // 4. Wait one animation frame to prevent animation race condition
         await new Promise(resolve => requestAnimationFrame(resolve));
 
-        // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
 
-        // 6. Execute
         return this.playerActionService.executeBuyShip(shipId, event);
     }
 
-    /**
-     * Orchestrates selling a ship: Validates, plays animation, then executes.
-     * @param {string} shipId
-     * @param {Event} event
-     */
     async sellShip(shipId, event) {
-        // 1. Validate
         const validation = this.playerActionService.validateSellShip(shipId);
         if (!validation.success) {
             this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
             return false;
         }
 
-        // 2. Find the button that was clicked
         const sellButton = event.target.closest('.action-button');
-
-        // 3. Trigger the BLOCKING 1-second glow
         if (sellButton) {
             await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
         }
-        
-        // 4. Wait one animation frame to prevent animation race condition
         await new Promise(resolve => requestAnimationFrame(resolve));
 
-        // 5. Animate (Dematerialize)
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
         await this.uiManager.runShipTransactionAnimation(shipId);
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
 
-        // 6. Execute
         return this.playerActionService.executeSellShip(shipId, event);
     }
 
-    /**
-     * Orchestrates boarding a ship: Glows button, waits 1s, sets state, then animates card.
-     * @param {string} shipId
-     * @param {Event} event - The click event, used to find the button for animation.
-     * @returns {Promise<boolean>} True on success, false on failure.
-     */
     async boardShip(shipId, event) {
-        // 1. Validate
         const validation = this.playerActionService.validateSetActiveShip(shipId);
         if (!validation.success) {
             if (validation.errorTitle !== "Action Redundant") {
@@ -26866,10 +26844,7 @@ export class SimulationService {
             return false;
         }
 
-        // 2. Find the button that was clicked
         const boardButton = event.target.closest('.action-button');
-        
-        // 3. Find the sibling "Sell" button and disable it immediately
         if (boardButton) {
             const sellButton = boardButton.closest('.grid').querySelector('[data-action="sell-ship"]');
             if (sellButton) {
@@ -26877,20 +26852,12 @@ export class SimulationService {
             }
         }
 
-        // 4. Trigger the BLOCKING 1-second glow on the "Board" button
          if (boardButton) {
             await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
         }
 
-        // 5. Execute the state change (this will re-render button to "ACTIVE")
         this.playerActionService.executeSetActiveShip(shipId);
-        
-        // 6. Check Tutorial
-        if (this.gameState.introSequenceActive) {
-            this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.SELECT_SHIP });
-        }
-   
-        // 7. Run the BLOCKING card animation *LAST*
+           
         await new Promise(resolve => requestAnimationFrame(resolve));
         
         this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
@@ -26900,47 +26867,20 @@ export class SimulationService {
         return true;
     }
 
-    /**
-     * Pays off the player's entire outstanding debt.
-     * @param {Event} [event] - The click event for placing floating text.
-     */
     payOffDebt(event) { this.playerActionService.payOffDebt(event); }
-
-    /**
-     * Allows the player to take out a loan, adding to their debt.
-     * @param {object} loanData - Contains amount, fee, and interest for the loan.
-     * @param {Event} [event] - The click event for placing floating text.
-     */
     takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
-    
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
-    
     refuelTick() { return this.playerActionService.refuelTick(); }
     repairTick() { return this.playerActionService.repairTick(); }
-    
-    // TravelService Delegation
-    // --- VIRTUAL WORKBENCH: Added useFoldedDrive param ---
     travelTo(locationId, useFoldedDrive = false) { this.travelService.travelTo(locationId, useFoldedDrive); }
-    // --- END VIRTUAL WORKBENCH ---
-    
     resumeTravel() { this.travelService.resumeTravel(); }
 
-    // NewsTickerService Delegation
-    /**
-     * Pushes a new message to the news ticker.
-     * @param {string} text - The message content.
-     * @param {string} type - 'SYSTEM', 'INTEL', 'FLAVOR', 'ALERT'
-     * @param {boolean} [isPriority=false] - If true, prepends to the front.
-     */
     pushNewsMessage(text, type, isPriority = false) {
         if (this.newsTickerService) {
             this.newsTickerService.pushMessage(text, type, isPriority);
         }
     }
 
-    /**
-     * Pulses the news ticker for daily updates (e.g., flavor text).
-     */
     pulseNewsTicker() {
         if (this.newsTickerService) {
             this.newsTickerService.pulse();
@@ -26948,12 +26888,6 @@ export class SimulationService {
     }
 
     // --- CORE & SHARED METHODS ---
-
-    /**
-     * Sets the active navigation tab and screen.
-     * @param {string} navId
-     * @param {string} screenId
-     */
     setScreen(navId, screenId) {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
         this.gameState.setState({ 
@@ -26961,16 +26895,8 @@ export class SimulationService {
              activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
-
-        if (this.tutorialService) {
-            this.tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: screenId });
-        }
     }
 
-    /**
-     * Sets the active tab on the Intel screen.
-     * @param {string} tabId The ID of the tab content to activate (e.g., 'intel-codex-content').
-     */
     setIntelTab(tabId) {
         if (this.gameState.uiState.activeIntelTab !== tabId) {
             this.gameState.uiState.activeIntelTab = tabId;
@@ -26980,10 +26906,6 @@ export class SimulationService {
         }
     }
 
-    /**
-     * Sets the hangar/shipyard toggle state.
-     * @param {string} mode - 'hangar' or 'shipyard'.
-     */
     setHangarShipyardMode(mode) {
         if (this.gameState.uiState.hangarShipyardToggleState !== mode) {
             this.gameState.uiState.hangarShipyardToggleState = mode;
@@ -26991,11 +26913,6 @@ export class SimulationService {
         }
     }
     
-    /**
-     * Updates the active index for the hangar or shipyard carousel.
-     * @param {number} index
-     * @param {string} mode
-     */
     setHangarCarouselIndex(index, mode) {
         if (mode === 'hangar') {
             this.gameState.uiState.hangarActiveIndex = index;
@@ -27005,10 +26922,6 @@ export class SimulationService {
         this.gameState.setState({});
     }
 
-    /**
-     * Cycles the hangar/shipyard carousel.
-     * @param {string} direction - 'next' or 'prev'.
-     */
     cycleHangarCarousel(direction) {
         const { uiState, player } = this.gameState;
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
@@ -27027,13 +26940,8 @@ export class SimulationService {
         this.setHangarCarouselIndex(currentIndex, isHangarMode ? 'hangar' : 'shipyard');
     }
 
-    /**
-     * Ends the game and displays a final message.
-     * @param {string} message
-     * @private
-     */
     _gameOver(message) {
-        if (this.gameState.isGameOver) return; // Prevent multiple game over triggers
+        if (this.gameState.isGameOver) return; 
         this.logger.info.state(this.gameState.day, 'GAME_OVER', message);
         this.gameState.setState({ isGameOver: true });
         this.uiManager.queueModal('event-modal', "Game Over", message, () => {
@@ -27042,10 +26950,6 @@ export class SimulationService {
         }, { buttonText: 'Restart' });
     }
 
-    /**
-     * Checks for any condition that would end the game, such as bankruptcy.
-     * @private
-     */
     _checkGameOverConditions() {
         if (this.gameState.player.credits <= 0) {
             this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
@@ -27053,13 +26957,6 @@ export class SimulationService {
     }
 
     // --- HELPER & PRIVATE METHODS (SHARED) ---
-
-    /**
-     * Calculates ship stats including upgrade modifiers (e.g. Max Fuel + 20%).
-     * This is the single source of truth for "Effective Stats".
-     * @param {string} shipId 
-     * @returns {object} The ship definition with modified stats.
-     */
     getEffectiveShipStats(shipId) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return null;
@@ -27067,28 +26964,19 @@ export class SimulationService {
         const state = this.gameState.getState();
         const shipState = state.player.shipStates[shipId];
         
-        // If not owned or no upgrades, return base stats (defensive copy)
         if (!shipState || !shipState.upgrades) return { ...ship };
 
-        // [[FIXED]] - Merge Installed Upgrades AND Innate Mechanics
-        // This ensures stats from innate ship attributes (e.g. Sleeper's 0 fuel logic, though that's logic not stats)
-        // are accounted for if they ever modify base stats.
-        // Even if mechanicIds are mostly logic flags, this unifies the system.
         const upgrades = [
             ...(ship.mechanicIds || []), 
             ...(shipState.upgrades || [])
         ];
 
-        // Calculate Additive Modifiers (1.0 + 0.1 + 0.1 = 1.2)
         const hullMod = GameAttributes.getMaxHullModifier(upgrades);
         const fuelMod = GameAttributes.getMaxFuelModifier(upgrades);
         const cargoMod = GameAttributes.getMaxCargoModifier(upgrades);
 
         return {
             ...ship,
-            // [[FIXED]] - Switched from Multiplication (*) to Addition (+) 
-            // GameAttributes returns a flat integer (e.g. 10 or 0). 
-            // 30 * 0 = 0 (The bug). 30 + 0 = 30 (Correct).
             maxHealth: Math.round(ship.maxHealth + hullMod),
             maxFuel: Math.round(ship.maxFuel + fuelMod),
             cargoCapacity: Math.round(ship.cargoCapacity + cargoMod)
@@ -27100,12 +26988,11 @@ export class SimulationService {
         if (!ship) return;
         this.gameState.player.ownedShipIds.push(shipId);
         
-        // Initialize with empty upgrades
         this.gameState.player.shipStates[shipId] = { 
             health: ship.maxHealth, 
             fuel: ship.maxFuel, 
             hullAlerts: { one: false, two: false },
-            upgrades: [] // Added upgrade array
+            upgrades: [] 
         };
         
         if (!this.gameState.player.inventories[shipId]) {
@@ -27132,7 +27019,6 @@ export class SimulationService {
         const activeId = state.player.activeShipId;
         if (!activeId) return null;
         
-        // Return Effective Stats
         const effectiveStats = this.getEffectiveShipStats(activeId);
         return { 
             id: activeId, 
@@ -27166,7 +27052,6 @@ export class SimulationService {
             balance: this.gameState.player.credits,
             description: description
         });
-        // Enforce the history limit
         while (this.gameState.player.financeLog.length > GAME_RULES.FINANCE_HISTORY_LENGTH) {
             this.gameState.player.financeLog.shift();
         }
@@ -27208,8 +27093,8 @@ export class SimulationService {
     }
 
     _getShipyardInventory() {
-        const { tutorials, player, currentLocationId, market } = this.gameState;
-        if (tutorials.activeBatchId === 'intro_hangar') {
+        const { player, currentLocationId, market, introSequenceActive } = this.gameState;
+        if (introSequenceActive) {
             return player.ownedShipIds.length > 0 ? [] : [SHIP_IDS.WANDERER, SHIP_IDS.STALWART, SHIP_IDS.MULE].map(id => [id, DB.SHIPS[id]]);
         } else {
             const shipsForSaleIds = market.shipyardStock[currentLocationId]?.shipsForSale || [];
@@ -27217,37 +27102,24 @@ export class SimulationService {
         }
     }
 
-    /**
-     * Advances the simulation by one day.
-     * Handles market fluctuations, interest, and random events.
-     */
     advanceDay() {
         this.gameState.day++;
         this.logger.info.system(this.gameState.day, 'DAY_START', `Day ${this.gameState.day} started.`);
 
-        // 1. Market Simulation
         this._updateMarkets();
-
-        // 2. Financials (Interest)
         this._processFinancials();
 
-        // 3. Random Events
         if (this.randomEventService) {
             this.randomEventService.checkForRandomEvents();
         }
         
-        // 4. Mission System Tick (Check latent triggers)
         if (this.missionService) {
              this.missionService.checkTriggers();
         }
         
-        this.gameState.setState({}); // Trigger UI update
+        this.gameState.setState({}); 
     }
 
-    /**
-     * Grants the starting cargo for a mission (if any).
-     * @param {string} missionId 
-     */
     grantMissionCargo(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.providedCargo) return;
@@ -27264,37 +27136,26 @@ export class SimulationService {
             }
             if (inventory[item.goodId]) {
                 inventory[item.goodId].quantity += item.quantity;
-                // We don't affect avgCost for mission items (free)
             }
         });
         
         this.logger.info.player(this.gameState.day, 'MISSION_CARGO', `Received mission cargo for ${missionId}`);
         
-        // Force a trigger check immediately after granting to update UI progress bars
         if (this.missionService) {
             this.missionService.checkTriggers();
         }
     }
 
-    /**
-     * Internal helper to process reward arrays.
-     * @param {Array} rewards 
-     * @param {string} sourceName 
-     */
     _grantRewards(rewards, sourceName) {
         if (!rewards || rewards.length === 0) return;
 
         rewards.forEach(reward => {
             switch (reward.type) {
-                // --- CURRENCY ---
                 case 'credits':
-                    // Apply credit cap
                     this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
                     this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
                     this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
                     break;
-
-                // --- ITEMS ---
                 case 'item':
                 case 'commodity':
                     const shipId = this.gameState.player.activeShipId;
@@ -27303,16 +27164,12 @@ export class SimulationService {
                         inventory[reward.goodId].quantity += reward.quantity;
                     }
                     break;
-
-                // --- PROGRESSION: LOCATIONS ---
                 case 'UNLOCK_LOCATION':
                     if (!this.gameState.player.unlockedLocationIds.includes(reward.target)) {
                         this.gameState.player.unlockedLocationIds.push(reward.target);
                         this.logger.info.player(this.gameState.day, 'UNLOCK', `Unlocked location: ${reward.target}`);
                     }
                     break;
-
-                // --- PROGRESSION: TIERS & LICENSES ---
                 case 'UNLOCK_TIER':
                     const newTier = Math.max(this.gameState.player.revealedTier, reward.value);
                     if (newTier > this.gameState.player.revealedTier) {
@@ -27320,8 +27177,7 @@ export class SimulationService {
                         this.logger.info.player(this.gameState.day, 'UNLOCK', `Clearance Tier increased to ${newTier}`);
                     }
                     break;
-                
-                case 'license': // Legacy support / specific licenses
+                case 'license': 
                     if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                         this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                         const license = DB.LICENSES[reward.licenseId];
@@ -27329,80 +27185,56 @@ export class SimulationService {
                         this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license ? license.name : reward.licenseId}.`);
                     }
                     break;
-
-                // --- ASSETS: SHIPS ---
                 case 'SHIP':
                     const targetShipId = reward.target;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
                         this.gameState.player.ownedShipIds.push(targetShipId);
-                        // Initialize state for the new ship
                         this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
                     }
                     break;
-
-                // --- TRAVEL: TELEPORT ---
                 case 'TELEPORT':
                     this.gameState.currentLocationId = reward.target;
-                    this.gameState.pendingTravel = null; // Clear any active travel
+                    this.gameState.pendingTravel = null; 
                     this.logger.info.player(this.gameState.day, 'TELEPORT', `Teleported to ${reward.target}`);
                     break;
-
-                // --- SERVICES: MAINTENANCE ---
                 case 'REPAIR':
                     const activeShip = this.gameState.player.activeShipId;
                     if (this.gameState.player.shipStates[activeShip]) {
                         this.gameState.player.shipStates[activeShip].health = DB.SHIPS[activeShip].maxHealth;
                     }
                     break;
-                
                 case 'REFUEL':
                     const currentShip = this.gameState.player.activeShipId;
                     if (this.gameState.player.shipStates[currentShip]) {
                         this.gameState.player.shipStates[currentShip].fuel = DB.SHIPS[currentShip].maxFuel;
                     }
                     break;
-                
-                // --- ASSETS: UPGRADES ---
                 case 'UPGRADE':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
-                     // Simple check: if not already owned (or if stackable logic is added later)
-                     // For now, we assume upgrades are unique per ship or just pushed.
                      if (shipState && shipState.upgrades) {
                          shipState.upgrades.push(reward.target);
                          this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target}`);
                      }
                      break;
-                
-                // --- OFFICERS ---
                 case 'OFFICER':
                     const officerId = reward.officerId;
                     const officer = OFFICERS[officerId];
-
-                    // Add to Roster if not already present
                     if (officer && !this.gameState.solStation.roster.includes(officerId)) {
                         this.gameState.solStation.roster.push(officerId);
                         this.logger.info.player(this.gameState.day, 'OFFICER_RECRUIT', `Recruited ${officer.name} (${officer.role})`);
-                        
-                        // Visual Feedback
                         this.uiManager.queueModal('event-modal', 
                             'New Officer Recruited', 
                             `<b>${officer.name}</b> has joined your staff roster.\n\nRole: ${officer.role}\nEffect: ${officer.description}`
                         );
                     }
                     break;
-
                 default:
                     console.warn(`Unknown reward type: ${reward.type}`);
             }
         });
     }
 
-    /**
-     * Helper to initialize a fresh ship state object.
-     * Replicates logic from GameState to ensure standalone functionality.
-     * @param {string} shipId 
-     */
     _initializeShipState(shipId) {
         const ship = DB.SHIPS[shipId];
         return {
@@ -27413,60 +27245,29 @@ export class SimulationService {
         };
     }
 
-    /**
-     * Sets the active screen/tab for the Intel UI.
-     * @param {string} tabId 
-     */
-    setIntelTab(tabId) {
-        this.gameState.uiState.activeIntelTab = tabId;
-        this.gameState.setState({});
-    }
-
-    /**
-     * Forces a screen switch (used by Intel navigation buttons).
-     * @param {string} navId 
-     * @param {string} screenId 
-     */
-    setScreen(navId, screenId) {
-        this.gameState.activeNav = navId;
-        this.gameState.activeScreen = screenId;
-        this.gameState.setState({});
-    }
-
-    // ... (Existing private methods _updateMarkets, _processFinancials remain unchanged)
-    
     _updateMarkets() {
         const { market } = this.gameState;
         
-        // 1. Decay/Update existing price history
         DB.MARKETS.forEach(loc => {
             DB.COMMODITIES.forEach(good => {
-                // Ensure array exists
                 if (!market.priceHistory[loc.id][good.id]) {
                     market.priceHistory[loc.id][good.id] = [];
                 }
-                
-                // Shift history (Max 30 days)
                 const history = market.priceHistory[loc.id][good.id];
                 history.push(market.prices[loc.id][good.id]);
                 if (history.length > 30) history.shift();
             });
         });
 
-        // 2. Calculate New Prices
-        // Simple random walk for now, bounded by +/- 20% of galactic average
         DB.MARKETS.forEach(loc => {
             DB.COMMODITIES.forEach(good => {
                 const currentPrice = market.prices[loc.id][good.id];
                 const avg = market.galacticAverages[good.id];
-                
-                // Volatility Check (Intel/Events could boost this)
                 const volatility = 0.05; 
                 
                 let change = 1 + (Math.random() * volatility * 2 - volatility);
                 let newPrice = Math.round(currentPrice * change);
                 
-                // Soft Clamping
                 const min = avg * 0.5;
                 const max = avg * 1.5;
                 if (newPrice < min) newPrice = Math.round(min + Math.random() * 5);
@@ -27475,9 +27276,8 @@ export class SimulationService {
                 market.prices[loc.id][good.id] = newPrice;
             });
             
-            // 3. Update Shipyard Stock (Weekly)
             if (this.gameState.day % 7 === 0) {
-                // Logic to rotate ships would go here
+                // Shipyard stock logic...
             }
         });
 
@@ -27485,9 +27285,8 @@ export class SimulationService {
     }
 
     _processFinancials() {
-        // Simple daily interest if in debt
         if (this.gameState.player.debt > 0) {
-            const dailyRate = 0.001; // 0.1% daily
+            const dailyRate = 0.001; 
             const interest = Math.ceil(this.gameState.player.debt * dailyRate);
             this.gameState.player.debt += interest;
             this.gameState.player.monthlyInterestAmount += interest;
@@ -27878,20 +27677,18 @@ export class EventManager {
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
+    constructor(gameState, simulationService, uiManager, debugService = null, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.tutorialService = tutorialService;
         this.debugService = debugService;
         this.logger = logger;
 
         // Instantiate all specialized handlers
-        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
+        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
         this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
@@ -27931,14 +27728,11 @@ export class EventManager {
             const actionTarget = e.target.closest('[data-action]');
             
             // 1. Only hide tooltips if we touch a "dead" area (background).
-            // This prevents the pill-tap from hiding the tooltip before the click logic can toggle it.
             if (!actionTarget) {
                 this.uiManager.hideGenericTooltip(); 
             }
 
             // 2. ISOLATION: If we are touching an actionable element, do NOT allow the carousel to start a drag.
-            // This mirrors the logic in CarouselEventHandler.handleDragStart but provides a cleaner exit.
-            // Specifically prevents 'jitter' on attribute pills and buttons.
             if (actionTarget || e.target.closest('.qty-stepper button')) {
                 return;
             }
@@ -27978,7 +27772,6 @@ export class EventManager {
             this.carouselEventHandler.handleDragMove(e);
         }, { passive: false });
 
-
         window.addEventListener('resize', () => this.uiManager.render(this.gameState.getState()));
 
         if (this.uiManager.cache.missionStickyBar) {
@@ -28004,7 +27797,6 @@ export class EventManager {
             e.preventDefault();
             return;
         }
-
 
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
@@ -28040,7 +27832,7 @@ export class EventManager {
         }
 
         // --- Fallback Handlers for non-action clicks ---
-        if (state.introSequenceActive && !state.tutorials.activeBatchId) {
+        if (state.introSequenceActive) {
             this.simulationService.handleIntroClick(e);
             return;
         }
@@ -30020,7 +29812,6 @@ export function applyEffect(gameState, simulationService, effect, outcome) {
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
-// [[CHANGED]] Added LOCATION_IDS to imports
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
@@ -30040,14 +29831,14 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 
-// --- [[NEW]] Domain Controllers ---
+// --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
-import { UITutorialManager } from './ui/UITutorialManager.js';
 import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
 import { UISolStationControl } from './ui/UISolStationControl.js';
+import { UIHelpManager } from './ui/UIHelpManager.js';
 
 export class UIManager {
     /**
@@ -30074,12 +29865,12 @@ export class UIManager {
 
         // --- Domain Controllers (The Switchboard) ---
         this.modalEngine = new UIModalEngine(this);
-        this.tutorialManager = new UITutorialManager(this);
         this.marketControl = new UIMarketControl(this);
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
         this.solStationControl = new UISolStationControl(this); 
+        this.helpManager = new UIHelpManager(this);
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -30153,17 +29944,6 @@ export class UIManager {
             eulaModal: document.getElementById('eula-modal'),
             eulaModalContent: document.getElementById('eula-modal-content'),
 
-            // Tutorial Elements
-            tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), 
-            tutorialToastContainer: document.getElementById('tutorial-toast-container'),
-            tutorialToastText: document.getElementById('tutorial-toast-text'),
-            tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
-            tutorialToastNextBtn: document.getElementById('tutorial-toast-next-btn'),
-            skipTutorialModal: document.getElementById('skip-tutorial-modal'),
-            skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
-            skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
-            tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
-
             // Mission Elements
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
@@ -30185,7 +29965,7 @@ export class UIManager {
         const previousState = this.lastKnownState;
         this.lastKnownState = gameState;
 
-        if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
+        if (gameState.introSequenceActive) {
             return;
         }
 
@@ -30196,6 +29976,9 @@ export class UIManager {
         
         // Delegate: Mission Control (HUD)
         this.missionControl.renderStickyBar(gameState);
+
+        // Help Modal Context Evaluation
+        this._evaluateHelpContext(gameState, previousState);
     }
 
     _applyTheme(gameState) {
@@ -30262,8 +30045,7 @@ export class UIManager {
     }
 
     renderNavigation(gameState) {
-        const { player, currentLocationId, activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials, subNavCollapsed } = gameState;
-        const { navLock } = tutorials;
+        const { player, currentLocationId, activeNav, activeScreen, lastActiveScreen, introSequenceActive, subNavCollapsed } = gameState;
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
         const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
@@ -30277,8 +30059,6 @@ export class UIManager {
         const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
 
         const dateText = formatGameDateShort(gameState.day);
-
-        // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
         const dateClass = currentLocationId === LOCATION_IDS.SUN ? 'date-text sol-date-pulse' : 'date-text';
 
         const contextBarHtml = `
@@ -30291,8 +30071,7 @@ export class UIManager {
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
-            const isDisabledByTutorial = navLock && navLock.navId !== navId;
-            const isDisabled = introSequenceActive || isDisabledByTutorial;
+            const isDisabled = introSequenceActive;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
              return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
                           style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
@@ -30331,9 +30110,8 @@ export class UIManager {
             const screens = this.navStructure[navId].screens;
             const isActive = navId === activeNav;
             const subNavButtons = Object.keys(screens).map(screenId => {
-                 const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
-                 const isDisabled = introSequenceActive || isDisabledByTutorial;
+                 const isDisabled = introSequenceActive;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  const action = ACTION_IDS.SET_SCREEN;
                  let subStyle = '';
@@ -30361,7 +30139,6 @@ export class UIManager {
             if (dateSpan) {
                 dateSpan.textContent = dateText;
                 
-                // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
                 if (currentLocationId === LOCATION_IDS.SUN) {
                     dateSpan.classList.add('sol-date-pulse');
                 } else {
@@ -30384,8 +30161,6 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
-        // [[FIX]] Reset Sol Station scroll memory if leaving Services screen
-        // This detects any state change where we were on Services but are now somewhere else.
         if (previousState && 
             previousState.activeScreen === SCREEN_IDS.SERVICES && 
             gameState.activeScreen !== SCREEN_IDS.SERVICES) {
@@ -30414,26 +30189,21 @@ export class UIManager {
                 if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
-                // Delegate: Market Control
                 this.marketControl.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
                 break;
             case SCREEN_IDS.HANGAR:
-                // Expanded Full Render condition for Boarding/Buy/Sell
-                // Added check for tutorial step change to trigger refresh for button unlock
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
                     previousState.player.activeShipId !== gameState.player.activeShipId || 
-                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length ||
-                    previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId;
+                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length;
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
                 }
-                // Delegate: Hangar Control (Updates)
                 this.hangarControl.updateHangarScreen(gameState);
                 break;
             case SCREEN_IDS.MISSIONS:
@@ -30446,14 +30216,12 @@ export class UIManager {
                 if (!previousState || previousState.activeScreen !== SCREEN_IDS.INTEL) {
                      this.cache.intelScreen.innerHTML = renderIntelScreen();
                 }
-                // Delegate: Event Control (Lore Buttons)
                 this.eventControl._renderCodexButtons(this.cache.intelScreen);
 
                 if (this.intelMarketRenderer) {
                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) this.intelMarketRenderer.render(marketContentEl, gameState);
                 }
-                // Delegate: Mission Control (Tabs)
                 this.missionControl.updateIntelTab(gameState.uiState.activeIntelTab);
                 break;
         }
@@ -30483,6 +30251,71 @@ export class UIManager {
     }
 
     // =========================================================================
+    // CONTEXTUAL HELP AUTO-TRIGGER SYSTEM
+    // =========================================================================
+
+    /**
+     * Determines the active Help Registry Context ID based on the current state configuration.
+     * @param {Object} gameState 
+     * @returns {string|null} The contextId matching the Help Registry
+     */
+    getCurrentHelpContextId(gameState) {
+        if (!gameState || !gameState.player) return null;
+        const { activeNav, activeScreen, uiState, solStation } = gameState;
+        const isSolStationUnlocked = solStation?.unlocked;
+
+        if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.MAP) return 'map';
+        if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.NAVIGATION) return 'navigation';
+        if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.CARGO) return 'cargo';
+        if (activeNav === NAV_IDS.STARPORT && activeScreen === SCREEN_IDS.MARKET) return 'market';
+        if (activeNav === NAV_IDS.STARPORT && activeScreen === SCREEN_IDS.SERVICES) {
+            if (uiState.servicesTab === 'tuning') return 'services-tuning';
+            return isSolStationUnlocked ? 'services-supply-sol' : 'services-supply';
+        }
+        if (activeNav === NAV_IDS.STARPORT && activeScreen === SCREEN_IDS.HANGAR) {
+            return uiState.hangarShipyardToggleState === 'shipyard' ? 'shipyard-shipyard' : 'shipyard-hangar';
+        }
+        if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.MISSIONS) {
+            return uiState.activeMissionTab === 'log' ? 'missions-log' : 'missions-terminal';
+        }
+        if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.FINANCE) return 'finance';
+        if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.INTEL) {
+            return uiState.activeIntelTab === 'market' ? 'intel-market' : 'intel-codex';
+        }
+        return null;
+    }
+
+    /**
+     * Evaluates whether the current screen requires the Help Modal to auto-instantiate or be dismissed.
+     * @param {Object} gameState 
+     * @param {Object} previousState 
+     */
+    _evaluateHelpContext(gameState, previousState) {
+        if (gameState.introSequenceActive) return;
+        if (!gameState.tutorials || !gameState.tutorials.seenHelpContexts) return;
+
+        const currentContextId = this.getCurrentHelpContextId(gameState);
+        const prevContextId = this.getCurrentHelpContextId(previousState);
+
+        // Dismissal Rule: If context changes, hide the modal.
+        if (currentContextId !== prevContextId && this.helpManager.isVisible) {
+            this.hideHelpModal();
+        }
+
+        // Auto-Instantiation Rule
+        if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
+            gameState.tutorials.seenHelpContexts.push(currentContextId);
+            
+            let startIndex = 0;
+            if (currentContextId === 'services-supply-sol') {
+                startIndex = 1; 
+            }
+
+            this.showHelpModal(currentContextId, startIndex);
+        }
+    }
+
+    // =========================================================================
     // SWITCHBOARD PROXIES (Delegation to Controllers)
     // =========================================================================
 
@@ -30493,14 +30326,6 @@ export class UIManager {
     getModalIdFromEvent(...args) { return this.modalEngine.getModalIdFromEvent(...args); }
     isClickInside(...args) { return this.modalEngine.isClickInside(...args); }
     showProcessingAnimation(...args) { this.modalEngine.showProcessingAnimation(...args); }
-
-    // --- Tutorial Manager ---
-    showTutorialToast(...args) { this.tutorialManager.showTutorialToast(...args); }
-    hideTutorialToast(...args) { this.tutorialManager.hideTutorialToast(...args); }
-    updateTutorialPopper(...args) { this.tutorialManager.updateTutorialPopper(...args); }
-    applyTutorialHighlight(...args) { this.tutorialManager.applyTutorialHighlight(...args); }
-    showSkipTutorialModal(...args) { this.tutorialManager.showSkipTutorialModal(...args); }
-    showTutorialLogModal(...args) { this.tutorialManager.showTutorialLogModal(...args); }
 
     // --- Market Control ---
     updateMarketScreen(...args) { this.marketControl.updateMarketScreen(...args); }
@@ -30537,10 +30362,14 @@ export class UIManager {
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
-    // --- Sol Station Control (NEW) ---
+    // --- Sol Station Control ---
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
+    // --- Help Manager ---
+    showHelpModal(...args) { this.helpManager.showModal(...args); }
+    hideHelpModal(...args) { this.helpManager.hideModal(...args); }
+    
     // =========================================================================
     // GENERAL UI UTILITIES (Generic Tooltips & Effects)
     // =========================================================================
@@ -30574,7 +30403,6 @@ export class UIManager {
         if (action === ACTION_IDS.SHOW_PRICE_GRAPH) {
             const goodId = anchorEl.dataset.goodId;
             const playerItem = gameState.player.inventories[gameState.player.activeShipId][goodId];
-            // Delegate SVG generation to MarketControl
             tooltip.innerHTML = this.marketControl.renderPriceGraph(goodId, gameState, playerItem);
         } else if (action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
             tooltip.innerHTML = this.marketControl.renderFinanceGraph(gameState);
@@ -33857,13 +33685,11 @@ export class ActionClickHandler {
      * @param {import('../GameState.js').GameState} gameState The central game state object.
      * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('../TutorialService.js').TutorialService} tutorialService The tutorial management service.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService) {
+    constructor(gameState, simulationService, uiManager) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.tutorialService = tutorialService;
     }
 
     /**
@@ -33876,7 +33702,6 @@ export class ActionClickHandler {
         if (actionTarget.hasAttribute('disabled')) return;
 
         const { action, ...dataset } = actionTarget.dataset;
-        let actionData = null; 
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
@@ -33890,7 +33715,6 @@ export class ActionClickHandler {
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.buyShip(shipId, { target });
-                    this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
                 break;
             }
@@ -34104,14 +33928,12 @@ export class ActionClickHandler {
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
-                actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
                 break;
             }
             case ACTION_IDS.TRAVEL: {
                 this.uiManager.hideModal('launch-modal');
                 const useFoldedDrive = dataset.useFoldedDrive === 'true';
                 this.simulationService.travelTo(dataset.locationId, useFoldedDrive);
-                actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
             }
 
@@ -34172,7 +33994,6 @@ export class ActionClickHandler {
 
             case 'show-mission-modal':
                 this.uiManager.showMissionModal(dataset.missionId);
-                actionData = { type: 'ACTION', action: 'show-mission-modal' };
                 break;
             case 'show_cargo_detail':
                 this.uiManager.showCargoDetailModal(state, dataset.goodId);
@@ -34192,6 +34013,21 @@ export class ActionClickHandler {
                 this.uiManager.showEulaModal();
                 break;
 
+            case 'toggle-help': {
+                e.preventDefault();
+                const contextId = this.uiManager.getCurrentHelpContextId(state);
+                if (contextId) {
+                    this.uiManager.showHelpModal(contextId);
+                }
+                break;
+            }
+
+            case 'close-help': {
+                e.preventDefault();
+                this.uiManager.hideHelpModal();
+                break;
+            }
+
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
@@ -34203,7 +34039,6 @@ export class ActionClickHandler {
                         }
                     });
                 }
-                actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
                 break;
             case 'abandon-mission':
                 this.simulationService.missionService.abandonMission(dataset.missionId);
@@ -34212,7 +34047,6 @@ export class ActionClickHandler {
             case 'complete-mission':
                 this.simulationService.missionService.completeMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'complete-mission' };
                 break;
 
             case ACTION_IDS.PAY_DEBT:
@@ -34235,9 +34069,6 @@ export class ActionClickHandler {
                 }
                 break;
 
-            // =================================================================
-            // --- SOL STATION ---
-            // =================================================================
             case 'open-sol-dashboard':
                 this.uiManager.showSolStationDashboard(state);
                 break;
@@ -34261,7 +34092,6 @@ export class ActionClickHandler {
                 
                 if (!cache) return;
 
-                // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
                 let playerStock = 0;
                 for (const shipId of this.gameState.player.ownedShipIds) {
                     playerStock += (this.gameState.player.inventories[shipId]?.[commId]?.quantity || 0);
@@ -34334,10 +34164,6 @@ export class ActionClickHandler {
                 }
                 break;
             }
-        }
-
-        if (actionData) {
-            this.tutorialService.checkState(actionData);
         }
     }
 
@@ -35708,6 +35534,12 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.16] - 2026-2-20
+-  added save/load system
+-  added import/export save file system
+-  added options screen and menu
+-  splash screen polish
 
 # [36.10] - 2026-2-20
 -  implemented balance pass v2 on all systems
@@ -37202,7 +37034,9 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands.",
     "Convoy_Tax": "An exponentially scaling fuel and credit penalty applied during travel to offset the mechanical advantages of operating massive multi-ship fleets.",
     "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
-    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states."
+    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states.",
+    "Dual-Write_Native_Bridge": "The persistence strategy that concurrently saves data to the browser's IndexedDB and the iOS native layer via WebKit message handlers, preventing save loss from cache eviction.",
+    "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data."
   },
   "service_summaries": {
     "SolStationService": {
@@ -37551,6 +37385,20 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "key_functions": {
         "saveAsset": "Stores a blob in IDB.",
         "getAsset": "Retrieves a blob from IDB."
+      },
+      "mutates_state": []
+    },
+    "SaveStorageService": {
+      "description": "Manages game saves using IndexedDB with a bulletproof iOS Native Bridge fallback. Implements a dual-write architecture for indestructible persistence.",
+      "dependencies": [
+        "IndexedDB",
+        "WebKit Message Handlers"
+      ],
+      "key_functions": {
+        "saveGame": "Saves payload to IDB and native iOS.",
+        "loadGame": "Loads save, prioritizing native iOS fallback and healing IDB.",
+        "getAllSaveMetadata": "Retrieves and merges save metadata for the splash screen.",
+        "deleteGame": "Removes save from both IDB and native iOS."
       },
       "mutates_state": []
     },
@@ -38224,6 +38072,11 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "path": "./js/data/officers.js",
       "role": "DATA_DEFINITION",
       "description": "Registry of Sol Station Directorate officers and their stats."
+    },
+    "F101": {
+      "path": "./js/services/SaveStorageService.js",
+      "role": "PERSISTENCE_SERVICE",
+      "description": "Service for managing game saves using IndexedDB with an iOS Native Bridge fallback."
     }
   }
 }
@@ -38556,6 +38409,14 @@ Responsibility: Low-level IndexedDB wrapper.
 Key Behavior: Manages the OrbitalAssetsDB. Stores raw Blob data to prevent iOS cache eviction.
 
 Dependencies: None (Native IndexedDB API).
+
+SaveStorageService (F101)
+
+Responsibility: Manages game saves using a dual-write architecture for indestructible persistence.
+
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB (OrbitalSavesDB) while concurrently broadcasting to the iOS native layer (Swift UserDefaults) via WebKit message handlers. Prioritizes indestructible iOS native saves during hydration to silently heal wiped IndexedDB data.
+
+Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
 TravelAnimationService.js
 
@@ -39288,6 +39149,23 @@ Consequences:
 Pro: The economy is now self-regulating and easily tunable via global variables.
 Pro: Late-game players still experience loss aversion and operating friction.
 Pro: Removes the need for arbitrary "hard caps" on wealth.
+
+ADR-032: Dual-Write iOS Native Persistence Bridge
+Status: Accepted (2026-02-20)
+
+Context: On iOS devices (the primary target platform via WKWebView/PWA), the operating system aggressively evicts web cache, IndexedDB, and LocalStorage data to save space. This resulted in devastating, unpredictable loss of player save data. Standard browser storage mechanisms proved insufficiently durable for a persistent game.
+
+Decision: Implemented a dual-write persistence architecture via `SaveStorageService.js`.
+* **Primary Storage (Web):** Saves are still written to IndexedDB (`OrbitalSavesDB`) to support standard browser play and development.
+* **Native Bridge (iOS):** Concurrently, the save payload is stringified and broadcast to the native Swift layer via `window.webkit.messageHandlers.iosSaveBackup`.
+* **Indestructible Fallback:** Swift stores this data in the native `UserDefaults`, completely immune to WebKit cache eviction.
+* **Silent Healing:** On load, the game checks for the native injected fallback (`window.__IOS_SAVES`). If found, it prioritizes this data and silently rewrites it back into IndexedDB to repair the wiped web state.
+
+Consequences:
+* **Pro:** Perfect save retention on iOS; saves survive OS-level cache purges and app updates.
+* **Pro:** Seamless background healing means the player never knows their web data was actually wiped.
+* **Pro:** Maintains full compatibility with standard desktop web browsers (they gracefully ignore the iOS bridge).
+* **Con:** Introduces slight overhead in serializing large state objects and requires native Swift code maintenance (`ViewController.swift`).
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -39664,6 +39542,28 @@ graph TD
         F --> G[TravelService counts active Ships in Fleet];
         G --> H[Assess Scaling Convoy Tax against resources];
     end
+
+2.15 Game State Persistence & Dual-Write Storage
+Flow for saving and loading game data, utilizing an iOS native bridge to prevent IndexedDB cache eviction.
+
+graph TD
+    subgraph Save Operation
+        A1[User Saves Game] --> B1[SaveStorageService.saveGame];
+        B1 --> C1[Write to IndexedDB];
+        C1 --> D1{Is iOS WebKit Bridge Active?};
+        D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
+        D1 -- No --> F1[End Save];
+        E1 --> F1;
+    end
+
+    subgraph Load Operation
+        A2[User Loads Game / Boot] --> B2[SaveStorageService.loadGame];
+        B2 --> C2{Is window.__IOS_SAVES present?};
+        C2 -- Yes --> D2[Parse Native Save Data];
+        D2 --> E2[Background: Heal IndexedDB];
+        C2 -- No --> F2[Read from IndexedDB];
+        E2 & F2 --> G2[Hydrate GameState];
+    end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
@@ -39686,7 +39586,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
 | `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
-| `tutorials` | Object | **(See Section 6)** State regarding the tutorial overlay system. |
+| `tutorials` | Object | **(See Section 6)** State regarding the Contextual Help Modal system. |
 | `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
 | `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
@@ -39804,15 +39704,11 @@ New data structures for the "Local Data Broker" system.
 
 ## 6. Tutorial State (`state.tutorials`)
 
-Manages the progress and locking mechanisms for interactive tutorials.
+Manages the progress and locking mechanisms for the Contextual Help Modal System.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `activeBatchId` | String | ID of the currently running tutorial sequence (e.g., 'intro_basics'). |
-| `activeStepId` | String | ID of the current step within the batch. |
-| `seenBatchIds` | Array<String> | List of tutorial IDs the player has already completed. |
-| `skippedTutorialBatches` | Array<String> | List of tutorial IDs the player explicitly skipped. |
-| `navLock` | Object | `{ navId, screenId }` - If set, restricts navigation to this target. |
+| `seenHelpContexts` | Array<String> | List of Help Context IDs the player has already auto-triggered. |
 
 ---
 
@@ -39851,6 +39747,23 @@ Manages the active concurrent missions and their granular progress.
 
 * `isCompletable`: Boolean flag indicating if all objectives are met.
 * `objectives`: Map of `objectiveId` -> `{ current, target }`.
+
+---
+
+## 9. Serialized Save Structure
+
+When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `slotId` | String | The primary key identifier for the save slot (e.g., 'auto', 'slot1'). |
+| `version` | Number | The schema version of the save file to handle future migrations. |
+| `metadata` | Object | Lightweight summary data used for rendering the splash/load screen without parsing the entire gamestate. |
+|   `day` | Number | The game day the save occurred. |
+|   `credits` | Number | The player's wealth at the time of saving. |
+|   `locationId` | String | The player's location. |
+|   `timestamp` | Number | Standard UNIX epoch timestamp of the save event. |
+| `...payload` | Object | The full, stringified (or direct, depending on bridge) `GameState` root object unpacked into the save object. |
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
 --- START OF FILE: ./manifest.json ---
