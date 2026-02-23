@@ -77,7 +77,7 @@ export class UIManager {
         // Bind Context for Market Renderer
         this.getItemPrice = this.marketControl.getItemPrice.bind(this.marketControl);
         
-        window.addEventListener('resize', this._setAppHeight);
+        window.addEventListener('resize', () => this._setAppHeight());
     }
 
     // --- Service Injection Methods ---
@@ -468,41 +468,54 @@ export class UIManager {
      * @param {Object} previousState 
      */
     _evaluateHelpContext(gameState, previousState) {
-        if (gameState.introSequenceActive) return;
+        try {
+            if (gameState.introSequenceActive) return;
 
-        // Force initialization of tutorials tracking to prevent undefined read errors
-        if (!gameState.tutorials) gameState.tutorials = { seenHelpContexts: [] };
-        if (!gameState.tutorials.seenHelpContexts) gameState.tutorials.seenHelpContexts = [];
-
-        const currentContextId = this.getCurrentHelpContextId(gameState);
-        const prevContextId = this.getCurrentHelpContextId(previousState);
-
-        // Dismissal Rule: If context changes, hide the modal.
-        if (currentContextId !== prevContextId && this.helpManager && this.helpManager.isVisible) {
-            this.hideHelpModal();
-        }
-
-        // Auto-Instantiation Rule
-        if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
-            // Safely push to the live GameState to ensure the flag persists across render loops and save files
-            if (this.simulationService && this.simulationService.gameState) {
-                const liveState = this.simulationService.gameState;
-                if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [] };
-                if (!liveState.tutorials.seenHelpContexts) liveState.tutorials.seenHelpContexts = [];
-                liveState.tutorials.seenHelpContexts.push(currentContextId);
-            }
-            
-            // Also push to the local deep-copy instance so the current render evaluation respects it
-            gameState.tutorials.seenHelpContexts.push(currentContextId);
-            
-            let startIndex = 0;
-            if (currentContextId === 'services-supply-sol') {
-                startIndex = 1; 
+            // Defensive array checks
+            if (!gameState.tutorials) gameState.tutorials = { seenHelpContexts: [] };
+            if (!Array.isArray(gameState.tutorials.seenHelpContexts)) {
+                gameState.tutorials.seenHelpContexts = [];
             }
 
-            if (this.helpManager) {
-                this.showHelpModal(currentContextId, startIndex);
+            const currentContextId = this.getCurrentHelpContextId(gameState);
+            const prevContextId = this.getCurrentHelpContextId(previousState);
+
+            // Dismissal Rule: If context changes, hide the modal.
+            if (currentContextId !== prevContextId && this.helpManager && this.helpManager.isVisible) {
+                this.hideHelpModal();
             }
+
+            // Auto-Instantiation Rule
+            if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
+                
+                // Safely push to the live GameState to ensure the flag persists across render loops and save files
+                if (this.simulationService && this.simulationService.gameState) {
+                    const liveState = this.simulationService.gameState;
+                    
+                    if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [] };
+                    if (!Array.isArray(liveState.tutorials.seenHelpContexts)) {
+                        liveState.tutorials.seenHelpContexts = [];
+                    }
+                    
+                    if (!liveState.tutorials.seenHelpContexts.includes(currentContextId)) {
+                        liveState.tutorials.seenHelpContexts.push(currentContextId);
+                    }
+                }
+                
+                // Also push to the local deep-copy instance so the current render evaluation respects it
+                gameState.tutorials.seenHelpContexts.push(currentContextId);
+                
+                let startIndex = 0;
+                if (currentContextId === 'services-supply-sol') {
+                    startIndex = 1; 
+                }
+
+                if (this.helpManager) {
+                    this.showHelpModal(currentContextId, startIndex);
+                }
+            }
+        } catch (error) {
+            console.error("[UIManager] Help Context Evaluation failed:", error);
         }
     }
 

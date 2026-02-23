@@ -3,7 +3,6 @@ import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_A
 import { MISSION_REGISTRY } from './missions/missionRegistry.js';
 import { RANDOM_EVENTS } from './events.js';
 import { AGE_EVENTS } from './age_events.js';
-import { TUTORIAL_DATA } from './tutorials.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
 import { SHIP_DATABASE } from './ship_database.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
@@ -452,8 +451,5 @@ export const DB = {
     ],
 
     // --- Mission Data ---
-    MISSIONS: MISSION_REGISTRY,
-
-    // --- Tutorial System Data ---
-    TUTORIAL_DATA: TUTORIAL_DATA
+    MISSIONS: MISSION_REGISTRY
 };

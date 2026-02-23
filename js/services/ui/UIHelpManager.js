@@ -6,39 +6,58 @@ export class UIHelpManager {
      * @param {import('../UIManager.js').UIManager} uiManager 
      */
     constructor(uiManager) {
-        this.uiManager = uiManager;
-        this.isVisible = false;
-        this.currentContext = null;
-        this.currentPageIndex = 0;
-        this.pages = [];
+        try {
+            this.uiManager = uiManager;
+            this.isVisible = false;
+            this.currentContext = null;
+            this.currentPageIndex = 0;
+            this.pages = [];
 
-        this._injectDOM();
-        this._cacheDOM();
-        this._bindEvents();
+            // Interaction state properties
+            this.isDragging = false;
+            this.startX = 0;
+            this.currentX = 0;
+
+            // Bound event handlers to prevent memory leaks and duplication
+            this._handleWindowMouseMove = this._handleWindowMouseMove.bind(this);
+            this._handleWindowMouseUp = this._handleWindowMouseUp.bind(this);
+            this._endTouch = this._endTouch.bind(this);
+
+            this._injectDOM();
+            this._cacheDOM();
+            this._bindEvents();
+        } catch (error) {
+            console.error("[UIHelpManager] Initialization failed:", error);
+        }
     }
 
     _injectDOM() {
         const gameContainer = document.getElementById('game-container');
         if (!gameContainer) return;
 
-        const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
-        gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
+        // Defensively prevent duplicate injection
+        if (!document.getElementById('global-help-anchor')) {
+            const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
+            gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
+        }
 
-        const modalHTML = `
-            <div id="help-modal-overlay" class="help-modal-overlay hidden">
-                <div class="help-modal-container">
-                    <div class="help-modal-header">
-                        <span class="help-modal-title">TUTORIAL</span>
-                        <button type="button" id="help-modal-close-btn" class="help-modal-close-btn" data-action="close-help">-</button>
+        if (!document.getElementById('help-modal-overlay')) {
+            const modalHTML = `
+                <div id="help-modal-overlay" class="help-modal-overlay hidden">
+                    <div class="help-modal-container">
+                        <div class="help-modal-header">
+                            <span class="help-modal-title">TUTORIAL</span>
+                            <button type="button" id="help-modal-close-btn" class="help-modal-close-btn" data-action="close-help">-</button>
+                        </div>
+                        <div class="help-modal-viewport">
+                            <div id="help-slide-track" class="help-slide-track"></div>
+                        </div>
+                        <div id="help-modal-footer" class="help-modal-footer"></div>
                     </div>
-                    <div class="help-modal-viewport">
-                        <div id="help-slide-track" class="help-slide-track"></div>
-                    </div>
-                    <div id="help-modal-footer" class="help-modal-footer"></div>
                 </div>
-            </div>
-        `;
-        gameContainer.insertAdjacentHTML('beforeend', modalHTML);
+            `;
+            gameContainer.insertAdjacentHTML('beforeend', modalHTML);
+        }
     }
 
     _cacheDOM() {
@@ -58,23 +77,19 @@ export class UIHelpManager {
             });
         }
 
-        let startX = 0;
-        let currentX = 0;
-        let isDragging = false;
-
         if (this.slideTrack) {
             this.slideTrack.addEventListener('touchstart', (e) => {
                 if (e.touches.length > 1) return;
-                isDragging = true;
-                startX = e.touches[0].clientX;
-                currentX = e.touches[0].clientX;
+                this.isDragging = true;
+                this.startX = e.touches[0].clientX;
+                this.currentX = e.touches[0].clientX;
                 this.slideTrack.style.transition = 'none';
             }, { passive: true });
 
             this.slideTrack.addEventListener('touchmove', (e) => {
-                if (!isDragging) return;
-                currentX = e.touches[0].clientX;
-                const deltaX = currentX - startX;
+                if (!this.isDragging) return;
+                this.currentX = e.touches[0].clientX;
+                const deltaX = this.currentX - this.startX;
                 
                 const containerWidth = this.slideTrack.clientWidth || 1;
                 const deltaPercent = (deltaX / containerWidth) * 100;
@@ -83,45 +98,57 @@ export class UIHelpManager {
                 this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
             }, { passive: true });
 
-            const endTouch = () => {
-                if (!isDragging) return;
-                isDragging = false;
-                this.slideTrack.style.transition = 'transform 0.3s ease-in-out';
-                
-                const deltaX = currentX - startX;
-                const threshold = 40; 
-                
-                if (deltaX < -threshold && this.currentPageIndex < this.pages.length - 1) {
-                    this.nextPage();
-                } else if (deltaX > threshold && this.currentPageIndex > 0) {
-                    this.prevPage();
-                } else {
-                    this._applyTransform();
-                }
-            };
-
-            this.slideTrack.addEventListener('touchend', endTouch);
-            this.slideTrack.addEventListener('touchcancel', endTouch);
+            this.slideTrack.addEventListener('touchend', this._endTouch);
+            this.slideTrack.addEventListener('touchcancel', this._endTouch);
 
             this.slideTrack.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startX = e.clientX;
-                currentX = e.clientX;
+                this.isDragging = true;
+                this.startX = e.clientX;
+                this.currentX = e.clientX;
                 this.slideTrack.style.transition = 'none';
             });
             
-            window.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                currentX = e.clientX;
-                const deltaX = currentX - startX;
-                const containerWidth = this.slideTrack.clientWidth || 1;
-                const deltaPercent = (deltaX / containerWidth) * 100;
-                const baseTranslate = -(this.currentPageIndex * 100);
-                this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
-            });
+            // Clean up global window listeners to prevent multi-binding
+            window.removeEventListener('mousemove', this._handleWindowMouseMove);
+            window.removeEventListener('mouseup', this._handleWindowMouseUp);
             
-            window.addEventListener('mouseup', endTouch);
+            window.addEventListener('mousemove', this._handleWindowMouseMove);
+            window.addEventListener('mouseup', this._handleWindowMouseUp);
         }
+    }
+
+    _endTouch() {
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        
+        if (this.slideTrack) {
+            this.slideTrack.style.transition = 'transform 0.3s ease-in-out';
+        }
+        
+        const deltaX = this.currentX - this.startX;
+        const threshold = 40; 
+        
+        if (deltaX < -threshold && this.currentPageIndex < this.pages.length - 1) {
+            this.nextPage();
+        } else if (deltaX > threshold && this.currentPageIndex > 0) {
+            this.prevPage();
+        } else {
+            this._applyTransform();
+        }
+    }
+
+    _handleWindowMouseMove(e) {
+        if (!this.isDragging || !this.slideTrack) return;
+        this.currentX = e.clientX;
+        const deltaX = this.currentX - this.startX;
+        const containerWidth = this.slideTrack.clientWidth || 1;
+        const deltaPercent = (deltaX / containerWidth) * 100;
+        const baseTranslate = -(this.currentPageIndex * 100);
+        this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
+    }
+
+    _handleWindowMouseUp(e) {
+        this._endTouch();
     }
 
     showModal(contextId, startingPageIndex = 0) {

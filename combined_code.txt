@@ -1122,268 +1122,6 @@
 /* --- [[END]] TUTORIAL TUNER STYLES --- */
 --- END OF FILE: ./css/debug.css ---
 
---- START OF FILE: ./css/tutorial.css ---
-/* css/tutorial.css */
-
-/* --- [[START]] NEW THEMED STYLES --- */
-
-#tutorial-toast-container {
-    /* New background: dark, slightly transparent, blurred */
-    background-color: rgba(18, 24, 39, 0.9); /* A color between modal bg and game bg */
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-
-    color: var(--color-text-primary, #d0d8e8); /* Default to global text color */
-
-    /* New border: Apply sci-fi-frame styles */
-    border: 1px solid #2a3a5a;
-    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5), 0 4px 15px rgba(0,0,0,0.3); /* Add outer shadow */
-    border-radius: 8px; /* Standard border radius */
-
-    /* --- [[START]] WIDTH FIX --- */
-    min-width: 200px;
-    max-width: min(600px, 90vw); /* Generous max-width, responsive */
-    /* --- [[END]] WIDTH FIX --- */
-
-    z-index: 999; /* Ensure toast is above anchor overlay */
-    padding: 1rem; /* Simplified padding */
-    /* MODIFIED: Add a little extra bottom padding for the arrow */
-    padding-bottom: 1.5rem;
-    position: fixed; /* Changed from absolute for percentage positioning */
-    transform: translate(-50%, -50%); /* Center based on top/left percentages */
-}
-
-/* NEW: Styles for the anchor overlay */
-#tutorial-anchor-overlay {
-    position: fixed;
-    inset: 0; /* Cover the whole viewport */
-    z-index: 998; /* Below toast, above game content */
-    pointer-events: none; /* Allow clicks to pass through */
-}
-
-/* Pseudo-elements for sci-fi-frame corners */
-#tutorial-toast-container::before,
-#tutorial-toast-container::after {
-    content: '';
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    border-color: #7a9ac0; /* Match default sci-fi-frame color */
-    border-style: solid;
-    transition: border-color 0.3s;
-}
-#tutorial-toast-container::before {
-    top: -1px;
-    left: -1px;
-    border-width: 2px 0 0 2px;
-    border-top-left-radius: 8px; /* Top-left corner */
-}
-#tutorial-toast-container::after {
-    bottom: -1px;
-    right: -1px;
-    border-width: 0 2px 2px 0;
-    border-bottom-right-radius: 8px; /* Bottom-right corner */
-}
-
-/* Apply flexbox layout only when the toast is visible */
-#tutorial-toast-container:not(.hidden) {
-    display: flex;
-    flex-direction: column;
-}
-
-#tutorial-toast-text {
-    text-align: left;
-    /* MODIFIED: Force scrollbar to exist */
-    overflow-y: scroll !important;
-    flex-grow: 1;
-    max-height: 150px; /* Adjust as needed, maybe based on height slider? */
-    /* MODIFIED: Remove padding for deleted skip button */
-    padding-right: 0.5rem;
-    font-family: 'Exo 2', sans-serif; /* Update font */
-    font-size: 0.9rem; /* Slightly larger for readability */
-    line-height: 1.5; /* Increased line height */
-    color: var(--color-text-secondary);
-
-    /* MODIFIED: Add Firefox scrollbar styles just in case */
-    scrollbar-width: thin !important;
-    scrollbar-color: var(--color-accent-yellow, #f7b731) #332a0e !important;
-}
-
-#tutorial-highlight-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    pointer-events: none;
-    z-index: 997; /* Below anchor overlay */
-}
-
-/* Style for individual highlight cues within the overlay */
-.tutorial-cue {
-    position: absolute;
-}
-
-
-/* --- [[START]] POPPER.JS ARROW STYLES --- */
-/* Adjusted arrow background and border */
-#tt-arrow,
-#tt-arrow::before {
-    position: absolute;
-    width: 8px;
-    height: 8px;
-    background: rgba(18, 24, 39, 0.9); /* Match new toast background */
-}
-
-#tt-arrow {
-    visibility: hidden;
-}
-
-#tt-arrow::before {
-    visibility: visible;
-    content: '';
-    transform: rotate(45deg);
-}
-
-/* Arrow border to match sci-fi-frame border */
-#tutorial-toast-container[data-popper-placement^='top'] > #tt-arrow {
-    bottom: -4px;
-    border-bottom: 1px solid #7a9ac0; /* Match new border color */
-    border-right: 1px solid #7a9ac0;
-}
-
-#tutorial-toast-container[data-popper-placement^='bottom'] > #tt-arrow {
-    top: -4px;
-    border-top: 1px solid #7a9ac0; /* Match new border color */
-    border-left: 1px solid #7a9ac0;
-}
-
-#tutorial-toast-container[data-popper-placement^='left'] > #tt-arrow {
-    right: -4px;
-    border-top: 1px solid #7a9ac0; /* Match new border color */
-    border-right: 1px solid #7a9ac0;
-}
-
-#tutorial-toast-container[data-popper-placement^='right'] > #tt-arrow {
-    left: -4px;
-    border-bottom: 1px solid #7a9ac0; /* Match new border color */
-    border-left: 1px solid #7a9ac0;
-}
-/* --- [[END]] POPPER.JS ARROW STYLES --- */
-
-
-/* --- [[START]] NEW CONTROL BUTTON STYLES --- */
-
-/* REMOVED: .tt-controls-container */
-/* REMOVED: #tutorial-toast-skip-btn */
-
-/* NEW: Pulse animation for the new text-based arrow */
-@keyframes pulse-glow-text {
-    0% {
-        color: var(--color-accent-yellow, #f7b731);
-        filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731));
-    }
-    50% {
-        color: var(--color-accent-yellow-light, #f8d775);
-        filter: drop-shadow(0 0 10px var(--color-accent-yellow-light, #f8d775));
-    }
-    100% {
-        color: var(--color-accent-yellow, #f7b731);
-        filter: drop-shadow(0 0 5px var(--color-accent-yellow, #f7b731));
-    }
-}
-
-/* MODIFIED: 'Next' arrow now uses a text character */
-.tt-next-arrow {
-    position: absolute;
-    /* MODIFIED: Positioned to be nested on the border, adjusted position */
-    bottom: -12px; /* -5px + 10px */
-    right: -9px; /* 5px + 10px */
-
-    /* MODIFIED: Hide the original '➤' from JS */
-    font-size: 0;
-    line-height: 0;
-
-    /* MODIFIED: Remove all old styles (bg, border, etc) */
-    background: none;
-    border: none;
-    width: auto;
-    height: auto;
-    padding: 0;
-    border-radius: 0; /* Override old style */
-    color: transparent; /* Override old style */
-
-    cursor: pointer;
-    user-select: none;
-    z-index: 11; /* Above corner pseudo-element */
-    transition: transform 0.2s ease;
-}
-
-/* NEW: Use ::before to inject the new arrow character */
-.tt-next-arrow::before {
-    content: '➜';
-    /* MODIFIED: 15% larger */
-    font-size: 30px;
-    line-height: 1;
-
-    /* MODIFIED: Apply color and pulse animation here */
-    color: var(--color-accent-yellow, #f7b731);
-    animation: pulse-glow-text 2.5s infinite ease-in-out;
-    transition: all 0.2s ease;
-}
-
-.tt-next-arrow:hover {
-    transform: scale(1.1); /* Scale the whole container */
-}
-
-.tt-next-arrow:hover::before {
-    /* MODIFIED: Stop animation, show static bright glow */
-    animation: none;
-    color: var(--color-accent-yellow-light, #f8d775);
-    filter: drop-shadow(0 0 12px var(--color-accent-yellow-light, #f8d775));
-}
-
-.tt-next-arrow.hidden {
-    display: none;
-}
-
-/* --- [[END]] NEW CONTROL BUTTON STYLES --- */
-
-
-/* --- [[START]] CUSTOM SCROLLBAR STYLES --- */
-/* MODIFIED: Increased specificity and added !important to override conflicts */
-#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar {
-    width: 8px !important;
-    background-color: transparent !important;
-}
-
-#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar-track {
-    background: #332a0e !important;
-    border-radius: 4px !important;
-    /* Add inner shadow for depth */
-    box-shadow: inset 0 0 3px rgba(0,0,0,0.5) !important;
-}
-
-#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar-thumb {
-    background-color: var(--color-accent-yellow, #f7b731) !important;
-    border-radius: 4px !important;
-    border: 1px solid var(--color-accent-yellow-light, #f8d775) !important;
-}
-
-#tutorial-toast-container #tutorial-toast-text::-webkit-scrollbar-thumb:hover {
-    background-color: var(--color-accent-yellow-light, #f8d775) !important;
-    border-color: #fff !important;
-    box-shadow: 0 0 5px var(--color-accent-yellow-light, #f8d775) !important;
-}
-/* --- [[END]] CUSTOM SCROLLBAR STYLES --- */
-
-/* Lore tooltip styles remain the same */
-.lore-container { /* ... */ }
-.lore-tooltip { /* ... */ }
-.tutorial-tooltip { /* ... */ }
-/* ... (rest of lore styles) ... */
---- END OF FILE: ./css/tutorial.css ---
-
 --- START OF FILE: ./css/hud.css ---
 /* css/hud.css */
 #top-bar-container {
@@ -7415,7 +7153,7 @@ BULKHEAD NAVIGATION STYLES
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 50; /* Above normal UI, below modals */
+    z-index: 50;
     opacity: 0.5;
     transition: opacity 0.2s ease, background-color 0.2s ease;
     cursor: pointer;
@@ -7430,7 +7168,7 @@ BULKHEAD NAVIGATION STYLES
     position: absolute;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.6);
-    z-index: 60; /* Above standard modals, below critical travel animations */
+    z-index: 60;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -7441,10 +7179,11 @@ BULKHEAD NAVIGATION STYLES
 .help-modal-container {
     width: 90vw;
     max-width: 400px;
-    aspect-ratio: 1 / 1;
+    /* 20/17 is mathematically identical to 1/0.85 but perfectly parses in older iOS targets */
+    aspect-ratio: 20 / 17; 
     background-color: #1a1a1a;
     border: 1px solid #666;
-    filter: drop-shadow(0 0 10px rgba(100, 100, 100, 0.5));
+    filter: drop-shadow(0 0 15px rgba(100, 100, 100, 0.5)); 
     border-radius: 12px;
     display: flex;
     flex-direction: column;
@@ -7472,8 +7211,8 @@ BULKHEAD NAVIGATION STYLES
     background: none;
     border: none;
     color: #fff;
-    font-size: 1.5rem;
-    line-height: 1;
+    font-size: 3rem; 
+    line-height: 0.5; 
     cursor: pointer;
     padding: 0 0.5rem;
     opacity: 0.8;
@@ -7486,7 +7225,7 @@ BULKHEAD NAVIGATION STYLES
 .help-modal-viewport {
     flex-grow: 1;
     width: 100%;
-    overflow: hidden; /* Enforce compartmentalization */
+    overflow: hidden;
     position: relative;
 }
 
@@ -7496,7 +7235,7 @@ BULKHEAD NAVIGATION STYLES
     width: 100%;
     transition: transform 0.3s ease-in-out;
     will-change: transform;
-    touch-action: pan-x; /* Strict horizontal panning expectation on mobile */
+    touch-action: pan-x;
 }
 
 .help-slide {
@@ -7508,8 +7247,8 @@ BULKHEAD NAVIGATION STYLES
     color: #fff;
     display: flex;
     flex-direction: column;
-    overflow-y: hidden; /* No vertical scrolling allowed */
-    justify-content: center; /* Center content aesthetically */
+    overflow-y: hidden;
+    justify-content: center;
 }
 
 .help-slide h3 {
@@ -7550,6 +7289,45 @@ BULKHEAD NAVIGATION STYLES
 .help-dot.active {
     background-color: #fff;
     box-shadow: 0 0 5px #fff;
+}
+
+@keyframes help-overlay-fade-in {
+    0% { opacity: 0; }
+    100% { opacity: 1; }
+}
+
+@keyframes help-overlay-fade-out {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+@keyframes help-materialize-card {
+    0% { opacity: 0; transform: scale(0.85); clip-path: inset(50% 0% 50% 0%); }
+    40% { opacity: 0.8; transform: scale(0.9); clip-path: inset(25% 0% 25% 0%); }
+    100% { opacity: 1; transform: scale(1); clip-path: inset(0% 0% 0% 0%); }
+}
+
+@keyframes help-dematerialize-card {
+    0% { opacity: 1; transform: scale(1); clip-path: inset(0% 0% 0% 0%); }
+    60% { opacity: 0.8; transform: scale(0.9); clip-path: inset(25% 0% 25% 0%); }
+    100% { opacity: 0; transform: scale(0.85); clip-path: inset(50% 0% 50% 0%); }
+}
+
+.help-anim-in {
+    animation: help-overlay-fade-in 0.4s ease-out forwards;
+}
+
+.help-anim-in .help-modal-container {
+    animation: help-materialize-card 0.4s ease-out forwards;
+}
+
+.help-anim-out {
+    animation: help-overlay-fade-out 0.4s ease-in forwards;
+    pointer-events: none;
+}
+
+.help-anim-out .help-modal-container {
+    animation: help-dematerialize-card 0.4s ease-in forwards;
 }
 --- END OF FILE: ./css/help-system.css ---
 
@@ -11610,7 +11388,6 @@ import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_A
 import { MISSION_REGISTRY } from './missions/missionRegistry.js';
 import { RANDOM_EVENTS } from './events.js';
 import { AGE_EVENTS } from './age_events.js';
-import { TUTORIAL_DATA } from './tutorials.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
 import { SHIP_DATABASE } from './ship_database.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
@@ -12059,10 +11836,7 @@ export const DB = {
     ],
 
     // --- Mission Data ---
-    MISSIONS: MISSION_REGISTRY,
-
-    // --- Tutorial System Data ---
-    TUTORIAL_DATA: TUTORIAL_DATA
+    MISSIONS: MISSION_REGISTRY
 };
 --- END OF FILE: ./js/data/database.js ---
 
@@ -14001,21 +13775,6 @@ export const FLAVOR_ADS = {
     ]
 };
 --- END OF FILE: ./js/data/flavorAds.js ---
-
---- START OF FILE: ./js/data/tutorials.js ---
-// js/data/tutorials.js
-/**
- * @fileoverview Tutorial Registry (Facade)
- * Aggregates all tutorial modules into the single TUTORIAL_DATA export.
- * New tutorial modules should be imported and spread here.
- */
-import { TUTS_INTRO } from './tutorials/tuts_intro.js';
-
-export const TUTORIAL_DATA = {
-    ...TUTS_INTRO
-    // Future modules (e.g., TUTS_COMBAT, TUTS_ECONOMY) will be added here.
-};
---- END OF FILE: ./js/data/tutorials.js ---
 
 --- START OF FILE: ./js/data/items.js ---
 // js/data/items.js
@@ -17594,332 +17353,6 @@ export class UIEventControl {
 }
 --- END OF FILE: ./js/services/ui/UIEventControl.js ---
 
---- START OF FILE: ./js/services/ui/UITutorialManager.js ---
-// js/services/ui/UITutorialManager.js
-import { DB } from '../../data/database.js';
-
-export class UITutorialManager {
-    /**
-     * @param {import('../UIManager.js').UIManager} manager
-     */
-    constructor(manager) {
-        this.manager = manager;
-        this.popperInstance = null;
-        this.activeHighlightConfig = null;
-    }
-
-    /**
-     * Displays a tutorial toast/popup.
-     * @param {object} params
-     * @param {object} params.step - The tutorial step object.
-     * @param {Function} params.onSkip - Callback for skip.
-     * @param {Function} params.onNext - Callback for next.
-     * @param {object} params.gameState - Current game state.
-     */
-    showTutorialToast({ step, onSkip, onNext, gameState }) {
-        const toast = this.manager.cache.tutorialToastContainer;
-        const arrow = toast.querySelector('#tt-arrow');
-        const isOverlayAnchor = step.anchorElement === 'body';
-        let referenceEl;
-        
-        if (isOverlayAnchor) {
-            referenceEl = this.manager.cache.tutorialAnchorOverlay; 
-        } else {
-            referenceEl = document.querySelector(step.anchorElement);
-            if (!referenceEl) {
-                this.manager.logger.error('UITutorialManager', `Anchor element "${step.anchorElement}" not found for step "${step.stepId}". Defaulting to overlay.`);
-                referenceEl = this.manager.cache.tutorialAnchorOverlay; 
-            }
-        }
-        
-        if (this.popperInstance) {
-            this.popperInstance.destroy();
-            this.popperInstance = null;
-        }
-
-        let processedText = step.text;
-        if (processedText.includes('{shipName}')) {
-            const activeShipId = gameState.player.activeShipId;
-            const shipName = activeShipId ? DB.SHIPS[activeShipId].name : 'your ship'; 
-            processedText = processedText.replace(/{shipName}/g, shipName);
-        }
-
-        if (processedText.includes('{playerName}')) {
-            const playerName = gameState.player.name || 'Captain'; 
-            processedText = processedText.replace(/{playerName}/g, playerName);
-        }
-
-        this.manager.cache.tutorialToastText.innerHTML = processedText;
-
-        const initialWidth = step.size?.width || 'auto';
-        const initialHeight = step.size?.height || 'auto';
-        toast.style.width = initialWidth;
-        toast.style.height = initialHeight;
-        
-        if (isOverlayAnchor) {
-            const posX = step.positionX ?? 50; 
-            const posY = step.positionY ?? 50; 
-            toast.style.left = `${posX}%`;
-            toast.style.top = `${posY}%`;
-            toast.style.transform = 'translate(-50%, -50%)'; 
-            arrow.style.display = 'none'; 
-            toast.removeAttribute('data-popper-placement'); 
-            
-        } else {
-            toast.style.left = ''; 
-            toast.style.top = '';
-            toast.style.transform = ''; 
-            
-            arrow.style.display = 'block'; 
-
-            const defaultOptions = { 
-                placement: 'auto',
-                modifiers: [
-                    { name: 'offset', options: { offset: [0, 10] } }, 
-                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
-                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
-                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
-                ]
-            };
-            
-            const stepOffsetMod = step.popperOptions?.modifiers?.find(m => m.name === 'offset');
-            let baseModifiers = defaultOptions.modifiers.filter(mod => mod.name !== 'offset'); 
-            if (stepOffsetMod) {
-                baseModifiers.push(stepOffsetMod); 
-            } else {
-                baseModifiers.push(defaultOptions.modifiers.find(m => m.name === 'offset')); 
-            }
-     
-            if (step.popperOptions?.modifiers) { /* ... merge other modifiers ... */ }
-
-            const finalOptions = {
-                placement: step.placement || step.popperOptions?.placement || defaultOptions.placement,
-                modifiers: baseModifiers
-            };
-
-            this.popperInstance = Popper.createPopper(referenceEl, toast, finalOptions);
-        }
-
-        toast.classList.remove('hidden');
-        const isInfoStep = step.completion.type === 'INFO';
-        this.manager.cache.tutorialToastNextBtn.classList.toggle('hidden', !isInfoStep);
-        if (isInfoStep) {
-            this.manager.cache.tutorialToastNextBtn.onclick = onNext;
-        }
-        const showSkipButton = false; 
-        this.manager.cache.tutorialToastSkipBtn.style.display = showSkipButton ? 'block' : 'none';
-        this.manager.cache.tutorialToastSkipBtn.onclick = onSkip;
-        this.manager.cache.tutorialToastText.scrollTop = 0;
-        
-        if (this.manager.debugService) {
-            this.manager.debugService.setActiveTutorialStep(step); 
-        }
-    }
-
-    /**
-     * Hides the tutorial toast and cleans up Popper instance.
-     */
-    hideTutorialToast() {
-        this.manager.cache.tutorialToastContainer.classList.add('hidden');
-        if (this.popperInstance) {
-            this.popperInstance.destroy();
-            this.popperInstance = null;
-        }
-        this.applyTutorialHighlight(null);
-        
-        if (this.manager.debugService) {
-            this.manager.debugService.clearActiveTutorialStep();
-        }
-    }
-
-    /**
-     * Dynamically updates the Popper position for the active toast.
-     * @param {object} newOptions 
-     */
-    updateTutorialPopper(newOptions) {
-        const toast = this.manager.cache.tutorialToastContainer;
-        const arrow = toast.querySelector('#tt-arrow');
-        const { isOverlayAnchor, width, height, percentX, percentY, placement, distance, skidding } = newOptions;
-
-        toast.style.width = width > 0 ? `${width}px` : 'auto';
-        toast.style.height = height > 0 ? `${height}px` : 'auto';
-
-        if (isOverlayAnchor) {
-            if (this.popperInstance) {
-                this.popperInstance.destroy();
-                this.popperInstance = null;
-                toast.removeAttribute('data-popper-placement'); 
-                toast.style.transform = ''; 
-            }
-            
-            toast.style.left = `${percentX}%`;
-            toast.style.top = `${percentY}%`;
-            toast.style.transform = 'translate(-50%, -50%)'; 
-            arrow.style.display = 'none';
-
-        } else {
-            toast.style.left = ''; 
-            toast.style.top = ''; 
-            toast.style.transform = ''; 
-            arrow.style.display = 'block';
-
-            const popperUpdateOptions = {
-                placement: placement,
-                modifiers: [
-                    { name: 'offset', options: { offset: [skidding, distance] } },
-                    { name: 'preventOverflow', options: { padding: { top: 60, bottom: 60, left: 10, right: 10 } } },
-                    { name: 'flip', options: { fallbackPlacements: ['top', 'bottom', 'left', 'right'] } },
-                    { name: 'arrow', options: { element: '#tt-arrow', padding: 5 } }
-                ]
-            };
-
-            if (this.popperInstance) {
-                this.popperInstance.setOptions(popperUpdateOptions).catch(e => {
-                    this.manager.logger.error('UITutorialManager', 'Error updating Popper options:', e);
-                });
-            } else {
-                this.manager.logger.warn('UITutorialManager', 'Popper instance needed but not found during update. Re-trigger toast if anchor type changed.');
-            }
-        }
-    }
-
-    /**
-     * Applies the visual highlights (spotlights/arrows) for the tutorial.
-     * @param {Array} highlightConfig 
-     */
-    applyTutorialHighlight(highlightConfig) {
-        this.activeHighlightConfig = highlightConfig;
-        this._renderHighlightsFromConfig(this.activeHighlightConfig);
-    }
-
-    /**
-     * Internal renderer for highlight SVG elements.
-     * @private
-     * @param {Array} highlightConfig 
-     */
-    _renderHighlightsFromConfig(highlightConfig) {
-        const overlay = this.manager.cache.tutorialHighlightOverlay;
-        if (!overlay) return;
-
-        overlay.innerHTML = ''; 
-        if (!highlightConfig) {
-            overlay.classList.add('hidden');
-            return;
-        }
-
-        overlay.classList.remove('hidden');
-
-        highlightConfig.forEach(cue => {
-            const el = document.createElement('div');
-            el.className = 'tutorial-cue';
-            el.style.left = `${cue.x}px`;
-            el.style.top = `${cue.y}px`;
-            el.style.width = `${cue.width}px`;
-            el.style.height = `${cue.height}px`;
-            el.style.transform = `rotate(${cue.rotation}deg)`;
-            el.style.opacity = cue.style.opacity;
-
-            if (cue.style.animation !== 'None') {
-                el.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
-            }
-
-            let content = '';
-            if (cue.type === 'Shape') {
-                content = `
-                    <svg width="100%" height="100%" viewBox="0 0 ${cue.width} ${cue.height}" preserveAspectRatio="none" style="overflow: visible;">
-                        ${cue.shapeType === 'Rectangle' ?
-                            `<rect x="0" y="0" width="100%" height="100%" rx="${cue.style.borderRadius}" ry="${cue.style.borderRadius}" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />` :
-                            `<ellipse cx="50%" cy="50%" rx="50%" ry="50%" style="fill:${cue.style.fill}; stroke:${cue.style.stroke}; stroke-width:${cue.style.strokeWidth}px;" />`
-                        }
-                    </svg>`;
-            } else if (cue.type === 'Arrow') {
-                content = `
-                    <svg width="100%" height="100%" viewBox="0 0 100 50" preserveAspectRatio="none" style="overflow: visible;">
-                        <defs>
-                            <marker id="arrowhead-player" markerWidth="10" markerHeight="7" refX="0" refY="3.5" orient="auto">
-                                <polygon points="0 0, 10 3.5, 0 7" fill="${cue.style.stroke}" />
-                            </marker>
-                        </defs>
-                        <line x1="0" y1="25" x2="90" y2="25" stroke="${cue.style.stroke}" stroke-width="${cue.style.strokeWidth}" marker-end="url(#arrowhead-player)" />
-                    </svg>
-                `;
-            } else if (cue.type === 'Spotlight') {
-                el.style.borderRadius = '50%';
-                el.style.boxShadow = `0 0 0 9999px rgba(0,0,0,0.7), 0 0 ${cue.style.glowIntensity || 20}px ${cue.style.glowIntensity || 10}px ${cue.style.glowColor || cue.style.stroke}`;
-            }
-
-            el.innerHTML = content;
-            const animatedChild = el.querySelector('svg');
-            if (animatedChild && cue.style.animation !== 'None') {
-                animatedChild.classList.add(`anim-${cue.style.animation.toLowerCase()}`);
-                animatedChild.style.setProperty('--glow-color', cue.style.glowColor || cue.style.stroke);
-                animatedChild.style.setProperty('--anim-speed', `${cue.style.animationSpeed}s`);
-                animatedChild.style.setProperty('--glow-intensity', `${cue.style.glowIntensity}px`);
-            }
-
-            overlay.appendChild(el);
-        });
-    }
-
-    /**
-     * Shows the "Skip Tutorial" confirmation modal.
-     * @param {Function} onConfirm 
-     */
-    showSkipTutorialModal(onConfirm) {
-        const modal = this.manager.cache.skipTutorialModal;
-        modal.classList.remove('hidden');
-
-        const confirmHandler = () => {
-            onConfirm();
-            this.manager.hideModal('skip-tutorial-modal');
-        };
-
-        const cancelHandler = () => {
-            this.manager.hideModal('skip-tutorial-modal');
-        };
-
-        this.manager.cache.skipTutorialConfirmBtn.onclick = confirmHandler;
-        this.manager.cache.skipTutorialCancelBtn.onclick = cancelHandler;
-    }
-
-    /**
-     * Shows the Tutorial Log (History) modal.
-     * @param {object} params
-     * @param {Array} params.seenBatches 
-     * @param {Function} params.onSelect 
-     */
-    showTutorialLogModal({ seenBatches, onSelect }) {
-        const logModal = document.getElementById('tutorial-log-modal');
-        const list = document.getElementById('tutorial-log-list');
-
-        if (!logModal || !list) {
-            this.manager.logger.error('UITutorialManager', 'Tutorial log modal elements not found in DOM.');
-            return;
-        }
-
-        list.innerHTML = '';
-
-        if (seenBatches.length === 0) {
-            list.innerHTML = `<li class="text-gray-400 p-2 text-center">No tutorials viewed yet.</li>`;
-        } else {
-            seenBatches.forEach(batchId => {
-                const batchData = DB.TUTORIAL_DATA[batchId];
-                if (batchData) {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<button class="btn w-full text-center">${batchData.title}</button>`;
-                    li.onclick = () => {
-                        logModal.classList.remove('visible');
-                        onSelect(batchId);
-                    };
-                    list.appendChild(li);
-                }
-            });
-        }
-        logModal.classList.add('visible');
-    }
-}
---- END OF FILE: ./js/services/ui/UITutorialManager.js ---
-
 --- START OF FILE: ./js/services/ui/UIMarketControl.js ---
 // js/services/ui/UIMarketControl.js
 import { DB } from '../../data/database.js';
@@ -18279,62 +17712,65 @@ export class UIMarketControl {
 // js/services/ui/UIHelpManager.js
 import { HELP_REGISTRY } from '../../data/helpRegistry.js';
 
-/**
- * @class UIHelpManager
- * @description Domain Controller responsible for the Contextual Help Modal System.
- * Handles DOM injection, micro-pagination, and rendering of contextual tutorial slides.
- */
 export class UIHelpManager {
     /**
      * @param {import('../UIManager.js').UIManager} uiManager 
      */
     constructor(uiManager) {
-        this.uiManager = uiManager;
-        this.isVisible = false;
-        this.currentContext = null;
-        this.currentPageIndex = 0;
-        this.pages = [];
+        try {
+            this.uiManager = uiManager;
+            this.isVisible = false;
+            this.currentContext = null;
+            this.currentPageIndex = 0;
+            this.pages = [];
 
-        this._injectDOM();
-        this._cacheDOM();
-        this._bindEvents();
+            // Interaction state properties
+            this.isDragging = false;
+            this.startX = 0;
+            this.currentX = 0;
+
+            // Bound event handlers to prevent memory leaks and duplication
+            this._handleWindowMouseMove = this._handleWindowMouseMove.bind(this);
+            this._handleWindowMouseUp = this._handleWindowMouseUp.bind(this);
+            this._endTouch = this._endTouch.bind(this);
+
+            this._injectDOM();
+            this._cacheDOM();
+            this._bindEvents();
+        } catch (error) {
+            console.error("[UIHelpManager] Initialization failed:", error);
+        }
     }
 
-    /**
-     * Injects the Help System's structural DOM elements directly into the game-container.
-     * Uses type="button" to satisfy defensive interaction protocols.
-     * @private
-     */
     _injectDOM() {
         const gameContainer = document.getElementById('game-container');
         if (!gameContainer) return;
 
-        // Inject the persistent global anchor opposite the debug start button
-        const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
-        gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
+        // Defensively prevent duplicate injection
+        if (!document.getElementById('global-help-anchor')) {
+            const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
+            gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
+        }
 
-        // Inject the fixed-aspect-ratio modal skeleton
-        const modalHTML = `
-            <div id="help-modal-overlay" class="help-modal-overlay hidden">
-                <div class="help-modal-container">
-                    <div class="help-modal-header">
-                        <span class="help-modal-title">DATABANK</span>
-                        <button type="button" id="help-modal-close-btn" class="help-modal-close-btn" data-action="close-help">-</button>
+        if (!document.getElementById('help-modal-overlay')) {
+            const modalHTML = `
+                <div id="help-modal-overlay" class="help-modal-overlay hidden">
+                    <div class="help-modal-container">
+                        <div class="help-modal-header">
+                            <span class="help-modal-title">TUTORIAL</span>
+                            <button type="button" id="help-modal-close-btn" class="help-modal-close-btn" data-action="close-help">-</button>
+                        </div>
+                        <div class="help-modal-viewport">
+                            <div id="help-slide-track" class="help-slide-track"></div>
+                        </div>
+                        <div id="help-modal-footer" class="help-modal-footer"></div>
                     </div>
-                    <div class="help-modal-viewport">
-                        <div id="help-slide-track" class="help-slide-track"></div>
-                    </div>
-                    <div id="help-modal-footer" class="help-modal-footer"></div>
                 </div>
-            </div>
-        `;
-        gameContainer.insertAdjacentHTML('beforeend', modalHTML);
+            `;
+            gameContainer.insertAdjacentHTML('beforeend', modalHTML);
+        }
     }
 
-    /**
-     * Caches references to the newly injected DOM elements.
-     * @private
-     */
     _cacheDOM() {
         this.anchorBtn = document.getElementById('global-help-anchor');
         this.overlay = document.getElementById('help-modal-overlay');
@@ -18343,12 +17779,7 @@ export class UIHelpManager {
         this.footer = document.getElementById('help-modal-footer');
     }
 
-    /**
-     * Binds swipe gesture logic and local UI interactions.
-     * @private
-     */
     _bindEvents() {
-        // Backdrop dismissal 
         if (this.overlay) {
             this.overlay.addEventListener('pointerdown', (e) => {
                 if (e.target === this.overlay) {
@@ -18357,26 +17788,20 @@ export class UIHelpManager {
             });
         }
 
-        let startX = 0;
-        let currentX = 0;
-        let isDragging = false;
-
         if (this.slideTrack) {
-            // Touch events for mobile (raw touch events bypass browser pan-x cancellation)
             this.slideTrack.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 1) return; // Ignore multi-touch
-                isDragging = true;
-                startX = e.touches[0].clientX;
-                currentX = e.touches[0].clientX;
-                this.slideTrack.style.transition = 'none'; // Remove snap transition during drag
+                if (e.touches.length > 1) return;
+                this.isDragging = true;
+                this.startX = e.touches[0].clientX;
+                this.currentX = e.touches[0].clientX;
+                this.slideTrack.style.transition = 'none';
             }, { passive: true });
 
             this.slideTrack.addEventListener('touchmove', (e) => {
-                if (!isDragging) return;
-                currentX = e.touches[0].clientX;
-                const deltaX = currentX - startX;
+                if (!this.isDragging) return;
+                this.currentX = e.touches[0].clientX;
+                const deltaX = this.currentX - this.startX;
                 
-                // Allow vertical bleed to pass through, but handle horizontal visual drag
                 const containerWidth = this.slideTrack.clientWidth || 1;
                 const deltaPercent = (deltaX / containerWidth) * 100;
                 const baseTranslate = -(this.currentPageIndex * 100);
@@ -18384,55 +17809,61 @@ export class UIHelpManager {
                 this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
             }, { passive: true });
 
-            const endTouch = () => {
-                if (!isDragging) return;
-                isDragging = false;
-                this.slideTrack.style.transition = 'transform 0.3s ease-in-out';
-                
-                const deltaX = currentX - startX;
-                const threshold = 40; // Pixels required to commit to a slide change
-                
-                if (deltaX < -threshold && this.currentPageIndex < this.pages.length - 1) {
-                    this.nextPage();
-                } else if (deltaX > threshold && this.currentPageIndex > 0) {
-                    this.prevPage();
-                } else {
-                    this._applyTransform(); // Snap back if threshold not met
-                }
-            };
+            this.slideTrack.addEventListener('touchend', this._endTouch);
+            this.slideTrack.addEventListener('touchcancel', this._endTouch);
 
-            this.slideTrack.addEventListener('touchend', endTouch);
-            this.slideTrack.addEventListener('touchcancel', endTouch);
-
-            // Mouse events for desktop simulation
             this.slideTrack.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                startX = e.clientX;
-                currentX = e.clientX;
+                this.isDragging = true;
+                this.startX = e.clientX;
+                this.currentX = e.clientX;
                 this.slideTrack.style.transition = 'none';
             });
             
-            window.addEventListener('mousemove', (e) => {
-                if (!isDragging) return;
-                currentX = e.clientX;
-                const deltaX = currentX - startX;
-                const containerWidth = this.slideTrack.clientWidth || 1;
-                const deltaPercent = (deltaX / containerWidth) * 100;
-                const baseTranslate = -(this.currentPageIndex * 100);
-                this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
-            });
+            // Clean up global window listeners to prevent multi-binding
+            window.removeEventListener('mousemove', this._handleWindowMouseMove);
+            window.removeEventListener('mouseup', this._handleWindowMouseUp);
             
-            window.addEventListener('mouseup', endTouch);
+            window.addEventListener('mousemove', this._handleWindowMouseMove);
+            window.addEventListener('mouseup', this._handleWindowMouseUp);
         }
     }
 
-    /**
-     * Renders and displays the Help Modal specifically for a given context.
-     * @param {string} contextId - The registry key mapping to the contextual slides.
-     * @param {number} [startingPageIndex=0] - Which slide to auto-paginate to upon opening.
-     */
+    _endTouch() {
+        if (!this.isDragging) return;
+        this.isDragging = false;
+        
+        if (this.slideTrack) {
+            this.slideTrack.style.transition = 'transform 0.3s ease-in-out';
+        }
+        
+        const deltaX = this.currentX - this.startX;
+        const threshold = 40; 
+        
+        if (deltaX < -threshold && this.currentPageIndex < this.pages.length - 1) {
+            this.nextPage();
+        } else if (deltaX > threshold && this.currentPageIndex > 0) {
+            this.prevPage();
+        } else {
+            this._applyTransform();
+        }
+    }
+
+    _handleWindowMouseMove(e) {
+        if (!this.isDragging || !this.slideTrack) return;
+        this.currentX = e.clientX;
+        const deltaX = this.currentX - this.startX;
+        const containerWidth = this.slideTrack.clientWidth || 1;
+        const deltaPercent = (deltaX / containerWidth) * 100;
+        const baseTranslate = -(this.currentPageIndex * 100);
+        this.slideTrack.style.transform = `translateX(calc(${baseTranslate}% + ${deltaPercent}%))`;
+    }
+
+    _handleWindowMouseUp(e) {
+        this._endTouch();
+    }
+
     showModal(contextId, startingPageIndex = 0) {
-        if (!HELP_REGISTRY[contextId]) return;
+        if (!HELP_REGISTRY || !HELP_REGISTRY[contextId]) return;
 
         this.currentContext = contextId;
         this.pages = HELP_REGISTRY[contextId];
@@ -18442,36 +17873,43 @@ export class UIHelpManager {
         this._updatePagination();
         this._applyTransform();
 
-        this.overlay.classList.remove('hidden');
-        this.isVisible = true;
-        
-        // Ensure anchor toggle icon disappears while modal is active
         if (this.anchorBtn) this.anchorBtn.style.display = 'none';
+
+        if (this.overlay) {
+            this.overlay.classList.remove('help-anim-out');
+            this.overlay.classList.remove('hidden');
+            this.overlay.classList.add('help-anim-in');
+        }
+
+        this.isVisible = true;
     }
 
-    /**
-     * Hides the Help Modal and restores the global anchor.
-     */
     hideModal() {
-        if (this.overlay) this.overlay.classList.add('hidden');
+        if (!this.isVisible) return; 
         this.isVisible = false;
-        if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+        
+        if (this.overlay) {
+            this.overlay.classList.remove('help-anim-in');
+            this.overlay.classList.add('help-anim-out');
+            
+            setTimeout(() => {
+                if (!this.isVisible) {
+                    this.overlay.classList.add('hidden');
+                    this.overlay.classList.remove('help-anim-out');
+                    if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+                }
+            }, 400); 
+        } else {
+            if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+        }
     }
 
-    /**
-     * Populates the slide track container with the HTML payload.
-     * @private
-     */
     _renderSlides() {
         if (this.slideTrack) {
             this.slideTrack.innerHTML = this.pages.join('');
         }
     }
 
-    /**
-     * Rebuilds the pagination indicator dots based on page count.
-     * @private
-     */
     _updatePagination() {
         if (!this.footer) return;
         if (this.pages.length <= 1) {
@@ -18486,10 +17924,6 @@ export class UIHelpManager {
         this.footer.innerHTML = dots;
     }
 
-    /**
-     * Translates the slide track via CSS to show the active slide index.
-     * @private
-     */
     _applyTransform() {
         if (this.slideTrack) {
             const translateX = -(this.currentPageIndex * 100);
@@ -18497,9 +17931,6 @@ export class UIHelpManager {
         }
     }
 
-    /**
-     * Advances to the next slide if one exists.
-     */
     nextPage() {
         if (this.currentPageIndex < this.pages.length - 1) {
             this.currentPageIndex++;
@@ -18508,9 +17939,6 @@ export class UIHelpManager {
         }
     }
 
-    /**
-     * Retreats to the previous slide if one exists.
-     */
     prevPage() {
         if (this.currentPageIndex > 0) {
             this.currentPageIndex--;
@@ -20919,10 +20347,6 @@ export class AssetStorageService {
 
 --- START OF FILE: ./js/services/DebugService.js ---
 // js/services/DebugService.js
-/**
- * @fileoverview This file contains the DebugService class, which is responsible for creating and managing
- * the lil-gui developer panel for real-time testing and manipulation of the game state.
- */
 import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
@@ -20931,6 +20355,7 @@ import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
 import { OFFICERS } from '../data/officers.js';
+import { HELP_REGISTRY } from '../data/helpRegistry.js';
 
 // --- EPHEMERAL DEBUG MISSIONS ---
 const DEBUG_MISSIONS = {
@@ -20941,9 +20366,9 @@ const DEBUG_MISSIONS = {
         host: 'DEV',
         description: 'Instantly completes to test multiple reward types (Credits, Items, Licenses).',
         triggers: [],
-        objectives: [], // Auto-complete
+        objectives: [], 
         completion: {
-            locationId: null, // Complete anywhere
+            locationId: null, 
             title: 'Debug Success',
             text: 'You have received a bounty of debug rewards.',
             buttonText: 'Claim Loot'
@@ -21012,12 +20437,6 @@ const DEBUG_MISSIONS = {
 };
 
 export class DebugService {
-    /**
-     * @param {import('./GameState.js').GameState} gameState The central game state object.
-     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('./LoggingService.js').Logger} logger The logging utility.
-     */
     constructor(gameState, simulationService, uiManager, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
@@ -21056,7 +20475,7 @@ export class DebugService {
         if (this.gui) return;
         
         Object.assign(DB.MISSIONS, DEBUG_MISSIONS);
-        this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
 
         this._cacheDiagElements();
         this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
@@ -21106,8 +20525,28 @@ ${logHistory}
                 this.uiManager.createFloatingText('Bug Report Copied to Clipboard!', window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
             })
             .catch(err => {
-                this.logger.error('DebugService', 'Failed to copy bug report.', err);
+                if(this.logger && this.logger.error) this.logger.error('DebugService', 'Failed to copy bug report.', err);
             });
+    }
+
+    /**
+     * Automatically populates the player's seen tutorials array with all available help contexts 
+     * to prevent modal auto-triggering during debug sessions.
+     * @private
+     */
+    _markAllTutorialsSeen() {
+        if (!this.gameState.tutorials) {
+            this.gameState.tutorials = { seenHelpContexts: [] };
+        }
+        if (HELP_REGISTRY) {
+            this.gameState.tutorials.seenHelpContexts = Object.keys(HELP_REGISTRY);
+        } else {
+            this.gameState.tutorials.seenHelpContexts = [];
+        }
+        
+        if (this.logger && this.logger.info && this.logger.info.system) {
+            this.logger.info.system('DebugService', 'All help modal contexts injected into seen state.');
+        }
     }
 
     _unlockEndgame() {
@@ -21126,8 +20565,10 @@ ${logHistory}
     }
 
     godMode() {
-        this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
+        
+        this._markAllTutorialsSeen();
 
         this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
 
@@ -21148,8 +20589,10 @@ ${logHistory}
     }
 
     simpleStart() {
-        this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
+        
+        this._markAllTutorialsSeen();
 
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
@@ -21166,7 +20609,7 @@ ${logHistory}
     }
 
     skipToHangarTutorial() {
-        this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
         this.gameState.introSequenceActive = true;
 
         this.gameState.player.credits = 25000;
@@ -21185,7 +20628,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = Math.max(0, shipState.health - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} hull from ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Deducted ${amount} hull from ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -21195,7 +20638,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = ship.maxHealth;
-            this.logger.warn('DebugService', `Restored hull for ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Restored hull for ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -21205,7 +20648,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = 0;
-            this.logger.warn('DebugService', `Destroyed ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Destroyed ${ship.name}.`);
             this.simulationService.travelService._handleShipDestruction(ship.id);
         }
     }
@@ -21215,7 +20658,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.fuel = Math.max(0, shipState.fuel - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} fuel from ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Deducted ${amount} fuel from ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -21225,7 +20668,7 @@ ${logHistory}
         if (ship) {
              const shipState = this.gameState.player.shipStates[ship.id];
             shipState.fuel = ship.maxFuel;
-            this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -21237,7 +20680,7 @@ ${logHistory}
                 inventory[goodId].quantity = 0;
                 inventory[goodId].avgCost = 0;
             }
-            this.logger.warn('DebugService', 'All cargo removed from active ship.');
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'All cargo removed from active ship.');
             this.gameState.setState({});
         }
     }
@@ -21254,7 +20697,7 @@ ${logHistory}
             }
             inventory[itemId].quantity += qty;
             
-            this.logger.warn('DebugService', `Added ${qty}x ${itemId} to ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Added ${qty}x ${itemId} to ${ship.name}.`);
             this.uiManager.createFloatingText(`+${qty} ${itemId}`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
             this.gameState.setState({});
         }
@@ -21268,10 +20711,10 @@ ${logHistory}
                 day: day,
                 shipsForSale: allShipIds
             };
-            this.logger.warn('DebugService', `SHIPYARD FILLED: All ships added to ${currentLocationId}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `SHIPYARD FILLED: All ships added to ${currentLocationId}.`);
             this.gameState.setState({});
         } else {
-            this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
+            if(this.logger && this.logger.error) this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
         }
     }
     
@@ -21285,10 +20728,10 @@ ${logHistory}
         
         if (shipState.upgrades.length < 3) {
             shipState.upgrades.push(upgradeId);
-            this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
+            if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
             this.gameState.setState({}); 
         } else {
-            this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
         }
     }
 
@@ -21307,7 +20750,7 @@ ${logHistory}
             shipState.upgrades.push(randomId);
         }
 
-        this.logger.info.system('DebugService', `Applied 3 random upgrades to ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Applied 3 random upgrades to ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -21317,7 +20760,7 @@ ${logHistory}
         const shipState = this.gameState.player.shipStates[activeShip.id];
         
         shipState.upgrades = [];
-        this.logger.info.system('DebugService', `Removed all upgrades from ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Removed all upgrades from ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -21405,7 +20848,7 @@ ${logHistory}
             }},
             setAge: { name: 'Set Age', type: 'button', handler: () => {
                 this.gameState.player.playerAge = this.debugState.targetAge;
-                this.logger.warn('DebugService', `Player age manually set to ${this.debugState.targetAge}.`);
+                if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Player age manually set to ${this.debugState.targetAge}.`);
                 
                 if (this.simulationService.timeService) {
                     this.simulationService.timeService._handleBirthday(this.debugState.targetAge);
@@ -21507,7 +20950,7 @@ ${logHistory}
             cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
                 this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
                 this.gameState.setState({}); 
-                this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
+                if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
             
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
@@ -21624,9 +21067,6 @@ ${logHistory}
         if(this.diagElements.navScreen) this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
     }
 
-    /**
-     * @private
-     */
     buildGui() {
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
@@ -21736,7 +21176,7 @@ ${logHistory}
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
-        automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
+        automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => { if(this.logger && this.logger.setLevel) this.logger.setLevel(v) });
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
         
         automationFolder.add(this.debugState, 'botStrategy', ['MIXED', 'HONEST_TRADER', 'MANIPULATOR', 'DEPLETE_ONLY', 'PROSPECTOR']).name('Bot Strategy');
@@ -27861,248 +27301,6 @@ export class EventManager {
 }
 --- END OF FILE: ./js/services/EventManager.js ---
 
---- START OF FILE: ./js/services/TutorialService.js ---
-// ./js/services/TutorialService.js
-/**
- * @fileoverview This file contains the TutorialService class, which manages the state
- * and flow of all interactive tutorials in the game. It checks for trigger conditions,
- * displays tutorial steps, and locks UI navigation to guide the player.
- */
-import { DB } from '../data/database.js';
-import { TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from '../data/constants.js';
-
-/**
- * @class TutorialService
- * @description Manages the state and flow of interactive tutorials.
- */
-export class TutorialService {
-    /**
-     * @param {import('./GameState.js').GameState} gameState The game's central state object.
-     * @param {import('./UIManager.js').UIManager} uiManager The UI manager for rendering updates.
-     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic simulator.
-     * @param {object} navStructure The navigation structure from UIManager, used to map screens to nav tabs.
-     * @param {import('./LoggingService.js').Logger} logger The logging utility.
-     */
-    constructor(gameState, uiManager, simulationService, navStructure, logger) {
-        this.gameState = gameState;
-        this.uiManager = uiManager;
-        this.simulationService = simulationService;
-        this.logger = logger;
-        this.activeBatchId = null;
-        this.activeStepId = null;
-
-        // Create a map of screenId -> navId for easy lookup when tutorials need to force navigation.
-        this.screenToNavMap = {};
-        for (const navId in navStructure) {
-            for (const screenId in navStructure[navId].screens) {
-                this.screenToNavMap[screenId] = navId;
-            }
-        }
-    }
-
-    /**
-     * Checks the current game action or state against tutorial triggers and step completion conditions.
-     * This is the main entry point for the tutorial system, called after player actions or screen loads.
-     * @param {object} [actionData=null] Data about the action that just occurred (e.g., { type: 'ACTION', action: 'buy-ship' }).
-     */
-    checkState(actionData = null) {
-        // If a tutorial is currently active, check if the action completes the current step.
-        if (this.activeBatchId && this.activeStepId) {
-            const batch = DB.TUTORIAL_DATA[this.activeBatchId];
-            const step = batch.steps.find(s => s.stepId === this.activeStepId);
-
-            if (step && this._matchesCondition(step.completion, actionData)) {
-                this.advanceStep();
-            }
-            return;
-        }
-
-        // If no tutorial is active, check if the action triggers a new tutorial batch.
-        for (const batchId in DB.TUTORIAL_DATA) {
-            const batch = DB.TUTORIAL_DATA[batchId];
-            const hasBeenSeen = this.gameState.tutorials.seenBatchIds.includes(batchId);
-            const isSkipped = this.gameState.tutorials.skippedTutorialBatches.includes(batchId);
-            
-            if (!hasBeenSeen && !isSkipped) {
-                const triggerAction = actionData || { type: TUTORIAL_ACTION_TYPES.SCREEN_LOAD, screenId: this.gameState.activeScreen };
-                if (this._matchesCondition(batch.trigger, triggerAction)) {
-                    this.triggerBatch(batchId);
-                    break;
-                }
-            }
-        }
-    }
-
-    /**
-     * Starts a specific tutorial batch by its ID.
-     * @param {string} batchId The unique identifier of the tutorial batch to start.
-     * @param {string|null} [startStepId=null] The ID of a specific step to start from. If null, starts from the beginning.
-     */
-    triggerBatch(batchId, startStepId = null) {
-        if (!DB.TUTORIAL_DATA[batchId]) return;
-        const batch = DB.TUTORIAL_DATA[batchId];
-
-        // If the tutorial is triggered by loading a specific screen, navigate to that screen first.
-        if (batch.trigger.type === TUTORIAL_ACTION_TYPES.SCREEN_LOAD) {
-            const targetScreenId = batch.trigger.screenId;
-            if (this.gameState.activeScreen !== targetScreenId) {
-                const targetNavId = this.screenToNavMap[targetScreenId];
-                if (targetNavId) {
-                    this.simulationService.setScreen(targetNavId, targetScreenId);
-                }
-            }
-        }
-
-        this.activeBatchId = batchId;
-        this.gameState.tutorials.activeBatchId = batchId;
-        
-        if (!this.gameState.tutorials.seenBatchIds.includes(batchId)) {
-            this.gameState.tutorials.seenBatchIds.push(batchId);
-        }
-
-        this.logger.info.system('Tutorial', this.gameState.day, 'TUTORIAL_START', `Starting tutorial batch: ${batchId}`);
-        this.gameState.setState(this.gameState);
-        this.uiManager.render(this.gameState.getState());
-        
-        const firstStepId = startStepId || batch.steps[0].stepId;
-        this._displayStep(firstStepId);
-    }
-
-    /**
-     * Skips the currently active tutorial batch, preventing it from triggering again.
-     */
-    skipActiveTutorial() {
-        if (!this.activeBatchId) return;
-        if (!this.gameState.tutorials.skippedTutorialBatches.includes(this.activeBatchId)) {
-            this.gameState.tutorials.skippedTutorialBatches.push(this.activeBatchId);
-        }
-        this.logger.info.player(this.gameState.day, 'TUTORIAL_SKIP', `Skipped tutorial: ${this.activeBatchId}`);
-        this._endBatch();
-        this.gameState.setState(this.gameState);
-    }
-    
-    /**
-     * Advances the tutorial to the next step in the current batch, or ends the batch if it's the final step.
-     */
-    advanceStep() {
-        if (!this.activeStepId || !this.activeBatchId) return;
-
-        const batch = DB.TUTORIAL_DATA[this.activeBatchId];
-        const currentStep = batch.steps.find(s => s.stepId === this.activeStepId);
-        
-        this.uiManager.hideTutorialToast();
-
-        if (currentStep && currentStep.nextStepId) {
-            this._displayStep(currentStep.nextStepId);
-        } else {
-            const completedBatchId = this.activeBatchId;
-            this._endBatch(); 
-            // If the completed tutorial was part of the intro sequence, continue the sequence.
-            if (this.gameState.introSequenceActive && completedBatchId?.startsWith('intro_')) {
-                this.simulationService._continueIntroSequence(completedBatchId);
-            }
-        }
-    }
-
-    /**
-     * Displays a specific tutorial step by its ID and manages UI navigation locks.
-     * @param {string} stepId The ID of the step to display.
-     * @private
-     */
-    _displayStep(stepId) {
-        if (!this.activeBatchId) return;
-        const batch = DB.TUTORIAL_DATA[this.activeBatchId];
-        const step = batch.steps.find(s => s.stepId === stepId);
-        if (!step) {
-            this._endBatch();
-            return;
-        }
-
-        // Apply navigation lock based on tutorial data.
-        if (step.hasOwnProperty('navLock')) {
-            // A step can explicitly define its own lock (or null to unlock).
-            this.gameState.tutorials.navLock = step.navLock;
-        } else if (batch.navLock) {
-            // Otherwise, inherit the lock from the parent batch.
-            const currentScreenId = this.gameState.activeScreen;
-            const currentNavId = this.screenToNavMap[currentScreenId];
-            this.gameState.tutorials.navLock = { navId: currentNavId, screenId: currentScreenId };
-        } else {
-            // Ensure navigation is unlocked if no lock is specified.
-            this.gameState.tutorials.navLock = null;
-        }
-
-        this.activeStepId = stepId;
-        this.gameState.tutorials.activeStepId = stepId;
-        this.logger.info.system('Tutorial', this.gameState.day, 'STEP_DISPLAY', `Displaying step: ${stepId}`);
-        
-        this.uiManager.showTutorialToast({
-            step: step,
-            onSkip: () => this.uiManager.showSkipTutorialModal(() => this.skipActiveTutorial()),
-            onNext: () => this.advanceStep(),
-            gameState: this.gameState.getState()
-        });
-        
-        // Re-render to apply navLock changes and any other state updates from advancing the step.
-        this.uiManager.render(this.gameState.getState());
-    }
-
-    /**
-     * Cleans up the state when a tutorial batch ends.
-     * @private
-     */
-    _endBatch() {
-        this.logger.info.system('Tutorial', this.gameState.day, 'TUTORIAL_END', `Ending tutorial batch: ${this.activeBatchId}`);
-        this.uiManager.hideTutorialToast();
-        this.activeBatchId = null;
-        this.activeStepId = null;
-        this.gameState.tutorials.activeBatchId = null;
-        this.gameState.tutorials.activeStepId = null;
-        this.gameState.tutorials.navLock = null; // Clear any active navigation lock.
-    }
-
-    /**
-     * Checks if a player action matches a tutorial step's completion or trigger condition.
-     * @param {object|object[]} condition The condition object or array of conditions from the database.
-     * @param {object} actionData The action performed by the player.
-     * @returns {boolean} True if the condition(s) are met.
-     * @private
-     */
-    _matchesCondition(condition, actionData) {
-        if (!condition || !actionData) return false;
-        // A condition can be an array of multiple sub-conditions that must all be true.
-        if (Array.isArray(condition)) {
-            return condition.every(c => this._matchesSingleCondition(c, actionData));
-        }
-        return this._matchesSingleCondition(condition, actionData);
-    }
-    
-    /**
-     * Helper for _matchesCondition to check a single condition object against a player action.
-     * @param {object} condition The single condition object.
-     * @param {object} actionData The action performed by the player.
-     * @returns {boolean} True if the single condition is met.
-     * @private
-     */
-    _matchesSingleCondition(condition, actionData) {
-        if (condition.type !== actionData.type) return false;
-        switch (condition.type) {
-            case TUTORIAL_ACTION_TYPES.SCREEN_LOAD:
-                return condition.screenId === actionData.screenId;
-            case TUTORIAL_ACTION_TYPES.ACTION:
-                if (condition.action === ACTION_IDS.SET_SCREEN && actionData.action === ACTION_IDS.SET_SCREEN) {
-                    return condition.navId === actionData.navId && condition.screenId === actionData.screenId;
-                }
-                return condition.action === actionData.action;
-            case TUTORIAL_ACTION_TYPES.INFO:
-                return true; // Info steps are always completed by the "Next" button, not a game action.
-            default:
-                return false;
-        }
-    }
-}
---- END OF FILE: ./js/services/TutorialService.js ---
-
 --- START OF FILE: ./js/services/GameAttributes.js ---
 // js/services/GameAttributes.js
 
@@ -29888,7 +29086,7 @@ export class UIManager {
         // Bind Context for Market Renderer
         this.getItemPrice = this.marketControl.getItemPrice.bind(this.marketControl);
         
-        window.addEventListener('resize', this._setAppHeight);
+        window.addEventListener('resize', () => this._setAppHeight());
     }
 
     // --- Service Injection Methods ---
@@ -29916,7 +29114,6 @@ export class UIManager {
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
             
-            // Screen Containers
             mapScreen: document.getElementById(`${SCREEN_IDS.MAP}-screen`),
             navigationScreen: document.getElementById(`${SCREEN_IDS.NAVIGATION}-screen`),
             servicesScreen: document.getElementById(`${SCREEN_IDS.SERVICES}-screen`),
@@ -29927,11 +29124,9 @@ export class UIManager {
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
             
-            // Tooltips
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
             
-            // Modals
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             launchModal: document.getElementById('launch-modal'),
@@ -29944,16 +29139,11 @@ export class UIManager {
             eulaModal: document.getElementById('eula-modal'),
             eulaModalContent: document.getElementById('eula-modal-content'),
 
-            // Mission Elements
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
             stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
         };
     }
-
-    // =========================================================================
-    // MASTER RENDER LOOP
-    // =========================================================================
 
     render(gameState) {
         if (!gameState || !gameState.player) return;
@@ -29974,10 +29164,8 @@ export class UIManager {
         this.renderNavigation(gameState);
         this.renderActiveScreen(gameState, previousState);
         
-        // Delegate: Mission Control (HUD)
         this.missionControl.renderStickyBar(gameState);
 
-        // Help Modal Context Evaluation
         this._evaluateHelpContext(gameState, previousState);
     }
 
@@ -30126,7 +29314,6 @@ export class UIManager {
         const existingContextBar = this.cache.navBar.querySelector('.context-bar');
         const existingNavWrapper = this.cache.navBar.querySelector('.nav-wrapper');
 
-        // Surgical DOM Update to prevent CSS animation restart
         if (existingContextBar && existingNavWrapper) {
             existingContextBar.className = containerClass;
             existingContextBar.style.background = theme.gradient;
@@ -30250,18 +29437,16 @@ export class UIManager {
         }
     }
 
-    // =========================================================================
-    // CONTEXTUAL HELP AUTO-TRIGGER SYSTEM
-    // =========================================================================
-
     /**
      * Determines the active Help Registry Context ID based on the current state configuration.
+     * Includes hyper-safe fallbacks for missing state subsets during rapid initialization.
      * @param {Object} gameState 
      * @returns {string|null} The contextId matching the Help Registry
      */
     getCurrentHelpContextId(gameState) {
         if (!gameState || !gameState.player) return null;
-        const { activeNav, activeScreen, uiState, solStation } = gameState;
+        const { activeNav, activeScreen, solStation } = gameState;
+        const uiState = gameState.uiState || {}; 
         const isSolStationUnlocked = solStation?.unlocked;
 
         if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.MAP) return 'map';
@@ -30287,39 +29472,62 @@ export class UIManager {
 
     /**
      * Evaluates whether the current screen requires the Help Modal to auto-instantiate or be dismissed.
+     * Heavily guarded to prevent crashes during the boot sequence or when loading legacy saves.
      * @param {Object} gameState 
      * @param {Object} previousState 
      */
     _evaluateHelpContext(gameState, previousState) {
-        if (gameState.introSequenceActive) return;
-        if (!gameState.tutorials || !gameState.tutorials.seenHelpContexts) return;
+        try {
+            if (gameState.introSequenceActive) return;
 
-        const currentContextId = this.getCurrentHelpContextId(gameState);
-        const prevContextId = this.getCurrentHelpContextId(previousState);
-
-        // Dismissal Rule: If context changes, hide the modal.
-        if (currentContextId !== prevContextId && this.helpManager.isVisible) {
-            this.hideHelpModal();
-        }
-
-        // Auto-Instantiation Rule
-        if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
-            gameState.tutorials.seenHelpContexts.push(currentContextId);
-            
-            let startIndex = 0;
-            if (currentContextId === 'services-supply-sol') {
-                startIndex = 1; 
+            // Defensive array checks
+            if (!gameState.tutorials) gameState.tutorials = { seenHelpContexts: [] };
+            if (!Array.isArray(gameState.tutorials.seenHelpContexts)) {
+                gameState.tutorials.seenHelpContexts = [];
             }
 
-            this.showHelpModal(currentContextId, startIndex);
+            const currentContextId = this.getCurrentHelpContextId(gameState);
+            const prevContextId = this.getCurrentHelpContextId(previousState);
+
+            // Dismissal Rule: If context changes, hide the modal.
+            if (currentContextId !== prevContextId && this.helpManager && this.helpManager.isVisible) {
+                this.hideHelpModal();
+            }
+
+            // Auto-Instantiation Rule
+            if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
+                
+                // Safely push to the live GameState to ensure the flag persists across render loops and save files
+                if (this.simulationService && this.simulationService.gameState) {
+                    const liveState = this.simulationService.gameState;
+                    
+                    if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [] };
+                    if (!Array.isArray(liveState.tutorials.seenHelpContexts)) {
+                        liveState.tutorials.seenHelpContexts = [];
+                    }
+                    
+                    if (!liveState.tutorials.seenHelpContexts.includes(currentContextId)) {
+                        liveState.tutorials.seenHelpContexts.push(currentContextId);
+                    }
+                }
+                
+                // Also push to the local deep-copy instance so the current render evaluation respects it
+                gameState.tutorials.seenHelpContexts.push(currentContextId);
+                
+                let startIndex = 0;
+                if (currentContextId === 'services-supply-sol') {
+                    startIndex = 1; 
+                }
+
+                if (this.helpManager) {
+                    this.showHelpModal(currentContextId, startIndex);
+                }
+            }
+        } catch (error) {
+            console.error("[UIManager] Help Context Evaluation failed:", error);
         }
     }
 
-    // =========================================================================
-    // SWITCHBOARD PROXIES (Delegation to Controllers)
-    // =========================================================================
-
-    // --- Modal Engine ---
     queueModal(...args) { this.modalEngine.queueModal(...args); }
     hideModal(...args) { this.modalEngine.hideModal(...args); }
     processModalQueue(...args) { this.modalEngine.processModalQueue(...args); }
@@ -30327,14 +29535,12 @@ export class UIManager {
     isClickInside(...args) { return this.modalEngine.isClickInside(...args); }
     showProcessingAnimation(...args) { this.modalEngine.showProcessingAnimation(...args); }
 
-    // --- Market Control ---
     updateMarketScreen(...args) { this.marketControl.updateMarketScreen(...args); }
     updateMarketCardPrice(...args) { this.marketControl.updateMarketCardPrice(...args); }
     updateMarketCardDisplay(...args) { this.marketControl.updateMarketCardDisplay(...args); }
     resetMarketTransactionState(...args) { this.marketControl.resetMarketTransactionState(...args); }
     _calculateSaleDetails(...args) { return this.marketControl._calculateSaleDetails(...args); }
 
-    // --- Mission Control ---
     renderStickyBar(...args) { this.missionControl.renderStickyBar(...args); }
     flashObjectiveProgress(...args) { this.missionControl.flashObjectiveProgress(...args); }
     showMissionModal(...args) { this.missionControl.showMissionModal(...args); }
@@ -30344,13 +29550,11 @@ export class UIManager {
     handleBuyIntel(...args) { this.missionControl.handleBuyIntel(...args); }
     handleShowIntelDetails(...args) { this.missionControl.handleShowIntelDetails(...args); }
 
-    // --- Hangar Control ---
     updateHangarScreen(...args) { this.hangarControl.updateHangarScreen(...args); }
     showShipDetailModal(...args) { this.hangarControl.showShipDetailModal(...args); }
     showUpgradeInstallationModal(...args) { this.hangarControl.showUpgradeInstallationModal(...args); }
     runShipTransactionAnimation(...args) { this.hangarControl.runShipTransactionAnimation(...args); }
 
-    // --- Event Control ---
     showRandomEventModal(...args) { this.eventControl.showRandomEventModal(...args); }
     showAgeEventModal(...args) { this.eventControl.showAgeEventModal(...args); }
     showLoreModal(...args) { this.eventControl.showLoreModal(...args); }
@@ -30362,18 +29566,12 @@ export class UIManager {
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
-    // --- Sol Station Control ---
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
-    // --- Help Manager ---
-    showHelpModal(...args) { this.helpManager.showModal(...args); }
-    hideHelpModal(...args) { this.helpManager.hideModal(...args); }
+    showHelpModal(...args) { if (this.helpManager) this.helpManager.showModal(...args); }
+    hideHelpModal(...args) { if (this.helpManager) this.helpManager.hideModal(...args); }
     
-    // =========================================================================
-    // GENERAL UI UTILITIES (Generic Tooltips & Effects)
-    // =========================================================================
-
     triggerEffect(name, options) {
         this.effectsManager.trigger(name, options);
     }
@@ -30394,7 +29592,6 @@ export class UIManager {
         return null;
     }
 
-    // --- Generic Graph Tooltip Logic ---
     showGraph(anchorEl, gameState) {
         this.activeGraphAnchor = anchorEl;
         const tooltip = this.cache.graphTooltip;
@@ -30437,7 +29634,6 @@ export class UIManager {
         tooltip.style.top = `${topPos}px`;
     }
 
-    // --- Generic Info Tooltip Logic ---
     showGenericTooltip(anchorEl, content, preferredPosition = 'right') {
         this.activeGenericTooltipAnchor = anchorEl;
         this.activeGenericTooltipPosition = preferredPosition;
@@ -30481,10 +29677,6 @@ export class UIManager {
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }
-
-    // =========================================================================
-    // LEGACY / SAFEGUARD METHODS
-    // =========================================================================
 
     showShipTransactionConfirmation(shipId, transactionType, forfeitWarning, onConfirm) {
         const ship = DB.SHIPS[shipId];
