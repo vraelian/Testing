@@ -309,11 +309,7 @@ export class GameState {
             // --- END VIRTUAL WORKBENCH ---
 
             tutorials: {
-                activeBatchId: null,
-                activeStepId: null,
-                seenBatchIds: [],
-                skippedTutorialBatches: [],
-                navLock: null
+                seenHelpContexts: []
             },
             missions: {
                 // --- MISSION SYSTEM 2.0 (Phase 1) ---

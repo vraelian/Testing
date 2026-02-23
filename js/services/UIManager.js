@@ -1,7 +1,6 @@
 // js/services/UIManager.js
 import { DB } from '../data/database.js';
 import { formatCredits, calculateInventoryUsed, renderIndicatorPills, formatGameDateShort } from '../utils.js';
-// [[CHANGED]] Added LOCATION_IDS to imports
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, GAME_RULES, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { EffectsManager } from '../effects/EffectsManager.js';
 
@@ -21,14 +20,14 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 
-// --- [[NEW]] Domain Controllers ---
+// --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
-import { UITutorialManager } from './ui/UITutorialManager.js';
 import { UIMarketControl } from './ui/UIMarketControl.js';
 import { UIMissionControl } from './ui/UIMissionControl.js';
 import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
 import { UISolStationControl } from './ui/UISolStationControl.js';
+import { UIHelpManager } from './ui/UIHelpManager.js';
 
 export class UIManager {
     /**
@@ -55,12 +54,12 @@ export class UIManager {
 
         // --- Domain Controllers (The Switchboard) ---
         this.modalEngine = new UIModalEngine(this);
-        this.tutorialManager = new UITutorialManager(this);
         this.marketControl = new UIMarketControl(this);
         this.missionControl = new UIMissionControl(this);
         this.hangarControl = new UIHangarControl(this);
         this.eventControl = new UIEventControl(this);
         this.solStationControl = new UISolStationControl(this); 
+        this.helpManager = new UIHelpManager(this);
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -134,17 +133,6 @@ export class UIManager {
             eulaModal: document.getElementById('eula-modal'),
             eulaModalContent: document.getElementById('eula-modal-content'),
 
-            // Tutorial Elements
-            tutorialAnchorOverlay: document.getElementById('tutorial-anchor-overlay'), 
-            tutorialToastContainer: document.getElementById('tutorial-toast-container'),
-            tutorialToastText: document.getElementById('tutorial-toast-text'),
-            tutorialToastSkipBtn: document.getElementById('tutorial-toast-skip-btn'),
-            tutorialToastNextBtn: document.getElementById('tutorial-toast-next-btn'),
-            skipTutorialModal: document.getElementById('skip-tutorial-modal'),
-            skipTutorialConfirmBtn: document.getElementById('skip-tutorial-confirm-btn'),
-            skipTutorialCancelBtn: document.getElementById('skip-tutorial-cancel-btn'),
-            tutorialHighlightOverlay: document.getElementById('tutorial-highlight-overlay'),
-
             // Mission Elements
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
@@ -166,7 +154,7 @@ export class UIManager {
         const previousState = this.lastKnownState;
         this.lastKnownState = gameState;
 
-        if (gameState.introSequenceActive && !gameState.tutorials.activeBatchId) {
+        if (gameState.introSequenceActive) {
             return;
         }
 
@@ -177,6 +165,9 @@ export class UIManager {
         
         // Delegate: Mission Control (HUD)
         this.missionControl.renderStickyBar(gameState);
+
+        // Help Modal Context Evaluation
+        this._evaluateHelpContext(gameState, previousState);
     }
 
     _applyTheme(gameState) {
@@ -243,8 +234,7 @@ export class UIManager {
     }
 
     renderNavigation(gameState) {
-        const { player, currentLocationId, activeNav, activeScreen, lastActiveScreen, introSequenceActive, tutorials, subNavCollapsed } = gameState;
-        const { navLock } = tutorials;
+        const { player, currentLocationId, activeNav, activeScreen, lastActiveScreen, introSequenceActive, subNavCollapsed } = gameState;
         const location = DB.MARKETS.find(l => l.id === currentLocationId);
         const activeShipStatic = player.activeShipId ? DB.SHIPS[player.activeShipId] : null;
         const activeShipState = player.activeShipId ? player.shipStates[player.activeShipId] : null;
@@ -258,8 +248,6 @@ export class UIManager {
         const containerClass = isMax ? 'context-bar max-credits-active' : 'context-bar';
 
         const dateText = formatGameDateShort(gameState.day);
-
-        // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
         const dateClass = currentLocationId === LOCATION_IDS.SUN ? 'date-text sol-date-pulse' : 'date-text';
 
         const contextBarHtml = `
@@ -272,8 +260,7 @@ export class UIManager {
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
-            const isDisabledByTutorial = navLock && navLock.navId !== navId;
-            const isDisabled = introSequenceActive || isDisabledByTutorial;
+            const isDisabled = introSequenceActive;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
              return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
                           style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
@@ -312,9 +299,8 @@ export class UIManager {
             const screens = this.navStructure[navId].screens;
             const isActive = navId === activeNav;
             const subNavButtons = Object.keys(screens).map(screenId => {
-                 const isDisabledByTutorial = navLock && navLock.screenId !== screenId;
                  const isSubNavActive = screenId === activeScreen;
-                 const isDisabled = introSequenceActive || isDisabledByTutorial;
+                 const isDisabled = introSequenceActive;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  const action = ACTION_IDS.SET_SCREEN;
                  let subStyle = '';
@@ -342,7 +328,6 @@ export class UIManager {
             if (dateSpan) {
                 dateSpan.textContent = dateText;
                 
-                // --- [[FIXED]] Corrected ID check to use proper 'loc_sun' constant ---
                 if (currentLocationId === LOCATION_IDS.SUN) {
                     dateSpan.classList.add('sol-date-pulse');
                 } else {
@@ -365,8 +350,6 @@ export class UIManager {
     }
 
     renderActiveScreen(gameState, previousState) {
-        // [[FIX]] Reset Sol Station scroll memory if leaving Services screen
-        // This detects any state change where we were on Services but are now somewhere else.
         if (previousState && 
             previousState.activeScreen === SCREEN_IDS.SERVICES && 
             gameState.activeScreen !== SCREEN_IDS.SERVICES) {
@@ -395,26 +378,21 @@ export class UIManager {
                 if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
                 break;
             case SCREEN_IDS.MARKET:
-                // Delegate: Market Control
                 this.marketControl.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
                 this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
                 break;
             case SCREEN_IDS.HANGAR:
-                // Expanded Full Render condition for Boarding/Buy/Sell
-                // Added check for tutorial step change to trigger refresh for button unlock
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
                     previousState.player.activeShipId !== gameState.player.activeShipId || 
-                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length ||
-                    previousState.tutorials.activeStepId !== gameState.tutorials.activeStepId;
+                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length;
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
                 }
-                // Delegate: Hangar Control (Updates)
                 this.hangarControl.updateHangarScreen(gameState);
                 break;
             case SCREEN_IDS.MISSIONS:
@@ -427,14 +405,12 @@ export class UIManager {
                 if (!previousState || previousState.activeScreen !== SCREEN_IDS.INTEL) {
                      this.cache.intelScreen.innerHTML = renderIntelScreen();
                 }
-                // Delegate: Event Control (Lore Buttons)
                 this.eventControl._renderCodexButtons(this.cache.intelScreen);
 
                 if (this.intelMarketRenderer) {
                     const marketContentEl = this.cache.intelScreen.querySelector('#intel-market-content');
                     if (marketContentEl) this.intelMarketRenderer.render(marketContentEl, gameState);
                 }
-                // Delegate: Mission Control (Tabs)
                 this.missionControl.updateIntelTab(gameState.uiState.activeIntelTab);
                 break;
         }
@@ -464,6 +440,71 @@ export class UIManager {
     }
 
     // =========================================================================
+    // CONTEXTUAL HELP AUTO-TRIGGER SYSTEM
+    // =========================================================================
+
+    /**
+     * Determines the active Help Registry Context ID based on the current state configuration.
+     * @param {Object} gameState 
+     * @returns {string|null} The contextId matching the Help Registry
+     */
+    getCurrentHelpContextId(gameState) {
+        if (!gameState || !gameState.player) return null;
+        const { activeNav, activeScreen, uiState, solStation } = gameState;
+        const isSolStationUnlocked = solStation?.unlocked;
+
+        if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.MAP) return 'map';
+        if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.NAVIGATION) return 'navigation';
+        if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.CARGO) return 'cargo';
+        if (activeNav === NAV_IDS.STARPORT && activeScreen === SCREEN_IDS.MARKET) return 'market';
+        if (activeNav === NAV_IDS.STARPORT && activeScreen === SCREEN_IDS.SERVICES) {
+            if (uiState.servicesTab === 'tuning') return 'services-tuning';
+            return isSolStationUnlocked ? 'services-supply-sol' : 'services-supply';
+        }
+        if (activeNav === NAV_IDS.STARPORT && activeScreen === SCREEN_IDS.HANGAR) {
+            return uiState.hangarShipyardToggleState === 'shipyard' ? 'shipyard-shipyard' : 'shipyard-hangar';
+        }
+        if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.MISSIONS) {
+            return uiState.activeMissionTab === 'log' ? 'missions-log' : 'missions-terminal';
+        }
+        if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.FINANCE) return 'finance';
+        if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.INTEL) {
+            return uiState.activeIntelTab === 'market' ? 'intel-market' : 'intel-codex';
+        }
+        return null;
+    }
+
+    /**
+     * Evaluates whether the current screen requires the Help Modal to auto-instantiate or be dismissed.
+     * @param {Object} gameState 
+     * @param {Object} previousState 
+     */
+    _evaluateHelpContext(gameState, previousState) {
+        if (gameState.introSequenceActive) return;
+        if (!gameState.tutorials || !gameState.tutorials.seenHelpContexts) return;
+
+        const currentContextId = this.getCurrentHelpContextId(gameState);
+        const prevContextId = this.getCurrentHelpContextId(previousState);
+
+        // Dismissal Rule: If context changes, hide the modal.
+        if (currentContextId !== prevContextId && this.helpManager.isVisible) {
+            this.hideHelpModal();
+        }
+
+        // Auto-Instantiation Rule
+        if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
+            gameState.tutorials.seenHelpContexts.push(currentContextId);
+            
+            let startIndex = 0;
+            if (currentContextId === 'services-supply-sol') {
+                startIndex = 1; 
+            }
+
+            this.showHelpModal(currentContextId, startIndex);
+        }
+    }
+
+    // =========================================================================
     // SWITCHBOARD PROXIES (Delegation to Controllers)
     // =========================================================================
 
@@ -474,14 +515,6 @@ export class UIManager {
     getModalIdFromEvent(...args) { return this.modalEngine.getModalIdFromEvent(...args); }
     isClickInside(...args) { return this.modalEngine.isClickInside(...args); }
     showProcessingAnimation(...args) { this.modalEngine.showProcessingAnimation(...args); }
-
-    // --- Tutorial Manager ---
-    showTutorialToast(...args) { this.tutorialManager.showTutorialToast(...args); }
-    hideTutorialToast(...args) { this.tutorialManager.hideTutorialToast(...args); }
-    updateTutorialPopper(...args) { this.tutorialManager.updateTutorialPopper(...args); }
-    applyTutorialHighlight(...args) { this.tutorialManager.applyTutorialHighlight(...args); }
-    showSkipTutorialModal(...args) { this.tutorialManager.showSkipTutorialModal(...args); }
-    showTutorialLogModal(...args) { this.tutorialManager.showTutorialLogModal(...args); }
 
     // --- Market Control ---
     updateMarketScreen(...args) { this.marketControl.updateMarketScreen(...args); }
@@ -518,10 +551,14 @@ export class UIManager {
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
-    // --- Sol Station Control (NEW) ---
+    // --- Sol Station Control ---
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
+    // --- Help Manager ---
+    showHelpModal(...args) { this.helpManager.showModal(...args); }
+    hideHelpModal(...args) { this.helpManager.hideModal(...args); }
+    
     // =========================================================================
     // GENERAL UI UTILITIES (Generic Tooltips & Effects)
     // =========================================================================
@@ -555,7 +592,6 @@ export class UIManager {
         if (action === ACTION_IDS.SHOW_PRICE_GRAPH) {
             const goodId = anchorEl.dataset.goodId;
             const playerItem = gameState.player.inventories[gameState.player.activeShipId][goodId];
-            // Delegate SVG generation to MarketControl
             tooltip.innerHTML = this.marketControl.renderPriceGraph(goodId, gameState, playerItem);
         } else if (action === ACTION_IDS.SHOW_FINANCE_GRAPH) {
             tooltip.innerHTML = this.marketControl.renderFinanceGraph(gameState);

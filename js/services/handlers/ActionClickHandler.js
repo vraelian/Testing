@@ -15,13 +15,11 @@ export class ActionClickHandler {
      * @param {import('../GameState.js').GameState} gameState The central game state object.
      * @param {import('../SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('../UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('../TutorialService.js').TutorialService} tutorialService The tutorial management service.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService) {
+    constructor(gameState, simulationService, uiManager) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.tutorialService = tutorialService;
     }
 
     /**
@@ -34,7 +32,6 @@ export class ActionClickHandler {
         if (actionTarget.hasAttribute('disabled')) return;
 
         const { action, ...dataset } = actionTarget.dataset;
-        let actionData = null; 
 
         switch (action) {
             // --- Ship Actions (Hangar/Shipyard) ---
@@ -48,7 +45,6 @@ export class ActionClickHandler {
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.buyShip(shipId, { target });
-                    this.tutorialService.checkState({ type: 'ACTION', action: ACTION_IDS.BUY_SHIP });
                 });
                 break;
             }
@@ -262,14 +258,12 @@ export class ActionClickHandler {
                     this.gameState.subNavCollapsed = false;
                     this.simulationService.setScreen(dataset.navId, dataset.screenId);
                 }
-                actionData = { type: 'ACTION', action: ACTION_IDS.SET_SCREEN, navId: dataset.navId, screenId: dataset.screenId };
                 break;
             }
             case ACTION_IDS.TRAVEL: {
                 this.uiManager.hideModal('launch-modal');
                 const useFoldedDrive = dataset.useFoldedDrive === 'true';
                 this.simulationService.travelTo(dataset.locationId, useFoldedDrive);
-                actionData = { type: 'ACTION', action: ACTION_IDS.TRAVEL };
                 break;
             }
 
@@ -330,7 +324,6 @@ export class ActionClickHandler {
 
             case 'show-mission-modal':
                 this.uiManager.showMissionModal(dataset.missionId);
-                actionData = { type: 'ACTION', action: 'show-mission-modal' };
                 break;
             case 'show_cargo_detail':
                 this.uiManager.showCargoDetailModal(state, dataset.goodId);
@@ -350,6 +343,21 @@ export class ActionClickHandler {
                 this.uiManager.showEulaModal();
                 break;
 
+            case 'toggle-help': {
+                e.preventDefault();
+                const contextId = this.uiManager.getCurrentHelpContextId(state);
+                if (contextId) {
+                    this.uiManager.showHelpModal(contextId);
+                }
+                break;
+            }
+
+            case 'close-help': {
+                e.preventDefault();
+                this.uiManager.hideHelpModal();
+                break;
+            }
+
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
@@ -361,7 +369,6 @@ export class ActionClickHandler {
                         }
                     });
                 }
-                actionData = { type: 'ACTION', action: 'accept-mission', missionId: dataset.missionId };
                 break;
             case 'abandon-mission':
                 this.simulationService.missionService.abandonMission(dataset.missionId);
@@ -370,7 +377,6 @@ export class ActionClickHandler {
             case 'complete-mission':
                 this.simulationService.missionService.completeMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
-                actionData = { type: 'ACTION', action: 'complete-mission' };
                 break;
 
             case ACTION_IDS.PAY_DEBT:
@@ -393,9 +399,6 @@ export class ActionClickHandler {
                 }
                 break;
 
-            // =================================================================
-            // --- SOL STATION ---
-            // =================================================================
             case 'open-sol-dashboard':
                 this.uiManager.showSolStationDashboard(state);
                 break;
@@ -419,7 +422,6 @@ export class ActionClickHandler {
                 
                 if (!cache) return;
 
-                // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
                 let playerStock = 0;
                 for (const shipId of this.gameState.player.ownedShipIds) {
                     playerStock += (this.gameState.player.inventories[shipId]?.[commId]?.quantity || 0);
@@ -492,10 +494,6 @@ export class ActionClickHandler {
                 }
                 break;
             }
-        }
-
-        if (actionData) {
-            this.tutorialService.checkState(actionData);
         }
     }
 

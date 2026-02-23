@@ -22,20 +22,18 @@ export class EventManager {
      * @param {import('./GameState.js').GameState} gameState The central game state object.
      * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
      * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('./TutorialService.js').TutorialService} tutorialService The tutorial management service.
      * @param {import('./DebugService.js').DebugService} [debugService=null] The debugging service.
      * @param {import('./LoggingService.js').Logger} logger The logging utility.
      */
-    constructor(gameState, simulationService, uiManager, tutorialService, debugService = null, logger) {
+    constructor(gameState, simulationService, uiManager, debugService = null, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
-        this.tutorialService = tutorialService;
         this.debugService = debugService;
         this.logger = logger;
 
         // Instantiate all specialized handlers
-        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager, tutorialService);
+        this.actionClickHandler = new ActionClickHandler(gameState, simulationService, uiManager);
         this.marketEventHandler = new MarketEventHandler(gameState, simulationService, uiManager);
         this.holdEventHandler = new HoldEventHandler(this.simulationService.playerActionService, uiManager);
         this.carouselEventHandler = new CarouselEventHandler(gameState, simulationService);
@@ -75,14 +73,11 @@ export class EventManager {
             const actionTarget = e.target.closest('[data-action]');
             
             // 1. Only hide tooltips if we touch a "dead" area (background).
-            // This prevents the pill-tap from hiding the tooltip before the click logic can toggle it.
             if (!actionTarget) {
                 this.uiManager.hideGenericTooltip(); 
             }
 
             // 2. ISOLATION: If we are touching an actionable element, do NOT allow the carousel to start a drag.
-            // This mirrors the logic in CarouselEventHandler.handleDragStart but provides a cleaner exit.
-            // Specifically prevents 'jitter' on attribute pills and buttons.
             if (actionTarget || e.target.closest('.qty-stepper button')) {
                 return;
             }
@@ -122,7 +117,6 @@ export class EventManager {
             this.carouselEventHandler.handleDragMove(e);
         }, { passive: false });
 
-
         window.addEventListener('resize', () => this.uiManager.render(this.gameState.getState()));
 
         if (this.uiManager.cache.missionStickyBar) {
@@ -148,7 +142,6 @@ export class EventManager {
             e.preventDefault();
             return;
         }
-
 
         const state = this.gameState.getState();
         const actionTarget = e.target.closest('[data-action]');
@@ -184,7 +177,7 @@ export class EventManager {
         }
 
         // --- Fallback Handlers for non-action clicks ---
-        if (state.introSequenceActive && !state.tutorials.activeBatchId) {
+        if (state.introSequenceActive) {
             this.simulationService.handleIntroClick(e);
             return;
         }

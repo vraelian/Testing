@@ -25,10 +25,10 @@
     <link rel="stylesheet" href="./css/global.css">
     <link rel="stylesheet" href="./css/navigation.css">
     <link rel="stylesheet" href="./css/news-ticker.css"> 
+    <link rel="stylesheet" href="./css/help-system.css">
     <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/missions.css">
-    <link rel="stylesheet" href="./css/tutorial.css">
     <link rel="stylesheet" href="./css/debug.css">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
@@ -149,7 +149,6 @@
         <div id="top-bar-container">
             <header id="header-main" class="relative">
                 <div id="nav-bar"></div>
-    
                 <div id="news-ticker-bar"></div> <div id="sub-nav-bar"></div>
             </header>
             <div id="sticky-bar"></div>
@@ -158,14 +157,11 @@
         <div class="main-content-wrapper px-4 md:px-8 pb-4 md:pb-8">
             <div id="main-content">
                 <div id="map-screen" class="screen"></div>
-  
                 <div id="navigation-screen" class="screen"></div>
                 <div id="services-screen" class="screen"></div>
-               
                 <div id="market-screen" class="screen"></div>
                 <div id="cargo-screen" class="screen"></div>
                 <div id="hangar-screen" class="screen"></div>
-
                 <div id="missions-screen" class="screen"></div>
                 <div id="finance-screen" class="screen"></div>
                 <div id="intel-screen" class="screen"></div>
@@ -179,7 +175,6 @@
                         <h3 id="mission-modal-title" class="text-xl font-orbitron mb-1"></h3>
                         <p id="mission-modal-type" class="mission-type"></p>
                     </div>
-                    
                 </div>
                 <p id="mission-modal-description" class="my-4 text-gray-300"></p>
                 <div id="mission-modal-objectives"></div>
@@ -191,7 +186,6 @@
              <div class="modal-content">
                 <div id="map-modal-content-container">
                 </div>
-     
              </div>
         </div>
     </main>
@@ -301,27 +295,6 @@
                </div>
        </div>
     </div>
-    <div id="tutorial-anchor-overlay" class="fixed inset-0 z-30 pointer-events-none"></div>
-
-    <div id="tutorial-toast-container" class="hidden fixed z-40 p-4 rounded-lg shadow-2xl transition-all duration-300 pointer-events-auto">
-        <div id="tt-arrow" data-popper-arrow></div>
-        <div class="tt-controls-container">
-            <button id="tutorial-toast-skip-btn" class="absolute top-1 right-2 text-2xl font-bold opacity-70 hover:opacity-1.01">×</button>
-            <button id="tutorial-toast-next-btn" class="tt-next-arrow hidden">›</button>
-        </div>
-        <p id="tutorial-toast-text" class="text-lg pr-6"></p>
-        </div>
-    
-    <div id="skip-tutorial-modal" class="modal-backdrop hidden">
-         <div class="modal-content">
-            <h3 id="skip-tutorial-title" class="text-2xl font-orbitron mb-4">Skip Tutorial?</h3>
-            <p id="skip-tutorial-description" class="mb-6 text-lg">Are you sure you want to skip the rest of this tutorial? You can replay it later from the tutorial log.</p>
-            <div id="skip-tutorial-button-container" class="mt-6 flex justify-center gap-4">
-                 <button id="skip-tutorial-confirm-btn" class="btn bg-red-800/80">Yes, Skip</button>
-                 <button id="skip-tutorial-cancel-btn" class="btn">No, Cancel</button>
-            </div>
-        </div>
-    </div>
 
     <div id="ship-detail-modal" class="modal-backdrop hidden">
         <div id="ship-detail-content" class="modal-content">
@@ -341,7 +314,6 @@
     <div id="graph-tooltip"></div>
     <div id="generic-tooltip" class="generic-tooltip"></div>
     
-    <div id="tutorial-highlight-overlay" class="hidden"></div>
     <div id="orientation-overlay">Please rotate your device to portrait mode.</div>
 
     <div id="diagnostic-overlay" class="hidden">
@@ -359,13 +331,8 @@
             <p><strong>Day:</strong> <span id="diag-day"></span></p>
             <p><strong>Nav/Screen:</strong> <span id="diag-nav-screen"></span></p>
         </div>
-        <div class="diag-section">
-            <p><strong>Tutorial Batch:</strong> <span id="diag-tutorial-batch"></span></p>
-            <p><strong>Tutorial Step:</strong> <span id="diag-tutorial-step"></span></D></p>
-        </div>
     </div>
 
-    <script src="https://unpkg.com/@popperjs/core@2"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {

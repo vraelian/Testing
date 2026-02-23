@@ -17,7 +17,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
 | `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
-| `tutorials` | Object | **(See Section 6)** State regarding the tutorial overlay system. |
+| `tutorials` | Object | **(See Section 6)** State regarding the Contextual Help Modal system. |
 | `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
 | `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
@@ -135,15 +135,11 @@ New data structures for the "Local Data Broker" system.
 
 ## 6. Tutorial State (`state.tutorials`)
 
-Manages the progress and locking mechanisms for interactive tutorials.
+Manages the progress and locking mechanisms for the Contextual Help Modal System.
 
 | Property | Type | Description |
 | --- | --- | --- |
-| `activeBatchId` | String | ID of the currently running tutorial sequence (e.g., 'intro_basics'). |
-| `activeStepId` | String | ID of the current step within the batch. |
-| `seenBatchIds` | Array<String> | List of tutorial IDs the player has already completed. |
-| `skippedTutorialBatches` | Array<String> | List of tutorial IDs the player explicitly skipped. |
-| `navLock` | Object | `{ navId, screenId }` - If set, restricts navigation to this target. |
+| `seenHelpContexts` | Array<String> | List of Help Context IDs the player has already auto-triggered. |
 
 ---
 

@@ -3,7 +3,6 @@ import { GameState } from './services/GameState.js';
 import { SimulationService } from './services/SimulationService.js';
 import { UIManager } from './services/UIManager.js';
 import { EventManager } from './services/EventManager.js';
-import { TutorialService } from './services/TutorialService.js';
 import { MissionService } from './services/MissionService.js';
 import { DebugService } from './services/DebugService.js';
 import { Logger } from './services/LoggingService.js';
@@ -500,7 +499,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const newsTickerService = new NewsTickerService(gameState); 
         const missionService = new MissionService(gameState, uiManager, logger);
         const simulationService = new SimulationService(gameState, uiManager, logger, newsTickerService);
-        const tutorialService = new TutorialService(gameState, uiManager, simulationService, uiManager.navStructure, logger);
         let debugService = null;
 
         if (DEV_MODE) {
@@ -512,10 +510,9 @@ document.addEventListener('DOMContentLoaded', () => {
         uiManager.setNewsTickerService(newsTickerService); 
         uiManager.setMissionService(missionService);
         uiManager.setSimulationService(simulationService);
-        simulationService.setTutorialService(tutorialService);
         simulationService.setMissionService(missionService);
         missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, tutorialService, debugService, logger);
+        const eventManager = new EventManager(gameState, simulationService, uiManager, debugService, logger);
         uiManager.setEventManager(eventManager);
         
         gameState.subscribe(() => uiManager.render(gameState.getState()));
@@ -555,8 +552,6 @@ document.addEventListener('DOMContentLoaded', () => {
             uiManager.render(gameState.getState());
         }
         
-        tutorialService.checkState({ type: 'SCREEN_LOAD', screenId: gameState.activeScreen });
-
         AssetService.hydrateGameAssets(gameState.getState());
     }
 });

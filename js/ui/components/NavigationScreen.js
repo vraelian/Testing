@@ -4,20 +4,8 @@ import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA, tutorials } = gameState;
-    const { navLock } = tutorials;
+    const { player, currentLocationId, TRAVEL_DATA } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
-
-    const isNavLocked = navLock && navLock.screenId === SCREEN_IDS.NAVIGATION;
-    const enabledElementQuery = isNavLocked ? navLock.enabledElementQuery : null;
-
-    let enabledLocationId = null;
-    if (enabledElementQuery) {
-        const match = enabledElementQuery.match(/\[data-location-id='(.*?)'\]/);
-        if (match && match[1]) {
-            enabledLocationId = match[1];
-        }
-    }
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
     const activeShipId = player.activeShipId;
@@ -95,13 +83,10 @@ export function renderNavigationScreen(gameState) {
                         if (isFreeFuel) displayFuel = 0;
                     }
 
-                    const isDisabled = isNavLocked && enabledLocationId && location.id !== enabledLocationId;
-                    const disabledClass = isDisabled ? 'disabled-location' : '';
-                    
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${disabledClass}" 
-                                     data-action="show-launch-modal" data-location-id="${location.id}" ${isDisabled ? 'disabled' : ''} ${currentStyle}>
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}" 
+                                     data-action="show-launch-modal" data-location-id="${location.id}" ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 

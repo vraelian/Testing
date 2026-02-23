@@ -1,0 +1,153 @@
+/* css/help-system.css */
+
+.global-help-anchor {
+    position: absolute;
+    bottom: 1rem;
+    right: 1rem;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(45, 55, 72, 0.6);
+    color: #fff;
+    border: 1px solid rgba(122, 154, 192, 0.5);
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50; /* Above normal UI, below modals */
+    opacity: 0.5;
+    transition: opacity 0.2s ease, background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.global-help-anchor:hover, .global-help-anchor:active {
+    opacity: 1;
+    background-color: rgba(45, 55, 72, 0.9);
+}
+
+.help-modal-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.6);
+    z-index: 60; /* Above standard modals, below critical travel animations */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(2px);
+    -webkit-backdrop-filter: blur(2px);
+}
+
+.help-modal-container {
+    width: 90vw;
+    max-width: 400px;
+    aspect-ratio: 1 / 1;
+    background-color: #1a1a1a;
+    border: 1px solid #666;
+    filter: drop-shadow(0 0 10px rgba(100, 100, 100, 0.5));
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    box-sizing: border-box;
+}
+
+.help-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 1rem;
+    border-bottom: 1px solid #333;
+    background-color: #222;
+}
+
+.help-modal-title {
+    font-family: 'Orbitron', sans-serif;
+    color: #ccc;
+    font-size: 0.9rem;
+    letter-spacing: 1px;
+}
+
+.help-modal-close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.5rem;
+    opacity: 0.8;
+}
+
+.help-modal-close-btn:hover {
+    opacity: 1;
+}
+
+.help-modal-viewport {
+    flex-grow: 1;
+    width: 100%;
+    overflow: hidden; /* Enforce compartmentalization */
+    position: relative;
+}
+
+.help-slide-track {
+    display: flex;
+    height: 100%;
+    width: 100%;
+    transition: transform 0.3s ease-in-out;
+    will-change: transform;
+    touch-action: pan-x; /* Strict horizontal panning expectation on mobile */
+}
+
+.help-slide {
+    flex: 0 0 100%;
+    width: 100%;
+    height: 100%;
+    padding: 1.5rem;
+    box-sizing: border-box;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    overflow-y: hidden; /* No vertical scrolling allowed */
+    justify-content: center; /* Center content aesthetically */
+}
+
+.help-slide h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #60a5fa;
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.help-slide p {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 1rem;
+    line-height: 1.4;
+    color: #d0d8e8;
+    text-align: center;
+}
+
+.help-modal-footer {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0.75rem;
+    gap: 8px;
+    background-color: #222;
+    border-top: 1px solid #333;
+    min-height: 36px;
+}
+
+.help-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background-color: #444;
+    transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.help-dot.active {
+    background-color: #fff;
+    box-shadow: 0 0 5px #fff;
+}

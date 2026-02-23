@@ -38,7 +38,7 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * @private
  */
 function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
-    const { player, market, currentLocationId, tutorials, uiState } = gameState;
+    const { player, market, currentLocationId, uiState } = gameState;
     
     // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
     let totalQty = 0;
@@ -64,10 +64,6 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
     const marketStock = market.inventory[currentLocationId]?.[good.id];
 
     const hasLicense = !good.licenseId || player.unlockedLicenseIds.includes(good.licenseId);
-
-    const isPlasteelTutStep = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_2';
-    const isMarketLockedForMission = tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId === 'mission_2_3';
-    const isLockedForTutorial = (isPlasteelTutStep && good.id !== COMMODITY_IDS.PLASTEEL) || isMarketLockedForMission;
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = fleetItem ? fleetItem.quantity : '0';
@@ -108,7 +104,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
         const initialMode = marketTransactionState[good.id]?.mode || 'buy';
 
         const transactionControlsHtml = `
-             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}" ${isLockedForTutorial ? 'disabled' : ''}>
+             <div class="transaction-controls" data-mode="${initialMode}" data-good-id="${good.id}">
                 <div class="toggle-switch" data-action="toggle-trade-mode" data-good-id="${good.id}">
                     <div class="toggle-thumb"></div>
                     <div class="toggle-labels"><span class="label-buy">Buy</span><span class="label-sell">Sell</span></div>

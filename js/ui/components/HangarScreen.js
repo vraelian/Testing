@@ -117,7 +117,7 @@ function _getUpgradePillStyle(definition, tier, color) {
  * @returns {string} The HTML content for the Hangar screen.
  */
 export function renderHangarScreen(gameState, simulationService) {
-    const { uiState, player, tutorials } = gameState;
+    const { uiState, player } = gameState;
 
     // Determine the current mode (Hangar or Shipyard)
     const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
@@ -354,7 +354,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         <div class="col-span-2 flex flex-col justify-between">
             ${infoPanel}
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
@@ -373,7 +373,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             </div>
             
             <div class="action-buttons-container pt-2">
-                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode, gameState.tutorials)}
+                ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
@@ -477,7 +477,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
  * Renders the appropriate action buttons (Hangar or Shipyard).
  * @private
  */
-function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorials) {
+function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
     if (isHangarMode) {
         const isActive = player.activeShipId === shipId;
         const canSell = player.ownedShipIds.length > 1 && !isActive;
@@ -499,9 +499,7 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode, tutorial
         `;
     } else { // Shipyard
         const canAfford = player.credits >= shipStatic.price;
-        const activeStep = tutorials.activeBatchId ? DB.TUTORIAL_DATA[tutorials.activeBatchId]?.steps.find(s => s.stepId === tutorials.activeStepId) : null;
-        const isPurchaseLocked = tutorials.activeBatchId === 'intro_hangar' && !activeStep?.unlockPurchase;
-        const isDisabled = !canAfford || isPurchaseLocked;
+        const isDisabled = !canAfford;
         
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
