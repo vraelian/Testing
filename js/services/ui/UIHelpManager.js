@@ -1,11 +1,6 @@
 // js/services/ui/UIHelpManager.js
 import { HELP_REGISTRY } from '../../data/helpRegistry.js';
 
-/**
- * @class UIHelpManager
- * @description Domain Controller responsible for the Contextual Help Modal System.
- * Handles DOM injection, micro-pagination, and rendering of contextual tutorial slides.
- */
 export class UIHelpManager {
     /**
      * @param {import('../UIManager.js').UIManager} uiManager 
@@ -22,20 +17,13 @@ export class UIHelpManager {
         this._bindEvents();
     }
 
-    /**
-     * Injects the Help System's structural DOM elements directly into the game-container.
-     * Uses type="button" to satisfy defensive interaction protocols.
-     * @private
-     */
     _injectDOM() {
         const gameContainer = document.getElementById('game-container');
         if (!gameContainer) return;
 
-        // Inject the persistent global anchor opposite the debug start button
         const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
         gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
 
-        // Inject the fixed-aspect-ratio modal skeleton
         const modalHTML = `
             <div id="help-modal-overlay" class="help-modal-overlay hidden">
                 <div class="help-modal-container">
@@ -53,10 +41,6 @@ export class UIHelpManager {
         gameContainer.insertAdjacentHTML('beforeend', modalHTML);
     }
 
-    /**
-     * Caches references to the newly injected DOM elements.
-     * @private
-     */
     _cacheDOM() {
         this.anchorBtn = document.getElementById('global-help-anchor');
         this.overlay = document.getElementById('help-modal-overlay');
@@ -65,12 +49,7 @@ export class UIHelpManager {
         this.footer = document.getElementById('help-modal-footer');
     }
 
-    /**
-     * Binds swipe gesture logic and local UI interactions.
-     * @private
-     */
     _bindEvents() {
-        // Backdrop dismissal 
         if (this.overlay) {
             this.overlay.addEventListener('pointerdown', (e) => {
                 if (e.target === this.overlay) {
@@ -84,13 +63,12 @@ export class UIHelpManager {
         let isDragging = false;
 
         if (this.slideTrack) {
-            // Touch events for mobile (raw touch events bypass browser pan-x cancellation)
             this.slideTrack.addEventListener('touchstart', (e) => {
-                if (e.touches.length > 1) return; // Ignore multi-touch
+                if (e.touches.length > 1) return;
                 isDragging = true;
                 startX = e.touches[0].clientX;
                 currentX = e.touches[0].clientX;
-                this.slideTrack.style.transition = 'none'; // Remove snap transition during drag
+                this.slideTrack.style.transition = 'none';
             }, { passive: true });
 
             this.slideTrack.addEventListener('touchmove', (e) => {
@@ -98,7 +76,6 @@ export class UIHelpManager {
                 currentX = e.touches[0].clientX;
                 const deltaX = currentX - startX;
                 
-                // Allow vertical bleed to pass through, but handle horizontal visual drag
                 const containerWidth = this.slideTrack.clientWidth || 1;
                 const deltaPercent = (deltaX / containerWidth) * 100;
                 const baseTranslate = -(this.currentPageIndex * 100);
@@ -112,21 +89,20 @@ export class UIHelpManager {
                 this.slideTrack.style.transition = 'transform 0.3s ease-in-out';
                 
                 const deltaX = currentX - startX;
-                const threshold = 40; // Pixels required to commit to a slide change
+                const threshold = 40; 
                 
                 if (deltaX < -threshold && this.currentPageIndex < this.pages.length - 1) {
                     this.nextPage();
                 } else if (deltaX > threshold && this.currentPageIndex > 0) {
                     this.prevPage();
                 } else {
-                    this._applyTransform(); // Snap back if threshold not met
+                    this._applyTransform();
                 }
             };
 
             this.slideTrack.addEventListener('touchend', endTouch);
             this.slideTrack.addEventListener('touchcancel', endTouch);
 
-            // Mouse events for desktop simulation
             this.slideTrack.addEventListener('mousedown', (e) => {
                 isDragging = true;
                 startX = e.clientX;
@@ -148,13 +124,8 @@ export class UIHelpManager {
         }
     }
 
-    /**
-     * Renders and displays the Help Modal specifically for a given context.
-     * @param {string} contextId - The registry key mapping to the contextual slides.
-     * @param {number} [startingPageIndex=0] - Which slide to auto-paginate to upon opening.
-     */
     showModal(contextId, startingPageIndex = 0) {
-        if (!HELP_REGISTRY[contextId]) return;
+        if (!HELP_REGISTRY || !HELP_REGISTRY[contextId]) return;
 
         this.currentContext = contextId;
         this.pages = HELP_REGISTRY[contextId];
@@ -164,14 +135,10 @@ export class UIHelpManager {
         this._updatePagination();
         this._applyTransform();
 
-        // Ensure anchor toggle icon disappears while modal is active
         if (this.anchorBtn) this.anchorBtn.style.display = 'none';
 
         if (this.overlay) {
-            // Clear any lingering exit animations
             this.overlay.classList.remove('help-anim-out');
-            
-            // Trigger materialize entrance animation
             this.overlay.classList.remove('hidden');
             this.overlay.classList.add('help-anim-in');
         }
@@ -179,46 +146,32 @@ export class UIHelpManager {
         this.isVisible = true;
     }
 
-    /**
-     * Triggers the dematerialize exit animation and asynchronously hides the Help Modal.
-     */
     hideModal() {
-        if (!this.isVisible) return; // Prevent double-execution
+        if (!this.isVisible) return; 
         this.isVisible = false;
         
         if (this.overlay) {
-            // Trigger dematerialize exit animation
             this.overlay.classList.remove('help-anim-in');
             this.overlay.classList.add('help-anim-out');
             
-            // Delay strict DOM hiding until CSS animation completes
             setTimeout(() => {
-                // Safeguard against the player triggering showModal() during the fade-out
                 if (!this.isVisible) {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('help-anim-out');
                     if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
                 }
-            }, 400); // 0.4 seconds matching @keyframes
+            }, 400); 
         } else {
             if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
         }
     }
 
-    /**
-     * Populates the slide track container with the HTML payload.
-     * @private
-     */
     _renderSlides() {
         if (this.slideTrack) {
             this.slideTrack.innerHTML = this.pages.join('');
         }
     }
 
-    /**
-     * Rebuilds the pagination indicator dots based on page count.
-     * @private
-     */
     _updatePagination() {
         if (!this.footer) return;
         if (this.pages.length <= 1) {
@@ -233,10 +186,6 @@ export class UIHelpManager {
         this.footer.innerHTML = dots;
     }
 
-    /**
-     * Translates the slide track via CSS to show the active slide index.
-     * @private
-     */
     _applyTransform() {
         if (this.slideTrack) {
             const translateX = -(this.currentPageIndex * 100);
@@ -244,9 +193,6 @@ export class UIHelpManager {
         }
     }
 
-    /**
-     * Advances to the next slide if one exists.
-     */
     nextPage() {
         if (this.currentPageIndex < this.pages.length - 1) {
             this.currentPageIndex++;
@@ -255,9 +201,6 @@ export class UIHelpManager {
         }
     }
 
-    /**
-     * Retreats to the previous slide if one exists.
-     */
     prevPage() {
         if (this.currentPageIndex > 0) {
             this.currentPageIndex--;

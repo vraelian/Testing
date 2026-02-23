@@ -1,8 +1,4 @@
 // js/services/DebugService.js
-/**
- * @fileoverview This file contains the DebugService class, which is responsible for creating and managing
- * the lil-gui developer panel for real-time testing and manipulation of the game state.
- */
 import { DB } from '../data/database.js';
 import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
@@ -22,9 +18,9 @@ const DEBUG_MISSIONS = {
         host: 'DEV',
         description: 'Instantly completes to test multiple reward types (Credits, Items, Licenses).',
         triggers: [],
-        objectives: [], // Auto-complete
+        objectives: [], 
         completion: {
-            locationId: null, // Complete anywhere
+            locationId: null, 
             title: 'Debug Success',
             text: 'You have received a bounty of debug rewards.',
             buttonText: 'Claim Loot'
@@ -93,12 +89,6 @@ const DEBUG_MISSIONS = {
 };
 
 export class DebugService {
-    /**
-     * @param {import('./GameState.js').GameState} gameState The central game state object.
-     * @param {import('./SimulationService.js').SimulationService} simulationService The core game logic engine.
-     * @param {import('./UIManager.js').UIManager} uiManager The UI rendering service.
-     * @param {import('./LoggingService.js').Logger} logger The logging utility.
-     */
     constructor(gameState, simulationService, uiManager, logger) {
         this.gameState = gameState;
         this.simulationService = simulationService;
@@ -137,7 +127,7 @@ export class DebugService {
         if (this.gui) return;
         
         Object.assign(DB.MISSIONS, DEBUG_MISSIONS);
-        this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
 
         this._cacheDiagElements();
         this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
@@ -187,7 +177,7 @@ ${logHistory}
                 this.uiManager.createFloatingText('Bug Report Copied to Clipboard!', window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
             })
             .catch(err => {
-                this.logger.error('DebugService', 'Failed to copy bug report.', err);
+                if(this.logger && this.logger.error) this.logger.error('DebugService', 'Failed to copy bug report.', err);
             });
     }
 
@@ -200,8 +190,15 @@ ${logHistory}
         if (!this.gameState.tutorials) {
             this.gameState.tutorials = { seenHelpContexts: [] };
         }
-        this.gameState.tutorials.seenHelpContexts = Object.keys(HELP_REGISTRY);
-        this.logger.info.system('DebugService', 'All help modal contexts injected into seen state.');
+        if (HELP_REGISTRY) {
+            this.gameState.tutorials.seenHelpContexts = Object.keys(HELP_REGISTRY);
+        } else {
+            this.gameState.tutorials.seenHelpContexts = [];
+        }
+        
+        if (this.logger && this.logger.info && this.logger.info.system) {
+            this.logger.info.system('DebugService', 'All help modal contexts injected into seen state.');
+        }
     }
 
     _unlockEndgame() {
@@ -220,7 +217,7 @@ ${logHistory}
     }
 
     godMode() {
-        this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
         
         this._markAllTutorialsSeen();
@@ -244,7 +241,7 @@ ${logHistory}
     }
 
     simpleStart() {
-        this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
         
         this._markAllTutorialsSeen();
@@ -264,7 +261,7 @@ ${logHistory}
     }
 
     skipToHangarTutorial() {
-        this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
         this.gameState.introSequenceActive = true;
 
         this.gameState.player.credits = 25000;
@@ -283,7 +280,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = Math.max(0, shipState.health - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} hull from ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Deducted ${amount} hull from ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -293,7 +290,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = ship.maxHealth;
-            this.logger.warn('DebugService', `Restored hull for ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Restored hull for ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -303,7 +300,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.health = 0;
-            this.logger.warn('DebugService', `Destroyed ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Destroyed ${ship.name}.`);
             this.simulationService.travelService._handleShipDestruction(ship.id);
         }
     }
@@ -313,7 +310,7 @@ ${logHistory}
         if (ship) {
             const shipState = this.gameState.player.shipStates[ship.id];
             shipState.fuel = Math.max(0, shipState.fuel - amount);
-            this.logger.warn('DebugService', `Deducted ${amount} fuel from ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Deducted ${amount} fuel from ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -323,7 +320,7 @@ ${logHistory}
         if (ship) {
              const shipState = this.gameState.player.shipStates[ship.id];
             shipState.fuel = ship.maxFuel;
-            this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Restored fuel for ${ship.name}.`);
             this.gameState.setState({});
         }
     }
@@ -335,7 +332,7 @@ ${logHistory}
                 inventory[goodId].quantity = 0;
                 inventory[goodId].avgCost = 0;
             }
-            this.logger.warn('DebugService', 'All cargo removed from active ship.');
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'All cargo removed from active ship.');
             this.gameState.setState({});
         }
     }
@@ -352,7 +349,7 @@ ${logHistory}
             }
             inventory[itemId].quantity += qty;
             
-            this.logger.warn('DebugService', `Added ${qty}x ${itemId} to ${ship.name}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Added ${qty}x ${itemId} to ${ship.name}.`);
             this.uiManager.createFloatingText(`+${qty} ${itemId}`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
             this.gameState.setState({});
         }
@@ -366,10 +363,10 @@ ${logHistory}
                 day: day,
                 shipsForSale: allShipIds
             };
-            this.logger.warn('DebugService', `SHIPYARD FILLED: All ships added to ${currentLocationId}.`);
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `SHIPYARD FILLED: All ships added to ${currentLocationId}.`);
             this.gameState.setState({});
         } else {
-            this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
+            if(this.logger && this.logger.error) this.logger.error('DebugService', `Cannot fill shipyard: No stock object for ${currentLocationId}.`);
         }
     }
     
@@ -383,10 +380,10 @@ ${logHistory}
         
         if (shipState.upgrades.length < 3) {
             shipState.upgrades.push(upgradeId);
-            this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
+            if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
             this.gameState.setState({}); 
         } else {
-            this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
         }
     }
 
@@ -405,7 +402,7 @@ ${logHistory}
             shipState.upgrades.push(randomId);
         }
 
-        this.logger.info.system('DebugService', `Applied 3 random upgrades to ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Applied 3 random upgrades to ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -415,7 +412,7 @@ ${logHistory}
         const shipState = this.gameState.player.shipStates[activeShip.id];
         
         shipState.upgrades = [];
-        this.logger.info.system('DebugService', `Removed all upgrades from ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Removed all upgrades from ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -503,7 +500,7 @@ ${logHistory}
             }},
             setAge: { name: 'Set Age', type: 'button', handler: () => {
                 this.gameState.player.playerAge = this.debugState.targetAge;
-                this.logger.warn('DebugService', `Player age manually set to ${this.debugState.targetAge}.`);
+                if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Player age manually set to ${this.debugState.targetAge}.`);
                 
                 if (this.simulationService.timeService) {
                     this.simulationService.timeService._handleBirthday(this.debugState.targetAge);
@@ -605,7 +602,7 @@ ${logHistory}
             cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
                 this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
                 this.gameState.setState({}); 
-                this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
+                if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
             
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
@@ -722,9 +719,6 @@ ${logHistory}
         if(this.diagElements.navScreen) this.diagElements.navScreen.textContent = `${state.activeNav} / ${state.activeScreen}`;
     }
 
-    /**
-     * @private
-     */
     buildGui() {
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
@@ -834,7 +828,7 @@ ${logHistory}
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
-        automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => this.logger.setLevel(v));
+        automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => { if(this.logger && this.logger.setLevel) this.logger.setLevel(v) });
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
         
         automationFolder.add(this.debugState, 'botStrategy', ['MIXED', 'HONEST_TRADER', 'MANIPULATOR', 'DEPLETE_ONLY', 'PROSPECTOR']).name('Bot Strategy');

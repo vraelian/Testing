@@ -105,7 +105,6 @@ export class UIManager {
             subNavBar: document.getElementById('sub-nav-bar'),
             stickyBar: document.getElementById('sticky-bar'),
             
-            // Screen Containers
             mapScreen: document.getElementById(`${SCREEN_IDS.MAP}-screen`),
             navigationScreen: document.getElementById(`${SCREEN_IDS.NAVIGATION}-screen`),
             servicesScreen: document.getElementById(`${SCREEN_IDS.SERVICES}-screen`),
@@ -116,11 +115,9 @@ export class UIManager {
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
             intelScreen: document.getElementById(`${SCREEN_IDS.INTEL}-screen`),
             
-            // Tooltips
             graphTooltip: document.getElementById('graph-tooltip'),
             genericTooltip: document.getElementById('generic-tooltip'),
             
-            // Modals
             processingModal: document.getElementById('processing-modal'),
             shipDetailModal: document.getElementById('ship-detail-modal'),
             launchModal: document.getElementById('launch-modal'),
@@ -133,16 +130,11 @@ export class UIManager {
             eulaModal: document.getElementById('eula-modal'),
             eulaModalContent: document.getElementById('eula-modal-content'),
 
-            // Mission Elements
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
             stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
         };
     }
-
-    // =========================================================================
-    // MASTER RENDER LOOP
-    // =========================================================================
 
     render(gameState) {
         if (!gameState || !gameState.player) return;
@@ -163,10 +155,8 @@ export class UIManager {
         this.renderNavigation(gameState);
         this.renderActiveScreen(gameState, previousState);
         
-        // Delegate: Mission Control (HUD)
         this.missionControl.renderStickyBar(gameState);
 
-        // Help Modal Context Evaluation
         this._evaluateHelpContext(gameState, previousState);
     }
 
@@ -315,7 +305,6 @@ export class UIManager {
         const existingContextBar = this.cache.navBar.querySelector('.context-bar');
         const existingNavWrapper = this.cache.navBar.querySelector('.nav-wrapper');
 
-        // Surgical DOM Update to prevent CSS animation restart
         if (existingContextBar && existingNavWrapper) {
             existingContextBar.className = containerClass;
             existingContextBar.style.background = theme.gradient;
@@ -439,18 +428,16 @@ export class UIManager {
         }
     }
 
-    // =========================================================================
-    // CONTEXTUAL HELP AUTO-TRIGGER SYSTEM
-    // =========================================================================
-
     /**
      * Determines the active Help Registry Context ID based on the current state configuration.
+     * Includes hyper-safe fallbacks for missing state subsets during rapid initialization.
      * @param {Object} gameState 
      * @returns {string|null} The contextId matching the Help Registry
      */
     getCurrentHelpContextId(gameState) {
         if (!gameState || !gameState.player) return null;
-        const { activeNav, activeScreen, uiState, solStation } = gameState;
+        const { activeNav, activeScreen, solStation } = gameState;
+        const uiState = gameState.uiState || {}; 
         const isSolStationUnlocked = solStation?.unlocked;
 
         if (activeNav === NAV_IDS.SHIP && activeScreen === SCREEN_IDS.MAP) return 'map';
@@ -476,27 +463,35 @@ export class UIManager {
 
     /**
      * Evaluates whether the current screen requires the Help Modal to auto-instantiate or be dismissed.
+     * Heavily guarded to prevent crashes during the boot sequence or when loading legacy saves.
      * @param {Object} gameState 
      * @param {Object} previousState 
      */
     _evaluateHelpContext(gameState, previousState) {
         if (gameState.introSequenceActive) return;
-        if (!gameState.tutorials || !gameState.tutorials.seenHelpContexts) return;
+
+        // Force initialization of tutorials tracking to prevent undefined read errors
+        if (!gameState.tutorials) gameState.tutorials = { seenHelpContexts: [] };
+        if (!gameState.tutorials.seenHelpContexts) gameState.tutorials.seenHelpContexts = [];
 
         const currentContextId = this.getCurrentHelpContextId(gameState);
         const prevContextId = this.getCurrentHelpContextId(previousState);
 
         // Dismissal Rule: If context changes, hide the modal.
-        if (currentContextId !== prevContextId && this.helpManager.isVisible) {
+        if (currentContextId !== prevContextId && this.helpManager && this.helpManager.isVisible) {
             this.hideHelpModal();
         }
 
         // Auto-Instantiation Rule
         if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
-            // Push to the live GameState to ensure the flag persists across render loops and save files
+            // Safely push to the live GameState to ensure the flag persists across render loops and save files
             if (this.simulationService && this.simulationService.gameState) {
-                this.simulationService.gameState.tutorials.seenHelpContexts.push(currentContextId);
+                const liveState = this.simulationService.gameState;
+                if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [] };
+                if (!liveState.tutorials.seenHelpContexts) liveState.tutorials.seenHelpContexts = [];
+                liveState.tutorials.seenHelpContexts.push(currentContextId);
             }
+            
             // Also push to the local deep-copy instance so the current render evaluation respects it
             gameState.tutorials.seenHelpContexts.push(currentContextId);
             
@@ -505,15 +500,12 @@ export class UIManager {
                 startIndex = 1; 
             }
 
-            this.showHelpModal(currentContextId, startIndex);
+            if (this.helpManager) {
+                this.showHelpModal(currentContextId, startIndex);
+            }
         }
     }
 
-    // =========================================================================
-    // SWITCHBOARD PROXIES (Delegation to Controllers)
-    // =========================================================================
-
-    // --- Modal Engine ---
     queueModal(...args) { this.modalEngine.queueModal(...args); }
     hideModal(...args) { this.modalEngine.hideModal(...args); }
     processModalQueue(...args) { this.modalEngine.processModalQueue(...args); }
@@ -521,14 +513,12 @@ export class UIManager {
     isClickInside(...args) { return this.modalEngine.isClickInside(...args); }
     showProcessingAnimation(...args) { this.modalEngine.showProcessingAnimation(...args); }
 
-    // --- Market Control ---
     updateMarketScreen(...args) { this.marketControl.updateMarketScreen(...args); }
     updateMarketCardPrice(...args) { this.marketControl.updateMarketCardPrice(...args); }
     updateMarketCardDisplay(...args) { this.marketControl.updateMarketCardDisplay(...args); }
     resetMarketTransactionState(...args) { this.marketControl.resetMarketTransactionState(...args); }
     _calculateSaleDetails(...args) { return this.marketControl._calculateSaleDetails(...args); }
 
-    // --- Mission Control ---
     renderStickyBar(...args) { this.missionControl.renderStickyBar(...args); }
     flashObjectiveProgress(...args) { this.missionControl.flashObjectiveProgress(...args); }
     showMissionModal(...args) { this.missionControl.showMissionModal(...args); }
@@ -538,13 +528,11 @@ export class UIManager {
     handleBuyIntel(...args) { this.missionControl.handleBuyIntel(...args); }
     handleShowIntelDetails(...args) { this.missionControl.handleShowIntelDetails(...args); }
 
-    // --- Hangar Control ---
     updateHangarScreen(...args) { this.hangarControl.updateHangarScreen(...args); }
     showShipDetailModal(...args) { this.hangarControl.showShipDetailModal(...args); }
     showUpgradeInstallationModal(...args) { this.hangarControl.showUpgradeInstallationModal(...args); }
     runShipTransactionAnimation(...args) { this.hangarControl.runShipTransactionAnimation(...args); }
 
-    // --- Event Control ---
     showRandomEventModal(...args) { this.eventControl.showRandomEventModal(...args); }
     showAgeEventModal(...args) { this.eventControl.showAgeEventModal(...args); }
     showLoreModal(...args) { this.eventControl.showLoreModal(...args); }
@@ -556,18 +544,12 @@ export class UIManager {
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
-    // --- Sol Station Control ---
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
-    // --- Help Manager ---
-    showHelpModal(...args) { this.helpManager.showModal(...args); }
-    hideHelpModal(...args) { this.helpManager.hideModal(...args); }
+    showHelpModal(...args) { if (this.helpManager) this.helpManager.showModal(...args); }
+    hideHelpModal(...args) { if (this.helpManager) this.helpManager.hideModal(...args); }
     
-    // =========================================================================
-    // GENERAL UI UTILITIES (Generic Tooltips & Effects)
-    // =========================================================================
-
     triggerEffect(name, options) {
         this.effectsManager.trigger(name, options);
     }
@@ -588,7 +570,6 @@ export class UIManager {
         return null;
     }
 
-    // --- Generic Graph Tooltip Logic ---
     showGraph(anchorEl, gameState) {
         this.activeGraphAnchor = anchorEl;
         const tooltip = this.cache.graphTooltip;
@@ -631,7 +612,6 @@ export class UIManager {
         tooltip.style.top = `${topPos}px`;
     }
 
-    // --- Generic Info Tooltip Logic ---
     showGenericTooltip(anchorEl, content, preferredPosition = 'right') {
         this.activeGenericTooltipAnchor = anchorEl;
         this.activeGenericTooltipPosition = preferredPosition;
@@ -675,10 +655,6 @@ export class UIManager {
         tooltip.style.left = `${leftPos}px`;
         tooltip.style.top = `${topPos}px`;
     }
-
-    // =========================================================================
-    // LEGACY / SAFEGUARD METHODS
-    // =========================================================================
 
     showShipTransactionConfirmation(shipId, transactionType, forfeitWarning, onConfirm) {
         const ship = DB.SHIPS[shipId];

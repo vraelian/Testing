@@ -15,7 +15,7 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 50; /* Above normal UI, below modals */
+    z-index: 50;
     opacity: 0.5;
     transition: opacity 0.2s ease, background-color 0.2s ease;
     cursor: pointer;
@@ -30,7 +30,7 @@
     position: absolute;
     inset: 0;
     background-color: rgba(0, 0, 0, 0.6);
-    z-index: 60; /* Above standard modals, below critical travel animations */
+    z-index: 60;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -41,11 +41,10 @@
 .help-modal-container {
     width: 90vw;
     max-width: 400px;
-    /* Reduced vertical height by 15% */
-    aspect-ratio: 1 / 0.85; 
+    /* 20/17 is mathematically identical to 1/0.85 but perfectly parses in older iOS targets */
+    aspect-ratio: 20 / 17; 
     background-color: #1a1a1a;
     border: 1px solid #666;
-    /* Increased glow radius by 50% */
     filter: drop-shadow(0 0 15px rgba(100, 100, 100, 0.5)); 
     border-radius: 12px;
     display: flex;
@@ -74,9 +73,7 @@
     background: none;
     border: none;
     color: #fff;
-    /* Doubled from 1.5rem to 3rem */
     font-size: 3rem; 
-    /* Squashed line-height to prevent vertical stretching in the header */
     line-height: 0.5; 
     cursor: pointer;
     padding: 0 0.5rem;
@@ -90,7 +87,7 @@
 .help-modal-viewport {
     flex-grow: 1;
     width: 100%;
-    overflow: hidden; /* Enforce compartmentalization */
+    overflow: hidden;
     position: relative;
 }
 
@@ -100,7 +97,7 @@
     width: 100%;
     transition: transform 0.3s ease-in-out;
     will-change: transform;
-    touch-action: pan-x; /* Strict horizontal panning expectation on mobile */
+    touch-action: pan-x;
 }
 
 .help-slide {
@@ -112,8 +109,8 @@
     color: #fff;
     display: flex;
     flex-direction: column;
-    overflow-y: hidden; /* No vertical scrolling allowed */
-    justify-content: center; /* Center content aesthetically */
+    overflow-y: hidden;
+    justify-content: center;
 }
 
 .help-slide h3 {
@@ -156,8 +153,6 @@
     box-shadow: 0 0 5px #fff;
 }
 
-/* --- [[START]] HELP MODAL DEMATERIALIZE ANIMATIONS --- */
-
 @keyframes help-overlay-fade-in {
     0% { opacity: 0; }
     100% { opacity: 1; }
@@ -190,10 +185,9 @@
 
 .help-anim-out {
     animation: help-overlay-fade-out 0.4s ease-in forwards;
-    pointer-events: none; /* Block interactions immediately during exit */
+    pointer-events: none;
 }
 
 .help-anim-out .help-modal-container {
     animation: help-dematerialize-card 0.4s ease-in forwards;
 }
-/* --- [[END]] HELP MODAL DEMATERIALIZE ANIMATIONS --- */
