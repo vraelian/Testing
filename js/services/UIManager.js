@@ -493,6 +493,11 @@ export class UIManager {
 
         // Auto-Instantiation Rule
         if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
+            // Push to the live GameState to ensure the flag persists across render loops and save files
+            if (this.simulationService && this.simulationService.gameState) {
+                this.simulationService.gameState.tutorials.seenHelpContexts.push(currentContextId);
+            }
+            // Also push to the local deep-copy instance so the current render evaluation respects it
             gameState.tutorials.seenHelpContexts.push(currentContextId);
             
             let startIndex = 0;

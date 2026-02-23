@@ -40,7 +40,7 @@ export class UIHelpManager {
             <div id="help-modal-overlay" class="help-modal-overlay hidden">
                 <div class="help-modal-container">
                     <div class="help-modal-header">
-                        <span class="help-modal-title">DATABANK</span>
+                        <span class="help-modal-title">TUTORIAL</span>
                         <button type="button" id="help-modal-close-btn" class="help-modal-close-btn" data-action="close-help">-</button>
                     </div>
                     <div class="help-modal-viewport">
@@ -164,20 +164,45 @@ export class UIHelpManager {
         this._updatePagination();
         this._applyTransform();
 
-        this.overlay.classList.remove('hidden');
-        this.isVisible = true;
-        
         // Ensure anchor toggle icon disappears while modal is active
         if (this.anchorBtn) this.anchorBtn.style.display = 'none';
+
+        if (this.overlay) {
+            // Clear any lingering exit animations
+            this.overlay.classList.remove('help-anim-out');
+            
+            // Trigger materialize entrance animation
+            this.overlay.classList.remove('hidden');
+            this.overlay.classList.add('help-anim-in');
+        }
+
+        this.isVisible = true;
     }
 
     /**
-     * Hides the Help Modal and restores the global anchor.
+     * Triggers the dematerialize exit animation and asynchronously hides the Help Modal.
      */
     hideModal() {
-        if (this.overlay) this.overlay.classList.add('hidden');
+        if (!this.isVisible) return; // Prevent double-execution
         this.isVisible = false;
-        if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+        
+        if (this.overlay) {
+            // Trigger dematerialize exit animation
+            this.overlay.classList.remove('help-anim-in');
+            this.overlay.classList.add('help-anim-out');
+            
+            // Delay strict DOM hiding until CSS animation completes
+            setTimeout(() => {
+                // Safeguard against the player triggering showModal() during the fade-out
+                if (!this.isVisible) {
+                    this.overlay.classList.add('hidden');
+                    this.overlay.classList.remove('help-anim-out');
+                    if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+                }
+            }, 400); // 0.4 seconds matching @keyframes
+        } else {
+            if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+        }
     }
 
     /**

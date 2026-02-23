@@ -11,6 +11,7 @@ import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { AssetService } from './AssetService.js'; 
 import { OFFICERS } from '../data/officers.js';
+import { HELP_REGISTRY } from '../data/helpRegistry.js';
 
 // --- EPHEMERAL DEBUG MISSIONS ---
 const DEBUG_MISSIONS = {
@@ -190,6 +191,19 @@ ${logHistory}
             });
     }
 
+    /**
+     * Automatically populates the player's seen tutorials array with all available help contexts 
+     * to prevent modal auto-triggering during debug sessions.
+     * @private
+     */
+    _markAllTutorialsSeen() {
+        if (!this.gameState.tutorials) {
+            this.gameState.tutorials = { seenHelpContexts: [] };
+        }
+        this.gameState.tutorials.seenHelpContexts = Object.keys(HELP_REGISTRY);
+        this.logger.info.system('DebugService', 'All help modal contexts injected into seen state.');
+    }
+
     _unlockEndgame() {
         const { player, solStation } = this.gameState;
         
@@ -208,6 +222,8 @@ ${logHistory}
     godMode() {
         this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
+        
+        this._markAllTutorialsSeen();
 
         this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
 
@@ -230,6 +246,8 @@ ${logHistory}
     simpleStart() {
         this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
+        
+        this._markAllTutorialsSeen();
 
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
