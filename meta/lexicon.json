@@ -1,3 +1,4 @@
+
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -42,7 +43,10 @@
     "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
     "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states.",
     "Dual-Write_Native_Bridge": "The persistence strategy that concurrently saves data to the browser's IndexedDB and the iOS native layer via WebKit message handlers, preventing save loss from cache eviction.",
-    "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data."
+    "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data.",
+    "Contextual_Help_Modal": "A strictly containerized, fixed-aspect-ratio modal that sits above the UI, providing context-sensitive assistance based on the player's current screen and sub-tab. Replaces legacy Popper.js tutorials.",
+    "Micro-Pagination": "Navigation method within Help Modals utilizing horizontal swipe gestures (translating CSS X-axis) rather than vertical scrolling to prevent mobile gesture conflicts.",
+    "Global_Context_Anchor": "A persistent '?' icon overlaid on the viewport that, when tapped, queries the GameState to instantiate the relevant Help Modal."
   },
   "service_summaries": {
     "SolStationService": {
@@ -95,7 +99,6 @@
         "TravelService",
         "IntroService",
         "PlayerActionService",
-        "TutorialService",
         "MissionService",
         "NewsTickerService",
         "IntelService",
@@ -303,13 +306,13 @@
       ]
     },
     "UIManager": {
-      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`). Responsible for the main render loop and proxying logic to delegates.",
+      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`). Responsible for the main render loop and proxying logic to delegates.",
       "dependencies": [
         "Logger",
         "EffectsManager",
         "TravelAnimationService",
         "UIModalEngine",
-        "UITutorialManager",
+        "UIHelpManager",
         "UIMarketControl",
         "UIMissionControl",
         "UIHangarControl",
@@ -327,7 +330,7 @@
       "mutates_state": []
     },
     "UIModalEngine": {
-      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and DOM manipulation for showing/hiding modals.",
+      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic.",
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "queueModal": "Adds a modal to the queue.",
@@ -335,12 +338,14 @@
         "hideModal": "Removes the active modal."
       }
     },
-    "UITutorialManager": {
-      "description": "Domain Controller responsible for the interactive tutorial system. Encapsulates Popper.js logic for positioning toasts and managing highlight overlays.",
-      "dependencies": ["UIManager (Facade)", "Popper.js"],
+    "UIHelpManager": {
+      "description": "Domain Controller responsible for the Contextual Help Modal system. Manages dynamic DOM injection, fixed-aspect ratio modal presentation, and horizontal micro-pagination swipe logic.",
+      "dependencies": ["UIManager (Facade)"],
       "key_functions": {
-        "showTutorialToast": "Renders a tutorial step.",
-        "applyTutorialHighlight": "Draws SVG highlights over target elements."
+        "showModal": "Builds slide DOM elements and translates to the active slide.",
+        "hideModal": "Dismisses the modal back to the hidden state.",
+        "nextPage": "Advances the slide track via X-axis calculation.",
+        "prevPage": "Reverses the slide track via X-axis calculation."
       }
     },
     "UIMarketControl": {
@@ -444,7 +449,6 @@
         "GameState",
         "SimulationService",
         "UIManager",
-        "TutorialService",
         "DebugService",
         "Logger"
       ],
@@ -459,8 +463,7 @@
       "dependencies": [
         "GameState",
         "SimulationService",
-        "UIManager",
-        "TutorialService"
+        "UIManager"
       ],
       "key_functions": {
         "handle": "Processes a click event on an element with a `data-action` attribute, now an async function to await promise-based actions like animated ship purchases."
@@ -541,29 +544,6 @@
         "missions.completedMissionIds",
         "missions.missionProgress",
         "missions.activeMissionObjectivesMet"
-      ]
-    },
-    "TutorialService": {
-      "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "SimulationService",
-        "Logger",
-        "js/data/tutorials.js"
-      ],
-      "key_functions": {
-        "checkState": "Checks game state/action against triggers/completion conditions.",
-        "triggerBatch": "Starts a specific tutorial batch.",
-        "advanceStep": "Moves to the next step in the current batch.",
-        "skipActiveTutorial": "Skips the current tutorial batch."
-      },
-      "mutates_state": [
-        "tutorials.activeBatchId",
-        "tutorials.activeStepId",
-        "tutorials.seenBatchIds",
-        "tutorials.skippedTutorialBatches",
-        "tutorials.navLock"
       ]
     },
     "DebugService": {
@@ -674,16 +654,12 @@
       "path": "./js/services/EventManager.js",
       "role": "EVENT_HANDLER"
     },
-    "F016": {
-      "path": "./js/services/TutorialService.js",
-      "role": "LOGIC_SERVICE"
-    },
     "F017": {
       "path": "./js/services/UIManager.js",
       "role": "UI_RENDERER",
       "dependencies": [
         "js/services/ui/UIModalEngine.js",
-        "js/services/ui/UITutorialManager.js",
+        "js/services/ui/UIHelpManager.js",
         "js/services/ui/UIMarketControl.js",
         "js/services/ui/UIMissionControl.js",
         "js/services/ui/UIHangarControl.js",
@@ -843,11 +819,6 @@
       "path": "./js/data/missions.js",
       "role": "DATA_DEFINITION"
     },
-    "F052": {
-      "path": "./js/data/tutorials.js",
-      "role": "DATA_DEFINITION",
-      "description": "Facade that aggregates modular tutorial files."
-    },
     "F053": {
       "path": "./js/services/NewsTickerService.js",
       "role": "UI_SERVICE"
@@ -938,11 +909,6 @@
       "role": "UI_CONTROLLER",
       "description": "Domain Controller: Manages modal lifecycle and queue."
     },
-    "F072": {
-      "path": "./js/services/ui/UITutorialManager.js",
-      "role": "UI_CONTROLLER",
-      "description": "Domain Controller: Manages tutorial toasts and overlays."
-    },
     "F073": {
       "path": "./js/services/ui/UIMarketControl.js",
       "role": "UI_CONTROLLER",
@@ -1023,21 +989,6 @@
       "role": "DATA_DEFINITION",
       "description": "Modular event file: Unique narrative encounters."
     },
-    "F089": {
-      "path": "./js/data/tutorials/tuts_intro.js",
-      "role": "DATA_DEFINITION",
-      "description": "Modular tutorial file: Introduction sequence."
-    },
-    "F090": {
-      "path": "./js/data/tutorials/tuts_economy.js",
-      "role": "DATA_DEFINITION",
-      "description": "Modular tutorial file: Economy & Market mechanics."
-    },
-    "F091": {
-      "path": "./js/data/tutorials/tuts_progression.js",
-      "role": "DATA_DEFINITION",
-      "description": "Modular tutorial file: Ship upgrades & Progression."
-    },
     "F092": {
       "path": "./js/data/lore/loreRegistry.js",
       "role": "DATA_DEFINITION",
@@ -1083,6 +1034,21 @@
       "path": "./js/services/SaveStorageService.js",
       "role": "PERSISTENCE_SERVICE",
       "description": "Service for managing game saves using IndexedDB with an iOS Native Bridge fallback."
+    },
+    "F102": {
+      "path": "./js/services/ui/UIHelpManager.js",
+      "role": "UI_CONTROLLER",
+      "description": "Domain Controller: Manages Contextual Help Modals and micro-pagination."
+    },
+    "F103": {
+      "path": "./js/data/helpRegistry.js",
+      "role": "DATA_DEFINITION",
+      "description": "Facade mapping Context IDs to arrays of HTML slide strings."
+    },
+    "F104": {
+      "path": "./css/help-system.css",
+      "role": "STYLESHEET",
+      "description": "CSS compartmentalization for the fixed-aspect-ratio help modal system."
     }
   }
 }

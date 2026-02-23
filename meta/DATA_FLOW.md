@@ -242,31 +242,30 @@ graph TD
         J --> K((Mutate GameState));
     end
 
-2.10 Tutorial Trigger & Interaction Flow
-The interaction loop between Logic (TutorialService) and View (UITutorialManager).
+2.10 Contextual Help Modal Flow
+The interaction loop for context-sensitive player assistance, replacing the legacy tutorial triggers.
 
 graph TD
     subgraph Triggering
-        A[User Action / Screen Load] --> B[TutorialService.checkState];
-        B --> C{Matches Trigger?};
-        C -- Yes --> D[Set activeBatchId / activeStepId];
-        D --> E[Mutate GameState (NavLock)];
+        A[User Action / Screen Load] --> B[UIManager._evaluateHelpContext];
+        B --> C{Current Context ID in seenHelpContexts?};
+        C -- No --> D[Silently Push ID to State];
+        C -- Yes --> E[Wait for Manual ? Click];
     end
 
     subgraph Visualization
-        E --> F[UIManager.render];
-        F --> G[UITutorialManager.showTutorialToast];
-        G --> H[Calculate Popper.js Position];
-        G --> I[Render SVG Highlights];
-        H & I --> J[DOM Update];
+        D & E --> F[UIHelpManager.showModal];
+        F --> G[Fetch HTML from helpRegistry.js];
+        G --> H[Inject Fixed-Aspect Modal DOM];
+        H --> I[Highlight active pagination dot];
     end
 
-    subgraph Progression
-        J --> K[User Clicks 'Next' or 'Action'];
-        K --> L[TutorialService.advanceStep];
-        L --> M{Next Step Exists?};
-        M -- Yes --> D;
-        M -- No --> N[End Batch & Clear Lock];
+    subgraph Micro-Pagination
+        I --> J[User swipes left/right];
+        J --> K[Calculate touch delta];
+        K --> L{Exceeds threshold?};
+        L -- Yes --> M[Update CSS transform: translateX];
+        L -- No --> N[Snap back to current slide];
     end
 
 2.11 Mission System Architecture

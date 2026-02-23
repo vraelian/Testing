@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.20] - 2026-2-22
+-  removed tutorial system
+-  added helper-modal system
+-  modified intro sequence
+-  reinforced some files to mitigate crashing
+-  updated meta files
+
 # [36.16] - 2026-2-20
 -  added save/load system
 -  added import/export save file system

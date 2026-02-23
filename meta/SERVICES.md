@@ -82,22 +82,6 @@ Key Behavior:
 
 Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator.
 
-TutorialService (F016)
-
-Responsibility: Manages the state and flow of interactive tutorials (Logic Layer).
-
-Key Behavior:
-
-Checks game state/actions against triggers defined in tutorials.js.
-
-Manages activeBatchId and activeStepId.
-
-Enforces navLock in the GameState to restrict player movement during critical lessons.
-
-Delegates visual rendering to UIManager -> UITutorialManager.
-
-Dependencies: GameState, UIManager, SimulationService, js/data/tutorials.js.
-
 SolStationService (F098)
 
 Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
@@ -157,13 +141,13 @@ Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Dom
 
 Key Behavior: Proxies requests from external services (like ActionClickHandler) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
 
-Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
+Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
 
 Controllers (Delegates):
 
 UIModalEngine: Manages the modal queue, priority processing, and dismissal logic.
 
-UITutorialManager: Manages the "Presentation Layer" of tutorials. Handles Popper.js instantiation, positioning of toast elements relative to targets, and rendering of SVG highlight overlays.
+UIHelpManager: Manages the Contextual Help Modal system, DOM injection of the fixed-aspect-ratio modal, horizontal micro-pagination slide tracks, and mobile swipe threshold logic.
 
 UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
 
@@ -273,7 +257,7 @@ events_story.js: Unique narrative encounters.
 
 missions.js: Defines static data for all player missions.
 
-tutorials.js: Defines static data for all tutorial batches and steps.
+helpRegistry.js: Defines static HTML string payloads organized by context IDs for the Help Modal slides.
 
 flavorAds.js: Defines static, location-specific flavor text ads for the news ticker.
 

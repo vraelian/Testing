@@ -427,7 +427,7 @@ Decision: Refactored the UIManager into a thin Facade ("Switchboard") that deleg
 
 UIModalEngine: Lifecycle management for the global modal queue.
 
-UITutorialManager: Orchestration of tutorial steps, toasts, and visual highlights.
+UIHelpManager: Orchestration of the contextual help modals and micro-pagination slides. (Replaced UITutorialManager).
 
 UIMarketControl: Market screen rendering, state retention, and graph generation.
 
@@ -512,8 +512,8 @@ Pro: Keeps individual file sizes manageable.
 
 Pro: simplifies access for the UI layer.
 
-ADR-024: Tutorial Architecture (Logic-View Separation)
-Status: Accepted (2026-01-26)
+ADR-024: Tutorial Architecture (Logic-View Separation) [DEPRECATED]
+Status: Deprecated (2026-02-22) - Replaced by ADR-033: Contextual Help Modal System (V1)
 
 Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
 
@@ -666,3 +666,20 @@ Consequences:
 * **Pro:** Seamless background healing means the player never knows their web data was actually wiped.
 * **Pro:** Maintains full compatibility with standard desktop web browsers (they gracefully ignore the iOS bridge).
 * **Con:** Introduces slight overhead in serializing large state objects and requires native Swift code maintenance (`ViewController.swift`).
+
+ADR-033: Contextual Help Modal System (V1)
+Status: Accepted (2026-02-22)
+
+Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers to guide players through virtualized UI lists. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design, leading to clipped text, gesture conflicts, and UI blocking.
+
+Decision: Abandon "DOM-hunting" tooltip tutorials entirely in favor of a Contextual Help Modal System.
+* Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio ($1/1$ or $4/3$).
+* Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling to eliminate mobile X/Y touch-gesture conflicts.
+* State-Driven Context: Relies purely on the abstract GameState (current Nav, Screen, and Sub-tabs) to resolve context and auto-instantiate the relevant help modal.
+* Centralized Data: Help slide content is stored in a static registry (`helpRegistry.js`).
+
+Consequences:
+* Pro: Guarantees 100% stability across all devices (iPhone SE to Desktop).
+* Pro: Eliminates complex DOM-tracking bugs and performance overhead.
+* Pro: Affords spatial luxury for multimedia explanations (SVGs, CSS diagrams) over dense text.
+* Con: Less direct visual pointing; relies on the player to map the modal's explanations to the UI elements.

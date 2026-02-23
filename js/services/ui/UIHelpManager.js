@@ -12,6 +12,7 @@ export class UIHelpManager {
             this.currentContext = null;
             this.currentPageIndex = 0;
             this.pages = [];
+            this.onCloseCallback = null;
 
             // Interaction state properties
             this.isDragging = false;
@@ -151,12 +152,13 @@ export class UIHelpManager {
         this._endTouch();
     }
 
-    showModal(contextId, startingPageIndex = 0) {
+    showModal(contextId, startingPageIndex = 0, onCloseCallback = null) {
         if (!HELP_REGISTRY || !HELP_REGISTRY[contextId]) return;
 
         this.currentContext = contextId;
         this.pages = HELP_REGISTRY[contextId];
         this.currentPageIndex = Math.min(startingPageIndex, this.pages.length - 1);
+        this.onCloseCallback = onCloseCallback;
 
         this._renderSlides();
         this._updatePagination();
@@ -186,10 +188,21 @@ export class UIHelpManager {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('help-anim-out');
                     if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+
+                    if (typeof this.onCloseCallback === 'function') {
+                        const callback = this.onCloseCallback;
+                        this.onCloseCallback = null;
+                        callback();
+                    }
                 }
             }, 400); 
         } else {
             if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+            if (typeof this.onCloseCallback === 'function') {
+                const callback = this.onCloseCallback;
+                this.onCloseCallback = null;
+                callback();
+            }
         }
     }
 

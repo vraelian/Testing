@@ -210,9 +210,9 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
-                // Graceful delay to let the floating text play before routing to the game
+                // Route through the meta help modals instead of immediately ending
                 setTimeout(() => {
-                    this._end();
+                    this._showMetaHelpModals();
                 }, 2000);
             };
 
@@ -244,6 +244,24 @@ export class IntroService {
     }
 
     /**
+     * Executes the sequential meta help modals before allowing the UI to render.
+     * @private
+     */
+    _showMetaHelpModals() {
+        // Unhide the game container so the injected Help Modals become visible.
+        // Because introSequenceActive is still true, the game UI will not render yet, keeping the background blank.
+        this.uiManager.showGameContainer();
+
+        this.uiManager.showHelpModal('meta-tutorial', 0, () => {
+            setTimeout(() => {
+                this.uiManager.showHelpModal('meta-autosave', 0, () => {
+                    this._end();
+                });
+            }, 1000);
+        });
+    }
+
+    /**
      * Finalizes the intro sequence and transitions control to the core render loop.
      * @private
      */
@@ -257,7 +275,7 @@ export class IntroService {
         // Default the Hangar screen to "Shipyard" so they can buy their ship
         this.gameState.uiState.hangarShipyardToggleState = 'shipyard';
 
-        // Reveal the main layout
+        // Reveal the main layout (safe to call again to ensure layout calcs)
         this.uiManager.showGameContainer();
         
         // Set context to the Hangar/Shipyard screen

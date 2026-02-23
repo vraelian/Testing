@@ -48,5 +48,11 @@ export const HELP_REGISTRY = {
     ],
     'intel-market': [
         `<div class="help-slide"><h3>Data Broker</h3><p>Purchase temporary, guaranteed market advantages at specific locations. You may only have one active deal at a time.</p></div>`
+    ],
+    'meta-tutorial': [
+        `<div class="help-slide"><h3>Tutorials</h3><p>The game's mechanics are explained via tutorial windows like this one. You can dismiss them at any time using the '-' icon in the top right corner. In-game, you can recall them using the '?' icon.</p></div>`
+    ],
+    'meta-autosave': [
+        `<div class="help-slide"><h3>Auto-Save</h3><p>Orbital Trading automatically saves your progress after every flight to a new location. You can also manually manage your saves in the Options menu.</p></div>`
     ]
 };

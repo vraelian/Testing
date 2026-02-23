@@ -135,7 +135,7 @@ New data structures for the "Local Data Broker" system.
 
 ## 6. Tutorial State (`state.tutorials`)
 
-Manages the progress and locking mechanisms for the Contextual Help Modal System.
+Manages the auto-instantiation tracking for the Contextual Help Modal System.
 
 | Property | Type | Description |
 | --- | --- | --- |

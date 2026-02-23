@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.16</title>
+    <title>Orbital Trading 36.20</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.16</p>
+            <p>Version 36.20</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -16233,6 +16233,12 @@ export const HELP_REGISTRY = {
     ],
     'intel-market': [
         `<div class="help-slide"><h3>Data Broker</h3><p>Purchase temporary, guaranteed market advantages at specific locations. You may only have one active deal at a time.</p></div>`
+    ],
+    'meta-tutorial': [
+        `<div class="help-slide"><h3>Tutorials</h3><p>The game's mechanics are explained via tutorial windows like this one. You can dismiss them at any time using the '-' icon in the top right corner. In-game, you can recall them using the '?' icon.</p></div>`
+    ],
+    'meta-autosave': [
+        `<div class="help-slide"><h3>Auto-Save</h3><p>Orbital Trading automatically saves your progress after every flight to a new location. You can also manually manage your saves in the Options menu.</p></div>`
     ]
 };
 --- END OF FILE: ./js/data/helpRegistry.js ---
@@ -17723,6 +17729,7 @@ export class UIHelpManager {
             this.currentContext = null;
             this.currentPageIndex = 0;
             this.pages = [];
+            this.onCloseCallback = null;
 
             // Interaction state properties
             this.isDragging = false;
@@ -17862,12 +17869,13 @@ export class UIHelpManager {
         this._endTouch();
     }
 
-    showModal(contextId, startingPageIndex = 0) {
+    showModal(contextId, startingPageIndex = 0, onCloseCallback = null) {
         if (!HELP_REGISTRY || !HELP_REGISTRY[contextId]) return;
 
         this.currentContext = contextId;
         this.pages = HELP_REGISTRY[contextId];
         this.currentPageIndex = Math.min(startingPageIndex, this.pages.length - 1);
+        this.onCloseCallback = onCloseCallback;
 
         this._renderSlides();
         this._updatePagination();
@@ -17897,10 +17905,21 @@ export class UIHelpManager {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('help-anim-out');
                     if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+
+                    if (typeof this.onCloseCallback === 'function') {
+                        const callback = this.onCloseCallback;
+                        this.onCloseCallback = null;
+                        callback();
+                    }
                 }
             }, 400); 
         } else {
             if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+            if (typeof this.onCloseCallback === 'function') {
+                const callback = this.onCloseCallback;
+                this.onCloseCallback = null;
+                callback();
+            }
         }
     }
 
@@ -25688,9 +25707,9 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
-                // Graceful delay to let the floating text play before routing to the game
+                // Route through the meta help modals instead of immediately ending
                 setTimeout(() => {
-                    this._end();
+                    this._showMetaHelpModals();
                 }, 2000);
             };
 
@@ -25722,6 +25741,24 @@ export class IntroService {
     }
 
     /**
+     * Executes the sequential meta help modals before allowing the UI to render.
+     * @private
+     */
+    _showMetaHelpModals() {
+        // Unhide the game container so the injected Help Modals become visible.
+        // Because introSequenceActive is still true, the game UI will not render yet, keeping the background blank.
+        this.uiManager.showGameContainer();
+
+        this.uiManager.showHelpModal('meta-tutorial', 0, () => {
+            setTimeout(() => {
+                this.uiManager.showHelpModal('meta-autosave', 0, () => {
+                    this._end();
+                });
+            }, 1000);
+        });
+    }
+
+    /**
      * Finalizes the intro sequence and transitions control to the core render loop.
      * @private
      */
@@ -25735,7 +25772,7 @@ export class IntroService {
         // Default the Hangar screen to "Shipyard" so they can buy their ship
         this.gameState.uiState.hangarShipyardToggleState = 'shipyard';
 
-        // Reveal the main layout
+        // Reveal the main layout (safe to call again to ensure layout calcs)
         this.uiManager.showGameContainer();
         
         // Set context to the Hangar/Shipyard screen
@@ -34727,6 +34764,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.20] - 2026-2-22
+-  removed tutorial system
+-  added helper-modal system
+-  modified intro sequence
+-  reinforced some files to mitigate crashing
+-  updated meta files
+
 # [36.16] - 2026-2-20
 -  added save/load system
 -  added import/export save file system
@@ -35824,7 +35868,50 @@ Penalty = LiquidCredits * HazardSeverity%
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
-Orbital Trading: UI Component Library & Style Guide1. Design System Core1.1 TypographyThe game uses a dual-font system to establish its "Industrial Sci-Fi" aesthetic.Primary Font: Oxanium (Variable Weight)Usage: All UI text, data readouts, body copy, and buttons.Weights: Light (300) for body, Medium (500) for labels, Bold (700) for headers.Accent Font: Zorque (Regular)Usage: Logos, Major Section Headers, "Hero" numbers (e.g., Credits balance).Characteristics: Blocky, retro-futuristic.1.2 Color Palette (CSS Variables)Do not hardcode hex values. Use these semantic variables defined in global.css.VariableRole--bg-colorApp background (Deep Space Black).--panel-bgComponent background (Semi-transparent dark grey).--color-text-primaryMain text (White/Off-White).--color-text-secondaryLabels and dim text (Light Grey).--color-accentPrimary action color (Cyan/Blue).--color-successPositive values/Profits (Green).--color-dangerNegative values/Costs/Alerts (Red).--color-warningCautions (Yellow/Orange).--color-borderStandard border color for cards/panels.1.3 Z-Index RegistryStrict layering ensures modals and overlays behave correctly.LayerZ-IndexComponentsBase0Background, Canvas Starfield.Content10Main Screen Containers, Carousel.Chrome50Top Bar, Bottom Nav, Sticky HUD.Modal Mask900The generic modal-overlay background.Modal1000Active Modal Dialogs.Toast2000Tutorial Popups, Notifications.Cursor9999Custom hardware cursors (if applicable).2. Component Blueprints2.1 Standard Card (.card)Used for Commodities, Ships, and Missions.HTML<div class="card" data-id="{id}">
+Orbital Trading: UI Component Library & Style Guide
+
+1. Design System Core
+
+1.1 Typography
+The game uses a dual-font system to establish its "Industrial Sci-Fi" aesthetic.
+Primary Font: Oxanium (Variable Weight)
+Usage: All UI text, data readouts, body copy, and buttons.
+Weights: Light (300) for body, Medium (500) for labels, Bold (700) for headers.
+Accent Font: Zorque (Regular)
+Usage: Logos, Major Section Headers, "Hero" numbers (e.g., Credits balance).
+Characteristics: Blocky, retro-futuristic.
+
+1.2 Color Palette (CSS Variables)
+Do not hardcode hex values. Use these semantic variables defined in global.css.
+VariableRole
+--bg-colorApp background (Deep Space Black).
+--panel-bgComponent background (Semi-transparent dark grey).
+--color-text-primaryMain text (White/Off-White).
+--color-text-secondaryLabels and dim text (Light Grey).
+--color-accentPrimary action color (Cyan/Blue).
+--color-successPositive values/Profits (Green).
+--color-dangerNegative values/Costs/Alerts (Red).
+--color-warningCautions (Yellow/Orange).
+--color-borderStandard border color for cards/panels.
+
+1.3 Z-Index Registry
+Strict layering ensures modals and overlays behave correctly.
+LayerZ-IndexComponents
+Base0Background, Canvas Starfield.
+Content10Main Screen Containers, Carousel.
+Chrome50Top Bar, Bottom Nav, Sticky HUD.
+Help Anchor800Global Contextual Help '?' Button.
+Modal Mask900The generic modal-overlay background.
+Modal1000Active Modal Dialogs, Help Modals.
+Toast2000Notifications, Floating Battle Text.
+Cursor9999Custom hardware cursors (if applicable).
+
+2. Component Blueprints
+
+2.1 Standard Card (.card)
+Used for Commodities, Ships, and Missions.
+HTML
+<div class="card" data-id="{id}">
     <div class="card-header">
         <span class="card-title">{Title}</span>
         <span class="badge">{Status}</span>
@@ -35841,13 +35928,22 @@ Orbital Trading: UI Component Library & Style Guide1. Design System Core1.1 Typo
         <button class="btn btn-secondary" data-action="...">Action</button>
     </div>
 </div>
+
 2.2 Action Button (.btn)
 Interactive elements must always use the `.btn` class and **MUST** include `type="button"` to prevent page reloads.
-2.3 Attribute Pill (.attribute-pill)Used in Hangar/Shipyard to show stats. Now explicitly a <button> for better mobile touch handling (ADR-011).HTML<button class="attribute-pill" data-type="{type}" data-tooltip="{text}">
+
+2.3 Attribute Pill (.attribute-pill)
+Used in Hangar/Shipyard to show stats. Now explicitly a <button> for better mobile touch handling (ADR-011).
+HTML
+<button class="attribute-pill" type="button" data-type="{type}" data-tooltip="{text}">
     <span class="label">{Label}</span>
     <span class="value">{Value}</span>
 </button>
-2.4 Modal Dialog (.modal)Standard wrapper for popup content.HTML<div id="modal-overlay" class="hidden">
+
+2.4 Modal Dialog (.modal)
+Standard wrapper for popup content.
+HTML
+<div id="modal-overlay" class="hidden">
     <div class="modal">
         <div class="modal-header">
             <h2>{Title}</h2>
@@ -35855,26 +35951,64 @@ Interactive elements must always use the `.btn` class and **MUST** include `type
         <div class="modal-content">
             </div>
         <div class="modal-footer">
-            <button class="btn btn-secondary" data-action="close-modal">Close</button>
+            <button class="btn btn-secondary" type="button" data-action="close-modal">Close</button>
         </div>
     </div>
 </div>
+
 2.5 Tab Navigation (.mission-tabs-nav)
 Used in Missions/Data screens to toggle sub-views.
-HTML<div class="mission-tabs-nav">
-    <button class="mission-tab-btn active" data-action="switch-tab" data-target="A">TAB A</button>
-    <button class="mission-tab-btn" data-action="switch-tab" data-target="B">TAB B</button>
+HTML
+<div class="mission-tabs-nav">
+    <button class="mission-tab-btn active" type="button" data-action="switch-tab" data-target="A">TAB A</button>
+    <button class="mission-tab-btn" type="button" data-action="switch-tab" data-target="B">TAB B</button>
 </div>
+
 2.6 Objective Progress Bar (.objective-row-filled)
 Used in Mission Log cards to show continuous progress.
-HTML<div class="objective-row-filled">
+HTML
+<div class="objective-row-filled">
     <div class="objective-fill-bar" style="width: 50%"></div>
     <div class="objective-text">
         <span>DELIVER ICE</span>
         <span>5/10</span>
     </div>
 </div>
-3. CSS Utilities.hidden: display: none !important. Used for toggling visibility..text-center: text-align: center..text-highlight: Applies the accent color to text..flex-row: display: flex; flex-direction: row;..flex-col: display: flex; flex-direction: column;..spacer: flex-grow: 1. Pushes flex items apart..scroll-y: overflow-y: auto. Enables vertical scrolling within a container..silent-exit: Forces a modal to close instantly without an exit animation. Used for cinematic transitions.
+
+2.7 Contextual Help Modal (.help-modal-container)
+Strictly containerized, fixed-aspect-ratio modal utilizing horizontal micro-pagination. Requires `touch-action: pan-x` on the track to restrict mobile gesture bleed.
+HTML
+<div class="help-modal-container" style="aspect-ratio: 1/1;">
+    <div class="help-header">
+        <button class="btn btn-close" type="button" data-action="close-help">-</button>
+    </div>
+    <div class="help-slide-track" style="transform: translateX(0%); touch-action: pan-x;">
+        <div class="help-slide">
+            <h3>Mechanics</h3>
+            <p>Slide 1 context content.</p>
+        </div>
+        <div class="help-slide">
+            <h3>Strategy</h3>
+            <p>Slide 2 context content.</p>
+        </div>
+    </div>
+    <div class="help-footer">
+        <div class="pagination-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+        </div>
+    </div>
+</div>
+
+3. CSS Utilities
+.hidden: display: none !important. Used for toggling visibility.
+.text-center: text-align: center.
+.text-highlight: Applies the accent color to text.
+.flex-row: display: flex; flex-direction: row;
+.flex-col: display: flex; flex-direction: column;
+.spacer: flex-grow: 1. Pushes flex items apart.
+.scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
+.silent-exit: Forces a modal to close instantly without an exit animation. Used for cinematic transitions.
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---
@@ -36184,6 +36318,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
+
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -36228,7 +36363,10 @@ Unique economic rules that apply only to specific stations, encouraging speciali
     "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
     "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states.",
     "Dual-Write_Native_Bridge": "The persistence strategy that concurrently saves data to the browser's IndexedDB and the iOS native layer via WebKit message handlers, preventing save loss from cache eviction.",
-    "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data."
+    "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data.",
+    "Contextual_Help_Modal": "A strictly containerized, fixed-aspect-ratio modal that sits above the UI, providing context-sensitive assistance based on the player's current screen and sub-tab. Replaces legacy Popper.js tutorials.",
+    "Micro-Pagination": "Navigation method within Help Modals utilizing horizontal swipe gestures (translating CSS X-axis) rather than vertical scrolling to prevent mobile gesture conflicts.",
+    "Global_Context_Anchor": "A persistent '?' icon overlaid on the viewport that, when tapped, queries the GameState to instantiate the relevant Help Modal."
   },
   "service_summaries": {
     "SolStationService": {
@@ -36281,7 +36419,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "TravelService",
         "IntroService",
         "PlayerActionService",
-        "TutorialService",
         "MissionService",
         "NewsTickerService",
         "IntelService",
@@ -36489,13 +36626,13 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       ]
     },
     "UIManager": {
-      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UITutorialManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`). Responsible for the main render loop and proxying logic to delegates.",
+      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`). Responsible for the main render loop and proxying logic to delegates.",
       "dependencies": [
         "Logger",
         "EffectsManager",
         "TravelAnimationService",
         "UIModalEngine",
-        "UITutorialManager",
+        "UIHelpManager",
         "UIMarketControl",
         "UIMissionControl",
         "UIHangarControl",
@@ -36513,7 +36650,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "mutates_state": []
     },
     "UIModalEngine": {
-      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and DOM manipulation for showing/hiding modals.",
+      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic.",
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "queueModal": "Adds a modal to the queue.",
@@ -36521,12 +36658,14 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "hideModal": "Removes the active modal."
       }
     },
-    "UITutorialManager": {
-      "description": "Domain Controller responsible for the interactive tutorial system. Encapsulates Popper.js logic for positioning toasts and managing highlight overlays.",
-      "dependencies": ["UIManager (Facade)", "Popper.js"],
+    "UIHelpManager": {
+      "description": "Domain Controller responsible for the Contextual Help Modal system. Manages dynamic DOM injection, fixed-aspect ratio modal presentation, and horizontal micro-pagination swipe logic.",
+      "dependencies": ["UIManager (Facade)"],
       "key_functions": {
-        "showTutorialToast": "Renders a tutorial step.",
-        "applyTutorialHighlight": "Draws SVG highlights over target elements."
+        "showModal": "Builds slide DOM elements and translates to the active slide.",
+        "hideModal": "Dismisses the modal back to the hidden state.",
+        "nextPage": "Advances the slide track via X-axis calculation.",
+        "prevPage": "Reverses the slide track via X-axis calculation."
       }
     },
     "UIMarketControl": {
@@ -36630,7 +36769,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "GameState",
         "SimulationService",
         "UIManager",
-        "TutorialService",
         "DebugService",
         "Logger"
       ],
@@ -36645,8 +36783,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "dependencies": [
         "GameState",
         "SimulationService",
-        "UIManager",
-        "TutorialService"
+        "UIManager"
       ],
       "key_functions": {
         "handle": "Processes a click event on an element with a `data-action` attribute, now an async function to await promise-based actions like animated ship purchases."
@@ -36727,29 +36864,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
         "missions.completedMissionIds",
         "missions.missionProgress",
         "missions.activeMissionObjectivesMet"
-      ]
-    },
-    "TutorialService": {
-      "description": "Manages the state and flow of interactive tutorials. Draws tutorial data from `js/data/tutorials.js`.",
-      "dependencies": [
-        "GameState",
-        "UIManager",
-        "SimulationService",
-        "Logger",
-        "js/data/tutorials.js"
-      ],
-      "key_functions": {
-        "checkState": "Checks game state/action against triggers/completion conditions.",
-        "triggerBatch": "Starts a specific tutorial batch.",
-        "advanceStep": "Moves to the next step in the current batch.",
-        "skipActiveTutorial": "Skips the current tutorial batch."
-      },
-      "mutates_state": [
-        "tutorials.activeBatchId",
-        "tutorials.activeStepId",
-        "tutorials.seenBatchIds",
-        "tutorials.skippedTutorialBatches",
-        "tutorials.navLock"
       ]
     },
     "DebugService": {
@@ -36860,16 +36974,12 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "path": "./js/services/EventManager.js",
       "role": "EVENT_HANDLER"
     },
-    "F016": {
-      "path": "./js/services/TutorialService.js",
-      "role": "LOGIC_SERVICE"
-    },
     "F017": {
       "path": "./js/services/UIManager.js",
       "role": "UI_RENDERER",
       "dependencies": [
         "js/services/ui/UIModalEngine.js",
-        "js/services/ui/UITutorialManager.js",
+        "js/services/ui/UIHelpManager.js",
         "js/services/ui/UIMarketControl.js",
         "js/services/ui/UIMissionControl.js",
         "js/services/ui/UIHangarControl.js",
@@ -37029,11 +37139,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "path": "./js/data/missions.js",
       "role": "DATA_DEFINITION"
     },
-    "F052": {
-      "path": "./js/data/tutorials.js",
-      "role": "DATA_DEFINITION",
-      "description": "Facade that aggregates modular tutorial files."
-    },
     "F053": {
       "path": "./js/services/NewsTickerService.js",
       "role": "UI_SERVICE"
@@ -37124,11 +37229,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "role": "UI_CONTROLLER",
       "description": "Domain Controller: Manages modal lifecycle and queue."
     },
-    "F072": {
-      "path": "./js/services/ui/UITutorialManager.js",
-      "role": "UI_CONTROLLER",
-      "description": "Domain Controller: Manages tutorial toasts and overlays."
-    },
     "F073": {
       "path": "./js/services/ui/UIMarketControl.js",
       "role": "UI_CONTROLLER",
@@ -37209,21 +37309,6 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "role": "DATA_DEFINITION",
       "description": "Modular event file: Unique narrative encounters."
     },
-    "F089": {
-      "path": "./js/data/tutorials/tuts_intro.js",
-      "role": "DATA_DEFINITION",
-      "description": "Modular tutorial file: Introduction sequence."
-    },
-    "F090": {
-      "path": "./js/data/tutorials/tuts_economy.js",
-      "role": "DATA_DEFINITION",
-      "description": "Modular tutorial file: Economy & Market mechanics."
-    },
-    "F091": {
-      "path": "./js/data/tutorials/tuts_progression.js",
-      "role": "DATA_DEFINITION",
-      "description": "Modular tutorial file: Ship upgrades & Progression."
-    },
     "F092": {
       "path": "./js/data/lore/loreRegistry.js",
       "role": "DATA_DEFINITION",
@@ -37269,6 +37354,21 @@ Unique economic rules that apply only to specific stations, encouraging speciali
       "path": "./js/services/SaveStorageService.js",
       "role": "PERSISTENCE_SERVICE",
       "description": "Service for managing game saves using IndexedDB with an iOS Native Bridge fallback."
+    },
+    "F102": {
+      "path": "./js/services/ui/UIHelpManager.js",
+      "role": "UI_CONTROLLER",
+      "description": "Domain Controller: Manages Contextual Help Modals and micro-pagination."
+    },
+    "F103": {
+      "path": "./js/data/helpRegistry.js",
+      "role": "DATA_DEFINITION",
+      "description": "Facade mapping Context IDs to arrays of HTML slide strings."
+    },
+    "F104": {
+      "path": "./css/help-system.css",
+      "role": "STYLESHEET",
+      "description": "CSS compartmentalization for the fixed-aspect-ratio help modal system."
     }
   }
 }
@@ -37481,22 +37581,6 @@ Key Behavior:
 
 Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator.
 
-TutorialService (F016)
-
-Responsibility: Manages the state and flow of interactive tutorials (Logic Layer).
-
-Key Behavior:
-
-Checks game state/actions against triggers defined in tutorials.js.
-
-Manages activeBatchId and activeStepId.
-
-Enforces navLock in the GameState to restrict player movement during critical lessons.
-
-Delegates visual rendering to UIManager -> UITutorialManager.
-
-Dependencies: GameState, UIManager, SimulationService, js/data/tutorials.js.
-
 SolStationService (F098)
 
 Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
@@ -37556,13 +37640,13 @@ Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Dom
 
 Key Behavior: Proxies requests from external services (like ActionClickHandler) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
 
-Dependencies: UIModalEngine, UITutorialManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
+Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
 
 Controllers (Delegates):
 
 UIModalEngine: Manages the modal queue, priority processing, and dismissal logic.
 
-UITutorialManager: Manages the "Presentation Layer" of tutorials. Handles Popper.js instantiation, positioning of toast elements relative to targets, and rendering of SVG highlight overlays.
+UIHelpManager: Manages the Contextual Help Modal system, DOM injection of the fixed-aspect-ratio modal, horizontal micro-pagination slide tracks, and mobile swipe threshold logic.
 
 UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
 
@@ -37672,7 +37756,7 @@ events_story.js: Unique narrative encounters.
 
 missions.js: Defines static data for all player missions.
 
-tutorials.js: Defines static data for all tutorial batches and steps.
+helpRegistry.js: Defines static HTML string payloads organized by context IDs for the Help Modal slides.
 
 flavorAds.js: Defines static, location-specific flavor text ads for the news ticker.
 
@@ -38119,7 +38203,7 @@ Decision: Refactored the UIManager into a thin Facade ("Switchboard") that deleg
 
 UIModalEngine: Lifecycle management for the global modal queue.
 
-UITutorialManager: Orchestration of tutorial steps, toasts, and visual highlights.
+UIHelpManager: Orchestration of the contextual help modals and micro-pagination slides. (Replaced UITutorialManager).
 
 UIMarketControl: Market screen rendering, state retention, and graph generation.
 
@@ -38204,8 +38288,8 @@ Pro: Keeps individual file sizes manageable.
 
 Pro: simplifies access for the UI layer.
 
-ADR-024: Tutorial Architecture (Logic-View Separation)
-Status: Accepted (2026-01-26)
+ADR-024: Tutorial Architecture (Logic-View Separation) [DEPRECATED]
+Status: Deprecated (2026-02-22) - Replaced by ADR-033: Contextual Help Modal System (V1)
 
 Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
 
@@ -38358,6 +38442,23 @@ Consequences:
 * **Pro:** Seamless background healing means the player never knows their web data was actually wiped.
 * **Pro:** Maintains full compatibility with standard desktop web browsers (they gracefully ignore the iOS bridge).
 * **Con:** Introduces slight overhead in serializing large state objects and requires native Swift code maintenance (`ViewController.swift`).
+
+ADR-033: Contextual Help Modal System (V1)
+Status: Accepted (2026-02-22)
+
+Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers to guide players through virtualized UI lists. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design, leading to clipped text, gesture conflicts, and UI blocking.
+
+Decision: Abandon "DOM-hunting" tooltip tutorials entirely in favor of a Contextual Help Modal System.
+* Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio ($1/1$ or $4/3$).
+* Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling to eliminate mobile X/Y touch-gesture conflicts.
+* State-Driven Context: Relies purely on the abstract GameState (current Nav, Screen, and Sub-tabs) to resolve context and auto-instantiate the relevant help modal.
+* Centralized Data: Help slide content is stored in a static registry (`helpRegistry.js`).
+
+Consequences:
+* Pro: Guarantees 100% stability across all devices (iPhone SE to Desktop).
+* Pro: Eliminates complex DOM-tracking bugs and performance overhead.
+* Pro: Affords spatial luxury for multimedia explanations (SVGs, CSS diagrams) over dense text.
+* Con: Less direct visual pointing; relies on the player to map the modal's explanations to the UI elements.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -38605,31 +38706,30 @@ graph TD
         J --> K((Mutate GameState));
     end
 
-2.10 Tutorial Trigger & Interaction Flow
-The interaction loop between Logic (TutorialService) and View (UITutorialManager).
+2.10 Contextual Help Modal Flow
+The interaction loop for context-sensitive player assistance, replacing the legacy tutorial triggers.
 
 graph TD
     subgraph Triggering
-        A[User Action / Screen Load] --> B[TutorialService.checkState];
-        B --> C{Matches Trigger?};
-        C -- Yes --> D[Set activeBatchId / activeStepId];
-        D --> E[Mutate GameState (NavLock)];
+        A[User Action / Screen Load] --> B[UIManager._evaluateHelpContext];
+        B --> C{Current Context ID in seenHelpContexts?};
+        C -- No --> D[Silently Push ID to State];
+        C -- Yes --> E[Wait for Manual ? Click];
     end
 
     subgraph Visualization
-        E --> F[UIManager.render];
-        F --> G[UITutorialManager.showTutorialToast];
-        G --> H[Calculate Popper.js Position];
-        G --> I[Render SVG Highlights];
-        H & I --> J[DOM Update];
+        D & E --> F[UIHelpManager.showModal];
+        F --> G[Fetch HTML from helpRegistry.js];
+        G --> H[Inject Fixed-Aspect Modal DOM];
+        H --> I[Highlight active pagination dot];
     end
 
-    subgraph Progression
-        J --> K[User Clicks 'Next' or 'Action'];
-        K --> L[TutorialService.advanceStep];
-        L --> M{Next Step Exists?};
-        M -- Yes --> D;
-        M -- No --> N[End Batch & Clear Lock];
+    subgraph Micro-Pagination
+        I --> J[User swipes left/right];
+        J --> K[Calculate touch delta];
+        K --> L{Exceeds threshold?};
+        L -- Yes --> M[Update CSS transform: translateX];
+        L -- No --> N[Snap back to current slide];
     end
 
 2.11 Mission System Architecture
@@ -38896,7 +38996,7 @@ New data structures for the "Local Data Broker" system.
 
 ## 6. Tutorial State (`state.tutorials`)
 
-Manages the progress and locking mechanisms for the Contextual Help Modal System.
+Manages the auto-instantiation tracking for the Contextual Help Modal System.
 
 | Property | Type | Description |
 | --- | --- | --- |
