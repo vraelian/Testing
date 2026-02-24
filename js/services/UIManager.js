@@ -472,9 +472,12 @@ export class UIManager {
             if (gameState.introSequenceActive) return;
 
             // Defensive array checks
-            if (!gameState.tutorials) gameState.tutorials = { seenHelpContexts: [] };
+            if (!gameState.tutorials) gameState.tutorials = { seenHelpContexts: [], helpSlideMemory: {} };
             if (!Array.isArray(gameState.tutorials.seenHelpContexts)) {
                 gameState.tutorials.seenHelpContexts = [];
+            }
+            if (!gameState.tutorials.helpSlideMemory) {
+                gameState.tutorials.helpSlideMemory = {};
             }
 
             const currentContextId = this.getCurrentHelpContextId(gameState);
@@ -492,9 +495,12 @@ export class UIManager {
                 if (this.simulationService && this.simulationService.gameState) {
                     const liveState = this.simulationService.gameState;
                     
-                    if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [] };
+                    if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [], helpSlideMemory: {} };
                     if (!Array.isArray(liveState.tutorials.seenHelpContexts)) {
                         liveState.tutorials.seenHelpContexts = [];
+                    }
+                    if (!liveState.tutorials.helpSlideMemory) {
+                        liveState.tutorials.helpSlideMemory = {};
                     }
                     
                     if (!liveState.tutorials.seenHelpContexts.includes(currentContextId)) {
@@ -516,6 +522,32 @@ export class UIManager {
             }
         } catch (error) {
             console.error("[UIManager] Help Context Evaluation failed:", error);
+        }
+    }
+
+    /**
+     * Commits the last viewed slide index for a specific help context into the persistent game state.
+     * @param {string} contextId 
+     * @param {number} index 
+     */
+    saveHelpSlideIndex(contextId, index) {
+        if (!contextId) return;
+
+        // Update local copy to keep rendering smooth
+        if (this.lastKnownState && this.lastKnownState.tutorials) {
+            if (!this.lastKnownState.tutorials.helpSlideMemory) {
+                this.lastKnownState.tutorials.helpSlideMemory = {};
+            }
+            this.lastKnownState.tutorials.helpSlideMemory[contextId] = index;
+        }
+
+        // Push to live simulation state to persist in saves
+        if (this.simulationService && this.simulationService.gameState) {
+            const liveState = this.simulationService.gameState;
+            if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [], helpSlideMemory: {} };
+            if (!liveState.tutorials.helpSlideMemory) liveState.tutorials.helpSlideMemory = {};
+            
+            liveState.tutorials.helpSlideMemory[contextId] = index;
         }
     }
 
@@ -560,7 +592,29 @@ export class UIManager {
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
-    showHelpModal(...args) { if (this.helpManager) this.helpManager.showModal(...args); }
+    /**
+     * Intercepts calls to show the Help Modal to automatically inject memory state index
+     * @param {string} contextId 
+     * @param {number|null} startingPageIndex 
+     * @param {Function|null} onCloseCallback 
+     */
+    showHelpModal(contextId, startingPageIndex = null, onCloseCallback = null) {
+        if (this.helpManager) {
+            const targetContext = contextId || this.getCurrentHelpContextId(this.lastKnownState);
+            if (!targetContext) return;
+
+            let indexToUse = startingPageIndex;
+            if (indexToUse === null || indexToUse === undefined) {
+                if (this.lastKnownState?.tutorials?.helpSlideMemory?.[targetContext] !== undefined) {
+                    indexToUse = this.lastKnownState.tutorials.helpSlideMemory[targetContext];
+                } else {
+                    indexToUse = 0;
+                }
+            }
+            this.helpManager.showModal(targetContext, indexToUse, onCloseCallback);
+        }
+    }
+
     hideHelpModal(...args) { if (this.helpManager) this.helpManager.hideModal(...args); }
     
     triggerEffect(name, options) {

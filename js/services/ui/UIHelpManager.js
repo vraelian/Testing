@@ -152,12 +152,15 @@ export class UIHelpManager {
         this._endTouch();
     }
 
-    showModal(contextId, startingPageIndex = 0, onCloseCallback = null) {
+    showModal(contextId, startingPageIndex = null, onCloseCallback = null) {
         if (!HELP_REGISTRY || !HELP_REGISTRY[contextId]) return;
 
         this.currentContext = contextId;
         this.pages = HELP_REGISTRY[contextId];
-        this.currentPageIndex = Math.min(startingPageIndex, this.pages.length - 1);
+        
+        const startIdx = startingPageIndex !== null && startingPageIndex !== undefined ? startingPageIndex : 0;
+        this.currentPageIndex = Math.min(startIdx, this.pages.length - 1);
+        
         this.onCloseCallback = onCloseCallback;
 
         this._renderSlides();
@@ -177,6 +180,12 @@ export class UIHelpManager {
 
     hideModal() {
         if (!this.isVisible) return; 
+
+        // Push slide memory out to the persistent game state before hiding
+        if (this.uiManager && typeof this.uiManager.saveHelpSlideIndex === 'function' && this.currentContext) {
+            this.uiManager.saveHelpSlideIndex(this.currentContext, this.currentPageIndex);
+        }
+        
         this.isVisible = false;
         
         if (this.overlay) {

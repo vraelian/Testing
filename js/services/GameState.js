@@ -309,7 +309,8 @@ export class GameState {
             // --- END VIRTUAL WORKBENCH ---
 
             tutorials: {
-                seenHelpContexts: []
+                seenHelpContexts: [],
+                helpSlideMemory: {} // State property to persist slide indices
             },
             missions: {
                 // --- MISSION SYSTEM 2.0 (Phase 1) ---

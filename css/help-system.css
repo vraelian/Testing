@@ -41,8 +41,8 @@
 .help-modal-container {
     width: 90vw;
     max-width: 400px;
-    /* 20/17 is mathematically identical to 1/0.85 but perfectly parses in older iOS targets */
-    aspect-ratio: 20 / 17; 
+    /* 50/51 represents a 20% vertical height increase over the original 20/17 ratio */
+    aspect-ratio: 50 / 55; 
     background-color: #1a1a1a;
     border: 1px solid #666;
     filter: drop-shadow(0 0 15px rgba(100, 100, 100, 0.5)); 
