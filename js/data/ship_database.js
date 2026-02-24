@@ -132,7 +132,7 @@ The ship looks like it was scavenged rather than built. Its 'hull' is merely a s
     "Nomad.Ship": {
         name: "Nomad",
         class: "C",
-        price: 42000,
+        price: 25000,
         maxHealth: 40,
         cargoCapacity: 35,
         maxFuel: 150,

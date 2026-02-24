@@ -197,12 +197,12 @@ export class UIHangarControl {
                 modalContent.classList.remove('intro-modal-width');
             }
 
-            // Provide the requested image variants for the starter modal
+            // [FIX C] Provide the correct .jpeg image variants for the starter modal
             let imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
             if (context === 'intro_shipyard') {
-                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/ships/Wanderer_F.png';
-                if (shipId === 'Mule.Ship') imageSrc = 'assets/ships/Mule_H.png';
-                if (shipId === 'Nomad.Ship') imageSrc = 'assets/ships/Nomad_A.png';
+                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/images/ships/Wanderer/Wanderer_F.jpeg';
+                if (shipId === 'Mule.Ship') imageSrc = 'assets/images/ships/Mule/Mule_H.jpeg';
+                if (shipId === 'Nomad.Ship') imageSrc = 'assets/images/ships/Nomad/Nomad_A.jpeg';
             }
 
             const largeImageHtml = context === 'intro_shipyard' ? 
@@ -210,7 +210,7 @@ export class UIHangarControl {
                     <img src="${imageSrc}" class="w-full max-w-[280px] h-auto object-contain drop-shadow-2xl rounded border border-gray-600 bg-gray-800 bg-opacity-60 p-2" />
                 </div>` : '';
 
-            // Swap to description instead of lore for the intro
+            // Swap to short description instead of lore for the intro
             const textContent = context === 'intro_shipyard' ? shipStatic.description : shipStatic.lore;
 
             modalContentHtml = `
@@ -227,9 +227,9 @@ export class UIHangarControl {
                      <p class="text-sm text-gray-400 flex-grow text-left">${textContent}</p>
                      ${largeImageHtml}
                     <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
-                        <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
-                        <div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${shipStatic.maxFuel}</span></div>
-                        <div><span class="text-gray-500">Cargo:</span> <span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
+                        <div><span class="text-gray-500">Hull:</span><br><span class="text-green-400">${shipStatic.maxHealth}</span></div>
+                        <div><span class="text-gray-500">Fuel:</span><br><span class="text-sky-400">${shipStatic.maxFuel}</span></div>
+                        <div><span class="text-gray-500">Cargo:</span><br><span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
                     </div>
                      <button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
                 </div>`;
@@ -311,12 +311,11 @@ export class UIHangarControl {
         const modalContentTarget = modal.querySelector('#ship-detail-content');
         modalContentTarget.innerHTML = modalContentHtml;
 
-        // Apply outside click dismissal strictly for intro_shipyard context
+        // Apply robust outside click dismissal strictly for intro_shipyard context
         if (context === 'intro_shipyard') {
             const dismissHandler = (e) => {
-                if (e.target === modal) {
-                    modal.classList.add('hidden');
-                    modal.classList.remove('modal-visible');
+                if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
+                    this.manager.hideModal('ship-detail-modal');
                     modal.removeEventListener('click', dismissHandler);
                 }
             };

@@ -361,9 +361,9 @@ export class ActionClickHandler {
                             <p class="mb-4">Choosing your first ship is an exciting first step on the road to becoming a wealthy captain.</p>
                             <p class="mb-2">What play style will you choose?</p>
                             <ul class="list-disc pl-5 space-y-2">
-                                <li>Will you opt for the Explorer, prioritizing its larger fuel tank for fewer refueling stops and more continuous travel?</li>
-                                <li>Perhaps the balanced Vessel is your choice, appreciated for its overall competence across all attributes.</li>
-                                <li>Or do you select the Hauler, increasing its profitability per run thanks to its expanded storage capacity?</li>
+                                <li>Will you opt for the <span class="text-sky-400 font-bold">Explorer</span>, prioritizing its larger fuel tank for fewer refueling stops and more continuous travel?</li>
+                                <li>Perhaps the <span class="text-emerald-400 font-bold">Balanced</span> Vessel is your choice, appreciated for its overall competence across all attributes.</li>
+                                <li>Or do you select the <span class="text-amber-400 font-bold">Hauler</span>, increasing its profitability per run thanks to its expanded storage capacity?</li>
                             </ul>
                         </div>
                     `;

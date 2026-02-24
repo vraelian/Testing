@@ -268,6 +268,9 @@ export class IntroService {
      * @private
      */
     _showStarterShipSelection() {
+        // [FIX B] Explicitly release the interaction lock so the purchase buttons work
+        this._transitioning = false;
+        
         this.uiManager.showGameContainer();
         
         const overlay = document.createElement('div');
@@ -304,11 +307,11 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // Map the specific asset strings for the initial button generation, failing over to the generic getter.
+            // [FIX A] Corrected asset folder paths
             let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
-            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/ships/Wanderer_F.png';
-            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/ships/Mule_H.png';
-            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/ships/Nomad_A.png';
+            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.jpeg';
+            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.jpeg';
+            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.jpeg';
             
             btn.innerHTML = `
                 <img src="${imgSrc}" alt="${shipStatic.name}" />
@@ -347,14 +350,28 @@ export class IntroService {
         const modal = document.getElementById('ship-detail-modal');
         const modalContent = modal ? modal.querySelector('.modal-content') : null;
 
+        // Apply visual feedback to the modal
         if (modalContent) {
-            // Disable all buttons in modal to prevent double clicks during animation
             modalContent.querySelectorAll('button').forEach(btn => btn.disabled = true);
-            await playBlockingAnimation(modalContent, 'is-dematerializing');
+            try {
+                await playBlockingAnimation(modalContent, 'is-dematerializing');
+            } catch (e) {
+                console.warn("Dematerialize animation bypassed or failed.", e);
+            }
         }
 
-        // Execute actual purchase state mutations (deducts 25k, gives ship)
-        this.simulationService.playerActionService.executeBuyShip(shipId);
+        // Hardcode the initial ship grant to bypass the strict market-validation
+        // constraints normally evaluated by PlayerActionService.executeBuyShip
+        const shipStatic = DB.SHIPS[shipId];
+        this.gameState.player.credits -= shipStatic.price;
+        this.gameState.player.ownedShipIds.push(shipId);
+        this.gameState.player.activeShipId = shipId;
+        this.gameState.player.shipStates[shipId] = {
+            health: shipStatic.maxHealth,
+            fuel: shipStatic.maxFuel,
+            upgrades: []
+        };
+        this.gameState.player.inventories[shipId] = {};
 
         // Clean up UI - Remove the custom full-screen overlay
         const overlay = document.getElementById('starter-ship-selection-overlay');
