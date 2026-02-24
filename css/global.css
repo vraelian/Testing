@@ -964,3 +964,137 @@ card.
 }
 /* --- END VIRTUAL WORKBENCH --- */
 /* --- [[END]] GENERIC ANIMATIONS --- */
+
+/* --- STARTER SHIP SELECTION (INTRO) --- */
+.intro-starfield-bg {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    z-index: 45; /* Below modals (z-index 50) but above UI */
+    background: radial-gradient(circle at center, #1a2030 0%, #050811 100%);
+    background-size: 200% 200%;
+    animation: slow-pan-starfield 30s ease-in-out infinite alternate;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    /* Fade in on creation */
+    opacity: 0;
+    animation: fadeIn 1s ease-out forwards, slow-pan-starfield 30s ease-in-out infinite alternate;
+}
+
+@keyframes slow-pan-starfield {
+    0% { background-position: 0% 50%; }
+    100% { background-position: 100% 50%; }
+}
+
+/* Role-specific pulse borders */
+@keyframes pulse-border-explorer {
+    0%, 100% { box-shadow: 0 0 8px #38bdf8, inset 0 0 8px rgba(56, 189, 248, 0.3); border-color: #38bdf8; }
+    50% { box-shadow: 0 0 16px #7dd3fc, inset 0 0 12px rgba(125, 211, 252, 0.5); border-color: #7dd3fc; }
+}
+.border-pulse-explorer {
+    animation: pulse-border-explorer 2.5s infinite;
+}
+
+@keyframes pulse-border-balanced {
+    0%, 100% { box-shadow: 0 0 8px #34d399, inset 0 0 8px rgba(52, 211, 153, 0.3); border-color: #34d399; }
+    50% { box-shadow: 0 0 16px #6ee7b7, inset 0 0 12px rgba(110, 231, 183, 0.5); border-color: #6ee7b7; }
+}
+.border-pulse-balanced {
+    animation: pulse-border-balanced 2.5s infinite;
+}
+
+@keyframes pulse-border-hauler {
+    0%, 100% { box-shadow: 0 0 8px #fbbf24, inset 0 0 8px rgba(251, 191, 36, 0.3); border-color: #fbbf24; }
+    50% { box-shadow: 0 0 16px #fcd34d, inset 0 0 12px rgba(252, 211, 77, 0.5); border-color: #fcd34d; }
+}
+.border-pulse-hauler {
+    animation: pulse-border-hauler 2.5s infinite;
+}
+
+/* Additional layout classes for starter selection */
+.starter-selection-container {
+    display: flex;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.starter-thumbnail-btn {
+    width: 260px; /* Increased 85% */
+    min-height: 260px; /* Allow growth if text wraps */
+    height: auto;
+    background: #111827;
+    border: 2px solid #374151;
+    border-radius: 12px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: transform 0.2s;
+    padding: 1rem;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+}
+
+.starter-thumbnail-btn:hover {
+    transform: translateY(-4px) scale(1.02);
+}
+
+.starter-thumbnail-btn img {
+    width: 128px; /* Doubled in size */
+    height: 128px;
+    object-fit: contain;
+    margin-bottom: 1rem;
+    border: 2px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+    background: rgba(0, 0, 0, 0.4);
+}
+
+.starter-thumbnail-btn .ship-name {
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #fff;
+}
+
+.starter-thumbnail-btn .ship-role {
+    font-size: 0.8rem;
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.starter-thumbnail-btn .ship-desc {
+    font-size: 1.8rem; /* Tripled in size */
+    line-height: 1.2;
+    /* Color handled via dynamic roleClass injected via JS */
+}
+
+.starter-narrative-box {
+    background: rgba(17, 24, 39, 0.85);
+    border: 1px solid #4b5563;
+    border-radius: 8px;
+    padding: 1.5rem;
+    max-width: 600px;
+    text-align: center;
+    font-size: 1rem;
+    color: #e5e7eb;
+    line-height: 1.5;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+    margin: 0 1rem;
+}
+
+/* Modifies the width by -15% (340px max) */
+.intro-modal-width {
+    width: 85% !important;
+    max-width: 340px !important;
+}

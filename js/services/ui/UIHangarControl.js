@@ -172,17 +172,47 @@ export class UIHangarControl {
      * Shows the detailed ship modal (Buy/Sell/Board/Upgrade).
      * @param {object} gameState 
      * @param {string} shipId 
-     * @param {string} context - 'shipyard' or 'hangar'
+     * @param {string} context - 'shipyard', 'hangar', or 'intro_shipyard'
      */
     showShipDetailModal(gameState, shipId, context) {
         const { player, tutorials } = gameState;
         const shipStatic = DB.SHIPS[shipId];
+        const modal = this.manager.cache.shipDetailModal;
+        const modalContent = modal.querySelector('.modal-content');
         let modalContentHtml;
 
-        if (context === 'shipyard') {
-             const canAfford = player.credits >= shipStatic.price;
-            const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
-            const isDisabled = !canAfford || isHangarTutStep1Active;
+        if (context === 'shipyard' || context === 'intro_shipyard') {
+            const canAfford = player.credits >= shipStatic.price;
+            let isDisabled = false;
+            let actionId = ACTION_IDS.BUY_SHIP;
+
+            // Handle intro-specific constraints
+            if (context === 'intro_shipyard') {
+                isDisabled = !canAfford; 
+                actionId = ACTION_IDS.INTRO_BUY_SHIP;
+                modalContent.classList.add('intro-modal-width');
+            } else {
+                const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
+                isDisabled = !canAfford || isHangarTutStep1Active;
+                modalContent.classList.remove('intro-modal-width');
+            }
+
+            // Provide the requested image variants for the starter modal
+            let imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
+            if (context === 'intro_shipyard') {
+                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/ships/Wanderer_F.png';
+                if (shipId === 'Mule.Ship') imageSrc = 'assets/ships/Mule_H.png';
+                if (shipId === 'Nomad.Ship') imageSrc = 'assets/ships/Nomad_A.png';
+            }
+
+            const largeImageHtml = context === 'intro_shipyard' ? 
+                `<div class="flex justify-center my-2">
+                    <img src="${imageSrc}" class="w-full max-w-[280px] h-auto object-contain drop-shadow-2xl rounded border border-gray-600 bg-gray-800 bg-opacity-60 p-2" />
+                </div>` : '';
+
+            // Swap to description instead of lore for the intro
+            const textContent = context === 'intro_shipyard' ? shipStatic.description : shipStatic.lore;
+
             modalContentHtml = `
                 <div class="ship-card p-4 flex flex-col space-y-3">
                     <div class="flex justify-between items-start">
@@ -194,15 +224,18 @@ export class UIHangarControl {
                              <p class="text-lg font-bold text-cyan-300">${formatCredits(shipStatic.price)}</p>
                         </div>
                     </div>
-                     <p class="text-sm text-gray-400 flex-grow text-left">${shipStatic.lore}</p>
+                     <p class="text-sm text-gray-400 flex-grow text-left">${textContent}</p>
+                     ${largeImageHtml}
                     <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
                         <div><span class="text-gray-500">Hull:</span> <span class="text-green-400">${shipStatic.maxHealth}</span></div>
                         <div><span class="text-gray-500">Fuel:</span> <span class="text-sky-400">${shipStatic.maxFuel}</span></div>
                         <div><span class="text-gray-500">Cargo:</span> <span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
                     </div>
-                     <button class="btn w-full mt-2" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
+                     <button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
                 </div>`;
+
         } else { // context === 'hangar'
+            modalContent.classList.remove('intro-modal-width');
             const shipDynamic = player.shipStates[shipId];
             const shipInventory = player.inventories[shipId];
             const cargoUsed = calculateInventoryUsed(shipInventory);
@@ -225,7 +258,6 @@ export class UIHangarControl {
                 
                 const label = def ? def.name : id; 
                 const tooltipText = def ? def.description : '';
-                // [[FIXED]] Check 'pillColor' first, fallback to 'color', then hard fallback.
                 const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
                 let tier = 1;
@@ -276,9 +308,23 @@ export class UIHangarControl {
                  </div>`;
         }
 
-        const modal = this.manager.cache.shipDetailModal;
-        const modalContent = modal.querySelector('#ship-detail-content');
-        modalContent.innerHTML = modalContentHtml;
+        const modalContentTarget = modal.querySelector('#ship-detail-content');
+        modalContentTarget.innerHTML = modalContentHtml;
+
+        // Apply outside click dismissal strictly for intro_shipyard context
+        if (context === 'intro_shipyard') {
+            const dismissHandler = (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                    modal.classList.remove('modal-visible');
+                    modal.removeEventListener('click', dismissHandler);
+                }
+            };
+            modal.removeEventListener('click', modal._introDismissHandler);
+            modal._introDismissHandler = dismissHandler;
+            modal.addEventListener('click', dismissHandler);
+        }
+
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
     }

@@ -6,6 +6,8 @@
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { AssetService } from '../AssetService.js';
+import { playBlockingAnimation } from '../ui/AnimationService.js';
 
 export class IntroService {
     /**
@@ -255,10 +257,116 @@ export class IntroService {
         this.uiManager.showHelpModal('meta-tutorial', 0, () => {
             setTimeout(() => {
                 this.uiManager.showHelpModal('meta-autosave', 0, () => {
-                    this._end();
+                    this._showStarterShipSelection();
                 });
             }, 1000);
         });
+    }
+
+    /**
+     * Generates and displays the bespoke starter ship selection screen dynamically over the game UI.
+     * @private
+     */
+    _showStarterShipSelection() {
+        this.uiManager.showGameContainer();
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'starter-ship-selection-overlay';
+        overlay.className = 'intro-starfield-bg';
+        
+        const starterShips = [
+            {
+                id: 'Wanderer.Ship',
+                roleClass: 'text-sky-400',
+                borderClass: 'border-pulse-explorer',
+                desc: 'A larger fuel tank means more trips before refilling.'
+            },
+            {
+                id: 'Nomad.Ship',
+                roleClass: 'text-emerald-400',
+                borderClass: 'border-pulse-balanced',
+                desc: 'Sturdy and resilient against wear and tear.'
+            },
+            {
+                id: 'Mule.Ship',
+                roleClass: 'text-amber-400',
+                borderClass: 'border-pulse-hauler',
+                desc: 'At the cost of range, carry just a little more.'
+            }
+        ];
+
+        const container = document.createElement('div');
+        container.className = 'starter-selection-container';
+
+        starterShips.forEach(shipInfo => {
+            const shipStatic = DB.SHIPS[shipInfo.id];
+            const btn = document.createElement('button');
+            btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
+            btn.type = 'button';
+            
+            // Map the specific asset strings for the initial button generation, failing over to the generic getter.
+            let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
+            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/ships/Wanderer_F.png';
+            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/ships/Mule_H.png';
+            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/ships/Nomad_A.png';
+            
+            btn.innerHTML = `
+                <img src="${imgSrc}" alt="${shipStatic.name}" />
+                <span class="ship-name">${shipStatic.name}</span>
+                <span class="ship-role ${shipInfo.roleClass}">${shipStatic.role}</span>
+                <span class="ship-desc ${shipInfo.roleClass}">${shipInfo.desc}</span>
+            `;
+            
+            btn.onclick = (e) => {
+                e.preventDefault();
+                this.uiManager.showShipDetailModal(this.gameState, shipInfo.id, 'intro_shipyard');
+            };
+            
+            container.appendChild(btn);
+        });
+
+        const narrativeBox = document.createElement('div');
+        narrativeBox.className = 'starter-narrative-box';
+        narrativeBox.innerHTML = "Now that you've got some credits, it's time to purchase your first ship. Make your selection carefully to begin your journey.";
+
+        overlay.appendChild(container);
+        overlay.appendChild(narrativeBox);
+
+        document.body.appendChild(overlay);
+    }
+
+    /**
+     * Handles the intercepted purchase action from the starter ship selection modal.
+     * Triggers the animation, mutates state, and finalizes the intro.
+     * @param {string} shipId 
+     */
+    async handleStarterPurchase(shipId) {
+        if (this._transitioning) return;
+        this._transitioning = true;
+
+        const modal = document.getElementById('ship-detail-modal');
+        const modalContent = modal ? modal.querySelector('.modal-content') : null;
+
+        if (modalContent) {
+            // Disable all buttons in modal to prevent double clicks during animation
+            modalContent.querySelectorAll('button').forEach(btn => btn.disabled = true);
+            await playBlockingAnimation(modalContent, 'is-dematerializing');
+        }
+
+        // Execute actual purchase state mutations (deducts 25k, gives ship)
+        this.simulationService.playerActionService.executeBuyShip(shipId);
+
+        // Clean up UI - Remove the custom full-screen overlay
+        const overlay = document.getElementById('starter-ship-selection-overlay');
+        if (overlay) {
+            overlay.remove();
+        }
+        
+        // Hide and reset the standard ship detail modal
+        this.uiManager.hideModal('ship-detail-modal');
+
+        // Boot the core game loop
+        this._end();
     }
 
     /**
@@ -270,10 +378,10 @@ export class IntroService {
         this.gameState.introSequenceActive = false;
         this._transitioning = false;
         
-        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Shipyard.');
+        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Hangar.');
         
-        // Default the Hangar screen to "Shipyard" so they can buy their ship
-        this.gameState.uiState.hangarShipyardToggleState = 'shipyard';
+        // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
+        this.gameState.uiState.hangarShipyardToggleState = 'hangar';
 
         // Reveal the main layout (safe to call again to ensure layout calcs)
         this.uiManager.showGameContainer();

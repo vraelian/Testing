@@ -48,6 +48,15 @@ export class ActionClickHandler {
                 });
                 break;
             }
+            case ACTION_IDS.INTRO_BUY_SHIP: {
+                const { shipId } = dataset;
+                if (!shipId) return;
+                e.stopPropagation();
+                
+                // Route to the special IntroService handler
+                await this.simulationService.introService.handleStarterPurchase(shipId);
+                break;
+            }
             case ACTION_IDS.SELL_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
@@ -345,6 +354,23 @@ export class ActionClickHandler {
 
             case 'toggle-help': {
                 e.preventDefault();
+                // Custom Override during Intro Sequence
+                if (state.introSequenceActive) {
+                    const helpHtml = `
+                        <div class="text-left text-sm text-gray-300">
+                            <p class="mb-4">Choosing your first ship is an exciting first step on the road to becoming a wealthy captain.</p>
+                            <p class="mb-2">What play style will you choose?</p>
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li>Will you opt for the Explorer, prioritizing its larger fuel tank for fewer refueling stops and more continuous travel?</li>
+                                <li>Perhaps the balanced Vessel is your choice, appreciated for its overall competence across all attributes.</li>
+                                <li>Or do you select the Hauler, increasing its profitability per run thanks to its expanded storage capacity?</li>
+                            </ul>
+                        </div>
+                    `;
+                    this.uiManager.queueModal('event-modal', 'Starter Selection', helpHtml, null, { dismissOutside: true });
+                    return;
+                }
+                
                 const contextId = this.uiManager.getCurrentHelpContextId(state);
                 if (contextId) {
                     this.uiManager.showHelpModal(contextId);
