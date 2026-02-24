@@ -17,13 +17,21 @@
     align-items: center;
     z-index: 50;
     opacity: 0.5;
-    transition: opacity 0.2s ease, background-color 0.2s ease;
+    transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
 }
 
-.global-help-anchor:hover, .global-help-anchor:active {
+.global-help-anchor:hover {
     opacity: 1;
     background-color: rgba(45, 55, 72, 0.9);
+}
+
+.global-help-anchor:active {
+    opacity: 1;
+    background-color: rgba(45, 55, 72, 0.9);
+    transform: scale(0.98);
 }
 
 .help-modal-overlay {
@@ -43,14 +51,26 @@
     max-width: 400px;
     /* 50/51 represents a 20% vertical height increase over the original 20/17 ratio */
     aspect-ratio: 50 / 55; 
-    background-color: #1a1a1a;
-    border: 1px solid #666;
-    filter: drop-shadow(0 0 15px rgba(100, 100, 100, 0.5)); 
+    background-color: #151515; /* Dark charcoal/gunmetal */
+    border: 1px solid #333;
+    filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.8)); 
     border-radius: 12px;
     display: flex;
     flex-direction: column;
     overflow: hidden;
     box-sizing: border-box;
+    position: relative; /* Anchor for the ::before noise texture */
+}
+
+/* Materiality & Texture pseudo-element */
+.help-modal-container::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    opacity: 0.05; /* Subtle noise overlay */
+    pointer-events: none; /* Ensure texture does not block interactions */
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    z-index: 0;
 }
 
 .help-modal-header {
@@ -59,7 +79,9 @@
     align-items: center;
     padding: 0.5rem 1rem;
     border-bottom: 1px solid #333;
-    background-color: #222;
+    background-color: rgba(34, 34, 34, 0.8);
+    position: relative;
+    z-index: 1;
 }
 
 .help-modal-title {
@@ -78,10 +100,17 @@
     cursor: pointer;
     padding: 0 0.5rem;
     opacity: 0.8;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: transform 50ms ease-out, opacity 0.2s;
 }
 
 .help-modal-close-btn:hover {
     opacity: 1;
+}
+
+.help-modal-close-btn:active {
+    transform: scale(0.98);
 }
 
 .help-modal-viewport {
@@ -89,6 +118,7 @@
     width: 100%;
     overflow: hidden;
     position: relative;
+    z-index: 1;
 }
 
 .help-slide-track {
@@ -135,9 +165,11 @@
     align-items: center;
     padding: 0.75rem;
     gap: 8px;
-    background-color: #222;
+    background-color: rgba(34, 34, 34, 0.8);
     border-top: 1px solid #333;
     min-height: 36px;
+    position: relative;
+    z-index: 1;
 }
 
 .help-dot {
