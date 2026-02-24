@@ -260,6 +260,35 @@ ${logHistory}
         this.gameState.setState({});
     }
 
+    skipToStarterSelection() {
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO STARTER SHIP SELECTION.');
+        
+        // Setup initial intro parameters
+        this.gameState.introSequenceActive = true;
+        this.gameState.player.credits = 25000;
+        this.gameState.player.ownedShipIds = [];
+        this.gameState.player.activeShipId = null;
+        this.gameState.player.shipStates = {};
+        this.gameState.player.inventories = {};
+
+        this.uiManager.showGameContainer();
+        
+        // Execute Ship Selection
+        if (this.simulationService && this.simulationService.introService) {
+            this.simulationService.introService._showStarterShipSelection();
+        } else {
+            // Dynamic fallback if IntroService is not strictly bound to SimulationService
+            import('./game/IntroService.js').then(({IntroService}) => {
+                const intro = new IntroService(this.gameState, this.uiManager, this.logger, this.simulationService);
+                intro._showStarterShipSelection();
+            }).catch(e => {
+                console.error("Failed to load IntroService for debug skip", e);
+            });
+        }
+        
+        this.gameState.setState({});
+    }
+
     skipToHangarTutorial() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
         this.gameState.introSequenceActive = true;
@@ -487,6 +516,7 @@ ${logHistory}
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
+            skipToStarterSelection: { name: 'Skip to Ship Select (Intro)', type: 'button', handler: () => this.skipToStarterSelection() },
              skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
@@ -723,6 +753,7 @@ ${logHistory}
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
+        flowFolder.add(this.actions.skipToStarterSelection, 'handler').name(this.actions.skipToStarterSelection.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');

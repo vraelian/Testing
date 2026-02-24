@@ -7,7 +7,6 @@ import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { AssetService } from '../AssetService.js';
-import { playBlockingAnimation } from '../ui/AnimationService.js';
 
 export class IntroService {
     /**
@@ -265,10 +264,9 @@ export class IntroService {
 
     /**
      * Generates and displays the bespoke starter ship selection screen dynamically over the game UI.
-     * @private
+     * @public - Accessible by DebugService
      */
     _showStarterShipSelection() {
-        // [FIX B] Explicitly release the interaction lock so the purchase buttons work
         this._transitioning = false;
         
         this.uiManager.showGameContainer();
@@ -307,7 +305,6 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // [FIX A] Corrected asset folder paths
             let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
             if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.jpeg';
             if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.jpeg';
@@ -340,28 +337,34 @@ export class IntroService {
 
     /**
      * Handles the intercepted purchase action from the starter ship selection modal.
-     * Triggers the animation, mutates state, and finalizes the intro.
+     * Triggers the 6-second cinematic transition, mutates state, and finalizes the intro.
      * @param {string} shipId 
      */
     async handleStarterPurchase(shipId) {
         if (this._transitioning) return;
         this._transitioning = true;
 
-        const modal = document.getElementById('ship-detail-modal');
-        const modalContent = modal ? modal.querySelector('.modal-content') : null;
+        const overlay = document.getElementById('starter-ship-selection-overlay');
+        const starterContainer = overlay ? overlay.querySelector('.starter-selection-container') : null;
+        const narrativeBox = overlay ? overlay.querySelector('.starter-narrative-box') : null;
 
-        // Apply visual feedback to the modal
-        if (modalContent) {
-            modalContent.querySelectorAll('button').forEach(btn => btn.disabled = true);
-            try {
-                await playBlockingAnimation(modalContent, 'is-dematerializing');
-            } catch (e) {
-                console.warn("Dematerialize animation bypassed or failed.", e);
-            }
-        }
+        // [Phase 1: 0-2s]
+        // Immediately dismiss the detail modal so it doesn't flash or complicate the blur stack
+        this.uiManager.hideModal('ship-detail-modal');
 
-        // Hardcode the initial ship grant to bypass the strict market-validation
-        // constraints normally evaluated by PlayerActionService.executeBuyShip
+        // Blur-fade out the underlying UI elements
+        if (starterContainer) starterContainer.classList.add('blur-fade-out');
+        if (narrativeBox) narrativeBox.classList.add('blur-fade-out');
+        
+        // Wait 2 seconds for UI to visually dissolve into the background starfield
+        await new Promise(res => setTimeout(res, 2000));
+        
+        // [Phase 2: 2-4s] Starfield Hold 
+        // Mechanically hide elements while holding the view on just the starfield
+        if (starterContainer) starterContainer.style.display = 'none';
+        if (narrativeBox) narrativeBox.style.display = 'none';
+
+        // Mutate State during the blackout window
         const shipStatic = DB.SHIPS[shipId];
         this.gameState.player.credits -= shipStatic.price;
         this.gameState.player.ownedShipIds.push(shipId);
@@ -373,17 +376,40 @@ export class IntroService {
         };
         this.gameState.player.inventories[shipId] = {};
 
-        // Clean up UI - Remove the custom full-screen overlay
-        const overlay = document.getElementById('starter-ship-selection-overlay');
+        // Prepare the Game UI Container before calling _end() so it does not instantly appear
+        const gameContainer = document.getElementById('game-container');
+        if (gameContainer) {
+            // Keep it visually hidden under the starfield overlay layer
+            gameContainer.style.opacity = '0';
+            gameContainer.style.filter = 'blur(10px)';
+        }
+
+        // Boot the core game loop, generating the Hangar layout invisibly
+        this._end();
+
+        // Hold for the remaining 2 seconds of the Starfield scene (Reduced from 4s)
+        await new Promise(res => setTimeout(res, 2000));
+
+        // [Phase 3: 4-6s] Crossfade
+        // Fade the starfield overlay out WITHOUT overwriting the CSS animation to prevent the jitter/jump
         if (overlay) {
-            overlay.remove();
+            overlay.style.transition = 'opacity 2s ease-in-out, filter 2s ease-in-out';
+            overlay.style.opacity = '0';
+            overlay.style.filter = 'blur(10px)';
+            overlay.style.pointerEvents = 'none';
         }
         
-        // Hide and reset the standard ship detail modal
-        this.uiManager.hideModal('ship-detail-modal');
-
-        // Boot the core game loop
-        this._end();
+        if (gameContainer) {
+            gameContainer.classList.add('blur-fade-in');
+            
+            // Final cleanup after crossfade completes
+            setTimeout(() => {
+                gameContainer.style.opacity = '';
+                gameContainer.style.filter = '';
+                gameContainer.classList.remove('blur-fade-in');
+                if (overlay) overlay.remove();
+            }, 2000);
+        }
     }
 
     /**
@@ -400,7 +426,7 @@ export class IntroService {
         // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
 
-        // Reveal the main layout (safe to call again to ensure layout calcs)
+        // Reveal the main layout
         this.uiManager.showGameContainer();
         
         // Set context to the Hangar/Shipyard screen

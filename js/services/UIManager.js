@@ -626,6 +626,9 @@ export class UIManager {
     }
     
     showGameContainer() {
+        const splash = document.getElementById('splash-screen');
+        if (splash) splash.style.display = 'none';
+
         this.cache.gameContainer.classList.remove('hidden');
         this._setAppHeight();
         requestAnimationFrame(() => this._setAppHeight());

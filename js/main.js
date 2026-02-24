@@ -51,7 +51,48 @@ document.addEventListener('DOMContentLoaded', () => {
     const debugStartButton = document.getElementById('debug-start-btn');
     const DEV_MODE = true; 
 
+    // Instantiate UI Manager immediately
     const uiManager = new UIManager(Logger);
+
+    // --- PHASE 0: PRE-INITIALIZE GAME SERVICES ---
+    // Establish a dormant game session so the Debug Menu can be invoked on the title screen
+    const gameState = new GameState();
+    gameState.startNewGame(''); 
+    
+    const newsTickerService = new NewsTickerService(gameState); 
+    const missionService = new MissionService(gameState, uiManager, Logger);
+    const simulationService = new SimulationService(gameState, uiManager, Logger, newsTickerService);
+    let debugService = null;
+
+    if (DEV_MODE) {
+        debugService = new DebugService(gameState, simulationService, uiManager, Logger);
+        debugService.init();
+        uiManager.setDebugService(debugService);
+    }
+    
+    uiManager.setNewsTickerService(newsTickerService); 
+    uiManager.setMissionService(missionService);
+    uiManager.setSimulationService(simulationService);
+    simulationService.setMissionService(missionService);
+    missionService.setSimulationService(simulationService);
+    
+    const eventManager = new EventManager(gameState, simulationService, uiManager, debugService, Logger);
+    uiManager.setEventManager(eventManager);
+    
+    gameState.subscribe(() => uiManager.render(gameState.getState()));
+    eventManager.bindEvents();
+    
+    if (DEV_MODE || true) {
+        window.game = {
+            gameState,
+            simulationService,
+            missionService,
+            uiManager,
+            eventManager,
+            debugService
+        };
+        console.log("Game services exposed to window.game");
+    }
 
     const eulaCheckbox = document.getElementById('eula-checkbox');
     const eulaContainer = document.getElementById('eula-container');
@@ -224,17 +265,14 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- BASE64 HELPER UTILITIES (Prevents payload truncation & handles Unicode backwards-compatibility) ---
     function utf8ToBase64(str) {
-        // Fast, native encoding that handles Unicode without bloating
         return window.btoa(unescape(encodeURIComponent(str)));
     }
 
     function base64ToUtf8(b64) {
         const decodedRaw = window.atob(b64);
         try {
-            // Modern, efficient unescape mechanism
             return decodeURIComponent(escape(decodedRaw));
         } catch (e) {
-            // Legacy Fallback: Recovers saves exported from the very first V1 implementation
             try {
                 return decodeURIComponent(decodedRaw);
             } catch (legacyErr) {
@@ -267,7 +305,6 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const jsonString = JSON.stringify(allSaves);
-            // Uses unified Base64 encoder ensuring minimal footprint and valid parsing
             cachedExportCode = utf8ToBase64(jsonString);
         } catch (error) {
             console.error("[Backup] Pre-generation failed:", error);
@@ -294,7 +331,6 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         try {
-            // Clipboard API (Works on HTTPS/Localhost)
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(cachedExportCode).then(() => {
                     triggerSuccessVisuals();
@@ -343,7 +379,6 @@ document.addEventListener('DOMContentLoaded', () => {
     importDataTextarea.addEventListener('input', resetImportButton);
 
     importSavesBtn.addEventListener('click', async () => {
-        // Strip all whitespace/newlines that might be introduced by textarea or iOS pasting
         const b64Data = importDataTextarea.value.replace(/\s+/g, '');
         if (!b64Data) {
             showOptionsStatus('Please paste a backup code first.', true);
@@ -359,7 +394,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         try {
-            // Decode cleanly via the unified decoder to ensure legacy compatibility
             const jsonString = base64ToUtf8(b64Data);
             const parsedSaves = JSON.parse(jsonString);
             
@@ -368,7 +402,6 @@ document.addEventListener('DOMContentLoaded', () => {
             
             for (const slotId of slots) {
                 if (parsedSaves[slotId] && parsedSaves[slotId].state) {
-                    // This call securely syncs to IDB and the native iOS bridge
                     await saveStorageService.saveGame(slotId, parsedSaves[slotId]);
                     importedCount++;
                 }
@@ -377,8 +410,8 @@ document.addEventListener('DOMContentLoaded', () => {
             if (importedCount > 0) {
                 importDataTextarea.value = '';
                 showOptionsStatus(`Successfully restored ${importedCount} save(s)!`);
-                await refreshSlotUI(); // Refresh UI to show the imported slots
-                preGenerateExportCode(); // Update the export field with newly loaded data
+                await refreshSlotUI(); 
+                preGenerateExportCode(); 
             } else {
                 showOptionsStatus('Invalid backup code. No valid saves found.', true);
             }
@@ -420,7 +453,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    // EULA Link Binding
     if (splashScreen) {
         splashScreen.addEventListener('click', (e) => {
             const actionTarget = e.target.closest('[data-action]');
@@ -456,6 +488,13 @@ document.addEventListener('DOMContentLoaded', () => {
         window.addEventListener('resize', setAppHeight);
     }
 
+    // Opens the persistent global debug menu natively from the splash screen
+    debugStartButton.addEventListener('click', () => {
+        if (debugService) {
+            debugService.toggleVisibility();
+        }
+    });
+
     // --- V4 SAVE SYSTEM: Execution Pipeline ---
     async function executeStartGame(type, slotId, isSimpleStart = false) {
         splashScreen.classList.add('splash-screen-hiding');
@@ -470,9 +509,7 @@ document.addEventListener('DOMContentLoaded', () => {
             if (type === 'load' && payload) {
                 AssetService.hydrateGameAssets(payload.state);
             } else {
-                const tempState = new GameState();
-                tempState.startNewGame('');
-                AssetService.hydrateGameAssets(tempState.getState());
+                AssetService.hydrateGameAssets(gameState.getState());
             }
         } catch (e) {
             console.warn("[Main] Pre-flight hydration warning:", e);
@@ -480,48 +517,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
         splashScreen.addEventListener('animationend', () => {
             splashScreen.style.display = 'none';
-            startGame({ type, slotId, payload, isSimpleStart }, uiManager, Logger);
+            startGame({ type, slotId, payload, isSimpleStart });
         }, { once: true });
     }
-    
-    debugStartButton.addEventListener('click', () => {
-        if (checkEula()) {
-            executeStartGame('new', 'slot_1', true);
-        }
-    });
 
     /**
-     * Instantiates all core game services, establishes their dependencies,
-     * loads saved data or starts a new game, and binds all necessary event listeners.
+     * Executes the hand-off to the active game layer.
      */
-    function startGame(initData, uiManager, logger) {
-        const gameState = new GameState();
-        const newsTickerService = new NewsTickerService(gameState); 
-        const missionService = new MissionService(gameState, uiManager, logger);
-        const simulationService = new SimulationService(gameState, uiManager, logger, newsTickerService);
-        let debugService = null;
-
-        if (DEV_MODE) {
-            debugService = new DebugService(gameState, simulationService, uiManager, logger);
-            debugService.init();
-            uiManager.setDebugService(debugService);
-        }
-        
-        uiManager.setNewsTickerService(newsTickerService); 
-        uiManager.setMissionService(missionService);
-        uiManager.setSimulationService(simulationService);
-        simulationService.setMissionService(missionService);
-        missionService.setSimulationService(simulationService);
-        const eventManager = new EventManager(gameState, simulationService, uiManager, debugService, logger);
-        uiManager.setEventManager(eventManager);
-        
-        gameState.subscribe(() => uiManager.render(gameState.getState()));
-
+    function startGame(initData) {
         const hasSave = initData.type === 'load' && initData.payload;
 
         if (hasSave) {
             gameState.importMergedState(initData.payload);
         } else {
+            // Reset to clean state just in case the debug menu mutated the global state
             gameState.startNewGame('');
             gameState.slotId = initData.slotId; 
 
@@ -531,19 +540,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 simulationService.timeService.advanceDays(7);
                 simulationService.startIntroSequence();
             }
-        }
-
-        eventManager.bindEvents();
-        
-        if (DEV_MODE || true) {
-            window.game = {
-                gameState,
-                simulationService,
-                missionService,
-                uiManager,
-                eventManager
-            };
-            console.log("Game services exposed to window.game");
         }
 
         if (hasSave || initData.isSimpleStart) {

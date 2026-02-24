@@ -973,22 +973,59 @@ card.
     width: 100vw;
     height: 100dvh;
     z-index: 45; /* Below modals (z-index 50) but above UI */
-    background: radial-gradient(circle at center, #1a2030 0%, #050811 100%);
-    background-size: 200% 200%;
-    animation: slow-pan-starfield 30s ease-in-out infinite alternate;
+    background-color: #000000;
+    box-shadow: inset 0 0 150px 50px rgba(0,0,0,1); /* Vignette Bordering */
     display: flex;
     flex-direction: column;
     justify-content: center;
     align-items: center;
     color: #fff;
-    /* Fade in on creation */
     opacity: 0;
-    animation: fadeIn 1s ease-out forwards, slow-pan-starfield 30s ease-in-out infinite alternate;
+    animation: fadeIn 1s ease-out forwards;
+    overflow: hidden; /* Ensures parallax elements don't stretch layout */
 }
 
-@keyframes slow-pan-starfield {
-    0% { background-position: 0% 50%; }
-    100% { background-position: 100% 50%; }
+/* Background & Twinkling Stars */
+.intro-starfield-bg::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -2;
+    background-image: 
+        radial-gradient(1px 1px at 15px 25px, #f0f8ff 50%, transparent 100%), /* Ice blue */
+        radial-gradient(1px 1px at 50px 75px, #fffafa 50%, transparent 100%), /* Warm white */
+        radial-gradient(1.5px 1.5px at 110px 40px, #e2e8f0 50%, transparent 100%),
+        radial-gradient(1.5px 1.5px at 180px 130px, #fdfbf7 50%, transparent 100%); /* Pale yellow */
+    background-size: 100px 100px, 150px 150px, 200px 200px, 250px 250px;
+    animation: star-drift-slow 40s linear infinite, star-twinkle 4s ease-in-out infinite alternate;
+}
+
+/* Constant, Fast Foreground Stars */
+.intro-starfield-bg::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    z-index: -1;
+    background-image: 
+        radial-gradient(2px 2px at 60px 180px, #ffffff 50%, transparent 100%),
+        radial-gradient(2.5px 2.5px at 220px 20px, #fdfbf7 50%, transparent 100%);
+    background-size: 300px 300px, 350px 350px;
+    animation: star-drift-fast 15s linear infinite;
+}
+
+@keyframes star-drift-slow {
+    0% { background-position: 0px 0px, 0px 0px, 0px 0px, 0px 0px; }
+    100% { background-position: -100px 100px, -150px 150px, -200px 200px, -250px 250px; }
+}
+
+@keyframes star-drift-fast {
+    0% { background-position: 0px 0px, 0px 0px; }
+    100% { background-position: -600px 600px, -800px 800px; }
+}
+
+@keyframes star-twinkle {
+    0% { opacity: 0.5; }
+    100% { opacity: 1; }
 }
 
 /* Role-specific pulse borders */
@@ -1023,6 +1060,8 @@ card.
     margin-bottom: 2rem;
     flex-wrap: wrap;
     justify-content: center;
+    position: relative;
+    z-index: 10;
 }
 
 .starter-thumbnail-btn {
@@ -1090,10 +1129,32 @@ card.
     line-height: 1.5;
     box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
     margin: 0 1rem;
+    position: relative;
+    z-index: 10;
 }
 
 /* Modifies the width by -15% (340px max) */
 .intro-modal-width {
     width: 85% !important;
     max-width: 340px !important;
+}
+
+/* --- INTRO SEQUENCE TRANSITIONS --- */
+@keyframes blur-fade-out {
+    0% { opacity: 1; filter: blur(0px); }
+    100% { opacity: 0; filter: blur(10px); }
+}
+
+@keyframes blur-fade-in {
+    0% { opacity: 0; filter: blur(10px); }
+    100% { opacity: 1; filter: blur(0px); }
+}
+
+.blur-fade-out {
+    animation: blur-fade-out 2s ease-in-out forwards;
+    pointer-events: none;
+}
+
+.blur-fade-in {
+    animation: blur-fade-in 2s ease-in-out forwards;
 }
