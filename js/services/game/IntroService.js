@@ -377,9 +377,10 @@ export class IntroService {
         this.gameState.player.inventories[shipId] = {};
 
         // Prepare the Game UI Container before calling _end() so it does not instantly appear
-        const gameContainer = document.querySelector('.game-container');
+        const gameContainer = document.getElementById('game-container');
         if (gameContainer) {
-            // Keep it visually hidden under the starfield overlay layer
+            // Suppress the native background/opacity transitions temporarily
+            gameContainer.style.transition = 'none';
             gameContainer.style.opacity = '0';
             gameContainer.style.filter = 'blur(10px)';
         }
@@ -387,29 +388,33 @@ export class IntroService {
         // Boot the core game loop, generating the Hangar layout invisibly
         this._end();
 
-        // Hold for the remaining 2 seconds of the Starfield scene (Reduced from 4s)
+        // Hold for the remaining 2 seconds of the Starfield scene
         await new Promise(res => setTimeout(res, 2000));
 
         // [Phase 3: 4-6s] Crossfade
-        // Fade the starfield overlay out WITHOUT overwriting the CSS animation to prevent the jitter/jump
         if (overlay) {
-            overlay.style.transition = 'opacity 2s ease-in-out, filter 2s ease-in-out';
-            overlay.style.opacity = '0';
-            overlay.style.filter = 'blur(10px)';
             overlay.style.pointerEvents = 'none';
+            // Use Web Animations API so UIManager's class wiping doesn't interrupt it
+            overlay.animate([
+                { opacity: 1, filter: 'blur(0px)' },
+                { opacity: 0, filter: 'blur(10px)' }
+            ], { duration: 2000, easing: 'ease-in-out', fill: 'forwards' });
         }
         
         if (gameContainer) {
-            // Add the animation class immediately while the inline styles hold the element fully invisible.
-            // This prevents a 1-frame pop that occurs if inline styles are removed prior to the CSS animation initializing.
-            gameContainer.classList.add('blur-fade-in');
+            // Strip the inline overrides so it targets its true default state (Opacity 1)
+            gameContainer.style.opacity = '';
+            gameContainer.style.filter = '';
+            
+            // Execute animation independently of CSS classes
+            gameContainer.animate([
+                { opacity: 0, filter: 'blur(10px)' },
+                { opacity: 1, filter: 'blur(0px)' }
+            ], { duration: 2000, easing: 'ease-in-out' });
             
             // Final cleanup after crossfade completes
             setTimeout(() => {
-                // Strip inline overrides only after the forward-filling animation has reached its end state (opacity 1)
-                gameContainer.style.opacity = '';
-                gameContainer.style.filter = '';
-                gameContainer.classList.remove('blur-fade-in');
+                gameContainer.style.transition = ''; // Restore CSS transitions
                 if (overlay) overlay.remove();
             }, 2000);
         }
