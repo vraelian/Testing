@@ -243,31 +243,47 @@ export class UISolStationControl {
         // --- 2. SCROLL HANDLER (LIVE CAPTURE) ---
         const sc = document.getElementById('event-description');
         if (sc) {
-            // Remove old listener if exists
+            // Remove old listeners if exists
             if (this._scrollHandler) {
+                sc.removeEventListener('scroll', this._scrollHandler, { capture: true });
                 sc.removeEventListener('scroll', this._scrollHandler);
             }
 
-            // Create new handler
+            // Create new capture handler
             this._scrollHandler = (e) => {
-                if (this.currentView) {
-                    this.scrollMemory[this.currentView] = e.target.scrollTop;
+                if (this.currentView && e.target && e.target.id) {
+                    if (typeof this.scrollMemory[this.currentView] !== 'object') {
+                        this.scrollMemory[this.currentView] = {};
+                    }
+                    this.scrollMemory[this.currentView][e.target.id] = e.target.scrollTop;
                 }
             };
 
-            // Bind passive listener for performance
-            sc.addEventListener('scroll', this._scrollHandler, { passive: true });
+            // Bind passive listener with capture to intercept nested scrolls
+            sc.addEventListener('scroll', this._scrollHandler, { capture: true, passive: true });
         }
     }
 
     _restoreScrollPosition() {
-        const targetScroll = this.scrollMemory[this.currentView] || 0;
-        const sc = document.getElementById('event-description');
-        if (sc) {
-            requestAnimationFrame(() => {
-                sc.scrollTop = targetScroll;
-            });
-        }
+        if (!this.currentView || !this.scrollMemory[this.currentView]) return;
+        const memory = this.scrollMemory[this.currentView];
+        
+        requestAnimationFrame(() => {
+            if (typeof memory === 'object') {
+                const sc = document.getElementById('event-description');
+                if (sc && memory['event-description'] !== undefined) sc.scrollTop = memory['event-description'];
+                
+                const avail = document.getElementById('roster-avail-scroll');
+                if (avail && memory['roster-avail-scroll'] !== undefined) avail.scrollTop = memory['roster-avail-scroll'];
+                
+                const active = document.getElementById('roster-active-scroll');
+                if (active && memory['roster-active-scroll'] !== undefined) active.scrollTop = memory['roster-active-scroll'];
+            } else {
+                // Legacy fallback support if an old single numeric memory is detected
+                const sc = document.getElementById('event-description');
+                if (sc) sc.scrollTop = memory;
+            }
+        });
     }
 
     _buildDomCache(root) {
@@ -448,7 +464,7 @@ export class UISolStationControl {
         
         const sc = document.getElementById('event-description');
         if (sc && this._scrollHandler) {
-            sc.removeEventListener('scroll', this._scrollHandler);
+            sc.removeEventListener('scroll', this._scrollHandler, { capture: true });
         }
         
         this.domCache = null; 
@@ -492,11 +508,11 @@ export class UISolStationControl {
             <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 50vh; min-height: 350px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
-                    <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
+                    <div id="roster-avail-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
                 </div>
                 <div class="column-active flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">ACTIVE SLOTS</div>
-                    <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${slotsHtml}</div>
+                    <div id="roster-active-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${slotsHtml}</div>
                 </div>
             </div>
             
@@ -836,6 +852,15 @@ export class UISolStationControl {
         };
     }
 
+    _getOfficerBtnThemeClass(level) {
+        if (level < 10) return 'bg-gray-800 border border-gray-500';
+        if (level < 20) return 'bg-green-900 border border-green-500';
+        if (level < 30) return 'bg-blue-900 border border-blue-500';
+        if (level < 40) return 'bg-yellow-900 border border-yellow-500';
+        if (level < 50) return 'bg-orange-900 border border-orange-500';
+        return 'bg-red-900 border border-red-500';
+    }
+
     _buildDashboardHtml(gameState) {
         const station = this._getLiveStationState(gameState);
         const output = this._calculateProjections(gameState);
@@ -881,6 +906,8 @@ export class UISolStationControl {
                 </div>
             `;
         }
+
+        const officerBtnTheme = this._getOfficerBtnThemeClass(station.level);
 
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
@@ -969,7 +996,7 @@ export class UISolStationControl {
                 </div>
 
                 <div class="mt-4 pt-4 border-t border-gray-700">
-                    <button type="button" class="w-full bg-blue-900 border border-blue-500 text-white font-bold py-3 rounded uppercase tracking-wider shadow-lg transition-transform hover:scale-[1.02]" data-local-action="open-officer-mgmt">
+                    <button type="button" class="w-full ${officerBtnTheme} text-white font-bold py-3 rounded uppercase tracking-wider shadow-lg transition-transform hover:scale-[1.02]" data-local-action="open-officer-mgmt">
                         OFFICER MANAGEMENT
                     </button>
                 </div>

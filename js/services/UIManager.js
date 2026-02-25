@@ -340,6 +340,30 @@ export class UIManager {
         this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 
+    _preserveScrollAndRender(screenEl, renderCallback) {
+        if (!screenEl) {
+            renderCallback();
+            return;
+        }
+
+        // Capture scroll positions before wipe
+        const screenScrollTop = screenEl.scrollTop;
+        const childScrollTop = screenEl.firstElementChild ? screenEl.firstElementChild.scrollTop : 0;
+
+        // Execute the render (overwrites innerHTML)
+        renderCallback();
+
+        // Restore after DOM update
+        requestAnimationFrame(() => {
+            if (screenScrollTop > 0) {
+                screenEl.scrollTop = screenScrollTop;
+            }
+            if (childScrollTop > 0 && screenEl.firstElementChild) {
+                screenEl.firstElementChild.scrollTop = childScrollTop;
+            }
+        });
+    }
+
     renderActiveScreen(gameState, previousState) {
         if (previousState && 
             previousState.activeScreen === SCREEN_IDS.SERVICES && 
@@ -365,14 +389,18 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
-                if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
+                this._preserveScrollAndRender(this.cache.servicesScreen, () => {
+                    this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
+                    if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
+                });
                 break;
             case SCREEN_IDS.MARKET:
                 this.marketControl.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
-                this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
+                this._preserveScrollAndRender(this.cache.cargoScreen, () => {
+                    this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
+                });
                 break;
             case SCREEN_IDS.HANGAR:
                 const needsFullRender = !previousState || 
@@ -387,10 +415,14 @@ export class UIManager {
                 this.hangarControl.updateHangarScreen(gameState);
                 break;
             case SCREEN_IDS.MISSIONS:
-                this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                this._preserveScrollAndRender(this.cache.missionsScreen, () => {
+                    this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                });
                 break;
             case SCREEN_IDS.FINANCE:
-                this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
+                this._preserveScrollAndRender(this.cache.financeScreen, () => {
+                    this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
+                });
                 break;
             case SCREEN_IDS.INTEL:
                 if (!previousState || previousState.activeScreen !== SCREEN_IDS.INTEL) {

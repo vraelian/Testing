@@ -1,6 +1,6 @@
 // js/services/world/TimeService.js
 import { DB } from '../../data/database.js';
-import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES } from '../../data/constants.js';
+import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
@@ -125,7 +125,12 @@ export class TimeService {
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
-                this.marketService._updateShipyardStock(); 
+                
+                // Do not cycle upgrades/shipyard if currently docked at Sol Station
+                if (this.gameState.currentLocationId !== 'sol' && this.gameState.currentLocationId !== LOCATION_IDS.SUN) {
+                    this.marketService._updateShipyardStock(); 
+                }
+                
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 

@@ -85,17 +85,22 @@ export class ToastService {
 
         // 2. Finance Check (Loans nearing garnishment)
         if (state.player.debt > 0) {
-            let daysRemaining = 199; // Fallback assumes imminent payment if loanDay tracking isn't hydrated
-            if (state.player.loanDay !== undefined) {
-                daysRemaining = (state.player.loanDay + GAME_RULES.LOAN_GARNISHMENT_DAYS) - state.day;
+            let daysRemaining = 199; // Fallback assumes imminent payment if loanStartDate tracking isn't hydrated
+            if (state.player.loanStartDate !== undefined && state.player.loanStartDate !== null) {
+                daysRemaining = (state.player.loanStartDate + GAME_RULES.LOAN_GARNISHMENT_DAYS) - state.day;
             }
             
             if (daysRemaining < 200) {
+                let message = `Loan due within ${Math.max(0, daysRemaining)} days!`;
+                if (daysRemaining <= 0) {
+                    message = "Credits garnished for debt!";
+                }
+
                 triggers.push({
                     priority: 2,
                     type: 'finance',
                     title: 'FINANCE ALERT',
-                    message: `Active loan payment due in ${Math.max(0, daysRemaining)} days.`,
+                    message: message,
                     navTarget: 'data',
                     actionTarget: 'finance'
                 });

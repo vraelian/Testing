@@ -87,9 +87,9 @@ export function renderCargoScreen(gameState, simulationService) {
                 <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: space-between;">
                     <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${usedCapStr}/${totalCapStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
-                    <div><span class="cargo-band-label">COST BASIS:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${costStr}</span></div>
+                    <div><span class="cargo-band-label">COST:</span> <span class="credits-text-pulsing font-bold" style="font-size: 0.95em;">⌬ ${costStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
-                    <div><span class="cargo-band-label">LOCAL VALUE:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${localStr}</span></div>
+                    <div><span class="cargo-band-label">VALUE:</span> <span class="credits-text-pulsing font-bold" style="font-size: 0.95em;">⌬ ${localStr}</span></div>
                 </div>
             `;
         } else {

@@ -374,7 +374,11 @@ export class IntroService {
             fuel: shipStatic.maxFuel,
             upgrades: []
         };
+        
         this.gameState.player.inventories[shipId] = {};
+        DB.COMMODITIES.forEach(c => {
+            this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 };
+        });
 
         // Prepare the Game UI Container before calling _end() so it does not instantly appear
         const gameContainer = document.getElementById('game-container');
