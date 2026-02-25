@@ -483,7 +483,7 @@ export class ActionClickHandler {
                     playerStock += (this.gameState.player.inventories[shipId]?.[commId]?.quantity || 0);
                 }
 
-                const spaceAvailable = cache.max - cache.current;
+                const spaceAvailable = Math.floor(cache.max - cache.current);
                 const donateAmount = Math.min(playerStock, spaceAvailable);
 
                 if (donateAmount > 0) {

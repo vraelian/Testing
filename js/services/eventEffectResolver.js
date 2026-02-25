@@ -5,11 +5,13 @@
  * apply the consequences of player choices during events.
  * UPDATED: Added Math.round() to enforce integer values and preventing float drift.
  * UPDATED: Fleet Overflow logic applied to all cargo rewards and penalties.
+ * UPDATED: Added GRANT_OFFICER handler for acquiring Sol Station Directorate officers.
  */
 import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
+import { OFFICERS } from '../data/officers.js';
 import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER, LOCATION_IDS } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
@@ -20,6 +22,29 @@ const effectHandlers = {
     // --- Custom, Complex Event Handlers ---
     'SPACE_RACE': resolveSpaceRace,
     'ADRIFT_PASSENGER': resolveAdriftPassenger,
+
+    // --- Special Acquisition Handlers ---
+    'GRANT_OFFICER': (gameState, simulationService, effect, outcome) => {
+        const officerId = effect.target;
+        gameState.player.officerRoster = gameState.player.officerRoster || [];
+
+        if (!gameState.player.officerRoster.includes(officerId)) {
+            gameState.player.officerRoster.push(officerId);
+            
+            const officerName = OFFICERS[officerId] ? OFFICERS[officerId].name : officerId;
+            
+            if (outcome) {
+                outcome.text += `<br><br><span class="text-green-400 font-bold tracking-wider">Recruited Officer: ${officerName}</span>`;
+            }
+
+            return { addedOfficer: officerName };
+        } else {
+            if (outcome) {
+                 const officerName = OFFICERS[officerId] ? OFFICERS[officerId].name : officerId;
+                 outcome.text += ` (Received contract for ${officerName}, but they are already in your roster.)`;
+            }
+        }
+    },
 
     // --- Standard, Reusable Effect Handlers ---
     

@@ -386,7 +386,8 @@ export class UISolStationControl {
         Object.entries(station.caches).forEach(([commId, cache]) => {
             if (commId !== COMMODITY_IDS.FOLDED_DRIVES) {
                 const playerStock = playerInventory[commId]?.quantity || 0;
-                const canDonate = playerStock > 0 && cache.current < cache.max;
+                // STRICT ENFORCEMENT: Only enable if at least 1.0 full units are needed
+                const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const ui = c.caches[commId];
                 if (ui && ui.btn) {
                     ui.btn.disabled = !canDonate;
@@ -625,20 +626,55 @@ export class UISolStationControl {
         const baseStyle = "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.4;";
 
         let buffsHtml = '';
-        if (officer.buffs.entropy !== 0) buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-red-300 font-bold uppercase tracking-wider">ENTROPY:</span><br/> ${officer.buffs.entropy > 0 ? '+' : ''}${Math.round(officer.buffs.entropy * 100)}%</div>`;
-        if (officer.buffs.creditMult !== 0) buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-green-300 font-bold uppercase tracking-wider">CREDIT YIELD:</span><br/> +${Math.round(officer.buffs.creditMult * 100)}%</div>`;
-        if (officer.buffs.amMult !== 0) buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-purple-300 font-bold uppercase tracking-wider">AM YIELD:</span><br/> +${Math.round(officer.buffs.amMult * 100)}%</div>`;
+        
+        // Helper to consistently format stat rows with color-coded logic
+        const formatStatRow = (label, valueStr, isGood) => {
+            const colorClass = isGood ? 'text-green-400' : 'text-red-400';
+            return `
+                <div class="flex justify-between items-center mb-1 pb-1 border-b border-gray-800/50 last:border-0" style="${baseStyle}">
+                    <span class="text-gray-400 font-bold uppercase tracking-wider text-[10px]">${label}</span>
+                    <span class="${colorClass} font-mono font-bold text-xs">${valueStr}</span>
+                </div>
+            `;
+        };
+
+        if (officer.buffs.entropy !== 0) {
+            // Lower entropy is beneficial
+            const isGood = officer.buffs.entropy < 0;
+            const sign = officer.buffs.entropy > 0 ? '+' : '';
+            buffsHtml += formatStatRow('ENTROPY', `${sign}${Math.round(officer.buffs.entropy * 100)}%`, isGood);
+        }
+        if (officer.buffs.creditMult !== 0) {
+            // Higher yield is beneficial
+            const isGood = officer.buffs.creditMult > 0;
+            const sign = officer.buffs.creditMult > 0 ? '+' : '';
+            buffsHtml += formatStatRow('CREDIT YIELD', `${sign}${Math.round(officer.buffs.creditMult * 100)}%`, isGood);
+        }
+        if (officer.buffs.amMult !== 0) {
+            // Higher yield is beneficial
+            const isGood = officer.buffs.amMult > 0;
+            const sign = officer.buffs.amMult > 0 ? '+' : '';
+            buffsHtml += formatStatRow('AM YIELD', `${sign}${Math.round(officer.buffs.amMult * 100)}%`, isGood);
+        }
         
         if (officer.buffs.capacityMods) {
             Object.entries(officer.buffs.capacityMods).forEach(([k, v]) => {
                 const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-blue-300 font-bold uppercase tracking-wider">+ CAPACITY:</span><br/> ${cName} (${v.toLocaleString()})</div>`;
+                // Higher capacity is beneficial
+                const isGood = v > 0;
+                const sign = v > 0 ? '+' : '';
+                buffsHtml += formatStatRow(`${cName.toUpperCase()} CAP`, `${sign}${v.toLocaleString()}`, isGood);
             });
         }
+        
         if (officer.buffs.consumptionMods) {
             Object.entries(officer.buffs.consumptionMods).forEach(([k, v]) => {
                 const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-yellow-300 font-bold uppercase tracking-wider">- CONSUMPTION:</span><br/> ${cName} (-${Math.round(v * 100)}%)</div>`;
+                // v > 0 mathematically means reduced burn (GOOD). We invert it for player display so v=0.35 shows as "-35% BURN"
+                const isGood = v > 0;
+                const displayVal = -v; 
+                const sign = displayVal > 0 ? '+' : '';
+                buffsHtml += formatStatRow(`${cName.toUpperCase()} BURN`, `${sign}${Math.round(displayVal * 100)}%`, isGood);
             });
         }
 
@@ -647,22 +683,22 @@ export class UISolStationControl {
                 <div class="sol-level-header ${rarityColor} text-[22px] tracking-wider uppercase text-center w-full">${officer.name}</div>
             </div>
             
-            <div class="flex flex-col p-5 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
-                <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-2">
+            <div class="flex flex-col p-4 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
+                <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
                     <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">${officer.role}</div>
                     <div class="text-[10px] font-bold uppercase px-2 py-1 rounded border border-gray-600 ${rarityColor} opacity-80">
                         ${(officer.rarity || 'common').replace('_', ' ')}
                     </div>
                 </div>
                 
-                <div class="text-sm text-gray-300 mb-6 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans">
+                <div class="text-sm text-gray-300 mb-4 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans max-h-32 overflow-y-auto" style="scrollbar-width: thin;">
                     "${officer.lore}"
                 </div>
                 
-                <div class="w-full flex flex-col" style="max-height: 200px;">
+                <div class="w-full flex flex-col" style="max-height: 220px;">
                     <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-widest">Influence</div>
                     <div class="flex-1 overflow-y-auto bg-black/50 p-3 rounded border border-gray-800" style="scrollbar-width: thin;">
-                        ${buffsHtml || '<div class="text-sm text-gray-500">No measurable influence.</div>'}
+                        ${buffsHtml || '<div class="text-sm text-gray-500 text-center italic mt-2">No measurable influence.</div>'}
                     </div>
                 </div>
             </div>
@@ -1065,7 +1101,8 @@ export class UISolStationControl {
 
                 const fillPct = (cache.current / cache.max) * 100;
                 const playerStock = playerInventory[commodityId]?.quantity || 0;
-                const canDonate = playerStock > 0 && cache.current < cache.max;
+                // STRICT ENFORCEMENT: Only enable if at least 1.0 full units are needed
+                const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
                 const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);

@@ -482,6 +482,9 @@ export class SolStationService {
     donateToCache(commodityId, quantity) {
         this._syncTime(); 
 
+        // Enforce strictly integer inputs for cache transfers
+        quantity = Math.floor(quantity);
+
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
 
@@ -496,7 +499,8 @@ export class SolStationService {
             return { success: false, message: "Insufficient fleet cargo." };
         }
         
-        const spaceAvailable = cache.max - cache.current;
+        // Strictly evaluate remaining floor capacity
+        const spaceAvailable = Math.floor(cache.max - cache.current);
         if (quantity > spaceAvailable) {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
