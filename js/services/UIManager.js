@@ -452,7 +452,8 @@ export class UIManager {
         }
         if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.FINANCE) return 'finance';
         if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.INTEL) {
-            return uiState.activeIntelTab === 'market' ? 'intel-market' : 'intel-codex';
+            // Evaluates using the correct DOM ID reference
+            return uiState.activeIntelTab === 'intel-market-content' ? 'intel-market' : 'intel-codex';
         }
         return null;
     }

@@ -390,25 +390,23 @@ export class ActionClickHandler {
                 const { target, navTarget } = dataset;
                 if (navTarget && target) {
                     
-                    // 1. Navigate to the base screen FIRST (triggers HTML injection)
+                    // 1. Pre-configure the UI state BEFORE triggering the screen transition.
+                    // Copy current uiState to apply the correct DOM ID mutations
+                    const newUiState = { ...state.uiState };
+
+                    if (target === 'intel') {
+                        newUiState.activeIntelTab = 'intel-market-content';
+                    } else if (target === 'missions') {
+                        newUiState.activeMissionTab = 'terminal';
+                    }
+                    
+                    // 2. Commit the mutated UI state to the live GameState 
+                    this.gameState.setState({ uiState: newUiState });
+
+                    // 3. Route to the intended screen (triggers single cohesive render)
                     this.simulationService.setScreen(navTarget, target);
 
-                    // 2. Queue the sub-tab state change after the DOM has definitively painted
-                    setTimeout(() => {
-                        if (target === 'intel') {
-                            this.gameState.uiState.activeIntelTab = null; // Force inequality to guarantee update
-                            this.simulationService.setIntelTab('market');
-                        } else if (target === 'missions') {
-                            this.gameState.setState({
-                                uiState: {
-                                    ...this.gameState.getState().uiState,
-                                    activeMissionTab: 'terminal'
-                                }
-                            });
-                        }
-                    }, 50);
-
-                    // 3. Manually dismiss the toast so it doesn't linger
+                    // 4. Manually dismiss the toast so it doesn't linger
                     if (this.uiManager.toastManager) {
                         this.uiManager.toastManager.hideToast();
                     }

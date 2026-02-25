@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.25] - 2026-2-24
+-  added toast system v1
+
 # [36.24] - 2026-2-23
 -  updated helper-modal writing
 -  helper-modal system polish
