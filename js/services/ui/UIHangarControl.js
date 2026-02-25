@@ -181,6 +181,9 @@ export class UIHangarControl {
         const modalContent = modal.querySelector('.modal-content');
         let modalContentHtml;
 
+        // Ensure clean slate for themes
+        modalContent.classList.remove('modal-theme-amber', 'modal-theme-blue', 'modal-theme-green');
+
         if (context === 'shipyard' || context === 'intro_shipyard') {
             const canAfford = player.credits >= shipStatic.price;
             let isDisabled = false;
@@ -191,6 +194,15 @@ export class UIHangarControl {
                 isDisabled = !canAfford; 
                 actionId = ACTION_IDS.INTRO_BUY_SHIP;
                 modalContent.classList.add('intro-modal-width');
+                
+                // Set Theme styling based on role
+                if (shipStatic.role === 'Explorer') {
+                    modalContent.classList.add('modal-theme-blue');
+                } else if (shipStatic.role === 'Balanced') {
+                    modalContent.classList.add('modal-theme-green');
+                } else if (shipStatic.role === 'Hauler') {
+                    modalContent.classList.add('modal-theme-amber');
+                }
             } else {
                 const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
                 isDisabled = !canAfford || isHangarTutStep1Active;
@@ -212,12 +224,19 @@ export class UIHangarControl {
 
             // Swap to short description instead of lore for the intro
             const textContent = context === 'intro_shipyard' ? shipStatic.description : shipStatic.lore;
+            
+            // Add style for font size explicitly for intro context
+            const titleStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.25rem + 2pt);"' : '';
+
+            const btnHtml = context === 'intro_shipyard' 
+                ? `<button id="intro-purchase-btn" class="btn w-full mt-2" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`
+                : `<button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`;
 
             modalContentHtml = `
                 <div class="ship-card p-4 flex flex-col space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                             <h3 class="text-xl font-orbitron text-cyan-300">${shipStatic.name}</h3>
+                             <h3 class="text-xl font-orbitron text-cyan-300" ${titleStyle}>${shipStatic.name}</h3>
                             <p class="text-sm text-gray-400">Class ${shipStatic.class}</p>
                          </div>
                         <div class="text-right">
@@ -231,7 +250,7 @@ export class UIHangarControl {
                         <div><span class="text-gray-500">Fuel:</span><br><span class="text-sky-400">${shipStatic.maxFuel}</span></div>
                         <div><span class="text-gray-500">Cargo:</span><br><span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
                     </div>
-                     <button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
+                     ${btnHtml}
                 </div>`;
 
         } else { // context === 'hangar'
@@ -310,6 +329,23 @@ export class UIHangarControl {
 
         const modalContentTarget = modal.querySelector('#ship-detail-content');
         modalContentTarget.innerHTML = modalContentHtml;
+
+        // Intro Purchase Two-Step Verification Listener
+        if (context === 'intro_shipyard') {
+            const purchaseBtn = modalContentTarget.querySelector('#intro-purchase-btn');
+            if (purchaseBtn) {
+                purchaseBtn.addEventListener('click', (e) => {
+                    if (purchaseBtn.dataset.confirmed !== 'true') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        purchaseBtn.dataset.confirmed = 'true';
+                        purchaseBtn.textContent = 'Confirm Purchase?';
+                        purchaseBtn.classList.add('btn-confirm-purchase');
+                        purchaseBtn.setAttribute('data-action', ACTION_IDS.INTRO_BUY_SHIP);
+                    }
+                });
+            }
+        }
 
         // Apply robust outside click dismissal strictly for intro_shipyard context
         if (context === 'intro_shipyard') {

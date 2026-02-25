@@ -377,7 +377,7 @@ export class IntroService {
         this.gameState.player.inventories[shipId] = {};
 
         // Prepare the Game UI Container before calling _end() so it does not instantly appear
-        const gameContainer = document.getElementById('game-container');
+        const gameContainer = document.querySelector('.game-container');
         if (gameContainer) {
             // Keep it visually hidden under the starfield overlay layer
             gameContainer.style.opacity = '0';
@@ -400,10 +400,13 @@ export class IntroService {
         }
         
         if (gameContainer) {
+            // Add the animation class immediately while the inline styles hold the element fully invisible.
+            // This prevents a 1-frame pop that occurs if inline styles are removed prior to the CSS animation initializing.
             gameContainer.classList.add('blur-fade-in');
             
             // Final cleanup after crossfade completes
             setTimeout(() => {
+                // Strip inline overrides only after the forward-filling animation has reached its end state (opacity 1)
                 gameContainer.style.opacity = '';
                 gameContainer.style.filter = '';
                 gameContainer.classList.remove('blur-fade-in');

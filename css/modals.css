@@ -1234,3 +1234,28 @@
 .dashboard-fade-in {
     animation: fadeIn 1s ease-in forwards;
 }
+
+/* Intro Ship Themes */
+#ship-detail-modal .modal-content.modal-theme-amber {
+    background: linear-gradient(145deg, rgba(69, 42, 15, 0.9), #111827);
+    border-color: #fbbf24;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.4), inset 0 0 15px rgba(251, 191, 36, 0.2);
+}
+#ship-detail-modal .modal-content.modal-theme-blue {
+    background: linear-gradient(145deg, rgba(12, 74, 110, 0.9), #111827);
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2);
+}
+#ship-detail-modal .modal-content.modal-theme-green {
+    background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827);
+    border-color: #34d399;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.4), inset 0 0 15px rgba(52, 211, 153, 0.2);
+}
+
+.btn-confirm-purchase {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
+    font-weight: bold !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
+}

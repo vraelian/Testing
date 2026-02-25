@@ -136,7 +136,7 @@ The ship looks like it was scavenged rather than built. Its 'hull' is merely a s
         maxHealth: 40,
         cargoCapacity: 35,
         maxFuel: 150,
-        role: "Explorer",
+        role: "Balanced",
         attribute: "None",
         description: "Resembling a manned deep-space probe, its fragile, asymmetric frame carries massive fuel reserves at the cost of armor and crew comfort.",
         lore: `The Nomad, born from the Helium Rush, is a direct response to the chaos and opportunity of Luna's new economy.
@@ -672,7 +672,7 @@ This ship is a pure expression of ambition. It is a high-performance machine for
 
 These ships are rarely sold but instead are granted. They are given to Syndicate members who have provided the most compromising and lucrative information and have repeatedly proven their loyalty. To see one on the open market on Venus means its previous owner has been retired. Permanently.
 
-To acquire a Pterodactyl is to fly the flag of the Venetian Syndicate. It is a ship that announces its owner's ambition, a tool that seems to bend the laws of chance itself. It is the ultimate gambler's vessel, for the captain who knows that in the great game, you make your own luck.`,
+To acquire a Pterodactyl is to buy the flag of the Venetian Syndicate. It is a ship that announces its owner's ambition, a tool that seems to bend the laws of chance itself. It is the ultimate gambler's vessel, for the captain who knows that in the great game, you make your own luck.`,
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
