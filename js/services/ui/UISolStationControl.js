@@ -22,6 +22,7 @@ export class UISolStationControl {
         // Memory router to preserve scroll states across views
         this.currentView = null;
         this.scrollMemory = {};
+        this.isRestoringScroll = false; // Prevents browser DOM-reflows from overwriting saved scrolls
         
         // Handler references for cleanup
         this._clickHandler = null;
@@ -251,6 +252,8 @@ export class UISolStationControl {
 
             // Create new capture handler
             this._scrollHandler = (e) => {
+                if (this.isRestoringScroll) return; // Prevent DOM creation artifacts from overwriting the memory
+
                 if (this.currentView && e.target && e.target.id) {
                     if (typeof this.scrollMemory[this.currentView] !== 'object') {
                         this.scrollMemory[this.currentView] = {};
@@ -268,7 +271,9 @@ export class UISolStationControl {
         if (!this.currentView || !this.scrollMemory[this.currentView]) return;
         const memory = this.scrollMemory[this.currentView];
         
-        requestAnimationFrame(() => {
+        this.isRestoringScroll = true;
+
+        setTimeout(() => {
             if (typeof memory === 'object') {
                 const sc = document.getElementById('event-description');
                 if (sc && memory['event-description'] !== undefined) sc.scrollTop = memory['event-description'];
@@ -283,7 +288,12 @@ export class UISolStationControl {
                 const sc = document.getElementById('event-description');
                 if (sc) sc.scrollTop = memory;
             }
-        });
+
+            // Unlock scroll listening shortly after the browser executes the shift
+            setTimeout(() => {
+                this.isRestoringScroll = false;
+            }, 50);
+        }, 20);
     }
 
     _buildDomCache(root) {
@@ -506,7 +516,7 @@ export class UISolStationControl {
             <div class="sol-subview-header flex justify-between items-center mb-3">
                 <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 50vh; min-height: 350px;">
+            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 60vh; min-height: 420px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
                     <div id="roster-avail-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
