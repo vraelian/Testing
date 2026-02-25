@@ -1,5 +1,4 @@
-// js/services/world/TravelService.js
-
+// js/services/world/TravelService.js (Appended and Modified)
 /**
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
@@ -141,6 +140,11 @@ export class TravelService {
      * Executes the core travel logic: applies fuel costs and hull damage, advances time, and shows the animation.
      */
     initiateTravel(locationId, eventMods = {}) {
+        // --- HARD INTERRUPT: Clear Universal Toast Queue ---
+        if (this.simulationService.toastService) {
+            this.simulationService.toastService.clearQueueAndHide();
+        }
+
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         
@@ -418,6 +422,11 @@ export class TravelService {
             // [[FIXED]] Force Mission Trigger Check on Arrival
             if (this.simulationService.missionService) {
                 this.simulationService.missionService.checkTriggers();
+            }
+
+            // --- UNIVERSAL TOAST SYSTEM (Post-Arrival Notification Queue) ---
+            if (this.simulationService.toastService) {
+                this.simulationService.toastService.evaluateArrivalTriggers();
             }
 
             // --- SOL STATION: SYNC JIT STATE IF ARRIVING ---

@@ -224,3 +224,126 @@
     transform: translateY(-3px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
+
+/* --- Universal Toast System --- */
+#toast-container {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100%;
+    max-width: 600px;
+    height: 14vh;
+    z-index: 55; /* Beneath standard modals (60+), but above sticky bar (50) */
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    pointer-events: none; /* Let clicks pass through empty space */
+    padding-bottom: 1rem;
+}
+
+.toast-message {
+    width: 90%;
+    height: 100%;
+    max-height: 80px;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.5); /* White border glow */
+    pointer-events: auto; /* Re-enable clicks for the toast itself */
+    transform: translateY(150%);
+    transition: transform 0.3s ease-out;
+    position: relative;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    overflow: hidden; /* Clips the fuse to the bottom corners */
+}
+
+.toast-message.toast-slide-up {
+    transform: translateY(0);
+}
+
+.toast-message.toast-slide-down {
+    transform: translateY(150%);
+}
+
+/* Themes */
+.toast-system { border: 2px solid #2ecc71; background-color: #14532d; color: #fff; }
+.toast-finance { border: 2px solid #ef4444; background-color: #7f1d1d; color: #fff; }
+.toast-intel { border: 2px solid #a855f7; background-color: #4c1d95; color: #fff; }
+.toast-mission { border: 2px solid #3b82f6; background-color: #1e3a8a; color: #fff; }
+.toast-sol { border: 2px solid #f97316; background-color: #fbbf24; color: #000; }
+
+/* Readability overrides for bright Sol toast */
+.toast-sol .toast-title, .toast-sol .toast-body { text-shadow: none; font-weight: 500; }
+.toast-sol .toast-dismiss-btn { color: #000; }
+
+/* The Fuse (Duration Indicator) */
+.toast-fuse {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 4px;
+    background-color: rgba(255, 255, 255, 0.7);
+    width: 100%;
+    z-index: 0;
+}
+.toast-sol .toast-fuse { background-color: rgba(0, 0, 0, 0.4); } /* Darker fuse for light gold background */
+
+@keyframes toast-fuse-burn {
+    0% { width: 100%; }
+    100% { width: 0%; }
+}
+
+/* Layout within toast */
+.toast-content-wrapper {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    z-index: 1; /* Elevate above fuse */
+}
+
+.toast-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1rem;
+    font-weight: bold;
+    margin-bottom: 4px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+.toast-body {
+    font-family: 'Exo 2', sans-serif;
+    font-size: 0.85rem;
+    line-height: 1.2;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+
+/* Manual Dismiss button */
+.toast-dismiss-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: transparent;
+    border: none;
+    color: #fff;
+    font-size: 1.5rem;
+    padding: 12px 16px; /* 44x44 min touch target */
+    min-width: 44px;
+    min-height: 44px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    opacity: 0.8;
+    z-index: 1; /* Elevate above fuse */
+}
+
+.toast-dismiss-btn:hover {
+    opacity: 1;
+}

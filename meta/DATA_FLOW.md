@@ -213,7 +213,8 @@ graph TD
         J --> K[UIManager.render: New Location];
         J --> L{Event Triggered?};
         L -- Yes --> M[Show Event Modal];
-        F --> N[UIManager.render: Origin Location];
+        L -- No --> N[ToastService.evaluateArrivalTriggers];
+        F --> O[UIManager.render: Origin Location];
     end
 
 2.9 Event System 2.0 Resolution
@@ -391,4 +392,34 @@ graph TD
         D2 --> E2[Background: Heal IndexedDB];
         C2 -- No --> F2[Read from IndexedDB];
         E2 & F2 --> G2[Hydrate GameState];
+    end
+
+2.16 Universal Toast System Queue
+Flow for evaluating, capping, and rendering non-blocking notifications upon location arrival.
+
+graph TD
+    subgraph Trigger Post-Travel
+        A[Travel Animation Completes] --> B[ToastService.evaluateArrivalTriggers];
+    end
+
+    subgraph Logic & Culling
+        B --> C[Evaluate: Ship Systems, Finance, Intel, Missions];
+        C --> D[Sort Valid Triggers by Priority];
+        D --> E[Cull Queue to Max 2 Toasts];
+    end
+
+    subgraph Presentation Lifecycle
+        E --> F[1.0s Initial Delay];
+        F --> G[UIToastManager.showToast];
+        G --> H[Animate DOM Injection];
+        H -- 3.0s Duration --> I[UIToastManager.hideToast];
+        I --> J[Animate DOM Removal];
+        J -- 1.0s Interval Delay --> K{More in Queue?};
+        K -- Yes --> G;
+    end
+    
+    subgraph Interruption
+        L[Player Initiates New Travel] --> M[ToastService.clearQueueAndHide];
+        M --> N[Purge Queue & Timers];
+        N --> O[UIToastManager.forceClear];
     end

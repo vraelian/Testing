@@ -46,7 +46,9 @@
     "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data.",
     "Contextual_Help_Modal": "A strictly containerized, fixed-aspect-ratio modal that sits above the UI, providing context-sensitive assistance based on the player's current screen and sub-tab. Replaces legacy Popper.js tutorials.",
     "Micro-Pagination": "Navigation method within Help Modals utilizing horizontal swipe gestures (translating CSS X-axis) rather than vertical scrolling to prevent mobile gesture conflicts.",
-    "Global_Context_Anchor": "A persistent '?' icon overlaid on the viewport that, when tapped, queries the GameState to instantiate the relevant Help Modal."
+    "Global_Context_Anchor": "A persistent '?' icon overlaid on the viewport that, when tapped, queries the GameState to instantiate the relevant Help Modal.",
+    "Universal_Toast_System": "A scalable, non-blocking notification queue that triggers strictly upon location arrival, conveying critical system, financial, intel, and mission data. Capped at a maximum of two toasts per arrival.",
+    "Opt-In_Pulse": "A visual cue applied to the global help anchor to signal unread contextual information without intercepting the player's UI focus."
   },
   "service_summaries": {
     "SolStationService": {
@@ -103,7 +105,8 @@
         "NewsTickerService",
         "IntelService",
         "SolStationService",
-        "js/services/ui/AnimationService.js"
+        "js/services/ui/AnimationService.js",
+        "ToastService"
       ],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
@@ -305,8 +308,22 @@
         "player.credits"
       ]
     },
+    "ToastService": {
+      "description": "Manages the volatile notification queue, evaluates thresholds upon location arrival, sorts by priority, and culls excess alerts.",
+      "dependencies": [
+        "GameState",
+        "UIManager",
+        "SimulationService"
+      ],
+      "key_functions": {
+        "evaluateArrivalTriggers": "Checks state thresholds and populates the queue.",
+        "playNextInQueue": "Executes the timed lifecycle of a single toast.",
+        "clearQueueAndHide": "Hard interrupt to clear timeouts and dismiss toasts."
+      },
+      "mutates_state": []
+    },
     "UIManager": {
-      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`). Responsible for the main render loop and proxying logic to delegates.",
+      "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`). Responsible for the main render loop and proxying logic to delegates.",
       "dependencies": [
         "Logger",
         "EffectsManager",
@@ -317,7 +334,8 @@
         "UIMissionControl",
         "UIHangarControl",
         "UIEventControl",
-        "UISolStationControl"
+        "UISolStationControl",
+        "UIToastManager"
       ],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
@@ -346,6 +364,15 @@
         "hideModal": "Dismisses the modal back to the hidden state.",
         "nextPage": "Advances the slide track via X-axis calculation.",
         "prevPage": "Reverses the slide track via X-axis calculation."
+      }
+    },
+    "UIToastManager": {
+      "description": "Domain Controller responsible for the Universal Toast System DOM injection, CSS class application, and animation timing.",
+      "dependencies": ["UIManager (Facade)"],
+      "key_functions": {
+        "showToast": "Injects toast DOM and triggers slide-up animation.",
+        "hideToast": "Triggers slide-down animation and removes DOM element.",
+        "forceClear": "Immediately destroys toast DOM without animation."
       }
     },
     "UIMarketControl": {
@@ -664,7 +691,8 @@
         "js/services/ui/UIMissionControl.js",
         "js/services/ui/UIHangarControl.js",
         "js/services/ui/UIEventControl.js",
-        "js/services/ui/UISolStationControl.js"
+        "js/services/ui/UISolStationControl.js",
+        "js/services/ui/UIToastManager.js"
       ]
     },
     "F018": {
@@ -1049,6 +1077,16 @@
       "path": "./css/help-system.css",
       "role": "STYLESHEET",
       "description": "CSS compartmentalization for the fixed-aspect-ratio help modal system."
+    },
+    "F105": {
+      "path": "./js/services/ui/UIToastManager.js",
+      "role": "UI_CONTROLLER",
+      "description": "Domain Controller: Manages Universal Toast notifications and DOM injection."
+    },
+    "F106": {
+      "path": "./js/services/ToastService.js",
+      "role": "LOGIC_SERVICE",
+      "description": "Logic layer for managing the Universal Toast notification queue and thresholds."
     }
   }
 }

@@ -167,7 +167,11 @@ export class UIHelpManager {
         this._updatePagination();
         this._applyTransform();
 
-        if (this.anchorBtn) this.anchorBtn.style.display = 'none';
+        if (this.anchorBtn) {
+            // Strip the pulse class upon explicit viewing
+            this.anchorBtn.classList.remove('help-anchor-pulse');
+            this.anchorBtn.style.display = 'none';
+        }
 
         if (this.overlay) {
             this.overlay.classList.remove('help-anim-out');

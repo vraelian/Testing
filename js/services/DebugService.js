@@ -512,6 +512,38 @@ ${logHistory}
         }
     }
 
+    triggerToast(type) {
+        if (!this.simulationService.toastService) return;
+        
+        // Interrupt to clear anything currently displaying
+        this.simulationService.toastService.clearQueueAndHide();
+        
+        let config;
+        switch(type) {
+            case 'system':
+                config = { type: 'system', title: 'SYSTEM ALERT', message: '[DEBUG] Critical Systems Failure.', navTarget: 'starport', actionTarget: 'services' };
+                break;
+            case 'finance':
+                config = { type: 'finance', title: 'FINANCE ALERT', message: '[DEBUG] Impending loan garnishment.', navTarget: 'data', actionTarget: 'finance' };
+                break;
+            case 'intel':
+                config = { type: 'intel', title: 'INTEL EXPIRED', message: '[DEBUG] Market data has expired.', navTarget: 'data', actionTarget: 'intel' };
+                break;
+            case 'mission':
+                config = { type: 'mission', title: 'MISSIONS AVAILABLE', message: '[DEBUG] New contracts available.', navTarget: 'data', actionTarget: 'missions' };
+                break;
+            case 'sol':
+                config = { type: 'sol', title: 'STATION CRITICAL', message: 'Station supplies are low!', navTarget: 'starport', actionTarget: 'services' };
+                break;
+        }
+        
+        if (config) {
+            // Push manually into queue and start the lifecycle
+            this.simulationService.toastService.toastQueue.push(config);
+            this.simulationService.toastService.playNextInQueue();
+        }
+    }
+
     _registerDebugActions() {
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
@@ -665,6 +697,13 @@ ${logHistory}
             forceCompleteMission: { name: 'Force Complete Mission', type: 'button', handler: () => {
                  this.simulationService.missionService.completeActiveMission(true); 
             }},
+
+            // --- UNIVERSAL TOAST TRIGGERS ---
+            triggerSystemToast: { name: 'Toast: System', type: 'button', handler: () => this.triggerToast('system') },
+            triggerFinanceToast: { name: 'Toast: Finance', type: 'button', handler: () => this.triggerToast('finance') },
+            triggerIntelToast: { name: 'Toast: Intel', type: 'button', handler: () => this.triggerToast('intel') },
+            triggerMissionToast: { name: 'Toast: Mission', type: 'button', handler: () => this.triggerToast('mission') },
+            triggerSolToast: { name: 'Toast: Sol', type: 'button', handler: () => this.triggerToast('sol') },
 
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
@@ -856,6 +895,11 @@ ${logHistory}
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
+        triggerFolder.add(this.actions.triggerSystemToast, 'handler').name(this.actions.triggerSystemToast.name);
+        triggerFolder.add(this.actions.triggerFinanceToast, 'handler').name(this.actions.triggerFinanceToast.name);
+        triggerFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
+        triggerFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
+        triggerFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');

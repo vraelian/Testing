@@ -28,6 +28,7 @@ import { UIHangarControl } from './ui/UIHangarControl.js';
 import { UIEventControl } from './ui/UIEventControl.js';
 import { UISolStationControl } from './ui/UISolStationControl.js';
 import { UIHelpManager } from './ui/UIHelpManager.js';
+import { UIToastManager } from './ui/UIToastManager.js';
 
 export class UIManager {
     /**
@@ -60,6 +61,7 @@ export class UIManager {
         this.eventControl = new UIEventControl(this);
         this.solStationControl = new UISolStationControl(this); 
         this.helpManager = new UIHelpManager(this);
+        this.toastManager = new UIToastManager(this);
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -428,12 +430,6 @@ export class UIManager {
         }
     }
 
-    /**
-     * Determines the active Help Registry Context ID based on the current state configuration.
-     * Includes hyper-safe fallbacks for missing state subsets during rapid initialization.
-     * @param {Object} gameState 
-     * @returns {string|null} The contextId matching the Help Registry
-     */
     getCurrentHelpContextId(gameState) {
         if (!gameState || !gameState.player) return null;
         const { activeNav, activeScreen, solStation } = gameState;
@@ -461,17 +457,10 @@ export class UIManager {
         return null;
     }
 
-    /**
-     * Evaluates whether the current screen requires the Help Modal to auto-instantiate or be dismissed.
-     * Heavily guarded to prevent crashes during the boot sequence or when loading legacy saves.
-     * @param {Object} gameState 
-     * @param {Object} previousState 
-     */
     _evaluateHelpContext(gameState, previousState) {
         try {
             if (gameState.introSequenceActive) return;
 
-            // Defensive array checks
             if (!gameState.tutorials) gameState.tutorials = { seenHelpContexts: [], helpSlideMemory: {} };
             if (!Array.isArray(gameState.tutorials.seenHelpContexts)) {
                 gameState.tutorials.seenHelpContexts = [];
@@ -483,41 +472,17 @@ export class UIManager {
             const currentContextId = this.getCurrentHelpContextId(gameState);
             const prevContextId = this.getCurrentHelpContextId(previousState);
 
-            // Dismissal Rule: If context changes, hide the modal.
             if (currentContextId !== prevContextId && this.helpManager && this.helpManager.isVisible) {
                 this.hideHelpModal();
             }
 
-            // Auto-Instantiation Rule
             if (currentContextId && !gameState.tutorials.seenHelpContexts.includes(currentContextId)) {
-                
-                // Safely push to the live GameState to ensure the flag persists across render loops and save files
-                if (this.simulationService && this.simulationService.gameState) {
-                    const liveState = this.simulationService.gameState;
-                    
-                    if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [], helpSlideMemory: {} };
-                    if (!Array.isArray(liveState.tutorials.seenHelpContexts)) {
-                        liveState.tutorials.seenHelpContexts = [];
-                    }
-                    if (!liveState.tutorials.helpSlideMemory) {
-                        liveState.tutorials.helpSlideMemory = {};
-                    }
-                    
-                    if (!liveState.tutorials.seenHelpContexts.includes(currentContextId)) {
-                        liveState.tutorials.seenHelpContexts.push(currentContextId);
-                    }
+                if (this.helpManager && this.helpManager.anchorBtn) {
+                    this.helpManager.anchorBtn.classList.add('help-anchor-pulse');
                 }
-                
-                // Also push to the local deep-copy instance so the current render evaluation respects it
-                gameState.tutorials.seenHelpContexts.push(currentContextId);
-                
-                let startIndex = 0;
-                if (currentContextId === 'services-supply-sol') {
-                    startIndex = 1; 
-                }
-
-                if (this.helpManager) {
-                    this.showHelpModal(currentContextId, startIndex);
+            } else {
+                if (this.helpManager && this.helpManager.anchorBtn) {
+                    this.helpManager.anchorBtn.classList.remove('help-anchor-pulse');
                 }
             }
         } catch (error) {
@@ -525,15 +490,9 @@ export class UIManager {
         }
     }
 
-    /**
-     * Commits the last viewed slide index for a specific help context into the persistent game state.
-     * @param {string} contextId 
-     * @param {number} index 
-     */
     saveHelpSlideIndex(contextId, index) {
         if (!contextId) return;
 
-        // Update local copy to keep rendering smooth
         if (this.lastKnownState && this.lastKnownState.tutorials) {
             if (!this.lastKnownState.tutorials.helpSlideMemory) {
                 this.lastKnownState.tutorials.helpSlideMemory = {};
@@ -541,7 +500,6 @@ export class UIManager {
             this.lastKnownState.tutorials.helpSlideMemory[contextId] = index;
         }
 
-        // Push to live simulation state to persist in saves
         if (this.simulationService && this.simulationService.gameState) {
             const liveState = this.simulationService.gameState;
             if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [], helpSlideMemory: {} };
@@ -592,16 +550,26 @@ export class UIManager {
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
-    /**
-     * Intercepts calls to show the Help Modal to automatically inject memory state index
-     * @param {string} contextId 
-     * @param {number|null} startingPageIndex 
-     * @param {Function|null} onCloseCallback 
-     */
     showHelpModal(contextId, startingPageIndex = null, onCloseCallback = null) {
         if (this.helpManager) {
             const targetContext = contextId || this.getCurrentHelpContextId(this.lastKnownState);
             if (!targetContext) return;
+
+            if (this.simulationService && this.simulationService.gameState) {
+                const liveState = this.simulationService.gameState;
+                if (!liveState.tutorials) liveState.tutorials = { seenHelpContexts: [], helpSlideMemory: {} };
+                if (!Array.isArray(liveState.tutorials.seenHelpContexts)) liveState.tutorials.seenHelpContexts = [];
+                
+                if (!liveState.tutorials.seenHelpContexts.includes(targetContext)) {
+                    liveState.tutorials.seenHelpContexts.push(targetContext);
+                }
+            }
+            if (this.lastKnownState && this.lastKnownState.tutorials) {
+                if (!Array.isArray(this.lastKnownState.tutorials.seenHelpContexts)) this.lastKnownState.tutorials.seenHelpContexts = [];
+                if (!this.lastKnownState.tutorials.seenHelpContexts.includes(targetContext)) {
+                    this.lastKnownState.tutorials.seenHelpContexts.push(targetContext);
+                }
+            }
 
             let indexToUse = startingPageIndex;
             if (indexToUse === null || indexToUse === undefined) {

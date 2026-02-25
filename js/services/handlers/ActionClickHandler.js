@@ -384,6 +384,38 @@ export class ActionClickHandler {
                 break;
             }
 
+            // --- UNIVERSAL TOAST ROUTING ---
+            case 'route-toast': {
+                e.stopPropagation();
+                const { target, navTarget } = dataset;
+                if (navTarget && target) {
+                    
+                    // 1. Navigate to the base screen FIRST (triggers HTML injection)
+                    this.simulationService.setScreen(navTarget, target);
+
+                    // 2. Queue the sub-tab state change after the DOM has definitively painted
+                    setTimeout(() => {
+                        if (target === 'intel') {
+                            this.gameState.uiState.activeIntelTab = null; // Force inequality to guarantee update
+                            this.simulationService.setIntelTab('market');
+                        } else if (target === 'missions') {
+                            this.gameState.setState({
+                                uiState: {
+                                    ...this.gameState.getState().uiState,
+                                    activeMissionTab: 'terminal'
+                                }
+                            });
+                        }
+                    }, 50);
+
+                    // 3. Manually dismiss the toast so it doesn't linger
+                    if (this.uiManager.toastManager) {
+                        this.uiManager.toastManager.hideToast();
+                    }
+                }
+                break;
+            }
+
             case 'accept-mission':
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');

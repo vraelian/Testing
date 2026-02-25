@@ -1,4 +1,4 @@
-// js/services/SimulationService.js
+// js/services/SimulationService.js (Appended and Modified)
 /**
  * @fileoverview This file contains the SimulationService class, which acts as the core game engine
  * facade. It instantiates all specialized game logic services and delegates calls to them,
@@ -19,6 +19,7 @@ import { GameAttributes } from './GameAttributes.js';
 import { RandomEventService } from './RandomEventService.js'; 
 import { SolStationService } from './SolStationService.js'; 
 import { OFFICERS } from '../data/officers.js'; 
+import { ToastService } from './ToastService.js';
 
 /**
  * @class SimulationService
@@ -56,6 +57,9 @@ export class SimulationService {
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         
+        // --- TOAST NOTIFICATION SERVICE ---
+        this.toastService = new ToastService(gameState, uiManager, this);
+
         this.timeService.intelService = this.intelService;
         this.uiManager.setIntelService(this.intelService); 
         this.timeService.simulationService = this;
@@ -496,6 +500,11 @@ export class SimulationService {
     _checkHullWarnings(shipId) {
         const shipState = this.gameState.player.shipStates[shipId];
         const effectiveStats = this.getEffectiveShipStats(shipId);
+        
+        // Defensive initialization to heal older save files missing this object
+        if (!shipState.hullAlerts) {
+            shipState.hullAlerts = { one: false, two: false };
+        }
         
         const healthPct = (shipState.health / effectiveStats.maxHealth) * 100;
         
