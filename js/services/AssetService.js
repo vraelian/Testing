@@ -90,14 +90,14 @@ export class AssetService {
             // Rule: "Cryo_Sleep_Pod" -> "Cryo Sleep Pod"
             const folderName = fileName.replace(/_/g, ' ');
 
-            // Result: assets/images/ships/Cryo Sleep Pod/Cryo_Sleep_Pod_A.jpeg
-            return `assets/images/ships/${folderName}/${fileName}_${variantLetter}.jpeg`;
+            // Result: assets/images/ships/Cryo Sleep Pod/Cryo_Sleep_Pod_A.webp
+            return `assets/images/ships/${folderName}/${fileName}_${variantLetter}.webp`;
         } 
         
         // 3. Legacy Logic (Classes C, B, A, S, O)
         // Keeps original behavior 100% intact for existing ships
         const baseName = shipData.name;
-        return `assets/images/ships/${baseName}/${baseName}_${variantLetter}.jpeg`;
+        return `assets/images/ships/${baseName}/${baseName}_${variantLetter}.webp`;
     }
 
     static _generateCommodityPath(commodityName, visualSeed) {
@@ -108,7 +108,7 @@ export class AssetService {
         const variantIndex = Math.abs(visualSeed) % variantCount;
         const variantLetter = this._getVariantSuffix(variantIndex);
         const fileNamePrefix = commodityName.replace(/ /g, '_');
-        return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.png`;
+        return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.webp`;
     }
 
     static _generateLocationPath(locationId) {
@@ -134,8 +134,8 @@ export class AssetService {
         const variantLetter = this._getVariantSuffix(variantIndex); // A...Z, AA...
 
         // 4. Construct Path
-        // Pattern: assets/images/locations/[Capitalized]/[Capitalized]_[Letter].jpeg
-        return `assets/images/locations/${filePrefix}/${filePrefix}_${variantLetter}.jpeg`;
+        // Pattern: assets/images/locations/[Capitalized]/[Capitalized]_[Letter].webp
+        return `assets/images/locations/${filePrefix}/${filePrefix}_${variantLetter}.webp`;
     }
 
     // --- Public API ---
@@ -169,12 +169,12 @@ export class AssetService {
             // Standard Rule: "Cryo_Sleep_Pod" -> "Cryo Sleep Pod"
             const folderName = fileName.replace(/_/g, ' ');
             
-            return `assets/images/ships/${folderName}/${fileName}_A.jpeg`;
+            return `assets/images/ships/${folderName}/${fileName}_A.webp`;
         }
 
         // Legacy Fallback
         const baseName = shipData.name;
-        return `assets/images/ships/${baseName}/${baseName}_A.jpeg`;
+        return `assets/images/ships/${baseName}/${baseName}_A.webp`;
     }
 
     /**
@@ -282,6 +282,7 @@ export class AssetService {
      * Loads high-priority UI assets that are needed immediately upon entering the game.
      * - All Commodity Icons (used in Market cards)
      * - All Location Backgrounds (used in Screen backgrounds)
+     * - Starter Ships (to prevent pop-in on new games)
      */
     static async hydrateBootAssets() {
         console.log("[AssetService] Starting Boot Phase Hydration...");
@@ -296,6 +297,21 @@ export class AssetService {
         DB.MARKETS.forEach(m => {
             if (m.bgImage) bootQueue.push({ type: 'location', path: m.bgImage });
             if (m.imagePath) bootQueue.push({ type: 'location', path: m.imagePath });
+        });
+
+        // 3. Starter Ships (ADD YOUR EARLY GAME SHIPS HERE)
+        // This ensures the initial ships are cached in memory before the Hangar UI loads.
+        const starterShips = [
+            'Mule.Ship', 
+            'Wanderer.Ship', 
+            'Stalwart.Ship', 
+            'Rooster.Ship', 
+            'Nomad.Ship'
+        ]; 
+        
+        starterShips.forEach(shipId => {
+            // We use seed 0 as a default, ensuring the basic "A" variant is loaded instantly
+            bootQueue.push({ type: 'ship', id: shipId, seed: 0 }); 
         });
 
         await this.hydrateAssets(bootQueue);
