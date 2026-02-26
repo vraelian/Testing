@@ -9,10 +9,6 @@ import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
-// --- VIRTUAL WORKBENCH START: Phase 1 ---
-// This function is now REMOVED as the global formatCredits handles all logic.
-// --- VIRTUAL WORKBENCH END: Phase 1 ---
-
 /**
  * Renders the entire Finance screen UI.
  * @param {object} gameState - The current state of the game.
@@ -38,10 +34,17 @@ export function renderFinanceScreen(gameState) {
         let garnishmentTimerHtml = '';
         if (player.loanStartDate) {
             const daysRemaining = GAME_RULES.LOAN_GARNISHMENT_DAYS - (day - player.loanStartDate);
+            
+            // --- VIRTUAL WORKBENCH START: Garnishment UI ---
             if (daysRemaining > 0) {
-                // VIRTUAL WORKBENCH: Increased font size from text-xs to text-sm
                 garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
+            } else {
+                // Calculate projected garnishment
+                const garnishmentAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
+                const displayGarnish = Math.min(garnishmentAmount, player.debt);
+                garnishmentTimerHtml = `<p class="text-sm text-glow-red font-bold mt-2 animate-pulse">Active Garnishment: ${formatCredits(displayGarnish)} / Mo</p>`;
             }
+            // --- VIRTUAL WORKBENCH END: Garnishment UI ---
         }
 
         // --- UPGRADE SYSTEM: INTEREST DISPLAY ---
@@ -73,7 +76,7 @@ export function renderFinanceScreen(gameState) {
         }
         // ----------------------------------------
 
-        // --- VIRTUAL WORKBENCH START: Phase 2 ---
+        // --- VIRTUAL WORKBENCH START: Reorder ---
         loanHtml = `
             <div>
                 <div class="themed-header-bar" style="${themeStyleVars}">
@@ -83,11 +86,11 @@ export function renderFinanceScreen(gameState) {
                     <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
                         <span class="text-base">Pay Off <span class="text-glow-red">${formatCredits(-player.debt, true)}</span></span>
                     </button>
-                    ${interestHtml}
                     ${garnishmentTimerHtml}
+                    ${interestHtml}
                 </div>
             </div>`;
-        // --- VIRTUAL WORKBENCH END: Phase 2 ---
+        // --- VIRTUAL WORKBENCH END: Reorder ---
     } else {
         // Otherwise, display available loan options.
         const dynamicLoanAmount = Math.floor(player.credits * 3.5);
@@ -95,16 +98,26 @@ export function renderFinanceScreen(gameState) {
         const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.04);
         const dynamicLoanData = { amount: dynamicLoanAmount, fee: dynamicLoanFee, interest: dynamicLoanInterest };
         
-        // --- VIRTUAL WORKBENCH START: Phase 1 & 2 ---
+        // --- VIRTUAL WORKBENCH START: Loan Terminal Two-Step Prep ---
         const loanButtonsHtml = [
             { key: '10000', amount: 10000, fee: 600, interest: 500 },
             { key: 'dynamic', ...dynamicLoanData }
         ].map((loan) => {
-            return `<button class="btn-module btn-module-credit w-full mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
-                        <span class="credits-text-pulsing">${formatCredits(loan.amount, true)}</span>
+            return `<button class="btn-module btn-module-credit w-full mt-2 relative overflow-hidden" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
+                        <div class="loan-normal-content flex flex-col items-center w-full">
+                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">LOAN</span>
+                            <span class="credits-text-pulsing text-[21px]">${formatCredits(loan.amount, true)}</span>
+                            <div class="loan-details mt-2 text-[12px] flex gap-3">
+                                <div class="detail-block">FEE: <span class="text-glow-red">${formatCredits(-loan.fee)}</span></div>
+                                <div class="detail-block">INTEREST: <span class="text-glow-red">${formatCredits(-loan.interest)}</span>/mo</div>
+                            </div>
+                        </div>
+                        <div class="loan-confirm-content">
+                            CONFIRM LOAN?
+                        </div>
                     </button>`;
         }).join('');
-        // --- VIRTUAL WORKBENCH END: Phase 1 & 2 ---
+        // --- VIRTUAL WORKBENCH END: Loan Terminal Two-Step Prep ---
 
         loanHtml = `
             <div>
@@ -112,7 +125,7 @@ export function renderFinanceScreen(gameState) {
                     <div class="themed-header-title">Financing</div>
                 </div>
                 <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                    <div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>
+                    <div class="flex flex-col justify-center gap-2 w-full">${loanButtonsHtml}</div>
                 </div>
             </div>`;
     }

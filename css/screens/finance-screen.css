@@ -97,29 +97,109 @@
     box-shadow: none;
 }
 
-/* --- VIRTUAL WORKBENCH: MODIFIED (Point E) --- */
-/* Changed from cyan to sky to match main credit glow */
+/* --- VIRTUAL WORKBENCH START: Predatory Corporate Terminal --- */
 .btn-module-credit {
-    background-color: #0c4a6e; /* sky-900 */
-    border-color: #075985; /* sky-800 */
-    color: #bae6fd; /* sky-200 */
-    /* Add sky-blue glow to the convex shadow */
-    box-shadow: 0 0 10px -2px #0ea5e9, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+    background: linear-gradient(180deg, #0f172a 0%, #020617 100%); /* Dark industrial slate */
+    border: 1px solid #0891b2; /* Corporate Cyan */
+    color: #fbbf24; /* Predatory Gold */
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(8, 145, 178, 0.3), inset 0 0 15px rgba(8, 145, 178, 0.15);
+    text-shadow: 0 0 4px rgba(251, 191, 36, 0.3);
+}
+
+/* Subtle scanline overlay for the terminal feel */
+.btn-module-credit::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+}
+
+/* Ensure text renders above the scanlines */
+.btn-module-credit > * {
+    position: relative;
+    z-index: 1;
 }
 
 .btn-module-credit:hover:not(:disabled) {
-    background-color: #075985; /* sky-800 */
-    border-color: #0ea5e9; /* sky-500 */
-    color: #f0f9ff; /* sky-50 */
-    box-shadow: 0 0 15px -2px #0ea5e9, 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border-color: #22d3ee; /* Bright Cyan */
+    color: #fde68a; /* Brighter Gold */
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), inset 0 0 20px rgba(34, 211, 238, 0.2);
+    transform: translateY(-1px);
 }
-/* --- END VIRTUAL WORKBENCH --- */
+
+/* Styling for the HTML structural labels */
+.btn-module-credit .loan-label {
+    color: #22d3ee; /* Cyan */
+    text-shadow: 0 0 6px rgba(34, 211, 238, 0.6);
+    font-weight: 700;
+    border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+    padding-bottom: 2px;
+    width: 80%;
+}
+
+.btn-module-credit .loan-details .detail-block {
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 3px 6px;
+    border-radius: 4px; /* Softened sharp corners */
+    border: 1px solid rgba(251, 191, 36, 0.3); /* Dimmer gold border */
+    color: #fde68a; 
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* --- VIRTUAL WORKBENCH: Primed State for Loan Confirmation --- */
+.btn-module-credit.primed {
+    background: #e2e8f0 !important; /* Reduced brightness off-white */
+    border-color: #0891b2 !important;
+    color: #000000 !important;
+    /* Cyan credit-blue vignette on the inside */
+    box-shadow: 0 0 20px rgba(226, 232, 240, 0.6), inset 0 0 40px rgba(6, 182, 212, 0.6), inset 0 0 10px rgba(0,0,0,0.3) !important;
+    text-shadow: none !important;
+    transform: scale(0.98);
+}
+
+.btn-module-credit.primed::before {
+    opacity: 0.1; /* Dim scanlines on primed state */
+}
+
+.btn-module-credit .loan-normal-content {
+    transition: opacity 0.2s ease;
+    opacity: 1;
+}
+
+.btn-module-credit.primed .loan-normal-content {
+    opacity: 0;
+}
+
+.btn-module-credit .loan-confirm-content {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #000000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.btn-module-credit.primed .loan-confirm-content {
+    opacity: 1;
+}
+/* --- VIRTUAL WORKBENCH END --- */
 
 
-/* --- VIRTUAL WORKBENCH: MODIFIED (Point B) & Phase 2 --- */
-/* Muted destructive button */
+/* --- VIRTUAL WORKBENCH: MODIFIED Muted destructive button --- */
 .btn-module-destructive {
-    /* Muted red */
     background-color: #7f1d1d; /* red-900 */
     border-color: #991b1b; /* red-800 */
     color: #fecaca; /* red-200 */
@@ -130,7 +210,7 @@
     border-color: #dc2626; /* red-600 */
     color: #ffffff;
 }
-/* --- END VIRTUAL WORKBENCH & Phase 2 --- */
+/* --- END VIRTUAL WORKBENCH --- */
 
 
 /* --- VIRTUAL WORKBENCH: ADJUST LOG PANEL STYLING --- */

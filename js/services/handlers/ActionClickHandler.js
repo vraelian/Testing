@@ -20,6 +20,17 @@ export class ActionClickHandler {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
+
+        // --- VIRTUAL WORKBENCH: Global click listener to dismiss primed loan buttons ---
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.btn-module-credit')) {
+                document.querySelectorAll('.btn-module-credit.primed').forEach(btn => {
+                    delete btn.dataset.primed;
+                    btn.classList.remove('primed');
+                });
+            }
+        });
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -439,6 +450,23 @@ export class ActionClickHandler {
                 this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
+                // --- VIRTUAL WORKBENCH START: Two-Step Loan Confirmation ---
+                if (!actionTarget.dataset.primed) {
+                    // Reset any previously primed buttons
+                    document.querySelectorAll('.btn-module-credit[data-primed="true"]').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                    });
+                    
+                    // Prime this button
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed');
+                    e.stopPropagation();
+                    return; // Prevent immediate execution
+                }
+                // --- VIRTUAL WORKBENCH END ---
+                
+                // Second click: execute the loan
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
             case ACTION_IDS.PURCHASE_INTEL:

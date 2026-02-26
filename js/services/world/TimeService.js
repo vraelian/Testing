@@ -335,28 +335,50 @@ export class TimeService {
         }
     }
 
+    // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---
     _applyGarnishment() {
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
             // Apply garnishment on the same cycle as interest
             if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) return;
 
-            const garnishedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
+            // Calculate potential garnishment based on current credits
+            const calculatedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
+            
+            // Clamp garnishment so it does not exceed the remaining debt balance
+            const garnishedAmount = Math.min(calculatedAmount, player.debt);
+
             if (garnishedAmount > 0) {
+                // Deduct from credits and reduce the debt principal
                 player.credits -= garnishedAmount;
+                player.debt -= garnishedAmount;
+                
                 if (this.simulationService) {
-                    this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
+                    this.simulationService._logTransaction('debt', -garnishedAmount, 'Delinquent loan garnishment applied to principal');
                     this.simulationService._checkGameOverConditions(); 
+                }
+
+                // Check if the garnishment fully paid off the loan
+                if (player.debt <= 0) {
+                    player.debt = 0;
+                    player.loanStartDate = null;
+                    player.monthlyInterestAmount = 0;
+                    player.seenGarnishmentWarning = false; // Reset for future loans
+
+                    if (this.simulationService) {
+                        this.simulationService.pushNewsMessage('Delinquent loan balance fully satisfied via garnishment.', 'FINANCE');
+                    }
                 }
             }
 
-            if (!player.seenGarnishmentWarning) {
-                const msg = "Your loan is delinquent. Your lender is now garnishing 14% of your credits monthly until the debt is paid.";
+            if (player.debt > 0 && !player.seenGarnishmentWarning) {
+                const msg = "Your loan is delinquent. Your lender is now garnishing a percentage of your credits monthly to pay down the principal until the debt is satisfied.";
                 this.uiManager.queueModal('event-modal', "Credit Garnishment Notice", msg, null, { buttonClass: 'bg-red-800/80' });
                 player.seenGarnishmentWarning = true;
             }
         }
     }
+    // --- VIRTUAL WORKBENCH END: Garnishment Debt Reduction Update ---
     
     getCurrentDay() {
         return this.gameState.day;
