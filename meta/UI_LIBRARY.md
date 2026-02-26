@@ -1,3 +1,5 @@
+// meta/UI_LIBRARY.md
+
 Orbital Trading: UI Component Library & Style Guide
 
 1. Design System Core
@@ -128,6 +130,26 @@ HTML
             <span class="dot"></span>
         </div>
     </div>
+</div>
+
+2.8 Universal Toast Notification (.toast-message)
+A strictly timed, non-blocking alert system. Uses an animated visual fuse that acts as a countdown. Requires localized event interception on the dismiss button to prevent routing bubbles.
+HTML
+<div class="toast-message toast-{type}" data-action="route-toast" data-target="{actionTarget}">
+    <div class="toast-fuse" style="animation: toast-fuse-burn 4s linear forwards;"></div>
+    <div class="toast-content-wrapper">
+        <div class="toast-title">{Title}</div>
+        <div class="toast-body">{Message}</div>
+    </div>
+    <button type="button" class="toast-dismiss-btn" data-action="dismiss-toast">-</button>
+</div>
+
+2.9 Cinematic Overlays (.intro-starfield-bg)
+Used for bespoke sequences (like the Starter Ship Selection) that bypass the main UIManager render cycle to execute asynchronous crossfades via the native Web Animations API. Rendered outside the core `#game-container`.
+HTML
+<div id="starter-ship-selection-overlay" class="intro-starfield-bg">
+    <div class="starter-selection-container">
+        </div>
 </div>
 
 3. CSS Utilities

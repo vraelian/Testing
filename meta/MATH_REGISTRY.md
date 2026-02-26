@@ -124,3 +124,21 @@ For event fines and bureaucratic hazards, penalizing the player based on liquidi
 JavaScript
 Penalty = LiquidCredits * HazardSeverity%
 (Hard capped at 9% for the most catastrophic outcomes to preserve progression feasibility).
+
+5. Sol Station Directorate Engine
+5.1 Entropy Calculation
+The daily decay rate of station caches is dynamically altered by the sum of slotted officer buffs.
+JavaScript
+CurrentEntropy = BaseEntropy * (1 + Sum(OfficerEntropyBuffs))
+
+5.2 Resource Consumption & Capacity Modifiers
+Officers dynamically alter the mathematics of how much specific commodities the station can hold and how fast they burn per tick via both additive and multiplicative modifiers.
+JavaScript
+EffectiveCapacity = BaseCapacity + Sum(OfficerCapacityMods[commodityId])
+EffectiveConsumption = BaseConsumption * (1 + Sum(OfficerConsumptionMods[commodityId]))
+
+5.3 Antimatter & Credit Yields
+Output yields during 'Commerce' and 'Production' modes are directly scaled by the Directorate roster.
+JavaScript
+DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults))
+DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults))

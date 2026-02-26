@@ -683,3 +683,18 @@ Consequences:
 * Pro: Eliminates complex DOM-tracking bugs and performance overhead.
 * Pro: Affords spatial luxury for multimedia explanations (SVGs, CSS diagrams) over dense text.
 * Con: Less direct visual pointing; relies on the player to map the modal's explanations to the UI elements.
+
+ADR-034: Cinematic UI Crossfades via Web Animations API
+Status: Accepted (2026-02-25)
+
+Context: The conclusion of the Intro Sequence required a seamless transition from a bespoke "Starter Ship Selection" screen to the fully rendered core game loop (Hangar screen). Standard CSS class toggling (`.hidden`, `.fade-out`) interfered with the `UIManager`'s aggressive DOM wiping and state re-renders, causing visual flashing or premature exposure of the game UI before the cinematic finished.
+
+Decision: Bypassed standard CSS state classes for critical cinematic transitions in favor of the Javascript Web Animations API (`Element.animate()`).
+* External Overlay: The cinematic screen (`starter-ship-selection-overlay`) is injected directly into the `document.body`, outside the control of the `#game-container` and `UIManager`.
+* Independent Animation: The API executes a 6-second crossfade phase (blur/opacity) that runs entirely independent of CSS transition rules.
+* Invisible State Mutation: The actual `GameState` updates (credit deduction, ship assignment) and the initial `UIManager.render()` are executed *during* the blackout hold phase of the animation.
+
+Consequences:
+* Pro: Guarantees a flawless, stutter-free cinematic transition without DOM flashing.
+* Pro: Decouples bespoke intro UI components from the rigid rules of the core UI library.
+* Con: Requires explicit timeout orchestration and careful cleanup of inline styles (`opacity`, `filter`) injected by the API to prevent breaking subsequent UI behavior.

@@ -1,6 +1,8 @@
+// meta/ECONOMIC_BEHAVIOR.md
+
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 2/20/26, ver. Balance v2
+Last Edit: 2/25/26, ver. Balance v2
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
@@ -197,3 +199,12 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 * **Neptune (Military Logistics):** 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
 * **Kepler's Eye (Financial Hub):** 15% Discount on all financing and debt payments.
 * **Pluto (Fringe Outpost):** +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
+
+IX. Sol Station Directorate (Macro-Economic Impact)
+The officers slotted into the Sol Station Engineering Interface act as dynamic macro-economic levers that shape the player's arbitrage strategy system-wide.
+1. Systemic Supply Bottlenecks
+Officers with severe negative `consumptionMods` (e.g., hyper-burning Plasteel or Water Ice) will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system. This fundamentally alters the global availability ratios, driving up localized prices for those specific commodities universally as the player hoards them for donation.
+2. Capacity Buffers
+Officers with high `capacityMods` drastically increase the "runway" a station has before reaching critical entropy. This allows the player to embark on longer deep-space trade routes without the station starving while they are gone, effectively expanding the viable geographic radius of arbitrage loops.
+3. Wealth Generation Swings
+Slotting officers with massive `creditMult` or `amMult` bonuses transforms the station into an exponential raw wealth engine, but typically at the cost of extreme resource consumption, transitioning the late-game loop from "Arbitrage Trader" to "Station Feeder".

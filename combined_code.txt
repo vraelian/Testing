@@ -37483,9 +37483,29 @@ For event fines and bureaucratic hazards, penalizing the player based on liquidi
 JavaScript
 Penalty = LiquidCredits * HazardSeverity%
 (Hard capped at 9% for the most catastrophic outcomes to preserve progression feasibility).
+
+5. Sol Station Directorate Engine
+5.1 Entropy Calculation
+The daily decay rate of station caches is dynamically altered by the sum of slotted officer buffs.
+JavaScript
+CurrentEntropy = BaseEntropy * (1 + Sum(OfficerEntropyBuffs))
+
+5.2 Resource Consumption & Capacity Modifiers
+Officers dynamically alter the mathematics of how much specific commodities the station can hold and how fast they burn per tick via both additive and multiplicative modifiers.
+JavaScript
+EffectiveCapacity = BaseCapacity + Sum(OfficerCapacityMods[commodityId])
+EffectiveConsumption = BaseConsumption * (1 + Sum(OfficerConsumptionMods[commodityId]))
+
+5.3 Antimatter & Credit Yields
+Output yields during 'Commerce' and 'Production' modes are directly scaled by the Directorate roster.
+JavaScript
+DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults))
+DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults))
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
+// meta/UI_LIBRARY.md
+
 Orbital Trading: UI Component Library & Style Guide
 
 1. Design System Core
@@ -37618,6 +37638,26 @@ HTML
     </div>
 </div>
 
+2.8 Universal Toast Notification (.toast-message)
+A strictly timed, non-blocking alert system. Uses an animated visual fuse that acts as a countdown. Requires localized event interception on the dismiss button to prevent routing bubbles.
+HTML
+<div class="toast-message toast-{type}" data-action="route-toast" data-target="{actionTarget}">
+    <div class="toast-fuse" style="animation: toast-fuse-burn 4s linear forwards;"></div>
+    <div class="toast-content-wrapper">
+        <div class="toast-title">{Title}</div>
+        <div class="toast-body">{Message}</div>
+    </div>
+    <button type="button" class="toast-dismiss-btn" data-action="dismiss-toast">-</button>
+</div>
+
+2.9 Cinematic Overlays (.intro-starfield-bg)
+Used for bespoke sequences (like the Starter Ship Selection) that bypass the main UIManager render cycle to execute asynchronous crossfades via the native Web Animations API. Rendered outside the core `#game-container`.
+HTML
+<div id="starter-ship-selection-overlay" class="intro-starfield-bg">
+    <div class="starter-selection-container">
+        </div>
+</div>
+
 3. CSS Utilities
 .hidden: display: none !important. Used for toggling visibility.
 .text-center: text-align: center.
@@ -37734,9 +37774,11 @@ Correction: Define these as constants in js/data/constants.js and import them.
 --- END OF FILE: ./meta/CODING_STANDARDS.md ---
 
 --- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
+// meta/ECONOMIC_BEHAVIOR.md
+
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 2/20/26, ver. Balance v2
+Last Edit: 2/25/26, ver. Balance v2
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
@@ -37933,6 +37975,15 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 * **Neptune (Military Logistics):** 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
 * **Kepler's Eye (Financial Hub):** 15% Discount on all financing and debt payments.
 * **Pluto (Fringe Outpost):** +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
+
+IX. Sol Station Directorate (Macro-Economic Impact)
+The officers slotted into the Sol Station Engineering Interface act as dynamic macro-economic levers that shape the player's arbitrage strategy system-wide.
+1. Systemic Supply Bottlenecks
+Officers with severe negative `consumptionMods` (e.g., hyper-burning Plasteel or Water Ice) will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system. This fundamentally alters the global availability ratios, driving up localized prices for those specific commodities universally as the player hoards them for donation.
+2. Capacity Buffers
+Officers with high `capacityMods` drastically increase the "runway" a station has before reaching critical entropy. This allows the player to embark on longer deep-space trade routes without the station starving while they are gone, effectively expanding the viable geographic radius of arbitrage loops.
+3. Wealth Generation Swings
+Slotting officers with massive `creditMult` or `amMult` bonuses transforms the station into an exponential raw wealth engine, but typically at the cost of extreme resource consumption, transitioning the late-game loop from "Arbitrage Trader" to "Station Feeder".
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
@@ -40115,6 +40166,21 @@ Consequences:
 * Pro: Eliminates complex DOM-tracking bugs and performance overhead.
 * Pro: Affords spatial luxury for multimedia explanations (SVGs, CSS diagrams) over dense text.
 * Con: Less direct visual pointing; relies on the player to map the modal's explanations to the UI elements.
+
+ADR-034: Cinematic UI Crossfades via Web Animations API
+Status: Accepted (2026-02-25)
+
+Context: The conclusion of the Intro Sequence required a seamless transition from a bespoke "Starter Ship Selection" screen to the fully rendered core game loop (Hangar screen). Standard CSS class toggling (`.hidden`, `.fade-out`) interfered with the `UIManager`'s aggressive DOM wiping and state re-renders, causing visual flashing or premature exposure of the game UI before the cinematic finished.
+
+Decision: Bypassed standard CSS state classes for critical cinematic transitions in favor of the Javascript Web Animations API (`Element.animate()`).
+* External Overlay: The cinematic screen (`starter-ship-selection-overlay`) is injected directly into the `document.body`, outside the control of the `#game-container` and `UIManager`.
+* Independent Animation: The API executes a 6-second crossfade phase (blur/opacity) that runs entirely independent of CSS transition rules.
+* Invisible State Mutation: The actual `GameState` updates (credit deduction, ship assignment) and the initial `UIManager.render()` are executed *during* the blackout hold phase of the animation.
+
+Consequences:
+* Pro: Guarantees a flawless, stutter-free cinematic transition without DOM flashing.
+* Pro: Decouples bespoke intro UI components from the rigid rules of the core UI library.
+* Con: Requires explicit timeout orchestration and careful cleanup of inline styles (`opacity`, `filter`) injected by the API to prevent breaking subsequent UI behavior.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -40163,8 +40229,8 @@ graph TD
 
     H --> A;
 
-2.2 Boot Sequence & Pre-Flight (ADR-021)
-Initialization logic satisfying legal (EULA) and performance (Asset Hydration) constraints.
+2.2 Boot Sequence & Pre-Flight (ADR-021 & ADR-034)
+Initialization logic satisfying legal (EULA), performance (Asset Hydration), and cinematic (Web Animations API) constraints.
 
 graph TD
     subgraph Phase 1: DOM Ready
@@ -40174,17 +40240,19 @@ graph TD
         D --> E[Render Title Screen & EULA Modal];
     end
 
-    subgraph Phase 2: User Gate
+    subgraph Phase 2: User Gate & Loan
         E --> F{User Accepts EULA?};
         F -- No --> G[Wait / Pulse Warning];
-        F -- Yes --> H[Trigger Start Sequence];
+        F -- Yes --> H[Trigger Signature Modal];
+        H --> I[Accept Loan & Intro Sequences];
     end
 
-    subgraph Phase 3: Game Injection
-        H --> I[Unlock AudioContext: User Gesture];
-        I --> J[Instantiate GameState & Core Services];
-        J --> K[Hydrate Game Assets: Ships/Planets];
-        K --> L[UIManager.render: Game];
+    subgraph Phase 3: Game Injection (Cinematic Handoff)
+        I --> J[DOM Inject: Starter Ship Selection Overlay];
+        J --> K{User Selects Ship};
+        K --> L[Mutate GameState Invisibly];
+        L --> M[Web Animations API: Crossfade Overlay to Game Container];
+        M --> N[UIManager.render: Hangar/Shipyard];
     end
 
 2.3 Asset Hydration Architecture
@@ -40532,7 +40600,7 @@ graph TD
         E --> F[1.0s Initial Delay];
         F --> G[UIToastManager.showToast];
         G --> H[Animate DOM Injection];
-        H -- 3.0s Duration --> I[UIToastManager.hideToast];
+        H -- 4.5s Duration --> I[UIToastManager.hideToast];
         I --> J[Animate DOM Removal];
         J -- 1.0s Interval Delay --> K{More in Queue?};
         K -- Yes --> G;

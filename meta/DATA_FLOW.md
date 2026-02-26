@@ -43,8 +43,8 @@ graph TD
 
     H --> A;
 
-2.2 Boot Sequence & Pre-Flight (ADR-021)
-Initialization logic satisfying legal (EULA) and performance (Asset Hydration) constraints.
+2.2 Boot Sequence & Pre-Flight (ADR-021 & ADR-034)
+Initialization logic satisfying legal (EULA), performance (Asset Hydration), and cinematic (Web Animations API) constraints.
 
 graph TD
     subgraph Phase 1: DOM Ready
@@ -54,17 +54,19 @@ graph TD
         D --> E[Render Title Screen & EULA Modal];
     end
 
-    subgraph Phase 2: User Gate
+    subgraph Phase 2: User Gate & Loan
         E --> F{User Accepts EULA?};
         F -- No --> G[Wait / Pulse Warning];
-        F -- Yes --> H[Trigger Start Sequence];
+        F -- Yes --> H[Trigger Signature Modal];
+        H --> I[Accept Loan & Intro Sequences];
     end
 
-    subgraph Phase 3: Game Injection
-        H --> I[Unlock AudioContext: User Gesture];
-        I --> J[Instantiate GameState & Core Services];
-        J --> K[Hydrate Game Assets: Ships/Planets];
-        K --> L[UIManager.render: Game];
+    subgraph Phase 3: Game Injection (Cinematic Handoff)
+        I --> J[DOM Inject: Starter Ship Selection Overlay];
+        J --> K{User Selects Ship};
+        K --> L[Mutate GameState Invisibly];
+        L --> M[Web Animations API: Crossfade Overlay to Game Container];
+        M --> N[UIManager.render: Hangar/Shipyard];
     end
 
 2.3 Asset Hydration Architecture
@@ -412,7 +414,7 @@ graph TD
         E --> F[1.0s Initial Delay];
         F --> G[UIToastManager.showToast];
         G --> H[Animate DOM Injection];
-        H -- 3.0s Duration --> I[UIToastManager.hideToast];
+        H -- 4.5s Duration --> I[UIToastManager.hideToast];
         I --> J[Animate DOM Removal];
         J -- 1.0s Interval Delay --> K{More in Queue?};
         K -- Yes --> G;
