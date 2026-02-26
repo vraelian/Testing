@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.25</title>
+    <title>Orbital Trading 36.29</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.25</p>
+            <p>Version 36.29</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3873,6 +3873,31 @@ card.
 /* [[NEW]] Dashboard Fade In Hook */
 .dashboard-fade-in {
     animation: fadeIn 1s ease-in forwards;
+}
+
+/* Intro Ship Themes */
+#ship-detail-modal .modal-content.modal-theme-amber {
+    background: linear-gradient(145deg, rgba(69, 42, 15, 0.9), #111827);
+    border-color: #fbbf24;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.4), inset 0 0 15px rgba(251, 191, 36, 0.2);
+}
+#ship-detail-modal .modal-content.modal-theme-blue {
+    background: linear-gradient(145deg, rgba(12, 74, 110, 0.9), #111827);
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2);
+}
+#ship-detail-modal .modal-content.modal-theme-green {
+    background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827);
+    border-color: #34d399;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.4), inset 0 0 15px rgba(52, 211, 153, 0.2);
+}
+
+.btn-confirm-purchase {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
+    font-weight: bold !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -10058,9 +10083,9 @@ export function renderCargoScreen(gameState, simulationService) {
                 <div class="cargo-band" style="--location-color: ${locationColor}; justify-content: space-between;">
                     <div><span class="cargo-band-label">STORAGE:</span> <span class="cargo-band-value">${usedCapStr}/${totalCapStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
-                    <div><span class="cargo-band-label">COST BASIS:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${costStr}</span></div>
+                    <div><span class="cargo-band-label">COST:</span> <span class="credits-text-pulsing font-bold" style="font-size: 0.95em;">⌬ ${costStr}</span></div>
                     <span class="cargo-band-pipe">|</span>
-                    <div><span class="cargo-band-label">LOCAL VALUE:</span> <span class="credits-text-pulsing font-bold" style="font-size: 1.05em;">⌬ ${localStr}</span></div>
+                    <div><span class="cargo-band-label">VALUE:</span> <span class="credits-text-pulsing font-bold" style="font-size: 0.95em;">⌬ ${localStr}</span></div>
                 </div>
             `;
         } else {
@@ -12514,89 +12539,379 @@ export const MISSION_REGISTRY = {
 // js/data/officers.js
 /**
  * @fileoverview Registry of all Sol Station Directorate officers.
- * Officers are acquired via missions and provide passive buffs to the station when assigned.
+ * Officers are acquired via missions and events, providing passive buffs to the station when assigned.
  * Includes support for expanded modifiers: capacityMods and consumptionMods, as well as UI properties like rarity and lore.
  */
 
 export const OFFICERS = {
-    // --- OPERATIONS (Entropy Reduction) ---
-    "off_ops_alpha": {
-        id: "off_ops_alpha",
-        name: "Cmdr. Harken",
-        role: "Operations",
-        rarity: "valuable",
-        description: "A veteran of the Jupiter run. Specialized in structural integrity and decay mitigation.",
-        lore: "Lost his original command during the Jovian blockades. Now channels his meticulous obsession with protocol into station structural integrity, ensuring every bulkhead holds.",
-        buffs: { entropy: -0.05, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: {} } // -5% Decay
-    },
-    "off_ops_beta": {
-        id: "off_ops_beta",
-        name: "Lt. Syla",
-        role: "Operations",
-        rarity: "uncommon",
-        description: "Former station architect. Her maintenance algorithms are highly efficient at preserving Plasteel.",
-        lore: "A former black-market architect who designed hidden bays for smugglers. She understands orbital stresses better than the Guild's own supercomputers.",
-        buffs: { entropy: -0.05, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "plasteel": 0.15 } } // -5% Decay, -15% Plasteel Burn
-    },
-
-    // --- LOGISTICS (Credit Yield) ---
-    "off_log_alpha": {
-        id: "off_log_alpha",
-        name: "Broker Krell",
-        role: "Logistics",
-        rarity: "rare",
-        description: "A ruthless negotiator who squeezes every credit out of station commerce.",
-        lore: "Exiled from the Venusian Exchange for being 'too cutthroat.' Krell's financial models operate on quantum probabilities, squeezing unimaginable profit from standard routes.",
-        buffs: { entropy: 0, creditMult: 0.15, amMult: 0, capacityMods: {}, consumptionMods: {} } // +15% Credits
-    },
-    "off_log_beta": {
-        id: "off_log_beta",
-        name: "Quartermaster Vance",
-        role: "Logistics",
-        rarity: "valuable",
-        description: "Optimizes supply chains to maximize commercial throughput and expand Ice storage.",
-        lore: "Used to manage supply drops for outer-rim terraforming projects. Can fit twice as much water ice into a reservoir than the manufacturer's maximum limits.",
-        buffs: { entropy: 0, creditMult: 0.10, amMult: 0, capacityMods: { "water_ice": 25000 }, consumptionMods: {} } // +10% Credits, +25k Ice Capacity
-    },
-
-    // --- ENGINEERING (Antimatter Yield) ---
-    "off_eng_alpha": {
-        id: "off_eng_alpha",
-        name: "Dr. Aris",
-        role: "Engineering",
-        rarity: "rare",
-        description: "Particle physicist obsessed with maximizing collider efficiency.",
-        lore: "Authored the controversial 'Aris Conjecture' regarding folding space. Aris is legally barred from operating drives but remains unparalleled at synthesizing Antimatter.",
-        buffs: { entropy: 0, creditMult: 0, amMult: 0.10, capacityMods: {}, consumptionMods: {} } // +10% Antimatter
-    },
-    "off_eng_beta": {
-        id: "off_eng_beta",
-        name: "Chief O'Rin",
-        role: "Engineering",
-        rarity: "hyper_rare",
-        description: "Pushing the reactor beyond safety limits is his specialty.",
-        lore: "A mad genius who treats safety regulations as mere suggestions. He can push a reactor to extraordinary outputs, provided the station doesn't shake itself apart in the process.",
-        buffs: { entropy: 0.05, creditMult: 0, amMult: 0.30, capacityMods: {}, consumptionMods: {} } // +30% Antimatter, but +5% Decay (Trade-off)
-    },
-
-    // --- TEST OFFICERS (Sol Station V1 Testing) ---
-    "off_test_logistics": {
-        id: "off_test_logistics",
-        name: "Chief Halloway",
-        role: "Logistics",
+    // --- I. THE GENERALISTS (Common / Low Uncommon) ---
+    "off_eclasia": {
+        id: "off_eclasia",
+        name: "Eclasia",
+        role: "Resource Warden",
         rarity: "common",
-        description: "[TEST] A specialist in hydrological storage solutions.",
-        lore: "Halloway spent twenty years managing water reserves on Ganymede. He brings that same efficient stacking protocol to Sol Station.",
-        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "water_ice": 60 }, consumptionMods: {} } // +30% Base Cap (Level 1)
+        description: "Safe baseline arbitrage. Her strict audits ensure no credits are lost to systemic inefficiency.",
+        lore: "Audits mining yields to prevent embezzlement by labor crews. Carries an encrypted ledger capable of freezing corporate assets instantaneously.",
+        buffs: { entropy: 0, creditMult: 0.10, amMult: 0, capacityMods: {}, consumptionMods: {} }
     },
-    "off_test_engineer": {
-        id: "off_test_engineer",
-        name: "Eng. Vance",
-        role: "Engineering",
+    "off_eapuria": {
+        id: "off_eapuria",
+        name: "Eapuria",
+        role: "Colony Administrator",
+        rarity: "common",
+        description: "Eases the early feeding loop for the most consumed good. Scales up the station's ice reservoirs.",
+        lore: "Manages a remote mining outpost on the edge of the system. Brews synthetic alcohol to maintain morale among the workers.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "water_ice": 1000 }, consumptionMods: {} }
+    },
+    "off_qualisus": {
+        id: "off_qualisus",
+        name: "Qualisus",
+        role: "Systems Architect",
+        rarity: "common",
+        description: "Slightly slows the bleeding. His redundant backups prevent catastrophic structural cascades.",
+        lore: "Designs the redundant computer networks that run station infrastructure. Fears a total system collapse and keeps analog backups.",
+        buffs: { entropy: -0.05, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_dorae": {
+        id: "off_dorae",
+        name: "Dorae",
+        role: "Franchise Owner",
+        rarity: "common",
+        description: "Provides a simple logistical buffer for orbital fuel reserves.",
+        lore: "Operates a successful chain of refueling depots across the outer rim. Aggressive towards competitors who attempt to undercut set fuel prices.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "propellant": 500 }, consumptionMods: {} }
+    },
+    "off_harklinore": {
+        id: "off_harklinore",
+        name: "Harklinore",
+        role: "Consortium Lead",
+        rarity: "common",
+        description: "Increases the storage ceiling for the primary hull-repair commodity based on his corporate mining ties.",
+        lore: "Represents a unified block of mining corporations in Guild senate hearings. Collects rare geological samples from industrially fractured moons.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "plasteel": 500 }, consumptionMods: {} }
+    },
+    "off_melini": {
+        id: "off_melini",
+        name: "Melini",
+        role: "Fleet Commodore",
+        rarity: "common",
+        description: "Her expert convoy routing reduces the station's orbital thruster fuel burn.",
+        lore: "Coordinates the Guild's massive automated convoy routes to avoid hazardous spatial anomalies. Plays classical violin over the fleet comms during downtime.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "propellant": 0.10 } }
+    },
+    "off_nepydoria": {
+        id: "off_nepydoria",
+        name: "Nepydoria",
+        role: "Extraction Director",
+        rarity: "common",
+        description: "Highly efficient processing of raw asteroid materials saves Tier 5 resources.",
+        lore: "Oversees the strip-mining operations of captured asteroids. Donates anonymously to environmental restoration funds on Earth.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "xeno_geologicals": 0.15 } }
+    },
+    "off_perfurine": {
+        id: "off_perfurine",
+        name: "Perfurine",
+        role: "Bio-Dome Curator",
+        rarity: "common",
+        description: "Expands the internal gardens, providing a safe buffer for organic supplies.",
+        lore: "Maintains the delicate ecosystem of the luxury station parks. Imports real soil from Earth at exorbitant personal cost.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "hydroponics": 500 }, consumptionMods: {} }
+    },
+    "off_petrinor": {
+        id: "off_petrinor",
+        name: "Petrinor",
+        role: "Flight Director",
+        rarity: "uncommon",
+        description: "A tiny, penalty-free bump to Antimatter synthesis through flawless telemetry alignment.",
+        lore: "Monitors the real-time telemetry of thousands of active flights. Communicates exclusively in hexadecimal when stressed.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0.05, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_simmerick": {
+        id: "off_simmerick",
+        name: "Simmerick",
+        role: "Research Director",
+        rarity: "uncommon",
+        description: "Pushes the reactor slightly harder to test his efficiency theories, causing minor degradation.",
+        lore: "Leads experimental projects to improve ion drive efficiency. Believes that FTL travel is a solvable mathematical riddle.",
+        buffs: { entropy: 0.02, creditMult: 0, amMult: 0.10, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_oepureem": {
+        id: "off_oepureem",
+        name: "Oepureem",
+        role: "High Marshal",
+        rarity: "uncommon",
+        description: "Absolute authority means zero waste. A flat, tiny reduction in burn across the board.",
+        lore: "Commands the station's customs and internal audit divisions with absolute authority. Possesses a deep hatred for the chaotic economic influence of the Syndicate.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": 0.05, "plasteel": 0.05, "hydroponics": 0.05, "propellant": 0.05, "cybernetics": 0.05, "processors": 0.05, "graphene_lattices": 0.05, "cryo_pods": 0.05, "atmo_processors": 0.05, "cloned_organs": 0.05, "xeno_geologicals": 0.05, "sentient_ai": 0.05 } }
+    },
+    "off_zidola": {
+        id: "off_zidola",
+        name: "Zidola",
+        role: "Surveillance Chief",
+        rarity: "uncommon",
+        description: "Her obsessive attention to detail roots out minor systemic inefficiencies and cargo embezzlement.",
+        lore: "Known for an obsession with detail in reviewing security footage. Enjoys vacationing on Europa to escape the digital noise.",
+        buffs: { entropy: -0.02, creditMult: 0.05, amMult: 0, capacityMods: {}, consumptionMods: {} }
+    },
+
+    // --- II. THE SPECIALISTS (Uncommon / Rare) ---
+    "off_rosarian": {
+        id: "off_rosarian",
+        name: "Rosarian",
+        role: "Refinery Overseer",
         rarity: "rare",
-        description: "[TEST] An expert in entropy reduction, but expensive to maintain.",
-        lore: "Vance's methods are incredibly effective at stabilizing the station's decay, but his salary requirements eat into the station's bottom line.",
-        buffs: { entropy: -0.10, creditMult: -0.05, amMult: 0, capacityMods: {}, consumptionMods: {} } // -10% Entropy, -5% Credits
+        description: "Heavily anchors cooling needs, but the intense heat of his operations melts advanced components.",
+        lore: "Manages the volatile chemical reactions of fuel refinement plants. Views fire as a living entity that must be tamed.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": 0.35, "cybernetics": -0.20, "processors": -0.20, "graphene_lattices": -0.20, "cryo_pods": -0.20, "atmo_processors": -0.20, "cloned_organs": -0.20, "xeno_geologicals": -0.20, "sentient_ai": -0.20 } }
+    },
+    "off_luzicia": {
+        id: "off_luzicia",
+        name: "Luzicia",
+        role: "Physics Head",
+        rarity: "rare",
+        description: "Speeds up the endgame AM grind, but the solar anomalies she exploits cause faster station degradation.",
+        lore: "Studies the gravitational anomalies of the sun to improve energy harvesting. Refuses to communicate with non-scientific personnel.",
+        buffs: { entropy: 0.10, creditMult: 0, amMult: 0.25, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_disophlonese": {
+        id: "off_disophlonese",
+        name: "Disophlonese",
+        role: "Regional Viceroy",
+        rarity: "rare",
+        description: "Massively reduces decay, but slashes storage space, requiring high-frequency, low-volume cargo drops.",
+        lore: "Administers Guild law across a vast and sparsely populated sector of space. Developing a philosophy based on the silence of the vacuum.",
+        buffs: { entropy: -0.15, creditMult: 0, amMult: 0, capacityMods: { "water_ice": -500, "plasteel": -500, "hydroponics": -500, "propellant": -500, "cybernetics": -500, "processors": -500, "graphene_lattices": -100, "cryo_pods": -100, "atmo_processors": -100, "cloned_organs": -20, "xeno_geologicals": -20, "sentient_ai": -10 }, consumptionMods: {} }
+    },
+    "off_myrnos": {
+        id: "off_myrnos",
+        name: "Myrnos",
+        role: "Convoy Marshal",
+        rarity: "uncommon",
+        description: "Densely packs structural cargo with architectural precision, though the concentrated heavy mass accelerates orbit decay.",
+        lore: "Calculates precise orbital trajectories to maximize fuel efficiency for heavy cargo haulers. Obsessed with the logistical perfection of ancient Roman aqueducts.",
+        buffs: { entropy: 0.10, creditMult: 0, amMult: 0, capacityMods: { "plasteel": 1500, "cybernetics": 1500 }, consumptionMods: {} }
+    },
+    "off_hallast": {
+        id: "off_hallast",
+        name: "Hallast",
+        role: "Naval Architect",
+        rarity: "rare",
+        description: "Excellent for long-term structural health, but his zero-g refits disrupt commercial docking bays.",
+        lore: "Designs the skeletal frames of the next generation of heavy lifters. Suffers from bone density loss due to a life in zero-g.",
+        buffs: { entropy: 0, creditMult: -0.10, amMult: 0, capacityMods: {}, consumptionMods: { "plasteel": 0.25 } }
+    },
+    "off_kimridon": {
+        id: "off_kimridon",
+        name: "Kimridon",
+        role: "Fabrication Chief",
+        rarity: "rare",
+        description: "Prints money, but uses up vast amounts of computational power for his secret metal sculptures.",
+        lore: "Controls the nanotech vats that print ship components. Creates abstract sculptures out of scrap metal in secret.",
+        buffs: { entropy: 0, creditMult: 0.20, amMult: 0, capacityMods: {}, consumptionMods: { "processors": -0.30 } }
+    },
+    "off_droysia": {
+        id: "off_droysia",
+        name: "Droysia",
+        role: "Chief Geneticist",
+        rarity: "rare",
+        description: "Radiation-resistant crops save massive amounts of organic supplies, but the ambient radiation eats at the station hull.",
+        lore: "Engineers crops capable of growing in high-radiation environments. Has modified their own DNA to require less sleep.",
+        buffs: { entropy: 0.15, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "hydroponics": 0.35, "cloned_organs": 0.35 } }
+    },
+    "off_lysander": {
+        id: "off_lysander",
+        name: "Lysander",
+        role: "Terraforming Lead",
+        rarity: "uncommon",
+        description: "Perfectly balances the air scrubbers, but requires significantly more water to run the humidity simulations.",
+        lore: "Models atmospheric changes for planetary rehabilitation over centuries. Names every simulation after a distinct emotion.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "atmo_processors": 0.35, "water_ice": -0.15 } }
+    },
+    "off_xanadu": {
+        id: "off_xanadu",
+        name: "Xanadu",
+        role: "System Governor",
+        rarity: "rare",
+        description: "Heavy market regulation drives massive commercial profit, but completely stifles the creative scientific environment needed for AM synthesis.",
+        lore: "Administers strict trade embargoes and corporate sanctions for the entire Jovian sector with zero tolerance for deviation. Composes symphonies based on the electromagnetic hum of Jupiter.",
+        buffs: { entropy: 0.05, creditMult: 0.30, amMult: -0.15, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_pryderi": {
+        id: "off_pryderi",
+        name: "Pryderi",
+        role: "Apex Director",
+        rarity: "very_rare",
+        description: "Incredible wealth generation, but his corporate mergers require massive systemic payouts and resource expenditures to maintain.",
+        lore: "Holds final authority on all inter-corporate mergers and acquisitions within the Guild. Collects fossilized dinosaur bones retrieved from Earth.",
+        buffs: { entropy: 0, creditMult: 0.40, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": -0.30, "plasteel": -0.30, "hydroponics": -0.30, "propellant": -0.30, "cybernetics": -0.30, "processors": -0.30, "graphene_lattices": -0.30, "cryo_pods": -0.30, "atmo_processors": -0.30, "cloned_organs": -0.30, "xeno_geologicals": -0.30, "sentient_ai": -0.30 } }
+    },
+    "off_kaelith": {
+        id: "off_kaelith",
+        name: "Kaelith",
+        role: "Grand Strategist",
+        rarity: "rare",
+        description: "Predicts system stresses before they happen, slowing decay beautifully, but her obsession with market simulations hurts actual commercial yield.",
+        lore: "Simulates hostile corporate takeovers against the Syndicate to predict market crashes before they happen. Fascinated by the irrational concept of gambling.",
+        buffs: { entropy: -0.20, creditMult: -0.15, amMult: 0, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_orestes": {
+        id: "off_orestes",
+        name: "Orestes",
+        role: "Void Chancellor",
+        rarity: "rare",
+        description: "Expands storage specifically for the most esoteric, ancient, and endgame items.",
+        lore: "Dictates the foreign policy and trade rights of the outer rim settlements. Refuses to speak directly to anyone under the age of sixty.",
+        buffs: { entropy: 0.15, creditMult: 0, amMult: 0, capacityMods: { "sentient_ai": 1000, "cryo_pods": 1000 }, consumptionMods: {} }
+    },
+    "off_mnemosyne": {
+        id: "off_mnemosyne",
+        name: "Mnemosyne",
+        role: "Chief Neural Architect",
+        rarity: "rare",
+        description: "Saves from hauling extremely expensive tech components, but her nostalgia-driven network drops commercial efficiency.",
+        lore: "Designs the consciousness frameworks for the next generation of sentient capital ships. Experiences nostalgia for data formats that no longer exist.",
+        buffs: { entropy: 0, creditMult: -0.10, amMult: 0, capacityMods: {}, consumptionMods: { "sentient_ai": 0.30, "processors": 0.30 } }
+    },
+    "off_cassander": {
+        id: "off_cassander",
+        name: "Cassander",
+        role: "Trade Sovereign",
+        rarity: "rare",
+        description: "Artificial scarcity fills his pockets, but his modified scout ships take up massive amounts of hangar space, reducing basic storage.",
+        lore: "Possesses the power to embargo entire space stations with a single digital signature. Races modified scout ships through debris fields for sport.",
+        buffs: { entropy: 0, creditMult: 0.25, amMult: 0, capacityMods: { "water_ice": -800, "plasteel": -800, "hydroponics": -800, "propellant": -800 }, consumptionMods: {} }
+    },
+    "off_themis": {
+        id: "off_themis",
+        name: "Themis",
+        role: "High Inquisitor",
+        rarity: "very_rare",
+        description: "Eliminates all corporate theft, phenomenally improving resource retention. However, her aggressive investigations terrify merchants, crippling income.",
+        lore: "Investigates extreme corporate fraud and embezzlement within the upper ranks of the Merchant's Guild. Deletes its own personality files weekly to remain impartial.",
+        buffs: { entropy: 0, creditMult: -0.40, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": 0.25, "plasteel": 0.25, "hydroponics": 0.25, "propellant": 0.25, "cybernetics": 0.25, "processors": 0.25, "graphene_lattices": 0.25, "cryo_pods": 0.25, "atmo_processors": 0.25, "cloned_organs": 0.25, "xeno_geologicals": 0.25, "sentient_ai": 0.25 } }
+    },
+    "off_chronos": {
+        id: "off_chronos",
+        name: "Chronos",
+        role: "Prime Logistics Officer",
+        rarity: "rare",
+        description: "Perfect mathematical efficiency scales everything up equally—including the station's inevitable demise.",
+        lore: "Optimizes the movement of every grain of rice in the sector to prevent famine. Finds beauty in the mathematical efficiency of starvation.",
+        buffs: { entropy: 0.15, creditMult: 0.15, amMult: 0.15, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_argus": {
+        id: "off_argus",
+        name: "Argus",
+        role: "Panopticon Overseer",
+        rarity: "rare",
+        description: "Sees every microscopic hull fracture before it spreads. Needs massive computational storage to process the camera feeds.",
+        lore: "Processes visual data from every public camera in the inner system simultaneously. Watches old pre-collapse cinema to understand human deceit.",
+        buffs: { entropy: -0.10, creditMult: 0, amMult: 0, capacityMods: { "processors": 1000 }, consumptionMods: {} }
+    },
+    "off_helios": {
+        id: "off_helios",
+        name: "Helios",
+        role: "Energy Sovereign",
+        rarity: "very_rare",
+        description: "Opening the arrays to 'hear the sun' grants absurd AM synthesis but bakes the station's outer plating.",
+        lore: "Monopolizes the solar collection arrays orbiting near Mercury. Claims to hear the voice of the sun during solar flares.",
+        buffs: { entropy: 0.25, creditMult: 0, amMult: 0.35, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_metis": {
+        id: "off_metis",
+        name: "Metis",
+        role: "Media Mogul",
+        rarity: "very_rare",
+        description: "Spins Sol Station as a luxury destination, bringing in massive wealth, but the influx of tourists causes logistical chaos and disrupts AM colliders.",
+        lore: "Controls the news feeds that shape public opinion across the solar system. Writes fiction under a pseudonym to experience creativity.",
+        buffs: { entropy: 0.20, creditMult: 0.50, amMult: -0.20, capacityMods: {}, consumptionMods: {} }
+    },
+
+    // --- III. THE HYPER-RARE MAVERICKS (Rule Breakers) ---
+    "off_hyperion": {
+        id: "off_hyperion",
+        name: "Hyperion",
+        role: "Antimatter Baron",
+        rarity: "hyper_rare",
+        description: "Generates AM at an absurd rate, but cuts storage in half and nearly doubles decay. For local inner-system loops only.",
+        lore: "Controls the limited supply of FTL fuel remnants saved from the Ad Astra era. Wears a suit lined with lead to signal status.",
+        buffs: { entropy: 0.75, creditMult: 0, amMult: 1.50, capacityMods: { "water_ice": -1000, "plasteel": -1000, "hydroponics": -1000, "propellant": -1000, "cybernetics": -1000, "processors": -1000, "graphene_lattices": -500, "cryo_pods": -500, "atmo_processors": -500, "cloned_organs": -100, "xeno_geologicals": -100, "sentient_ai": -50 }, consumptionMods: {} }
+    },
+    "off_atlas": {
+        id: "off_atlas",
+        name: "Atlas",
+        role: "Infrastructure Apex",
+        rarity: "hyper_rare",
+        description: "The Macro-Management savior. Produces almost nothing, but his structural micro-management creates enough physical storage buffer to survive deep outer-rim trips unattended.",
+        lore: "Literally holds the station together by micro-managing structural stress in real-time. Fears the silence that would come with a total power failure.",
+        buffs: { entropy: 0, creditMult: -0.75, amMult: -0.75, capacityMods: { "water_ice": 2500, "plasteel": 2500, "hydroponics": 2500, "propellant": 2500, "cybernetics": 2500, "processors": 2500 }, consumptionMods: {} }
+    },
+    "off_nemesis": {
+        id: "off_nemesis",
+        name: "Nemesis",
+        role: "Syndicate Shadow",
+        rarity: "hyper_rare",
+        description: "Effectively halts the burn of hyper-expensive goods, but guzzles basic resources like a black hole to mask her operations.",
+        lore: "Orchestrates system-wide black market fluctuations from the shadows. Never appears in person and uses multiple body doubles.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": -1.50, "plasteel": -1.50, "hydroponics": -1.50, "propellant": -1.50, "cybernetics": -1.50, "processors": -1.50, "cloned_organs": 0.35, "xeno_geologicals": 0.35, "sentient_ai": 0.35 } }
+    },
+    "off_aurelius": {
+        id: "off_aurelius",
+        name: "Aurelius",
+        role: "Corporate Monarch",
+        rarity: "hyper_rare",
+        description: "Liquidates physical health for raw, immediate wealth. Prints money, but requires dumping massive fleet cargo holds into the station daily to keep it alive.",
+        lore: "Rules a sovereign corporate state that operates independent of Guild oversight. Seeks a cure for the psychological weight of immortality.",
+        buffs: { entropy: 0, creditMult: 1.50, amMult: -0.50, capacityMods: {}, consumptionMods: { "water_ice": -1.50, "plasteel": -1.50, "hydroponics": -1.50, "propellant": -1.50, "cybernetics": -1.50, "processors": -1.50, "graphene_lattices": -1.50, "cryo_pods": -1.50, "atmo_processors": -1.50, "cloned_organs": -1.50, "xeno_geologicals": -1.50, "sentient_ai": -1.50 } }
+    },
+    "off_lethe": {
+        id: "off_lethe",
+        name: "Lethe",
+        role: "Legacy Guardian",
+        rarity: "hyper_rare",
+        description: "The Pause Button. Protecting the cryo-tombs drops the station to minimum viable power. Decay drops to a crawl, and production stops.",
+        lore: "Protects the cryo-tombs of the sleeping ultra-rich waiting for the future. Reads bedtime stories to the frozen bodies in the vault.",
+        buffs: { entropy: -0.75, creditMult: -1.00, amMult: -1.00, capacityMods: {}, consumptionMods: {} }
+    },
+
+    // --- IV. THE NOOB-TRAPS (Misleading Efficiencies) ---
+    "off_tyche": {
+        id: "off_tyche",
+        name: "Tyche",
+        role: "Banking Magnate",
+        rarity: "rare",
+        description: "Siphons off a quarter of the station's total yield to pay off her private planetary debts. The loss in yield drastically outweighs the cargo saved from her decay reduction.",
+        lore: "Owns the private debt of three separate planetary governments. Cultivates poisonous flowers in a private zero-g garden.",
+        buffs: { entropy: -0.15, creditMult: -0.25, amMult: -0.25, capacityMods: {}, consumptionMods: {} }
+    },
+    "off_tantalus": {
+        id: "off_tantalus",
+        name: "Tantalus",
+        role: "Resource Tycoon",
+        rarity: "very_rare",
+        description: "The increased entropy scales against the massive new volume. Burns significantly more cargo overall just to keep the larger caches full, draining bank accounts to feed his hoarding.",
+        lore: "Hoards strategic stockpiles of water ice to artificially drive up prices. Fears dying of thirst despite owning entire glaciers.",
+        buffs: { entropy: 0.25, creditMult: 0, amMult: 0, capacityMods: { "water_ice": 3000, "plasteel": 3000, "hydroponics": 3000, "propellant": 3000, "cybernetics": 3000, "processors": 3000, "graphene_lattices": 3000, "cryo_pods": 3000, "atmo_processors": 3000, "cloned_organs": 3000, "xeno_geologicals": 3000, "sentient_ai": 3000 }, consumptionMods: {} }
+    },
+    "off_rhea": {
+        id: "off_rhea",
+        name: "Rhea",
+        role: "Bio-Engineering CEO",
+        rarity: "very_rare",
+        description: "Because Rhea refuses to use her own products, the station quietly chews through your most expensive, hard-to-find cargo at a bankrupting pace to sustain the AM boost.",
+        lore: "Holds the patents for the most popular synthetic organ replacements in the market. Refuses to use their own products out of paranoia.",
+        buffs: { entropy: 0, creditMult: 0, amMult: 0.40, capacityMods: {}, consumptionMods: { "cloned_organs": -1.50, "cybernetics": -1.50 } }
+    },
+
+    // --- V. THE JOKE OFFICER (Hard Mode) ---
+    "off_valerion": {
+        id: "off_valerion",
+        name: "Valerion",
+        role: "Board Chairman",
+        rarity: "hyper_rare",
+        description: "Pure, unadulterated sabotage. Spends millions of the budget on illicit treatments, bleeding caches dry while halting all production. Slot at your own peril.",
+        lore: "Controls the voting shares of the three largest mining conglomerates in the system. Spends millions annually on illegal stem-cell rejuvenation treatments.",
+        buffs: { entropy: 5.00, creditMult: -0.95, amMult: -0.95, capacityMods: {}, consumptionMods: {} }
     }
 };
 --- END OF FILE: ./js/data/officers.js ---
@@ -13029,7 +13344,7 @@ The ship looks like it was scavenged rather than built. Its 'hull' is merely a s
         maxHealth: 40,
         cargoCapacity: 35,
         maxFuel: 150,
-        role: "Explorer",
+        role: "Balanced",
         attribute: "None",
         description: "Resembling a manned deep-space probe, its fragile, asymmetric frame carries massive fuel reserves at the cost of armor and crew comfort.",
         lore: `The Nomad, born from the Helium Rush, is a direct response to the chaos and opportunity of Luna's new economy.
@@ -13565,7 +13880,7 @@ This ship is a pure expression of ambition. It is a high-performance machine for
 
 These ships are rarely sold but instead are granted. They are given to Syndicate members who have provided the most compromising and lucrative information and have repeatedly proven their loyalty. To see one on the open market on Venus means its previous owner has been retired. Permanently.
 
-To acquire a Pterodactyl is to fly the flag of the Venetian Syndicate. It is a ship that announces its owner's ambition, a tool that seems to bend the laws of chance itself. It is the ultimate gambler's vessel, for the captain who knows that in the great game, you make your own luck.`,
+To acquire a Pterodactyl is to buy the flag of the Venetian Syndicate. It is a ship that announces its owner's ambition, a tool that seems to bend the laws of chance itself. It is the ultimate gambler's vessel, for the captain who knows that in the great game, you make your own luck.`,
         saleLocationId: locationMap["Venus"],
         spawnChance: 0.40,
         spawnTrigger: "Tier 6 Unlock",
@@ -18749,6 +19064,9 @@ export class UIHangarControl {
         const modalContent = modal.querySelector('.modal-content');
         let modalContentHtml;
 
+        // Ensure clean slate for themes
+        modalContent.classList.remove('modal-theme-amber', 'modal-theme-blue', 'modal-theme-green');
+
         if (context === 'shipyard' || context === 'intro_shipyard') {
             const canAfford = player.credits >= shipStatic.price;
             let isDisabled = false;
@@ -18759,6 +19077,15 @@ export class UIHangarControl {
                 isDisabled = !canAfford; 
                 actionId = ACTION_IDS.INTRO_BUY_SHIP;
                 modalContent.classList.add('intro-modal-width');
+                
+                // Set Theme styling based on role
+                if (shipStatic.role === 'Explorer') {
+                    modalContent.classList.add('modal-theme-blue');
+                } else if (shipStatic.role === 'Balanced') {
+                    modalContent.classList.add('modal-theme-green');
+                } else if (shipStatic.role === 'Hauler') {
+                    modalContent.classList.add('modal-theme-amber');
+                }
             } else {
                 const isHangarTutStep1Active = tutorials.activeBatchId === 'intro_hangar' && tutorials.activeStepId === 'hangar_1';
                 isDisabled = !canAfford || isHangarTutStep1Active;
@@ -18780,12 +19107,19 @@ export class UIHangarControl {
 
             // Swap to short description instead of lore for the intro
             const textContent = context === 'intro_shipyard' ? shipStatic.description : shipStatic.lore;
+            
+            // Add style for font size explicitly for intro context
+            const titleStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.25rem + 2pt);"' : '';
+
+            const btnHtml = context === 'intro_shipyard' 
+                ? `<button id="intro-purchase-btn" class="btn w-full mt-2" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`
+                : `<button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`;
 
             modalContentHtml = `
                 <div class="ship-card p-4 flex flex-col space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                             <h3 class="text-xl font-orbitron text-cyan-300">${shipStatic.name}</h3>
+                             <h3 class="text-xl font-orbitron text-cyan-300" ${titleStyle}>${shipStatic.name}</h3>
                             <p class="text-sm text-gray-400">Class ${shipStatic.class}</p>
                          </div>
                         <div class="text-right">
@@ -18799,7 +19133,7 @@ export class UIHangarControl {
                         <div><span class="text-gray-500">Fuel:</span><br><span class="text-sky-400">${shipStatic.maxFuel}</span></div>
                         <div><span class="text-gray-500">Cargo:</span><br><span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
                     </div>
-                     <button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>
+                     ${btnHtml}
                 </div>`;
 
         } else { // context === 'hangar'
@@ -18878,6 +19212,23 @@ export class UIHangarControl {
 
         const modalContentTarget = modal.querySelector('#ship-detail-content');
         modalContentTarget.innerHTML = modalContentHtml;
+
+        // Intro Purchase Two-Step Verification Listener
+        if (context === 'intro_shipyard') {
+            const purchaseBtn = modalContentTarget.querySelector('#intro-purchase-btn');
+            if (purchaseBtn) {
+                purchaseBtn.addEventListener('click', (e) => {
+                    if (purchaseBtn.dataset.confirmed !== 'true') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        purchaseBtn.dataset.confirmed = 'true';
+                        purchaseBtn.textContent = 'Confirm Purchase?';
+                        purchaseBtn.classList.add('btn-confirm-purchase');
+                        purchaseBtn.setAttribute('data-action', ACTION_IDS.INTRO_BUY_SHIP);
+                    }
+                });
+            }
+        }
 
         // Apply robust outside click dismissal strictly for intro_shipyard context
         if (context === 'intro_shipyard') {
@@ -19097,6 +19448,74 @@ import { AssetService } from '../AssetService.js';
 import { spawnFloatingText, playBlockingAnimationAndRemove } from './AnimationService.js';
 import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 
+// --- PURE VISUAL HELPERS ---
+function getRarityColorClass(rarity) {
+    switch (rarity) {
+        case 'uncommon': return 'text-green-400';
+        case 'valuable': return 'text-blue-400';
+        case 'rare': return 'text-yellow-400';
+        case 'very_rare': return 'text-orange-400';
+        case 'hyper_rare': return 'text-red-500';
+        case 'common':
+        default: return 'text-white';
+    }
+}
+
+function getLevelStyleClass(level) {
+    if (level < 10) return 'sol-level-white';
+    if (level < 20) return 'sol-level-green';
+    if (level < 30) return 'sol-level-blue';
+    if (level < 40) return 'sol-level-gold';
+    if (level < 50) return 'sol-level-orange';
+    return 'sol-level-red';
+}
+
+function getHealthColorClass(health) {
+    if (health >= 80) return 'text-green-400';
+    if (health >= 50) return 'text-yellow-400';
+    return 'text-red-500';
+}
+
+function getHealthColorVar(health) {
+    if (health >= 80) return '--ot-green-base';
+    if (health >= 50) return '--ot-yellow-base';
+    return '--ot-red-base';
+}
+
+function getOfficerBtnThemeClass(level) {
+    if (level < 10) return 'bg-gray-800 border border-gray-500';
+    if (level < 20) return 'bg-green-900 border border-green-500';
+    if (level < 30) return 'bg-blue-900 border border-blue-500';
+    if (level < 40) return 'bg-yellow-900 border border-yellow-500';
+    if (level < 50) return 'bg-orange-900 border border-orange-500';
+    return 'bg-red-900 border border-red-500';
+}
+
+function getModeDescription(mode) {
+    switch (mode) {
+        case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
+        case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
+        case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
+        default: return "";
+    }
+}
+
+function getProjectImpactDescription(stats) {
+    const parts = [];
+    if (stats.cacheCapacity) {
+        Object.keys(stats.cacheCapacity).forEach(k => {
+            const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
+            parts.push(`Expand ${cName} storage.`);
+        });
+    }
+    if (stats.amYieldMult > 0) parts.push(`Increase Antimatter synthesis by ${Math.round(stats.amYieldMult * 100)}%.`);
+    if (stats.creditYieldMult > 0) parts.push(`Improve commercial revenue by ${Math.round(stats.creditYieldMult * 100)}%.`);
+    if (stats.globalEntropyRed > 0) parts.push(`Reinforce hull integrity against solar decay.`);
+    
+    return parts.length > 0 ? parts.join(" ") : "General station improvements.";
+}
+
+// --- MAIN CONTROLLER ---
 export class UISolStationControl {
     constructor(uiManager) {
         this.uiManager = uiManager;
@@ -19115,7 +19534,6 @@ export class UISolStationControl {
         
         // Handler references for cleanup
         this._clickHandler = null;
-        this._scrollHandler = null;
     }
 
     _getLiveStationState(gameState) {
@@ -19125,14 +19543,65 @@ export class UISolStationControl {
         return gameState.solStation;
     }
 
-    /**
-     * Resets the scroll memory. Call this when navigating away from the Services screen.
-     */
     resetScrollMemory() {
         this.scrollMemory = {};
     }
 
+    /**
+     * Intercept Strategy: Records DOM scroll positions BEFORE the DOM is replaced.
+     */
+    _saveCurrentScrollPositions() {
+        if (!this.currentView) return;
+        
+        if (typeof this.scrollMemory[this.currentView] !== 'object') {
+            this.scrollMemory[this.currentView] = {};
+        }
+
+        const elementsToTrack = [
+            'event-description',
+            'roster-avail-scroll',
+            'roster-active-scroll',
+            'roster-lore-scroll',
+            'roster-buffs-scroll'
+        ];
+
+        elementsToTrack.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                this.scrollMemory[this.currentView][id] = el.scrollTop;
+            }
+        });
+    }
+
+    _restoreScrollPosition() {
+        if (!this.currentView || !this.scrollMemory[this.currentView]) return;
+        const memory = this.scrollMemory[this.currentView];
+
+        // Ensure browser has fully painted the new DOM and established layout heights before restoring
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const elementsToRestore = [
+                        'event-description',
+                        'roster-avail-scroll',
+                        'roster-active-scroll',
+                        'roster-lore-scroll',
+                        'roster-buffs-scroll'
+                    ];
+
+                    elementsToRestore.forEach(id => {
+                        if (memory[id] !== undefined) {
+                            const el = document.getElementById(id);
+                            if (el) el.scrollTop = memory[id];
+                        }
+                    });
+                }, 10);
+            });
+        });
+    }
+
     showDashboard(gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'dashboard';
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
@@ -19148,10 +19617,7 @@ export class UISolStationControl {
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
         
-        // Safety Clean-up for Silent Exit flag
-        if (modalContainer) {
-            modalContainer.classList.remove('silent-exit');
-        }
+        if (modalContainer) modalContainer.classList.remove('silent-exit');
         
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
@@ -19167,13 +19633,12 @@ export class UISolStationControl {
             this.domCache = null; 
             this._bindLocalListeners(gameState);
             
-            // --- UPDATE THEME DYNAMICALLY ---
             this._applyLevelTheme(station.level);
 
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
-                footerBtn.style.display = ''; // Ensure visible
+                footerBtn.style.display = ''; 
                 footerBtn.onclick = () => {
                     this._stopRefreshLoop();
                     this.uiManager.hideModal('event-modal');
@@ -19190,7 +19655,6 @@ export class UISolStationControl {
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm',
                 customSetup: (modal, closeHandler) => {
-                    // --- FIX: APPLY THEME DIRECTLY TO MODAL CONTAINER ---
                     this._updateThemeClasses(modal, station.level);
                 }
             });
@@ -19202,7 +19666,6 @@ export class UISolStationControl {
     }
 
     _updateThemeClasses(element, level) {
-        // Remove all potential theme classes first
         element.classList.remove(
             'sol-theme-white', 
             'sol-theme-green', 
@@ -19212,7 +19675,6 @@ export class UISolStationControl {
             'sol-theme-red'
         );
 
-        // Add the correct class
         if (level < 10) element.classList.add('sol-theme-white');
         else if (level < 20) element.classList.add('sol-theme-green');
         else if (level < 30) element.classList.add('sol-theme-blue');
@@ -19224,7 +19686,6 @@ export class UISolStationControl {
     _applyLevelTheme(level) {
         const modal = document.getElementById('event-modal');
         if (modal) {
-            // FIX: Ensure this always targets the parent container
             this._updateThemeClasses(modal, level);
         }
     }
@@ -19233,7 +19694,6 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
 
-        // --- 1. CLICK HANDLER ---
         if (this._clickHandler) {
             root.removeEventListener('click', this._clickHandler);
         }
@@ -19292,11 +19752,9 @@ export class UISolStationControl {
                         const res = svc.completeActiveProject();
                         
                         if (res.success) {
-                            // 1. Silent Exit Logic
                             modal.classList.add('silent-exit');
                             this.uiManager.hideModal('event-modal');
                             
-                            // 2. Target the specific UI elements on the Services Screen
                             const btn = document.getElementById('btn-sol-orbital-interface');
                             const lbl = document.getElementById('lbl-sol-level-indicator');
 
@@ -19307,7 +19765,7 @@ export class UISolStationControl {
 
                                 setTimeout(() => {
                                     lbl.textContent = svc.gameState.solStation.level;
-                                    const newClass = this._getLevelStyleClass(svc.gameState.solStation.level);
+                                    const newClass = getLevelStyleClass(svc.gameState.solStation.level);
                                     lbl.className = `font-orbitron font-bold text-2xl z-10 ${newClass}`;
                                 }, 1200);
 
@@ -19329,35 +19787,6 @@ export class UISolStationControl {
             }
         };
         root.addEventListener('click', this._clickHandler);
-
-        // --- 2. SCROLL HANDLER (LIVE CAPTURE) ---
-        const sc = document.getElementById('event-description');
-        if (sc) {
-            // Remove old listener if exists
-            if (this._scrollHandler) {
-                sc.removeEventListener('scroll', this._scrollHandler);
-            }
-
-            // Create new handler
-            this._scrollHandler = (e) => {
-                if (this.currentView) {
-                    this.scrollMemory[this.currentView] = e.target.scrollTop;
-                }
-            };
-
-            // Bind passive listener for performance
-            sc.addEventListener('scroll', this._scrollHandler, { passive: true });
-        }
-    }
-
-    _restoreScrollPosition() {
-        const targetScroll = this.scrollMemory[this.currentView] || 0;
-        const sc = document.getElementById('event-description');
-        if (sc) {
-            requestAnimationFrame(() => {
-                sc.scrollTop = targetScroll;
-            });
-        }
     }
 
     _buildDomCache(root) {
@@ -19406,10 +19835,10 @@ export class UISolStationControl {
         const healthDisp = station.health.toFixed(2);
         if (lr.health !== healthDisp) {
             if (c.integrityLabel && c.integrityBar) {
-                c.integrityLabel.className = this._getHealthColorClass(station.health);
+                c.integrityLabel.className = getHealthColorClass(station.health);
                 c.integrityLabel.textContent = `${healthDisp}%`;
                 c.integrityBar.style.width = `${station.health}%`;
-                c.integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
+                c.integrityBar.style.backgroundColor = `var(${getHealthColorVar(station.health)})`;
             }
             lr.health = healthDisp;
         }
@@ -19451,7 +19880,7 @@ export class UISolStationControl {
                 btn.style.opacity = isLocked ? '0.3' : '1';
                 btn.style.cursor = isLocked ? 'not-allowed' : (isActive ? 'default' : 'pointer');
             });
-            if (c.modeDesc) c.modeDesc.innerHTML = this._getModeDescription(station.mode);
+            if (c.modeDesc) c.modeDesc.innerHTML = getModeDescription(station.mode);
             lr.mode = station.mode;
             lr.hasCheckedLocks = true;
         }
@@ -19460,7 +19889,7 @@ export class UISolStationControl {
         Object.entries(station.caches).forEach(([commId, cache]) => {
             if (commId !== COMMODITY_IDS.FOLDED_DRIVES) {
                 const playerStock = playerInventory[commId]?.quantity || 0;
-                const canDonate = playerStock > 0 && cache.current < cache.max;
+                const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const ui = c.caches[commId];
                 if (ui && ui.btn) {
                     ui.btn.disabled = !canDonate;
@@ -19535,16 +19964,11 @@ export class UISolStationControl {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
-        
-        const sc = document.getElementById('event-description');
-        if (sc && this._scrollHandler) {
-            sc.removeEventListener('scroll', this._scrollHandler);
-        }
-        
         this.domCache = null; 
     }
 
     showOfficerManagement(gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'officers';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
@@ -19577,16 +20001,16 @@ export class UISolStationControl {
 
         root.innerHTML = `
             <div class="sol-subview-header flex justify-between items-center mb-3">
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
+                <div class="sol-level-header ${getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 50vh; min-height: 350px;">
+            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 70vh; min-height: 500px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
-                    <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
+                    <div id="roster-avail-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
                 </div>
                 <div class="column-active flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">ACTIVE SLOTS</div>
-                    <div class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${slotsHtml}</div>
+                    <div id="roster-active-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${slotsHtml}</div>
                 </div>
             </div>
             
@@ -19622,6 +20046,7 @@ export class UISolStationControl {
             if (e.target.closest('.btn-inline-assign') || (isDoubleTap && !isAssigned)) {
                 const emptySlot = slots.find(s => !s.assignedOfficerId);
                 if (emptySlot) {
+                    this._saveCurrentScrollPositions(); // Save exactly before re-rendering view
                     svc.assignOfficer(emptySlot.slotId, officerId);
                     this.showOfficerManagement(svc.gameState);
                 }
@@ -19631,6 +20056,7 @@ export class UISolStationControl {
                 if (!validation.safe) {
                     this.showUnslotWarningModal(slotId, officerId, validation, svc.gameState);
                 } else {
+                    this._saveCurrentScrollPositions(); // Save exactly before re-rendering view
                     svc.assignOfficer(slotId, null);
                     this.showOfficerManagement(svc.gameState);
                 }
@@ -19659,7 +20085,7 @@ export class UISolStationControl {
         const actionBtn = isAssigned ? 
             `<button type="button" class="btn-inline-remove bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold py-1 px-2 rounded">REMOVE</button>` : 
             `<button type="button" class="btn-inline-assign bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-2 rounded">ASSIGN</button>`;
-        const rarityColor = this._getRarityColorClass(officer.rarity);
+        const rarityColor = getRarityColorClass(officer.rarity);
         
         const nameParts = officer.name.split(' ');
         const shortName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : officer.name;
@@ -19687,6 +20113,7 @@ export class UISolStationControl {
     }
 
     showOfficerDetailModal(officerId, gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'officerDetail';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
@@ -19695,24 +20122,53 @@ export class UISolStationControl {
         const officer = OFFICERS[officerId];
         if (!officer) return;
 
-        const rarityColor = this._getRarityColorClass(officer.rarity);
+        const rarityColor = getRarityColorClass(officer.rarity);
         const baseStyle = "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.4;";
 
         let buffsHtml = '';
-        if (officer.buffs.entropy !== 0) buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-red-300 font-bold uppercase tracking-wider">ENTROPY:</span><br/> ${officer.buffs.entropy > 0 ? '+' : ''}${Math.round(officer.buffs.entropy * 100)}%</div>`;
-        if (officer.buffs.creditMult !== 0) buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-green-300 font-bold uppercase tracking-wider">CREDIT YIELD:</span><br/> +${Math.round(officer.buffs.creditMult * 100)}%</div>`;
-        if (officer.buffs.amMult !== 0) buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-purple-300 font-bold uppercase tracking-wider">AM YIELD:</span><br/> +${Math.round(officer.buffs.amMult * 100)}%</div>`;
+        
+        const formatStatRow = (label, valueStr, isGood) => {
+            const colorClass = isGood ? 'text-green-400' : 'text-red-400';
+            return `
+                <div class="flex justify-between items-center mb-1 pb-1 border-b border-gray-800/50 last:border-0" style="${baseStyle}">
+                    <span class="text-gray-400 font-bold uppercase tracking-wider text-[10px]">${label}</span>
+                    <span class="${colorClass} font-mono font-bold text-xs">${valueStr}</span>
+                </div>
+            `;
+        };
+
+        if (officer.buffs.entropy !== 0) {
+            const isGood = officer.buffs.entropy < 0;
+            const sign = officer.buffs.entropy > 0 ? '+' : '';
+            buffsHtml += formatStatRow('ENTROPY', `${sign}${Math.round(officer.buffs.entropy * 100)}%`, isGood);
+        }
+        if (officer.buffs.creditMult !== 0) {
+            const isGood = officer.buffs.creditMult > 0;
+            const sign = officer.buffs.creditMult > 0 ? '+' : '';
+            buffsHtml += formatStatRow('CREDIT YIELD', `${sign}${Math.round(officer.buffs.creditMult * 100)}%`, isGood);
+        }
+        if (officer.buffs.amMult !== 0) {
+            const isGood = officer.buffs.amMult > 0;
+            const sign = officer.buffs.amMult > 0 ? '+' : '';
+            buffsHtml += formatStatRow('AM YIELD', `${sign}${Math.round(officer.buffs.amMult * 100)}%`, isGood);
+        }
         
         if (officer.buffs.capacityMods) {
             Object.entries(officer.buffs.capacityMods).forEach(([k, v]) => {
                 const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-blue-300 font-bold uppercase tracking-wider">+ CAPACITY:</span><br/> ${cName} (${v.toLocaleString()})</div>`;
+                const isGood = v > 0;
+                const sign = v > 0 ? '+' : '';
+                buffsHtml += formatStatRow(`${cName.toUpperCase()} CAP`, `${sign}${v.toLocaleString()}`, isGood);
             });
         }
+        
         if (officer.buffs.consumptionMods) {
             Object.entries(officer.buffs.consumptionMods).forEach(([k, v]) => {
                 const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                buffsHtml += `<div class="mb-2 pb-2 border-b border-gray-800/50" style="${baseStyle}"><span class="text-yellow-300 font-bold uppercase tracking-wider">- CONSUMPTION:</span><br/> ${cName} (-${Math.round(v * 100)}%)</div>`;
+                const isGood = v > 0;
+                const displayVal = -v; 
+                const sign = displayVal > 0 ? '+' : '';
+                buffsHtml += formatStatRow(`${cName.toUpperCase()} BURN`, `${sign}${Math.round(displayVal * 100)}%`, isGood);
             });
         }
 
@@ -19721,22 +20177,22 @@ export class UISolStationControl {
                 <div class="sol-level-header ${rarityColor} text-[22px] tracking-wider uppercase text-center w-full">${officer.name}</div>
             </div>
             
-            <div class="flex flex-col p-5 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
-                <div class="flex items-center justify-between mb-4 border-b border-gray-800 pb-2">
+            <div class="flex flex-col p-4 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
+                <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
                     <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">${officer.role}</div>
                     <div class="text-[10px] font-bold uppercase px-2 py-1 rounded border border-gray-600 ${rarityColor} opacity-80">
                         ${(officer.rarity || 'common').replace('_', ' ')}
                     </div>
                 </div>
                 
-                <div class="text-sm text-gray-300 mb-6 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans">
+                <div id="roster-lore-scroll" class="text-sm text-gray-300 mb-4 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans max-h-32 overflow-y-auto" style="scrollbar-width: thin;">
                     "${officer.lore}"
                 </div>
                 
-                <div class="w-full flex flex-col" style="max-height: 200px;">
+                <div class="w-full flex flex-col" style="max-height: 220px;">
                     <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-widest">Influence</div>
-                    <div class="flex-1 overflow-y-auto bg-black/50 p-3 rounded border border-gray-800" style="scrollbar-width: thin;">
-                        ${buffsHtml || '<div class="text-sm text-gray-500">No measurable influence.</div>'}
+                    <div id="roster-buffs-scroll" class="flex-1 overflow-y-auto bg-black/50 p-3 rounded border border-gray-800" style="scrollbar-width: thin;">
+                        ${buffsHtml || '<div class="text-sm text-gray-500 text-center italic mt-2">No measurable influence.</div>'}
                     </div>
                 </div>
             </div>
@@ -19757,19 +20213,8 @@ export class UISolStationControl {
         this._restoreScrollPosition();
     }
 
-    _getRarityColorClass(rarity) {
-        switch (rarity) {
-            case 'uncommon': return 'text-green-400';
-            case 'valuable': return 'text-blue-400';
-            case 'rare': return 'text-yellow-400';
-            case 'very_rare': return 'text-orange-400';
-            case 'hyper_rare': return 'text-red-500';
-            case 'common':
-            default: return 'text-white';
-        }
-    }
-
     showEngineeringModal(gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'engineering';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
@@ -19846,7 +20291,7 @@ export class UISolStationControl {
 
         root.innerHTML = `
             <div class="sol-subview-header flex justify-between items-center mb-4">
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-lg font-bold">ENGINEERING: PROJECT ${station.level + 1}</div>
+                <div class="sol-level-header ${getLevelStyleClass(station.level)} text-lg font-bold">ENGINEERING: PROJECT ${station.level + 1}</div>
             </div>
             <div class="eng-project-info mb-6 p-4 bg-black/40 border border-gray-700 rounded">
                 <div class="text-lg font-bold text-yellow-400 mb-1 tracking-wide">${nextLevelData.projectName}</div>
@@ -19882,6 +20327,8 @@ export class UISolStationControl {
     }
 
     showUnslotWarningModal(slotId, officerId, payload, gameState) {
+        this._saveCurrentScrollPositions();
+        this.currentView = 'unslotWarning';
         const officer = OFFICERS[officerId];
         let warningsHtml = '';
 
@@ -19961,7 +20408,7 @@ export class UISolStationControl {
                 `;
             }).join('');
             
-            const descText = this._getProjectImpactDescription(nextLvl.rewards.stats);
+            const descText = getProjectImpactDescription(nextLvl.rewards.stats);
 
             engOverview = `
                 <div style="display: flex; flex-direction: column; margin-top: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-transform: none; letter-spacing: normal;">
@@ -19972,10 +20419,12 @@ export class UISolStationControl {
             `;
         }
 
+        const officerBtnTheme = getOfficerBtnThemeClass(station.level);
+
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
                 
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-center mb-2 font-orbitron font-bold text-xl uppercase tracking-widest transition-colors duration-500">
+                <div class="sol-level-header ${getLevelStyleClass(station.level)} text-center mb-2 font-orbitron font-bold text-xl uppercase tracking-widest transition-colors duration-500">
                     SOL STATION LV. ${station.level}
                 </div>
 
@@ -19983,10 +20432,10 @@ export class UISolStationControl {
                     <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 0.5rem;">
                             <div style="font-size: 0.7rem; color: #9ca3af; letter-spacing: 1px;">STATION HEALTH</div>
-                            <div class="${this._getHealthColorClass(station.health)}" style="font-size: 1.25rem; font-weight: bold; line-height: 1;">${station.health.toFixed(2)}%</div>
+                            <div class="${getHealthColorClass(station.health)}" style="font-size: 1.25rem; font-weight: bold; line-height: 1;">${station.health.toFixed(2)}%</div>
                         </div>
                         <div class="sol-health-track" style="position: relative;">
-                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
+                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${getHealthColorVar(station.health)});"></div>
                             <div class="sol-health-threshold-marker" style="position: absolute; top: -2px; bottom: -2px; width: 3px; background-color: transparent; z-index: 10; border-left: 2px solid #fff; box-shadow: -1px 0 2px #000; left: ${output.threshold}%;"></div>
                         </div>
                     </div>
@@ -20047,7 +20496,7 @@ export class UISolStationControl {
                         ${this._renderModeButton('PRODUCTION', station.mode, station.unlockedModes)}
                     </div>
                     <div class="mode-description">
-                        ${this._getModeDescription(station.mode)}
+                        ${getModeDescription(station.mode)}
                     </div>
                 </div>
 
@@ -20059,7 +20508,7 @@ export class UISolStationControl {
                 </div>
 
                 <div class="mt-4 pt-4 border-t border-gray-700">
-                    <button type="button" class="w-full bg-blue-900 border border-blue-500 text-white font-bold py-3 rounded uppercase tracking-wider shadow-lg transition-transform hover:scale-[1.02]" data-local-action="open-officer-mgmt">
+                    <button type="button" class="w-full ${officerBtnTheme} text-white font-bold py-3 rounded uppercase tracking-wider shadow-lg transition-transform hover:scale-[1.02]" data-local-action="open-officer-mgmt">
                         OFFICER MANAGEMENT
                     </button>
                 </div>
@@ -20071,21 +20520,6 @@ export class UISolStationControl {
                 </div>
             </div>
         `;
-    }
-
-    _getProjectImpactDescription(stats) {
-        const parts = [];
-        if (stats.cacheCapacity) {
-            Object.keys(stats.cacheCapacity).forEach(k => {
-                const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                parts.push(`Expand ${cName} storage.`);
-            });
-        }
-        if (stats.amYieldMult > 0) parts.push(`Increase Antimatter synthesis by ${Math.round(stats.amYieldMult * 100)}%.`);
-        if (stats.creditYieldMult > 0) parts.push(`Improve commercial revenue by ${Math.round(stats.creditYieldMult * 100)}%.`);
-        if (stats.globalEntropyRed > 0) parts.push(`Reinforce hull integrity against solar decay.`);
-        
-        return parts.length > 0 ? parts.join(" ") : "General station improvements.";
     }
 
     _renderModeButton(modeId, currentMode, unlockedModes = ["STABILITY"]) {
@@ -20105,15 +20539,6 @@ export class UISolStationControl {
         `;
     }
 
-    _getModeDescription(mode) {
-        switch (mode) {
-            case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
-            case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
-            case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
-            default: return "";
-        }
-    }
-
     _renderCacheList(gameState) {
         const station = this._getLiveStationState(gameState);
         const caches = station.caches;
@@ -20128,7 +20553,7 @@ export class UISolStationControl {
 
                 const fillPct = (cache.current / cache.max) * 100;
                 const playerStock = playerInventory[commodityId]?.quantity || 0;
-                const canDonate = playerStock > 0 && cache.current < cache.max;
+                const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
                 const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
@@ -20174,27 +20599,6 @@ export class UISolStationControl {
             return projections;
         }
         return { credits: 0, antimatter: 0, entropy: 1, threshold: 0 };
-    }
-
-    _getHealthColorClass(health) {
-        if (health >= 80) return 'text-green-400';
-        if (health >= 50) return 'text-yellow-400';
-        return 'text-red-500';
-    }
-
-    _getHealthColorVar(health) {
-        if (health >= 80) return '--ot-green-base';
-        if (health >= 50) return '--ot-yellow-base';
-        return '--ot-red-base';
-    }
-    
-    _getLevelStyleClass(level) {
-        if (level < 10) return 'sol-level-white';
-        if (level < 20) return 'sol-level-green';
-        if (level < 30) return 'sol-level-blue';
-        if (level < 40) return 'sol-level-gold';
-        if (level < 50) return 'sol-level-orange';
-        return 'sol-level-red';
     }
 }
 --- END OF FILE: ./js/services/ui/UISolStationControl.js ---
@@ -21917,17 +22321,22 @@ export class ToastService {
 
         // 2. Finance Check (Loans nearing garnishment)
         if (state.player.debt > 0) {
-            let daysRemaining = 199; // Fallback assumes imminent payment if loanDay tracking isn't hydrated
-            if (state.player.loanDay !== undefined) {
-                daysRemaining = (state.player.loanDay + GAME_RULES.LOAN_GARNISHMENT_DAYS) - state.day;
+            let daysRemaining = 199; // Fallback assumes imminent payment if loanStartDate tracking isn't hydrated
+            if (state.player.loanStartDate !== undefined && state.player.loanStartDate !== null) {
+                daysRemaining = (state.player.loanStartDate + GAME_RULES.LOAN_GARNISHMENT_DAYS) - state.day;
             }
             
             if (daysRemaining < 200) {
+                let message = `Loan due within ${Math.max(0, daysRemaining)} days!`;
+                if (daysRemaining <= 0) {
+                    message = "Credits garnished for debt!";
+                }
+
                 triggers.push({
                     priority: 2,
                     type: 'finance',
                     title: 'FINANCE ALERT',
-                    message: `Active loan payment due in ${Math.max(0, daysRemaining)} days.`,
+                    message: message,
                     navTarget: 'data',
                     actionTarget: 'finance'
                 });
@@ -23237,6 +23646,9 @@ export class SolStationService {
     donateToCache(commodityId, quantity) {
         this._syncTime(); 
 
+        // Enforce strictly integer inputs for cache transfers
+        quantity = Math.floor(quantity);
+
         const station = this.gameState.solStation;
         const cache = station.caches[commodityId];
 
@@ -23251,7 +23663,8 @@ export class SolStationService {
             return { success: false, message: "Insufficient fleet cargo." };
         }
         
-        const spaceAvailable = cache.max - cache.current;
+        // Strictly evaluate remaining floor capacity
+        const spaceAvailable = Math.floor(cache.max - cache.current);
         if (quantity > spaceAvailable) {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
@@ -26005,7 +26418,7 @@ export class TravelService {
 --- START OF FILE: ./js/services/world/TimeService.js ---
 // js/services/world/TimeService.js
 import { DB } from '../../data/database.js';
-import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES } from '../../data/constants.js';
+import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
@@ -26130,7 +26543,12 @@ export class TimeService {
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
                 this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
-                this.marketService._updateShipyardStock(); 
+                
+                // Do not cycle upgrades/shipyard if currently docked at Sol Station
+                if (this.gameState.currentLocationId !== 'sol' && this.gameState.currentLocationId !== LOCATION_IDS.SUN) {
+                    this.marketService._updateShipyardStock(); 
+                }
+                
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
             }
 
@@ -26741,12 +27159,17 @@ export class IntroService {
             fuel: shipStatic.maxFuel,
             upgrades: []
         };
+        
         this.gameState.player.inventories[shipId] = {};
+        DB.COMMODITIES.forEach(c => {
+            this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 };
+        });
 
         // Prepare the Game UI Container before calling _end() so it does not instantly appear
         const gameContainer = document.getElementById('game-container');
         if (gameContainer) {
-            // Keep it visually hidden under the starfield overlay layer
+            // Suppress the native background/opacity transitions temporarily
+            gameContainer.style.transition = 'none';
             gameContainer.style.opacity = '0';
             gameContainer.style.filter = 'blur(10px)';
         }
@@ -26754,26 +27177,33 @@ export class IntroService {
         // Boot the core game loop, generating the Hangar layout invisibly
         this._end();
 
-        // Hold for the remaining 2 seconds of the Starfield scene (Reduced from 4s)
+        // Hold for the remaining 2 seconds of the Starfield scene
         await new Promise(res => setTimeout(res, 2000));
 
         // [Phase 3: 4-6s] Crossfade
-        // Fade the starfield overlay out WITHOUT overwriting the CSS animation to prevent the jitter/jump
         if (overlay) {
-            overlay.style.transition = 'opacity 2s ease-in-out, filter 2s ease-in-out';
-            overlay.style.opacity = '0';
-            overlay.style.filter = 'blur(10px)';
             overlay.style.pointerEvents = 'none';
+            // Use Web Animations API so UIManager's class wiping doesn't interrupt it
+            overlay.animate([
+                { opacity: 1, filter: 'blur(0px)' },
+                { opacity: 0, filter: 'blur(10px)' }
+            ], { duration: 2000, easing: 'ease-in-out', fill: 'forwards' });
         }
         
         if (gameContainer) {
-            gameContainer.classList.add('blur-fade-in');
+            // Strip the inline overrides so it targets its true default state (Opacity 1)
+            gameContainer.style.opacity = '';
+            gameContainer.style.filter = '';
+            
+            // Execute animation independently of CSS classes
+            gameContainer.animate([
+                { opacity: 0, filter: 'blur(10px)' },
+                { opacity: 1, filter: 'blur(0px)' }
+            ], { duration: 2000, easing: 'ease-in-out' });
             
             // Final cleanup after crossfade completes
             setTimeout(() => {
-                gameContainer.style.opacity = '';
-                gameContainer.style.filter = '';
-                gameContainer.classList.remove('blur-fade-in');
+                gameContainer.style.transition = ''; // Restore CSS transitions
                 if (overlay) overlay.remove();
             }, 2000);
         }
@@ -29571,11 +30001,13 @@ export const Logger = {
  * apply the consequences of player choices during events.
  * UPDATED: Added Math.round() to enforce integer values and preventing float drift.
  * UPDATED: Fleet Overflow logic applied to all cargo rewards and penalties.
+ * UPDATED: Added GRANT_OFFICER handler for acquiring Sol Station Directorate officers.
  */
 import { resolveSpaceRace } from './event-effects/effectSpaceRace.js';
 import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js';
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
+import { OFFICERS } from '../data/officers.js';
 import { COMMODITY_IDS, EVENT_CONSTANTS, NAV_IDS, SCREEN_IDS, PERK_IDS, ORBITAL_ORDER, LOCATION_IDS } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
@@ -29586,6 +30018,29 @@ const effectHandlers = {
     // --- Custom, Complex Event Handlers ---
     'SPACE_RACE': resolveSpaceRace,
     'ADRIFT_PASSENGER': resolveAdriftPassenger,
+
+    // --- Special Acquisition Handlers ---
+    'GRANT_OFFICER': (gameState, simulationService, effect, outcome) => {
+        const officerId = effect.target;
+        gameState.player.officerRoster = gameState.player.officerRoster || [];
+
+        if (!gameState.player.officerRoster.includes(officerId)) {
+            gameState.player.officerRoster.push(officerId);
+            
+            const officerName = OFFICERS[officerId] ? OFFICERS[officerId].name : officerId;
+            
+            if (outcome) {
+                outcome.text += `<br><br><span class="text-green-400 font-bold tracking-wider">Recruited Officer: ${officerName}</span>`;
+            }
+
+            return { addedOfficer: officerName };
+        } else {
+            if (outcome) {
+                 const officerName = OFFICERS[officerId] ? OFFICERS[officerId].name : officerId;
+                 outcome.text += ` (Received contract for ${officerName}, but they are already in your roster.)`;
+            }
+        }
+    },
 
     // --- Standard, Reusable Effect Handlers ---
     
@@ -30416,6 +30871,30 @@ export class UIManager {
         this.cache.subNavBar.innerHTML = subNavsHtml;
     }
 
+    _preserveScrollAndRender(screenEl, renderCallback) {
+        if (!screenEl) {
+            renderCallback();
+            return;
+        }
+
+        // Capture scroll positions before wipe
+        const screenScrollTop = screenEl.scrollTop;
+        const childScrollTop = screenEl.firstElementChild ? screenEl.firstElementChild.scrollTop : 0;
+
+        // Execute the render (overwrites innerHTML)
+        renderCallback();
+
+        // Restore after DOM update
+        requestAnimationFrame(() => {
+            if (screenScrollTop > 0) {
+                screenEl.scrollTop = screenScrollTop;
+            }
+            if (childScrollTop > 0 && screenEl.firstElementChild) {
+                screenEl.firstElementChild.scrollTop = childScrollTop;
+            }
+        });
+    }
+
     renderActiveScreen(gameState, previousState) {
         if (previousState && 
             previousState.activeScreen === SCREEN_IDS.SERVICES && 
@@ -30441,14 +30920,18 @@ export class UIManager {
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
                 break;
             case SCREEN_IDS.SERVICES:
-                this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
-                if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
+                this._preserveScrollAndRender(this.cache.servicesScreen, () => {
+                    this.cache.servicesScreen.innerHTML = renderServicesScreen(gameState, this.simulationService);
+                    if (this.eventManager) this.eventManager.holdEventHandler.bindHoldEvents();
+                });
                 break;
             case SCREEN_IDS.MARKET:
                 this.marketControl.updateMarketScreen(gameState);
                 break;
             case SCREEN_IDS.CARGO:
-                this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
+                this._preserveScrollAndRender(this.cache.cargoScreen, () => {
+                    this.cache.cargoScreen.innerHTML = renderCargoScreen(gameState, this.simulationService);
+                });
                 break;
             case SCREEN_IDS.HANGAR:
                 const needsFullRender = !previousState || 
@@ -30463,10 +30946,14 @@ export class UIManager {
                 this.hangarControl.updateHangarScreen(gameState);
                 break;
             case SCREEN_IDS.MISSIONS:
-                this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                this._preserveScrollAndRender(this.cache.missionsScreen, () => {
+                    this.cache.missionsScreen.innerHTML = renderMissionsScreen(gameState, this.missionService);
+                });
                 break;
             case SCREEN_IDS.FINANCE:
-                this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
+                this._preserveScrollAndRender(this.cache.financeScreen, () => {
+                    this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
+                });
                 break;
             case SCREEN_IDS.INTEL:
                 if (!previousState || previousState.activeScreen !== SCREEN_IDS.INTEL) {
@@ -34438,7 +34925,7 @@ export class ActionClickHandler {
                     playerStock += (this.gameState.player.inventories[shipId]?.[commId]?.quantity || 0);
                 }
 
-                const spaceAvailable = cache.max - cache.current;
+                const spaceAvailable = Math.floor(cache.max - cache.current);
                 const donateAmount = Math.min(playerStock, spaceAvailable);
 
                 if (donateAmount > 0) {
@@ -35875,6 +36362,16 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.29] - 2026-2-25
+-  bug fixes
+-  cargo screen polish
+-  added officer roster v1
+
+# [36.28] - 2026-2-24
+-  compressed all assets to WebP to reduce size
+-  intro sequence polish
+-  toast system polish
 
 # [36.25] - 2026-2-24
 -  added toast system v1

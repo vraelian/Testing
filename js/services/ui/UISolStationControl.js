@@ -7,6 +7,74 @@ import { AssetService } from '../AssetService.js';
 import { spawnFloatingText, playBlockingAnimationAndRemove } from './AnimationService.js';
 import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 
+// --- PURE VISUAL HELPERS ---
+function getRarityColorClass(rarity) {
+    switch (rarity) {
+        case 'uncommon': return 'text-green-400';
+        case 'valuable': return 'text-blue-400';
+        case 'rare': return 'text-yellow-400';
+        case 'very_rare': return 'text-orange-400';
+        case 'hyper_rare': return 'text-red-500';
+        case 'common':
+        default: return 'text-white';
+    }
+}
+
+function getLevelStyleClass(level) {
+    if (level < 10) return 'sol-level-white';
+    if (level < 20) return 'sol-level-green';
+    if (level < 30) return 'sol-level-blue';
+    if (level < 40) return 'sol-level-gold';
+    if (level < 50) return 'sol-level-orange';
+    return 'sol-level-red';
+}
+
+function getHealthColorClass(health) {
+    if (health >= 80) return 'text-green-400';
+    if (health >= 50) return 'text-yellow-400';
+    return 'text-red-500';
+}
+
+function getHealthColorVar(health) {
+    if (health >= 80) return '--ot-green-base';
+    if (health >= 50) return '--ot-yellow-base';
+    return '--ot-red-base';
+}
+
+function getOfficerBtnThemeClass(level) {
+    if (level < 10) return 'bg-gray-800 border border-gray-500';
+    if (level < 20) return 'bg-green-900 border border-green-500';
+    if (level < 30) return 'bg-blue-900 border border-blue-500';
+    if (level < 40) return 'bg-yellow-900 border border-yellow-500';
+    if (level < 50) return 'bg-orange-900 border border-orange-500';
+    return 'bg-red-900 border border-red-500';
+}
+
+function getModeDescription(mode) {
+    switch (mode) {
+        case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
+        case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
+        case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
+        default: return "";
+    }
+}
+
+function getProjectImpactDescription(stats) {
+    const parts = [];
+    if (stats.cacheCapacity) {
+        Object.keys(stats.cacheCapacity).forEach(k => {
+            const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
+            parts.push(`Expand ${cName} storage.`);
+        });
+    }
+    if (stats.amYieldMult > 0) parts.push(`Increase Antimatter synthesis by ${Math.round(stats.amYieldMult * 100)}%.`);
+    if (stats.creditYieldMult > 0) parts.push(`Improve commercial revenue by ${Math.round(stats.creditYieldMult * 100)}%.`);
+    if (stats.globalEntropyRed > 0) parts.push(`Reinforce hull integrity against solar decay.`);
+    
+    return parts.length > 0 ? parts.join(" ") : "General station improvements.";
+}
+
+// --- MAIN CONTROLLER ---
 export class UISolStationControl {
     constructor(uiManager) {
         this.uiManager = uiManager;
@@ -22,11 +90,9 @@ export class UISolStationControl {
         // Memory router to preserve scroll states across views
         this.currentView = null;
         this.scrollMemory = {};
-        this.isRestoringScroll = false; // Prevents browser DOM-reflows from overwriting saved scrolls
         
         // Handler references for cleanup
         this._clickHandler = null;
-        this._scrollHandler = null;
     }
 
     _getLiveStationState(gameState) {
@@ -36,14 +102,65 @@ export class UISolStationControl {
         return gameState.solStation;
     }
 
-    /**
-     * Resets the scroll memory. Call this when navigating away from the Services screen.
-     */
     resetScrollMemory() {
         this.scrollMemory = {};
     }
 
+    /**
+     * Intercept Strategy: Records DOM scroll positions BEFORE the DOM is replaced.
+     */
+    _saveCurrentScrollPositions() {
+        if (!this.currentView) return;
+        
+        if (typeof this.scrollMemory[this.currentView] !== 'object') {
+            this.scrollMemory[this.currentView] = {};
+        }
+
+        const elementsToTrack = [
+            'event-description',
+            'roster-avail-scroll',
+            'roster-active-scroll',
+            'roster-lore-scroll',
+            'roster-buffs-scroll'
+        ];
+
+        elementsToTrack.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                this.scrollMemory[this.currentView][id] = el.scrollTop;
+            }
+        });
+    }
+
+    _restoreScrollPosition() {
+        if (!this.currentView || !this.scrollMemory[this.currentView]) return;
+        const memory = this.scrollMemory[this.currentView];
+
+        // Ensure browser has fully painted the new DOM and established layout heights before restoring
+        requestAnimationFrame(() => {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const elementsToRestore = [
+                        'event-description',
+                        'roster-avail-scroll',
+                        'roster-active-scroll',
+                        'roster-lore-scroll',
+                        'roster-buffs-scroll'
+                    ];
+
+                    elementsToRestore.forEach(id => {
+                        if (memory[id] !== undefined) {
+                            const el = document.getElementById(id);
+                            if (el) el.scrollTop = memory[id];
+                        }
+                    });
+                }, 10);
+            });
+        });
+    }
+
     showDashboard(gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'dashboard';
         const station = this._getLiveStationState(gameState);
         if (!station.unlocked) return; 
@@ -59,10 +176,7 @@ export class UISolStationControl {
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
         
-        // Safety Clean-up for Silent Exit flag
-        if (modalContainer) {
-            modalContainer.classList.remove('silent-exit');
-        }
+        if (modalContainer) modalContainer.classList.remove('silent-exit');
         
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
@@ -78,13 +192,12 @@ export class UISolStationControl {
             this.domCache = null; 
             this._bindLocalListeners(gameState);
             
-            // --- UPDATE THEME DYNAMICALLY ---
             this._applyLevelTheme(station.level);
 
             const footerBtn = document.querySelector('#event-button-container button');
             if (footerBtn) {
                 footerBtn.innerHTML = 'Dismiss';
-                footerBtn.style.display = ''; // Ensure visible
+                footerBtn.style.display = ''; 
                 footerBtn.onclick = () => {
                     this._stopRefreshLoop();
                     this.uiManager.hideModal('event-modal');
@@ -101,7 +214,6 @@ export class UISolStationControl {
                 buttonText: 'Dismiss',
                 buttonClass: 'btn-dismiss-sm',
                 customSetup: (modal, closeHandler) => {
-                    // --- FIX: APPLY THEME DIRECTLY TO MODAL CONTAINER ---
                     this._updateThemeClasses(modal, station.level);
                 }
             });
@@ -113,7 +225,6 @@ export class UISolStationControl {
     }
 
     _updateThemeClasses(element, level) {
-        // Remove all potential theme classes first
         element.classList.remove(
             'sol-theme-white', 
             'sol-theme-green', 
@@ -123,7 +234,6 @@ export class UISolStationControl {
             'sol-theme-red'
         );
 
-        // Add the correct class
         if (level < 10) element.classList.add('sol-theme-white');
         else if (level < 20) element.classList.add('sol-theme-green');
         else if (level < 30) element.classList.add('sol-theme-blue');
@@ -135,7 +245,6 @@ export class UISolStationControl {
     _applyLevelTheme(level) {
         const modal = document.getElementById('event-modal');
         if (modal) {
-            // FIX: Ensure this always targets the parent container
             this._updateThemeClasses(modal, level);
         }
     }
@@ -144,7 +253,6 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
 
-        // --- 1. CLICK HANDLER ---
         if (this._clickHandler) {
             root.removeEventListener('click', this._clickHandler);
         }
@@ -203,11 +311,9 @@ export class UISolStationControl {
                         const res = svc.completeActiveProject();
                         
                         if (res.success) {
-                            // 1. Silent Exit Logic
                             modal.classList.add('silent-exit');
                             this.uiManager.hideModal('event-modal');
                             
-                            // 2. Target the specific UI elements on the Services Screen
                             const btn = document.getElementById('btn-sol-orbital-interface');
                             const lbl = document.getElementById('lbl-sol-level-indicator');
 
@@ -218,7 +324,7 @@ export class UISolStationControl {
 
                                 setTimeout(() => {
                                     lbl.textContent = svc.gameState.solStation.level;
-                                    const newClass = this._getLevelStyleClass(svc.gameState.solStation.level);
+                                    const newClass = getLevelStyleClass(svc.gameState.solStation.level);
                                     lbl.className = `font-orbitron font-bold text-2xl z-10 ${newClass}`;
                                 }, 1200);
 
@@ -240,60 +346,6 @@ export class UISolStationControl {
             }
         };
         root.addEventListener('click', this._clickHandler);
-
-        // --- 2. SCROLL HANDLER (LIVE CAPTURE) ---
-        const sc = document.getElementById('event-description');
-        if (sc) {
-            // Remove old listeners if exists
-            if (this._scrollHandler) {
-                sc.removeEventListener('scroll', this._scrollHandler, { capture: true });
-                sc.removeEventListener('scroll', this._scrollHandler);
-            }
-
-            // Create new capture handler
-            this._scrollHandler = (e) => {
-                if (this.isRestoringScroll) return; // Prevent DOM creation artifacts from overwriting the memory
-
-                if (this.currentView && e.target && e.target.id) {
-                    if (typeof this.scrollMemory[this.currentView] !== 'object') {
-                        this.scrollMemory[this.currentView] = {};
-                    }
-                    this.scrollMemory[this.currentView][e.target.id] = e.target.scrollTop;
-                }
-            };
-
-            // Bind passive listener with capture to intercept nested scrolls
-            sc.addEventListener('scroll', this._scrollHandler, { capture: true, passive: true });
-        }
-    }
-
-    _restoreScrollPosition() {
-        if (!this.currentView || !this.scrollMemory[this.currentView]) return;
-        const memory = this.scrollMemory[this.currentView];
-        
-        this.isRestoringScroll = true;
-
-        setTimeout(() => {
-            if (typeof memory === 'object') {
-                const sc = document.getElementById('event-description');
-                if (sc && memory['event-description'] !== undefined) sc.scrollTop = memory['event-description'];
-                
-                const avail = document.getElementById('roster-avail-scroll');
-                if (avail && memory['roster-avail-scroll'] !== undefined) avail.scrollTop = memory['roster-avail-scroll'];
-                
-                const active = document.getElementById('roster-active-scroll');
-                if (active && memory['roster-active-scroll'] !== undefined) active.scrollTop = memory['roster-active-scroll'];
-            } else {
-                // Legacy fallback support if an old single numeric memory is detected
-                const sc = document.getElementById('event-description');
-                if (sc) sc.scrollTop = memory;
-            }
-
-            // Unlock scroll listening shortly after the browser executes the shift
-            setTimeout(() => {
-                this.isRestoringScroll = false;
-            }, 50);
-        }, 20);
     }
 
     _buildDomCache(root) {
@@ -342,10 +394,10 @@ export class UISolStationControl {
         const healthDisp = station.health.toFixed(2);
         if (lr.health !== healthDisp) {
             if (c.integrityLabel && c.integrityBar) {
-                c.integrityLabel.className = this._getHealthColorClass(station.health);
+                c.integrityLabel.className = getHealthColorClass(station.health);
                 c.integrityLabel.textContent = `${healthDisp}%`;
                 c.integrityBar.style.width = `${station.health}%`;
-                c.integrityBar.style.backgroundColor = `var(${this._getHealthColorVar(station.health)})`;
+                c.integrityBar.style.backgroundColor = `var(${getHealthColorVar(station.health)})`;
             }
             lr.health = healthDisp;
         }
@@ -387,7 +439,7 @@ export class UISolStationControl {
                 btn.style.opacity = isLocked ? '0.3' : '1';
                 btn.style.cursor = isLocked ? 'not-allowed' : (isActive ? 'default' : 'pointer');
             });
-            if (c.modeDesc) c.modeDesc.innerHTML = this._getModeDescription(station.mode);
+            if (c.modeDesc) c.modeDesc.innerHTML = getModeDescription(station.mode);
             lr.mode = station.mode;
             lr.hasCheckedLocks = true;
         }
@@ -396,7 +448,6 @@ export class UISolStationControl {
         Object.entries(station.caches).forEach(([commId, cache]) => {
             if (commId !== COMMODITY_IDS.FOLDED_DRIVES) {
                 const playerStock = playerInventory[commId]?.quantity || 0;
-                // STRICT ENFORCEMENT: Only enable if at least 1.0 full units are needed
                 const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const ui = c.caches[commId];
                 if (ui && ui.btn) {
@@ -472,16 +523,11 @@ export class UISolStationControl {
             cancelAnimationFrame(this.animationFrameId);
             this.animationFrameId = null;
         }
-        
-        const sc = document.getElementById('event-description');
-        if (sc && this._scrollHandler) {
-            sc.removeEventListener('scroll', this._scrollHandler, { capture: true });
-        }
-        
         this.domCache = null; 
     }
 
     showOfficerManagement(gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'officers';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
@@ -514,9 +560,9 @@ export class UISolStationControl {
 
         root.innerHTML = `
             <div class="sol-subview-header flex justify-between items-center mb-3">
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
+                <div class="sol-level-header ${getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 60vh; min-height: 420px;">
+            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 70vh; min-height: 500px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
                     <div id="roster-avail-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
@@ -559,6 +605,7 @@ export class UISolStationControl {
             if (e.target.closest('.btn-inline-assign') || (isDoubleTap && !isAssigned)) {
                 const emptySlot = slots.find(s => !s.assignedOfficerId);
                 if (emptySlot) {
+                    this._saveCurrentScrollPositions(); // Save exactly before re-rendering view
                     svc.assignOfficer(emptySlot.slotId, officerId);
                     this.showOfficerManagement(svc.gameState);
                 }
@@ -568,6 +615,7 @@ export class UISolStationControl {
                 if (!validation.safe) {
                     this.showUnslotWarningModal(slotId, officerId, validation, svc.gameState);
                 } else {
+                    this._saveCurrentScrollPositions(); // Save exactly before re-rendering view
                     svc.assignOfficer(slotId, null);
                     this.showOfficerManagement(svc.gameState);
                 }
@@ -596,7 +644,7 @@ export class UISolStationControl {
         const actionBtn = isAssigned ? 
             `<button type="button" class="btn-inline-remove bg-red-600 hover:bg-red-500 text-white text-[10px] font-bold py-1 px-2 rounded">REMOVE</button>` : 
             `<button type="button" class="btn-inline-assign bg-blue-600 hover:bg-blue-500 text-white text-[10px] font-bold py-1 px-2 rounded">ASSIGN</button>`;
-        const rarityColor = this._getRarityColorClass(officer.rarity);
+        const rarityColor = getRarityColorClass(officer.rarity);
         
         const nameParts = officer.name.split(' ');
         const shortName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : officer.name;
@@ -624,6 +672,7 @@ export class UISolStationControl {
     }
 
     showOfficerDetailModal(officerId, gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'officerDetail';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
@@ -632,12 +681,11 @@ export class UISolStationControl {
         const officer = OFFICERS[officerId];
         if (!officer) return;
 
-        const rarityColor = this._getRarityColorClass(officer.rarity);
+        const rarityColor = getRarityColorClass(officer.rarity);
         const baseStyle = "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.4;";
 
         let buffsHtml = '';
         
-        // Helper to consistently format stat rows with color-coded logic
         const formatStatRow = (label, valueStr, isGood) => {
             const colorClass = isGood ? 'text-green-400' : 'text-red-400';
             return `
@@ -649,19 +697,16 @@ export class UISolStationControl {
         };
 
         if (officer.buffs.entropy !== 0) {
-            // Lower entropy is beneficial
             const isGood = officer.buffs.entropy < 0;
             const sign = officer.buffs.entropy > 0 ? '+' : '';
             buffsHtml += formatStatRow('ENTROPY', `${sign}${Math.round(officer.buffs.entropy * 100)}%`, isGood);
         }
         if (officer.buffs.creditMult !== 0) {
-            // Higher yield is beneficial
             const isGood = officer.buffs.creditMult > 0;
             const sign = officer.buffs.creditMult > 0 ? '+' : '';
             buffsHtml += formatStatRow('CREDIT YIELD', `${sign}${Math.round(officer.buffs.creditMult * 100)}%`, isGood);
         }
         if (officer.buffs.amMult !== 0) {
-            // Higher yield is beneficial
             const isGood = officer.buffs.amMult > 0;
             const sign = officer.buffs.amMult > 0 ? '+' : '';
             buffsHtml += formatStatRow('AM YIELD', `${sign}${Math.round(officer.buffs.amMult * 100)}%`, isGood);
@@ -670,7 +715,6 @@ export class UISolStationControl {
         if (officer.buffs.capacityMods) {
             Object.entries(officer.buffs.capacityMods).forEach(([k, v]) => {
                 const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                // Higher capacity is beneficial
                 const isGood = v > 0;
                 const sign = v > 0 ? '+' : '';
                 buffsHtml += formatStatRow(`${cName.toUpperCase()} CAP`, `${sign}${v.toLocaleString()}`, isGood);
@@ -680,7 +724,6 @@ export class UISolStationControl {
         if (officer.buffs.consumptionMods) {
             Object.entries(officer.buffs.consumptionMods).forEach(([k, v]) => {
                 const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                // v > 0 mathematically means reduced burn (GOOD). We invert it for player display so v=0.35 shows as "-35% BURN"
                 const isGood = v > 0;
                 const displayVal = -v; 
                 const sign = displayVal > 0 ? '+' : '';
@@ -701,13 +744,13 @@ export class UISolStationControl {
                     </div>
                 </div>
                 
-                <div class="text-sm text-gray-300 mb-4 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans max-h-32 overflow-y-auto" style="scrollbar-width: thin;">
+                <div id="roster-lore-scroll" class="text-sm text-gray-300 mb-4 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans max-h-32 overflow-y-auto" style="scrollbar-width: thin;">
                     "${officer.lore}"
                 </div>
                 
                 <div class="w-full flex flex-col" style="max-height: 220px;">
                     <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-widest">Influence</div>
-                    <div class="flex-1 overflow-y-auto bg-black/50 p-3 rounded border border-gray-800" style="scrollbar-width: thin;">
+                    <div id="roster-buffs-scroll" class="flex-1 overflow-y-auto bg-black/50 p-3 rounded border border-gray-800" style="scrollbar-width: thin;">
                         ${buffsHtml || '<div class="text-sm text-gray-500 text-center italic mt-2">No measurable influence.</div>'}
                     </div>
                 </div>
@@ -729,19 +772,8 @@ export class UISolStationControl {
         this._restoreScrollPosition();
     }
 
-    _getRarityColorClass(rarity) {
-        switch (rarity) {
-            case 'uncommon': return 'text-green-400';
-            case 'valuable': return 'text-blue-400';
-            case 'rare': return 'text-yellow-400';
-            case 'very_rare': return 'text-orange-400';
-            case 'hyper_rare': return 'text-red-500';
-            case 'common':
-            default: return 'text-white';
-        }
-    }
-
     showEngineeringModal(gameState) {
+        this._saveCurrentScrollPositions();
         this.currentView = 'engineering';
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
@@ -818,7 +850,7 @@ export class UISolStationControl {
 
         root.innerHTML = `
             <div class="sol-subview-header flex justify-between items-center mb-4">
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-lg font-bold">ENGINEERING: PROJECT ${station.level + 1}</div>
+                <div class="sol-level-header ${getLevelStyleClass(station.level)} text-lg font-bold">ENGINEERING: PROJECT ${station.level + 1}</div>
             </div>
             <div class="eng-project-info mb-6 p-4 bg-black/40 border border-gray-700 rounded">
                 <div class="text-lg font-bold text-yellow-400 mb-1 tracking-wide">${nextLevelData.projectName}</div>
@@ -854,6 +886,8 @@ export class UISolStationControl {
     }
 
     showUnslotWarningModal(slotId, officerId, payload, gameState) {
+        this._saveCurrentScrollPositions();
+        this.currentView = 'unslotWarning';
         const officer = OFFICERS[officerId];
         let warningsHtml = '';
 
@@ -898,15 +932,6 @@ export class UISolStationControl {
         };
     }
 
-    _getOfficerBtnThemeClass(level) {
-        if (level < 10) return 'bg-gray-800 border border-gray-500';
-        if (level < 20) return 'bg-green-900 border border-green-500';
-        if (level < 30) return 'bg-blue-900 border border-blue-500';
-        if (level < 40) return 'bg-yellow-900 border border-yellow-500';
-        if (level < 50) return 'bg-orange-900 border border-orange-500';
-        return 'bg-red-900 border border-red-500';
-    }
-
     _buildDashboardHtml(gameState) {
         const station = this._getLiveStationState(gameState);
         const output = this._calculateProjections(gameState);
@@ -942,7 +967,7 @@ export class UISolStationControl {
                 `;
             }).join('');
             
-            const descText = this._getProjectImpactDescription(nextLvl.rewards.stats);
+            const descText = getProjectImpactDescription(nextLvl.rewards.stats);
 
             engOverview = `
                 <div style="display: flex; flex-direction: column; margin-top: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-transform: none; letter-spacing: normal;">
@@ -953,12 +978,12 @@ export class UISolStationControl {
             `;
         }
 
-        const officerBtnTheme = this._getOfficerBtnThemeClass(station.level);
+        const officerBtnTheme = getOfficerBtnThemeClass(station.level);
 
         return `
             <div id="sol-dashboard-root" class="sol-dashboard-container">
                 
-                <div class="sol-level-header ${this._getLevelStyleClass(station.level)} text-center mb-2 font-orbitron font-bold text-xl uppercase tracking-widest transition-colors duration-500">
+                <div class="sol-level-header ${getLevelStyleClass(station.level)} text-center mb-2 font-orbitron font-bold text-xl uppercase tracking-widest transition-colors duration-500">
                     SOL STATION LV. ${station.level}
                 </div>
 
@@ -966,10 +991,10 @@ export class UISolStationControl {
                     <div class="sol-health-container" style="flex-grow: 1;">
                         <div class="sol-health-bar-label" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 0.5rem;">
                             <div style="font-size: 0.7rem; color: #9ca3af; letter-spacing: 1px;">STATION HEALTH</div>
-                            <div class="${this._getHealthColorClass(station.health)}" style="font-size: 1.25rem; font-weight: bold; line-height: 1;">${station.health.toFixed(2)}%</div>
+                            <div class="${getHealthColorClass(station.health)}" style="font-size: 1.25rem; font-weight: bold; line-height: 1;">${station.health.toFixed(2)}%</div>
                         </div>
                         <div class="sol-health-track" style="position: relative;">
-                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${this._getHealthColorVar(station.health)});"></div>
+                            <div class="sol-health-fill" style="width: ${station.health}%; background-color: var(${getHealthColorVar(station.health)});"></div>
                             <div class="sol-health-threshold-marker" style="position: absolute; top: -2px; bottom: -2px; width: 3px; background-color: transparent; z-index: 10; border-left: 2px solid #fff; box-shadow: -1px 0 2px #000; left: ${output.threshold}%;"></div>
                         </div>
                     </div>
@@ -1030,7 +1055,7 @@ export class UISolStationControl {
                         ${this._renderModeButton('PRODUCTION', station.mode, station.unlockedModes)}
                     </div>
                     <div class="mode-description">
-                        ${this._getModeDescription(station.mode)}
+                        ${getModeDescription(station.mode)}
                     </div>
                 </div>
 
@@ -1056,21 +1081,6 @@ export class UISolStationControl {
         `;
     }
 
-    _getProjectImpactDescription(stats) {
-        const parts = [];
-        if (stats.cacheCapacity) {
-            Object.keys(stats.cacheCapacity).forEach(k => {
-                const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-                parts.push(`Expand ${cName} storage.`);
-            });
-        }
-        if (stats.amYieldMult > 0) parts.push(`Increase Antimatter synthesis by ${Math.round(stats.amYieldMult * 100)}%.`);
-        if (stats.creditYieldMult > 0) parts.push(`Improve commercial revenue by ${Math.round(stats.creditYieldMult * 100)}%.`);
-        if (stats.globalEntropyRed > 0) parts.push(`Reinforce hull integrity against solar decay.`);
-        
-        return parts.length > 0 ? parts.join(" ") : "General station improvements.";
-    }
-
     _renderModeButton(modeId, currentMode, unlockedModes = ["STABILITY"]) {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
@@ -1088,15 +1098,6 @@ export class UISolStationControl {
         `;
     }
 
-    _getModeDescription(mode) {
-        switch (mode) {
-            case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
-            case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
-            case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
-            default: return "";
-        }
-    }
-
     _renderCacheList(gameState) {
         const station = this._getLiveStationState(gameState);
         const caches = station.caches;
@@ -1111,7 +1112,6 @@ export class UISolStationControl {
 
                 const fillPct = (cache.current / cache.max) * 100;
                 const playerStock = playerInventory[commodityId]?.quantity || 0;
-                // STRICT ENFORCEMENT: Only enable if at least 1.0 full units are needed
                 const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const tierColorVar = `--tier-${commodity.tier || 1}-color`;
 
@@ -1158,26 +1158,5 @@ export class UISolStationControl {
             return projections;
         }
         return { credits: 0, antimatter: 0, entropy: 1, threshold: 0 };
-    }
-
-    _getHealthColorClass(health) {
-        if (health >= 80) return 'text-green-400';
-        if (health >= 50) return 'text-yellow-400';
-        return 'text-red-500';
-    }
-
-    _getHealthColorVar(health) {
-        if (health >= 80) return '--ot-green-base';
-        if (health >= 50) return '--ot-yellow-base';
-        return '--ot-red-base';
-    }
-    
-    _getLevelStyleClass(level) {
-        if (level < 10) return 'sol-level-white';
-        if (level < 20) return 'sol-level-green';
-        if (level < 30) return 'sol-level-blue';
-        if (level < 40) return 'sol-level-gold';
-        if (level < 50) return 'sol-level-orange';
-        return 'sol-level-red';
     }
 }
