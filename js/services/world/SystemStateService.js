@@ -147,6 +147,13 @@ export class SystemStateService {
         sysState.activeId = stateId;
         sysState.remainingDays = Math.floor(Math.random() * (stateDef.durationBounds[1] - stateDef.durationBounds[0] + 1)) + stateDef.durationBounds[0];
 
+        // Roll and save a static varietal index for narrative consistency
+        if (stateDef.varietals && stateDef.varietals.length > 0) {
+            sysState.varietalIndex = Math.floor(Math.random() * stateDef.varietals.length);
+        } else {
+            sysState.varietalIndex = 0;
+        }
+
         // Process Extreme state targeting
         if (overrideTargetLocations) {
             sysState.targetLocations = overrideTargetLocations;
@@ -174,6 +181,7 @@ export class SystemStateService {
         sysState.activeId = 'NEUTRAL';
         sysState.remainingDays = 0;
         sysState.targetLocations = [];
+        sysState.varietalIndex = 0;
         sysState.neutralPauseDays = Math.floor(Math.random() * (neutralDef.durationBounds[1] - neutralDef.durationBounds[0] + 1)) + neutralDef.durationBounds[0];
 
         this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);

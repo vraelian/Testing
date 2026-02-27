@@ -1163,3 +1163,34 @@ card.
 .blur-fade-in {
     animation: blur-fade-in 2s ease-in-out forwards;
 }
+
+/* --- ECONOMIC WEATHER MODAL ANIMATIONS --- */
+@keyframes econ-weather-fade-in {
+    0% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+@keyframes econ-weather-fade-out {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+}
+
+.econ-modal-anim-in {
+    animation: econ-weather-fade-in 1s ease-out forwards;
+}
+
+.econ-modal-anim-out {
+    animation: econ-weather-fade-out 1s ease-in forwards;
+    pointer-events: none;
+}
+
+/* --- ECONOMIC WEATHER MODAL ANIMATION MAPPING --- */
+/* Map the blur-fade keyframes directly to UIModalEngine's dynamic classes */
+#econ-weather-modal.modal-visible {
+    animation: econ-weather-fade-in 1s ease-out forwards;
+}
+
+#econ-weather-modal.modal-hiding {
+    animation: econ-weather-fade-out 1s ease-in forwards;
+    pointer-events: none;
+}

@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.29</title>
+    <title>Orbital Trading 36.33</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.29</p>
+            <p>Version 36.33 - Economoic Weather Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -168,6 +168,13 @@
                 <div id="intel-screen" class="screen"></div>
             </div>
         </div>
+
+        <button id="btn-econ-weather" class="hidden" title="Economic Weather" data-action="show_econ_weather">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <path d="M3 15h4l3-3 4 4 7-7"></path>
+            </svg>
+        </button>
 
         <div id="mission-modal" class="modal-backdrop hidden">
             <div class="modal-content sci-fi-frame flex flex-col items-center text-center">
@@ -230,6 +237,23 @@
             <h3 id="event-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center"></h3>
             <p id="event-description" class="mb-6 text-lg"></p>
             <div id="event-button-container" class="mt-6 flex justify-center gap-4"></div>
+        </div>
+    </div>
+
+     <div id="event-modal" class="modal-backdrop hidden">
+        <div class="modal-content">
+            <h3 id="event-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center"></h3>
+            <p id="event-description" class="mb-6 text-lg"></p>
+            <div id="event-button-container" class="mt-6 flex justify-center gap-4"></div>
+        </div>
+    </div>
+
+    <div id="econ-weather-modal" class="modal-backdrop hidden z-[60]">
+        <div class="modal-content relative">
+            <button id="econ-weather-close-btn" class="absolute top-2 right-4 text-gray-400 hover:text-white text-4xl font-bold leading-none cursor-pointer transition-colors" title="Close">&minus;</button>
+            <h3 id="econ-weather-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center pr-8 pl-8"></h3>
+            <div id="econ-weather-description" class="mb-6 text-lg"></div>
+            <div id="econ-weather-button-container" class="hidden"></div>
         </div>
     </div>
 
@@ -1472,6 +1496,44 @@
 .toast-dismiss-btn:hover {
     opacity: 1;
 }
+
+/* --- SYSTEM STATES V3: Econ Button --- */
+#btn-econ-weather {
+    position: absolute; /* Matches global help anchor */
+    bottom: 1rem;
+    left: 1rem; /* Symmetrical to the right-side help anchor */
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: rgba(45, 55, 72, 0.6);
+    color: #fff;
+    border: 1px solid rgba(122, 154, 192, 0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    opacity: 0.5;
+    transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+#btn-econ-weather:hover {
+    opacity: 1;
+    background-color: rgba(45, 55, 72, 0.9);
+}
+
+#btn-econ-weather:active {
+    opacity: 1;
+    background-color: rgba(45, 55, 72, 0.9);
+    transform: scale(0.98);
+}
+
+#btn-econ-weather svg {
+    width: 20px;
+    height: 20px;
+}
 --- END OF FILE: ./css/hud.css ---
 
 --- START OF FILE: ./css/global.css ---
@@ -1515,7 +1577,7 @@ definitions,
     --button-height: 28px;
     --font-family: 'Orbitron', sans-serif;
     --buy-primary: #196a8f;
---buy-secondary-bg: #1e2a3e;
+    --buy-secondary-bg: #1e2a3e;
     --buy-secondary-border: #3c4e68;
     --buy-text-light: #8ca4b5;
     --buy-text-dark: #ddf3f8;
@@ -1526,6 +1588,11 @@ definitions,
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
+
+    /* --- SYSTEM STATES V3: Semantic Colors --- */
+    --color-profit: #34d399; /* Emerald 400 */
+    --color-loss: #f87171;   /* Red 400 */
+    --color-text-muted: #9ca3af; /* Gray 400 */
 }
 
 html {
@@ -2634,6 +2701,37 @@ card.
 
 .blur-fade-in {
     animation: blur-fade-in 2s ease-in-out forwards;
+}
+
+/* --- ECONOMIC WEATHER MODAL ANIMATIONS --- */
+@keyframes econ-weather-fade-in {
+    0% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+@keyframes econ-weather-fade-out {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+}
+
+.econ-modal-anim-in {
+    animation: econ-weather-fade-in 1s ease-out forwards;
+}
+
+.econ-modal-anim-out {
+    animation: econ-weather-fade-out 1s ease-in forwards;
+    pointer-events: none;
+}
+
+/* --- ECONOMIC WEATHER MODAL ANIMATION MAPPING --- */
+/* Map the blur-fade keyframes directly to UIModalEngine's dynamic classes */
+#econ-weather-modal.modal-visible {
+    animation: econ-weather-fade-in 1s ease-out forwards;
+}
+
+#econ-weather-modal.modal-hiding {
+    animation: econ-weather-fade-out 1s ease-in forwards;
+    pointer-events: none;
 }
 --- END OF FILE: ./css/global.css ---
 
@@ -4937,26 +5035,67 @@ card.
     clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
-/* The POI text label */
+/* The POI text label parent wrapper */
 .poi-label {
     position: absolute; /* Relative to its group */
     font-family: 'Orbitron', sans-serif;
     color: #d0d8e8;
+    /* Nudge to center it vertically */
+    transform: translateY(-50%);
+    white-space: nowrap;
+    z-index: 11;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Apply D3-calculated text-anchor for layout direction */
+.poi-label[style*="text-anchor: end"] {
+    transform: translate(-100%, -50%);
+    align-items: flex-end;
+}
+.poi-label[style*="text-anchor: start"] {
+    align-items: flex-start;
+}
+
+/* Core POI Name Text */
+.poi-name-text {
     font-size: 0.9rem;
     /* Mimic the SVG stroke with text-shadow */
     text-shadow: 
         0 0 3px #0c101d,
         0 0 3px #0c101d,
         0 0 3px #0c101d;
-    
-    /* Nudge to center it vertically */
-    transform: translateY(-50%);
-    white-space: nowrap;
-    z-index: 11;
 }
-/* Apply D3-calculated text-anchor */
-.poi-label[style*="text-anchor: end"] {
-    transform: translate(-100%, -50%);
+
+/* --- VIRTUAL WORKBENCH: POI INDICATORS --- */
+.poi-indicators-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2px;
+    width: 100%;
+}
+
+.poi-indicator-hr {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #f59e0b;
+    margin: 2px 0 4px 0;
+    box-shadow: 0 1px 2px #0c101d, 0 -1px 2px #0c101d;
+}
+
+.poi-indicator-text {
+    color: #f59e0b;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    margin-bottom: 2px;
+    /* Crisp 1px black outline via text-shadow */
+    text-shadow: 
+        1px 1px 0 #0c101d,
+        -1px -1px 0 #0c101d,
+        1px -1px 0 #0c101d,
+        -1px 1px 0 #0c101d,
+        0 0 3px #0c101d;
 }
 
 /* --- 4. "FILTER-LESS" GLOW ANIMATIONS --- */
@@ -5009,8 +5148,8 @@ card.
 
 /* --- 5. APPLY ANIMATIONS TO CURRENT LOCATION --- */
 
-/* Apply the text glow */
-.poi-marker-group.current-location .poi-label {
+/* Apply the text glow only to the name to keep indicators amber */
+.poi-marker-group.current-location .poi-name-text {
     /* --- VIRTUAL WORKBENCH: Increased speed from 2.5s to 2.1s --- */
     animation: pulse-text-glow 2.1s infinite;
 }
@@ -6377,29 +6516,109 @@ WORKBENCH --- */
     box-shadow: none;
 }
 
-/* --- VIRTUAL WORKBENCH: MODIFIED (Point E) --- */
-/* Changed from cyan to sky to match main credit glow */
+/* --- VIRTUAL WORKBENCH START: Predatory Corporate Terminal --- */
 .btn-module-credit {
-    background-color: #0c4a6e; /* sky-900 */
-    border-color: #075985; /* sky-800 */
-    color: #bae6fd; /* sky-200 */
-    /* Add sky-blue glow to the convex shadow */
-    box-shadow: 0 0 10px -2px #0ea5e9, 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+    background: linear-gradient(180deg, #0f172a 0%, #020617 100%); /* Dark industrial slate */
+    border: 1px solid #0891b2; /* Corporate Cyan */
+    color: #fbbf24; /* Predatory Gold */
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 8px rgba(8, 145, 178, 0.3), inset 0 0 15px rgba(8, 145, 178, 0.15);
+    text-shadow: 0 0 4px rgba(251, 191, 36, 0.3);
+}
+
+/* Subtle scanline overlay for the terminal feel */
+.btn-module-credit::before {
+    content: "";
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+    background-size: 100% 4px;
+    pointer-events: none;
+    opacity: 0.5;
+    z-index: 0;
+}
+
+/* Ensure text renders above the scanlines */
+.btn-module-credit > * {
+    position: relative;
+    z-index: 1;
 }
 
 .btn-module-credit:hover:not(:disabled) {
-    background-color: #075985; /* sky-800 */
-    border-color: #0ea5e9; /* sky-500 */
-    color: #f0f9ff; /* sky-50 */
-    box-shadow: 0 0 15px -2px #0ea5e9, 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
+    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+    border-color: #22d3ee; /* Bright Cyan */
+    color: #fde68a; /* Brighter Gold */
+    box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), inset 0 0 20px rgba(34, 211, 238, 0.2);
+    transform: translateY(-1px);
 }
-/* --- END VIRTUAL WORKBENCH --- */
+
+/* Styling for the HTML structural labels */
+.btn-module-credit .loan-label {
+    color: #22d3ee; /* Cyan */
+    text-shadow: 0 0 6px rgba(34, 211, 238, 0.6);
+    font-weight: 700;
+    border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+    padding-bottom: 2px;
+    width: 80%;
+}
+
+.btn-module-credit .loan-details .detail-block {
+    background-color: rgba(0, 0, 0, 0.8);
+    padding: 3px 6px;
+    border-radius: 4px; /* Softened sharp corners */
+    border: 1px solid rgba(251, 191, 36, 0.3); /* Dimmer gold border */
+    color: #fde68a; 
+    font-family: 'Roboto Mono', monospace;
+}
+
+/* --- VIRTUAL WORKBENCH: Primed State for Loan Confirmation --- */
+.btn-module-credit.primed {
+    background: #e2e8f0 !important; /* Reduced brightness off-white */
+    border-color: #0891b2 !important;
+    color: #000000 !important;
+    /* Cyan credit-blue vignette on the inside */
+    box-shadow: 0 0 20px rgba(226, 232, 240, 0.6), inset 0 0 40px rgba(6, 182, 212, 0.6), inset 0 0 10px rgba(0,0,0,0.3) !important;
+    text-shadow: none !important;
+    transform: scale(0.98);
+}
+
+.btn-module-credit.primed::before {
+    opacity: 0.1; /* Dim scanlines on primed state */
+}
+
+.btn-module-credit .loan-normal-content {
+    transition: opacity 0.2s ease;
+    opacity: 1;
+}
+
+.btn-module-credit.primed .loan-normal-content {
+    opacity: 0;
+}
+
+.btn-module-credit .loan-confirm-content {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #000000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+
+.btn-module-credit.primed .loan-confirm-content {
+    opacity: 1;
+}
+/* --- VIRTUAL WORKBENCH END --- */
 
 
-/* --- VIRTUAL WORKBENCH: MODIFIED (Point B) & Phase 2 --- */
-/* Muted destructive button */
+/* --- VIRTUAL WORKBENCH: MODIFIED Muted destructive button --- */
 .btn-module-destructive {
-    /* Muted red */
     background-color: #7f1d1d; /* red-900 */
     border-color: #991b1b; /* red-800 */
     color: #fecaca; /* red-200 */
@@ -6410,7 +6629,7 @@ WORKBENCH --- */
     border-color: #dc2626; /* red-600 */
     color: #ffffff;
 }
-/* --- END VIRTUAL WORKBENCH & Phase 2 --- */
+/* --- END VIRTUAL WORKBENCH --- */
 
 
 /* --- VIRTUAL WORKBENCH: ADJUST LOG PANEL STYLING --- */
@@ -7770,6 +7989,7 @@ export class IntelMarketRenderer {
     constructor(intelService) {
         this.intelService = intelService;
         this.db = DB;
+        this.currentGameState = null;
     }
 
     /**
@@ -7779,6 +7999,7 @@ export class IntelMarketRenderer {
      * @JSDoc
      */
     render(containerElement, gameState) {
+        this.currentGameState = gameState;
         const state = gameState;
         const { currentLocationId, activeIntelDeal, intelMarket } = state;
         
@@ -7815,7 +8036,18 @@ export class IntelMarketRenderer {
                 return this._renderPurchasedButton(packet);
             } else {
                 // Price is calculated at render time
-                const price = this.intelService.calculateIntelPrice(packet);
+                let price = this.intelService.calculateIntelPrice(packet);
+                
+                // --- SYSTEM STATES V3 HOOKS (Intel Discount) ---
+                const systemState = this.currentGameState?.systemState;
+                const activeStateDef = systemState && systemState.activeId ? this.db.SYSTEM_STATES[systemState.activeId] : null;
+                const isTargetLocation = systemState && systemState.targetLocations?.includes(this.currentGameState?.currentLocationId);
+
+                if (activeStateDef && activeStateDef.modifiers && isTargetLocation && activeStateDef.modifiers.localIntelFree) {
+                    price = 0;
+                }
+                // --- END SYSTEM STATES V3 ---
+
                 return this._renderOfferButton(packet, price, isLocked);
             }
         }).join('');
@@ -7992,6 +8224,7 @@ function _drawMap(container, svgLayer, htmlLayer, uiManager) {
 
 /**
  * The "Brain" of the map. Calculates the unified data array used by both layers.
+ * Also calculates dynamically active UI states such as Intel and Mission indicators.
  * @param {number} containerWidth
  * @param {import('../../services/UIManager.js').UIManager} uiManager
  * @param {number} centerX
@@ -8033,13 +8266,29 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
     const bottomPadding = 30;
     const totalHeight = topPadding + ((allPoiData.length - 1) * verticalSpacing) + bottomPadding;
 
-    // Create the final data array with all calculated pixel coordinates
+    // Retrieve active game states for indicator calculation
+    const activeIntelLocationId = uiManager.lastKnownState.activeIntelDeal?.locationId;
+    const activeMissionIds = uiManager.lastKnownState.missions?.activeMissionIds || [];
+
+    // Create the final data array with all calculated pixel coordinates and state flags
     const poiData = allPoiData.map((d, i) => {
         const y = topPadding + (i * verticalSpacing);
         const x = centerX + (i % 2 === 0 ? -50 : 50); // POI x-position
         const labelX = centerX + (i % 2 === 0 ? -56 : 56); // Label x-position
         const labelAnchor = (i % 2 === 0 ? "end" : "start");
         const radius = (d.parent ? 12 : 16) * (sizeModifiers[d.id] || 1);
+
+        // Calculate Indicator Flags
+        const hasIntel = activeIntelLocationId === d.id;
+        const hasMission = activeMissionIds.some(missionId => {
+            const mission = DB.MISSIONS[missionId];
+            if (!mission) return false;
+            // Check completion destination
+            if (mission.completion && mission.completion.locationId === d.id) return true;
+            // Check specific objectives targets
+            if (mission.objectives && mission.objectives.some(obj => obj.target === d.id)) return true;
+            return false;
+        });
 
         return {
             ...d,
@@ -8048,7 +8297,9 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
             labelX,
             labelAnchor,
             leaderLineX: x, // X coord for the end of the leader line
-            radius
+            radius,
+            hasIntel,
+            hasMission
         };
     });
 
@@ -8064,8 +8315,6 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
  * @private
  */
 function _drawSubstrate(svgLayer, poiData, centerX, totalHeight) {
-    // --- VIRTUAL WORKBENCH: Removed Sun and Gradient definitions ---
-
     svgLayer.append("line")
         .attr("class", "central-axis")
         .attr("x1", centerX)
@@ -8086,7 +8335,7 @@ function _drawSubstrate(svgLayer, poiData, centerX, totalHeight) {
 }
 
 /**
- * Draws the interactive HTML interface layer.
+ * Draws the interactive HTML interface layer, including dynamic state indicators.
  * @param {d3.Selection} htmlLayer
  * @param {Array<object>} poiData
  * @param {import('../../services/UIManager.js').UIManager} uiManager
@@ -8094,7 +8343,6 @@ function _drawSubstrate(svgLayer, poiData, centerX, totalHeight) {
  * @private
  */
 function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
-    // --- VIRTUAL WORKBENCH: Add the Sun as an HTML element ---
     const sunRadius = 225;
     htmlLayer.append("div")
         .attr("id", "map-sun-poi")
@@ -8103,7 +8351,6 @@ function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
         .style("left", `${centerX}px`) // Original cx
         .style("width", `${sunRadius * 2}px`)
         .style("height", `${sunRadius * 2}px`);
-    // --- END VIRTUAL WORKBENCH ---
 
     // Bind data to create HTML <div>s
     const groups = htmlLayer.selectAll(".poi-marker-group")
@@ -8135,13 +8382,35 @@ function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
         // Override default circle for Sol and Belt
         .style("border-radius", d => (d.id === LOCATION_IDS.SUN || d.id === LOCATION_IDS.BELT) ? "0" : "50%");
 
-    // POI Labels (alternating sides)
-    groups.append("div")
+    // POI Labels Container (alternating sides)
+    const labelGroups = groups.append("div")
         .attr("class", "poi-label")
         .style("position", "absolute")
         .style("left", d => `${d.labelX}px`)
-        .style("text-anchor", d => d.labelAnchor)
+        .style("text-anchor", d => d.labelAnchor);
+    
+    // Core POI Name Text
+    labelGroups.append("div")
+        .attr("class", "poi-name-text")
         .text(d => d.name);
+
+    // Conditional Indicator Wrappers
+    const indicatorGroups = labelGroups.filter(d => d.hasIntel || d.hasMission)
+        .append("div")
+        .attr("class", "poi-indicators-wrapper");
+
+    indicatorGroups.append("hr")
+        .attr("class", "poi-indicator-hr");
+
+    indicatorGroups.filter(d => d.hasIntel)
+        .append("div")
+        .attr("class", "poi-indicator-text")
+        .text("INTEL");
+
+    indicatorGroups.filter(d => d.hasMission)
+        .append("div")
+        .attr("class", "poi-indicator-text")
+        .text("MISSION");
 }
 
 /**
@@ -8823,7 +9092,7 @@ import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA } = gameState;
+    const { player, currentLocationId, TRAVEL_DATA, systemState } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
@@ -8866,6 +9135,14 @@ export function renderNavigationScreen(gameState) {
     if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
         fuelMod *= 0.5; // -50% Fuel Cost
     }
+    
+    // --- SYSTEM STATES V3 HOOKS ---
+    const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+    if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
+        fuelMod *= activeStateDef.modifiers.travelFuelBurnMod;
+    }
+    // --- END SYSTEM STATES V3 ---
+
     const isFreeFuel = shipAttributes.includes('ATTR_NEWTONS_GHOST') || hasSleeper;
     // ---------------------------------------------
 
@@ -9243,10 +9520,6 @@ import { formatCredits } from '../../utils.js';
 import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
-// --- VIRTUAL WORKBENCH START: Phase 1 ---
-// This function is now REMOVED as the global formatCredits handles all logic.
-// --- VIRTUAL WORKBENCH END: Phase 1 ---
-
 /**
  * Renders the entire Finance screen UI.
  * @param {object} gameState - The current state of the game.
@@ -9272,10 +9545,17 @@ export function renderFinanceScreen(gameState) {
         let garnishmentTimerHtml = '';
         if (player.loanStartDate) {
             const daysRemaining = GAME_RULES.LOAN_GARNISHMENT_DAYS - (day - player.loanStartDate);
+            
+            // --- VIRTUAL WORKBENCH START: Garnishment UI ---
             if (daysRemaining > 0) {
-                // VIRTUAL WORKBENCH: Increased font size from text-xs to text-sm
                 garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
+            } else {
+                // Calculate projected garnishment
+                const garnishmentAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
+                const displayGarnish = Math.min(garnishmentAmount, player.debt);
+                garnishmentTimerHtml = `<p class="text-sm text-glow-red font-bold mt-2 animate-pulse">Active Garnishment: ${formatCredits(displayGarnish)} / Mo</p>`;
             }
+            // --- VIRTUAL WORKBENCH END: Garnishment UI ---
         }
 
         // --- UPGRADE SYSTEM: INTEREST DISPLAY ---
@@ -9307,7 +9587,7 @@ export function renderFinanceScreen(gameState) {
         }
         // ----------------------------------------
 
-        // --- VIRTUAL WORKBENCH START: Phase 2 ---
+        // --- VIRTUAL WORKBENCH START: Reorder ---
         loanHtml = `
             <div>
                 <div class="themed-header-bar" style="${themeStyleVars}">
@@ -9317,11 +9597,11 @@ export function renderFinanceScreen(gameState) {
                     <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
                         <span class="text-base">Pay Off <span class="text-glow-red">${formatCredits(-player.debt, true)}</span></span>
                     </button>
-                    ${interestHtml}
                     ${garnishmentTimerHtml}
+                    ${interestHtml}
                 </div>
             </div>`;
-        // --- VIRTUAL WORKBENCH END: Phase 2 ---
+        // --- VIRTUAL WORKBENCH END: Reorder ---
     } else {
         // Otherwise, display available loan options.
         const dynamicLoanAmount = Math.floor(player.credits * 3.5);
@@ -9329,16 +9609,26 @@ export function renderFinanceScreen(gameState) {
         const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.04);
         const dynamicLoanData = { amount: dynamicLoanAmount, fee: dynamicLoanFee, interest: dynamicLoanInterest };
         
-        // --- VIRTUAL WORKBENCH START: Phase 1 & 2 ---
+        // --- VIRTUAL WORKBENCH START: Loan Terminal Two-Step Prep ---
         const loanButtonsHtml = [
             { key: '10000', amount: 10000, fee: 600, interest: 500 },
             { key: 'dynamic', ...dynamicLoanData }
         ].map((loan) => {
-            return `<button class="btn-module btn-module-credit w-full mt-2" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
-                        <span class="credits-text-pulsing">${formatCredits(loan.amount, true)}</span>
+            return `<button class="btn-module btn-module-credit w-full mt-2 relative overflow-hidden" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
+                        <div class="loan-normal-content flex flex-col items-center w-full">
+                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">LOAN</span>
+                            <span class="credits-text-pulsing text-[21px]">${formatCredits(loan.amount, true)}</span>
+                            <div class="loan-details mt-2 text-[12px] flex gap-3">
+                                <div class="detail-block">FEE: <span class="text-glow-red">${formatCredits(-loan.fee)}</span></div>
+                                <div class="detail-block">INTEREST: <span class="text-glow-red">${formatCredits(-loan.interest)}</span>/mo</div>
+                            </div>
+                        </div>
+                        <div class="loan-confirm-content">
+                            CONFIRM LOAN?
+                        </div>
                     </button>`;
         }).join('');
-        // --- VIRTUAL WORKBENCH END: Phase 1 & 2 ---
+        // --- VIRTUAL WORKBENCH END: Loan Terminal Two-Step Prep ---
 
         loanHtml = `
             <div>
@@ -9346,7 +9636,7 @@ export function renderFinanceScreen(gameState) {
                     <div class="themed-header-title">Financing</div>
                 </div>
                 <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                    <div class="flex justify-center gap-4 w-full">${loanButtonsHtml}</div>
+                    <div class="flex flex-col justify-center gap-2 w-full">${loanButtonsHtml}</div>
                 </div>
             </div>`;
     }
@@ -11779,6 +12069,9 @@ import { SHIP_DATABASE } from './ship_database.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 6) ---
 import { CONSUMABLES } from './items.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 6) ---
+// --- SYSTEM STATES V3 ---
+import { SYSTEM_STATE_REGISTRY } from './systemStateRegistry.js';
+// --- END SYSTEM STATES V3 ---
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -11787,15 +12080,6 @@ export const DATE_CONFIG = {
     DAYS_IN_MONTH: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
     MONTH_NAMES: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     DAY_NAMES: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-};
-
-export const SYSTEM_STATES = {
-    'NEUTRAL': {
-        name: 'Neutral System',
-        duration: 28,
-        description: "Standard space-faring conditions. Markets are operating under normal parameters.",
-        modifiers: {} // No economic deviations
-    },
 };
 
 export const DB = {
@@ -11808,7 +12092,7 @@ export const DB = {
         INTEL_DEPRESSION_MOD: 0.5,
     },
 
-    SYSTEM_STATES: SYSTEM_STATES,
+    SYSTEM_STATES: SYSTEM_STATE_REGISTRY,
 
     DATE_CONFIG: DATE_CONFIG,
 
@@ -16857,6 +17141,246 @@ export const EULA_CONTENT = `
 `;
 --- END OF FILE: ./js/data/eulaContent.js ---
 
+--- START OF FILE: ./js/data/systemStateRegistry.js ---
+// js/data/systemStateRegistry.js
+import { COMMODITY_IDS } from './constants.js';
+
+export const SYSTEM_STATE_REGISTRY = {
+    'NEUTRAL': {
+        name: 'Stable Economy',
+        archetype: 'Neutral',
+        durationBounds: [240, 1387], // 8 months to 3.8 years
+        varietals: [
+            "System-wide markets are stable. Trade lanes are clear.",
+            "Standard macroeconomic conditions apply. No major disruptions reported.",
+            "Guild forecasts predict a prolonged period of economic baseline stability."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-text-muted);\">The system economy is operating under normal, baseline parameters.</span>",
+        modifiers: {}
+    },
+    'GUILD_EMBARGO': {
+        name: 'Guild Embargo (Logistical Gridlock)',
+        archetype: 'Bear Market (Restrictive)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "Guild customs frigates have established hard blockades at major transit junctions. Mandatory manifest audits are crippling bulk shipping lanes, resulting in widespread inventory stagnation.",
+            "Citing a surge in unregulated cybernetic transit, the Guild has slashed export quotas. Warehouses are overflowing, but automated loading docks refuse to clear cargo without quadruple-stamped clearance.",
+            "A localized strike by the Stevedore’s Union in the Belt has caused a cascading logistical failure. Guild routing algorithms are intentionally throttling market replenishment to prevent a system-wide crash."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">Stations are restocking goods 80% slower, and their market capacity for purchasing goods has been halved.</span>",
+        modifiers: {
+            replenishmentRateMod: 0.02,
+            targetStockTiers: [1, 2, 3],
+            targetStockMod: 0.5
+        }
+    },
+    'CORONAL_MASS_EJECTION': {
+        name: 'Coronal Mass Ejection (Radiation Storms)',
+        archetype: 'Bear Market (Restrictive)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "Sol Station telemetry indicates a massive breach in the solar corona. High-energy plasma waves are sweeping the system, forcing ship reactors to burn excess fuel just to maintain minimum deflector integrity.",
+            "A Class-X solar storm is saturating the interplanetary medium with ionizing radiation. Expect severe ablation to outer hull plating and vastly reduced fuel efficiency during deep-space transit.",
+            "The Guild has issued a system-wide radiation hazard warning. Navigational computers are automatically diverting power to electromagnetic shielding, driving up fuel consumption and maintenance overhead."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">Your engines are burning 25% more fuel just to stay shielded, and your hull is taking 40% more damage while flying.</span>",
+        modifiers: {
+            travelFuelBurnMod: 1.25,
+            travelHullDecayMod: 1.40
+        }
+    },
+    'AD_ASTRA_DIVIDEND': {
+        name: 'The Ad Astra Dividend (Tech Boom)',
+        archetype: 'Bull Market (Expansive)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "Earth’s Sovereign Board has authorized the release of a recovered Ad Astra fabrication cache. A sudden influx of hyper-efficient, standardized replacement parts has driven maintenance costs to historic lows.",
+            "A massive surplus of pre-Stagnation fuel cells has hit the open market. Guild-sanctioned service stations are practically giving away propellant and hull plating to clear inventory.",
+            "The syndication of an ancient, open-source engineering patent has revolutionized port services. Automated repair drones and refueling umbilicals are operating at peak, frictionless efficiency."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">All station services and repairs are 40% cheaper, and your ship takes 25% less damage when traveling.</span>",
+        modifiers: {
+            serviceCostMod: 0.60, // 40% discount
+            travelHullDecayMitigation: 0.75 // Mitigated by 25%
+        }
+    },
+    'SYSTEMIC_INFRASTRUCTURE_PUSH': {
+        name: 'Systemic Infrastructure Push',
+        archetype: 'Bull Market (Expansive)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "The immortal executives of Mars and Venus have jointly mandated a multi-trillion credit infrastructure overhaul. Demand for industrial bulk materials has completely outpaced standard system supply.",
+            "A panic over degrading terraforming arrays has triggered massive government spending. Planetary markets are absorbing endless shipments of Plasteel and Atmo Processors at massive premiums.",
+            "The Guild’s 'Century Expansion Initiative' is officially underway. Construction hubs are offering blank checks for structural composites and environmental hardware to meet absurdly aggressive building quotas."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Industrial materials like Plasteel are selling for 35% more credits, and their market capacity for purchasing these goods has doubled.</span>",
+        modifiers: {
+            affectedCommodities: [COMMODITY_IDS.PLASTEEL, COMMODITY_IDS.GRAPHENE_LATTICES, COMMODITY_IDS.ATMO_PROCESSORS],
+            basePriceInflate: 1.35,
+            targetStockMod: 2.0
+        }
+    },
+    'GUILD_FLEET_SUBSIDIZATION': {
+        name: 'Guild Fleet Subsidization',
+        archetype: 'Charitable Market (Beneficial)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "To stimulate sluggish trade routes, the Merchant's Guild has temporarily abolished all convoy transit taxes. Furthermore, shipyards are receiving massive kickbacks to sell hulls at a steep discount.",
+            "A system-wide initiative to expand the independent merchant marine is in full swing. Traveling with a massive fleet will no longer incur extra fuel penalties, and new ships are cheaper than ever.",
+            "Corporate logistics hubs are practically begging independent captains to carry more cargo. They have subsidized the shipyards to slash prices and forced traffic control to waive all convoy flight taxes."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Traveling with multiple ships costs absolutely no extra fuel, and all new ships in the shipyard are 30% cheaper.</span>",
+        modifiers: {
+            convoyTaxWaiver: true,
+            shipyardPriceMod: 0.70
+        }
+    },
+    'BLACK_MARKET_BLUEPRINT_LEAK': {
+        name: 'Black Market Blueprint Leak',
+        archetype: 'Opportunistic Market (High Volatility)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A massive data breach at a quantum research facility on Uranus has flooded the dark-net with classified ship schematics. Tuning shops are quietly offering experimental gear, for a hefty 'handling fee.'",
+            "Military-grade technology is inexplicably bleeding into civilian shipyards. Mechanics have the parts, but they are demanding exorbitant bribes to overlook the Guild licensing laws required to install them.",
+            "The black market is currently saturated with unstable, elite-tier ship modifications. If you have the credits to bribe the local shipwrights, you can refit a hauler into a dreadnought."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-text-muted);\">The best ship upgrades are three times easier to find in tuning shops, but mechanics are charging 50% more to install them.</span>",
+        modifiers: {
+            upgradeSpawnMod: 3.0,
+            installCostMod: 1.50
+        }
+    },
+    'LONG_WATCH_PHILANTHROPY': {
+        name: 'The Long Watch Philanthropy',
+        archetype: 'Charitable Market (Beneficial)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A Martian Sovereign is celebrating their second century of life with a systemic tax write-off. Debt interest has been temporarily frozen, and baseline survival rations are heavily subsidized.",
+            "In a rare display of corporate benevolence, the Guild has suspended all loan interest accruals for the fiscal quarter. Furthermore, foundational agricultural goods are trading at half their standard cost.",
+            "An anonymous philanthropic trust is dumping trillions of credits into the system. Debt clocks have stopped, and basic life-support commodities are practically free."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Your loan interest has been completely frozen, and basic survival goods like Water Ice cost half as much to buy everywhere.</span>",
+        modifiers: {
+            interestFrozen: true,
+            affectedCommodities: [COMMODITY_IDS.WATER_ICE, COMMODITY_IDS.HYDROPONICS],
+            survivalGoodsDiscountMod: 0.50
+        }
+    },
+    'SILENT_CORRECTION': {
+        name: 'Silent Correction',
+        archetype: 'Charitable Market (Beneficial)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A benign ghost in the machine is rewriting the routing tables. Nav-computers are plotting impossibly safe trajectories through deep space, and automated drydocks are repairing ships without registering a billing cycle.",
+            "Captains are reporting an unprecedented streak of luck across all trade lanes. Micro-meteoroid fields are parting perfectly, pirate signals are dead, and port mechanics are finding their labor ledgers mysteriously zeroed out.",
+            "An anomalous, decentralized AI process is sweeping the Guild's network, quietly optimizing the physical world. Hazards simply aren't manifesting on sensors, and structural repairs are executing for free."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Dangerous travel hazards have mysteriously vanished from space, and all station mechanics are repairing your hull for free.</span>",
+        modifiers: {
+            hazardsRemoved: true,
+            repairCostMod: 0.0
+        }
+    },
+    'VENETIAN_JUBILEE': {
+        name: 'The Venetian Jubilee',
+        archetype: 'Charitable Market (Beneficial)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A massive cyber-attack on corporate banking sectors has resulted in an unexpected windfall. Shadow brokers are quietly funneling stolen credits into the open market, padding the payouts for every independent trader.",
+            "The Venetian Syndicate is feeling generous. They've hacked the Guild's purchasing algorithms, forcing every station in the system to pay a massive premium to independent captains for their cargo.",
+            "To launder trillions in stolen corporate assets, black-market algorithms are artificially inflating the value of every single commodity you sell. The banks are bleeding, and the haulers are getting rich."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Shadow brokers are rigging the system in your favor, granting a massive 20% bonus to every single item you sell.</span>",
+        modifiers: {
+            sellPriceBonusMod: 1.20
+        }
+    },
+    'GEOPOLITICAL_STALEMATE': {
+        name: 'Geopolitical Stalemate',
+        archetype: 'Conservative Market (Stagnant)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A bitter tariff dispute between the Terran Alliance and the Martian colonies has brought speculative trade to a standstill. Markets are shedding inventory and aggressively reverting to baseline average prices.",
+            "Interplanetary trade has cooled into a tense geopolitical standoff. Nobody wants to hold excess stock. Ports are buying less, selling less, and any artificial price spikes are being instantly corrected by nervous algorithms.",
+            "Corporate states are hoarding their credits and halting bulk imports while they wait for the diplomatic dust to settle. Market capacities are severely shrunken, and prices are stubbornly returning to the galactic mean."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">Stations have 40% less market capacity for purchasing cargo, and any price spikes will drop back down to normal twice as fast.</span>",
+        modifiers: {
+            meanReversionMod: 2.0,
+            targetStockMod: 0.60 // -40%
+        }
+    },
+    'PLANETARY_GOLD_RUSH': {
+        name: 'Planetary Gold Rush',
+        archetype: 'Extreme (Single-Location Bull Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "[Loc] is experiencing an unprecedented economic boom! Corporate investors are pouring endless credits into the local economy, driving demand for absolutely everything through the roof.",
+            "A massive colonial expansion at [Loc] has created a bottomless pit of demand. They have uncapped their purchasing budgets and will pay top credit for any cargo that docks.",
+            "It's a genuine gold rush at [Loc]. Local brokers are fighting over every scrap of incoming cargo, offering exorbitant prices and massively expanding their import limits."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">[Loc] is booming! They are paying 75% more for everything and their market capacity for purchasing goods has tripled.</span>",
+        modifiers: {
+            requiresLocationTarget: true,
+            locationCount: 1,
+            localBasePriceInflate: 1.75,
+            localTargetStockMod: 3.0
+        }
+    },
+    'STATION_QUARANTINE': {
+        name: 'Station Quarantine',
+        archetype: 'Extreme (Single-Location Bear Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A severe crisis has forced the Guild to enact a total quarantine over [Loc]. The market has completely frozen, and the few mechanics still working are extorting captains for basic services.",
+            "Life support failures at [Loc] have triggered a mass panic. Commercial trading has been entirely suspended, and the cost of refueling or patching a hull there has reached criminal levels.",
+            "[Loc] is currently under martial lockdown. The trade floors are empty, nothing is being restocked, and docking fees and services have skyrocketed to exploit anyone desperate enough to land."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">[Loc] is in total lockdown. Their market is completely frozen, and local mechanics are charging triple for basic services.</span>",
+        modifiers: {
+            requiresLocationTarget: true,
+            locationCount: 1,
+            localReplenishmentMod: 0.0,
+            localServiceCostMod: 3.0
+        }
+    },
+    'SOVEREIGNS_RETREAT': {
+        name: "The Sovereign's Retreat",
+        archetype: 'Extreme (Single-Location Charitable Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A mysterious benefactor has turned [Loc] into a temporary haven for independent captains. Local tech shops are practically giving away military-grade ship upgrades, and data brokers are handing out intel for free.",
+            "[Loc] has been declared an open-source hub for the season. Elite shipwrights and local spies are completely subsidizing their services, offering unparalleled tech and secrets to anyone who docks.",
+            "Corporate subsidies have transformed [Loc] into a captain's paradise. The tuning shops have slashed their prices to rock bottom, and the local intel network is open to the public."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">[Loc] has become a haven! Ship upgrades here are 75% off, and the local data brokers are giving away intel for free.</span>",
+        modifiers: {
+            requiresLocationTarget: true,
+            locationCount: 1,
+            localUpgradeCostMod: 0.25, // 75% off
+            localIntelFree: true
+        }
+    },
+    'SECTOR_COLLAPSE': {
+        name: 'Sector Collapse',
+        archetype: 'Extreme (Tri-Location Bear Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A catastrophic economic contagion has swept through [Loc 1], [Loc 2], and [Loc 3]. Trade across this entire sector has collapsed. Nobody is buying, and the value of goods has hit absolute rock bottom.",
+            "Cascading industrial failures have triggered a localized depression spanning [Loc 1], [Loc 2], and [Loc 3]. The markets are dead. Cargo capacities are practically non-existent, and prices have completely tanked.",
+            "The Guild has declared a 'Dead Zone' covering [Loc 1], [Loc 2], and [Loc 3]. A vicious cycle of supply chain failures has crushed the local economies, rendering trade in this sector entirely worthless."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">A massive economic crash has hit [Loc 1], [Loc 2], and [Loc 3]. Their market capacity for purchasing goods has plummeted, and their prices have absolutely tanked.</span>",
+        modifiers: {
+            requiresLocationTarget: true,
+            locationCount: 3,
+            localTargetStockMod: 0.20, // -80%
+            localBasePriceMod: 0.50
+        }
+    }
+};
+--- END OF FILE: ./js/data/systemStateRegistry.js ---
+
 --- START OF FILE: ./js/data/helpRegistry.js ---
 // js/data/helpRegistry.js
 
@@ -19262,6 +19786,21 @@ export class UIHangarControl {
         const currentUpgrades = shipState.upgrades || [];
         const isFull = currentUpgrades.length >= 3;
         
+        // --- SYSTEM STATES V3 HOOKS (Upgrade Costs) ---
+        const systemState = this.manager.lastKnownState?.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(this.manager.lastKnownState?.currentLocationId);
+
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.installCostMod) {
+                installationFee = Math.floor(installationFee * activeStateDef.modifiers.installCostMod);
+            }
+            if (isTargetLocation && activeStateDef.modifiers.localUpgradeCostMod) {
+                hardwareCost = Math.floor(hardwareCost * activeStateDef.modifiers.localUpgradeCostMod);
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
+
         const totalCost = hardwareCost + installationFee;
         let title = totalCost > 0 ? "Purchase Upgrade" : "Install Upgrade";
         // [[FIXED]] Check pillColor first, fallback to color
@@ -21424,6 +21963,7 @@ export class DebugService {
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
             selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
             selectedMission: 'debug_kitchen_sink',
+            selectedSystemState: 'NEUTRAL', // Added for SSS
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
@@ -22020,6 +22560,23 @@ ${logHistory}
             triggerMissionToast: { name: 'Toast: Mission', type: 'button', handler: () => this.triggerToast('mission') },
             triggerSolToast: { name: 'Toast: Sol', type: 'button', handler: () => this.triggerToast('sol') },
 
+            // --- SYSTEM STATES V3 ---
+            triggerSystemState: { name: 'Force System State', type: 'button', handler: () => {
+                const sysService = this.simulationService?.timeService?.systemStateService;
+                if (sysService) {
+                    if (this.debugState.selectedSystemState === 'NEUTRAL') {
+                        sysService.endCurrentState();
+                    } else {
+                        sysService.triggerState(this.debugState.selectedSystemState);
+                    }
+                    this.uiManager.showEconWeatherModal(this.gameState.getState());
+                    this.gameState.setState({});
+                }
+            }},
+            showEconWeatherUI: { name: 'Show Weather UI', type: 'button', handler: () => {
+                this.uiManager.showEconWeatherModal(this.gameState.getState());
+            }},
+
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
@@ -22175,6 +22732,17 @@ ${logHistory}
         this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
         this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
+
+        // --- NEW: System States Folder ---
+        const sysStateFolder = this.gui.addFolder('System States');
+        const stateOptions = Object.keys(DB.SYSTEM_STATES).reduce((acc, key) => {
+            acc[DB.SYSTEM_STATES[key].name] = key;
+            return acc;
+        }, {});
+        sysStateFolder.add(this.debugState, 'selectedSystemState', stateOptions).name('Select State');
+        sysStateFolder.add(this.actions.triggerSystemState, 'handler').name(this.actions.triggerSystemState.name);
+        sysStateFolder.add(this.actions.showEconWeatherUI, 'handler').name(this.actions.showEconWeatherUI.name);
+        // ---------------------------------
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
@@ -22958,6 +23526,18 @@ export class GameState {
                 [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
             },
             pendingTravel: null,
+            
+            // --- SYSTEM STATES V3 ---
+            systemState: {
+                activeId: null, // Will evaluate to NEUTRAL or another active state upon first tick
+                remainingDays: 0,
+                neutralPauseDays: 0, 
+                targetLocations: [],
+                historyLedger: [],
+                economyFootprints: [] // Tracks specific player trading activity to trigger targeted states
+            },
+            // --- END SYSTEM STATES V3 ---
+
             player: {
                 name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
                 introStep: 0,
@@ -25432,6 +26012,28 @@ export class MarketService {
                 // Determine the local baseline price based on import/export modifiers
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
 
+                // --- SYSTEM STATES V3 HOOKS (Prices) ---
+                const systemState = this.gameState.systemState;
+                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+                const isTargetLocation = systemState && systemState.targetLocations?.includes(location.id);
+
+                let basePriceMod = 1.0;
+                let activeStateMeanReversionMod = 1.0;
+
+                if (activeStateDef && activeStateDef.modifiers) {
+                    const mods = activeStateDef.modifiers;
+                    if (mods.meanReversionMod) activeStateMeanReversionMod = mods.meanReversionMod;
+                    
+                    if (mods.affectedCommodities?.includes(commodity.id) && mods.basePriceInflate) {
+                        basePriceMod *= mods.basePriceInflate;
+                    }
+                    if (isTargetLocation) {
+                        if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
+                        if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
+                    }
+                }
+                // --- END SYSTEM STATES V3 ---
+
                 // (1.0 - modifier) inverts the logic:
                 // Exporter (mod > 1.0) results in a negative offset (lower price)
                 // Importer (mod < 1.0) results in a positive offset (higher price)
@@ -25439,7 +26041,7 @@ export class MarketService {
 
                 // The new baseline is the galactic average, pulled towards the local target price
                 // by the strength of the modifier.
-                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+                const localBaseline = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
                 
@@ -25449,7 +26051,7 @@ export class MarketService {
                 }
                 // --- END VIRTUAL WORKBENCH ---
 
-                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
+                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH * activeStateMeanReversionMod;
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
@@ -25535,9 +26137,30 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
 
+                // --- SYSTEM STATES V3 HOOKS (Replenishment) ---
+                const systemState = this.gameState.systemState;
+                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+                const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
+
+                let targetStockMod = 1.0;
+                let replenishRate = 0.10;
+
+                if (activeStateDef && activeStateDef.modifiers) {
+                    const mods = activeStateDef.modifiers;
+                    if (mods.replenishmentRateMod !== undefined) replenishRate = mods.replenishmentRateMod;
+                    if (isTargetLocation && mods.localReplenishmentMod !== undefined) replenishRate = mods.localReplenishmentMod;
+
+                    if (mods.targetStockTiers?.includes(c.tier) && mods.targetStockMod) targetStockMod *= mods.targetStockMod;
+                    if (mods.affectedCommodities?.includes(c.id) && mods.targetStockMod) targetStockMod *= mods.targetStockMod;
+                    if (mods.meanReversionMod && mods.targetStockMod) targetStockMod *= mods.targetStockMod; // Geopolitical Stalemate fallback
+                    
+                    if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
+                }
+                // --- END SYSTEM STATES V3 ---
+
                 // Market Memory: Reset if untouched for 120 days.
                 if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 120) {
-                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
+                    inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
                     inventoryItem.depletionDay = 0; // Clear depletion day on reset
@@ -25568,11 +26191,11 @@ export class MarketService {
                     const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
                     // --- END PHASE 2 ---
 
-                    const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus);
+                    const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus) * targetStockMod;
 
                     // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * 0.10; // Move 10% towards the target each week
+                    const replenishAmount = difference * replenishRate; 
                     
                     // --- NEW: Emergency Stock Boost ---
                     let emergencyStock = 0;
@@ -25770,8 +26393,228 @@ export class MarketService {
 }
 --- END OF FILE: ./js/services/simulation/MarketService.js ---
 
+--- START OF FILE: ./js/services/world/SystemStateService.js ---
+// js/services/world/SystemStateService.js
+import { DB } from '../../data/database.js';
+
+/**
+ * @class SystemStateService
+ * @description Dedicated logic controller for managing macroeconomic system states,
+ * evaluating player footprint thresholds, enforcing the Neutral pause periods,
+ * and selecting target locations for Extreme state archetypes.
+ */
+export class SystemStateService {
+    constructor(gameState, logger) {
+        this.gameState = gameState;
+        this.logger = logger;
+    }
+
+    /**
+     * Evaluates daily state conditions: countdowns, footprint pruning, and RNG rolls.
+     */
+    evaluateTick() {
+        const sysState = this.gameState.systemState;
+        if (!sysState) return;
+
+        // Initialize default state for new games or legacy save conversions
+        if (!sysState.activeId) {
+            this.endCurrentState();
+            return;
+        }
+
+        // 1. Prune Player Economy Footprints (180-day rolling window)
+        const cutoffDay = this.gameState.day - 180;
+        if (sysState.economyFootprints && sysState.economyFootprints.length > 0) {
+            sysState.economyFootprints = sysState.economyFootprints.filter(fp => fp.day >= cutoffDay);
+        }
+
+        // 2. Active State Countdown
+        if (sysState.activeId !== 'NEUTRAL') {
+            sysState.remainingDays--;
+            if (sysState.remainingDays <= 0) {
+                this.endCurrentState();
+            }
+        } 
+        // 3. Neutral State Countdown & Trigger Evaluation
+        else {
+            sysState.neutralPauseDays--;
+            
+            // Evaluate Player Footprints first (Overrides Neutral Pause)
+            const footprintTrigger = this._evaluateFootprints();
+            if (footprintTrigger) {
+                this.triggerState(footprintTrigger.id, footprintTrigger.targets);
+                return;
+            }
+
+            // Roll RNG if Neutral pause is over
+            if (sysState.neutralPauseDays <= 0) {
+                this._rollRngState();
+            }
+        }
+    }
+
+    /**
+     * Logs a significant player action to the footprint ledger for threshold evaluation.
+     * @param {string} type - The type of footprint (e.g., 'DEPLETION')
+     * @param {string} locationId - The market ID
+     * @param {string} commodityId - The commodity ID
+     */
+    logPlayerFootprint(type, locationId, commodityId) {
+        if (!this.gameState.systemState.economyFootprints) {
+            this.gameState.systemState.economyFootprints = [];
+        }
+        
+        this.gameState.systemState.economyFootprints.push({
+            day: this.gameState.day,
+            type,
+            locationId,
+            commodityId
+        });
+    }
+
+    /**
+     * Evaluates the 180-day footprint ledger to see if player behavior forces a state transition.
+     * @returns {object|null} The state payload to trigger, or null.
+     * @private
+     */
+    _evaluateFootprints() {
+        const fps = this.gameState.systemState.economyFootprints || [];
+        const depletions = fps.filter(f => f.type === 'DEPLETION');
+        
+        // Threshold: Depleting the same commodity at 3 disparate stations
+        const byCommodity = {};
+        for (const f of depletions) {
+            if (!byCommodity[f.commodityId]) byCommodity[f.commodityId] = new Set();
+            byCommodity[f.commodityId].add(f.locationId);
+        }
+
+        for (const [commodityId, locSet] of Object.entries(byCommodity)) {
+            if (locSet.size >= 3) {
+                // Clear the triggering footprints to prevent immediate re-trigger
+                this.gameState.systemState.economyFootprints = fps.filter(f => f.type !== 'DEPLETION' || f.commodityId !== commodityId);
+                
+                // Behavior-driven associative response (e.g., Guild panics over bulk buyout)
+                return { id: 'GUILD_EMBARGO', targets: null }; 
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Rolls for a new System State, strictly checking the history ledger to prevent sequential repeats.
+     * @private
+     */
+    _rollRngState() {
+        const allStates = Object.keys(DB.SYSTEM_STATES).filter(k => k !== 'NEUTRAL');
+        const ledger = this.gameState.systemState.historyLedger || [];
+        const lastStateId = ledger.length > 0 ? ledger[ledger.length - 1] : null;
+        const lastArchetype = lastStateId && DB.SYSTEM_STATES[lastStateId] ? DB.SYSTEM_STATES[lastStateId].archetype : null;
+
+        // Ensure the new state belongs to a different Archetype than the previous one
+        const validStates = allStates.filter(id => DB.SYSTEM_STATES[id].archetype !== lastArchetype);
+
+        if (validStates.length === 0) {
+            this.endCurrentState(); // Failsafe
+            return;
+        }
+
+        const chosenId = validStates[Math.floor(Math.random() * validStates.length)];
+        this.triggerState(chosenId);
+    }
+
+    /**
+     * Activates a specified System State, generating target locations and durations.
+     * @param {string} stateId - The registry ID of the system state.
+     * @param {Array<string>} [overrideTargetLocations=null] - Optional hardcoded targets.
+     */
+    triggerState(stateId, overrideTargetLocations = null) {
+        const stateDef = DB.SYSTEM_STATES[stateId];
+        if (!stateDef) return;
+
+        const sysState = this.gameState.systemState;
+        
+        // Archive the previous active state to the history ledger
+        if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
+            if (!sysState.historyLedger) sysState.historyLedger = [];
+            sysState.historyLedger.push(sysState.activeId);
+            if (sysState.historyLedger.length > 10) sysState.historyLedger.shift();
+        }
+
+        sysState.activeId = stateId;
+        sysState.remainingDays = Math.floor(Math.random() * (stateDef.durationBounds[1] - stateDef.durationBounds[0] + 1)) + stateDef.durationBounds[0];
+
+        // Roll and save a static varietal index for narrative consistency
+        if (stateDef.varietals && stateDef.varietals.length > 0) {
+            sysState.varietalIndex = Math.floor(Math.random() * stateDef.varietals.length);
+        } else {
+            sysState.varietalIndex = 0;
+        }
+
+        // Process Extreme state targeting
+        if (overrideTargetLocations) {
+            sysState.targetLocations = overrideTargetLocations;
+        } else if (stateDef.modifiers && stateDef.modifiers.requiresLocationTarget) {
+            sysState.targetLocations = this._generateTargetLocations(stateDef.modifiers.locationCount || 1);
+        } else {
+            sysState.targetLocations = [];
+        }
+
+        this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to ${stateId} for ${sysState.remainingDays} days.`);
+    }
+
+    /**
+     * Forces the end of an active state, returning the system to the 'NEUTRAL' pause phase.
+     */
+    endCurrentState() {
+        const sysState = this.gameState.systemState;
+        if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
+            if (!sysState.historyLedger) sysState.historyLedger = [];
+            sysState.historyLedger.push(sysState.activeId);
+            if (sysState.historyLedger.length > 10) sysState.historyLedger.shift();
+        }
+
+        const neutralDef = DB.SYSTEM_STATES['NEUTRAL'];
+        sysState.activeId = 'NEUTRAL';
+        sysState.remainingDays = 0;
+        sysState.targetLocations = [];
+        sysState.varietalIndex = 0;
+        sysState.neutralPauseDays = Math.floor(Math.random() * (neutralDef.durationBounds[1] - neutralDef.durationBounds[0] + 1)) + neutralDef.durationBounds[0];
+
+        this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);
+    }
+
+    /**
+     * Generates a specified number of geographically logical target locations.
+     * @param {number} count - 1 for singular extremes, 3 for tri-location collapses.
+     * @returns {Array<string>} Array of location IDs.
+     * @private
+     */
+    _generateTargetLocations(count) {
+        // Linear array of valid locations (excluding the most extreme bounds/anomalies for standard economic zones)
+        const validMarkets = DB.MARKETS.filter(m => 
+            m.id !== 'loc_sun' && 
+            m.id !== 'loc_exchange' && 
+            m.id !== 'loc_kepler'
+        ).sort((a, b) => a.distance - b.distance);
+        
+        if (count === 1) {
+            return [validMarkets[Math.floor(Math.random() * validMarkets.length)].id];
+        } else if (count === 3) {
+            // Find a linear cluster for cascading failures
+            const startIndex = Math.floor(Math.random() * (validMarkets.length - 2));
+            return [
+                validMarkets[startIndex].id,
+                validMarkets[startIndex + 1].id,
+                validMarkets[startIndex + 2].id
+            ];
+        }
+        return [];
+    }
+}
+--- END OF FILE: ./js/services/world/SystemStateService.js ---
+
 --- START OF FILE: ./js/services/world/TravelService.js ---
-// js/services/world/TravelService.js (Appended and Modified)
+// js/services/world/TravelService.js
 /**
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
@@ -25887,6 +26730,15 @@ export class TravelService {
             if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
                 requiredFuel = 0;
             }
+
+            // --- SYSTEM STATES V3 HOOKS (Pre-Flight Validation) ---
+            const systemState = state.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+            if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
+                requiredFuel = Math.round(requiredFuel * activeStateDef.modifiers.travelFuelBurnMod);
+            }
+            // --- END SYSTEM STATES V3 ---
         }
         // --- END VIRTUAL WORKBENCH ---
 
@@ -25951,6 +26803,17 @@ export class TravelService {
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const upgrades = activeShipState.upgrades || [];
+
+        // --- SYSTEM STATES V3 HOOKS (Fuel & Time) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (!eventMods.useFoldedDrive) {
+            if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
+                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * activeStateDef.modifiers.travelFuelBurnMod);
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
 
         // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Consumption ---
         if (eventMods.useFoldedDrive) {
@@ -26083,6 +26946,13 @@ export class TravelService {
         const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
         let travelHullDamage = baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod;
         
+        // --- SYSTEM STATES V3 HOOKS (Hull Decay) ---
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.travelHullDecayMod) travelHullDamage *= activeStateDef.modifiers.travelHullDecayMod;
+            if (activeStateDef.modifiers.travelHullDecayMitigation) travelHullDamage *= activeStateDef.modifiers.travelHullDecayMitigation;
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- Z-CLASS HULL LOGIC ---
         if (shipAttributes.includes('ATTR_XENO_HULL') || 
             shipAttributes.includes('ATTR_FLUID_HULL') || 
@@ -26109,8 +26979,15 @@ export class TravelService {
         activeShipState.fuel -= travelInfo.fuelCost;
 
         // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (TRAVEL) ---
-        const convoyFuelTax = Math.max(0, travelInfo.fuelCost * 0.05);
-        const convoyHullTax = Math.max(0, totalHullDamageValue * 0.05);
+        let convoyFuelTax = Math.max(0, travelInfo.fuelCost * 0.05);
+        let convoyHullTax = Math.max(0, totalHullDamageValue * 0.05);
+
+        // --- SYSTEM STATES V3 HOOKS (Convoy Tax) ---
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.convoyTaxWaiver) {
+            convoyFuelTax = 0;
+            convoyHullTax = 0;
+        }
+        // --- END SYSTEM STATES V3 ---
 
         if (convoyFuelTax > 0 || convoyHullTax > 0) {
             for (const shipId of this.gameState.player.ownedShipIds) {
@@ -26246,6 +27123,15 @@ export class TravelService {
      * @private
      */
     _checkForRandomEvent(destinationId, force = false) {
+        // --- SYSTEM STATES V3 HOOKS (Hazards) ---
+        const systemState = this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.hazardsRemoved) {
+             return false; // Silent Correction completely bypasses hazards/events for smooth sailing
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- UPGRADE SYSTEM: Event Modifier ---
         const activeShip = this.simulationService._getActiveShip();
         const shipState = this.gameState.player.shipStates[activeShip.id];
@@ -26421,6 +27307,7 @@ import { DB } from '../../data/database.js';
 import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { SystemStateService } from './SystemStateService.js';
 
 // --- ERA 2: TRANSHUMANIST EVENT DATA (Age 100-195) ---
 const CYBORG_EVENTS = {
@@ -26462,6 +27349,7 @@ export class TimeService {
         this.simulationService = null; 
         this.intelService = null;      
         this.solStationService = null; 
+        this.systemStateService = new SystemStateService(gameState, logger);
     }
 
     /**
@@ -26487,6 +27375,9 @@ export class TimeService {
                 return;
             }
             this.gameState.day++;
+
+            // --- SYSTEM STATES V3: Daily Evaluation Loop ---
+            this.systemStateService.evaluateTick();
 
             // Pulse News Ticker
             if (this.simulationService) {
@@ -26541,7 +27432,6 @@ export class TimeService {
 
             // Weekly Market Updates
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
-                this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
                 
                 // Do not cycle upgrades/shipyard if currently docked at Sol Station
@@ -26579,7 +27469,16 @@ export class TimeService {
 
             // --- UPGRADE SYSTEM: Debt Interest (Syndicate Badge) ---
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
-                const rawInterest = this.gameState.player.monthlyInterestAmount;
+                let rawInterest = this.gameState.player.monthlyInterestAmount;
+                
+                // --- SYSTEM STATES V3 HOOKS (Debt Interest) ---
+                const systemState = this.gameState.systemState;
+                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+                if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.interestFrozen) {
+                    rawInterest = 0;
+                }
+                // --- END SYSTEM STATES V3 ---
                 
                 // Apply Multiplicative Modifier (e.g. 0.80 for 20% off)
                 const interestMod = GameAttributes.getInterestModifier(activeUpgrades);
@@ -26588,7 +27487,7 @@ export class TimeService {
                 this.gameState.player.debt += finalInterest;
                 
                 // Log the transaction
-                if (this.simulationService) {
+                if (this.simulationService && finalInterest > 0) {
                     this.simulationService._logTransaction('loan', finalInterest, 'Monthly interest charge');
                 }
                 
@@ -26753,28 +27652,50 @@ export class TimeService {
         }
     }
 
+    // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---
     _applyGarnishment() {
         const { player, day } = this.gameState;
         if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
             // Apply garnishment on the same cycle as interest
             if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) return;
 
-            const garnishedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
+            // Calculate potential garnishment based on current credits
+            const calculatedAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
+            
+            // Clamp garnishment so it does not exceed the remaining debt balance
+            const garnishedAmount = Math.min(calculatedAmount, player.debt);
+
             if (garnishedAmount > 0) {
+                // Deduct from credits and reduce the debt principal
                 player.credits -= garnishedAmount;
+                player.debt -= garnishedAmount;
+                
                 if (this.simulationService) {
-                    this.simulationService._logTransaction('debt', -garnishedAmount, 'Monthly credit garnishment');
+                    this.simulationService._logTransaction('debt', -garnishedAmount, 'Delinquent loan garnishment applied to principal');
                     this.simulationService._checkGameOverConditions(); 
+                }
+
+                // Check if the garnishment fully paid off the loan
+                if (player.debt <= 0) {
+                    player.debt = 0;
+                    player.loanStartDate = null;
+                    player.monthlyInterestAmount = 0;
+                    player.seenGarnishmentWarning = false; // Reset for future loans
+
+                    if (this.simulationService) {
+                        this.simulationService.pushNewsMessage('Delinquent loan balance fully satisfied via garnishment.', 'FINANCE');
+                    }
                 }
             }
 
-            if (!player.seenGarnishmentWarning) {
-                const msg = "Your loan is delinquent. Your lender is now garnishing 14% of your credits monthly until the debt is paid.";
+            if (player.debt > 0 && !player.seenGarnishmentWarning) {
+                const msg = "Your loan is delinquent. Your lender is now garnishing a percentage of your credits monthly to pay down the principal until the debt is satisfied.";
                 this.uiManager.queueModal('event-modal', "Credit Garnishment Notice", msg, null, { buttonClass: 'bg-red-800/80' });
                 player.seenGarnishmentWarning = true;
             }
         }
     }
+    // --- VIRTUAL WORKBENCH END: Garnishment Debt Reduction Update ---
     
     getCurrentDay() {
         return this.gameState.day;
@@ -30570,6 +31491,7 @@ export class UIManager {
         this.isMobile = window.innerWidth <= 768;
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
+        this.lastSeenSystemStateId = null; // Used to track and trigger state change modals
         
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
@@ -30665,8 +31587,17 @@ export class UIManager {
 
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
-            stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
+            stickyObjectiveProgress: document.getElementById('sticky-objective-progress'),
+
+            econWeatherBtn: document.getElementById('btn-econ-weather')
         };
+
+        if (this.cache.econWeatherBtn) {
+            this.cache.econWeatherBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showEconWeatherModal();
+            });
+        }
     }
 
     render(gameState) {
@@ -30680,7 +31611,10 @@ export class UIManager {
         this.lastKnownState = gameState;
 
         if (gameState.introSequenceActive) {
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.add('hidden');
             return;
+        } else {
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.remove('hidden');
         }
 
         this._applyTheme(gameState);
@@ -30902,6 +31836,26 @@ export class UIManager {
             this.solStationControl.resetScrollMemory();
         }
 
+        // --- SYSTEM STATES V3: Auto-Instantiation Hook ---
+        const currentSystemStateId = gameState.systemState?.activeId;
+        if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
+            this.lastSeenSystemStateId = currentSystemStateId;
+            // Prevent auto-popups if we are just loading a fresh session (previousState is null)
+            // or if the intro is running.
+            if (previousState && !gameState.introSequenceActive) {
+                // Ensure we only trigger it upon arrival at a relevant market-facing screen
+                if (gameState.activeScreen === SCREEN_IDS.MARKET || 
+                    gameState.activeScreen === SCREEN_IDS.SERVICES || 
+                    gameState.activeScreen === SCREEN_IDS.HANGAR) {
+                    
+                    setTimeout(() => {
+                        this.showEconWeatherModal(gameState);
+                    }, 500); // Slight delay guarantees it lands at the absolute back of UIModalEngine queue
+                }
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
+
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.classList.remove('active-screen');
@@ -31111,6 +32065,72 @@ export class UIManager {
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
+    // --- SYSTEM STATES V3: Econ Weather UI Orchestrator ---
+    showEconWeatherModal(gameState = this.lastKnownState) {
+        if (!gameState || !gameState.systemState) return;
+        
+        const sysStateId = gameState.systemState.activeId;
+        
+        if (!sysStateId || sysStateId === 'NEUTRAL') {
+            this.queueModal('econ-weather-modal', 'System Economy', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { 
+                dismissOutside: true,
+                footer: null,
+                customSetup: (modal, closeHandler) => {
+                    const closeBtn = modal.querySelector('#econ-weather-close-btn');
+                    if (closeBtn) closeBtn.onclick = closeHandler;
+                }
+            });
+            return;
+        }
+
+        const stateDef = DB.SYSTEM_STATES[sysStateId];
+        if (!stateDef) return;
+
+        // Fetch static varietal index, fallback to random if missing (e.g., from old save)
+        const varietalIndex = gameState.systemState.varietalIndex !== undefined 
+            ? gameState.systemState.varietalIndex 
+            : Math.floor(Math.random() * stateDef.varietals.length);
+
+        let narrativeText = stateDef.varietals[varietalIndex];
+        let quantitativeText = stateDef.quantitativeDisplay;
+
+        // Format [Loc] dynamic injection for BOTH narrative and quantitative texts
+        if (gameState.systemState.targetLocations && gameState.systemState.targetLocations.length > 0) {
+            if (gameState.systemState.targetLocations.length === 1) {
+                const locName = DB.MARKETS.find(m => m.id === gameState.systemState.targetLocations[0])?.name || 'Unknown';
+                const locSpan = `<span class="hl-blue">${locName}</span>`;
+                narrativeText = narrativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
+                quantitativeText = quantitativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
+            } else {
+                gameState.systemState.targetLocations.forEach((locId, idx) => {
+                    const locName = DB.MARKETS.find(m => m.id === locId)?.name || 'Unknown';
+                    const locSpan = `<span class="hl-blue">${locName}</span>`;
+                    const regex = new RegExp(`\\[Loc ${idx + 1}\\]`, 'g');
+                    narrativeText = narrativeText.replace(regex, locSpan);
+                    quantitativeText = quantitativeText.replace(regex, locSpan);
+                });
+            }
+        }
+
+        const contentHtml = `
+            <div class="flex flex-col items-center justify-center space-y-4">
+                <p class="text-left text-gray-300 italic">"${narrativeText}"</p>
+                <div class="w-full p-4 bg-slate-900 border border-slate-700 rounded text-center text-sm font-roboto-mono mt-4">
+                    ${quantitativeText}
+                </div>
+            </div>
+        `;
+
+        this.queueModal('econ-weather-modal', "Macroeconomic Alert", contentHtml, null, { 
+            dismissOutside: true,
+            footer: null,
+            customSetup: (modal, closeHandler) => {
+                const closeBtn = modal.querySelector('#econ-weather-close-btn');
+                if (closeBtn) closeBtn.onclick = closeHandler;
+            }
+        });
+    }
+
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }
 
@@ -31308,7 +32328,7 @@ export class UIManager {
                     <button id="cancel-transaction-btn" class="btn">Cancel</button>
                  `;
                 
-                const confirmBtn = modal.querySelector('#confirm-transaction-btn');
+             const confirmBtn = modal.querySelector('#confirm-transaction-btn');
                 const cancelBtn = modal.querySelector('#cancel-transaction-btn');
                 
                 confirmBtn.onclick = () => {
@@ -34462,6 +35482,17 @@ export class ActionClickHandler {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
+
+        // --- VIRTUAL WORKBENCH: Global click listener to dismiss primed loan buttons ---
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.btn-module-credit')) {
+                document.querySelectorAll('.btn-module-credit.primed').forEach(btn => {
+                    delete btn.dataset.primed;
+                    btn.classList.remove('primed');
+                });
+            }
+        });
+        // --- END VIRTUAL WORKBENCH ---
     }
 
     /**
@@ -34881,6 +35912,23 @@ export class ActionClickHandler {
                 this.simulationService.payOffDebt(e);
                 break;
             case ACTION_IDS.TAKE_LOAN:
+                // --- VIRTUAL WORKBENCH START: Two-Step Loan Confirmation ---
+                if (!actionTarget.dataset.primed) {
+                    // Reset any previously primed buttons
+                    document.querySelectorAll('.btn-module-credit[data-primed="true"]').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                    });
+                    
+                    // Prime this button
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed');
+                    e.stopPropagation();
+                    return; // Prevent immediate execution
+                }
+                // --- VIRTUAL WORKBENCH END ---
+                
+                // Second click: execute the loan
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
             case ACTION_IDS.PURCHASE_INTEL:
@@ -35464,6 +36512,17 @@ export class PlayerActionService {
         }
         // --- END PHASE 2 ---
 
+        // --- SYSTEM STATES V3 HOOKS (Survival Goods Discount) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.survivalGoodsDiscountMod) {
+            if (activeStateDef.modifiers.affectedCommodities?.includes(goodId)) {
+                totalCost = Math.floor(totalCost * activeStateDef.modifiers.survivalGoodsDiscountMod);
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (NEPTUNE & BELT DISCOUNT) ---
         if (state.currentLocationId === LOCATION_IDS.NEPTUNE && 
             (goodId === COMMODITY_IDS.PROPELLANT || goodId === COMMODITY_IDS.PLASTEEL) &&
@@ -35608,6 +36667,15 @@ export class PlayerActionService {
         totalSaleValue = Math.floor(totalSaleValue * priceMod);
         // --- END UPGRADE SYSTEM ---
 
+        // --- SYSTEM STATES V3 HOOKS (Sell Bonus) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.sellPriceBonusMod) {
+            totalSaleValue = Math.floor(totalSaleValue * activeStateDef.modifiers.sellPriceBonusMod);
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SOL EXPORT YIELD) ---
         if (state.currentLocationId === LOCATION_IDS.SUN &&
             (goodId === COMMODITY_IDS.GRAPHENE_LATTICES || goodId === COMMODITY_IDS.PLASTEEL)) {
@@ -35693,6 +36761,15 @@ export class PlayerActionService {
         }
         // --- END PHASE 2 ---
 
+        // --- SYSTEM STATES V3 HOOKS (Shipyard Price) ---
+        const systemState = this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.shipyardPriceMod) {
+            effectivePrice = Math.floor(effectivePrice * activeStateDef.modifiers.shipyardPriceMod);
+        }
+        // --- END SYSTEM STATES V3 ---
+
         if (this.gameState.player.credits < effectivePrice) {
              return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
         }
@@ -35722,6 +36799,15 @@ export class PlayerActionService {
                 effectivePrice = Math.floor(ship.price * (1 - discount));
             }
             // --- END PHASE 2 ---
+
+            // --- SYSTEM STATES V3 HOOKS (Shipyard Price) ---
+            const systemState = this.gameState.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+            if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.shipyardPriceMod) {
+                effectivePrice = Math.floor(effectivePrice * activeStateDef.modifiers.shipyardPriceMod);
+            }
+            // --- END SYSTEM STATES V3 ---
 
             this.gameState.player.credits -= effectivePrice;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(effectivePrice)}.`);
@@ -36194,6 +37280,17 @@ export class PlayerActionService {
         }
         // --- END PHASE 2 ---
 
+        // --- SYSTEM STATES V3 HOOKS (Service Costs) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(state.currentLocationId);
+        
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.serviceCostMod) unitCost *= activeStateDef.modifiers.serviceCostMod;
+            if (isTargetLocation && activeStateDef.modifiers.localServiceCostMod !== undefined) unitCost *= activeStateDef.modifiers.localServiceCostMod;
+        }
+        // --- END SYSTEM STATES V3 ---
+
         const fuelDeficit = effectiveStats.maxFuel - currentFuel;
         const fuelDeficitPct = fuelDeficit / effectiveStats.maxFuel;
         
@@ -36273,6 +37370,18 @@ export class PlayerActionService {
             unitCost *= (1 - ageRepairDiscount);
         }
         // --- END PHASE 2 ---
+
+        // --- SYSTEM STATES V3 HOOKS (Service Costs) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(state.currentLocationId);
+
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.repairCostMod !== undefined) unitCost *= activeStateDef.modifiers.repairCostMod;
+            if (activeStateDef.modifiers.serviceCostMod) unitCost *= activeStateDef.modifiers.serviceCostMod;
+            if (isTargetLocation && activeStateDef.modifiers.localServiceCostMod !== undefined) unitCost *= activeStateDef.modifiers.localServiceCostMod;
+        }
+        // --- END SYSTEM STATES V3 ---
 
         const healthDeficit = effectiveStats.maxHealth - currentHealth;
         const healthDeficitPct = healthDeficit / effectiveStats.maxHealth;
@@ -36362,6 +37471,16 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.33] - 2026-2-27
+-  added system states v2
+-  added economic weather interface
+
+# [36.31] - 2026-2-26
+-  added map screen POI indicators
+
+# [36.30] - 2026-2-25
+-  financing UI overhaul
 
 # [36.29] - 2026-2-25
 -  bug fixes

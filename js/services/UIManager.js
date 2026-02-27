@@ -620,25 +620,42 @@ export class UIManager {
         const sysStateId = gameState.systemState.activeId;
         
         if (!sysStateId || sysStateId === 'NEUTRAL') {
-            this.queueModal('event-modal', 'System Economy', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { buttonText: 'Close' });
+            this.queueModal('econ-weather-modal', 'System Economy', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { 
+                dismissOutside: true,
+                footer: null,
+                customSetup: (modal, closeHandler) => {
+                    const closeBtn = modal.querySelector('#econ-weather-close-btn');
+                    if (closeBtn) closeBtn.onclick = closeHandler;
+                }
+            });
             return;
         }
 
         const stateDef = DB.SYSTEM_STATES[sysStateId];
         if (!stateDef) return;
 
-        const varietalIndex = Math.floor(Math.random() * stateDef.varietals.length);
-        let narrativeText = stateDef.varietals[varietalIndex];
+        // Fetch static varietal index, fallback to random if missing (e.g., from old save)
+        const varietalIndex = gameState.systemState.varietalIndex !== undefined 
+            ? gameState.systemState.varietalIndex 
+            : Math.floor(Math.random() * stateDef.varietals.length);
 
-        // Format [Loc] dynamic injection
+        let narrativeText = stateDef.varietals[varietalIndex];
+        let quantitativeText = stateDef.quantitativeDisplay;
+
+        // Format [Loc] dynamic injection for BOTH narrative and quantitative texts
         if (gameState.systemState.targetLocations && gameState.systemState.targetLocations.length > 0) {
             if (gameState.systemState.targetLocations.length === 1) {
                 const locName = DB.MARKETS.find(m => m.id === gameState.systemState.targetLocations[0])?.name || 'Unknown';
-                narrativeText = narrativeText.replace(/\[Target Location\]|\[Loc\]/g, `<span class="hl-blue">${locName}</span>`);
+                const locSpan = `<span class="hl-blue">${locName}</span>`;
+                narrativeText = narrativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
+                quantitativeText = quantitativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
             } else {
                 gameState.systemState.targetLocations.forEach((locId, idx) => {
                     const locName = DB.MARKETS.find(m => m.id === locId)?.name || 'Unknown';
-                    narrativeText = narrativeText.replace(new RegExp(`\\[Loc ${idx + 1}\\]`, 'g'), `<span class="hl-blue">${locName}</span>`);
+                    const locSpan = `<span class="hl-blue">${locName}</span>`;
+                    const regex = new RegExp(`\\[Loc ${idx + 1}\\]`, 'g');
+                    narrativeText = narrativeText.replace(regex, locSpan);
+                    quantitativeText = quantitativeText.replace(regex, locSpan);
                 });
             }
         }
@@ -647,12 +664,19 @@ export class UIManager {
             <div class="flex flex-col items-center justify-center space-y-4">
                 <p class="text-left text-gray-300 italic">"${narrativeText}"</p>
                 <div class="w-full p-4 bg-slate-900 border border-slate-700 rounded text-center text-sm font-roboto-mono mt-4">
-                    ${stateDef.quantitativeDisplay}
+                    ${quantitativeText}
                 </div>
             </div>
         `;
 
-        this.queueModal('event-modal', "Macroeconomic Alert", contentHtml, null, { buttonText: 'Acknowledge' });
+        this.queueModal('econ-weather-modal', "Macroeconomic Alert", contentHtml, null, { 
+            dismissOutside: true,
+            footer: null,
+            customSetup: (modal, closeHandler) => {
+                const closeBtn = modal.querySelector('#econ-weather-close-btn');
+                if (closeBtn) closeBtn.onclick = closeHandler;
+            }
+        });
     }
 
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
@@ -852,7 +876,7 @@ export class UIManager {
                     <button id="cancel-transaction-btn" class="btn">Cancel</button>
                  `;
                 
-                const confirmBtn = modal.querySelector('#confirm-transaction-btn');
+             const confirmBtn = modal.querySelector('#confirm-transaction-btn');
                 const cancelBtn = modal.querySelector('#cancel-transaction-btn');
                 
                 confirmBtn.onclick = () => {

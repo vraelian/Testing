@@ -15,7 +15,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.29</title>
+    <title>Orbital Trading 36.33</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -111,7 +111,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.29</p>
+            <p>Version 36.33 - Economoic Weather Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -236,6 +236,23 @@
             <h3 id="event-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center"></h3>
             <p id="event-description" class="mb-6 text-lg"></p>
             <div id="event-button-container" class="mt-6 flex justify-center gap-4"></div>
+        </div>
+    </div>
+
+     <div id="event-modal" class="modal-backdrop hidden">
+        <div class="modal-content">
+            <h3 id="event-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center"></h3>
+            <p id="event-description" class="mb-6 text-lg"></p>
+            <div id="event-button-container" class="mt-6 flex justify-center gap-4"></div>
+        </div>
+    </div>
+
+    <div id="econ-weather-modal" class="modal-backdrop hidden z-[60]">
+        <div class="modal-content relative">
+            <button id="econ-weather-close-btn" class="absolute top-2 right-4 text-gray-400 hover:text-white text-4xl font-bold leading-none cursor-pointer transition-colors" title="Close">&minus;</button>
+            <h3 id="econ-weather-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center pr-8 pl-8"></h3>
+            <div id="econ-weather-description" class="mb-6 text-lg"></div>
+            <div id="econ-weather-button-container" class="hidden"></div>
         </div>
     </div>
 
