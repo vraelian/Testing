@@ -116,26 +116,67 @@
     clip-path: polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%);
 }
 
-/* The POI text label */
+/* The POI text label parent wrapper */
 .poi-label {
     position: absolute; /* Relative to its group */
     font-family: 'Orbitron', sans-serif;
     color: #d0d8e8;
+    /* Nudge to center it vertically */
+    transform: translateY(-50%);
+    white-space: nowrap;
+    z-index: 11;
+    display: flex;
+    flex-direction: column;
+}
+
+/* Apply D3-calculated text-anchor for layout direction */
+.poi-label[style*="text-anchor: end"] {
+    transform: translate(-100%, -50%);
+    align-items: flex-end;
+}
+.poi-label[style*="text-anchor: start"] {
+    align-items: flex-start;
+}
+
+/* Core POI Name Text */
+.poi-name-text {
     font-size: 0.9rem;
     /* Mimic the SVG stroke with text-shadow */
     text-shadow: 
         0 0 3px #0c101d,
         0 0 3px #0c101d,
         0 0 3px #0c101d;
-    
-    /* Nudge to center it vertically */
-    transform: translateY(-50%);
-    white-space: nowrap;
-    z-index: 11;
 }
-/* Apply D3-calculated text-anchor */
-.poi-label[style*="text-anchor: end"] {
-    transform: translate(-100%, -50%);
+
+/* --- VIRTUAL WORKBENCH: POI INDICATORS --- */
+.poi-indicators-wrapper {
+    display: flex;
+    flex-direction: column;
+    margin-top: 2px;
+    width: 100%;
+}
+
+.poi-indicator-hr {
+    width: 100%;
+    border: none;
+    border-top: 1px solid #f59e0b;
+    margin: 2px 0 4px 0;
+    box-shadow: 0 1px 2px #0c101d, 0 -1px 2px #0c101d;
+}
+
+.poi-indicator-text {
+    color: #f59e0b;
+    font-size: 0.65rem;
+    letter-spacing: 0.05em;
+    line-height: 1.1;
+    margin-bottom: 2px;
+    /* Crisp 1px black outline via text-shadow */
+    text-shadow: 
+        1px 1px 0 #0c101d,
+        -1px -1px 0 #0c101d,
+        1px -1px 0 #0c101d,
+        -1px 1px 0 #0c101d,
+        0 0 3px #0c101d;
 }
 
 /* --- 4. "FILTER-LESS" GLOW ANIMATIONS --- */
@@ -188,8 +229,8 @@
 
 /* --- 5. APPLY ANIMATIONS TO CURRENT LOCATION --- */
 
-/* Apply the text glow */
-.poi-marker-group.current-location .poi-label {
+/* Apply the text glow only to the name to keep indicators amber */
+.poi-marker-group.current-location .poi-name-text {
     /* --- VIRTUAL WORKBENCH: Increased speed from 2.5s to 2.1s --- */
     animation: pulse-text-glow 2.1s infinite;
 }

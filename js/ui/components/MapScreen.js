@@ -94,6 +94,7 @@ function _drawMap(container, svgLayer, htmlLayer, uiManager) {
 
 /**
  * The "Brain" of the map. Calculates the unified data array used by both layers.
+ * Also calculates dynamically active UI states such as Intel and Mission indicators.
  * @param {number} containerWidth
  * @param {import('../../services/UIManager.js').UIManager} uiManager
  * @param {number} centerX
@@ -135,13 +136,29 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
     const bottomPadding = 30;
     const totalHeight = topPadding + ((allPoiData.length - 1) * verticalSpacing) + bottomPadding;
 
-    // Create the final data array with all calculated pixel coordinates
+    // Retrieve active game states for indicator calculation
+    const activeIntelLocationId = uiManager.lastKnownState.activeIntelDeal?.locationId;
+    const activeMissionIds = uiManager.lastKnownState.missions?.activeMissionIds || [];
+
+    // Create the final data array with all calculated pixel coordinates and state flags
     const poiData = allPoiData.map((d, i) => {
         const y = topPadding + (i * verticalSpacing);
         const x = centerX + (i % 2 === 0 ? -50 : 50); // POI x-position
         const labelX = centerX + (i % 2 === 0 ? -56 : 56); // Label x-position
         const labelAnchor = (i % 2 === 0 ? "end" : "start");
         const radius = (d.parent ? 12 : 16) * (sizeModifiers[d.id] || 1);
+
+        // Calculate Indicator Flags
+        const hasIntel = activeIntelLocationId === d.id;
+        const hasMission = activeMissionIds.some(missionId => {
+            const mission = DB.MISSIONS[missionId];
+            if (!mission) return false;
+            // Check completion destination
+            if (mission.completion && mission.completion.locationId === d.id) return true;
+            // Check specific objectives targets
+            if (mission.objectives && mission.objectives.some(obj => obj.target === d.id)) return true;
+            return false;
+        });
 
         return {
             ...d,
@@ -150,7 +167,9 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
             labelX,
             labelAnchor,
             leaderLineX: x, // X coord for the end of the leader line
-            radius
+            radius,
+            hasIntel,
+            hasMission
         };
     });
 
@@ -166,8 +185,6 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
  * @private
  */
 function _drawSubstrate(svgLayer, poiData, centerX, totalHeight) {
-    // --- VIRTUAL WORKBENCH: Removed Sun and Gradient definitions ---
-
     svgLayer.append("line")
         .attr("class", "central-axis")
         .attr("x1", centerX)
@@ -188,7 +205,7 @@ function _drawSubstrate(svgLayer, poiData, centerX, totalHeight) {
 }
 
 /**
- * Draws the interactive HTML interface layer.
+ * Draws the interactive HTML interface layer, including dynamic state indicators.
  * @param {d3.Selection} htmlLayer
  * @param {Array<object>} poiData
  * @param {import('../../services/UIManager.js').UIManager} uiManager
@@ -196,7 +213,6 @@ function _drawSubstrate(svgLayer, poiData, centerX, totalHeight) {
  * @private
  */
 function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
-    // --- VIRTUAL WORKBENCH: Add the Sun as an HTML element ---
     const sunRadius = 225;
     htmlLayer.append("div")
         .attr("id", "map-sun-poi")
@@ -205,7 +221,6 @@ function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
         .style("left", `${centerX}px`) // Original cx
         .style("width", `${sunRadius * 2}px`)
         .style("height", `${sunRadius * 2}px`);
-    // --- END VIRTUAL WORKBENCH ---
 
     // Bind data to create HTML <div>s
     const groups = htmlLayer.selectAll(".poi-marker-group")
@@ -237,13 +252,35 @@ function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
         // Override default circle for Sol and Belt
         .style("border-radius", d => (d.id === LOCATION_IDS.SUN || d.id === LOCATION_IDS.BELT) ? "0" : "50%");
 
-    // POI Labels (alternating sides)
-    groups.append("div")
+    // POI Labels Container (alternating sides)
+    const labelGroups = groups.append("div")
         .attr("class", "poi-label")
         .style("position", "absolute")
         .style("left", d => `${d.labelX}px`)
-        .style("text-anchor", d => d.labelAnchor)
+        .style("text-anchor", d => d.labelAnchor);
+    
+    // Core POI Name Text
+    labelGroups.append("div")
+        .attr("class", "poi-name-text")
         .text(d => d.name);
+
+    // Conditional Indicator Wrappers
+    const indicatorGroups = labelGroups.filter(d => d.hasIntel || d.hasMission)
+        .append("div")
+        .attr("class", "poi-indicators-wrapper");
+
+    indicatorGroups.append("hr")
+        .attr("class", "poi-indicator-hr");
+
+    indicatorGroups.filter(d => d.hasIntel)
+        .append("div")
+        .attr("class", "poi-indicator-text")
+        .text("INTEL");
+
+    indicatorGroups.filter(d => d.hasMission)
+        .append("div")
+        .attr("class", "poi-indicator-text")
+        .text("MISSION");
 }
 
 /**
