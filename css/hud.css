@@ -131,8 +131,6 @@
     visibility: hidden;
 }
 
-/* Removed rules for .fuel-group .status-tooltip and .cargo-group .status-tooltip */
-
 .status-tooltip.visible {
     opacity: 1;
     visibility: visible;
@@ -194,27 +192,29 @@
 .bottom-sticky-bar {
     display: none;
     position: fixed;
-    bottom: 1.5rem;
+    bottom: 2rem; /* Elevated by 20% to afford corner buttons clearance */
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
     max-width: 1200px;
-    padding: 0 1.5rem;
-    cursor: pointer;
+    padding: 0 4rem; /* Lateral layout padding */
+    pointer-events: none; /* Let clicks pass through the transparent layout padding */
     z-index: 50;
 }
 .sticky-content {
+    pointer-events: auto; /* Restrict the interactive 'hitbox' strictly to the visible visual frame */
+    cursor: pointer;
     background-color: rgba(12, 16, 29, 0.8);
     background-image: linear-gradient(rgba(12, 16, 29, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(12, 16, 29, 0.2) 1px, transparent 1px);
     background-size: 15px 15px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
-    padding: 0.5rem 1rem;
+    padding: 0.45rem 1rem; /* Marginally thinner base padding */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 .bottom-sticky-bar p {
@@ -353,8 +353,8 @@
     position: absolute; /* Matches global help anchor */
     bottom: 1rem;
     left: 1rem; /* Symmetrical to the right-side help anchor */
-    width: 36px;
-    height: 36px;
+    width: 40px; /* Scaled up 10% */
+    height: 40px; /* Scaled up 10% */
     border-radius: 50%;
     background-color: rgba(45, 55, 72, 0.6);
     color: #fff;
@@ -362,10 +362,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    font-size: 1.35rem; /* Base fallback for emojis */
     z-index: 50;
     opacity: 0.5;
     transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
+    pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -382,6 +384,6 @@
 }
 
 #btn-econ-weather svg {
-    width: 20px;
-    height: 20px;
+    width: 22px; /* Scaled up 10% */
+    height: 22px;
 }

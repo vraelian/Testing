@@ -539,14 +539,14 @@
     border: 1px solid var(--theme-border);
     backdrop-filter: blur(8px);
     
-    /* Reduced vertical thickness (approx 15% reduction) */
-    padding: 0.35rem 1rem;
+    /* Reduced vertical thickness (approx 10% reduction from previous) */
+    padding: 0.3rem 1rem;
     
     /* Fully rounded corners (Pill shape) */
     border-radius: 9999px;
     
     /* Slightly smaller text size */
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transition: all 0.3s ease;

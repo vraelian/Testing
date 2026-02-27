@@ -916,14 +916,14 @@
     border: 1px solid var(--theme-border);
     backdrop-filter: blur(8px);
     
-    /* Reduced vertical thickness (approx 15% reduction) */
-    padding: 0.35rem 1rem;
+    /* Reduced vertical thickness (approx 10% reduction from previous) */
+    padding: 0.3rem 1rem;
     
     /* Fully rounded corners (Pill shape) */
     border-radius: 9999px;
     
     /* Slightly smaller text size */
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
     transition: all 0.3s ease;
@@ -1280,8 +1280,6 @@
     visibility: hidden;
 }
 
-/* Removed rules for .fuel-group .status-tooltip and .cargo-group .status-tooltip */
-
 .status-tooltip.visible {
     opacity: 1;
     visibility: visible;
@@ -1343,27 +1341,29 @@
 .bottom-sticky-bar {
     display: none;
     position: fixed;
-    bottom: 1.5rem;
+    bottom: 2rem; /* Elevated by 20% to afford corner buttons clearance */
     left: 50%;
     transform: translateX(-50%);
     width: 100%;
     max-width: 1200px;
-    padding: 0 1.5rem;
-    cursor: pointer;
+    padding: 0 4rem; /* Lateral layout padding */
+    pointer-events: none; /* Let clicks pass through the transparent layout padding */
     z-index: 50;
 }
 .sticky-content {
+    pointer-events: auto; /* Restrict the interactive 'hitbox' strictly to the visible visual frame */
+    cursor: pointer;
     background-color: rgba(12, 16, 29, 0.8);
     background-image: linear-gradient(rgba(12, 16, 29, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(12, 16, 29, 0.2) 1px, transparent 1px);
     background-size: 15px 15px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
-    padding: 0.5rem 1rem;
+    padding: 0.45rem 1rem; /* Marginally thinner base padding */
     display: flex;
     justify-content: space-between;
     align-items: center;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
 .bottom-sticky-bar p {
@@ -1502,8 +1502,8 @@
     position: absolute; /* Matches global help anchor */
     bottom: 1rem;
     left: 1rem; /* Symmetrical to the right-side help anchor */
-    width: 36px;
-    height: 36px;
+    width: 40px; /* Scaled up 10% */
+    height: 40px; /* Scaled up 10% */
     border-radius: 50%;
     background-color: rgba(45, 55, 72, 0.6);
     color: #fff;
@@ -1511,10 +1511,12 @@
     display: flex;
     justify-content: center;
     align-items: center;
+    font-size: 1.35rem; /* Base fallback for emojis */
     z-index: 50;
     opacity: 0.5;
     transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
+    pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
@@ -1531,8 +1533,8 @@
 }
 
 #btn-econ-weather svg {
-    width: 20px;
-    height: 20px;
+    width: 22px; /* Scaled up 10% */
+    height: 22px;
 }
 --- END OF FILE: ./css/hud.css ---
 
@@ -7703,14 +7705,14 @@ BULKHEAD NAVIGATION STYLES
     position: absolute;
     bottom: 1rem;
     right: 1rem;
-    width: 36px;
-    height: 36px;
+    width: 40px; /* Scaled up 10% */
+    height: 40px; /* Scaled up 10% */
     border-radius: 50%;
     background-color: rgba(45, 55, 72, 0.6);
     color: #fff;
     border: 1px solid rgba(122, 154, 192, 0.5);
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.2rem;
+    font-size: 1.35rem; /* Scaled up 10% */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -37472,9 +37474,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.33] - 2026-2-27
+# [36.35] - 2026-2-27
 -  added system states v2
 -  added economic weather interface
+-  mission sticky bar polish
+-  econ + helper button polish
 
 # [36.31] - 2026-2-26
 -  added map screen POI indicators
@@ -40277,23 +40281,31 @@ All progression math is reverse-engineered from Mihaly Csikszentmihalyi’s conc
 
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-## Sudden Ideas
-- 
+## Immediate
+Economy
+A. Mercury market personality and performance
+B. Sol market personality and performance
+C. Give both Intel recipiency
+
+
+Officers
+A. Perks - economic stimulus: increase available commodities at given location
+
+Help System
+A. The helper modal ‘(?)’ icon should be made 10% larger in diameter.
+
+Mission Sticky Bar
+A. The mission sticky bar should be made vertically 10% shorter and its position moved up vertically on the screen 20% of its height to afford the helper modal button more room. 
+B. Reduce the activation padding on the mission stick bar on the lateral left and right sides of the bar slightly so that attempting to select the helper modal button doesn’t more often actuate the mission sticky bar. 
+
+Missions
+A. Add mission completion animation/effect
 
 ## Ongoing, WIP Efforts
 -  How to increase scaling  risk and difficulty mid-game through to end game?
--  Add sun station morale ‘personality’ depending on extended state of operation (I.e., starving and stopped: unhappy, thriving and productive: positive, etc)
--  Add sun station progression and escalation
--  Implement Officers GDD V1
 -  Build Mission Maker V3
 -  More UI CSS keyframes animations
 
-
-## Balance To-Do’s
-- Wealth milestones
-- Commodity pricing
-- Ship pricing
-- Ship Upgrade pricing 
 
 ## Long-Term Goals, Ideas
 - Optional game upgrades: fleet repair, fleet refueling
@@ -40308,7 +40320,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 - System states influencing market performance
 - Add more events: reward type, story type, voucher type
 
-DEFERRED
+## DEFERRED
 - Achievements
 - Art design refinement
 - Sound design (Audiomachine?)
