@@ -4,7 +4,7 @@ import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA } = gameState;
+    const { player, currentLocationId, TRAVEL_DATA, systemState } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
@@ -47,6 +47,14 @@ export function renderNavigationScreen(gameState) {
     if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
         fuelMod *= 0.5; // -50% Fuel Cost
     }
+    
+    // --- SYSTEM STATES V3 HOOKS ---
+    const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+    if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
+        fuelMod *= activeStateDef.modifiers.travelFuelBurnMod;
+    }
+    // --- END SYSTEM STATES V3 ---
+
     const isFreeFuel = shipAttributes.includes('ATTR_NEWTONS_GHOST') || hasSleeper;
     // ---------------------------------------------
 

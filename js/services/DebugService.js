@@ -109,6 +109,7 @@ export class DebugService {
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
             selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
             selectedMission: 'debug_kitchen_sink',
+            selectedSystemState: 'NEUTRAL', // Added for SSS
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
@@ -705,6 +706,23 @@ ${logHistory}
             triggerMissionToast: { name: 'Toast: Mission', type: 'button', handler: () => this.triggerToast('mission') },
             triggerSolToast: { name: 'Toast: Sol', type: 'button', handler: () => this.triggerToast('sol') },
 
+            // --- SYSTEM STATES V3 ---
+            triggerSystemState: { name: 'Force System State', type: 'button', handler: () => {
+                const sysService = this.simulationService?.timeService?.systemStateService;
+                if (sysService) {
+                    if (this.debugState.selectedSystemState === 'NEUTRAL') {
+                        sysService.endCurrentState();
+                    } else {
+                        sysService.triggerState(this.debugState.selectedSystemState);
+                    }
+                    this.uiManager.showEconWeatherModal(this.gameState.getState());
+                    this.gameState.setState({});
+                }
+            }},
+            showEconWeatherUI: { name: 'Show Weather UI', type: 'button', handler: () => {
+                this.uiManager.showEconWeatherModal(this.gameState.getState());
+            }},
+
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
@@ -860,6 +878,17 @@ ${logHistory}
         this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
         this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
+
+        // --- NEW: System States Folder ---
+        const sysStateFolder = this.gui.addFolder('System States');
+        const stateOptions = Object.keys(DB.SYSTEM_STATES).reduce((acc, key) => {
+            acc[DB.SYSTEM_STATES[key].name] = key;
+            return acc;
+        }, {});
+        sysStateFolder.add(this.debugState, 'selectedSystemState', stateOptions).name('Select State');
+        sysStateFolder.add(this.actions.triggerSystemState, 'handler').name(this.actions.triggerSystemState.name);
+        sysStateFolder.add(this.actions.showEconWeatherUI, 'handler').name(this.actions.showEconWeatherUI.name);
+        // ---------------------------------
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
