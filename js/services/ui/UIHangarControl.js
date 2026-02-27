@@ -379,6 +379,21 @@ export class UIHangarControl {
         const currentUpgrades = shipState.upgrades || [];
         const isFull = currentUpgrades.length >= 3;
         
+        // --- SYSTEM STATES V3 HOOKS (Upgrade Costs) ---
+        const systemState = this.manager.lastKnownState?.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(this.manager.lastKnownState?.currentLocationId);
+
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.installCostMod) {
+                installationFee = Math.floor(installationFee * activeStateDef.modifiers.installCostMod);
+            }
+            if (isTargetLocation && activeStateDef.modifiers.localUpgradeCostMod) {
+                hardwareCost = Math.floor(hardwareCost * activeStateDef.modifiers.localUpgradeCostMod);
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
+
         const totalCost = hardwareCost + installationFee;
         let title = totalCost > 0 ? "Purchase Upgrade" : "Install Upgrade";
         // [[FIXED]] Check pillColor first, fallback to color

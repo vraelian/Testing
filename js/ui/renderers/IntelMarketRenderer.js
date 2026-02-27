@@ -19,6 +19,7 @@ export class IntelMarketRenderer {
     constructor(intelService) {
         this.intelService = intelService;
         this.db = DB;
+        this.currentGameState = null;
     }
 
     /**
@@ -28,6 +29,7 @@ export class IntelMarketRenderer {
      * @JSDoc
      */
     render(containerElement, gameState) {
+        this.currentGameState = gameState;
         const state = gameState;
         const { currentLocationId, activeIntelDeal, intelMarket } = state;
         
@@ -64,7 +66,18 @@ export class IntelMarketRenderer {
                 return this._renderPurchasedButton(packet);
             } else {
                 // Price is calculated at render time
-                const price = this.intelService.calculateIntelPrice(packet);
+                let price = this.intelService.calculateIntelPrice(packet);
+                
+                // --- SYSTEM STATES V3 HOOKS (Intel Discount) ---
+                const systemState = this.currentGameState?.systemState;
+                const activeStateDef = systemState && systemState.activeId ? this.db.SYSTEM_STATES[systemState.activeId] : null;
+                const isTargetLocation = systemState && systemState.targetLocations?.includes(this.currentGameState?.currentLocationId);
+
+                if (activeStateDef && activeStateDef.modifiers && isTargetLocation && activeStateDef.modifiers.localIntelFree) {
+                    price = 0;
+                }
+                // --- END SYSTEM STATES V3 ---
+
                 return this._renderOfferButton(packet, price, isLocked);
             }
         }).join('');

@@ -9,6 +9,9 @@ import { SHIP_DATABASE } from './ship_database.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 6) ---
 import { CONSUMABLES } from './items.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 6) ---
+// --- SYSTEM STATES V3 ---
+import { SYSTEM_STATE_REGISTRY } from './systemStateRegistry.js';
+// --- END SYSTEM STATES V3 ---
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -17,15 +20,6 @@ export const DATE_CONFIG = {
     DAYS_IN_MONTH: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
     MONTH_NAMES: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
     DAY_NAMES: ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-};
-
-export const SYSTEM_STATES = {
-    'NEUTRAL': {
-        name: 'Neutral System',
-        duration: 28,
-        description: "Standard space-faring conditions. Markets are operating under normal parameters.",
-        modifiers: {} // No economic deviations
-    },
 };
 
 export const DB = {
@@ -38,7 +32,7 @@ export const DB = {
         INTEL_DEPRESSION_MOD: 0.5,
     },
 
-    SYSTEM_STATES: SYSTEM_STATES,
+    SYSTEM_STATES: SYSTEM_STATE_REGISTRY,
 
     DATE_CONFIG: DATE_CONFIG,
 

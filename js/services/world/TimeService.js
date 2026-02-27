@@ -3,6 +3,7 @@ import { DB } from '../../data/database.js';
 import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { SystemStateService } from './SystemStateService.js';
 
 // --- ERA 2: TRANSHUMANIST EVENT DATA (Age 100-195) ---
 const CYBORG_EVENTS = {
@@ -44,6 +45,7 @@ export class TimeService {
         this.simulationService = null; 
         this.intelService = null;      
         this.solStationService = null; 
+        this.systemStateService = new SystemStateService(gameState, logger);
     }
 
     /**
@@ -69,6 +71,9 @@ export class TimeService {
                 return;
             }
             this.gameState.day++;
+
+            // --- SYSTEM STATES V3: Daily Evaluation Loop ---
+            this.systemStateService.evaluateTick();
 
             // Pulse News Ticker
             if (this.simulationService) {
@@ -123,7 +128,6 @@ export class TimeService {
 
             // Weekly Market Updates
             if ((this.gameState.day - this.gameState.lastMarketUpdateDay) >= 7) {
-                this.marketService.checkForSystemStateChange();
                 this.marketService.replenishMarketInventory();
                 
                 // Do not cycle upgrades/shipyard if currently docked at Sol Station
@@ -161,7 +165,16 @@ export class TimeService {
 
             // --- UPGRADE SYSTEM: Debt Interest (Syndicate Badge) ---
             if (this.gameState.player.debt > 0 && (this.gameState.day - this.gameState.lastInterestChargeDay) >= GAME_RULES.INTEREST_INTERVAL) {
-                const rawInterest = this.gameState.player.monthlyInterestAmount;
+                let rawInterest = this.gameState.player.monthlyInterestAmount;
+                
+                // --- SYSTEM STATES V3 HOOKS (Debt Interest) ---
+                const systemState = this.gameState.systemState;
+                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+                if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.interestFrozen) {
+                    rawInterest = 0;
+                }
+                // --- END SYSTEM STATES V3 ---
                 
                 // Apply Multiplicative Modifier (e.g. 0.80 for 20% off)
                 const interestMod = GameAttributes.getInterestModifier(activeUpgrades);
@@ -170,7 +183,7 @@ export class TimeService {
                 this.gameState.player.debt += finalInterest;
                 
                 // Log the transaction
-                if (this.simulationService) {
+                if (this.simulationService && finalInterest > 0) {
                     this.simulationService._logTransaction('loan', finalInterest, 'Monthly interest charge');
                 }
                 

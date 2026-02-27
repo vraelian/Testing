@@ -65,6 +65,17 @@ export class PlayerActionService {
         }
         // --- END PHASE 2 ---
 
+        // --- SYSTEM STATES V3 HOOKS (Survival Goods Discount) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.survivalGoodsDiscountMod) {
+            if (activeStateDef.modifiers.affectedCommodities?.includes(goodId)) {
+                totalCost = Math.floor(totalCost * activeStateDef.modifiers.survivalGoodsDiscountMod);
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (NEPTUNE & BELT DISCOUNT) ---
         if (state.currentLocationId === LOCATION_IDS.NEPTUNE && 
             (goodId === COMMODITY_IDS.PROPELLANT || goodId === COMMODITY_IDS.PLASTEEL) &&
@@ -209,6 +220,15 @@ export class PlayerActionService {
         totalSaleValue = Math.floor(totalSaleValue * priceMod);
         // --- END UPGRADE SYSTEM ---
 
+        // --- SYSTEM STATES V3 HOOKS (Sell Bonus) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.sellPriceBonusMod) {
+            totalSaleValue = Math.floor(totalSaleValue * activeStateDef.modifiers.sellPriceBonusMod);
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SOL EXPORT YIELD) ---
         if (state.currentLocationId === LOCATION_IDS.SUN &&
             (goodId === COMMODITY_IDS.GRAPHENE_LATTICES || goodId === COMMODITY_IDS.PLASTEEL)) {
@@ -294,6 +314,15 @@ export class PlayerActionService {
         }
         // --- END PHASE 2 ---
 
+        // --- SYSTEM STATES V3 HOOKS (Shipyard Price) ---
+        const systemState = this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.shipyardPriceMod) {
+            effectivePrice = Math.floor(effectivePrice * activeStateDef.modifiers.shipyardPriceMod);
+        }
+        // --- END SYSTEM STATES V3 ---
+
         if (this.gameState.player.credits < effectivePrice) {
              return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
         }
@@ -323,6 +352,15 @@ export class PlayerActionService {
                 effectivePrice = Math.floor(ship.price * (1 - discount));
             }
             // --- END PHASE 2 ---
+
+            // --- SYSTEM STATES V3 HOOKS (Shipyard Price) ---
+            const systemState = this.gameState.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+            if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.shipyardPriceMod) {
+                effectivePrice = Math.floor(effectivePrice * activeStateDef.modifiers.shipyardPriceMod);
+            }
+            // --- END SYSTEM STATES V3 ---
 
             this.gameState.player.credits -= effectivePrice;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(effectivePrice)}.`);
@@ -795,6 +833,17 @@ export class PlayerActionService {
         }
         // --- END PHASE 2 ---
 
+        // --- SYSTEM STATES V3 HOOKS (Service Costs) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(state.currentLocationId);
+        
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.serviceCostMod) unitCost *= activeStateDef.modifiers.serviceCostMod;
+            if (isTargetLocation && activeStateDef.modifiers.localServiceCostMod !== undefined) unitCost *= activeStateDef.modifiers.localServiceCostMod;
+        }
+        // --- END SYSTEM STATES V3 ---
+
         const fuelDeficit = effectiveStats.maxFuel - currentFuel;
         const fuelDeficitPct = fuelDeficit / effectiveStats.maxFuel;
         
@@ -874,6 +923,18 @@ export class PlayerActionService {
             unitCost *= (1 - ageRepairDiscount);
         }
         // --- END PHASE 2 ---
+
+        // --- SYSTEM STATES V3 HOOKS (Service Costs) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(state.currentLocationId);
+
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.repairCostMod !== undefined) unitCost *= activeStateDef.modifiers.repairCostMod;
+            if (activeStateDef.modifiers.serviceCostMod) unitCost *= activeStateDef.modifiers.serviceCostMod;
+            if (isTargetLocation && activeStateDef.modifiers.localServiceCostMod !== undefined) unitCost *= activeStateDef.modifiers.localServiceCostMod;
+        }
+        // --- END SYSTEM STATES V3 ---
 
         const healthDeficit = effectiveStats.maxHealth - currentHealth;
         const healthDeficitPct = healthDeficit / effectiveStats.maxHealth;

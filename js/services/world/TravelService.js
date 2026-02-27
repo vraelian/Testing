@@ -1,4 +1,4 @@
-// js/services/world/TravelService.js (Appended and Modified)
+// js/services/world/TravelService.js
 /**
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
@@ -114,6 +114,15 @@ export class TravelService {
             if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
                 requiredFuel = 0;
             }
+
+            // --- SYSTEM STATES V3 HOOKS (Pre-Flight Validation) ---
+            const systemState = state.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+            if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
+                requiredFuel = Math.round(requiredFuel * activeStateDef.modifiers.travelFuelBurnMod);
+            }
+            // --- END SYSTEM STATES V3 ---
         }
         // --- END VIRTUAL WORKBENCH ---
 
@@ -178,6 +187,17 @@ export class TravelService {
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const upgrades = activeShipState.upgrades || [];
+
+        // --- SYSTEM STATES V3 HOOKS (Fuel & Time) ---
+        const systemState = state.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+
+        if (!eventMods.useFoldedDrive) {
+            if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
+                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * activeStateDef.modifiers.travelFuelBurnMod);
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
 
         // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Consumption ---
         if (eventMods.useFoldedDrive) {
@@ -310,6 +330,13 @@ export class TravelService {
         const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
         let travelHullDamage = baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod;
         
+        // --- SYSTEM STATES V3 HOOKS (Hull Decay) ---
+        if (activeStateDef && activeStateDef.modifiers) {
+            if (activeStateDef.modifiers.travelHullDecayMod) travelHullDamage *= activeStateDef.modifiers.travelHullDecayMod;
+            if (activeStateDef.modifiers.travelHullDecayMitigation) travelHullDamage *= activeStateDef.modifiers.travelHullDecayMitigation;
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- Z-CLASS HULL LOGIC ---
         if (shipAttributes.includes('ATTR_XENO_HULL') || 
             shipAttributes.includes('ATTR_FLUID_HULL') || 
@@ -336,8 +363,15 @@ export class TravelService {
         activeShipState.fuel -= travelInfo.fuelCost;
 
         // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (TRAVEL) ---
-        const convoyFuelTax = Math.max(0, travelInfo.fuelCost * 0.05);
-        const convoyHullTax = Math.max(0, totalHullDamageValue * 0.05);
+        let convoyFuelTax = Math.max(0, travelInfo.fuelCost * 0.05);
+        let convoyHullTax = Math.max(0, totalHullDamageValue * 0.05);
+
+        // --- SYSTEM STATES V3 HOOKS (Convoy Tax) ---
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.convoyTaxWaiver) {
+            convoyFuelTax = 0;
+            convoyHullTax = 0;
+        }
+        // --- END SYSTEM STATES V3 ---
 
         if (convoyFuelTax > 0 || convoyHullTax > 0) {
             for (const shipId of this.gameState.player.ownedShipIds) {
@@ -473,6 +507,15 @@ export class TravelService {
      * @private
      */
     _checkForRandomEvent(destinationId, force = false) {
+        // --- SYSTEM STATES V3 HOOKS (Hazards) ---
+        const systemState = this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.hazardsRemoved) {
+             return false; // Silent Correction completely bypasses hazards/events for smooth sailing
+        }
+        // --- END SYSTEM STATES V3 ---
+
         // --- UPGRADE SYSTEM: Event Modifier ---
         const activeShip = this.simulationService._getActiveShip();
         const shipState = this.gameState.player.shipStates[activeShip.id];

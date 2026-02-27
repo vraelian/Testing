@@ -39,6 +39,7 @@ export class UIManager {
         this.isMobile = window.innerWidth <= 768;
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
+        this.lastSeenSystemStateId = null; // Used to track and trigger state change modals
         
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
@@ -134,8 +135,17 @@ export class UIManager {
 
             missionStickyBar: document.getElementById('mission-sticky-bar'),
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
-            stickyObjectiveProgress: document.getElementById('sticky-objective-progress')
+            stickyObjectiveProgress: document.getElementById('sticky-objective-progress'),
+
+            econWeatherBtn: document.getElementById('btn-econ-weather')
         };
+
+        if (this.cache.econWeatherBtn) {
+            this.cache.econWeatherBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                this.showEconWeatherModal();
+            });
+        }
     }
 
     render(gameState) {
@@ -149,7 +159,10 @@ export class UIManager {
         this.lastKnownState = gameState;
 
         if (gameState.introSequenceActive) {
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.add('hidden');
             return;
+        } else {
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.remove('hidden');
         }
 
         this._applyTheme(gameState);
@@ -371,6 +384,26 @@ export class UIManager {
             this.solStationControl.resetScrollMemory();
         }
 
+        // --- SYSTEM STATES V3: Auto-Instantiation Hook ---
+        const currentSystemStateId = gameState.systemState?.activeId;
+        if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
+            this.lastSeenSystemStateId = currentSystemStateId;
+            // Prevent auto-popups if we are just loading a fresh session (previousState is null)
+            // or if the intro is running.
+            if (previousState && !gameState.introSequenceActive) {
+                // Ensure we only trigger it upon arrival at a relevant market-facing screen
+                if (gameState.activeScreen === SCREEN_IDS.MARKET || 
+                    gameState.activeScreen === SCREEN_IDS.SERVICES || 
+                    gameState.activeScreen === SCREEN_IDS.HANGAR) {
+                    
+                    setTimeout(() => {
+                        this.showEconWeatherModal(gameState);
+                    }, 500); // Slight delay guarantees it lands at the absolute back of UIModalEngine queue
+                }
+            }
+        }
+        // --- END SYSTEM STATES V3 ---
+
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
             this.lastActiveScreenEl.classList.remove('active-screen');
@@ -579,6 +612,48 @@ export class UIManager {
     showCargoDetailModal(...args) { this.eventControl.showCargoDetailModal(...args); }
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
+
+    // --- SYSTEM STATES V3: Econ Weather UI Orchestrator ---
+    showEconWeatherModal(gameState = this.lastKnownState) {
+        if (!gameState || !gameState.systemState) return;
+        
+        const sysStateId = gameState.systemState.activeId;
+        
+        if (!sysStateId || sysStateId === 'NEUTRAL') {
+            this.queueModal('event-modal', 'System Economy', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { buttonText: 'Close' });
+            return;
+        }
+
+        const stateDef = DB.SYSTEM_STATES[sysStateId];
+        if (!stateDef) return;
+
+        const varietalIndex = Math.floor(Math.random() * stateDef.varietals.length);
+        let narrativeText = stateDef.varietals[varietalIndex];
+
+        // Format [Loc] dynamic injection
+        if (gameState.systemState.targetLocations && gameState.systemState.targetLocations.length > 0) {
+            if (gameState.systemState.targetLocations.length === 1) {
+                const locName = DB.MARKETS.find(m => m.id === gameState.systemState.targetLocations[0])?.name || 'Unknown';
+                narrativeText = narrativeText.replace(/\[Target Location\]|\[Loc\]/g, `<span class="hl-blue">${locName}</span>`);
+            } else {
+                gameState.systemState.targetLocations.forEach((locId, idx) => {
+                    const locName = DB.MARKETS.find(m => m.id === locId)?.name || 'Unknown';
+                    narrativeText = narrativeText.replace(new RegExp(`\\[Loc ${idx + 1}\\]`, 'g'), `<span class="hl-blue">${locName}</span>`);
+                });
+            }
+        }
+
+        const contentHtml = `
+            <div class="flex flex-col items-center justify-center space-y-4">
+                <p class="text-left text-gray-300 italic">"${narrativeText}"</p>
+                <div class="w-full p-4 bg-slate-900 border border-slate-700 rounded text-center text-sm font-roboto-mono mt-4">
+                    ${stateDef.quantitativeDisplay}
+                </div>
+            </div>
+        `;
+
+        this.queueModal('event-modal', "Macroeconomic Alert", contentHtml, null, { buttonText: 'Acknowledge' });
+    }
 
     showSolStationDashboard(...args) { this.solStationControl.showDashboard(...args); }
     showOfficerRoster(...args) { this.solStationControl.showOfficerRoster(...args); }

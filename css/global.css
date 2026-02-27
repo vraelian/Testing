@@ -38,7 +38,7 @@ definitions,
     --button-height: 28px;
     --font-family: 'Orbitron', sans-serif;
     --buy-primary: #196a8f;
---buy-secondary-bg: #1e2a3e;
+    --buy-secondary-bg: #1e2a3e;
     --buy-secondary-border: #3c4e68;
     --buy-text-light: #8ca4b5;
     --buy-text-dark: #ddf3f8;
@@ -49,6 +49,11 @@ definitions,
     --sell-text-dark: #f7cfcf;
     --max-bg: #303946;
     --max-text: #a5aab1;
+
+    /* --- SYSTEM STATES V3: Semantic Colors --- */
+    --color-profit: #34d399; /* Emerald 400 */
+    --color-loss: #f87171;   /* Red 400 */
+    --color-text-muted: #9ca3af; /* Gray 400 */
 }
 
 html {

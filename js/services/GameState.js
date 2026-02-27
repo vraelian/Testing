@@ -228,6 +228,18 @@ export class GameState {
                 [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
             },
             pendingTravel: null,
+            
+            // --- SYSTEM STATES V3 ---
+            systemState: {
+                activeId: null, // Will evaluate to NEUTRAL or another active state upon first tick
+                remainingDays: 0,
+                neutralPauseDays: 0, 
+                targetLocations: [],
+                historyLedger: [],
+                economyFootprints: [] // Tracks specific player trading activity to trigger targeted states
+            },
+            // --- END SYSTEM STATES V3 ---
+
             player: {
                 name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
                 introStep: 0,

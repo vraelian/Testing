@@ -163,6 +163,28 @@ export class MarketService {
                 // Determine the local baseline price based on import/export modifiers
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
 
+                // --- SYSTEM STATES V3 HOOKS (Prices) ---
+                const systemState = this.gameState.systemState;
+                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+                const isTargetLocation = systemState && systemState.targetLocations?.includes(location.id);
+
+                let basePriceMod = 1.0;
+                let activeStateMeanReversionMod = 1.0;
+
+                if (activeStateDef && activeStateDef.modifiers) {
+                    const mods = activeStateDef.modifiers;
+                    if (mods.meanReversionMod) activeStateMeanReversionMod = mods.meanReversionMod;
+                    
+                    if (mods.affectedCommodities?.includes(commodity.id) && mods.basePriceInflate) {
+                        basePriceMod *= mods.basePriceInflate;
+                    }
+                    if (isTargetLocation) {
+                        if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
+                        if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
+                    }
+                }
+                // --- END SYSTEM STATES V3 ---
+
                 // (1.0 - modifier) inverts the logic:
                 // Exporter (mod > 1.0) results in a negative offset (lower price)
                 // Importer (mod < 1.0) results in a positive offset (higher price)
@@ -170,7 +192,7 @@ export class MarketService {
 
                 // The new baseline is the galactic average, pulled towards the local target price
                 // by the strength of the modifier.
-                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+                const localBaseline = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
                 
@@ -180,7 +202,7 @@ export class MarketService {
                 }
                 // --- END VIRTUAL WORKBENCH ---
 
-                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
+                let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH * activeStateMeanReversionMod;
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
@@ -266,9 +288,30 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
 
+                // --- SYSTEM STATES V3 HOOKS (Replenishment) ---
+                const systemState = this.gameState.systemState;
+                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+                const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
+
+                let targetStockMod = 1.0;
+                let replenishRate = 0.10;
+
+                if (activeStateDef && activeStateDef.modifiers) {
+                    const mods = activeStateDef.modifiers;
+                    if (mods.replenishmentRateMod !== undefined) replenishRate = mods.replenishmentRateMod;
+                    if (isTargetLocation && mods.localReplenishmentMod !== undefined) replenishRate = mods.localReplenishmentMod;
+
+                    if (mods.targetStockTiers?.includes(c.tier) && mods.targetStockMod) targetStockMod *= mods.targetStockMod;
+                    if (mods.affectedCommodities?.includes(c.id) && mods.targetStockMod) targetStockMod *= mods.targetStockMod;
+                    if (mods.meanReversionMod && mods.targetStockMod) targetStockMod *= mods.targetStockMod; // Geopolitical Stalemate fallback
+                    
+                    if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
+                }
+                // --- END SYSTEM STATES V3 ---
+
                 // Market Memory: Reset if untouched for 120 days.
                 if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 120) {
-                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
+                    inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
                     inventoryItem.depletionDay = 0; // Clear depletion day on reset
@@ -299,11 +342,11 @@ export class MarketService {
                     const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
                     // --- END PHASE 2 ---
 
-                    const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus);
+                    const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus) * targetStockMod;
 
                     // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * 0.10; // Move 10% towards the target each week
+                    const replenishAmount = difference * replenishRate; 
                     
                     // --- NEW: Emergency Stock Boost ---
                     let emergencyStock = 0;
