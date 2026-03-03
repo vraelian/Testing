@@ -1,4 +1,4 @@
-// js/services/SimulationService.js (Appended and Modified)
+// js/services/SimulationService.js
 /**
  * @fileoverview This file contains the SimulationService class, which acts as the core game engine
  * facade. It instantiates all specialized game logic services and delegates calls to them,
@@ -109,13 +109,6 @@ export class SimulationService {
             // Execute asynchronous save
             await saveStorageService.saveGame(this.gameState.slotId, payload);
             this.logger.info.system('SimulationService', this.gameState.day, 'SAVE_COMPLETE', `Auto-saved to ${this.gameState.slotId}`);
-
-            // One-Time Notification on first successful save post-tutorial
-            if (!this.gameState.player.seenAutoSaveNotice && !this.gameState.introSequenceActive) {
-                this.gameState.player.seenAutoSaveNotice = true;
-                this.uiManager.queueModal('event-modal', 'Auto-Save Enabled', 'Notice: Orbital Trading automatically saves your progress in the background every time you arrive safely at a station.');
-                this.gameState.setState({});
-            }
         } catch (error) {
             this.logger.error('SimulationService', `Background auto-save failed: ${error.message}`);
         }

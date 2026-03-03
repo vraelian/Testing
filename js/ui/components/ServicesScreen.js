@@ -314,7 +314,7 @@ export function renderServicesScreen(gameState, simulationService) {
                         <div class="control-deck flex justify-center items-center gap-4">
                           <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                             <span class="price-label text-sm engraved-text">COST</span>
-                            <span class="price-digits text-base ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                            <span class="price-digits text-sm whitespace-nowrap ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(fuelCostPerTick, true)}
                             </span>
                           </div>
@@ -339,7 +339,7 @@ export function renderServicesScreen(gameState, simulationService) {
                         <div class="control-deck flex justify-center items-center gap-4 relative">
                           <div class="price-display-module w-32 h-12 flex justify-between items-center px-4 relative">
                             <span class="price-label text-sm engraved-text">COST</span>
-                            <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                            <span class="price-digits text-sm whitespace-nowrap ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(repairCostPerTick, true)}
                             </span>
                             <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest" style="color: #60a5fa; opacity: 0.9;">+1 Day / Tick</div>

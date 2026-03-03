@@ -114,6 +114,10 @@ export class GameState {
         // Strip ephemeral properties
         stateCopy.pendingTravel = null;
         stateCopy.introSequenceActive = false;
+
+        // Force loaded games to start on the missions screen
+        stateCopy.activeNav = NAV_IDS.DATA;
+        stateCopy.activeScreen = SCREEN_IDS.MISSIONS;
         
         // Revert UI state to safe defaults
         stateCopy.uiState = {
@@ -219,7 +223,7 @@ export class GameState {
 
         const initialState = {
             slotId: null, // V4 SYSTEM: Track active save slot
-            day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
+            day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.DATA, activeScreen: SCREEN_IDS.MISSIONS, isGameOver: false,
             subNavCollapsed: false,
             introSequenceActive: true,
             lastActiveScreen: {

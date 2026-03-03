@@ -33,13 +33,11 @@ export class UIHelpManager {
     }
 
     _injectDOM() {
-        const gameContainer = document.getElementById('game-container');
-        if (!gameContainer) return;
-
-        // Defensively prevent duplicate injection
+        // Break free of the game-container and inject directly to document.body 
+        // to bypass local stacking contexts or opacity constraints.
         if (!document.getElementById('global-help-anchor')) {
             const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
-            gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
+            document.body.insertAdjacentHTML('beforeend', anchorHTML);
         }
 
         if (!document.getElementById('help-modal-overlay')) {
@@ -57,7 +55,7 @@ export class UIHelpManager {
                     </div>
                 </div>
             `;
-            gameContainer.insertAdjacentHTML('beforeend', modalHTML);
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
     }
 

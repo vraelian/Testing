@@ -40,6 +40,7 @@ export class UIManager {
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.lastSeenSystemStateId = null; 
+        this.hasTraveledThisSession = false; // Phase 3: Gate for Economic Weather Modal
         
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
@@ -384,7 +385,8 @@ export class UIManager {
         const currentSystemStateId = gameState.systemState?.activeId;
         if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
             this.lastSeenSystemStateId = currentSystemStateId;
-            if (previousState && !gameState.introSequenceActive) {
+            // Phase 3: Gate Economic Weather Modal Behind Travel Session
+            if (previousState && !gameState.introSequenceActive && this.hasTraveledThisSession) {
                 if (gameState.activeScreen === SCREEN_IDS.MARKET || 
                     gameState.activeScreen === SCREEN_IDS.SERVICES || 
                     gameState.activeScreen === SCREEN_IDS.HANGAR) {
@@ -710,6 +712,7 @@ export class UIManager {
     }
 
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
+        this.hasTraveledThisSession = true; // Phase 3: Gate trigger
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
     

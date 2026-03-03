@@ -395,7 +395,7 @@ export class IntroService {
             gameContainer.style.filter = 'blur(10px)';
         }
 
-        // Boot the core game loop, generating the Hangar layout invisibly
+        // Boot the core game loop, generating the UI layout invisibly
         this._end();
 
         // Hold for the remaining 2 seconds of the Starfield scene
@@ -439,7 +439,7 @@ export class IntroService {
         this.gameState.introSequenceActive = false;
         this._transitioning = false;
         
-        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Hangar.');
+        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Missions.');
         
         // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
@@ -447,8 +447,8 @@ export class IntroService {
         // Reveal the main layout
         this.uiManager.showGameContainer();
         
-        // Set context to the Hangar/Shipyard screen
-        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+        // Set context to the Missions screen
+        this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
         
         // Force the master render cycle to execute, naturally triggering the Help Modal
         this.uiManager.render(this.gameState.getState());
