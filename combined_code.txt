@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.33</title>
+    <title>Orbital Trading 36.39</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.33 - Economoic Weather Update</p>
+            <p>Version 36.39 - Cinematic Intro Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -26302,6 +26302,13 @@ export class MarketService {
             inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
             inventoryItem.depletionDay = currentDay;
             inventoryItem.depletionBonusDay = currentDay; // Set cooldown
+
+            // Log for System State footprint evaluation
+            if (this.gameState.systemState && this.gameState.systemState.economyFootprints) {
+                this.gameState.systemState.economyFootprints.push({
+                    day: currentDay, type: 'DEPLETION', locationId: this.gameState.currentLocationId, commodityId: good.id
+                });
+            }
         }
     }
     // --- END VIRTUAL WORKBENCH ---
@@ -27747,8 +27754,14 @@ export class IntroService {
         this.gameState.player.inventories = {};
         this.gameState.player.introStep = 0;
         
-        this._transitioning = false; 
-        this._showNextModal();
+        // Lock UI interactions while cinematic plays
+        this._transitioning = true; 
+        
+        // Trigger the dual-path cinematic, passing the modal initialization as the callback
+        this.uiManager.playIntroCinematic(() => {
+            this._transitioning = false;
+            this._showNextModal();
+        });
     }
 
     /**
@@ -32340,6 +32353,123 @@ export class UIManager {
                 
                 cancelBtn.onclick = closeHandler;
             }
+        });
+    }
+
+    /**
+     * Executes the "New Game" intro cinematic sequence natively via iOS or as a web fallback.
+     * @param {function} callback Executes when the video fully completes and the DOM is cleaned.
+     */
+    playIntroCinematic(callback) {
+        // 1. Native iOS execution via WKWebView Bridge
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
+            console.log('[UIManager] Triggering native iOS cinematic playback.');
+            
+            window.onCinematicComplete = () => {
+                delete window.onCinematicComplete;
+                if (callback) callback();
+            };
+            
+            window.webkit.messageHandlers.iosPlayCinematic.postMessage("intro_cinematic");
+            return;
+        }
+
+        // 2. Web Fallback Execution (The "Theater Curtain" with Skip UI)
+        console.log('[UIManager] Triggering web fallback cinematic playback.');
+        
+        // The Master Container
+        const container = document.createElement('div');
+        container.id = 'intro-cinematic-container';
+        Object.assign(container.style, {
+            position: 'fixed', top: '0', left: '0', width: '100vw', height: '100dvh',
+            zIndex: '9999', backgroundColor: '#000'
+        });
+
+        // The Video Element
+        const videoEl = document.createElement('video');
+        videoEl.id = 'intro-cinematic-video';
+        videoEl.src = 'assets/video/intro_cinematic.mp4';
+        videoEl.autoplay = true;
+        videoEl.playsInline = true;
+        videoEl.disablePictureInPicture = true;
+        videoEl.controls = false;
+        Object.assign(videoEl.style, {
+            width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none'
+        });
+
+        // The Invisible Tap Catcher
+        const tapCatcher = document.createElement('div');
+        Object.assign(tapCatcher.style, {
+            position: 'absolute', inset: '0', zIndex: '10'
+        });
+
+        // The Skip Button (Orbital Trading Theme)
+        const skipBtn = document.createElement('button');
+        skipBtn.innerHTML = 'SKIP ⏭';
+        skipBtn.className = 'btn'; // Inherits your global.css .btn styles directly
+        
+        // Apply only positioning and layout overrides
+        Object.assign(skipBtn.style, {
+            position: 'absolute', bottom: '30px', right: '20px', zIndex: '20',
+            opacity: '0', pointerEvents: 'none',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.8)', // Heavy drop shadow to pop against the video
+            textTransform: 'uppercase'
+        });
+
+        // --- Interaction Logic ---
+        let skipVisible = false;
+        let skipTimeout;
+
+        tapCatcher.addEventListener('click', () => {
+            if (!skipVisible) {
+                skipBtn.style.opacity = '1';
+                skipBtn.style.pointerEvents = 'auto';
+                skipVisible = true;
+                
+                // Auto-hide the button after 3 seconds if they don't tap it
+                skipTimeout = setTimeout(() => {
+                    skipBtn.style.opacity = '0';
+                    skipBtn.style.pointerEvents = 'none';
+                    skipVisible = false;
+                }, 3000);
+            }
+        });
+
+        let isFinished = false;
+
+        const finishCinematic = () => {
+            if (isFinished) return;
+            isFinished = true;
+            clearTimeout(skipTimeout);
+            
+            // Aggressive memory demolition
+            videoEl.pause();
+            videoEl.removeAttribute('src');
+            videoEl.load();
+            container.remove(); // Destroys video, overlay, and button
+            
+            if (callback) callback();
+        };
+
+        skipBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            finishCinematic();
+        });
+
+        // Failsafes and Auto-Resolution
+        videoEl.addEventListener('ended', finishCinematic);
+        videoEl.addEventListener('error', finishCinematic);
+        setTimeout(finishCinematic, 32000);
+
+        // Assemble and Inject
+        container.appendChild(videoEl);
+        container.appendChild(tapCatcher);
+        container.appendChild(skipBtn);
+        document.body.appendChild(container);
+        
+        videoEl.play().catch(e => {
+            console.warn('[UIManager] Video autoplay blocked or failed', e);
+            finishCinematic();
         });
     }
 }
@@ -37474,6 +37604,12 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.39] - 2026-3-2
+-  added intro cinematic
+-  added skip functionality
+-  added web view method
+-  added xcode view method
+
 # [36.35] - 2026-2-27
 -  added system states v2
 -  added economic weather interface
@@ -40327,7 +40463,7 @@ A. Add mission completion animation/effect
 - Install tailwind CSS resources locally
 - Tactile feedback
 
-## Far-Future Wishlist Ideas ()
+## Far-Future Wishlist Ideas
 - Purchasable stations
 - Each ship has a unique nav bar
 - Desktop version with super ultra wide compatibility

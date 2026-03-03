@@ -48,7 +48,7 @@ A. Add mission completion animation/effect
 - Install tailwind CSS resources locally
 - Tactile feedback
 
-## Far-Future Wishlist Ideas ()
+## Far-Future Wishlist Ideas
 - Purchasable stations
 - Each ship has a unique nav bar
 - Desktop version with super ultra wide compatibility

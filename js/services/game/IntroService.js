@@ -39,8 +39,14 @@ export class IntroService {
         this.gameState.player.inventories = {};
         this.gameState.player.introStep = 0;
         
-        this._transitioning = false; 
-        this._showNextModal();
+        // Lock UI interactions while cinematic plays
+        this._transitioning = true; 
+        
+        // Trigger the dual-path cinematic, passing the modal initialization as the callback
+        this.uiManager.playIntroCinematic(() => {
+            this._transitioning = false;
+            this._showNextModal();
+        });
     }
 
     /**

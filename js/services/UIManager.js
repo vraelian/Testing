@@ -39,7 +39,7 @@ export class UIManager {
         this.isMobile = window.innerWidth <= 768;
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
-        this.lastSeenSystemStateId = null; // Used to track and trigger state change modals
+        this.lastSeenSystemStateId = null; 
         
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
@@ -359,14 +359,11 @@ export class UIManager {
             return;
         }
 
-        // Capture scroll positions before wipe
         const screenScrollTop = screenEl.scrollTop;
         const childScrollTop = screenEl.firstElementChild ? screenEl.firstElementChild.scrollTop : 0;
 
-        // Execute the render (overwrites innerHTML)
         renderCallback();
 
-        // Restore after DOM update
         requestAnimationFrame(() => {
             if (screenScrollTop > 0) {
                 screenEl.scrollTop = screenScrollTop;
@@ -384,25 +381,20 @@ export class UIManager {
             this.solStationControl.resetScrollMemory();
         }
 
-        // --- SYSTEM STATES V3: Auto-Instantiation Hook ---
         const currentSystemStateId = gameState.systemState?.activeId;
         if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
             this.lastSeenSystemStateId = currentSystemStateId;
-            // Prevent auto-popups if we are just loading a fresh session (previousState is null)
-            // or if the intro is running.
             if (previousState && !gameState.introSequenceActive) {
-                // Ensure we only trigger it upon arrival at a relevant market-facing screen
                 if (gameState.activeScreen === SCREEN_IDS.MARKET || 
                     gameState.activeScreen === SCREEN_IDS.SERVICES || 
                     gameState.activeScreen === SCREEN_IDS.HANGAR) {
                     
                     setTimeout(() => {
                         this.showEconWeatherModal(gameState);
-                    }, 500); // Slight delay guarantees it lands at the absolute back of UIModalEngine queue
+                    }, 500);
                 }
             }
         }
-        // --- END SYSTEM STATES V3 ---
 
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
@@ -517,7 +509,6 @@ export class UIManager {
         }
         if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.FINANCE) return 'finance';
         if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.INTEL) {
-            // Evaluates using the correct DOM ID reference
             return uiState.activeIntelTab === 'intel-market-content' ? 'intel-market' : 'intel-codex';
         }
         return null;
@@ -613,7 +604,6 @@ export class UIManager {
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
-    // --- SYSTEM STATES V3: Econ Weather UI Orchestrator ---
     showEconWeatherModal(gameState = this.lastKnownState) {
         if (!gameState || !gameState.systemState) return;
         
@@ -634,7 +624,6 @@ export class UIManager {
         const stateDef = DB.SYSTEM_STATES[sysStateId];
         if (!stateDef) return;
 
-        // Fetch static varietal index, fallback to random if missing (e.g., from old save)
         const varietalIndex = gameState.systemState.varietalIndex !== undefined 
             ? gameState.systemState.varietalIndex 
             : Math.floor(Math.random() * stateDef.varietals.length);
@@ -642,7 +631,6 @@ export class UIManager {
         let narrativeText = stateDef.varietals[varietalIndex];
         let quantitativeText = stateDef.quantitativeDisplay;
 
-        // Format [Loc] dynamic injection for BOTH narrative and quantitative texts
         if (gameState.systemState.targetLocations && gameState.systemState.targetLocations.length > 0) {
             if (gameState.systemState.targetLocations.length === 1) {
                 const locName = DB.MARKETS.find(m => m.id === gameState.systemState.targetLocations[0])?.name || 'Unknown';
@@ -886,6 +874,126 @@ export class UIManager {
                 
                 cancelBtn.onclick = closeHandler;
             }
+        });
+    }
+
+    /**
+     * Executes the "New Game" intro cinematic sequence natively via iOS or as a web fallback.
+     * @param {function} callback Executes when the video fully completes and the DOM is cleaned.
+     */
+    playIntroCinematic(callback) {
+        // 1. Native iOS execution via WKWebView Bridge
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
+            console.log('[UIManager] Triggering native iOS cinematic playback.');
+            
+            window.onCinematicComplete = () => {
+                delete window.onCinematicComplete;
+                if (callback) callback();
+            };
+            
+            window.webkit.messageHandlers.iosPlayCinematic.postMessage("intro_cinematic");
+            return;
+        }
+
+        // 2. Web Fallback Execution (The "Theater Curtain" with Skip UI)
+        console.log('[UIManager] Triggering web fallback cinematic playback.');
+        
+        // The Master Container
+        const container = document.createElement('div');
+        container.id = 'intro-cinematic-container';
+        Object.assign(container.style, {
+            position: 'fixed', top: '0', left: '0', width: '100vw', height: '100dvh',
+            zIndex: '9999', backgroundColor: '#000'
+        });
+
+        // The Video Element
+        const videoEl = document.createElement('video');
+        videoEl.id = 'intro-cinematic-video';
+        
+        // --- PATH FIX ---
+        videoEl.src = 'assets/images/video/intro_cinematic.mp4';
+        
+        videoEl.autoplay = true;
+        videoEl.playsInline = true;
+        videoEl.disablePictureInPicture = true;
+        videoEl.controls = false;
+        Object.assign(videoEl.style, {
+            width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none'
+        });
+
+        // The Invisible Tap Catcher
+        const tapCatcher = document.createElement('div');
+        Object.assign(tapCatcher.style, {
+            position: 'absolute', inset: '0', zIndex: '10'
+        });
+
+        // The Skip Button (Orbital Trading Theme)
+        const skipBtn = document.createElement('button');
+        skipBtn.innerHTML = 'SKIP ⏭';
+        skipBtn.className = 'btn'; 
+        
+        Object.assign(skipBtn.style, {
+            position: 'absolute', bottom: '30px', right: '20px', zIndex: '20',
+            opacity: '0', pointerEvents: 'none',
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.8)', 
+            textTransform: 'uppercase'
+        });
+
+        // --- Interaction Logic ---
+        let skipVisible = false;
+        let skipTimeout;
+
+        tapCatcher.addEventListener('click', () => {
+            if (!skipVisible) {
+                skipBtn.style.opacity = '1';
+                skipBtn.style.pointerEvents = 'auto';
+                skipVisible = true;
+                
+                skipTimeout = setTimeout(() => {
+                    skipBtn.style.opacity = '0';
+                    skipBtn.style.pointerEvents = 'none';
+                    skipVisible = false;
+                }, 3000);
+            }
+        });
+
+        let isFinished = false;
+
+        const finishCinematic = () => {
+            if (isFinished) return;
+            isFinished = true;
+            clearTimeout(skipTimeout);
+            
+            // Aggressive memory demolition
+            videoEl.pause();
+            videoEl.removeAttribute('src');
+            videoEl.load();
+            container.remove(); 
+            
+            if (callback) callback();
+        };
+
+        skipBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            finishCinematic();
+        });
+
+        videoEl.addEventListener('ended', finishCinematic);
+        videoEl.addEventListener('error', finishCinematic);
+        
+        // --- TIMEOUT FIX --- 
+        // Extended failsafe to 110,000ms (110 seconds) to allow the 1m40s video to finish naturally.
+        setTimeout(finishCinematic, 110000); 
+
+        // Assemble and Inject
+        container.appendChild(videoEl);
+        container.appendChild(tapCatcher);
+        container.appendChild(skipBtn);
+        document.body.appendChild(container);
+        
+        videoEl.play().catch(e => {
+            console.warn('[UIManager] Video autoplay blocked or failed', e);
+            finishCinematic();
         });
     }
 }

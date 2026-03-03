@@ -451,6 +451,13 @@ export class MarketService {
             inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
             inventoryItem.depletionDay = currentDay;
             inventoryItem.depletionBonusDay = currentDay; // Set cooldown
+
+            // Log for System State footprint evaluation
+            if (this.gameState.systemState && this.gameState.systemState.economyFootprints) {
+                this.gameState.systemState.economyFootprints.push({
+                    day: currentDay, type: 'DEPLETION', locationId: this.gameState.currentLocationId, commodityId: good.id
+                });
+            }
         }
     }
     // --- END VIRTUAL WORKBENCH ---
