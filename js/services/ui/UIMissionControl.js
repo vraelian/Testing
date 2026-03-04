@@ -131,8 +131,9 @@ export class UIMissionControl {
 
             // [[NEW]] Progress Fill Gradient
             // Uses --theme-border (approx 30% opacity) for the filled part to ensure text remains readable
-            // against the black background, while still providing a clear visual indicator.
-            contentEl.style.background = `linear-gradient(90deg, var(--theme-border) ${percent}%, rgba(0, 0, 0, 0.9) ${percent}%)`;
+            // against the background, while still providing a clear visual indicator.
+            // Empty portion is themed to the host faction color via --host-bg-dark.
+            contentEl.style.background = `linear-gradient(90deg, var(--theme-border) ${percent}%, var(--host-bg-dark, rgba(0, 0, 0, 0.9)) ${percent}%)`;
 
             stickyBarEl.style.display = 'block';
         } else {
@@ -202,8 +203,14 @@ export class UIMissionControl {
     }
 
     _showMissionDetailsModal(mission) {
-        const { missions, tutorials } = this.manager.lastKnownState;
+        const { missions, tutorials, currentLocationId } = this.manager.lastKnownState;
         const isActive = missions.activeMissionIds.includes(mission.id);
+        
+        // --- NEW LOGIC FOR NAVIGATE BUTTON ---
+        const progress = missions.missionProgress[mission.id];
+        const isCompletable = progress ? progress.isCompletable : false;
+        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+        // -------------------------------------
         
         let shouldBeDisabled = false;
         
@@ -247,10 +254,32 @@ export class UIMissionControl {
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 if (isActive) {
                     const isAbandonable = mission.isAbandonable !== false;
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
+                    let navButtonHtml = '';
+                    
+                    // Conditionally inject Navigate button if ready to complete but wrong location
+                    if (isCompletable && !isAtCorrectLocation) {
+                        navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-3 btn-pulse-green">NAVIGATE >></button>`;
+                    }
+                    
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${navButtonHtml}`;
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
+                }
+
+                // Bind Navigate Event
+                const navBtn = modal.querySelector('#mission-navigate-btn');
+                if (navBtn) {
+                    navBtn.addEventListener('click', () => {
+                        if (this.manager.simulationService) {
+                            this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
+                        }
+                        // Small delay to let the screen transition resolve before launching the modal
+                        setTimeout(() => {
+                            this.manager.showLaunchModal(mission.completion.locationId);
+                        }, 100);
+                        closeHandler();
+                    });
                 }
             }
         };
