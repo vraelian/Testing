@@ -206,24 +206,28 @@
 /* Guild: Silver to Gold */
 .host-guild { 
     --host-color: #fbbf24; 
+    --host-bg-dark: rgba(69, 26, 3, 0.95); /* Dark Amber/Brown */
     background: linear-gradient(135deg, #52525b, #b45309) !important; /* Zinc-600 to Amber-700 */
 }
 
 /* Syndicate: Orange to Violet */
 .host-syndicate { 
     --host-color: #a855f7; 
+    --host-bg-dark: rgba(59, 7, 100, 0.95); /* Dark Purple */
     background: linear-gradient(135deg, #c2410c, #7e22ce) !important; /* Orange-700 to Purple-700 */
 }
 
 /* Station: Black to Dark Blue */
 .host-station { 
     --host-color: #3b82f6; 
+    --host-bg-dark: rgba(8, 47, 73, 0.95); /* Dark Blue */
     background: linear-gradient(135deg, #000000, #172554) !important; /* Black to Blue-950 */
 }
 
 /* Unknown: Red to Black */
 .host-unknown { 
     --host-color: #ef4444; 
+    --host-bg-dark: rgba(69, 10, 10, 0.95); /* Dark Red */
     background: linear-gradient(135deg, #7f1d1d, #000000) !important; /* Red-900 to Black */
 }
 
@@ -428,8 +432,7 @@
 
 /* --- [[NEW]] STATUS BANNER --- */
 .mission-status-banner {
-    background: var(--theme-color);
-    color: #000; /* High contrast black text on bright theme color */
+    background: rgba(0, 0, 0, 0.8);
     font-family: 'Oxanium', sans-serif;
     font-weight: 800;
     text-align: center;
@@ -441,13 +444,25 @@
     
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    box-shadow: 0 0 10px var(--theme-color-glow);
-    border-radius: 2px;
+    /* Added subtle inset shadow to ensure border contrast against dark background */
+    box-shadow: 0 0 10px var(--theme-color-glow), inset 0 0 8px rgba(0,0,0,0.5);
+    border-radius: 6px;
+    border: 1px solid var(--host-color, var(--theme-color));
+}
+
+.banner-text-ready {
+    color: #fbbf24 !important; /* Gold */
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.8) !important;
+}
+
+.banner-text-return {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5) !important;
 }
 
 @keyframes readyPulseBanner {
     0% { opacity: 0.8; }
-    50% { opacity: 1; text-shadow: 0 0 5px rgba(255,255,255,0.5); box-shadow: 0 0 15px var(--theme-color-glow); }
+    50% { opacity: 1; box-shadow: 0 0 15px var(--theme-color-glow), inset 0 0 8px rgba(0,0,0,0.5); }
     100% { opacity: 0.8; }
 }
 
@@ -469,6 +484,10 @@
     height: 28px; /* Fixed height for consistency */
     display: flex;
     align-items: center;
+}
+
+.objective-row-tall {
+    height: 45px;
 }
 
 .objective-fill-bar {

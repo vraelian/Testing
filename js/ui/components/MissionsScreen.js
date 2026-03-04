@@ -123,12 +123,14 @@ export function renderMissionsScreen(gameState, missionService) {
         let statusBannerHtml = '';
         if (progress.isCompletable) {
              let bannerText = 'READY TO COMPLETE';
-             if (mission.completion.locationId) {
+             let bannerTextClass = 'banner-text-ready';
+             if (mission.completion.locationId && !isAtCorrectLocation) {
                  const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
                  bannerText = `RETURN TO: ${locName.toUpperCase()}`;
+                 bannerTextClass = 'banner-text-return';
              }
              // Prominent pulsing banner
-             statusBannerHtml = `<div class="mission-status-banner">${bannerText}</div>`;
+             statusBannerHtml = `<div class="mission-status-banner ${bannerTextClass}">${bannerText}</div>`;
         }
         // -------------------------------
 
@@ -186,9 +188,11 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                 }
 
+                const tallClass = !progress.isCompletable ? 'objective-row-tall' : '';
+
                 // --- NEW PROGRESS FILL LAYOUT ---
                 objectivesHtml += `
-                    <div class="objective-row-filled">
+                    <div class="objective-row-filled ${tallClass}">
                         <div class="objective-fill-bar" style="width: ${percent}%"></div>
                         <div class="objective-text">
                             <span>${desc}</span>
@@ -211,11 +215,13 @@ export function renderMissionsScreen(gameState, missionService) {
             </button>
         `;
 
+        const contractStatusText = progress.isCompletable ? 'COMPLETE' : 'IN PROGRESS';
+
         // [[UPDATED]] Added typeClass to the list
         return `
             <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
                 ${starIcon}
-                <div class="mission-meta-row pl-6"> <span class="mission-type-badge">ACTIVE CONTRACT</span>
+                <div class="mission-meta-row pl-6"> <span class="mission-type-badge">${contractStatusText}</span>
                      <span class="mission-host-label">${mission.host}</span>
                 </div>
                 

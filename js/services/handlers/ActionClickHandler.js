@@ -319,13 +319,26 @@ export class ActionClickHandler {
                 const missionId = dataset.missionId;
                 if (!missionId) return;
 
-                const currentMissions = state.missions;
-                this.gameState.setState({
-                    missions: {
-                        ...currentMissions,
-                        trackedMissionId: missionId
-                    }
-                });
+                // Silently mutate state
+                this.gameState.missions.trackedMissionId = missionId;
+
+                // Targeted DOM manipulation to update stars
+                const missionList = actionTarget.closest('.missions-scroll-panel');
+                if (missionList) {
+                    missionList.querySelectorAll('.mission-track-star').forEach(star => {
+                        if (star.dataset.missionId === missionId) {
+                            star.classList.add('active');
+                        } else {
+                            star.classList.remove('active');
+                        }
+                    });
+                }
+
+                // Update the sticky bar directly using the updated state snapshot
+                if (this.uiManager.missionControl) {
+                    this.uiManager.missionControl.renderStickyBar(this.gameState.getState());
+                }
+
                 break;
             }
 
