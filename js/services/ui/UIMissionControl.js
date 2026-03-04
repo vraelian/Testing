@@ -43,8 +43,8 @@ export class UIMissionControl {
 
     /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
-     * [[UPDATED]] Now respects gameState.missions.trackedMissionId.
-     * [[UPDATED]] Now renders a "Progress Fill" background gradient.
+     * [[UPDATED]] Now uses a CSS variable and pseudo-element mask to act as a progress bar 
+     * without fighting the !important CSS gradients of the host classes.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -99,9 +99,6 @@ export class UIMissionControl {
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
                     displayStr = `[${current}% / ${comparator}${target}%]`;
-                    // Logic for hull: if we need > 90%, and we have 100%, that's 100% progress.
-                    // If we have 50%, that's 50/90 progress? Or just raw %?
-                    // Let's stick to raw value for the bar fill if comparator is >=
                     percent = Math.min(100, current); 
                 }
                 else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
@@ -126,14 +123,13 @@ export class UIMissionControl {
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
-            // [[NEW]] sci-fi-frame removed to strip corner bracket accents
             contentEl.className = `sticky-content ${hostClass} ${turnInClass}`;
 
-            // [[NEW]] Progress Fill Gradient
-            // Uses --theme-border (approx 30% opacity) for the filled part to ensure text remains readable
-            // against the background, while still providing a clear visual indicator.
-            // Empty portion is themed to the host faction color via --host-bg-dark.
-            contentEl.style.background = `linear-gradient(90deg, var(--theme-border) ${percent}%, var(--host-bg-dark, rgba(0, 0, 0, 0.9)) ${percent}%)`;
+            // We clear any inline background styling. The bright .host-* class gradient shines through naturally.
+            contentEl.style.background = '';
+            
+            // We set the CSS variable, which drives the dark ::after pseudo-element mask in missions.css
+            contentEl.style.setProperty('--sticky-progress', `${percent}%`);
 
             stickyBarEl.style.display = 'block';
         } else {

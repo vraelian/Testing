@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.39</title>
+    <title>Orbital Trading 36.46</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.39 - Cinematic Intro Update</p>
+            <p>Version 36.46 - Polish Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -583,24 +583,28 @@
 /* Guild: Silver to Gold */
 .host-guild { 
     --host-color: #fbbf24; 
+    --host-bg-dark: rgba(69, 26, 3, 0.95); /* Dark Amber/Brown */
     background: linear-gradient(135deg, #52525b, #b45309) !important; /* Zinc-600 to Amber-700 */
 }
 
 /* Syndicate: Orange to Violet */
 .host-syndicate { 
     --host-color: #a855f7; 
+    --host-bg-dark: rgba(59, 7, 100, 0.95); /* Dark Purple */
     background: linear-gradient(135deg, #c2410c, #7e22ce) !important; /* Orange-700 to Purple-700 */
 }
 
 /* Station: Black to Dark Blue */
 .host-station { 
     --host-color: #3b82f6; 
+    --host-bg-dark: rgba(8, 47, 73, 0.95); /* Dark Blue */
     background: linear-gradient(135deg, #000000, #172554) !important; /* Black to Blue-950 */
 }
 
 /* Unknown: Red to Black */
 .host-unknown { 
     --host-color: #ef4444; 
+    --host-bg-dark: rgba(69, 10, 10, 0.95); /* Dark Red */
     background: linear-gradient(135deg, #7f1d1d, #000000) !important; /* Red-900 to Black */
 }
 
@@ -805,8 +809,7 @@
 
 /* --- [[NEW]] STATUS BANNER --- */
 .mission-status-banner {
-    background: var(--theme-color);
-    color: #000; /* High contrast black text on bright theme color */
+    background: rgba(0, 0, 0, 0.8);
     font-family: 'Oxanium', sans-serif;
     font-weight: 800;
     text-align: center;
@@ -818,13 +821,25 @@
     
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    box-shadow: 0 0 10px var(--theme-color-glow);
-    border-radius: 2px;
+    /* Added subtle inset shadow to ensure border contrast against dark background */
+    box-shadow: 0 0 10px var(--theme-color-glow), inset 0 0 8px rgba(0,0,0,0.5);
+    border-radius: 6px;
+    border: 1px solid var(--host-color, var(--theme-color));
+}
+
+.banner-text-ready {
+    color: #fbbf24 !important; /* Gold */
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.8) !important;
+}
+
+.banner-text-return {
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255, 255, 255, 0.5) !important;
 }
 
 @keyframes readyPulseBanner {
     0% { opacity: 0.8; }
-    50% { opacity: 1; text-shadow: 0 0 5px rgba(255,255,255,0.5); box-shadow: 0 0 15px var(--theme-color-glow); }
+    50% { opacity: 1; box-shadow: 0 0 15px var(--theme-color-glow), inset 0 0 8px rgba(0,0,0,0.5); }
     100% { opacity: 0.8; }
 }
 
@@ -846,6 +861,10 @@
     height: 28px; /* Fixed height for consistency */
     display: flex;
     align-items: center;
+}
+
+.objective-row-tall {
+    height: 45px;
 }
 
 .objective-fill-bar {
@@ -912,24 +931,42 @@
 
 /* --- STICKY BAR (HUD) --- */
 .sticky-content {
+    /* Base styling remains, background is naturally overridden by .host-* classes */
     background: rgba(0, 0, 0, 0.9);
     border: 1px solid var(--theme-border);
     backdrop-filter: blur(8px);
     
-    /* Reduced vertical thickness (approx 10% reduction from previous) */
     padding: 0.3rem 1rem;
-    
-    /* Fully rounded corners (Pill shape) */
     border-radius: 9999px;
-    
-    /* Slightly smaller text size */
     font-size: 0.85rem;
-    
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    transition: all 0.3s ease;
-    
-    /* Ensure it floats with margin */
     margin-bottom: 0.5rem;
+    
+    /* NEW: Establishing a strict context to allow pseudo-element masking */
+    position: relative;
+    overflow: hidden;
+    z-index: 1; 
+}
+
+/* Elevate the text contents above the mask */
+.sticky-content > * {
+    position: relative;
+    z-index: 2; 
+}
+
+/* The "Empty" portion mask - Drapes over the right side of the host gradient */
+.sticky-content::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    /* Dynamically controlled by JS inline style var(--sticky-progress) */
+    width: calc(100% - var(--sticky-progress, 100%));
+    background: var(--host-bg-dark, rgba(0, 0, 0, 0.95));
+    border-left: 1px solid rgba(255, 255, 255, 0.1); /* Subtle partition line */
+    z-index: 0; /* Between the host background and the text */
+    transition: width 0.5s ease-out;
 }
 
 .objective-progress-flash {
@@ -9334,12 +9371,14 @@ export function renderMissionsScreen(gameState, missionService) {
         let statusBannerHtml = '';
         if (progress.isCompletable) {
              let bannerText = 'READY TO COMPLETE';
-             if (mission.completion.locationId) {
+             let bannerTextClass = 'banner-text-ready';
+             if (mission.completion.locationId && !isAtCorrectLocation) {
                  const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
-                 bannerText = `RETURN TO: ${locName.toUpperCase()}`;
+                 bannerText = `RETURN TO ${locName.toUpperCase()}`;
+                 bannerTextClass = 'banner-text-return';
              }
              // Prominent pulsing banner
-             statusBannerHtml = `<div class="mission-status-banner">${bannerText}</div>`;
+             statusBannerHtml = `<div class="mission-status-banner ${bannerTextClass}">${bannerText}</div>`;
         }
         // -------------------------------
 
@@ -9397,9 +9436,11 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                 }
 
+                const tallClass = !progress.isCompletable ? 'objective-row-tall' : '';
+
                 // --- NEW PROGRESS FILL LAYOUT ---
                 objectivesHtml += `
-                    <div class="objective-row-filled">
+                    <div class="objective-row-filled ${tallClass}">
                         <div class="objective-fill-bar" style="width: ${percent}%"></div>
                         <div class="objective-text">
                             <span>${desc}</span>
@@ -9422,11 +9463,13 @@ export function renderMissionsScreen(gameState, missionService) {
             </button>
         `;
 
+        const contractStatusText = progress.isCompletable ? 'COMPLETE' : 'IN PROGRESS';
+
         // [[UPDATED]] Added typeClass to the list
         return `
             <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
                 ${starIcon}
-                <div class="mission-meta-row pl-6"> <span class="mission-type-badge">ACTIVE CONTRACT</span>
+                <div class="mission-meta-row pl-6"> <span class="mission-type-badge">${contractStatusText}</span>
                      <span class="mission-host-label">${mission.host}</span>
                 </div>
                 
@@ -17516,8 +17559,8 @@ export class UIMissionControl {
 
     /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
-     * [[UPDATED]] Now respects gameState.missions.trackedMissionId.
-     * [[UPDATED]] Now renders a "Progress Fill" background gradient.
+     * [[UPDATED]] Now uses a CSS variable and pseudo-element mask to act as a progress bar 
+     * without fighting the !important CSS gradients of the host classes.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -17572,9 +17615,6 @@ export class UIMissionControl {
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
                     displayStr = `[${current}% / ${comparator}${target}%]`;
-                    // Logic for hull: if we need > 90%, and we have 100%, that's 100% progress.
-                    // If we have 50%, that's 50/90 progress? Or just raw %?
-                    // Let's stick to raw value for the bar fill if comparator is >=
                     percent = Math.min(100, current); 
                 }
                 else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
@@ -17599,13 +17639,13 @@ export class UIMissionControl {
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
-            // [[NEW]] sci-fi-frame removed to strip corner bracket accents
             contentEl.className = `sticky-content ${hostClass} ${turnInClass}`;
 
-            // [[NEW]] Progress Fill Gradient
-            // Uses --theme-border (approx 30% opacity) for the filled part to ensure text remains readable
-            // against the black background, while still providing a clear visual indicator.
-            contentEl.style.background = `linear-gradient(90deg, var(--theme-border) ${percent}%, rgba(0, 0, 0, 0.9) ${percent}%)`;
+            // We clear any inline background styling. The bright .host-* class gradient shines through naturally.
+            contentEl.style.background = '';
+            
+            // We set the CSS variable, which drives the dark ::after pseudo-element mask in missions.css
+            contentEl.style.setProperty('--sticky-progress', `${percent}%`);
 
             stickyBarEl.style.display = 'block';
         } else {
@@ -17675,8 +17715,14 @@ export class UIMissionControl {
     }
 
     _showMissionDetailsModal(mission) {
-        const { missions, tutorials } = this.manager.lastKnownState;
+        const { missions, tutorials, currentLocationId } = this.manager.lastKnownState;
         const isActive = missions.activeMissionIds.includes(mission.id);
+        
+        // --- NEW LOGIC FOR NAVIGATE BUTTON ---
+        const progress = missions.missionProgress[mission.id];
+        const isCompletable = progress ? progress.isCompletable : false;
+        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+        // -------------------------------------
         
         let shouldBeDisabled = false;
         
@@ -17720,10 +17766,32 @@ export class UIMissionControl {
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 if (isActive) {
                     const isAbandonable = mission.isAbandonable !== false;
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>`;
+                    let navButtonHtml = '';
+                    
+                    // Conditionally inject Navigate button if ready to complete but wrong location
+                    if (isCompletable && !isAtCorrectLocation) {
+                        navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-3 btn-pulse-green">NAVIGATE >></button>`;
+                    }
+                    
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${navButtonHtml}`;
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
+                }
+
+                // Bind Navigate Event
+                const navBtn = modal.querySelector('#mission-navigate-btn');
+                if (navBtn) {
+                    navBtn.addEventListener('click', () => {
+                        if (this.manager.simulationService) {
+                            this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
+                        }
+                        // Small delay to let the screen transition resolve before launching the modal
+                        setTimeout(() => {
+                            this.manager.showLaunchModal(mission.completion.locationId);
+                        }, 100);
+                        closeHandler();
+                    });
                 }
             }
         };
@@ -36023,13 +36091,26 @@ export class ActionClickHandler {
                 const missionId = dataset.missionId;
                 if (!missionId) return;
 
-                const currentMissions = state.missions;
-                this.gameState.setState({
-                    missions: {
-                        ...currentMissions,
-                        trackedMissionId: missionId
-                    }
-                });
+                // Silently mutate state
+                this.gameState.missions.trackedMissionId = missionId;
+
+                // Targeted DOM manipulation to update stars
+                const missionList = actionTarget.closest('.missions-scroll-panel');
+                if (missionList) {
+                    missionList.querySelectorAll('.mission-track-star').forEach(star => {
+                        if (star.dataset.missionId === missionId) {
+                            star.classList.add('active');
+                        } else {
+                            star.classList.remove('active');
+                        }
+                    });
+                }
+
+                // Update the sticky bar directly using the updated state snapshot
+                if (this.uiManager.missionControl) {
+                    this.uiManager.missionControl.renderStickyBar(this.gameState.getState());
+                }
+
                 break;
             }
 
@@ -37713,6 +37794,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.46] - 2026-3-4
+-  mission screen polish
 
 # [36.45] - 2026-3-3
 -  economic behavior update v4
