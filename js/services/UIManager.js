@@ -622,12 +622,14 @@ export class UIManager {
         const sysStateId = gameState.systemState.activeId;
         
         if (!sysStateId || sysStateId === 'NEUTRAL') {
-            this.queueModal('econ-weather-modal', 'System Economy', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { 
+            this.queueModal('econ-weather-modal', '<span style="font-size: calc(100% - 1pt);">Stable Economy</span>', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { 
                 dismissOutside: true,
                 footer: null,
                 customSetup: (modal, closeHandler) => {
                     const closeBtn = modal.querySelector('#econ-weather-close-btn');
                     if (closeBtn) closeBtn.onclick = closeHandler;
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) modalContent.style.background = 'radial-gradient(circle, #1e293b, #0f172a)';
                 }
             });
             return;
@@ -662,19 +664,33 @@ export class UIManager {
 
         const contentHtml = `
             <div class="flex flex-col items-center justify-center space-y-4">
-                <p class="text-left text-gray-300 italic">"${narrativeText}"</p>
-                <div class="w-full p-4 bg-slate-900 border border-slate-700 rounded text-center text-sm font-roboto-mono mt-4">
+                <p class="text-center text-gray-300 italic" style="font-size: calc(1rem - 2pt);">"${narrativeText}"</p>
+                <div class="w-full p-4 bg-slate-900 border border-slate-700 rounded text-center text-sm font-roboto-mono mt-4" style="font-size: calc(0.875rem + 2pt);">
                     ${quantitativeText}
                 </div>
             </div>
         `;
 
-        this.queueModal('econ-weather-modal', "Macroeconomic Alert", contentHtml, null, { 
+        const modalTitle = `<span style="font-size: calc(100% - 1pt);">${stateDef.name}</span>`;
+
+        this.queueModal('econ-weather-modal', modalTitle, contentHtml, null, { 
             dismissOutside: true,
             footer: null,
             customSetup: (modal, closeHandler) => {
                 const closeBtn = modal.querySelector('#econ-weather-close-btn');
                 if (closeBtn) closeBtn.onclick = closeHandler;
+                
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    const arch = stateDef.archetype || '';
+                    if (arch.includes('Beneficial') || arch.includes('Bull') || arch.includes('Charitable') || arch.includes('Expansive')) {
+                        modalContent.style.background = 'radial-gradient(circle, #064e3b, #0f172a)';
+                    } else if (arch.includes('Bear') || arch.includes('Restrictive') || arch.includes('Stagnant') || arch.includes('Collapse')) {
+                        modalContent.style.background = 'radial-gradient(circle, #450a0a, #0f172a)';
+                    } else {
+                        modalContent.style.background = 'radial-gradient(circle, #1e293b, #0f172a)';
+                    }
+                }
             }
         });
     }
