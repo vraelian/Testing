@@ -80,6 +80,12 @@ export class MarketService {
             commodityId === COMMODITY_IDS.WATER_ICE) {
             price = price * 1.40;
         }
+
+        // Sol Quirk: +25% Sell Price for Graphene Lattices & Plasteel
+        if (locationId === LOCATION_IDS.SUN &&
+            (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
+            price = price * 1.25;
+        }
         // --- END VIRTUAL WORKBENCH ---
 
         // 2. Upgrade Modifiers (Signal Hacker)
@@ -203,6 +209,11 @@ export class MarketService {
                 // --- END VIRTUAL WORKBENCH ---
 
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH * activeStateMeanReversionMod;
+                
+                // Apply Location EcoProfile Mean Reversion Modifier
+                if (location.ecoProfile?.meanReversionMod) {
+                    meanReversion *= location.ecoProfile.meanReversionMod;
+                }
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
@@ -253,7 +264,7 @@ export class MarketService {
                 // --- NEW: Depletion Price Hike ---
                 let priceHikeMultiplier = 1.0;
                 if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
-                    priceHikeMultiplier = 1.5; // 50% more acceleration
+                    priceHikeMultiplier = location.ecoProfile?.panicMult ?? 1.5; // Defaults to 1.5, scaling up for fringe/desperate worlds
                     // We check depletionDay + 7, so this effect lasts for the whole week
                     // We reset the flag *after* it's been used in replenishment
                 }
@@ -268,7 +279,13 @@ export class MarketService {
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
                 // marketPressure still decays, as this is the "timer" for the pressureEffect
-                inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
+                let decayMod = 1.0;
+                // e.g. Saturn Quirk: Recovers from negative market pressure (player crashes = positive pressure) faster
+                if (inventoryItem.marketPressure > 0 && location.ecoProfile?.recoveryMod) {
+                    decayMod = 1.0 / location.ecoProfile.recoveryMod;
+                }
+
+                inventoryItem.marketPressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
                 }
@@ -294,7 +311,9 @@ export class MarketService {
                 const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
 
                 let targetStockMod = 1.0;
-                let replenishRate = 0.10;
+                
+                // Dynamically fetch base replenish rate from Location EcoProfile, falling back to global default (10%)
+                let replenishRate = market.ecoProfile?.commodityReplenishRates?.[c.id] ?? market.ecoProfile?.replenishRate ?? 0.10;
 
                 if (activeStateDef && activeStateDef.modifiers) {
                     const mods = activeStateDef.modifiers;
@@ -365,10 +384,12 @@ export class MarketService {
                 }
 
                 // Phase 3: Apply Final Visual Fluctuation
-                const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
-                const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
-                const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
-                inventoryItem.quantity *= finalFluctuation;
+                if (!market.ecoProfile?.disableFluctuation) {
+                    const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
+                    const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
+                    const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
+                    inventoryItem.quantity *= finalFluctuation;
+                }
                 
                 // Apply system state modifiers if any exist.
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
@@ -388,11 +409,14 @@ export class MarketService {
      */
     applyMarketImpact(goodId, quantity, transactionType) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
+        let pressureMod = market?.ecoProfile?.dampeners?.[goodId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
+
         // This calculation is the core driver of the price change.
         // It sets marketPressure, which is used by pressureEffect after 7 days.
-        const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
+        const pressureChange = (((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
         
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;

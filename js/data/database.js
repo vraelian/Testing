@@ -107,7 +107,6 @@ export const DB = {
     TRAVEL_VISUALS: {
         zones: {
             inner_sphere: {
-                // [[UPDATED]]: Added SUN and MERCURY to the inner sphere zone
                 locations: [LOCATION_IDS.SUN, LOCATION_IDS.MERCURY, LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT],
                 gradient: ['#0f172a', '#1e3a8a']
             },
@@ -136,8 +135,6 @@ export const DB = {
     RANDOM_EVENTS: RANDOM_EVENTS,
 
     // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
-    // The old, hardcoded DB.SHIPS object has been removed.
-    // It is now replaced by the imported SHIP_DATABASE object from js/data/ship_database.js
     SHIPS: SHIP_DATABASE,
     // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
     
@@ -193,12 +190,17 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-600 to-orange-900', 
             fuelPrice: 50, 
             arrivalLore: "The brilliance of the star is impossibly majestic. The station's hull groans audibly under the immense thermal stress.", 
-            specialty: "+25% Sell Price for Graphene Lattices & Plasteel.", 
+            specialty: "• +25% Sell Price: Plasteel & Graphene<br>• Massive structural import capacity<br>• Premium Endgame Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5,
                 [COMMODITY_IDS.PLASTEEL]: 0.5,
                 [COMMODITY_IDS.ANTIMATTER]: 2.0
-            } 
+            },
+            ecoProfile: { 
+                commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.03, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.03 }, 
+                dampeners: { [COMMODITY_IDS.PLASTEEL]: 0.5, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5 } 
+            },
+            intelProfile: { costMod: 1.30, minDiscount: 0.30, maxDiscount: 0.60, focusCats: ['RARE', 'BIO', 'TECH'] }
         },
         { 
             id: LOCATION_IDS.MERCURY, 
@@ -211,11 +213,13 @@ export const DB = {
             bg: 'bg-gradient-to-br from-stone-600 to-red-900', 
             fuelPrice: 500, 
             arrivalLore: "Cratered grey rock stretches endlessly, scorched by the relentless sun.", 
-            specialty: "Pays 40% more for Water Ice.", 
+            specialty: "• +40% Sell Price: Water Ice<br>• Extreme Water Ice volatility<br>• Fast-expiring Fringe Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.WATER_ICE]: 0.1,
                 [COMMODITY_IDS.PLASTEEL]: 2.0
-            } 
+            },
+            ecoProfile: { replenishRate: 0.05, panicMult: 2.0, commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.15 } },
+            intelProfile: { costMod: 0.75, durationMod: 0.90 }
         },
         { 
             id: LOCATION_IDS.VENUS, 
@@ -228,13 +232,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', 
             fuelPrice: 400, 
             arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", 
-            specialty: "Intel is 50% cheaper and lasts twice as long.", 
+            specialty: "• 50% Intel Discount & 2x Duration<br>• Highly volatile Tech market<br>• Focused on Data & Tech Goods", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
                 [COMMODITY_IDS.SENTIENT_AI]: 0.5,
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5
-            } 
+            },
+            ecoProfile: { pressureMod: 1.15 },
+            intelProfile: { focusCats: ['TECH'] }
         },
         { 
             id: LOCATION_IDS.EARTH, 
@@ -247,13 +253,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-slate-900', 
             fuelPrice: 250, 
             arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", 
-            specialty: "Cloned Organs & Xeno-Geologicals sell for 10% more.", 
+            specialty: "• +10% Sell Price: Organs & Xeno-Geology<br>• Highly stable, inelastic prices<br>• Premium Corp-Espionage Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.HYDROPONICS]: 2.0, 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0, 
                 [COMMODITY_IDS.CLONED_ORGANS]: 0.5, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 
-            } 
+            },
+            ecoProfile: { pressureMod: 0.70 },
+            intelProfile: { costMod: 1.15, durationMod: 1.20, focusCats: ['BIO', 'TECH'] }
         },
         { 
             id: LOCATION_IDS.LUNA, 
@@ -267,13 +275,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-gray-700 to-slate-900', 
             fuelPrice: 350, 
             arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", 
-            specialty: "20% discount on all ship repairs.", 
+            specialty: "• 20% Discount on Ship Repairs<br>• Fast raw material restock<br>• Reliable Industrial Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.WATER_ICE]: 0.5, 
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
-            } 
+            },
+            ecoProfile: { replenishRate: 0.12 },
+            intelProfile: { focusCats: ['IND', 'RAW'] }
         },
         { 
             id: LOCATION_IDS.MARS, 
@@ -286,13 +296,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-900 to-slate-900', 
             fuelPrice: 450, 
             arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", 
-            specialty: "+10% Sell Price for Water Ice and Hydroponics.", 
+            specialty: "• +10% Sell Price: Water & Hydroponics<br>• Slow agricultural restock<br>• Standard Market Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.WATER_ICE]: 0.5, 
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
-            } 
+            },
+            ecoProfile: { commodityReplenishRates: { [COMMODITY_IDS.HYDROPONICS]: 0.08, [COMMODITY_IDS.WATER_ICE]: 0.08 } },
+            intelProfile: {}
         },
         { 
             id: LOCATION_IDS.BELT, 
@@ -305,13 +317,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-stone-800 to-slate-900', 
             fuelPrice: 600, 
             arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", 
-            specialty: "Pending Declassification...", 
+            specialty: "• Rapid raw material restock<br>• Erratic, chaotic Intel market", 
             availabilityModifier: { 
                 [COMMODITY_IDS.WATER_ICE]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.HYDROPONICS]: 0.5, 
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
-            } 
+            },
+            ecoProfile: { replenishRate: 0.15 },
+            intelProfile: { minDiscount: 0.05, maxDiscount: 0.60, durationMod: 0.50, costMod: 0.80 }
         },
         { 
             id: LOCATION_IDS.EXCHANGE, 
@@ -324,13 +338,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', 
             fuelPrice: 1200, 
             arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", 
-            specialty: "Prices fluctuate dramatically.", 
+            specialty: "• 3x Price Volatility<br>• Extremely fragile market (crashes easily)<br>• Black Market Smuggler Intel", 
             availabilityModifier: {
                 [COMMODITY_IDS.SENTIENT_AI]: 2.0,
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0,
                 [COMMODITY_IDS.ANTIMATTER]: 0.5,
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5
-            } 
+            },
+            ecoProfile: { pressureMod: 1.30 },
+            intelProfile: { focusCats: ['TECH', 'BIO', 'RARE'] }
         },
         { 
             id: LOCATION_IDS.JUPITER, 
@@ -343,12 +359,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-800 to-stone-900', 
             fuelPrice: 150, 
             arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", 
-            specialty: "Fuel is sold at a 50% discount.", 
+            specialty: "• 50% Discount on Fuel<br>• Highly stable Fuel market<br>• Industrial-focused Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROPELLANT]: 2.0, 
                 [COMMODITY_IDS.PLASTEEL]: 0.5, 
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
-            } 
+            },
+            ecoProfile: { dampeners: { [COMMODITY_IDS.PROPELLANT]: 0.20 }, commodityReplenishRates: { [COMMODITY_IDS.PROPELLANT]: 0.20 } },
+            intelProfile: { focusCats: ['IND'] }
         },
         { 
             id: LOCATION_IDS.SATURN, 
@@ -361,12 +379,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', 
             fuelPrice: 550, 
             arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", 
-            specialty: "+20% Sell Price for Cloned Organs & Cryo-Sleep Pods, but 200% Cost for Refueling & Repairs.", 
+            specialty: "• +20% Sell Price: Organs & Cryo Pods<br>• 200% Cost for Repairs & Fuel<br>• Premium Luxury Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0,
                 [COMMODITY_IDS.CRYO_PODS]: 0.5, 
                 [COMMODITY_IDS.CLONED_ORGANS]: 0.5 
-            } 
+            },
+            ecoProfile: { recoveryMod: 1.25 },
+            intelProfile: { costMod: 1.25, minDiscount: 0.25, focusCats: ['CIV', 'BIO'] }
         },
         { 
             id: LOCATION_IDS.URANUS, 
@@ -379,12 +399,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', 
             fuelPrice: 700, 
             arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", 
-            specialty: "Increased chance for advanced ship upgrades to appear in the tuning shop.", 
+            specialty: "• High chance of Advanced Upgrades<br>• Standard market elasticity<br>• Tech & Rare-focused Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
                 [COMMODITY_IDS.SENTIENT_AI]: 0.5, 
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
-            } 
+            },
+            ecoProfile: {},
+            intelProfile: { focusCats: ['TECH', 'RARE'] }
         },
         { 
             id: LOCATION_IDS.NEPTUNE, 
@@ -397,13 +419,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-black', 
             fuelPrice: 650, 
             arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", 
-            specialty: "Buying Refined Propellant or Plasteel in quantities > 50 grants a 10% Bulk Discount.", 
+            specialty: "• 10% Bulk Discount: Fuel & Plasteel (>50)<br>• Rigid, unfluctuating prices<br>• Tactical Military Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CRYO_PODS]: 2.0,
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0,
                 [COMMODITY_IDS.PLASTEEL]: 0.5, 
                 [COMMODITY_IDS.PROPELLANT]: 0.5 
-            } 
+            },
+            ecoProfile: { disableFluctuation: true, meanReversionMod: 1.25 },
+            intelProfile: { focusCats: ['CIV', 'IND'] }
         },
         { 
             id: LOCATION_IDS.KEPLER, 
@@ -416,12 +440,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', 
             fuelPrice: 800, 
             arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", 
-            specialty: "15% Discount on all financing and debt payments.", 
+            specialty: "• 15% Discount on Debt & Financing<br>• Double Intel Packet generation", 
             availabilityModifier: {
                 [COMMODITY_IDS.ANTIMATTER]: 2.0,
                 [COMMODITY_IDS.FOLDED_DRIVES]: 0.5,
                 [COMMODITY_IDS.PROCESSORS]: 0.5
-            } 
+            },
+            ecoProfile: {},
+            intelProfile: { packetMultiplier: 2 }
         },
         { 
             id: LOCATION_IDS.PLUTO, 
@@ -434,13 +460,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', 
             fuelPrice: 900, 
             arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", 
-            specialty: "+25% Sell Price on Cybernetics & Antimatter, but few supplies are available.", 
+            specialty: "• +25% Sell Price: Cybernetics & Antimatter<br>• Extreme price panic on depletion<br>• Jackpot Smuggler Intel (Deep Discounts)", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.ANTIMATTER]: 0.5,
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
-            } 
+            },
+            ecoProfile: { replenishRate: 0.05, panicMult: 2.0 },
+            intelProfile: { minDiscount: 0.40, maxDiscount: 0.75, focusCats: ['BIO', 'TECH', 'RARE'] }
         }
     ],
 

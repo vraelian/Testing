@@ -50,7 +50,6 @@ export class IntelService {
             intelMarket[locationId] = purchasedPackets;
         }
 
-        
         // Iterate through all markets to generate new intel
         for (const location of this.db.MARKETS) {
             const locationId = location.id; // This is the SALE location
@@ -62,7 +61,10 @@ export class IntelService {
                 const existingKeys = intelMarket[locationId].map(p => p.messageKey).filter(Boolean);
                 const newKeysInBatch = new Set();
 
-                const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
+                const baseNum = 1 + Math.floor(Math.random() * 3); // 1-3 packets
+                const mult = location.intelProfile?.packetMultiplier || 1;
+                const numPackets = Math.floor(baseNum * mult);
+
                 for (let i = 0; i < numPackets; i++) {
                     const unavailableKeys = [...existingKeys, ...newKeysInBatch];
                     const newPacket = this._createPacket(locationId, unavailableKeys);
@@ -90,14 +92,25 @@ export class IntelService {
         const state = this.gameState.getState();
         
         const revealedTier = state.player.revealedTier;
-        const unlockedCommodities = this.db.COMMODITIES
-             .filter(c => c.tier <= revealedTier)
-            .map(c => c.id);
+        const locationDef = this.db.MARKETS.find(m => m.id === saleLocationId);
+        const intelProfile = locationDef?.intelProfile || {};
+
+        let unlockedCommodities = this.db.COMMODITIES.filter(c => c.tier <= revealedTier);
 
         if (!unlockedCommodities || unlockedCommodities.length === 0) {
             this.logger.warn('IntelService', 'Cannot create packet: No unlocked commodities available for player\'s tier.');
             return null;
         }
+
+        // Apply Market Personality Focus Categories
+        if (intelProfile.focusCats && intelProfile.focusCats.length > 0) {
+            const focused = unlockedCommodities.filter(c => intelProfile.focusCats.includes(c.cat));
+            if (focused.length > 0) {
+                unlockedCommodities = focused; // Override with focused pool if player has unlocked them
+            }
+        }
+
+        const unlockedCommodityIds = unlockedCommodities.map(c => c.id);
 
         // Get the locations the player has actually visited and unlocked.
         const playerUnlockedLocations = state.player.unlockedLocationIds || [];
@@ -115,11 +128,18 @@ export class IntelService {
         }
         const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
 
-        const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
-        const discountPercent = 0.15 + Math.random() * 0.35; // 15% - 50%
-        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
+        const commodityId = unlockedCommodityIds[Math.floor(Math.random() * unlockedCommodityIds.length)];
         
-        const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
+        // Calculate Discount using Intel Profile parameters (falling back to baseline 15-50%)
+        const minDiscount = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.15;
+        const maxDiscount = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.50;
+        const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
+
+        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
+        const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;
+        const effectiveDurationDays = durationDays * durationMod;
+        
+        const valueMultiplier = 1.0 + (discountPercent * 2) + (effectiveDurationDays / 90);
         
         const messageKeys = Object.keys(INTEL_CONTENT);
         if (messageKeys.length === 0) {
@@ -170,6 +190,12 @@ export class IntelService {
         // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         if (currentLocationId === LOCATION_IDS.VENUS) {
             base *= 0.5; // 50% discount at Venus
+        }
+
+        // Apply Local Eco Profile Cost Modifier
+        const locationDef = this.db.MARKETS.find(m => m.id === currentLocationId);
+        if (locationDef?.intelProfile?.costMod) {
+             base *= locationDef.intelProfile.costMod;
         }
 
         let finalPrice = base * packet.valueMultiplier;
@@ -252,6 +278,12 @@ export class IntelService {
         let durationMultiplier = 1.9; // Base multiplier
         if (state.currentLocationId === LOCATION_IDS.VENUS) {
             durationMultiplier *= 2.0; // Double duration at Venus
+        }
+
+        // Apply Local Eco Profile Duration Modifier
+        const locationDef = this.db.MARKETS.find(m => m.id === state.currentLocationId);
+        if (locationDef?.intelProfile?.durationMod) {
+             durationMultiplier *= locationDef.intelProfile.durationMod;
         }
 
         // --- PHASE 2: AGE PERK (INTEL DURATION) ---
