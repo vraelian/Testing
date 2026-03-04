@@ -554,24 +554,42 @@
 
 /* --- STICKY BAR (HUD) --- */
 .sticky-content {
+    /* Base styling remains, background is naturally overridden by .host-* classes */
     background: rgba(0, 0, 0, 0.9);
     border: 1px solid var(--theme-border);
     backdrop-filter: blur(8px);
     
-    /* Reduced vertical thickness (approx 10% reduction from previous) */
     padding: 0.3rem 1rem;
-    
-    /* Fully rounded corners (Pill shape) */
     border-radius: 9999px;
-    
-    /* Slightly smaller text size */
     font-size: 0.85rem;
-    
     box-shadow: 0 4px 12px rgba(0,0,0,0.6);
-    transition: all 0.3s ease;
-    
-    /* Ensure it floats with margin */
     margin-bottom: 0.5rem;
+    
+    /* NEW: Establishing a strict context to allow pseudo-element masking */
+    position: relative;
+    overflow: hidden;
+    z-index: 1; 
+}
+
+/* Elevate the text contents above the mask */
+.sticky-content > * {
+    position: relative;
+    z-index: 2; 
+}
+
+/* The "Empty" portion mask - Drapes over the right side of the host gradient */
+.sticky-content::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    /* Dynamically controlled by JS inline style var(--sticky-progress) */
+    width: calc(100% - var(--sticky-progress, 100%));
+    background: var(--host-bg-dark, rgba(0, 0, 0, 0.95));
+    border-left: 1px solid rgba(255, 255, 255, 0.1); /* Subtle partition line */
+    z-index: 0; /* Between the host background and the text */
+    transition: width 0.5s ease-out;
 }
 
 .objective-progress-flash {

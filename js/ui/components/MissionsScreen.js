@@ -126,7 +126,7 @@ export function renderMissionsScreen(gameState, missionService) {
              let bannerTextClass = 'banner-text-ready';
              if (mission.completion.locationId && !isAtCorrectLocation) {
                  const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
-                 bannerText = `RETURN TO: ${locName.toUpperCase()}`;
+                 bannerText = `RETURN TO ${locName.toUpperCase()}`;
                  bannerTextClass = 'banner-text-return';
              }
              // Prominent pulsing banner
