@@ -32,6 +32,15 @@ export class IntroService {
         if (!this.gameState.introSequenceActive) return;
         this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
         
+        // [FIX] Force inline display: none to override CSS ID specificity
+        const econBtn = document.getElementById('btn-econ-weather');
+        if (econBtn) econBtn.style.display = 'none';
+
+        // Ensure the Help Anchor is completely suppressed early in the intro.
+        if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
+            this.uiManager.helpManager.anchorBtn.style.display = 'none';
+        }
+        
         // Set the initial state for the intro (strips debug/default items)
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
@@ -276,6 +285,15 @@ export class IntroService {
         this._transitioning = false;
         
         this.uiManager.showGameContainer();
+
+        // [FIX] Force inline display: none to override CSS ID specificity
+        const econBtn = document.getElementById('btn-econ-weather');
+        if (econBtn) econBtn.style.display = 'none';
+
+        // Restore Help Anchor visibility specifically for the selection sequence
+        if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
+            this.uiManager.helpManager.anchorBtn.style.display = 'flex';
+        }
         
         const overlay = document.createElement('div');
         overlay.id = 'starter-ship-selection-overlay';
@@ -285,20 +303,17 @@ export class IntroService {
             {
                 id: 'Wanderer.Ship',
                 roleClass: 'text-sky-400',
-                borderClass: 'border-pulse-explorer',
-                desc: 'A larger fuel tank means more trips before refilling.'
+                borderClass: 'border-pulse-explorer'
             },
             {
                 id: 'Nomad.Ship',
                 roleClass: 'text-emerald-400',
-                borderClass: 'border-pulse-balanced',
-                desc: 'Sturdy and resilient against wear and tear.'
+                borderClass: 'border-pulse-balanced'
             },
             {
                 id: 'Mule.Ship',
                 roleClass: 'text-amber-400',
-                borderClass: 'border-pulse-hauler',
-                desc: 'At the cost of range, carry just a little more.'
+                borderClass: 'border-pulse-hauler'
             }
         ];
 
@@ -311,16 +326,20 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
+            // Corrected Fallbacks to WebP per Asset Update
             let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
-            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.jpeg';
-            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.jpeg';
-            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.jpeg';
+            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
+            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
             
             btn.innerHTML = `
-                <img src="${imgSrc}" alt="${shipStatic.name}" />
-                <span class="ship-name">${shipStatic.name}</span>
-                <span class="ship-role ${shipInfo.roleClass}">${shipStatic.role}</span>
-                <span class="ship-desc ${shipInfo.roleClass}">${shipInfo.desc}</span>
+                <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
+                    <img src="${imgSrc}" alt="${shipStatic.name}" style="transform: scale(1.3); object-fit: cover; width: 100%; height: 100%;" />
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 0.5rem;">
+                    <span class="ship-name">${shipStatic.name}</span>
+                    <span class="ship-role ${shipInfo.roleClass}">${shipStatic.role}</span>
+                </div>
             `;
             
             btn.onclick = (e) => {
@@ -333,6 +352,7 @@ export class IntroService {
 
         const narrativeBox = document.createElement('div');
         narrativeBox.className = 'starter-narrative-box';
+        narrativeBox.style.fontSize = 'calc(1rem + 3pt)';
         narrativeBox.innerHTML = "Now that you've got some credits, it's time to purchase your first ship. Make your selection carefully to begin your journey.";
 
         overlay.appendChild(container);
@@ -441,6 +461,10 @@ export class IntroService {
         
         this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Missions.');
         
+        // Restore Economic Weather button visibility via inline styles
+        const econBtn = document.getElementById('btn-econ-weather');
+        if (econBtn) econBtn.style.display = '';
+
         // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
 

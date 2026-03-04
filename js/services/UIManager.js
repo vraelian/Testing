@@ -160,10 +160,16 @@ export class UIManager {
         this.lastKnownState = gameState;
 
         if (gameState.introSequenceActive) {
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.add('hidden');
+            // [FIX] Force inline style display: none to override CSS ID specificity
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
             return;
         } else {
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.remove('hidden');
+            // [FIX] Clear inline style so it reverts to the default display: flex in the CSS
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = '';
+            // Un-hide the help anchor strictly for normal gameplay loops
+            if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
+                this.helpManager.anchorBtn.style.display = 'flex';
+            }
         }
 
         this._applyTheme(gameState);
@@ -491,6 +497,10 @@ export class UIManager {
 
     getCurrentHelpContextId(gameState) {
         if (!gameState || !gameState.player) return null;
+        
+        // Isolate Help Context during Intro Sequence
+        if (gameState.introSequenceActive) return 'intro-ship-selection';
+
         const { activeNav, activeScreen, solStation } = gameState;
         const uiState = gameState.uiState || {}; 
         const isSolStationUnlocked = solStation?.unlocked;

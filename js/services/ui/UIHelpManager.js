@@ -35,8 +35,9 @@ export class UIHelpManager {
     _injectDOM() {
         // Break free of the game-container and inject directly to document.body 
         // to bypass local stacking contexts or opacity constraints.
+        // [FIX A] Initialized with display: none to prevent leaking onto the Start Screen.
         if (!document.getElementById('global-help-anchor')) {
-            const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
+            const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help" style="display: none;">?</button>`;
             document.body.insertAdjacentHTML('beforeend', anchorHTML);
         }
 
