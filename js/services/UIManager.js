@@ -622,7 +622,7 @@ export class UIManager {
         const sysStateId = gameState.systemState.activeId;
         
         if (!sysStateId || sysStateId === 'NEUTRAL') {
-            this.queueModal('econ-weather-modal', '<span style="font-size: calc(100% - 1pt);">Stable Economy</span>', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { 
+            this.queueModal('econ-weather-modal', '<span style="font-size: calc(100% - 1pt);">Stable Economy</span>', '<p class="text-center text-gray-400 mt-4">The solar system economy is neutral and stable.</p>', null, { 
                 dismissOutside: true,
                 footer: null,
                 customSetup: (modal, closeHandler) => {
