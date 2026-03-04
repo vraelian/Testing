@@ -209,24 +209,30 @@ export class UIHangarControl {
                 modalContent.classList.remove('intro-modal-width');
             }
 
-            // [FIX C] Provide the correct .jpeg image variants for the starter modal
+            // WebP Image Paths Fix
             let imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
             if (context === 'intro_shipyard') {
-                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/images/ships/Wanderer/Wanderer_F.jpeg';
-                if (shipId === 'Mule.Ship') imageSrc = 'assets/images/ships/Mule/Mule_H.jpeg';
-                if (shipId === 'Nomad.Ship') imageSrc = 'assets/images/ships/Nomad/Nomad_A.jpeg';
+                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+                if (shipId === 'Mule.Ship') imageSrc = 'assets/images/ships/Mule/Mule_H.webp';
+                if (shipId === 'Nomad.Ship') imageSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
             }
 
+            // Negative margins (-mx-4) to expand the image visually into the modal padding
             const largeImageHtml = context === 'intro_shipyard' ? 
-                `<div class="flex justify-center my-2">
-                    <img src="${imageSrc}" class="w-full max-w-[280px] h-auto object-contain drop-shadow-2xl rounded border border-gray-600 bg-gray-800 bg-opacity-60 p-2" />
+                `<div class="flex justify-center my-4 -mx-4">
+                    <img src="${imageSrc}" class="w-full max-w-[400px] aspect-square object-cover drop-shadow-2xl rounded border border-gray-600 bg-gray-800 bg-opacity-60 p-2" />
                 </div>` : '';
 
             // Swap to short description instead of lore for the intro
             const textContent = context === 'intro_shipyard' ? shipStatic.description : shipStatic.lore;
             
             // Add style for font size explicitly for intro context
-            const titleStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.25rem + 2pt);"' : '';
+            const titleStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.25rem + 3pt);"' : '';
+            const pStyle = context === 'intro_shipyard' ? 'style="font-size: calc(0.875rem + 1pt);"' : '';
+            const costStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.125rem + 1pt);"' : '';
+            const paramStyle = context === 'intro_shipyard' ? 'style="font-size: calc(0.875rem + 2pt);"' : '';
+            const titleColorClass = context === 'intro_shipyard' ? 'text-white' : 'text-cyan-300';
+            const valBoldClass = context === 'intro_shipyard' ? 'font-bold' : '';
 
             const btnHtml = context === 'intro_shipyard' 
                 ? `<button id="intro-purchase-btn" class="btn w-full mt-2" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`
@@ -236,19 +242,19 @@ export class UIHangarControl {
                 <div class="ship-card p-4 flex flex-col space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                             <h3 class="text-xl font-orbitron text-cyan-300" ${titleStyle}>${shipStatic.name}</h3>
-                            <p class="text-sm text-gray-400">Class ${shipStatic.class}</p>
+                             <h3 class="text-xl font-orbitron ${titleColorClass}" ${titleStyle}>${shipStatic.name}</h3>
+                            <p class="text-sm text-gray-400" ${pStyle}>Class ${shipStatic.class}</p>
                          </div>
                         <div class="text-right">
-                             <p class="text-lg font-bold text-cyan-300">${formatCredits(shipStatic.price)}</p>
+                             <p class="text-lg font-bold text-cyan-300" ${costStyle}>${formatCredits(shipStatic.price)}</p>
                         </div>
                     </div>
-                     <p class="text-sm text-gray-400 flex-grow text-left">${textContent}</p>
+                     <p class="text-sm text-gray-400 flex-grow text-left" ${pStyle}>${textContent}</p>
                      ${largeImageHtml}
-                    <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
-                        <div><span class="text-gray-500">Hull:</span><br><span class="text-green-400">${shipStatic.maxHealth}</span></div>
-                        <div><span class="text-gray-500">Fuel:</span><br><span class="text-sky-400">${shipStatic.maxFuel}</span></div>
-                        <div><span class="text-gray-500">Cargo:</span><br><span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
+                    <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2" ${paramStyle}>
+                        <div><span class="text-gray-500">Hull:</span><br><span class="text-green-400 ${valBoldClass}">${shipStatic.maxHealth}</span></div>
+                        <div><span class="text-gray-500">Fuel:</span><br><span class="text-sky-400 ${valBoldClass}">${shipStatic.maxFuel}</span></div>
+                        <div><span class="text-gray-500">Cargo:</span><br><span class="text-amber-400 ${valBoldClass}">${shipStatic.cargoCapacity}</span></div>
                     </div>
                      ${btnHtml}
                 </div>`;
