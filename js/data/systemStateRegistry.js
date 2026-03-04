@@ -11,7 +11,7 @@ export const SYSTEM_STATE_REGISTRY = {
             "Standard macroeconomic conditions apply. No major disruptions reported.",
             "Guild forecasts predict a prolonged period of economic baseline stability."
         ],
-        quantitativeDisplay: "<span style=\"color: var(--color-text-muted);\">The system economy is operating under normal, baseline parameters.</span>",
+        quantitativeDisplay: "<span style=\"color: var(--color-text-muted);\">The solar system economy is neutral and stable.</span>",
         modifiers: {}
     },
     'GUILD_EMBARGO': {

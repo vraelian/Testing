@@ -234,7 +234,7 @@
     width: 100%;
     max-width: 600px;
     height: 14vh;
-    z-index: 55; /* Beneath standard modals (60+), but above sticky bar (50) */
+    z-index: 10005; /* Elevated above help-system modals (10001) */
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
