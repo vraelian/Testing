@@ -298,15 +298,11 @@ export class UIEventControl {
              `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
          ).join('');
 
-        const quirks = GameAttributes.getStationQuirks(locationId);
         let quirksHtml = '';
-        if (quirks.length > 0) {
-            quirksHtml = quirks.map(qId => {
-                const def = GameAttributes.getDefinition(qId);
-                 return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
-            }).join('');
+        if (location.specialty) {
+            quirksHtml = `<p class="font-roboto-mono text-sm leading-relaxed imprinted-text-embedded" style="color: #facc15;">${location.specialty}</p>`;
         } else {
-            quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>`;
+            quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">None reported</p>`;
         }
 
         const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;

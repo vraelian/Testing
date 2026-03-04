@@ -1383,7 +1383,7 @@
     width: 100%;
     max-width: 600px;
     height: 14vh;
-    z-index: 55; /* Beneath standard modals (60+), but above sticky bar (50) */
+    z-index: 10005; /* Elevated above help-system modals (10001) */
     display: flex;
     flex-direction: column;
     justify-content: flex-end;
@@ -7702,21 +7702,21 @@ BULKHEAD NAVIGATION STYLES
 /* css/help-system.css */
 
 .global-help-anchor {
-    position: absolute;
+    position: fixed; /* Phase 4 Fix: Decoupled from #game-container relative context */
     bottom: 1rem;
     right: 1rem;
-    width: 40px; /* Scaled up 10% */
-    height: 40px; /* Scaled up 10% */
+    width: 40px; 
+    height: 40px; 
     border-radius: 50%;
     background-color: rgba(45, 55, 72, 0.6);
     color: #fff;
     border: 1px solid rgba(122, 154, 192, 0.5);
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.35rem; /* Scaled up 10% */
+    font-size: 1.35rem; 
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 50;
+    z-index: 10000; /* Phase 4 Fix: Enforced high z-index to overlay starfield */
     opacity: 0.5;
     transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
@@ -7750,10 +7750,10 @@ BULKHEAD NAVIGATION STYLES
 }
 
 .help-modal-overlay {
-    position: absolute;
+    position: fixed; /* Phase 4 Fix */
     inset: 0;
     background-color: rgba(0, 0, 0, 0.6);
-    z-index: 60;
+    z-index: 10001; /* Phase 4 Fix */
     display: flex;
     justify-content: center;
     align-items: center;
@@ -7764,9 +7764,8 @@ BULKHEAD NAVIGATION STYLES
 .help-modal-container {
     width: 90vw;
     max-width: 400px;
-    /* 50/51 represents a 20% vertical height increase over the original 20/17 ratio */
     aspect-ratio: 50 / 55; 
-    background-color: #151515; /* Dark charcoal/gunmetal */
+    background-color: #151515; 
     border: 1px solid #333;
     filter: drop-shadow(0 0 15px rgba(0, 0, 0, 0.8)); 
     border-radius: 12px;
@@ -7774,7 +7773,7 @@ BULKHEAD NAVIGATION STYLES
     flex-direction: column;
     overflow: hidden;
     box-sizing: border-box;
-    position: relative; /* Anchor for the ::before noise texture */
+    position: relative; 
 }
 
 /* Materiality & Texture pseudo-element */
@@ -7782,8 +7781,8 @@ BULKHEAD NAVIGATION STYLES
     content: '';
     position: absolute;
     inset: 0;
-    opacity: 0.05; /* Subtle noise overlay */
-    pointer-events: none; /* Ensure texture does not block interactions */
+    opacity: 0.05; 
+    pointer-events: none; 
     background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
     z-index: 0;
 }
@@ -10001,7 +10000,7 @@ export function renderServicesScreen(gameState, simulationService) {
                         <div class="control-deck flex justify-center items-center gap-4">
                           <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
                             <span class="price-label text-sm engraved-text">COST</span>
-                            <span class="price-digits text-base ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                            <span class="price-digits text-sm whitespace-nowrap ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(fuelCostPerTick, true)}
                             </span>
                           </div>
@@ -10026,7 +10025,7 @@ export function renderServicesScreen(gameState, simulationService) {
                         <div class="control-deck flex justify-center items-center gap-4 relative">
                           <div class="price-display-module w-32 h-12 flex justify-between items-center px-4 relative">
                             <span class="price-label text-sm engraved-text">COST</span>
-                            <span class="price-digits text-base ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
+                            <span class="price-digits text-sm whitespace-nowrap ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(repairCostPerTick, true)}
                             </span>
                             <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest" style="color: #60a5fa; opacity: 0.9;">+1 Day / Tick</div>
@@ -12169,7 +12168,6 @@ export const DB = {
     TRAVEL_VISUALS: {
         zones: {
             inner_sphere: {
-                // [[UPDATED]]: Added SUN and MERCURY to the inner sphere zone
                 locations: [LOCATION_IDS.SUN, LOCATION_IDS.MERCURY, LOCATION_IDS.EARTH, LOCATION_IDS.LUNA, LOCATION_IDS.MARS, LOCATION_IDS.BELT],
                 gradient: ['#0f172a', '#1e3a8a']
             },
@@ -12198,8 +12196,6 @@ export const DB = {
     RANDOM_EVENTS: RANDOM_EVENTS,
 
     // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
-    // The old, hardcoded DB.SHIPS object has been removed.
-    // It is now replaced by the imported SHIP_DATABASE object from js/data/ship_database.js
     SHIPS: SHIP_DATABASE,
     // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
     
@@ -12255,12 +12251,17 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-600 to-orange-900', 
             fuelPrice: 50, 
             arrivalLore: "The brilliance of the star is impossibly majestic. The station's hull groans audibly under the immense thermal stress.", 
-            specialty: "+25% Sell Price for Graphene Lattices & Plasteel.", 
+            specialty: "• +25% Sell Price: Plasteel & Graphene<br>• Massive structural import capacity<br>• Premium Endgame Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5,
                 [COMMODITY_IDS.PLASTEEL]: 0.5,
                 [COMMODITY_IDS.ANTIMATTER]: 2.0
-            } 
+            },
+            ecoProfile: { 
+                commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.03, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.03 }, 
+                dampeners: { [COMMODITY_IDS.PLASTEEL]: 0.5, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5 } 
+            },
+            intelProfile: { costMod: 1.30, minDiscount: 0.30, maxDiscount: 0.60, focusCats: ['RARE', 'BIO', 'TECH'] }
         },
         { 
             id: LOCATION_IDS.MERCURY, 
@@ -12273,11 +12274,13 @@ export const DB = {
             bg: 'bg-gradient-to-br from-stone-600 to-red-900', 
             fuelPrice: 500, 
             arrivalLore: "Cratered grey rock stretches endlessly, scorched by the relentless sun.", 
-            specialty: "Pays 40% more for Water Ice.", 
+            specialty: "• +40% Sell Price: Water Ice<br>• Extreme Water Ice volatility<br>• Fast-expiring Fringe Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.WATER_ICE]: 0.1,
                 [COMMODITY_IDS.PLASTEEL]: 2.0
-            } 
+            },
+            ecoProfile: { replenishRate: 0.05, panicMult: 2.0, commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.15 } },
+            intelProfile: { costMod: 0.75, durationMod: 0.90 }
         },
         { 
             id: LOCATION_IDS.VENUS, 
@@ -12290,13 +12293,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', 
             fuelPrice: 400, 
             arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", 
-            specialty: "Intel is 50% cheaper and lasts twice as long.", 
+            specialty: "• 50% Intel Discount & 2x Duration<br>• Highly volatile Tech market<br>• Focused on Data & Tech Goods", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
                 [COMMODITY_IDS.SENTIENT_AI]: 0.5,
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5
-            } 
+            },
+            ecoProfile: { pressureMod: 1.15 },
+            intelProfile: { focusCats: ['TECH'] }
         },
         { 
             id: LOCATION_IDS.EARTH, 
@@ -12309,13 +12314,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-slate-900', 
             fuelPrice: 250, 
             arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", 
-            specialty: "Cloned Organs & Xeno-Geologicals sell for 10% more.", 
+            specialty: "• +10% Sell Price: Organs & Xeno-Geology<br>• Highly stable, inelastic prices<br>• Premium Corp-Espionage Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.HYDROPONICS]: 2.0, 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0, 
                 [COMMODITY_IDS.CLONED_ORGANS]: 0.5, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 
-            } 
+            },
+            ecoProfile: { pressureMod: 0.70 },
+            intelProfile: { costMod: 1.15, durationMod: 1.20, focusCats: ['BIO', 'TECH'] }
         },
         { 
             id: LOCATION_IDS.LUNA, 
@@ -12329,13 +12336,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-gray-700 to-slate-900', 
             fuelPrice: 350, 
             arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", 
-            specialty: "20% discount on all ship repairs.", 
+            specialty: "• 20% Discount on Ship Repairs<br>• Fast raw material restock<br>• Reliable Industrial Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.WATER_ICE]: 0.5, 
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
-            } 
+            },
+            ecoProfile: { replenishRate: 0.12 },
+            intelProfile: { focusCats: ['IND', 'RAW'] }
         },
         { 
             id: LOCATION_IDS.MARS, 
@@ -12348,13 +12357,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-900 to-slate-900', 
             fuelPrice: 450, 
             arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", 
-            specialty: "+10% Sell Price for Water Ice and Hydroponics.", 
+            specialty: "• +10% Sell Price: Water & Hydroponics<br>• Slow agricultural restock<br>• Standard Market Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.WATER_ICE]: 0.5, 
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
-            } 
+            },
+            ecoProfile: { commodityReplenishRates: { [COMMODITY_IDS.HYDROPONICS]: 0.08, [COMMODITY_IDS.WATER_ICE]: 0.08 } },
+            intelProfile: {}
         },
         { 
             id: LOCATION_IDS.BELT, 
@@ -12367,13 +12378,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-stone-800 to-slate-900', 
             fuelPrice: 600, 
             arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", 
-            specialty: "Pending Declassification...", 
+            specialty: "• Rapid raw material restock<br>• Erratic, chaotic Intel market", 
             availabilityModifier: { 
                 [COMMODITY_IDS.WATER_ICE]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.HYDROPONICS]: 0.5, 
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
-            } 
+            },
+            ecoProfile: { replenishRate: 0.15 },
+            intelProfile: { minDiscount: 0.05, maxDiscount: 0.60, durationMod: 0.50, costMod: 0.80 }
         },
         { 
             id: LOCATION_IDS.EXCHANGE, 
@@ -12386,13 +12399,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', 
             fuelPrice: 1200, 
             arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", 
-            specialty: "Prices fluctuate dramatically.", 
+            specialty: "• 3x Price Volatility<br>• Extremely fragile market (crashes easily)<br>• Black Market Smuggler Intel", 
             availabilityModifier: {
                 [COMMODITY_IDS.SENTIENT_AI]: 2.0,
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0,
                 [COMMODITY_IDS.ANTIMATTER]: 0.5,
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5
-            } 
+            },
+            ecoProfile: { pressureMod: 1.30 },
+            intelProfile: { focusCats: ['TECH', 'BIO', 'RARE'] }
         },
         { 
             id: LOCATION_IDS.JUPITER, 
@@ -12405,12 +12420,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-orange-800 to-stone-900', 
             fuelPrice: 150, 
             arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", 
-            specialty: "Fuel is sold at a 50% discount.", 
+            specialty: "• 50% Discount on Fuel<br>• Highly stable Fuel market<br>• Industrial-focused Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROPELLANT]: 2.0, 
                 [COMMODITY_IDS.PLASTEEL]: 0.5, 
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
-            } 
+            },
+            ecoProfile: { dampeners: { [COMMODITY_IDS.PROPELLANT]: 0.20 }, commodityReplenishRates: { [COMMODITY_IDS.PROPELLANT]: 0.20 } },
+            intelProfile: { focusCats: ['IND'] }
         },
         { 
             id: LOCATION_IDS.SATURN, 
@@ -12423,12 +12440,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', 
             fuelPrice: 550, 
             arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", 
-            specialty: "+20% Sell Price for Cloned Organs & Cryo-Sleep Pods, but 200% Cost for Refueling & Repairs.", 
+            specialty: "• +20% Sell Price: Organs & Cryo Pods<br>• 200% Cost for Repairs & Fuel<br>• Premium Luxury Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0,
                 [COMMODITY_IDS.CRYO_PODS]: 0.5, 
                 [COMMODITY_IDS.CLONED_ORGANS]: 0.5 
-            } 
+            },
+            ecoProfile: { recoveryMod: 1.25 },
+            intelProfile: { costMod: 1.25, minDiscount: 0.25, focusCats: ['CIV', 'BIO'] }
         },
         { 
             id: LOCATION_IDS.URANUS, 
@@ -12441,12 +12460,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', 
             fuelPrice: 700, 
             arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", 
-            specialty: "Increased chance for advanced ship upgrades to appear in the tuning shop.", 
+            specialty: "• High chance of Advanced Upgrades<br>• Standard market elasticity<br>• Tech & Rare-focused Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
                 [COMMODITY_IDS.SENTIENT_AI]: 0.5, 
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
-            } 
+            },
+            ecoProfile: {},
+            intelProfile: { focusCats: ['TECH', 'RARE'] }
         },
         { 
             id: LOCATION_IDS.NEPTUNE, 
@@ -12459,13 +12480,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-blue-900 to-black', 
             fuelPrice: 650, 
             arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", 
-            specialty: "Buying Refined Propellant or Plasteel in quantities > 50 grants a 10% Bulk Discount.", 
+            specialty: "• 10% Bulk Discount: Fuel & Plasteel (>50)<br>• Rigid, unfluctuating prices<br>• Tactical Military Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CRYO_PODS]: 2.0,
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0,
                 [COMMODITY_IDS.PLASTEEL]: 0.5, 
                 [COMMODITY_IDS.PROPELLANT]: 0.5 
-            } 
+            },
+            ecoProfile: { disableFluctuation: true, meanReversionMod: 1.25 },
+            intelProfile: { focusCats: ['CIV', 'IND'] }
         },
         { 
             id: LOCATION_IDS.KEPLER, 
@@ -12478,12 +12501,14 @@ export const DB = {
             bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', 
             fuelPrice: 800, 
             arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", 
-            specialty: "15% Discount on all financing and debt payments.", 
+            specialty: "• 15% Discount on Debt & Financing<br>• Double Intel Packet generation", 
             availabilityModifier: {
                 [COMMODITY_IDS.ANTIMATTER]: 2.0,
                 [COMMODITY_IDS.FOLDED_DRIVES]: 0.5,
                 [COMMODITY_IDS.PROCESSORS]: 0.5
-            } 
+            },
+            ecoProfile: {},
+            intelProfile: { packetMultiplier: 2 }
         },
         { 
             id: LOCATION_IDS.PLUTO, 
@@ -12496,13 +12521,15 @@ export const DB = {
             bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', 
             fuelPrice: 900, 
             arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", 
-            specialty: "+25% Sell Price on Cybernetics & Antimatter, but few supplies are available.", 
+            specialty: "• +25% Sell Price: Cybernetics & Antimatter<br>• Extreme price panic on depletion<br>• Jackpot Smuggler Intel (Deep Discounts)", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.ANTIMATTER]: 0.5,
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
-            } 
+            },
+            ecoProfile: { replenishRate: 0.05, panicMult: 2.0 },
+            intelProfile: { minDiscount: 0.40, maxDiscount: 0.75, focusCats: ['BIO', 'TECH', 'RARE'] }
         }
     ],
 
@@ -17157,7 +17184,7 @@ export const SYSTEM_STATE_REGISTRY = {
             "Standard macroeconomic conditions apply. No major disruptions reported.",
             "Guild forecasts predict a prolonged period of economic baseline stability."
         ],
-        quantitativeDisplay: "<span style=\"color: var(--color-text-muted);\">The system economy is operating under normal, baseline parameters.</span>",
+        quantitativeDisplay: "<span style=\"color: var(--color-text-muted);\">The solar system economy is neutral and stable.</span>",
         modifiers: {}
     },
     'GUILD_EMBARGO': {
@@ -17220,21 +17247,6 @@ export const SYSTEM_STATE_REGISTRY = {
             affectedCommodities: [COMMODITY_IDS.PLASTEEL, COMMODITY_IDS.GRAPHENE_LATTICES, COMMODITY_IDS.ATMO_PROCESSORS],
             basePriceInflate: 1.35,
             targetStockMod: 2.0
-        }
-    },
-    'GUILD_FLEET_SUBSIDIZATION': {
-        name: 'Guild Fleet Subsidization',
-        archetype: 'Charitable Market (Beneficial)',
-        durationBounds: [240, 1387],
-        varietals: [
-            "To stimulate sluggish trade routes, the Merchant's Guild has temporarily abolished all convoy transit taxes. Furthermore, shipyards are receiving massive kickbacks to sell hulls at a steep discount.",
-            "A system-wide initiative to expand the independent merchant marine is in full swing. Traveling with a massive fleet will no longer incur extra fuel penalties, and new ships are cheaper than ever.",
-            "Corporate logistics hubs are practically begging independent captains to carry more cargo. They have subsidized the shipyards to slash prices and forced traffic control to waive all convoy flight taxes."
-        ],
-        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Traveling with multiple ships costs absolutely no extra fuel, and all new ships in the shipyard are 30% cheaper.</span>",
-        modifiers: {
-            convoyTaxWaiver: true,
-            shipyardPriceMod: 0.70
         }
     },
     'BLACK_MARKET_BLUEPRINT_LEAK': {
@@ -18309,15 +18321,11 @@ export class UIEventControl {
              `<span class="commodity-tag" style="border-color: ${tag.style.hex}; background-color: ${tag.style.hex}20; color: ${tag.style.hex};">${tag.name}</span>`
          ).join('');
 
-        const quirks = GameAttributes.getStationQuirks(locationId);
         let quirksHtml = '';
-        if (quirks.length > 0) {
-            quirksHtml = quirks.map(qId => {
-                const def = GameAttributes.getDefinition(qId);
-                 return `<p class="font-roboto-mono imprinted-text-embedded" style="color: #facc15;">${def.description}</p>`;
-            }).join('');
+        if (location.specialty) {
+            quirksHtml = `<p class="font-roboto-mono text-sm leading-relaxed imprinted-text-embedded" style="color: #facc15;">${location.specialty}</p>`;
         } else {
-            quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">${location.specialty || 'None reported'}</p>`;
+            quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">None reported</p>`;
         }
 
         const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
@@ -18965,13 +18973,12 @@ export class UIHelpManager {
     }
 
     _injectDOM() {
-        const gameContainer = document.getElementById('game-container');
-        if (!gameContainer) return;
-
-        // Defensively prevent duplicate injection
+        // Break free of the game-container and inject directly to document.body 
+        // to bypass local stacking contexts or opacity constraints.
+        // [FIX A] Initialized with display: none to prevent leaking onto the Start Screen.
         if (!document.getElementById('global-help-anchor')) {
-            const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help">?</button>`;
-            gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
+            const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help" style="display: none;">?</button>`;
+            document.body.insertAdjacentHTML('beforeend', anchorHTML);
         }
 
         if (!document.getElementById('help-modal-overlay')) {
@@ -18989,7 +18996,7 @@ export class UIHelpManager {
                     </div>
                 </div>
             `;
-            gameContainer.insertAdjacentHTML('beforeend', modalHTML);
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
         }
     }
 
@@ -19618,24 +19625,30 @@ export class UIHangarControl {
                 modalContent.classList.remove('intro-modal-width');
             }
 
-            // [FIX C] Provide the correct .jpeg image variants for the starter modal
+            // WebP Image Paths Fix
             let imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
             if (context === 'intro_shipyard') {
-                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/images/ships/Wanderer/Wanderer_F.jpeg';
-                if (shipId === 'Mule.Ship') imageSrc = 'assets/images/ships/Mule/Mule_H.jpeg';
-                if (shipId === 'Nomad.Ship') imageSrc = 'assets/images/ships/Nomad/Nomad_A.jpeg';
+                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+                if (shipId === 'Mule.Ship') imageSrc = 'assets/images/ships/Mule/Mule_H.webp';
+                if (shipId === 'Nomad.Ship') imageSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
             }
 
+            // Negative margins (-mx-4) to expand the image visually into the modal padding
             const largeImageHtml = context === 'intro_shipyard' ? 
-                `<div class="flex justify-center my-2">
-                    <img src="${imageSrc}" class="w-full max-w-[280px] h-auto object-contain drop-shadow-2xl rounded border border-gray-600 bg-gray-800 bg-opacity-60 p-2" />
+                `<div class="flex justify-center my-4 -mx-4">
+                    <img src="${imageSrc}" class="w-full max-w-[400px] aspect-square object-cover drop-shadow-2xl rounded border border-gray-600 bg-gray-800 bg-opacity-60 p-2" />
                 </div>` : '';
 
             // Swap to short description instead of lore for the intro
             const textContent = context === 'intro_shipyard' ? shipStatic.description : shipStatic.lore;
             
             // Add style for font size explicitly for intro context
-            const titleStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.25rem + 2pt);"' : '';
+            const titleStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.25rem + 3pt);"' : '';
+            const pStyle = context === 'intro_shipyard' ? 'style="font-size: calc(0.875rem + 1pt);"' : '';
+            const costStyle = context === 'intro_shipyard' ? 'style="font-size: calc(1.125rem + 1pt);"' : '';
+            const paramStyle = context === 'intro_shipyard' ? 'style="font-size: calc(0.875rem + 2pt);"' : '';
+            const titleColorClass = context === 'intro_shipyard' ? 'text-white' : 'text-cyan-300';
+            const valBoldClass = context === 'intro_shipyard' ? 'font-bold' : '';
 
             const btnHtml = context === 'intro_shipyard' 
                 ? `<button id="intro-purchase-btn" class="btn w-full mt-2" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`
@@ -19645,19 +19658,19 @@ export class UIHangarControl {
                 <div class="ship-card p-4 flex flex-col space-y-3">
                     <div class="flex justify-between items-start">
                         <div>
-                             <h3 class="text-xl font-orbitron text-cyan-300" ${titleStyle}>${shipStatic.name}</h3>
-                            <p class="text-sm text-gray-400">Class ${shipStatic.class}</p>
+                             <h3 class="text-xl font-orbitron ${titleColorClass}" ${titleStyle}>${shipStatic.name}</h3>
+                            <p class="text-sm text-gray-400" ${pStyle}>Class ${shipStatic.class}</p>
                          </div>
                         <div class="text-right">
-                             <p class="text-lg font-bold text-cyan-300">${formatCredits(shipStatic.price)}</p>
+                             <p class="text-lg font-bold text-cyan-300" ${costStyle}>${formatCredits(shipStatic.price)}</p>
                         </div>
                     </div>
-                     <p class="text-sm text-gray-400 flex-grow text-left">${textContent}</p>
+                     <p class="text-sm text-gray-400 flex-grow text-left" ${pStyle}>${textContent}</p>
                      ${largeImageHtml}
-                    <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2">
-                        <div><span class="text-gray-500">Hull:</span><br><span class="text-green-400">${shipStatic.maxHealth}</span></div>
-                        <div><span class="text-gray-500">Fuel:</span><br><span class="text-sky-400">${shipStatic.maxFuel}</span></div>
-                        <div><span class="text-gray-500">Cargo:</span><br><span class="text-amber-400">${shipStatic.cargoCapacity}</span></div>
+                    <div class="grid grid-cols-3 gap-x-4 text-sm font-roboto-mono text-center pt-2" ${paramStyle}>
+                        <div><span class="text-gray-500">Hull:</span><br><span class="text-green-400 ${valBoldClass}">${shipStatic.maxHealth}</span></div>
+                        <div><span class="text-gray-500">Fuel:</span><br><span class="text-sky-400 ${valBoldClass}">${shipStatic.maxFuel}</span></div>
+                        <div><span class="text-gray-500">Cargo:</span><br><span class="text-amber-400 ${valBoldClass}">${shipStatic.cargoCapacity}</span></div>
                     </div>
                      ${btnHtml}
                 </div>`;
@@ -23414,6 +23427,10 @@ export class GameState {
         // Strip ephemeral properties
         stateCopy.pendingTravel = null;
         stateCopy.introSequenceActive = false;
+
+        // Force loaded games to start on the missions screen
+        stateCopy.activeNav = NAV_IDS.DATA;
+        stateCopy.activeScreen = SCREEN_IDS.MISSIONS;
         
         // Revert UI state to safe defaults
         stateCopy.uiState = {
@@ -23519,7 +23536,7 @@ export class GameState {
 
         const initialState = {
             slotId: null, // V4 SYSTEM: Track active save slot
-            day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.SHIP, activeScreen: SCREEN_IDS.NAVIGATION, isGameOver: false,
+            day: 1, lastInterestChargeDay: 1, lastMarketUpdateDay: 1, currentLocationId: LOCATION_IDS.MARS, activeNav: NAV_IDS.DATA, activeScreen: SCREEN_IDS.MISSIONS, isGameOver: false,
             subNavCollapsed: false,
             introSequenceActive: true,
             lastActiveScreen: {
@@ -25931,6 +25948,12 @@ export class MarketService {
             commodityId === COMMODITY_IDS.WATER_ICE) {
             price = price * 1.40;
         }
+
+        // Sol Quirk: +25% Sell Price for Graphene Lattices & Plasteel
+        if (locationId === LOCATION_IDS.SUN &&
+            (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
+            price = price * 1.25;
+        }
         // --- END VIRTUAL WORKBENCH ---
 
         // 2. Upgrade Modifiers (Signal Hacker)
@@ -26054,6 +26077,11 @@ export class MarketService {
                 // --- END VIRTUAL WORKBENCH ---
 
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH * activeStateMeanReversionMod;
+                
+                // Apply Location EcoProfile Mean Reversion Modifier
+                if (location.ecoProfile?.meanReversionMod) {
+                    meanReversion *= location.ecoProfile.meanReversionMod;
+                }
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
@@ -26104,7 +26132,7 @@ export class MarketService {
                 // --- NEW: Depletion Price Hike ---
                 let priceHikeMultiplier = 1.0;
                 if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
-                    priceHikeMultiplier = 1.5; // 50% more acceleration
+                    priceHikeMultiplier = location.ecoProfile?.panicMult ?? 1.5; // Defaults to 1.5, scaling up for fringe/desperate worlds
                     // We check depletionDay + 7, so this effect lasts for the whole week
                     // We reset the flag *after* it's been used in replenishment
                 }
@@ -26119,7 +26147,13 @@ export class MarketService {
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
                 // marketPressure still decays, as this is the "timer" for the pressureEffect
-                inventoryItem.marketPressure *= GAME_RULES.MARKET_PRESSURE_DECAY;
+                let decayMod = 1.0;
+                // e.g. Saturn Quirk: Recovers from negative market pressure (player crashes = positive pressure) faster
+                if (inventoryItem.marketPressure > 0 && location.ecoProfile?.recoveryMod) {
+                    decayMod = 1.0 / location.ecoProfile.recoveryMod;
+                }
+
+                inventoryItem.marketPressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) {
                     inventoryItem.marketPressure = 0;
                 }
@@ -26145,7 +26179,9 @@ export class MarketService {
                 const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
 
                 let targetStockMod = 1.0;
-                let replenishRate = 0.10;
+                
+                // Dynamically fetch base replenish rate from Location EcoProfile, falling back to global default (10%)
+                let replenishRate = market.ecoProfile?.commodityReplenishRates?.[c.id] ?? market.ecoProfile?.replenishRate ?? 0.10;
 
                 if (activeStateDef && activeStateDef.modifiers) {
                     const mods = activeStateDef.modifiers;
@@ -26216,10 +26252,12 @@ export class MarketService {
                 }
 
                 // Phase 3: Apply Final Visual Fluctuation
-                const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
-                const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
-                const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
-                inventoryItem.quantity *= finalFluctuation;
+                if (!market.ecoProfile?.disableFluctuation) {
+                    const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
+                    const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
+                    const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
+                    inventoryItem.quantity *= finalFluctuation;
+                }
                 
                 // Apply system state modifiers if any exist.
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
@@ -26239,11 +26277,14 @@ export class MarketService {
      */
     applyMarketImpact(goodId, quantity, transactionType) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
+        let pressureMod = market?.ecoProfile?.dampeners?.[goodId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
+
         // This calculation is the core driver of the price change.
         // It sets marketPressure, which is used by pressureEffect after 7 days.
-        const pressureChange = ((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10;
+        const pressureChange = (((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
         
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;
@@ -27747,6 +27788,15 @@ export class IntroService {
         if (!this.gameState.introSequenceActive) return;
         this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
         
+        // [FIX] Force inline display: none to override CSS ID specificity
+        const econBtn = document.getElementById('btn-econ-weather');
+        if (econBtn) econBtn.style.display = 'none';
+
+        // Ensure the Help Anchor is completely suppressed early in the intro.
+        if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
+            this.uiManager.helpManager.anchorBtn.style.display = 'none';
+        }
+        
         // Set the initial state for the intro (strips debug/default items)
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
@@ -27991,6 +28041,15 @@ export class IntroService {
         this._transitioning = false;
         
         this.uiManager.showGameContainer();
+
+        // [FIX] Force inline display: none to override CSS ID specificity
+        const econBtn = document.getElementById('btn-econ-weather');
+        if (econBtn) econBtn.style.display = 'none';
+
+        // Restore Help Anchor visibility specifically for the selection sequence
+        if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
+            this.uiManager.helpManager.anchorBtn.style.display = 'flex';
+        }
         
         const overlay = document.createElement('div');
         overlay.id = 'starter-ship-selection-overlay';
@@ -28000,20 +28059,17 @@ export class IntroService {
             {
                 id: 'Wanderer.Ship',
                 roleClass: 'text-sky-400',
-                borderClass: 'border-pulse-explorer',
-                desc: 'A larger fuel tank means more trips before refilling.'
+                borderClass: 'border-pulse-explorer'
             },
             {
                 id: 'Nomad.Ship',
                 roleClass: 'text-emerald-400',
-                borderClass: 'border-pulse-balanced',
-                desc: 'Sturdy and resilient against wear and tear.'
+                borderClass: 'border-pulse-balanced'
             },
             {
                 id: 'Mule.Ship',
                 roleClass: 'text-amber-400',
-                borderClass: 'border-pulse-hauler',
-                desc: 'At the cost of range, carry just a little more.'
+                borderClass: 'border-pulse-hauler'
             }
         ];
 
@@ -28026,16 +28082,20 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
+            // Corrected Fallbacks to WebP per Asset Update
             let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
-            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.jpeg';
-            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.jpeg';
-            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.jpeg';
+            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
+            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
             
             btn.innerHTML = `
-                <img src="${imgSrc}" alt="${shipStatic.name}" />
-                <span class="ship-name">${shipStatic.name}</span>
-                <span class="ship-role ${shipInfo.roleClass}">${shipStatic.role}</span>
-                <span class="ship-desc ${shipInfo.roleClass}">${shipInfo.desc}</span>
+                <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
+                    <img src="${imgSrc}" alt="${shipStatic.name}" style="transform: scale(1.3); object-fit: cover; width: 100%; height: 100%;" />
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; margin-top: 0.5rem;">
+                    <span class="ship-name">${shipStatic.name}</span>
+                    <span class="ship-role ${shipInfo.roleClass}">${shipStatic.role}</span>
+                </div>
             `;
             
             btn.onclick = (e) => {
@@ -28048,6 +28108,7 @@ export class IntroService {
 
         const narrativeBox = document.createElement('div');
         narrativeBox.className = 'starter-narrative-box';
+        narrativeBox.style.fontSize = 'calc(1rem + 3pt)';
         narrativeBox.innerHTML = "Now that you've got some credits, it's time to purchase your first ship. Make your selection carefully to begin your journey.";
 
         overlay.appendChild(container);
@@ -28110,7 +28171,7 @@ export class IntroService {
             gameContainer.style.filter = 'blur(10px)';
         }
 
-        // Boot the core game loop, generating the Hangar layout invisibly
+        // Boot the core game loop, generating the UI layout invisibly
         this._end();
 
         // Hold for the remaining 2 seconds of the Starfield scene
@@ -28154,16 +28215,20 @@ export class IntroService {
         this.gameState.introSequenceActive = false;
         this._transitioning = false;
         
-        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Hangar.');
+        this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Missions.');
         
+        // Restore Economic Weather button visibility via inline styles
+        const econBtn = document.getElementById('btn-econ-weather');
+        if (econBtn) econBtn.style.display = '';
+
         // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
 
         // Reveal the main layout
         this.uiManager.showGameContainer();
         
-        // Set context to the Hangar/Shipyard screen
-        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+        // Set context to the Missions screen
+        this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
         
         // Force the master render cycle to execute, naturally triggering the Help Modal
         this.uiManager.render(this.gameState.getState());
@@ -28401,7 +28466,7 @@ export class MissionTriggerEvaluator {
 --- END OF FILE: ./js/services/mission/MissionTriggerEvaluator.js ---
 
 --- START OF FILE: ./js/services/SimulationService.js ---
-// js/services/SimulationService.js (Appended and Modified)
+// js/services/SimulationService.js
 /**
  * @fileoverview This file contains the SimulationService class, which acts as the core game engine
  * facade. It instantiates all specialized game logic services and delegates calls to them,
@@ -28512,13 +28577,6 @@ export class SimulationService {
             // Execute asynchronous save
             await saveStorageService.saveGame(this.gameState.slotId, payload);
             this.logger.info.system('SimulationService', this.gameState.day, 'SAVE_COMPLETE', `Auto-saved to ${this.gameState.slotId}`);
-
-            // One-Time Notification on first successful save post-tutorial
-            if (!this.gameState.player.seenAutoSaveNotice && !this.gameState.introSequenceActive) {
-                this.gameState.player.seenAutoSaveNotice = true;
-                this.uiManager.queueModal('event-modal', 'Auto-Save Enabled', 'Notice: Orbital Trading automatically saves your progress in the background every time you arrive safely at a station.');
-                this.gameState.setState({});
-            }
         } catch (error) {
             this.logger.error('SimulationService', `Background auto-save failed: ${error.message}`);
         }
@@ -31506,7 +31564,8 @@ export class UIManager {
         this.isMobile = window.innerWidth <= 768;
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
-        this.lastSeenSystemStateId = null; // Used to track and trigger state change modals
+        this.lastSeenSystemStateId = null; 
+        this.hasTraveledThisSession = false; // Phase 3: Gate for Economic Weather Modal
         
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
@@ -31626,10 +31685,16 @@ export class UIManager {
         this.lastKnownState = gameState;
 
         if (gameState.introSequenceActive) {
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.add('hidden');
+            // [FIX] Force inline style display: none to override CSS ID specificity
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
             return;
         } else {
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.classList.remove('hidden');
+            // [FIX] Clear inline style so it reverts to the default display: flex in the CSS
+            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = '';
+            // Un-hide the help anchor strictly for normal gameplay loops
+            if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
+                this.helpManager.anchorBtn.style.display = 'flex';
+            }
         }
 
         this._applyTheme(gameState);
@@ -31826,14 +31891,11 @@ export class UIManager {
             return;
         }
 
-        // Capture scroll positions before wipe
         const screenScrollTop = screenEl.scrollTop;
         const childScrollTop = screenEl.firstElementChild ? screenEl.firstElementChild.scrollTop : 0;
 
-        // Execute the render (overwrites innerHTML)
         renderCallback();
 
-        // Restore after DOM update
         requestAnimationFrame(() => {
             if (screenScrollTop > 0) {
                 screenEl.scrollTop = screenScrollTop;
@@ -31851,25 +31913,21 @@ export class UIManager {
             this.solStationControl.resetScrollMemory();
         }
 
-        // --- SYSTEM STATES V3: Auto-Instantiation Hook ---
         const currentSystemStateId = gameState.systemState?.activeId;
         if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
             this.lastSeenSystemStateId = currentSystemStateId;
-            // Prevent auto-popups if we are just loading a fresh session (previousState is null)
-            // or if the intro is running.
-            if (previousState && !gameState.introSequenceActive) {
-                // Ensure we only trigger it upon arrival at a relevant market-facing screen
+            // Phase 3: Gate Economic Weather Modal Behind Travel Session
+            if (previousState && !gameState.introSequenceActive && this.hasTraveledThisSession) {
                 if (gameState.activeScreen === SCREEN_IDS.MARKET || 
                     gameState.activeScreen === SCREEN_IDS.SERVICES || 
                     gameState.activeScreen === SCREEN_IDS.HANGAR) {
                     
                     setTimeout(() => {
                         this.showEconWeatherModal(gameState);
-                    }, 500); // Slight delay guarantees it lands at the absolute back of UIModalEngine queue
+                    }, 500);
                 }
             }
         }
-        // --- END SYSTEM STATES V3 ---
 
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
         if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
@@ -31964,6 +32022,10 @@ export class UIManager {
 
     getCurrentHelpContextId(gameState) {
         if (!gameState || !gameState.player) return null;
+        
+        // Isolate Help Context during Intro Sequence
+        if (gameState.introSequenceActive) return 'intro-ship-selection';
+
         const { activeNav, activeScreen, solStation } = gameState;
         const uiState = gameState.uiState || {}; 
         const isSolStationUnlocked = solStation?.unlocked;
@@ -31984,7 +32046,6 @@ export class UIManager {
         }
         if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.FINANCE) return 'finance';
         if (activeNav === NAV_IDS.DATA && activeScreen === SCREEN_IDS.INTEL) {
-            // Evaluates using the correct DOM ID reference
             return uiState.activeIntelTab === 'intel-market-content' ? 'intel-market' : 'intel-codex';
         }
         return null;
@@ -32080,19 +32141,20 @@ export class UIManager {
     createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
-    // --- SYSTEM STATES V3: Econ Weather UI Orchestrator ---
     showEconWeatherModal(gameState = this.lastKnownState) {
         if (!gameState || !gameState.systemState) return;
         
         const sysStateId = gameState.systemState.activeId;
         
         if (!sysStateId || sysStateId === 'NEUTRAL') {
-            this.queueModal('econ-weather-modal', 'System Economy', '<p class="text-center text-gray-400 mt-4">Economy: Stable / Baseline</p>', null, { 
+            this.queueModal('econ-weather-modal', '<span style="font-size: calc(100% - 1pt);">Stable Economy</span>', '<p class="text-center text-gray-400 mt-4">The solar system economy is neutral and stable.</p>', null, { 
                 dismissOutside: true,
                 footer: null,
                 customSetup: (modal, closeHandler) => {
                     const closeBtn = modal.querySelector('#econ-weather-close-btn');
                     if (closeBtn) closeBtn.onclick = closeHandler;
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) modalContent.style.background = 'radial-gradient(circle, #1e293b, #0f172a)';
                 }
             });
             return;
@@ -32101,7 +32163,6 @@ export class UIManager {
         const stateDef = DB.SYSTEM_STATES[sysStateId];
         if (!stateDef) return;
 
-        // Fetch static varietal index, fallback to random if missing (e.g., from old save)
         const varietalIndex = gameState.systemState.varietalIndex !== undefined 
             ? gameState.systemState.varietalIndex 
             : Math.floor(Math.random() * stateDef.varietals.length);
@@ -32109,7 +32170,6 @@ export class UIManager {
         let narrativeText = stateDef.varietals[varietalIndex];
         let quantitativeText = stateDef.quantitativeDisplay;
 
-        // Format [Loc] dynamic injection for BOTH narrative and quantitative texts
         if (gameState.systemState.targetLocations && gameState.systemState.targetLocations.length > 0) {
             if (gameState.systemState.targetLocations.length === 1) {
                 const locName = DB.MARKETS.find(m => m.id === gameState.systemState.targetLocations[0])?.name || 'Unknown';
@@ -32129,19 +32189,33 @@ export class UIManager {
 
         const contentHtml = `
             <div class="flex flex-col items-center justify-center space-y-4">
-                <p class="text-left text-gray-300 italic">"${narrativeText}"</p>
-                <div class="w-full p-4 bg-slate-900 border border-slate-700 rounded text-center text-sm font-roboto-mono mt-4">
+                <p class="text-center text-gray-300 italic" style="font-size: calc(1rem - 2pt);">"${narrativeText}"</p>
+                <div class="w-full p-4 bg-slate-900 border border-slate-700 rounded text-center text-sm font-roboto-mono mt-4" style="font-size: calc(0.875rem + 2pt);">
                     ${quantitativeText}
                 </div>
             </div>
         `;
 
-        this.queueModal('econ-weather-modal', "Macroeconomic Alert", contentHtml, null, { 
+        const modalTitle = `<span style="font-size: calc(100% - 1pt);">${stateDef.name}</span>`;
+
+        this.queueModal('econ-weather-modal', modalTitle, contentHtml, null, { 
             dismissOutside: true,
             footer: null,
             customSetup: (modal, closeHandler) => {
                 const closeBtn = modal.querySelector('#econ-weather-close-btn');
                 if (closeBtn) closeBtn.onclick = closeHandler;
+                
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    const arch = stateDef.archetype || '';
+                    if (arch.includes('Beneficial') || arch.includes('Bull') || arch.includes('Charitable') || arch.includes('Expansive')) {
+                        modalContent.style.background = 'radial-gradient(circle, #064e3b, #0f172a)';
+                    } else if (arch.includes('Bear') || arch.includes('Restrictive') || arch.includes('Stagnant') || arch.includes('Collapse')) {
+                        modalContent.style.background = 'radial-gradient(circle, #450a0a, #0f172a)';
+                    } else {
+                        modalContent.style.background = 'radial-gradient(circle, #1e293b, #0f172a)';
+                    }
+                }
             }
         });
     }
@@ -32189,6 +32263,7 @@ export class UIManager {
     }
 
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
+        this.hasTraveledThisSession = true; // Phase 3: Gate trigger
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
     
@@ -32388,7 +32463,10 @@ export class UIManager {
         // The Video Element
         const videoEl = document.createElement('video');
         videoEl.id = 'intro-cinematic-video';
-        videoEl.src = 'assets/video/intro_cinematic.mp4';
+        
+        // --- PATH FIX ---
+        videoEl.src = 'assets/images/video/intro_cinematic.mp4';
+        
         videoEl.autoplay = true;
         videoEl.playsInline = true;
         videoEl.disablePictureInPicture = true;
@@ -32406,13 +32484,12 @@ export class UIManager {
         // The Skip Button (Orbital Trading Theme)
         const skipBtn = document.createElement('button');
         skipBtn.innerHTML = 'SKIP ⏭';
-        skipBtn.className = 'btn'; // Inherits your global.css .btn styles directly
+        skipBtn.className = 'btn'; 
         
-        // Apply only positioning and layout overrides
         Object.assign(skipBtn.style, {
             position: 'absolute', bottom: '30px', right: '20px', zIndex: '20',
             opacity: '0', pointerEvents: 'none',
-            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.8)', // Heavy drop shadow to pop against the video
+            boxShadow: '0 4px 15px rgba(0, 0, 0, 0.8)', 
             textTransform: 'uppercase'
         });
 
@@ -32426,7 +32503,6 @@ export class UIManager {
                 skipBtn.style.pointerEvents = 'auto';
                 skipVisible = true;
                 
-                // Auto-hide the button after 3 seconds if they don't tap it
                 skipTimeout = setTimeout(() => {
                     skipBtn.style.opacity = '0';
                     skipBtn.style.pointerEvents = 'none';
@@ -32446,7 +32522,7 @@ export class UIManager {
             videoEl.pause();
             videoEl.removeAttribute('src');
             videoEl.load();
-            container.remove(); // Destroys video, overlay, and button
+            container.remove(); 
             
             if (callback) callback();
         };
@@ -32456,10 +32532,12 @@ export class UIManager {
             finishCinematic();
         });
 
-        // Failsafes and Auto-Resolution
         videoEl.addEventListener('ended', finishCinematic);
         videoEl.addEventListener('error', finishCinematic);
-        setTimeout(finishCinematic, 32000);
+        
+        // --- TIMEOUT FIX --- 
+        // Extended failsafe to 110,000ms (110 seconds) to allow the 1m40s video to finish naturally.
+        setTimeout(finishCinematic, 110000); 
 
         // Assemble and Inject
         container.appendChild(videoEl);
@@ -34494,7 +34572,6 @@ export class IntelService {
             intelMarket[locationId] = purchasedPackets;
         }
 
-        
         // Iterate through all markets to generate new intel
         for (const location of this.db.MARKETS) {
             const locationId = location.id; // This is the SALE location
@@ -34506,7 +34583,10 @@ export class IntelService {
                 const existingKeys = intelMarket[locationId].map(p => p.messageKey).filter(Boolean);
                 const newKeysInBatch = new Set();
 
-                const numPackets = 1 + Math.floor(Math.random() * 3); // 1-3 packets
+                const baseNum = 1 + Math.floor(Math.random() * 3); // 1-3 packets
+                const mult = location.intelProfile?.packetMultiplier || 1;
+                const numPackets = Math.floor(baseNum * mult);
+
                 for (let i = 0; i < numPackets; i++) {
                     const unavailableKeys = [...existingKeys, ...newKeysInBatch];
                     const newPacket = this._createPacket(locationId, unavailableKeys);
@@ -34534,14 +34614,25 @@ export class IntelService {
         const state = this.gameState.getState();
         
         const revealedTier = state.player.revealedTier;
-        const unlockedCommodities = this.db.COMMODITIES
-             .filter(c => c.tier <= revealedTier)
-            .map(c => c.id);
+        const locationDef = this.db.MARKETS.find(m => m.id === saleLocationId);
+        const intelProfile = locationDef?.intelProfile || {};
+
+        let unlockedCommodities = this.db.COMMODITIES.filter(c => c.tier <= revealedTier);
 
         if (!unlockedCommodities || unlockedCommodities.length === 0) {
             this.logger.warn('IntelService', 'Cannot create packet: No unlocked commodities available for player\'s tier.');
             return null;
         }
+
+        // Apply Market Personality Focus Categories
+        if (intelProfile.focusCats && intelProfile.focusCats.length > 0) {
+            const focused = unlockedCommodities.filter(c => intelProfile.focusCats.includes(c.cat));
+            if (focused.length > 0) {
+                unlockedCommodities = focused; // Override with focused pool if player has unlocked them
+            }
+        }
+
+        const unlockedCommodityIds = unlockedCommodities.map(c => c.id);
 
         // Get the locations the player has actually visited and unlocked.
         const playerUnlockedLocations = state.player.unlockedLocationIds || [];
@@ -34559,11 +34650,18 @@ export class IntelService {
         }
         const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
 
-        const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
-        const discountPercent = 0.15 + Math.random() * 0.35; // 15% - 50%
-        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
+        const commodityId = unlockedCommodityIds[Math.floor(Math.random() * unlockedCommodityIds.length)];
         
-        const valueMultiplier = 1.0 + (discountPercent * 2) + (durationDays / 90);
+        // Calculate Discount using Intel Profile parameters (falling back to baseline 15-50%)
+        const minDiscount = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.15;
+        const maxDiscount = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.50;
+        const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
+
+        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
+        const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;
+        const effectiveDurationDays = durationDays * durationMod;
+        
+        const valueMultiplier = 1.0 + (discountPercent * 2) + (effectiveDurationDays / 90);
         
         const messageKeys = Object.keys(INTEL_CONTENT);
         if (messageKeys.length === 0) {
@@ -34614,6 +34712,12 @@ export class IntelService {
         // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         if (currentLocationId === LOCATION_IDS.VENUS) {
             base *= 0.5; // 50% discount at Venus
+        }
+
+        // Apply Local Eco Profile Cost Modifier
+        const locationDef = this.db.MARKETS.find(m => m.id === currentLocationId);
+        if (locationDef?.intelProfile?.costMod) {
+             base *= locationDef.intelProfile.costMod;
         }
 
         let finalPrice = base * packet.valueMultiplier;
@@ -34696,6 +34800,12 @@ export class IntelService {
         let durationMultiplier = 1.9; // Base multiplier
         if (state.currentLocationId === LOCATION_IDS.VENUS) {
             durationMultiplier *= 2.0; // Double duration at Venus
+        }
+
+        // Apply Local Eco Profile Duration Modifier
+        const locationDef = this.db.MARKETS.find(m => m.id === state.currentLocationId);
+        if (locationDef?.intelProfile?.durationMod) {
+             durationMultiplier *= locationDef.intelProfile.durationMod;
         }
 
         // --- PHASE 2: AGE PERK (INTEL DURATION) ---
@@ -37603,6 +37713,16 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.45] - 2026-3-3
+-  economic behavior update v4
+-  added intel recipiency to mercury and sol
+-  map POI station detail rewrites
+
+# [36.42] - 2026-3-3
+-  UI polish
+-  intro sequence polish
+-  system state polish
 
 # [36.39] - 2026-3-2
 -  added intro cinematic
