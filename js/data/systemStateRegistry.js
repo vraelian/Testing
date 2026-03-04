@@ -76,21 +76,6 @@ export const SYSTEM_STATE_REGISTRY = {
             targetStockMod: 2.0
         }
     },
-    'GUILD_FLEET_SUBSIDIZATION': {
-        name: 'Guild Fleet Subsidization',
-        archetype: 'Charitable Market (Beneficial)',
-        durationBounds: [240, 1387],
-        varietals: [
-            "To stimulate sluggish trade routes, the Merchant's Guild has temporarily abolished all convoy transit taxes. Furthermore, shipyards are receiving massive kickbacks to sell hulls at a steep discount.",
-            "A system-wide initiative to expand the independent merchant marine is in full swing. Traveling with a massive fleet will no longer incur extra fuel penalties, and new ships are cheaper than ever.",
-            "Corporate logistics hubs are practically begging independent captains to carry more cargo. They have subsidized the shipyards to slash prices and forced traffic control to waive all convoy flight taxes."
-        ],
-        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Traveling with multiple ships costs absolutely no extra fuel, and all new ships in the shipyard are 30% cheaper.</span>",
-        modifiers: {
-            convoyTaxWaiver: true,
-            shipyardPriceMod: 0.70
-        }
-    },
     'BLACK_MARKET_BLUEPRINT_LEAK': {
         name: 'Black Market Blueprint Leak',
         archetype: 'Opportunistic Market (High Volatility)',
