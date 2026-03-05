@@ -439,13 +439,17 @@ export class UIMissionControl {
                            
                            // RENDER HIJACK: Completely neutralize the aggressive DOM wipe!
                            uiManager.render = function(...args) {
-                               // Manually sync the sticky bar HUD
+                               const newState = args[0] || uiManager.lastKnownState;
+                               // Ensure the manager's cache is updated so subsequent local calls have fresh data
+                               uiManager.lastKnownState = newState;
+
+                               // Manually sync the sticky bar HUD with the fresh state
                                if (uiManager.missionControl) {
-                                   uiManager.missionControl.renderStickyBar(uiManager.lastKnownState);
+                                   uiManager.missionControl.renderStickyBar(newState);
                                }
 
-                               // Manually sync the star tracking icons
-                               const activeTrackedId = uiManager.lastKnownState.missions.trackedMissionId;
+                               // Manually sync the star tracking icons with the fresh state
+                               const activeTrackedId = newState.missions.trackedMissionId;
                                document.querySelectorAll('.mission-track-star').forEach(star => {
                                    if (star.dataset.missionId === activeTrackedId) {
                                        star.classList.add('active');

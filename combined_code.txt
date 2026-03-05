@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.46</title>
+    <title>Orbital Trading 36.48</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.46 - Polish Update</p>
+            <p>Version 36.48 - Polish Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -4035,6 +4035,30 @@ card.
     border-color: #ffffff !important;
     font-weight: bold !important;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* --- MISSION COMPLETE ANIMATION --- */
+.modal-blur-fade-out {
+    animation: modalBlurFadeOut 2s ease-out forwards !important;
+    pointer-events: none;
+}
+
+@keyframes modalBlurFadeOut {
+    0% { 
+        opacity: 1; 
+        transform: scale(1); 
+        filter: blur(0px); 
+    }
+    100% { 
+        opacity: 0; 
+        transform: scale(1.05); 
+        filter: blur(8px); 
+    }
+}
+
+.backdrop-fade-out-slow {
+    animation: simpleFadeOut 2s ease-out forwards !important;
+    pointer-events: none;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -17739,11 +17763,20 @@ export class UIMissionControl {
             dismissOutside: true, 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
+                
+                // Safely clean up animation states from previous custom injections
+                modalContent.classList.remove('modal-blur-fade-out');
+                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
+
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                 const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
-                modal.querySelector('#mission-modal-type').textContent = mission.type;
+                const typeEl = modal.querySelector('#mission-modal-type');
+                if (typeEl) {
+                    typeEl.textContent = mission.type;
+                    typeEl.style.display = 'block';
+                }
 
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
                 const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>${this._getObjectiveDescription(obj)}</li>`).join('') + '</ul>';
@@ -17818,16 +17851,71 @@ export class UIMissionControl {
     }
 
     _showMissionCompletionModal(mission) {
+        // --- PHASE 2: PREDICTIVE CARGO OVERFLOW CHECK ---
+        let rewardVolume = 0;
+        if (mission.rewards) {
+            mission.rewards.forEach(r => {
+                if (r.type === 'item' || r.type === 'cargo' || r.target) {
+                    // Quick check if target ID matches a physical commodity
+                    const isCommodity = DB.COMMODITIES.some(c => c.id === (r.goodId || r.target));
+                    if (isCommodity) {
+                        rewardVolume += (r.amount || r.quantity || 1);
+                    }
+                }
+            });
+        }
+
+        let hasSpace = true;
+        let capacityWarningHtml = '';
+
+        if (rewardVolume > 0) {
+            let totalFreeSpace = 0;
+            const state = this.manager.lastKnownState;
+            if (state && state.player && state.player.ownedShipIds) {
+                for (const shipId of state.player.ownedShipIds) {
+                    const maxCap = this.manager.simulationService ? 
+                        this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                        (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                    
+                    let used = 0;
+                    const inventory = state.player.inventories[shipId];
+                    if (inventory) {
+                        for (const item of Object.values(inventory)) {
+                            used += (item.quantity || 0);
+                        }
+                    }
+                    totalFreeSpace += Math.max(0, maxCap - used);
+                }
+            }
+            if (rewardVolume > totalFreeSpace) {
+                hasSpace = false;
+                capacityWarningHtml = `
+                    <div class="mt-4 p-2 bg-red-900/40 border border-red-500 rounded text-red-200 text-xs font-bold font-orbitron animate-pulse shadow-lg">
+                        CARGO OVERFLOW: REQUIRES ${rewardVolume} SPACE (${Math.floor(totalFreeSpace)} AVAILABLE)
+                    </div>
+                `;
+            }
+        }
+        // --- END OVERFLOW CHECK ---
+
         const options = {
-           dismissOutside: true,
+           dismissOutside: true, // Allow tapping away to cancel
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
+               
+               // Safely clean up animation states from previous custom injections
+               modalContent.classList.remove('modal-blur-fade-out');
+               modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
+
                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                modalContent.classList.add(hostClass);
 
                modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
-               modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
+               
+               const typeEl = modal.querySelector('#mission-modal-type');
+               if (typeEl) typeEl.style.display = 'none';
+               
                modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
 
                const objectivesEl = modal.querySelector('#mission-modal-objectives');
@@ -17839,7 +17927,11 @@ export class UIMissionControl {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                        return r.type.toUpperCase();
                    }).join(', ');
-                   rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
+                   rewardsEl.innerHTML = `
+                       <p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p>
+                       <p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>
+                       ${capacityWarningHtml}
+                   `;
                    rewardsEl.style.display = 'block';
                } else {
                    rewardsEl.innerHTML = '';
@@ -17847,7 +17939,123 @@ export class UIMissionControl {
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
-               buttonsEl.innerHTML = `<button class="btn w-full btn-pulse-green" data-action="complete-mission" data-mission-id="${mission.id}">${mission.completion.buttonText}</button>`;
+               buttonsEl.innerHTML = '';
+               
+               const completeBtn = document.createElement('button');
+               completeBtn.className = hasSpace ? 'btn w-full btn-pulse-green' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
+               completeBtn.textContent = hasSpace ? mission.completion.buttonText : 'INSUFFICIENT CARGO SPACE';
+               completeBtn.disabled = !hasSpace;
+
+               completeBtn.onclick = () => {
+                   completeBtn.disabled = true;
+
+                   // Lock the modal specifically so the player cannot back out mid-sequence
+                   modal.dataset.dismissOutside = 'false';
+                   modal.classList.add('dismiss-disabled');
+
+                   // Execute CSS blur-fade effect for content AND backdrop fade out
+                   modalContent.classList.add('modal-blur-fade-out');
+                   modal.classList.add('backdrop-fade-out-slow');
+
+                   // Wait for the 2-second modal fade to finish
+                   setTimeout(() => {
+                       // SURGICAL MODAL CLEANUP (Bypass UIModalEngine hideModal entirely to prevent animationend conflicts)
+                       modal.classList.add('hidden');
+                       modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                       delete modal.dataset.theme;
+                       delete modal.dataset.dismissInside;
+                       delete modal.dataset.dismissOutside;
+
+                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                           this.manager.modalEngine.processModalQueue();
+                       }
+
+                       // FIND AND ANIMATE THE CARD IN THE LOG
+                       const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
+                       
+                       const finalizeCompletion = () => {
+                           const uiManager = this.manager;
+                           const originalRender = uiManager.render;
+                           
+                           // RENDER HIJACK: Completely neutralize the aggressive DOM wipe!
+                           uiManager.render = function(...args) {
+                               const newState = args[0] || uiManager.lastKnownState;
+                               // Ensure the manager's cache is updated so subsequent local calls have fresh data
+                               uiManager.lastKnownState = newState;
+
+                               // Manually sync the sticky bar HUD with the fresh state
+                               if (uiManager.missionControl) {
+                                   uiManager.missionControl.renderStickyBar(newState);
+                               }
+
+                               // Manually sync the star tracking icons with the fresh state
+                               const activeTrackedId = newState.missions.trackedMissionId;
+                               document.querySelectorAll('.mission-track-star').forEach(star => {
+                                   if (star.dataset.missionId === activeTrackedId) {
+                                       star.classList.add('active');
+                                   } else {
+                                       star.classList.remove('active');
+                                   }
+                               });
+                           };
+
+                           // Trigger State Update (Internal logic will hit our hijacked render)
+                           if (this.manager.simulationService) {
+                               this.manager.simulationService.missionService.completeMission(mission.id);
+                           }
+                           
+                           // Restore the standard render pipeline immediately after the state tick concludes
+                           uiManager.render = originalRender;
+                           closeHandler(); // Signal modal engine that we are done
+                       };
+
+                       if (card) {
+                           // Capture exact dimensions to perform a perfectly smooth collapse
+                           const height = card.offsetHeight;
+                           const computedStyle = window.getComputedStyle(card);
+                           const marginTop = computedStyle.marginTop;
+                           const marginBottom = computedStyle.marginBottom;
+                           const paddingTop = computedStyle.paddingTop;
+                           const paddingBottom = computedStyle.paddingBottom;
+
+                           // Lock layout to prevent jitter while shrinking
+                           card.style.overflow = 'hidden';
+                           card.style.boxSizing = 'border-box';
+                           
+                           // PERF OPTIMIZATION: Two-Phase "Invisible Stripping" Animation
+                           // Phase 1: Scale and fade out (Visual)
+                           const fadeAnim = card.animate([
+                               { opacity: 1, transform: 'scale(1)' },
+                               { opacity: 0, transform: 'scale(0.95)' }
+                           ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
+
+                           fadeAnim.onfinish = () => {
+                               // Strip heavy CSS rendering instantly now that it is invisible.
+                               // This prevents layout reflows from recalculating shadows and blurs.
+                               card.style.backdropFilter = 'none';
+                               card.style.webkitBackdropFilter = 'none';
+                               card.style.boxShadow = 'none';
+                               card.style.background = 'none';
+                               card.style.border = 'none';
+
+                               // Phase 2: Collapse physical layout (Fast CPU calculation now)
+                               const collapseAnim = card.animate([
+                                   { height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom },
+                                   { height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px' }
+                               ], { duration: 350, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+
+                               collapseAnim.onfinish = () => {
+                                   card.remove(); // Safely rip it out of the DOM immediately
+                                   finalizeCompletion();
+                               };
+                           };
+                       } else {
+                           // Fallback if card isn't found (e.g. completed via Map context)
+                           finalizeCompletion();
+                       }
+                   }, 2000);
+               };
+               buttonsEl.appendChild(completeBtn);
            }
         };
        this.manager.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
@@ -37794,6 +38002,11 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.48] - 2026-3-5
+-  mission screen bug fixes
+-  map screen POI modal polish
+-  
 
 # [36.46] - 2026-3-4
 -  mission screen polish
