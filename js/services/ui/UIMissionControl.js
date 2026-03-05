@@ -223,6 +223,11 @@ export class UIMissionControl {
             dismissOutside: true, 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
+                
+                // CLEANUP PREVIOUS STATES SAFELY
+                modalContent.classList.remove('modal-blur-fade-out');
+                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
+
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                 const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                 modalContent.classList.add(hostClass);
@@ -307,9 +312,14 @@ export class UIMissionControl {
 
     _showMissionCompletionModal(mission) {
         const options = {
-           dismissOutside: true,
+           dismissOutside: true, // Allow tapping away to cancel
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
+               
+               // CLEANUP PREVIOUS STATES SAFELY
+               modalContent.classList.remove('modal-blur-fade-out');
+               modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
+
                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                modalContent.classList.add(hostClass);
@@ -346,6 +356,10 @@ export class UIMissionControl {
                completeBtn.onclick = () => {
                    completeBtn.disabled = true;
 
+                   // Lock the modal specifically so the player cannot back out mid-sequence
+                   modal.dataset.dismissOutside = 'false';
+                   modal.classList.add('dismiss-disabled');
+
                    // Execute CSS blur-fade effect for content AND backdrop fade out
                    modalContent.classList.add('modal-blur-fade-out');
                    modal.classList.add('backdrop-fade-out-slow');
@@ -355,33 +369,36 @@ export class UIMissionControl {
                        const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
                        
                        const finalizeCompletion = () => {
-                           // Suppress entry animations to prevent remaining cards from blinking/re-animating on redraw
-                           const styleId = 'mission-anim-suppress';
-                           if (!document.getElementById(styleId)) {
-                               const style = document.createElement('style');
-                               style.id = styleId;
-                               style.innerHTML = '.mission-card { animation: none !important; transition: none !important; }';
-                               document.head.appendChild(style);
-                           }
+                           const uiManager = this.manager;
+                           const originalRender = uiManager.render;
+                           
+                           // Temporarily hijack the render loop to neutralize sibling entry animations seamlessly
+                           uiManager.render = function(...args) {
+                               originalRender.apply(uiManager, args);
+                               const panel = document.querySelector('.missions-scroll-panel');
+                               if (panel) {
+                                   const cards = panel.querySelectorAll('.mission-card');
+                                   cards.forEach(c => {
+                                       c.style.setProperty('animation', 'none', 'important');
+                                   });
+
+                                   // Lift the inline lock safely after the first paint
+                                   requestAnimationFrame(() => {
+                                       requestAnimationFrame(() => {
+                                           cards.forEach(c => c.style.removeProperty('animation'));
+                                       });
+                                   });
+                               }
+                           };
 
                            if (this.manager.simulationService) {
                                this.manager.simulationService.missionService.completeMission(mission.id);
                            }
-                           closeHandler();
                            
-                           // Cleanup modal state AFTER UIModalEngine completes its standard background fade
-                           setTimeout(() => {
-                               modalContent.classList.remove('modal-blur-fade-out');
-                               modal.classList.remove('backdrop-fade-out-slow');
-                           }, 1200);
+                           // Restore the original render loop immediately
+                           uiManager.render = originalRender;
 
-                           // Remove CSS suppression after DOM paint completes
-                           requestAnimationFrame(() => {
-                               requestAnimationFrame(() => {
-                                   const el = document.getElementById(styleId);
-                                   if (el) el.remove();
-                               });
-                           });
+                           closeHandler(); // Triggers UIModalEngine hideModal
                        };
 
                        if (card) {
@@ -409,7 +426,7 @@ export class UIMissionControl {
                            });
 
                            anim.onfinish = () => {
-                               card.style.display = 'none'; // Instantly hide to prevent micro-frame flash before DOM rebuild
+                               card.remove(); // Safely rip it out of the DOM immediately
                                finalizeCompletion();
                            };
                        } else {
