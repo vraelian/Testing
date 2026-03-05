@@ -1259,3 +1259,27 @@
     font-weight: bold !important;
     box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
 }
+
+/* --- MISSION COMPLETE ANIMATION --- */
+.modal-blur-fade-out {
+    animation: modalBlurFadeOut 2s ease-out forwards !important;
+    pointer-events: none;
+}
+
+@keyframes modalBlurFadeOut {
+    0% { 
+        opacity: 1; 
+        transform: scale(1); 
+        filter: blur(0px); 
+    }
+    100% { 
+        opacity: 0; 
+        transform: scale(1.05); 
+        filter: blur(8px); 
+    }
+}
+
+.backdrop-fade-out-slow {
+    animation: simpleFadeOut 2s ease-out forwards !important;
+    pointer-events: none;
+}
