@@ -227,7 +227,11 @@ export class UIMissionControl {
                 const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
-                modal.querySelector('#mission-modal-type').textContent = mission.type;
+                const typeEl = modal.querySelector('#mission-modal-type');
+                if (typeEl) {
+                    typeEl.textContent = mission.type;
+                    typeEl.style.display = 'block';
+                }
 
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
                 const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>${this._getObjectiveDescription(obj)}</li>`).join('') + '</ul>';
@@ -311,7 +315,10 @@ export class UIMissionControl {
                modalContent.classList.add(hostClass);
 
                modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
-               modal.querySelector('#mission-modal-type').textContent = "OBJECTIVES MET";
+               
+               const typeEl = modal.querySelector('#mission-modal-type');
+               if (typeEl) typeEl.style.display = 'none';
+               
                modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
 
                const objectivesEl = modal.querySelector('#mission-modal-objectives');
@@ -331,7 +338,87 @@ export class UIMissionControl {
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
-               buttonsEl.innerHTML = `<button class="btn w-full btn-pulse-green" data-action="complete-mission" data-mission-id="${mission.id}">${mission.completion.buttonText}</button>`;
+               buttonsEl.innerHTML = '';
+               
+               const completeBtn = document.createElement('button');
+               completeBtn.className = 'btn w-full btn-pulse-green';
+               completeBtn.textContent = mission.completion.buttonText;
+               completeBtn.onclick = () => {
+                   completeBtn.disabled = true;
+
+                   // Execute CSS blur-fade effect for content AND backdrop fade out
+                   modalContent.classList.add('modal-blur-fade-out');
+                   modal.classList.add('backdrop-fade-out-slow');
+
+                   // Wait for the 2-second modal fade to finish
+                   setTimeout(() => {
+                       const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
+                       
+                       const finalizeCompletion = () => {
+                           // Suppress entry animations to prevent remaining cards from blinking/re-animating on redraw
+                           const styleId = 'mission-anim-suppress';
+                           if (!document.getElementById(styleId)) {
+                               const style = document.createElement('style');
+                               style.id = styleId;
+                               style.innerHTML = '.mission-card { animation: none !important; transition: none !important; }';
+                               document.head.appendChild(style);
+                           }
+
+                           if (this.manager.simulationService) {
+                               this.manager.simulationService.missionService.completeMission(mission.id);
+                           }
+                           closeHandler();
+                           
+                           // Cleanup modal state AFTER UIModalEngine completes its standard background fade
+                           setTimeout(() => {
+                               modalContent.classList.remove('modal-blur-fade-out');
+                               modal.classList.remove('backdrop-fade-out-slow');
+                           }, 1200);
+
+                           // Remove CSS suppression after DOM paint completes
+                           requestAnimationFrame(() => {
+                               requestAnimationFrame(() => {
+                                   const el = document.getElementById(styleId);
+                                   if (el) el.remove();
+                               });
+                           });
+                       };
+
+                       if (card) {
+                           // Capture exact dimensions to perform a perfectly smooth collapse
+                           const height = card.offsetHeight;
+                           const computedStyle = window.getComputedStyle(card);
+                           const marginTop = computedStyle.marginTop;
+                           const marginBottom = computedStyle.marginBottom;
+                           const paddingTop = computedStyle.paddingTop;
+                           const paddingBottom = computedStyle.paddingBottom;
+
+                           // Lock layout to prevent jitter while shrinking
+                           card.style.overflow = 'hidden';
+                           card.style.boxSizing = 'border-box';
+                           
+                           // 600ms Two-Stage Web Animation (Shrink & Fade -> Collapse Layout Height)
+                           const anim = card.animate([
+                               { opacity: 1, transform: 'scale(1)', height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom, offset: 0 },
+                               { opacity: 0, transform: 'scale(0.95)', height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom, offset: 0.4 },
+                               { opacity: 0, transform: 'scale(0.95)', height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px', offset: 1 }
+                           ], {
+                               duration: 600,
+                               easing: 'ease-out',
+                               fill: 'forwards'
+                           });
+
+                           anim.onfinish = () => {
+                               card.style.display = 'none'; // Instantly hide to prevent micro-frame flash before DOM rebuild
+                               finalizeCompletion();
+                           };
+                       } else {
+                           // Fallback if card isn't found (e.g. completed via Map context)
+                           finalizeCompletion();
+                       }
+                   }, 2000);
+               };
+               buttonsEl.appendChild(completeBtn);
            }
         };
        this.manager.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
