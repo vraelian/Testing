@@ -224,7 +224,7 @@ export class UIMissionControl {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 
-                // CLEANUP PREVIOUS STATES SAFELY
+                // Safely clean up animation states from previous custom injections
                 modalContent.classList.remove('modal-blur-fade-out');
                 modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
@@ -311,12 +311,59 @@ export class UIMissionControl {
     }
 
     _showMissionCompletionModal(mission) {
+        // --- PHASE 2: PREDICTIVE CARGO OVERFLOW CHECK ---
+        let rewardVolume = 0;
+        if (mission.rewards) {
+            mission.rewards.forEach(r => {
+                if (r.type === 'item' || r.type === 'cargo' || r.target) {
+                    // Quick check if target ID matches a physical commodity
+                    const isCommodity = DB.COMMODITIES.some(c => c.id === (r.goodId || r.target));
+                    if (isCommodity) {
+                        rewardVolume += (r.amount || r.quantity || 1);
+                    }
+                }
+            });
+        }
+
+        let hasSpace = true;
+        let capacityWarningHtml = '';
+
+        if (rewardVolume > 0) {
+            let totalFreeSpace = 0;
+            const state = this.manager.lastKnownState;
+            if (state && state.player && state.player.ownedShipIds) {
+                for (const shipId of state.player.ownedShipIds) {
+                    const maxCap = this.manager.simulationService ? 
+                        this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                        (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                    
+                    let used = 0;
+                    const inventory = state.player.inventories[shipId];
+                    if (inventory) {
+                        for (const item of Object.values(inventory)) {
+                            used += (item.quantity || 0);
+                        }
+                    }
+                    totalFreeSpace += Math.max(0, maxCap - used);
+                }
+            }
+            if (rewardVolume > totalFreeSpace) {
+                hasSpace = false;
+                capacityWarningHtml = `
+                    <div class="mt-4 p-2 bg-red-900/40 border border-red-500 rounded text-red-200 text-xs font-bold font-orbitron animate-pulse shadow-lg">
+                        CARGO OVERFLOW: REQUIRES ${rewardVolume} SPACE (${Math.floor(totalFreeSpace)} AVAILABLE)
+                    </div>
+                `;
+            }
+        }
+        // --- END OVERFLOW CHECK ---
+
         const options = {
            dismissOutside: true, // Allow tapping away to cancel
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
                
-               // CLEANUP PREVIOUS STATES SAFELY
+               // Safely clean up animation states from previous custom injections
                modalContent.classList.remove('modal-blur-fade-out');
                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
@@ -340,7 +387,11 @@ export class UIMissionControl {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                        return r.type.toUpperCase();
                    }).join(', ');
-                   rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>`;
+                   rewardsEl.innerHTML = `
+                       <p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p>
+                       <p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>
+                       ${capacityWarningHtml}
+                   `;
                    rewardsEl.style.display = 'block';
                } else {
                    rewardsEl.innerHTML = '';
@@ -351,8 +402,10 @@ export class UIMissionControl {
                buttonsEl.innerHTML = '';
                
                const completeBtn = document.createElement('button');
-               completeBtn.className = 'btn w-full btn-pulse-green';
-               completeBtn.textContent = mission.completion.buttonText;
+               completeBtn.className = hasSpace ? 'btn w-full btn-pulse-green' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
+               completeBtn.textContent = hasSpace ? mission.completion.buttonText : 'INSUFFICIENT CARGO SPACE';
+               completeBtn.disabled = !hasSpace;
+
                completeBtn.onclick = () => {
                    completeBtn.disabled = true;
 
@@ -366,39 +419,50 @@ export class UIMissionControl {
 
                    // Wait for the 2-second modal fade to finish
                    setTimeout(() => {
+                       // SURGICAL MODAL CLEANUP (Bypass UIModalEngine hideModal entirely to prevent animationend conflicts)
+                       modal.classList.add('hidden');
+                       modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                       delete modal.dataset.theme;
+                       delete modal.dataset.dismissInside;
+                       delete modal.dataset.dismissOutside;
+
+                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                           this.manager.modalEngine.processModalQueue();
+                       }
+
+                       // FIND AND ANIMATE THE CARD IN THE LOG
                        const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
                        
                        const finalizeCompletion = () => {
                            const uiManager = this.manager;
                            const originalRender = uiManager.render;
                            
-                           // Temporarily hijack the render loop to neutralize sibling entry animations seamlessly
+                           // RENDER HIJACK: Completely neutralize the aggressive DOM wipe!
                            uiManager.render = function(...args) {
-                               originalRender.apply(uiManager, args);
-                               const panel = document.querySelector('.missions-scroll-panel');
-                               if (panel) {
-                                   const cards = panel.querySelectorAll('.mission-card');
-                                   cards.forEach(c => {
-                                       c.style.setProperty('animation', 'none', 'important');
-                                   });
-
-                                   // Lift the inline lock safely after the first paint
-                                   requestAnimationFrame(() => {
-                                       requestAnimationFrame(() => {
-                                           cards.forEach(c => c.style.removeProperty('animation'));
-                                       });
-                                   });
+                               // Manually sync the sticky bar HUD
+                               if (uiManager.missionControl) {
+                                   uiManager.missionControl.renderStickyBar(uiManager.lastKnownState);
                                }
+
+                               // Manually sync the star tracking icons
+                               const activeTrackedId = uiManager.lastKnownState.missions.trackedMissionId;
+                               document.querySelectorAll('.mission-track-star').forEach(star => {
+                                   if (star.dataset.missionId === activeTrackedId) {
+                                       star.classList.add('active');
+                                   } else {
+                                       star.classList.remove('active');
+                                   }
+                               });
                            };
 
+                           // Trigger State Update (Internal logic will hit our hijacked render)
                            if (this.manager.simulationService) {
                                this.manager.simulationService.missionService.completeMission(mission.id);
                            }
                            
-                           // Restore the original render loop immediately
+                           // Restore the standard render pipeline immediately after the state tick concludes
                            uiManager.render = originalRender;
-
-                           closeHandler(); // Triggers UIModalEngine hideModal
+                           closeHandler(); // Signal modal engine that we are done
                        };
 
                        if (card) {
@@ -414,20 +478,32 @@ export class UIMissionControl {
                            card.style.overflow = 'hidden';
                            card.style.boxSizing = 'border-box';
                            
-                           // 600ms Two-Stage Web Animation (Shrink & Fade -> Collapse Layout Height)
-                           const anim = card.animate([
-                               { opacity: 1, transform: 'scale(1)', height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom, offset: 0 },
-                               { opacity: 0, transform: 'scale(0.95)', height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom, offset: 0.4 },
-                               { opacity: 0, transform: 'scale(0.95)', height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px', offset: 1 }
-                           ], {
-                               duration: 600,
-                               easing: 'ease-out',
-                               fill: 'forwards'
-                           });
+                           // PERF OPTIMIZATION: Two-Phase "Invisible Stripping" Animation
+                           // Phase 1: Scale and fade out (Visual)
+                           const fadeAnim = card.animate([
+                               { opacity: 1, transform: 'scale(1)' },
+                               { opacity: 0, transform: 'scale(0.95)' }
+                           ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
 
-                           anim.onfinish = () => {
-                               card.remove(); // Safely rip it out of the DOM immediately
-                               finalizeCompletion();
+                           fadeAnim.onfinish = () => {
+                               // Strip heavy CSS rendering instantly now that it is invisible.
+                               // This prevents layout reflows from recalculating shadows and blurs.
+                               card.style.backdropFilter = 'none';
+                               card.style.webkitBackdropFilter = 'none';
+                               card.style.boxShadow = 'none';
+                               card.style.background = 'none';
+                               card.style.border = 'none';
+
+                               // Phase 2: Collapse physical layout (Fast CPU calculation now)
+                               const collapseAnim = card.animate([
+                                   { height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom },
+                                   { height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px' }
+                               ], { duration: 350, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
+
+                               collapseAnim.onfinish = () => {
+                                   card.remove(); // Safely rip it out of the DOM immediately
+                                   finalizeCompletion();
+                               };
                            };
                        } else {
                            // Fallback if card isn't found (e.g. completed via Map context)
