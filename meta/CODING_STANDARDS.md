@@ -1,7 +1,5 @@
-{
-type: file_update,
-fileName: meta/CODING_STANDARDS.md,
-fullContent:
+// meta/CODING_STANDARDS.md
+
 Orbital Trading: Coding Standards & Protocols
 1. AI Implementation Protocols
 These rules govern how the AI Assistant (Gemini) must interact with the codebase.
@@ -98,4 +96,7 @@ Correction: Define these as constants in js/data/constants.js and import them.
 3.5 Unhandled Default Events
 **Stability:** When handling a click for a game action, always assume the browser might have a default behavior attached.
 **Correction:** Explicitly call `event.preventDefault()` at the start of the handler case.
-}
+
+3.6 Cinematic Transitions and Web Animations API
+**Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence) must not rely on standard CSS `.hidden` class toggling to handle fades, as this can create race conditions and visible flashing when the `UIManager` executes its aggressive DOM wiping and state re-renders.
+**Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. The actual `GameState` mutations and `UIManager.render()` calls should be executed *during* the blackout/hold phase of the animation. Explicitly ensure all inline styling injected by the API (e.g., opacity, filter) is cleaned up to prevent breaking subsequent UI behavior.
