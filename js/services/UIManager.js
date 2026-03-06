@@ -269,12 +269,25 @@ export class UIManager {
                 <span class="credit-text ${creditClass}">${creditText}</span>
             </div>`;
 
+        const navGuide = gameState.tutorials?.guidedNavPath || { active: false, navIds: [], screenIds: [] };
+
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
             const screenIdToLink = lastActiveScreen[navId] || Object.keys(this.navStructure[navId].screens)[0];
             const isDisabled = introSequenceActive;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
-             return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''}" 
+            
+            // Apply Guardrail Lock/Glow Classes (Multi-Path Support)
+            let guideClass = '';
+            if (navGuide.active) {
+                if ((navGuide.navIds || []).includes(navId)) {
+                    guideClass = 'nav-guide-pulse';
+                } else {
+                    guideClass = 'nav-guide-locked';
+                }
+            }
+
+             return `<div class="tab ${isActive ? 'active' : ''} ${isDisabled ? 'disabled' : ''} ${guideClass}" 
                           style="${activeStyle}" data-action="${ACTION_IDS.SET_SCREEN}" data-nav-id="${navId}" data-screen-id="${screenIdToLink}">${this.navStructure[navId].label}</div>`;
         }).join('');
 
@@ -315,11 +328,22 @@ export class UIManager {
                  const isDisabled = introSequenceActive;
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  const action = ACTION_IDS.SET_SCREEN;
+
+                 // Apply Guardrail Lock/Glow Classes (Multi-Path Support)
+                 let guideClass = '';
+                 if (navGuide.active) {
+                     if ((navGuide.screenIds || []).includes(screenId)) {
+                         guideClass = 'nav-guide-pulse';
+                     } else {
+                         guideClass = 'nav-guide-locked';
+                     }
+                 }
+
                  let subStyle = '';
                  if (isSubNavActive) {
                     subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
                  }
-                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
+                 return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass} ${guideClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
             return `<div class="nav-sub ${(!isActive || subNavCollapsed) ? 'hidden' : ''}" id="${navId}-sub">${subNavButtons}</div>`;
         }).join('');

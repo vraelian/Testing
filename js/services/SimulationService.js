@@ -80,6 +80,38 @@ export class SimulationService {
         this.playerActionService.missionService = missionService;
     }
 
+    // --- TUTORIAL GUARDRAIL METHODS ---
+
+    /**
+     * Locks the navigation UI to specific paths for guided tutorials.
+     * Passing empty arrays (or null) locks the respective bar completely.
+     * @param {string|string[]} navIds - The allowed main navigation IDs (e.g., 'starport' or ['ship', 'data'])
+     * @param {string|string[]} screenIds - The allowed sub-screen IDs (e.g., 'services' or ['market', 'missions'])
+     */
+    setNavigationLock(navIds = [], screenIds = []) {
+        const nIds = Array.isArray(navIds) ? navIds : (navIds ? [navIds] : []);
+        const sIds = Array.isArray(screenIds) ? screenIds : (screenIds ? [screenIds] : []);
+
+        this.gameState.setState({
+            tutorials: {
+                ...this.gameState.tutorials,
+                guidedNavPath: { active: true, navIds: nIds, screenIds: sIds }
+            }
+        });
+    }
+
+    /**
+     * Releases the navigation UI from guided tutorial locks.
+     */
+    clearNavigationLock() {
+        this.gameState.setState({
+            tutorials: {
+                ...this.gameState.tutorials,
+                guidedNavPath: { active: false, navIds: [], screenIds: [] }
+            }
+        });
+    }
+
     // --- V4 SAVE SYSTEM DELEGATION ---
 
     /**

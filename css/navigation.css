@@ -162,3 +162,67 @@ BULKHEAD NAVIGATION STYLES
     color: #fde047; /* Fallback/Base Yellow */
     font-weight: 700;
 }
+
+/* --- TUTORIAL GUARDRAILS --- */
+.nav-guide-locked {
+    pointer-events: none !important;
+    color: transparent !important; /* Hides text to isolate focus */
+    opacity: 0.25 !important;      /* Keeps the dark structural shape visible */
+    filter: grayscale(1) !important;
+    box-shadow: none !important;
+    text-shadow: none !important;
+}
+
+/* Hide the sub-nav active underline indicator when a button is ghosted */
+.nav-guide-locked::after {
+    display: none !important;
+}
+
+/* Base Pulse Class 
+   Requires relative positioning and high z-index so it guarantees rendering 
+   ON TOP of its neighbors, preventing lateral shadow clipping.
+*/
+.nav-guide-pulse {
+    z-index: 999 !important;
+    position: relative !important;
+    opacity: 1 !important;
+    color: #ffffff !important;
+    text-shadow: 0 0 8px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* Main Nav (Trapezoid Tabs) Pulse */
+/* MUST use filter/webkit-filter because clip-path physically destroys borders */
+.tab.nav-guide-pulse {
+    animation: main-nav-glow 1.2s infinite alternate ease-in-out !important;
+}
+
+@keyframes main-nav-glow {
+    0% { 
+        -webkit-filter: drop-shadow(0 0 4px rgba(255,255,255,0.6));
+        filter: drop-shadow(0 0 4px rgba(255,255,255,0.6)); 
+        transform: scale(1.02); 
+    }
+    100% { 
+        -webkit-filter: drop-shadow(0 0 10px rgba(255,255,255,1)) drop-shadow(0 0 20px rgba(255,255,255,0.8));
+        filter: drop-shadow(0 0 10px rgba(255,255,255,1)) drop-shadow(0 0 20px rgba(255,255,255,0.8)); 
+        transform: scale(1.08); 
+    }
+}
+
+/* Sub Nav (Rectangle Buttons) Pulse */
+/* MUST use inset shadow combos to bypass the overflow:hidden on the #sub-nav-bar parent */
+.nav-sub a.nav-guide-pulse {
+    animation: sub-nav-glow 1.2s infinite alternate ease-in-out !important;
+    border: none !important;
+}
+
+@keyframes sub-nav-glow {
+    0% { 
+        /* Inner solid line + Inner blur + Outer blur for lateral bleed */
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.5), inset 0 0 8px rgba(255,255,255,0.4), 0 0 5px rgba(255,255,255,0.4); 
+    }
+    100% { 
+        /* Strong inner border + strong inner glow + strong lateral outset glow */
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,1), inset 0 0 16px rgba(255,255,255,0.8), 0 0 15px 4px rgba(255,255,255,0.8); 
+    }
+}
