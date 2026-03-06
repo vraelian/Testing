@@ -336,7 +336,7 @@
     display: inline-block;
     font-family: 'Oxanium', sans-serif;
     font-weight: 600;
-    font-size: calc(0.8rem + 3.0pt);
+    font-size: calc(0.8rem + 5.0pt);
     color: #fde047; /* Base gold color */
     text-shadow: 0 0 5px #facc15; /* Gold glow */
     cursor: pointer;
@@ -344,9 +344,22 @@
     z-index: 50;
     letter-spacing: 0.05em;
     transition: transform 0.2s ease, text-shadow 0.2s ease;
+    animation: pulse-navigate-btn 2s infinite ease-in-out;
 }
 
 .map-navigate-btn:hover {
     text-shadow: 0 0 8px var(--ot-cyan-glow, #67e8f9), 0 0 12px var(--ot-cyan-glow, #67e8f9);
-    transform: scale(1.05);
+    transform: scale(1.1);
+    animation: none;
+}
+
+@keyframes pulse-navigate-btn {
+    0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 0 5px #facc15;
+    }
+    50% {
+        transform: scale(1.05);
+        text-shadow: 0 0 12px #facc15, 0 0 18px #facc15;
+    }
 }

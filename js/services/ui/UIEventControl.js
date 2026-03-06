@@ -194,7 +194,7 @@ export class UIEventControl {
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
-                     <p class="flavor-text italic">${location.launchFlavor}</p>
+                     <p class="flavor-text italic text-lg">${location.launchFlavor}</p>
                 </div>
 
                 <div class="flex-grow flex items-center justify-center flex-col">
@@ -310,7 +310,7 @@ export class UIEventControl {
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
-                 <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
+                 <p class="text-base italic imprinted-text">${location.description}</p>
             </div>
 
             <div class="my-4 space-y-3">

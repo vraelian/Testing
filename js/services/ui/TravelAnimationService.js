@@ -182,7 +182,14 @@ export class TravelAnimationService {
 
     _onArrival(to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.statusText.textContent = `Arrived at ${to.name}`;
-        this.arrivalLore.innerHTML = to.arrivalLore || "You have arrived.";
+        
+        // Randomization logic for the new array-based arrival lore
+        const flavorText = Array.isArray(to.arrivalLore) 
+            ? to.arrivalLore[Math.floor(Math.random() * to.arrivalLore.length)] 
+            : (to.arrivalLore || "You have arrived.");
+            
+        this.arrivalLore.innerHTML = flavorText;
+        
         this.infoText.innerHTML = `
             <div class="text-center">
                 <div>Journey Time: ${travelInfo.time} Days</div>
