@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.48</title>
+    <title>Orbital Trading 36.49</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.48 - Polish Update</p>
+            <p>Version 36.49 - Flavor Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -5318,7 +5318,7 @@ card.
     display: inline-block;
     font-family: 'Oxanium', sans-serif;
     font-weight: 600;
-    font-size: calc(0.8rem + 3.0pt);
+    font-size: calc(0.8rem + 5.0pt);
     color: #fde047; /* Base gold color */
     text-shadow: 0 0 5px #facc15; /* Gold glow */
     cursor: pointer;
@@ -5326,11 +5326,24 @@ card.
     z-index: 50;
     letter-spacing: 0.05em;
     transition: transform 0.2s ease, text-shadow 0.2s ease;
+    animation: pulse-navigate-btn 2s infinite ease-in-out;
 }
 
 .map-navigate-btn:hover {
     text-shadow: 0 0 8px var(--ot-cyan-glow, #67e8f9), 0 0 12px var(--ot-cyan-glow, #67e8f9);
-    transform: scale(1.05);
+    transform: scale(1.1);
+    animation: none;
+}
+
+@keyframes pulse-navigate-btn {
+    0%, 100% {
+        transform: scale(1);
+        text-shadow: 0 0 5px #facc15;
+    }
+    50% {
+        transform: scale(1.05);
+        text-shadow: 0 0 12px #facc15, 0 0 18px #facc15;
+    }
 }
 --- END OF FILE: ./css/screens/map-screen.css ---
 
@@ -12311,13 +12324,18 @@ export const DB = {
             id: LOCATION_IDS.SUN, 
             name: 'Sol Station', 
             distance: 45, 
-            launchFlavor: "The dark is a memory in the primordial radiance of Sol Proxima.", 
+            launchFlavor: "Plunge inward toward the corona, where extreme thermal stress threatens any hull daring enough to reach the massive solar harvester.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #f59e0b, #9a3412)', textColor: '#fef3c7', borderColor: '#f59e0b' }, 
-            description: 'A masterwork of shielding and courage, harvesting raw solar output. Consumes structural materials to maintain integrity.', 
+            description: "This perilous forge consumes endless structural materials to generate the system's most valuable and volatile commodity.", 
             color: 'border-yellow-500', 
             bg: 'bg-gradient-to-br from-yellow-600 to-orange-900', 
             fuelPrice: 50, 
-            arrivalLore: "The brilliance of the star is impossibly majestic. The station's hull groans audibly under the immense thermal stress.", 
+            arrivalLore: [
+                "The blinding brilliance of the primordial star dominates the viewport as your ship groans under the immense heat radiating from the colossal solar engine.",
+                "Solar flares lick at the edges of your shielding as the awe-inspiring silhouette of the massive harvesting array eclipses the sun.",
+                "Warning klaxons wail as thermal stress tests the limits of your hull against the furious backdrop of the solar corona.",
+                "The terrifying majesty of the star fills every monitor, reducing your vessel to a mere speck against the roaring plasma storms."
+            ], 
             specialty: "• +25% Sell Price: Plasteel & Graphene<br>• Massive structural import capacity<br>• Premium Endgame Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5,
@@ -12334,13 +12352,18 @@ export const DB = {
             id: LOCATION_IDS.MERCURY, 
             name: 'Mercury', 
             distance: 58, 
-            launchFlavor: "The scorched anvil of the system.", 
+            launchFlavor: "Navigate the sun's blistering glare to reach the heavily cratered surface of the system's innermost rock.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #7f1d1d, #44403c)', textColor: '#e7e5e4', borderColor: '#a8a29e' }, 
-            description: 'A mining outpost baking in the solar glare. Desperate for water to sustain its subterranean workforce.', 
+            description: "Desperate for water to sustain its subterranean workforce, this scorched outpost operates a highly volatile, fast-moving market.", 
             color: 'border-stone-400', 
             bg: 'bg-gradient-to-br from-stone-600 to-red-900', 
             fuelPrice: 500, 
-            arrivalLore: "Cratered grey rock stretches endlessly, scorched by the relentless sun.", 
+            arrivalLore: [
+                "Searing solar radiation washes over a bleak, grey landscape scarred by strip-mining and deep, shadowed craters.",
+                "A fractured horizon of scorched stone and deep fissures rolls beneath you as you approach the subterranean entry gates.",
+                "The oppressive proximity of the sun bakes the cracked surface of this tidally locked mining colony.",
+                "Plumes of automated dust extractors are the only movement on this blindingly bright, merciless rock."
+            ], 
             specialty: "• +40% Sell Price: Water Ice<br>• Extreme Water Ice volatility<br>• Fast-expiring Fringe Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.WATER_ICE]: 0.1,
@@ -12353,13 +12376,18 @@ export const DB = {
             id: LOCATION_IDS.VENUS, 
             name: 'Venus', 
             distance: 97, 
-            launchFlavor: "Floating cities hide scientific marvels and secrets.", 
+            launchFlavor: "Descend through a dense, acidic atmosphere to dock at the opulent, floating cloud-cities of the Syndicate.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #854d0e, #0f172a)', textColor: '#fde047', borderColor: '#facc15' }, 
-            description: 'A scientific enclave hungry for research data and processors.', 
+            description: "An extravagant haven of scientific research where erratic technology markets and heavily discounted corporate data streams reward the bold.", 
             color: 'border-yellow-400', 
             bg: 'bg-gradient-to-br from-yellow-800 to-slate-900', 
             fuelPrice: 400, 
-            arrivalLore: "Floating cities drift through the thick, acidic clouds, their lights a lonely defiance to the crushing pressure below.", 
+            arrivalLore: [
+                "Gilded platforms drift gracefully through violently swirling, toxic yellow clouds, projecting an aura of untouchable wealth.",
+                "Lightning arcs through the crushing, acidic atmosphere, illuminating the luxurious underbellies of suspended habitats.",
+                "Opulent spires pierce the thick, corrosive fog, offering a stark contrast between the lethal environment and the syndicate's extravagance.",
+                "The golden haze of the cloud-deck parts to reveal sprawling, buoyant estates anchored securely above the planetary inferno."
+            ], 
             specialty: "• 50% Intel Discount & 2x Duration<br>• Highly volatile Tech market<br>• Focused on Data & Tech Goods", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
@@ -12374,13 +12402,18 @@ export const DB = {
             id: LOCATION_IDS.EARTH, 
             name: 'Earth', 
             distance: 180, 
-            launchFlavor: "The bustling heart of the Sol system.", 
+            launchFlavor: "Plot a highly regulated transit vector toward the serene, meticulously gardened homeworld.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #0f172a)', textColor: '#93c5fd', borderColor: '#60a5fa' }, 
-            description: 'The hub of power and wealth. High demand for tech and bio-enhancements.', 
+            description: "The wealthy, post-scarcity cradle of humanity boasts incredibly stable prices and an insatiable corporate appetite for bio-wares.", 
             color: 'border-cyan-500', 
             bg: 'bg-gradient-to-br from-blue-900 to-slate-900', 
             fuelPrice: 250, 
-            arrivalLore: "The cradle of humanity buzzes with endless traffic; a beacon of blue and green against the void.", 
+            arrivalLore: [
+                "The vibrant blue and green marble hums with a staggering, luminous web of ceaseless orbital traffic.",
+                "Pristine, geo-engineered continents and tranquil oceans rotate beneath a gleaming mesh of orbital luxury stations.",
+                "Endless streams of cargo haulers and sleek yachts navigate the pristine, heavily regulated orbitals of the ancestral world.",
+                "The atmosphere below is perfectly filtered, a pristine garden maintained by vast networks of silent, planetary logic engines."
+            ], 
             specialty: "• +10% Sell Price: Organs & Xeno-Geology<br>• Highly stable, inelastic prices<br>• Premium Corp-Espionage Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.HYDROPONICS]: 2.0, 
@@ -12396,13 +12429,18 @@ export const DB = {
             name: 'The Moon', 
             parent: 'loc_earth', 
             distance: 15, 
-            launchFlavor: "An industrial powerhouse built on grey dust.", 
+            launchFlavor: "Drop into the shadow of Earth to dock with its tirelessly churning, dust-covered satellite.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #374151, #0f172a)', textColor: '#e5e7eb', borderColor: '#9ca3af' }, 
-            description: 'An industrial proving ground. Exports propellant and basic materials.', 
+            description: "A bustling industrial hub specializing in rapid raw material turnover and heavily discounted shipyard services.", 
             color: 'border-gray-400', 
             bg: 'bg-gradient-to-br from-gray-700 to-slate-900', 
             fuelPrice: 350, 
-            arrivalLore: "Dusty plains are scarred by mining operations under the harsh, silent watch of distant Earth.", 
+            arrivalLore: [
+                "Sprawling grey plains are dominated by massive, utilitarian drydocks and ceaseless, dust-kicking extraction crawlers.",
+                "The stark, airless landscape is illuminated by the harsh, flickering glare of industrial foundries and orbital shipyards.",
+                "Endless grids of processing plants and cargo rails scar the surface of the pale, silent moon.",
+                "A constellation of landing lights guides you toward a colossal, subterranean logistics hub buried deep within the lunar rock."
+            ], 
             specialty: "• 20% Discount on Ship Repairs<br>• Fast raw material restock<br>• Reliable Industrial Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
@@ -12417,13 +12455,18 @@ export const DB = {
             id: LOCATION_IDS.MARS, 
             name: 'Mars', 
             distance: 226, 
-            launchFlavor: "The red frontier, ripe with opportunity.", 
+            launchFlavor: "Chart a course across the inner system to the rust-red sphere of endless corporate expansion.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #7c2d12, #0f172a)', textColor: '#fca5a5', borderColor: '#f87171' }, 
-            description: 'A growing colony. Needs processors and materials for expansion.', 
+            description: "A rapidly expanding colonial frontier eager to pay a premium for water and structural plastics.", 
             color: 'border-orange-600', 
             bg: 'bg-gradient-to-br from-orange-900 to-slate-900', 
             fuelPrice: 450, 
-            arrivalLore: "The thin, reddish atmosphere whips across terraforming arrays and fledgling biodomes.", 
+            arrivalLore: [
+                "Sprawling industrial foundries and immense habitation structures pierce the thin, reddish atmosphere and sweeping desert dunes.",
+                "A vast, rust-colored desert stretches out below, interrupted only by the sprawling geometry of expanding corporate colonies.",
+                "Massive dust storms sweep across the plains, obscuring the colossal industrial habitats that cling to the red rock.",
+                "The pale sun glints off the reinforced glass of immense agricultural domes dotting the harsh, arid landscape."
+            ], 
             specialty: "• +10% Sell Price: Water & Hydroponics<br>• Slow agricultural restock<br>• Standard Market Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PLASTEEL]: 2.0, 
@@ -12438,13 +12481,18 @@ export const DB = {
             id: LOCATION_IDS.BELT, 
             name: 'The Belt', 
             distance: 292, 
-            launchFlavor: "A lawless expanse of rock and riches.", 
+            launchFlavor: "Navigate cautiously through a dense, unpredictable expanse of tumbling rock and unsanctioned transit signals.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #292524, #0f172a)', textColor: '#ca8a04', borderColor: '#a16207' }, 
-            description: 'A lawless frontier. Rich in raw minerals and water ice.', 
+            description: "A sprawling expanse of unrefined wealth where rapid material extraction drives a wildly unpredictable and fractured economy.", 
             color: 'border-amber-700', 
             bg: 'bg-gradient-to-br from-stone-800 to-slate-900', 
             fuelPrice: 600, 
-            arrivalLore: "Countless rocks tumble in a silent, chaotic dance, hiding both immense wealth and sudden peril.", 
+            arrivalLore: [
+                "Countless jagged asteroids dance in silent, deadly orbits, concealing rugged mining rigs and hidden dangers.",
+                "Shadows shift rapidly across the tumbling debris field as automated drills carve into the icy bellies of passing rocks.",
+                "Your vessel carefully threads the needle through a dense, chaotic storm of grinding, mineral-rich fragments.",
+                "A haphazard network of tethered rocks and makeshift processing platforms emerges from the dense, spinning void."
+            ], 
             specialty: "• Rapid raw material restock<br>• Erratic, chaotic Intel market", 
             availabilityModifier: { 
                 [COMMODITY_IDS.WATER_ICE]: 2.0, 
@@ -12459,13 +12507,18 @@ export const DB = {
             id: LOCATION_IDS.EXCHANGE, 
             name: 'The Exchange', 
             distance: 309, 
-            launchFlavor: "The notorious black market of the outer belt.", 
+            launchFlavor: "Disengage primary transponders and drift quietly into the deepest, unmapped recesses of the outer asteroid belt.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #581c87, #000000, #0f172a)', textColor: '#e9d5ff', borderColor: '#c084fc' }, 
-            description: 'A legendary black market station hidden deep within the Kuiper Belt. High stakes, high rewards.', 
+            description: "A deeply concealed hub of shadow commerce where staggering fortunes are wagered on volatile, unsanctioned trade goods.", 
             color: 'border-purple-500', 
             bg: 'bg-gradient-to-br from-purple-900 via-black to-slate-900', 
             fuelPrice: 1200, 
-            arrivalLore: "A hollowed-out asteroid, bristling with rogue drones and comms jammers. This is the fabled Exchange, where fortunes are made or lost in an instant.", 
+            arrivalLore: [
+                "A colossal, hollowed-out asteroid bristles with intense sensory baffles, radiating an aura of absolute, paranoid secrecy.",
+                "The jagged surface of the shadowy trade hub remains utterly dark to standard scanners, existing only as a void against the stars.",
+                "Endless streams of unmarked vessels slide silently into the yawning, unlit hangar bays of this massive rock.",
+                "A labyrinth of heavily encrypted approach vectors and silent docking clamps surrounds the deeply isolated market hub."
+            ], 
             specialty: "• 3x Price Volatility<br>• Extremely fragile market (crashes easily)<br>• Black Market Smuggler Intel", 
             availabilityModifier: {
                 [COMMODITY_IDS.SENTIENT_AI]: 2.0,
@@ -12480,13 +12533,18 @@ export const DB = {
             id: LOCATION_IDS.JUPITER, 
             name: 'Jupiter', 
             distance: 443, 
-            launchFlavor: "Vast refineries harvest fuel from the giant.", 
+            launchFlavor: "Undertake a long haul to the system's largest gravity well and its sprawling network of orbital refineries.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #9a3412, #1c1917)', textColor: '#fed7aa', borderColor: '#fb923c' }, 
-            description: 'A gas giant teeming with orbital refineries. The primary source of propellant for the outer system.', 
+            description: "A titan of industry built on massive subsidies, offering a remarkably stable and heavily discounted propellant market.", 
             color: 'border-orange-400', 
             bg: 'bg-gradient-to-br from-orange-800 to-stone-900', 
             fuelPrice: 150, 
-            arrivalLore: "The colossal sphere of Jupiter dominates the viewport, its Great Red Spot a baleful eye. Automated refineries drift in its upper atmosphere.", 
+            arrivalLore: [
+                "The gas giant's churning, multicolored bands and baleful storm systems loom ominously over automated fuel siphons.",
+                "A terrifying expanse of swirling ammonia clouds completely devours the horizon, anchoring a web of delicate orbital extractors.",
+                "The sheer scale of the banded planet induces vertigo as your ship joins the endless line of bulk propellant haulers.",
+                "Silent lightning flashes within the colossal, bruised atmosphere below the endless, skeletal rigging of the industrial rings."
+            ], 
             specialty: "• 50% Discount on Fuel<br>• Highly stable Fuel market<br>• Industrial-focused Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROPELLANT]: 2.0, 
@@ -12500,13 +12558,18 @@ export const DB = {
             id: LOCATION_IDS.SATURN, 
             name: 'Saturn', 
             distance: 618, 
-            launchFlavor: "Opulent stations drift among majestic rings.", 
+            launchFlavor: "Traverse the cold void toward the magnificent planetary rings and heavily taxed commercial airspace.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #713f12, #312e81, #0f172a)', textColor: '#fef08a', borderColor: '#fde047' }, 
-            description: 'A tourism hub. Demands luxury goods and bio-wares.', 
+            description: "An opulent tourist destination with steep service fees but exceptional payouts for luxury and biological goods to sustain the elite.", 
             color: 'border-yellow-200', 
             bg: 'bg-gradient-to-br from-yellow-900 via-indigo-900 to-slate-900', 
             fuelPrice: 550, 
-            arrivalLore: "The majestic rings cast long shadows over opulent tourist stations and icy harvesting rigs.", 
+            arrivalLore: [
+                "Golden, icy rings cast striking shadows across extravagant resort stations designed to pamper the wealthiest planetary executives.",
+                "Millions of glittering ice particles drift past the sweeping, transparent promenades of high-orbit luxury habitats.",
+                "The breathtaking rings provide a stunning, serene backdrop to the sprawling architectural vanity projects of the corporate elite.",
+                "Delicate, crystalline habitats float serenely between the majestic bands of ice and dust, radiating untouchable prosperity."
+            ], 
             specialty: "• +20% Sell Price: Organs & Cryo Pods<br>• 200% Cost for Repairs & Fuel<br>• Premium Luxury Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CYBERNETICS]: 2.0,
@@ -12520,13 +12583,18 @@ export const DB = {
             id: LOCATION_IDS.URANUS, 
             name: 'Uranus', 
             distance: 775, 
-            launchFlavor: "A silent, ice-cold world of strange science.", 
+            launchFlavor: "Endure a grueling, icy transit into the remote depths of the system to reach the tilted, pale-blue sphere of isolated quantum research.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #155e75, #312e81)', textColor: '#a5f3fc', borderColor: '#67e8f9' }, 
-            description: 'A cold, distant world where scientists study bizarre quantum phenomena and strange geologicals.', 
+            description: "A distant research collective where highly classified quantum technologies frequently slip into standard trade flows.", 
             color: 'border-cyan-200', 
             bg: 'bg-gradient-to-br from-cyan-800 to-indigo-900', 
             fuelPrice: 700, 
-            arrivalLore: "The pale, featureless orb of Uranus hangs tilted in the sky. Research outposts glitter like ice crystals in the eternal twilight.", 
+            arrivalLore: [
+                "Featureless, pale blue clouds provide a silent backdrop for fragile, glittering outposts suspended in eternal twilight.",
+                "The tilted, icy giant hangs silently in the deep dark, orbited by humming arrays of esoteric sensory equipment.",
+                "Delicate rings of dark dust frame the freezing, cyan atmosphere of this deeply isolated scientific enclave.",
+                "A profound, chilling stillness surrounds the distant, pale orb and its sparse network of high-energy research platforms."
+            ], 
             specialty: "• High chance of Advanced Upgrades<br>• Standard market elasticity<br>• Tech & Rare-focused Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
@@ -12540,13 +12608,18 @@ export const DB = {
             id: LOCATION_IDS.NEPTUNE, 
             name: 'Neptune', 
             distance: 877, 
-            launchFlavor: "The stormy edge of military-controlled space.", 
+            launchFlavor: "Approach the stormy, military-controlled fringes of the outer system with all transponders broadcasting clearly.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #1e3a8a, #000000)', textColor: '#93c5fd', borderColor: '#60a5fa' }, 
-            description: 'A dark, stormy world, home to secretive military bases and shipyards.', 
+            description: "A rigid, unfluctuating military economy offering bulk discounts on essentials to independent captains brave enough to dock.", 
             color: 'border-blue-400', 
             bg: 'bg-gradient-to-br from-blue-900 to-black', 
             fuelPrice: 650, 
-            arrivalLore: "Supersonic winds howl across Neptune's deep blue clouds. Heavily armed patrol ships escort you to the shielded orbital station.", 
+            arrivalLore: [
+                "Strict formations of Guild escorts guide you through supersonic, dark blue winds toward a heavily reinforced orbital staging ground.",
+                "The violent, azure storms of the planet swirl far below the rigid, utilitarian geometry of a high-security staging ground.",
+                "Massive, armored bulkheads slide open to receive your vessel against a backdrop of freezing, indigo atmospheric tempests.",
+                "Countless security scans sweep your hull as you approach the imposing, unadorned architecture of the Guild's deepest perimeter."
+            ], 
             specialty: "• 10% Bulk Discount: Fuel & Plasteel (>50)<br>• Rigid, unfluctuating prices<br>• Tactical Military Intel", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CRYO_PODS]: 2.0,
@@ -12561,13 +12634,18 @@ export const DB = {
             id: LOCATION_IDS.KEPLER, 
             name: "Kepler's Eye", 
             distance: 903, 
-            launchFlavor: "A colossal lens staring into the infinite void.", 
+            launchFlavor: "Drift far into the deep-space void toward a solitary, free-floating outpost of profound observation.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #701a75, #0f172a)', textColor: '#f472b6', borderColor: '#ec4899' }, 
-            description: 'A massive deep-space observatory that consumes vast amounts of processing power.', 
+            description: "A unique, free-floating intelligence hub where institutional financing is heavily discounted and exclusive market data flows in abundance.", 
             color: 'border-fuchsia-500', 
             bg: 'bg-gradient-to-br from-fuchsia-900 to-slate-900', 
             fuelPrice: 800, 
-            arrivalLore: "The station is a single, enormous lens staring into the abyss, surrounded by a delicate lattice of sensors and habitation rings.", 
+            arrivalLore: [
+                "A breathtaking, colossal glass lens dominates the structure, staring unblinkingly into the cosmic abyss.",
+                "Surrounded entirely by the deep black of the outer system, the massive observatory turns its silent gaze toward the unknown.",
+                "A fragile lattice of sensory equipment and habitation rings clings to the edges of the largest optical array ever constructed.",
+                "The structure feels impossibly lonely, a fragile needle of light and glass piercing the infinite dark of the solar boundary."
+            ], 
             specialty: "• 15% Discount on Debt & Financing<br>• Double Intel Packet generation", 
             availabilityModifier: {
                 [COMMODITY_IDS.ANTIMATTER]: 2.0,
@@ -12581,13 +12659,18 @@ export const DB = {
             id: LOCATION_IDS.PLUTO, 
             name: 'Pluto', 
             distance: 1080, 
-            launchFlavor: "A haven for outcasts at the system's fringe.", 
+            launchFlavor: "Commit to the longest, darkest journey to the very edge of human habitation and the solar boundary.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #312e81, #0f172a)', textColor: '#c4b5fd', borderColor: '#a78bfa' }, 
-            description: 'The furthest outpost, a haven for outcasts and smugglers dealing in forbidden tech.', 
+            description: "A remote fringe market prone to extreme panic pricing, desperate for structural tech but offering deep discounts on classified market data.", 
             color: 'border-indigo-400', 
             bg: 'bg-gradient-to-br from-indigo-900 to-slate-900', 
             fuelPrice: 900, 
-            arrivalLore: "Pluto's tiny, frozen heart is a whisper in the dark. The only light comes from a ramshackle station carved into a nitrogen-ice mountain.", 
+            arrivalLore: [
+                "A tiny, frozen rock barely illuminated by the distant sun harbors a ramshackle outpost carved straight into nitrogen ice.",
+                "The faint, starlight-level illumination barely reveals the jagged, frozen mountains surrounding this desperate edge-world colony.",
+                "Deep within a glacial valley, the faint thermal glow of a struggling habitat marks the absolute limit of civilized space.",
+                "You dock in utter silence, the sprawling, icy plains outside bathed in the terrifying, perpetual twilight of the Kuiper Belt."
+            ], 
             specialty: "• +25% Sell Price: Cybernetics & Antimatter<br>• Extreme price panic on depletion<br>• Jackpot Smuggler Intel (Deep Discounts)", 
             availabilityModifier: { 
                 [COMMODITY_IDS.GRAPHENE_LATTICES]: 2.0, 
@@ -18493,7 +18576,7 @@ export class UIEventControl {
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
-                     <p class="flavor-text italic">${location.launchFlavor}</p>
+                     <p class="flavor-text italic text-lg">${location.launchFlavor}</p>
                 </div>
 
                 <div class="flex-grow flex items-center justify-center flex-col">
@@ -18609,7 +18692,7 @@ export class UIEventControl {
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
-                 <p class="text-lg italic imprinted-text">${location.launchFlavor}</p>
+                 <p class="text-base italic imprinted-text">${location.description}</p>
             </div>
 
             <div class="my-4 space-y-3">
@@ -19664,7 +19747,14 @@ export class TravelAnimationService {
 
     _onArrival(to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.statusText.textContent = `Arrived at ${to.name}`;
-        this.arrivalLore.innerHTML = to.arrivalLore || "You have arrived.";
+        
+        // Randomization logic for the new array-based arrival lore
+        const flavorText = Array.isArray(to.arrivalLore) 
+            ? to.arrivalLore[Math.floor(Math.random() * to.arrivalLore.length)] 
+            : (to.arrivalLore || "You have arrived.");
+            
+        this.arrivalLore.innerHTML = flavorText;
+        
         this.infoText.innerHTML = `
             <div class="text-center">
                 <div>Journey Time: ${travelInfo.time} Days</div>
@@ -19686,7 +19776,6 @@ export class TravelAnimationService {
         }, 150);
     }
 }
-
 --- END OF FILE: ./js/services/ui/TravelAnimationService.js ---
 
 --- START OF FILE: ./js/services/ui/UIHangarControl.js ---
@@ -38003,10 +38092,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.48] - 2026-3-5
+# [36.49] - 2026-3-5
 -  mission screen bug fixes
 -  map screen POI modal polish
--  
+-  flavor update v2
+-  updated meta files
 
 # [36.46] - 2026-3-4
 -  mission screen polish
@@ -39346,10 +39436,8 @@ HTML
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---
-{
-type: file_update,
-fileName: meta/CODING_STANDARDS.md,
-fullContent:
+// meta/CODING_STANDARDS.md
+
 Orbital Trading: Coding Standards & Protocols
 1. AI Implementation Protocols
 These rules govern how the AI Assistant (Gemini) must interact with the codebase.
@@ -39446,7 +39534,10 @@ Correction: Define these as constants in js/data/constants.js and import them.
 3.5 Unhandled Default Events
 **Stability:** When handling a click for a game action, always assume the browser might have a default behavior attached.
 **Correction:** Explicitly call `event.preventDefault()` at the start of the handler case.
-}
+
+3.6 Cinematic Transitions and Web Animations API
+**Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence) must not rely on standard CSS `.hidden` class toggling to handle fades, as this can create race conditions and visible flashing when the `UIManager` executes its aggressive DOM wiping and state re-renders.
+**Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. The actual `GameState` mutations and `UIManager.render()` calls should be executed *during* the blackout/hold phase of the animation. Explicitly ensure all inline styling injected by the API (e.g., opacity, filter) is cleaned up to prevent breaking subsequent UI behavior.
 --- END OF FILE: ./meta/CODING_STANDARDS.md ---
 
 --- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
@@ -40888,6 +40979,8 @@ A. Add mission completion animation/effect
 --- END OF FILE: ./meta/ROADMAP.md ---
 
 --- START OF FILE: ./meta/SERVICES.md ---
+// meta/SERVICES.md
+
 Service Responsibility & Dependency Matrix
 Core Architecture
 SimulationService acts as the central Facade. It is the only service that the EventManager talks to directly for complex game actions. It coordinates the specialized services below and acts as the bridge for the Event System 2.0, handling Debug Event injection and high-level resolution orchestration.
@@ -40902,11 +40995,27 @@ Key Behavior: Emits notifications to subscribers (UIManager) whenever setState i
 Dependencies: None (Leaf node).
 
 2. Game Logic Services
+SimulationService (F011) [FACADE]
+
+Responsibility: The core game engine Facade. Instantiates and coordinates all specialized services.
+
+Key Behavior: Receives calls from the EventManager and delegates them to the appropriate domain service. Orchestrates multi-step flows like ship purchasing.
+
+Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService.
+
+IntroService (F033)
+
+Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
+
+Key Behavior: Mutates the player's starting state, debt, and handles bespoke UI transitions bypassing standard navigation logic.
+
+Dependencies: GameState, UIManager, Logger, SimulationService.
+
 PlayerActionService (F034)
 
 Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
 
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs. Now orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
 
 Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
 
@@ -40927,7 +41036,7 @@ Key Behavior:
 * Calculates and deducts the 'Convoy Tax' resource scaling based on active fleet size.
 * Pauses travel for event resolution, including Blockade events.
 * Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
-* **Consumable Logic:** Handles the consumption of "Folded Space Drives" to execute instant travel (0 days, 0 fuel) via the `useFoldedDrive` argument.
+* Consumable Logic: Handles the consumption of "Folded Space Drives" to execute instant travel via the `useFoldedDrive` argument.
 
 Dependencies: GameState, TimeService, RandomEventService.
 
@@ -40935,7 +41044,7 @@ MarketService (F010)
 
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
 
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Triggers asset hydration when new ships are spawned in shipyards.
+Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Triggers asset hydration when new ships are spawned.
 
 Dependencies: GameState, IntelService, AssetService.
 
@@ -40952,12 +41061,9 @@ TimeService (F035)
 Responsibility: Advances the calendar and manages long-term progression.
 
 Key Behavior:
-
-Triggers daily/weekly simulation ticks (Market, News).
-
-Manages the "3-Era Age Engine", applying procedural stat bonuses and world modifiers based on player age.
-
-Checks for debt interest, Intel expiration, and loan garnishment.
+* Triggers daily/weekly simulation ticks (Market, News).
+* Manages the "3-Era Age Engine", applying procedural stat bonuses and world modifiers based on player age.
+* Checks for debt interest, Intel expiration, and loan garnishment.
 
 Dependencies: GameState, MarketService.
 
@@ -40983,6 +41089,14 @@ Key Behavior:
 
 Dependencies: GameState, Logger.
 
+ToastService (F106)
+
+Responsibility: Manages the volatile notification queue and evaluates thresholds upon location arrival.
+
+Key Behavior: Checks state thresholds (financial, intel, missions) post-travel, populates the queue, sorts by priority, and culls excess alerts before handing them to the UI.
+
+Dependencies: GameState, UIManager, SimulationService.
+
 3. Event System Services (Event 2.0)
 RandomEventService
 
@@ -40996,7 +41110,7 @@ ConditionEvaluator
 
 Responsibility: A stateless utility service that validates requirements.
 
-Key Behavior: Parses the requirements array of an event or choice (e.g., "Has Item: Water Ice > 5", "Has Perk: Navigator"). Returns true or false based on the current GameState.
+Key Behavior: Parses the requirements array of an event or choice. Returns true or false based on the current GameState.
 
 Dependencies: GameState (Read-only).
 
@@ -41012,7 +41126,7 @@ DynamicValueResolver
 
 Responsibility: Calculates dynamic integer values for event effects based on game state context.
 
-Key Behavior: Resolves abstract value definitions (e.g., "Scale with WEALTH_TIER" or "Scale with MAX_FUEL") into concrete numbers for rewards/penalties. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
+Key Behavior: Resolves abstract value definitions into concrete numbers for rewards/penalties. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
 
 Dependencies: GameState (Read-only), DB.
 
@@ -41020,38 +41134,32 @@ eventEffectResolver
 
 Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome.
 
-Key Behavior: Routes effect types (e.g., MODIFY_FUEL, REMOVE_ITEM) to specific handler functions. Mutates GameState or pendingTravel accordingly. Pure state mutation only; does not handle game-over consequences.
+Key Behavior: Routes effect types to specific handler functions. Mutates GameState or pendingTravel accordingly. Pure state mutation only.
 
 Dependencies: GameState, SimulationService, DynamicValueResolver.
 
 4. UI & Presentation Services
 UIManager (F017) [FACADE]
 
-Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers. Handles the main render loop and navigation bars.
+Responsibility: The master "Switchboard". Instantiates and coordinates the Domain Controllers. Handles the main render loop.
 
-Key Behavior: Proxies requests from external services (like ActionClickHandler) to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
+Key Behavior: Proxies requests from external services to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
 
-Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl.
+Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
 
 Controllers (Delegates):
-
-UIModalEngine: Manages the modal queue, priority processing, and dismissal logic.
-
-UIHelpManager: Manages the Contextual Help Modal system, DOM injection of the fixed-aspect-ratio modal, horizontal micro-pagination slide tracks, and mobile swipe threshold logic.
-
-UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
-
-UIMissionControl: Manages Mission data screens, the new `MissionsScreen` renderer, sticky bar HUD tracking, and Intel interactions.
-
-UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-
-UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA). Now manages the Launch Modal logic for Consumables (Folded Space).
-
-UISolStationControl: Manages the Sol Station Dashboard, operational mode switching, cache grids, the in-modal Officer Roster sub-view, the Engineering Interface, and level-up animations.
+* UIModalEngine: Manages the modal queue, priority processing, and dismissal logic.
+* UIHelpManager: Manages the Contextual Help Modal system, micro-pagination tracks, and swipe threshold logic.
+* UIToastManager: Manages Universal Toast notifications, DOM injection, and animation timing.
+* UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
+* UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel interactions.
+* UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
+* UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA, Launch Modals).
+* UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
 
 IntelMarketRenderer (F058)
 
-Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content (Called by UIMissionControl).
+Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content.
 
 Dependencies: IntelService.
 
@@ -41069,32 +41177,39 @@ Responsibility: Centralized path resolution and "Hydration" for visual assets.
 
 Dependencies: AssetStorageService, assets_config.js.
 
+TravelAnimationService (F044)
+
+Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
+
+Dependencies: DB (Travel Visuals).
+
+AnimationService (F060)
+
+Responsibility: Provides a generic, promise-based utility (`playBlockingAnimation`) to run CSS animations and block further execution until completion. Used for ship buy/sell transitions.
+
+Dependencies: None.
+
+5. Persistence Services
+SaveStorageService (F101)
+
+Responsibility: Manages game saves using a dual-write architecture for indestructible persistence.
+
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB (OrbitalSavesDB) while concurrently broadcasting to the iOS native layer (Swift UserDefaults) via WebKit message handlers. Prioritizes iOS native saves during hydration to silently heal wiped IndexedDB data.
+
+Dependencies: Native IndexedDB API, WebKit Message Handlers.
+
 AssetStorageService (F070)
 
 Responsibility: Low-level IndexedDB wrapper.
 
 Key Behavior: Manages the OrbitalAssetsDB. Stores raw Blob data to prevent iOS cache eviction.
 
-Dependencies: None (Native IndexedDB API).
+Dependencies: Native IndexedDB API.
 
-SaveStorageService (F101)
-
-Responsibility: Manages game saves using a dual-write architecture for indestructible persistence.
-
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB (OrbitalSavesDB) while concurrently broadcasting to the iOS native layer (Swift UserDefaults) via WebKit message handlers. Prioritizes indestructible iOS native saves during hydration to silently heal wiped IndexedDB data.
-
-Dependencies: Native IndexedDB API, WebKit Message Handlers.
-
-TravelAnimationService.js
-
-Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
-
-Dependencies: DB (Travel Visuals).
-
-5. Input & Event Handling
+6. Input & Event Handling
 EventManager (F015): The root listener. Binds global click/touch events.
 
-ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation, ship cycling interactions on the services screen, and Travel initiation (including Consumable flags).
+ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation, ship cycling, and Travel initiation.
 
 HoldEventHandler (F041): Manages "press-and-hold" for Refuel/Repair using Pointer Events.
 
@@ -41104,64 +41219,41 @@ MarketEventHandler (F040): Manages the buy/sell sliders on market cards.
 
 TooltipHandler (F043): Manages hover states and popups for graphs and attribute pills.
 
-Effects
-EffectsManager.js: Manages the queueing and execution of visual effects (particle effects, UI animations, etc.).
+7. Effects
+EffectsManager.js: Manages the queueing and execution of visual effects.
 
 BaseEffect.js: The abstract base class for all visual effects.
 
-Debug & Automation
-DebugService.js: Manages the debug panel (lil-gui), synchronizing its UI controls with the GameState and providing cheat/test functionalities. Triggers asset hydration for debug actions.
+8. Debug & Automation
+DebugService.js: Manages the debug panel (lil-gui), synchronizing its UI controls with the GameState and providing cheat/test functionalities.
 
-bot/AutomatedPlayerService.js: Contains the AutomatedPlayer class, a state-machine-driven bot designed to stress-test the economy. It mimics a human player by directly calling service methods, bypassing the input layer.
+bot/AutomatedPlayerService.js: Contains the AutomatedPlayer class, a state-machine-driven bot designed to stress-test the economy. Bypasses the input layer.
 
-Static Data Files (js/data/)
-database.js: Aggregates and exports static game data imported from other modules.
-
+9. Static Data Files (js/data/)
+database.js: Aggregates and exports static game data.
 ship_database.js: Defines the static data for all player-tradable ships.
-
 assets_config.js: Defines configuration for ship asset variants.
-
-constants.js: Defines widely used constant values and enums (IDs, game rules, Upgrade Types, Upgrade Colors).
-
-items.js: Defines the registry of Consumable Items (e.g., Folded Space Drives).
-
-age_events.js: Defines static data for narrative events triggered by game progression.
-
-events.js: (Facade) Aggregates all event categories into the master RANDOM_EVENTS registry.
-
+constants.js: Defines widely used constant values and enums.
+items.js: Defines the registry of Consumable Items.
+age_events.js: Defines static data for narrative events triggered by progression.
+events.js: (Facade) Aggregates all event categories.
 events_traffic.js: Encounters & Distress signals.
-
 events_entropy.js: System failures & maintenance issues.
-
-events_hazards.js: Environmental threats (Solar flares, Asteroids).
-
+events_hazards.js: Environmental threats.
 events_bureaucracy.js: Customs, fines, and inspections.
-
 events_logistics.js: Cargo spoilage & storage issues.
-
 events_salvage.js: Derelict recovery & looting.
-
 events_opportunity.js: Trade deals & windfalls.
-
 events_story.js: Unique narrative encounters.
-
 missions.js: Defines static data for all player missions.
-
-helpRegistry.js: Defines static HTML string payloads organized by context IDs for the Help Modal slides.
-
-flavorAds.js: Defines static, location-specific flavor text ads for the news ticker.
-
+helpRegistry.js: Defines static HTML string payloads organized by context IDs.
+flavorAds.js: Defines static, location-specific flavor text ads.
 intelMessages.js: Defines message templates for free and purchased market intel.
-
-intelContent.js: Defines the "Sample" and "Details" message pairs for the purchasable Intel Packets.
-
+intelContent.js: Defines the "Sample" and "Details" message pairs.
 eulaContent.js: Defines the static HTML content for the EULA modal.
-
-lore/loreRegistry.js: (Facade) Aggregates all lore modules into the master LORE_REGISTRY.
-
+lore/loreRegistry.js: (Facade) Aggregates all lore modules.
 lore/lore_broadstrokes.js: Defines the base lore content.
-
-officers.js: Defines the registry of Sol Station Directorate officers and their buff stats.
+officers.js: Defines the registry of Sol Station Directorate officers.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -42298,6 +42390,8 @@ graph TD
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
+// meta/STATE_SCHEMA.md
+
 # Orbital Trading: State Schema Definition
 
 ## 1. Root State Object
@@ -42342,6 +42436,7 @@ Contains all progression, assets, and statistics for the user.
 | Property | Type | Description |
 | --- | --- | --- |
 | `name` | String | Player's chosen name. |
+| `introStep` | Number | Current progression step within the cinematic intro sequence. |
 | `playerAge` | Number | Current age (starts at 24). |
 | `lastBirthdayYear` | Number | Year of the last processed birthday event. |
 | `credits` | Number | Current currency balance. |
@@ -42435,7 +42530,7 @@ New data structures for the "Local Data Broker" system.
 
 ## 6. Tutorial State (`state.tutorials`)
 
-Manages the auto-instantiation tracking for the Contextual Help Modal System.
+Exclusively manages the auto-instantiation tracking for the Contextual Help Modal System (ADR-033). Legacy Popper.js properties have been deprecated and removed.
 
 | Property | Type | Description |
 | --- | --- | --- |

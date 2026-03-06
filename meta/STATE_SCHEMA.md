@@ -1,3 +1,5 @@
+// meta/STATE_SCHEMA.md
+
 # Orbital Trading: State Schema Definition
 
 ## 1. Root State Object
@@ -42,6 +44,7 @@ Contains all progression, assets, and statistics for the user.
 | Property | Type | Description |
 | --- | --- | --- |
 | `name` | String | Player's chosen name. |
+| `introStep` | Number | Current progression step within the cinematic intro sequence. |
 | `playerAge` | Number | Current age (starts at 24). |
 | `lastBirthdayYear` | Number | Year of the last processed birthday event. |
 | `credits` | Number | Current currency balance. |
@@ -135,7 +138,7 @@ New data structures for the "Local Data Broker" system.
 
 ## 6. Tutorial State (`state.tutorials`)
 
-Manages the auto-instantiation tracking for the Contextual Help Modal System.
+Exclusively manages the auto-instantiation tracking for the Contextual Help Modal System (ADR-033). Legacy Popper.js properties have been deprecated and removed.
 
 | Property | Type | Description |
 | --- | --- | --- |
