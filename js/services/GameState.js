@@ -115,6 +115,11 @@ export class GameState {
         stateCopy.pendingTravel = null;
         stateCopy.introSequenceActive = false;
 
+        // Strip tutorial locks to prevent loading into a dead end
+        if (stateCopy.tutorials) {
+            stateCopy.tutorials.guidedNavPath = { active: false, navIds: [], screenIds: [] };
+        }
+
         // Force loaded games to start on the missions screen
         stateCopy.activeNav = NAV_IDS.DATA;
         stateCopy.activeScreen = SCREEN_IDS.MISSIONS;
@@ -326,7 +331,13 @@ export class GameState {
 
             tutorials: {
                 seenHelpContexts: [],
-                helpSlideMemory: {} // State property to persist slide indices
+                helpSlideMemory: {},
+                // --- VIRTUAL WORKBENCH: UI GUIDE LOCK ---
+                guidedNavPath: {
+                    active: false,
+                    navIds: [],
+                    screenIds: []
+                }
             },
             missions: {
                 // --- MISSION SYSTEM 2.0 (Phase 1) ---

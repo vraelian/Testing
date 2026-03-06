@@ -109,7 +109,7 @@ export class DebugService {
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
             selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
             selectedMission: 'debug_kitchen_sink',
-            selectedSystemState: 'NEUTRAL', // Added for SSS
+            selectedSystemState: 'NEUTRAL', 
             botDaysToRun: 365,
             botStrategy: 'MIXED', 
             botProgress: 'Idle',
@@ -118,7 +118,11 @@ export class DebugService {
             selectedUpgrade: null, 
             selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
             quantityToAdd: 10,
-            alwaysTriggerEvents: false
+            alwaysTriggerEvents: false,
+
+            // --- UI GUIDES STATE (Arrays/Booleans) ---
+            navLockMain: Object.values(NAV_IDS).reduce((acc, id) => ({ ...acc, [id]: false }), {}),
+            navLockSub: Object.values(SCREEN_IDS).reduce((acc, id) => ({ ...acc, [id]: false }), {})
         }; 
 
         this.bot = new AutomatedPlayer(gameState, simulationService, logger);
@@ -699,14 +703,12 @@ ${logHistory}
                  this.simulationService.missionService.completeActiveMission(true); 
             }},
 
-            // --- UNIVERSAL TOAST TRIGGERS ---
             triggerSystemToast: { name: 'Toast: System', type: 'button', handler: () => this.triggerToast('system') },
             triggerFinanceToast: { name: 'Toast: Finance', type: 'button', handler: () => this.triggerToast('finance') },
             triggerIntelToast: { name: 'Toast: Intel', type: 'button', handler: () => this.triggerToast('intel') },
             triggerMissionToast: { name: 'Toast: Mission', type: 'button', handler: () => this.triggerToast('mission') },
             triggerSolToast: { name: 'Toast: Sol', type: 'button', handler: () => this.triggerToast('sol') },
 
-            // --- SYSTEM STATES V3 ---
             triggerSystemState: { name: 'Force System State', type: 'button', handler: () => {
                 const sysService = this.simulationService?.timeService?.systemStateService;
                 if (sysService) {
@@ -754,6 +756,32 @@ ${logHistory}
             sootheEconomy: { name: 'Bullish Economy (Soothe)', type: 'button', handler: () => this.sootheEconomy() },
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
+
+            // --- UI GUIDES LOGIC ---
+            applyNavLock: { name: 'Apply Nav Lock', type: 'button', handler: () => {
+                const selectedNavs = Object.keys(this.debugState.navLockMain).filter(k => this.debugState.navLockMain[k]);
+                const selectedScreens = Object.keys(this.debugState.navLockSub).filter(k => this.debugState.navLockSub[k]);
+                
+                if (selectedNavs.length === 0 && selectedScreens.length === 0) {
+                    this.simulationService.setNavigationLock([], []);
+                } else {
+                    this.simulationService.setNavigationLock(selectedNavs, selectedScreens);
+                }
+            }},
+            clearNavLock: { name: 'Clear Nav Lock', type: 'button', handler: () => {
+                // Reset toggles in UI
+                Object.keys(this.debugState.navLockMain).forEach(k => this.debugState.navLockMain[k] = false);
+                Object.keys(this.debugState.navLockSub).forEach(k => this.debugState.navLockSub[k] = false);
+                // Update GUI controllers
+                if (this.gui) {
+                    this.gui.controllersRecursive().forEach(c => {
+                        if (c.parent && (c.parent._title === 'Allowed Main Navs' || c.parent._title === 'Allowed Sub Navs')) {
+                            c.updateDisplay();
+                        }
+                    });
+                }
+                this.simulationService.clearNavigationLock();
+            }}
         };
     }
 
@@ -815,6 +843,19 @@ ${logHistory}
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
+
+        // --- NEW: UI Guides Folder ---
+        const uiFolder = this.gui.addFolder('UI Guides');
+        
+        const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
+        Object.values(NAV_IDS).forEach(id => mainNavFolder.add(this.debugState.navLockMain, id).name(id));
+        
+        const subNavFolder = uiFolder.addFolder('Allowed Sub Navs');
+        Object.values(SCREEN_IDS).forEach(id => subNavFolder.add(this.debugState.navLockSub, id).name(id));
+        
+        uiFolder.add(this.actions.applyNavLock, 'handler').name(this.actions.applyNavLock.name);
+        uiFolder.add(this.actions.clearNavLock, 'handler').name(this.actions.clearNavLock.name);
+        // ------------------------------
 
         const solFolder = this.gui.addFolder('Sol Station');
         solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
@@ -879,7 +920,6 @@ ${logHistory}
         this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
         this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
 
-        // --- NEW: System States Folder ---
         const sysStateFolder = this.gui.addFolder('System States');
         const stateOptions = Object.keys(DB.SYSTEM_STATES).reduce((acc, key) => {
             acc[DB.SYSTEM_STATES[key].name] = key;
@@ -888,7 +928,6 @@ ${logHistory}
         sysStateFolder.add(this.debugState, 'selectedSystemState', stateOptions).name('Select State');
         sysStateFolder.add(this.actions.triggerSystemState, 'handler').name(this.actions.triggerSystemState.name);
         sysStateFolder.add(this.actions.showEconWeatherUI, 'handler').name(this.actions.showEconWeatherUI.name);
-        // ---------------------------------
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
