@@ -385,6 +385,11 @@ export class SimulationService {
              activeScreen: screenId,
             lastActiveScreen: newLastActive 
         });
+
+        // Ensure UI navigation checks evaluate any active VISIT_SCREEN objectives
+        if (this.missionService) {
+            this.missionService.checkTriggers();
+        }
     }
 
     setIntelTab(tabId) {

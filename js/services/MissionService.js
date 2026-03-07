@@ -68,155 +68,6 @@ export class MissionService {
     }
 
     /**
-     * Generates and injects a set of test missions into the database.
-     * Covers various Hosts and Objective types with trivial requirements.
-     */
-    injectTestMissions() {
-        const timestamp = Date.now();
-        const testMissions = [
-            {
-                id: `test_station_delivery_${timestamp}`,
-                name: '[TEST] Station Delivery',
-                type: 'DELIVERY', // Standard type
-                host: 'STATION', // Host A
-                description: 'Simple delivery test. Deliver 1 Water Ice.',
-                triggers: [], // Always available
-                objectives: [
-                    { id: 'obj_deliver_ice', type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 1 }
-                ],
-                providedCargo: [{ goodId: 'water_ice', quantity: 1 }],
-                completion: {
-                    locationId: null,
-                    title: 'Delivery Success',
-                    text: 'Station delivery logic verified.',
-                    buttonText: 'Close'
-                },
-                rewards: [{ type: 'credits', amount: 100 }]
-            },
-            {
-                id: `test_guild_travel_${timestamp}`,
-                name: '[TEST] Guild Travel',
-                type: 'TRAVEL', // Standard type
-                host: 'GUILD', // Host B
-                description: 'Simple travel test. Travel to any location.',
-                triggers: [],
-                objectives: [
-                    { id: 'obj_travel_luna', type: 'TRAVEL_TO', target: 'loc_luna' } // Trivial target
-                ],
-                completion: {
-                    locationId: null,
-                    title: 'Travel Success',
-                    text: 'Guild travel logic verified.',
-                    buttonText: 'Close'
-                },
-                rewards: [{ type: 'item', goodId: 'propellant', quantity: 10 }]
-            },
-            {
-                id: `test_syndicate_wealth_${timestamp}`,
-                name: '[TEST] Syndicate Wealth',
-                type: 'WEALTH',
-                host: 'SYNDICATE', // Host C
-                description: 'Simple wealth check. Have > 1 Credit.',
-                triggers: [],
-                objectives: [
-                    { id: 'obj_wealth_check', type: 'WEALTH_CHECK', value: 1 }
-                ],
-                completion: {
-                    locationId: null,
-                    title: 'Wealth Success',
-                    text: 'Syndicate wealth logic verified.',
-                    buttonText: 'Pay Up'
-                },
-                rewards: [{ type: 'credits', amount: 666 }]
-            },
-            {
-                id: `test_unknown_cargo_${timestamp}`,
-                name: '[TEST] Unknown Protocol (Item)',
-                type: 'STATUS', // [[FIX]] Renamed from MYSTERY
-                host: 'UNKNOWN', // Host D
-                description: 'Tests checking CARGO for Propellant (Item).',
-                triggers: [],
-                objectives: [
-                    { id: 'obj_check_prop', type: 'have_item', goodId: 'propellant', quantity: 1 }
-                ],
-                completion: {
-                    locationId: null,
-                    title: 'Cargo Verified',
-                    text: 'Inventory item check successful.',
-                    buttonText: 'End'
-                },
-                rewards: [{ type: 'credits', amount: 5000 }]
-            },
-            {
-                id: `test_unknown_tank_${timestamp}`,
-                name: '[TEST] Unknown Protocol (Tank)',
-                type: 'STATUS', // [[FIX]] Renamed from MYSTERY
-                host: 'UNKNOWN', // Host D
-                description: 'Tests checking SHIP TANK for Fuel Level.',
-                triggers: [],
-                objectives: [
-                    { id: 'obj_check_tank', type: 'have_fuel_tank', value: 10 }
-                ],
-                completion: {
-                    locationId: null,
-                    title: 'Tank Verified',
-                    text: 'Ship fuel tank logic verified.',
-                    buttonText: 'Ignite'
-                },
-                rewards: [{ type: 'credits', amount: 5000 }]
-            },
-            {
-                id: `test_maintenance_std_${timestamp}`,
-                name: '[TEST] Maintenance Standard',
-                type: 'INSPECTION',
-                host: 'GUILD', 
-                description: 'Requires Hull Integrity >= 90%. Repair if needed.',
-                triggers: [],
-                objectives: [
-                    { id: 'obj_check_hull', type: 'HAVE_HULL_PCT', value: 90, comparator: '>=' }
-                ],
-                completion: {
-                    locationId: null,
-                    title: 'Inspection Passed',
-                    text: 'Your ship meets Guild safety standards.',
-                    buttonText: 'OK'
-                },
-                rewards: [{ type: 'credits', amount: 250 }]
-            },
-            {
-                id: `test_ghost_run_${timestamp}`,
-                name: '[TEST] Ghost Run',
-                type: 'SMUGGLING',
-                host: 'SYNDICATE',
-                description: 'Requires Empty Cargo Hold (0% Usage). Sell everything.',
-                triggers: [],
-                objectives: [
-                    { id: 'obj_check_cargo_pct', type: 'HAVE_CARGO_PCT', value: 0, comparator: '<=' }
-                ],
-                completion: {
-                    locationId: null,
-                    title: 'Ghost Run Complete',
-                    text: 'You arrived clean. Good work.',
-                    buttonText: 'Vanish'
-                },
-                rewards: [{ type: 'credits', amount: 2000 }]
-            }
-        ];
-
-        // Inject into DB
-        testMissions.forEach(m => {
-            DB.MISSIONS[m.id] = m;
-        });
-
-        this.logger.warn('MissionService', `Injected ${testMissions.length} Test Missions into Mission Terminal.`);
-        
-        // Force refresh of the UI to show new missions in the terminal
-        if (this.uiManager) {
-            this.uiManager.render(this.gameState.getState());
-        }
-    }
-
-    /**
      * Accepts a new mission, setting it as active.
      * @param {string} missionId The ID of the mission to accept.
      * @param {boolean} [force=false] If true, bypasses checks.
@@ -250,7 +101,7 @@ export class MissionService {
             isCompletable: false
         };
 
-        // [[NEW]] Auto-track logic: If no mission is being tracked, track this one.
+        // Auto-track logic: If no mission is being tracked, track this one.
         if (!this.gameState.missions.trackedMissionId) {
             this.gameState.missions.trackedMissionId = missionId;
         }
@@ -261,8 +112,16 @@ export class MissionService {
         if (this.simulationService) {
             this.simulationService.grantMissionCargo(missionId);
         }
+
+        // 5. Apply Navigation Locks if specified
+        if (mission.navLock && this.simulationService) {
+            this.simulationService.setNavigationLock(
+                mission.navLock.navIds || [],
+                mission.navLock.screenIds || []
+            );
+        }
         
-        // 5. Initial Check & Render
+        // 6. Initial Check & Render
         this.checkTriggers(); 
 
         // If the mission has no objectives, complete it immediately.
@@ -280,6 +139,8 @@ export class MissionService {
     abandonMission(missionId) {
         if (!missionId || !this.gameState.missions.activeMissionIds.includes(missionId)) return;
 
+        const mission = DB.MISSIONS[missionId];
+
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         
         // We do NOT delete from missionProgress to preserve partial progress if re-accepted.
@@ -288,11 +149,16 @@ export class MissionService {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
         }
 
-        // [[NEW]] Logic: If abandoned mission was tracked, clear tracking or pick next.
+        // Logic: If abandoned mission was tracked, clear tracking or pick next.
         if (this.gameState.missions.trackedMissionId === missionId) {
             // Pick next active mission or null
             const nextMission = this.gameState.missions.activeMissionIds[0];
             this.gameState.missions.trackedMissionId = nextMission || null;
+        }
+
+        // Clear Navigation Locks if the abandoned mission had them
+        if (mission && mission.navLock && this.simulationService) {
+            this.simulationService.clearNavigationLock();
         }
 
         this.logger.info.player(this.gameState.day, 'MISSION_ABANDON', `Abandoned mission: ${missionId}`);
@@ -327,11 +193,10 @@ export class MissionService {
 
             if (mission.objectives) {
                 mission.objectives.forEach(obj => {
-                    // [[FIX]] Pass simulationService to enable advanced checks (Effective Stats)
                     const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService);
                     
                     // Identify the objective (fallback to legacy goodId if no specific ID)
-                    const objKey = obj.id || obj.goodId;
+                    const objKey = obj.id || obj.goodId || obj.target;
                     
                     if (!progress.objectives[objKey]) {
                         progress.objectives[objKey] = { current: 0, target: result.target };
@@ -447,16 +312,19 @@ export class MissionService {
         this.gameState.missions.completedMissionIds.push(missionId);
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         
-        // Cleanup progress if desired, though keeping it is fine for history. 
         if (this.gameState.missions.missionProgress[missionId]) {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
         }
 
-        // [[NEW]] Auto-Track Logic: If the completed mission was being tracked, auto-track the next one in the list.
+        // Auto-Track Logic: If the completed mission was being tracked, auto-track the next one in the list.
         if (this.gameState.missions.trackedMissionId === missionId) {
-            // Grab the next available active mission (the list was already filtered above)
             const nextMissionId = this.gameState.missions.activeMissionIds[0];
             this.gameState.missions.trackedMissionId = nextMissionId || null;
+        }
+
+        // Clear Navigation Locks if the completed mission had them
+        if (mission.navLock && this.simulationService) {
+            this.simulationService.clearNavigationLock();
         }
 
         // 4. Update state and re-render

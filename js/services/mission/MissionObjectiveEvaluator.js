@@ -17,7 +17,6 @@ export class MissionObjectiveEvaluator {
         let current = 0;
         
         // [[FIX]] Allow 0 as a valid target (e.g. Empty Hold = 0 items)
-        // Previous logic `val || 1` treated 0 as falsey and defaulted to 1.
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
         let target = val !== undefined ? val : 1; 
 
@@ -54,6 +53,55 @@ export class MissionObjectiveEvaluator {
             case 'WEALTH_CHECK':
                 current = gameState.player.credits;
                 break;
+
+            // --- UI / NAVIGATION CHECKS ---
+            case 'visit_screen':
+            case 'VISIT_SCREEN': {
+                const reqNav = objective.navId;
+                const reqScreen = objective.screenId;
+                const isCorrectNav = !reqNav || gameState.activeNav === reqNav;
+                const isCorrectScreen = !reqScreen || gameState.activeScreen === reqScreen;
+                
+                current = (isCorrectNav && isCorrectScreen) ? 1 : 0;
+                target = 1;
+                break;
+            }
+
+            // --- ACTION / TRADE CHECKS ---
+            case 'trade_item':
+            case 'TRADE_ITEM': {
+                // A stateless check that verifies recent player trading actions via the financeLog
+                const itemId = objective.goodId || objective.target;
+                const tradeType = objective.tradeType; // 'buy' or 'sell' (optional)
+                let tradeCount = 0;
+                
+                const log = gameState.player.financeLog || [];
+                const commodity = DB.COMMODITIES ? DB.COMMODITIES.find(c => c.id === itemId) : null;
+                const searchName = commodity ? commodity.name : itemId;
+                
+                log.forEach(entry => {
+                    if (entry.type === 'trade' && entry.description.includes(searchName)) {
+                        const isBuy = entry.description.startsWith('Bought');
+                        const isSell = entry.description.startsWith('Sold');
+                        
+                        const matchesType = !tradeType || 
+                                            (tradeType.toLowerCase() === 'buy' && isBuy) || 
+                                            (tradeType.toLowerCase() === 'sell' && isSell);
+                        
+                        if (matchesType) {
+                            const match = entry.description.match(/\s(\d+)x\s/);
+                            if (match) {
+                                tradeCount += parseInt(match[1], 10);
+                            } else {
+                                tradeCount += 1;
+                            }
+                        }
+                    }
+                });
+                
+                current = tradeCount;
+                break;
+            }
 
             // --- SHIP STATE CHECKS ---
             case 'have_fuel_tank':
@@ -144,7 +192,6 @@ export class MissionObjectiveEvaluator {
                 break;
             case '<=':
                 // For "Less Than" (e.g. Empty Hold), we do NOT cap visual progress.
-                // 50% used vs target 0% -> Display "50% / <= 0%" (Fail)
                 if (current <= target) {
                     isMet = true;
                 }
