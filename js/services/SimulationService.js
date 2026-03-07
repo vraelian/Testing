@@ -21,10 +21,6 @@ import { SolStationService } from './SolStationService.js';
 import { OFFICERS } from '../data/officers.js'; 
 import { ToastService } from './ToastService.js';
 
-/**
- * @class SimulationService
- * @description Manages the core game loop, player actions, and state changes by delegating to specialized services.
- */
 export class SimulationService {
     /**
      * @param {import('./GameState.js').GameState} gameState - The central state object.
@@ -40,24 +36,20 @@ export class SimulationService {
         this.missionService = null;  
         this.intelService = null; 
 
-         // Instantiate all services
         this.marketService = new MarketService(gameState);
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
         this.travelService = new TravelService(gameState, uiManager, this.timeService, logger, this);
         this.introService = new IntroService(gameState, uiManager, logger, this);
         this.playerActionService = new PlayerActionService(gameState, uiManager, null, this.marketService, this.timeService, logger, this);
 
-        // --- EVENT SYSTEM 2.0 ---
         this.randomEventService = new RandomEventService();
 
-        // --- SOL STATION SERVICE ---
         this.solStationService = new SolStationService(gameState, logger);
         this.timeService.solStationService = this.solStationService;
         this.solStationService.setTimeService(this.timeService);
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         
-        // --- TOAST NOTIFICATION SERVICE ---
         this.toastService = new ToastService(gameState, uiManager, this);
 
         this.timeService.intelService = this.intelService;
@@ -71,23 +63,11 @@ export class SimulationService {
         }
     }
 
-    /**
-     * Injects the MissionService after all services have been instantiated.
-     * @param {import('./MissionService.js').MissionService} missionService
-     */
     setMissionService(missionService) {
         this.missionService = missionService;
         this.playerActionService.missionService = missionService;
     }
 
-    // --- TUTORIAL GUARDRAIL METHODS ---
-
-    /**
-     * Locks the navigation UI to specific paths for guided tutorials.
-     * Passing empty arrays (or null) locks the respective bar completely.
-     * @param {string|string[]} navIds - The allowed main navigation IDs (e.g., 'starport' or ['ship', 'data'])
-     * @param {string|string[]} screenIds - The allowed sub-screen IDs (e.g., 'services' or ['market', 'missions'])
-     */
     setNavigationLock(navIds = [], screenIds = []) {
         const nIds = Array.isArray(navIds) ? navIds : (navIds ? [navIds] : []);
         const sIds = Array.isArray(screenIds) ? screenIds : (screenIds ? [screenIds] : []);
@@ -100,9 +80,6 @@ export class SimulationService {
         });
     }
 
-    /**
-     * Releases the navigation UI from guided tutorial locks.
-     */
     clearNavigationLock() {
         this.gameState.setState({
             tutorials: {
@@ -112,14 +89,8 @@ export class SimulationService {
         });
     }
 
-    // --- V4 SAVE SYSTEM DELEGATION ---
-
-    /**
-     * Executes an invisible, non-blocking auto-save.
-     * Retrieves the serialized state, builds metadata, and pushes to IndexedDB.
-     */
     async saveGame() {
-        if (!this.gameState.slotId) return; // Prevent saving if slot association is missing
+        if (!this.gameState.slotId) return;
 
         try {
             const stateToSave = this.gameState.exportState();
@@ -127,7 +98,7 @@ export class SimulationService {
             const shipName = DB.SHIPS[activeShipId]?.name || "Unknown";
             
             const payload = {
-                version: "36.10", // Schema tracking
+                version: "36.10",
                 slotId: this.gameState.slotId,
                 metadata: {
                     realDate: new Date().toLocaleDateString(),
@@ -138,7 +109,6 @@ export class SimulationService {
                 state: stateToSave
             };
 
-            // Execute asynchronous save
             await saveStorageService.saveGame(this.gameState.slotId, payload);
             this.logger.info.system('SimulationService', this.gameState.day, 'SAVE_COMPLETE', `Auto-saved to ${this.gameState.slotId}`);
         } catch (error) {
@@ -146,13 +116,6 @@ export class SimulationService {
         }
     }
 
-    // --- EVENT SYSTEM 2.0 METHODS ---
-
-    /**
-     * Forces a specific Random Event to trigger immediately.
-     * Used by DebugService.
-     * @param {string} eventId 
-     */
     forceTriggerEvent(eventId) {
         const rawEventDef = this.randomEventService.getEventById(eventId);
         if (!rawEventDef) {
@@ -162,7 +125,6 @@ export class SimulationService {
 
         this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${rawEventDef.template.title}`);
         
-        // Clone and process requirements to determine disabled state
         const eventDef = { ...rawEventDef };
         if (eventDef.choices) {
             eventDef.choices = rawEventDef.choices.map(choice => {
@@ -180,11 +142,6 @@ export class SimulationService {
         });
     }
 
-    /**
-     * Resolves a player's choice from a Random Event.
-     * @param {string} eventId 
-     * @param {string} choiceId 
-     */
     resolveEventChoice(eventId, choiceId) {
         const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this);
         if (!result) return;
@@ -199,10 +156,6 @@ export class SimulationService {
         );
     }
 
-    /**
-     * Handles post-event logic for forced/debug events, checking for hull or fuel depletion.
-     * @private
-     */
     _handlePostForceEvent() {
         const ship = this._getActiveShip();
         if (!ship) return;
@@ -233,10 +186,6 @@ export class SimulationService {
         }
     }
 
-    /**
-     * Applies the calculated effects from an event outcome.
-     * @private
-     */
     _applyEventEffects(effects) {
         effects.forEach(eff => {
             switch (eff.type) {
@@ -274,14 +223,10 @@ export class SimulationService {
         this.gameState.setState({}); 
     }
 
-    // --- FACADE METHODS ---
-
-    // IntroService Delegation
     startIntroSequence() { this.introService.start(); }
     handleIntroClick(e) { this.introService.handleIntroClick(e); }
     _continueIntroSequence(batchId) { this.introService.continueAfterTutorial(batchId); }
     
-    // PlayerActionService Delegation
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
     
@@ -380,16 +325,20 @@ export class SimulationService {
     // --- CORE & SHARED METHODS ---
     setScreen(navId, screenId) {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
-        this.gameState.setState({ 
-            activeNav: navId, 
-             activeScreen: screenId,
-            lastActiveScreen: newLastActive 
-        });
+        
+        // --- PHASE 3 FIX: Atomic execution ---
+        // 1. Mutate raw state instantly
+        this.gameState.activeNav = navId;
+        this.gameState.activeScreen = screenId;
+        this.gameState.lastActiveScreen = newLastActive;
 
-        // Ensure UI navigation checks evaluate any active VISIT_SCREEN objectives
+        // 2. Evaluate objectives silently against the fresh raw state
         if (this.missionService) {
-            this.missionService.checkTriggers();
+            this.missionService.checkTriggers(true);
         }
+
+        // 3. Commit state change and broadcast UI render
+        this.gameState.setState({});
     }
 
     setIntelTab(tabId) {
@@ -451,7 +400,6 @@ export class SimulationService {
         }
     }
 
-    // --- HELPER & PRIVATE METHODS (SHARED) ---
     getEffectiveShipStats(shipId) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return null;
@@ -531,7 +479,6 @@ export class SimulationService {
         const shipState = this.gameState.player.shipStates[shipId];
         const effectiveStats = this.getEffectiveShipStats(shipId);
         
-        // Defensive initialization to heal older save files missing this object
         if (!shipState.hullAlerts) {
             shipState.hullAlerts = { one: false, two: false };
         }

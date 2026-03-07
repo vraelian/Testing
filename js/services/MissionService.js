@@ -51,8 +51,6 @@ export class MissionService {
     
     /**
      * Gets a list of all missions that are currently available to the player.
-     * A mission is available if it's not active, not completed, and its triggers are met.
-     * EXCLUDES 'DEBUG' TYPE MISSIONS.
      * @returns {Array<object>} An array of available mission objects.
      */
     getAvailableMissions() {
@@ -61,7 +59,7 @@ export class MissionService {
             const isAvailable =
                 !activeMissionIds.includes(mission.id) &&
                 !completedMissionIds.includes(mission.id) &&
-                mission.type !== 'DEBUG' && // [FIX] Hide debug missions from standard terminal
+                mission.type !== 'DEBUG' && // Hide debug missions from standard terminal
                 this.arePrerequisitesMet(mission.id);
             return isAvailable;
         });
@@ -124,12 +122,11 @@ export class MissionService {
         // 6. Initial Check & Render
         this.checkTriggers(); 
 
-        // If the mission has no objectives, complete it immediately.
+        // If the mission has no objectives, mark it as completable immediately, but do NOT auto-complete it.
         if (!mission.objectives || mission.objectives.length === 0) {
-            this.completeMission(missionId, force);
-        } else {
-            this.uiManager.render(this.gameState.getState());
+            this.gameState.missions.missionProgress[missionId].isCompletable = true;
         }
+        this.uiManager.render(this.gameState.getState());
     }
 
     /**
@@ -143,15 +140,12 @@ export class MissionService {
 
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         
-        // We do NOT delete from missionProgress to preserve partial progress if re-accepted.
-        // But we DO reset isCompletable to be safe.
         if (this.gameState.missions.missionProgress[missionId]) {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
         }
 
         // Logic: If abandoned mission was tracked, clear tracking or pick next.
         if (this.gameState.missions.trackedMissionId === missionId) {
-            // Pick next active mission or null
             const nextMission = this.gameState.missions.activeMissionIds[0];
             this.gameState.missions.trackedMissionId = nextMission || null;
         }
@@ -169,7 +163,6 @@ export class MissionService {
     /**
      * Checks all mission triggers against the current game state.
      * Iterates through ALL active missions and evaluates objectives using the Logic Engine.
-     * [[UPDATED]] Supports silent execution for render loop integration.
      * @param {boolean} [suppressNotify=false] - If true, mutates state but skips setState/render to avoid loops.
      */
     checkTriggers(suppressNotify = false) {
@@ -185,31 +178,28 @@ export class MissionService {
             let allObjectivesMet = true;
             let progressChanged = false;
             
-            // Ensure progress object exists
             if (!this.gameState.missions.missionProgress[missionId]) {
                 this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false };
             }
             const progress = this.gameState.missions.missionProgress[missionId];
 
-            if (mission.objectives) {
+            if (mission.objectives && mission.objectives.length > 0) {
                 mission.objectives.forEach(obj => {
-                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService);
-                    
-                    // Identify the objective (fallback to legacy goodId if no specific ID)
                     const objKey = obj.id || obj.goodId || obj.target;
                     
                     if (!progress.objectives[objKey]) {
-                        progress.objectives[objKey] = { current: 0, target: result.target };
+                        progress.objectives[objKey] = { current: 0, target: 1 };
                     }
-
-                    // Check for value change
+                    
+                    const currentObjProgress = progress.objectives[objKey].current;
+                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService, currentObjProgress);
+                    
                     if (progress.objectives[objKey].current !== result.current) {
                         progress.objectives[objKey].current = result.current;
-                        progress.objectives[objKey].target = result.target; // Update target just in case
+                        progress.objectives[objKey].target = result.target; 
                         progressChanged = true;
                     }
 
-                    // Check for Met status
                     if (!result.isMet) {
                         allObjectivesMet = false;
                     }
@@ -219,7 +209,6 @@ export class MissionService {
                 allObjectivesMet = true;
             }
 
-            // Update Completion Status
             if (progress.isCompletable !== allObjectivesMet) {
                 progress.isCompletable = allObjectivesMet;
                 stateChanged = true;
@@ -231,10 +220,9 @@ export class MissionService {
             if (progressChanged) stateChanged = true;
         });
     
-        // Only update state and re-render if there's a change AND we aren't suppressing notifications.
         if (stateChanged && !suppressNotify) {
-            this.gameState.setState({}); // Set the new state
-            this.uiManager.render(this.gameState.getState()); // Trigger a full re-render
+            this.gameState.setState({}); 
+            this.uiManager.render(this.gameState.getState()); 
             this.uiManager.flashObjectiveProgress();
         }
     }
@@ -250,7 +238,6 @@ export class MissionService {
         const mission = DB.MISSIONS[missionId];
         const progress = this.gameState.missions.missionProgress[missionId];
         
-        // Check Conditions
         const isCompletable = progress ? progress.isCompletable : false;
         const noObjectives = !mission.objectives || mission.objectives.length === 0;
         
@@ -258,10 +245,9 @@ export class MissionService {
             return; // Can't complete yet
         }
 
-        // 1. Deduct objective items (if applicable) using Sequential Fleet Drain
+        // 1. Deduct objective items
         if (mission.objectives) {
             mission.objectives.forEach(obj => {
-                // Only deduct if it's an item delivery type
                 if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
                     const itemId = obj.goodId || obj.target;
                     let remainingToRemove = obj.quantity || 1;
@@ -272,7 +258,6 @@ export class MissionService {
                         
                         for (const shipId of this.gameState.player.ownedShipIds) {
                             const qty = this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0;
-                            // Sort heuristic requires maxCapacity
                             const maxCapacity = this.simulationService ? 
                                 this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
                                 (DB.SHIPS[shipId]?.cargoCapacity || 100);
@@ -280,7 +265,6 @@ export class MissionService {
                             shipInventories.push({ shipId, qty, maxCapacity });
                         }
 
-                        // Sort: Active ship first, then remaining inactive ships by max capacity descending
                         shipInventories.sort((a, b) => {
                             if (a.shipId === activeShipId) return -1;
                             if (b.shipId === activeShipId) return 1;
@@ -308,7 +292,7 @@ export class MissionService {
         }
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
 
-        // 3. Update mission state
+        // 3. Update mission state arrays
         this.gameState.missions.completedMissionIds.push(missionId);
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         
@@ -316,14 +300,19 @@ export class MissionService {
             this.gameState.missions.missionProgress[missionId].isCompletable = false;
         }
 
-        // Auto-Track Logic: If the completed mission was being tracked, auto-track the next one in the list.
+        // Auto-switch back to the terminal if the log is now completely empty
+        if (this.gameState.missions.activeMissionIds.length === 0) {
+            this.gameState.uiState.activeMissionTab = 'terminal';
+        }
+
         if (this.gameState.missions.trackedMissionId === missionId) {
             const nextMissionId = this.gameState.missions.activeMissionIds[0];
             this.gameState.missions.trackedMissionId = nextMissionId || null;
         }
 
-        // Clear Navigation Locks if the completed mission had them
-        if (mission.navLock && this.simulationService) {
+        // Navigation Locks: ONLY clear if the mission completion explicitly instructs it.
+        // This ensures sequential tutorial locks persist cleanly between turn-ins.
+        if (mission.completion && mission.completion.clearNavLock && this.simulationService) {
             this.simulationService.clearNavigationLock();
         }
 
