@@ -261,14 +261,14 @@ export class MarketService {
                 }
                 // [GEMINI] --- END MODEL FIX ---
 
+                let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
+                
                 // --- NEW: Depletion Price Hike ---
-                let priceHikeMultiplier = 1.0;
                 if (inventoryItem.isDepleted) {
-                    priceHikeMultiplier = location.ecoProfile?.panicMult ?? 1.5; // Defaults to 1.5, scaling up for fringe/desperate worlds
+                    let priceHikeMultiplier = location.ecoProfile?.panicMult ?? 1.5; // Defaults to 1.5, scaling up for fringe/desperate worlds
+                    newPrice *= priceHikeMultiplier;
                 }
                 // --- End Depletion Price Hike ---
-
-                let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
                 
                 // --- NEW: Saturation Penalty ---
                 if (inventoryItem.isSaturated) {
