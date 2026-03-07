@@ -146,7 +146,7 @@ export const TUTORIAL_MISSIONS = {
         ],
         navLock: { 
             navIds: ['data', 'ship'], 
-            screenIds: ['missions', 'cargo'] 
+            screenIds: ['missions', 'cargo', 'map', 'navigation'] 
         },
         completion: {
             locationId: "loc_luna",

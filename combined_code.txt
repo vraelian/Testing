@@ -9231,7 +9231,7 @@ import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA, systemState } = gameState;
+    const { player, currentLocationId, TRAVEL_DATA, systemState, missions } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
@@ -9285,6 +9285,11 @@ export function renderNavigationScreen(gameState) {
     const isFreeFuel = shipAttributes.includes('ATTR_NEWTONS_GHOST') || hasSleeper;
     // ---------------------------------------------
 
+    // --- TUTORIAL GUARDRAIL CHECK ---
+    const isTut5 = missions?.activeMissionIds?.includes('mission_tutorial_05');
+    const isTut6 = missions?.activeMissionIds?.includes('mission_tutorial_06');
+    const isTut7 = missions?.activeMissionIds?.includes('mission_tutorial_07');
+
     return `
         <div class="scroll-panel navigation-scroll-panel">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -9292,6 +9297,15 @@ export function renderNavigationScreen(gameState) {
                 .filter(loc => player.unlockedLocationIds.includes(loc.id))
                 .map(location => {
                     const isCurrent = location.id === currentLocationId;
+                    
+                    // Specific tutorial lockout logic
+                    let isLockedOut = false;
+                    if (isTut5 && location.id !== 'loc_luna') isLockedOut = true;
+                    if (isTut6) isLockedOut = true;
+                    if (isTut7 && location.id !== 'loc_mars') isLockedOut = true;
+                    
+                    const lockoutClass = isLockedOut ? 'opacity-50 grayscale pointer-events-none' : '';
+                    const actionData = isLockedOut ? '' : `data-action="show-launch-modal" data-location-id="${location.id}"`;
                     
                     let displayTime = 0;
                     let displayFuel = 0;
@@ -9320,8 +9334,8 @@ export function renderNavigationScreen(gameState) {
 
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}" 
-                                     data-action="show-launch-modal" data-location-id="${location.id}" ${currentStyle}>
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
+                                     ${actionData} ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
@@ -9509,7 +9523,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 const objKey = obj.id || obj.goodId;
                 const pObj = progress.objectives[objKey];
                 const current = pObj ? pObj.current : 0;
-                const target = pObj ? pObj.target : (obj.quantity || 1);
+                const target = pObj ? pObj.target : (obj.quantity || obj.value || 1);
                 const comparator = obj.comparator || '>=';
 
                 let desc = 'OBJECTIVE';
@@ -9521,6 +9535,10 @@ export function renderMissionsScreen(gameState, missionService) {
                     desc = `DELIVER ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase()}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
+                else if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
+                    desc = `${(obj.tradeType || 'trade').toUpperCase()} ${DB.COMMODITIES.find(c => c.id === obj.goodId)?.name.toUpperCase()}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
                 else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
                     desc = `TRAVEL TO ${DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase()}`;
                     displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
@@ -9531,13 +9549,13 @@ export function renderMissionsScreen(gameState, missionService) {
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
-                    desc = 'FUEL LEVEL';
-                    displayStr = `${current}`;
+                    desc = 'REFUEL SHIP';
+                    displayStr = `${current}/${target}`;
                     percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); 
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
-                    desc = 'HULL INTEGRITY';
-                    displayStr = `${current}%`;
+                    desc = 'REPAIR HULL';
+                    displayStr = `${current}%/${target}%`;
                     if (comparator === '<=') {
                         percent = current <= target ? 100 : 0;
                     } else {
@@ -13132,7 +13150,7 @@ export const TUTORIAL_MISSIONS = {
         ],
         navLock: { 
             navIds: ['data', 'ship'], 
-            screenIds: ['missions', 'cargo'] 
+            screenIds: ['missions', 'cargo', 'map', 'navigation'] 
         },
         completion: {
             locationId: "loc_luna",
@@ -17967,7 +17985,21 @@ export class UIMissionControl {
             let firstObj = null;
             
             if (mission.objectives) {
-                firstObj = mission.objectives[0];
+                // Find first uncompleted objective or default to the last objective
+                firstObj = mission.objectives.find(obj => {
+                    const localKey = obj.id || obj.goodId;
+                    const pObj = progress.objectives[localKey];
+                    const locCurrent = pObj ? pObj.current : 0;
+                    const locTarget = pObj ? pObj.target : (obj.quantity || obj.value || 1);
+                    
+                    if (['have_hull_pct', 'HAVE_HULL_PCT', 'have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {
+                        const comparator = obj.comparator || '>=';
+                        if (comparator === '<=') return locCurrent > locTarget;
+                        return locCurrent < locTarget;
+                    }
+                    return locCurrent < locTarget;
+                }) || mission.objectives[mission.objectives.length - 1];
+                
                 objKey = firstObj.id || firstObj.goodId;
                 
                 if (progress.objectives[objKey]) {
@@ -17986,7 +18018,7 @@ export class UIMissionControl {
             
             if (firstObj) {
                 if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
-                    displayStr = `[${current}]`;
+                    displayStr = `[${current}/${target}]`;
                     percent = Math.min(100, (current / (target || 100)) * 100);
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
@@ -18033,14 +18065,19 @@ export class UIMissionControl {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Deliver ${name}`;
         }
+        if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
+             const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
+             return `${action} ${name}`;
+        }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
         
-        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Fuel Tank';
-        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Hull Status';
+        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Refuel Ship';
+        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Repair Hull';
         if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
         if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
@@ -18182,6 +18219,11 @@ export class UIMissionControl {
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Deliver ${obj.quantity || 1}x ${name}`;
+        }
+        if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
+             const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
+             return `${action} ${obj.quantity || 1}x ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
@@ -18343,6 +18385,13 @@ export class UIMissionControl {
                            
                            uiManager.render = originalRender;
                            closeHandler();
+
+                           // --- FORCE RENDER ---
+                           // Ensure the screen formally updates now that it is un-hijacked so 
+                           // we can catch empty logs and the automatic Terminal switch
+                           if (uiManager.lastKnownState) {
+                               uiManager.render(uiManager.lastKnownState);
+                           }
                        };
 
                        if (card) {
@@ -18902,6 +18951,7 @@ export class UIEventControl {
     }
 
     showMapDetailModal(locationId) {
+        const state = this.manager.lastKnownState;
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
 
@@ -18945,7 +18995,9 @@ export class UIEventControl {
             quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">None reported</p>`;
         }
 
-        const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
+        // --- TUTORIAL GUARDRAIL CHECK ---
+        const isMapNavLocked = state?.missions?.activeMissionIds?.some(id => ['mission_tutorial_04', 'mission_tutorial_05', 'mission_tutorial_06', 'mission_tutorial_07'].includes(id));
+        const navigateBtnHtml = isMapNavLocked ? '' : `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
 
         const contentHtml = `
             <div class="text-center">
@@ -27705,7 +27757,11 @@ export class TravelService {
             this.simulationService.saveGame();
             // ------------------------------------------------------
 
-            if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
+            const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
+            if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
+                this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+            } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
+                // Keep old logic safeguard
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else {
                 this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
@@ -28540,6 +28596,15 @@ export class IntroService {
                 this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
                 
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
+
+                // --- RECORD LOAN TO LOG ---
+                this.gameState.player.financeLog.push({
+                    day: this.gameState.day,
+                    type: 'loan',
+                    amount: 25000,
+                    balance: this.gameState.player.credits,
+                    description: 'Merchant Guild Start-up Loan'
+                });
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 

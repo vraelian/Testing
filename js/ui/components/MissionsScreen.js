@@ -160,7 +160,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 const objKey = obj.id || obj.goodId;
                 const pObj = progress.objectives[objKey];
                 const current = pObj ? pObj.current : 0;
-                const target = pObj ? pObj.target : (obj.quantity || 1);
+                const target = pObj ? pObj.target : (obj.quantity || obj.value || 1);
                 const comparator = obj.comparator || '>=';
 
                 let desc = 'OBJECTIVE';
@@ -172,6 +172,10 @@ export function renderMissionsScreen(gameState, missionService) {
                     desc = `DELIVER ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase()}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
+                else if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
+                    desc = `${(obj.tradeType || 'trade').toUpperCase()} ${DB.COMMODITIES.find(c => c.id === obj.goodId)?.name.toUpperCase()}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
                 else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
                     desc = `TRAVEL TO ${DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase()}`;
                     displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
@@ -182,13 +186,13 @@ export function renderMissionsScreen(gameState, missionService) {
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
-                    desc = 'FUEL LEVEL';
-                    displayStr = `${current}`;
+                    desc = 'REFUEL SHIP';
+                    displayStr = `${current}/${target}`;
                     percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); 
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
-                    desc = 'HULL INTEGRITY';
-                    displayStr = `${current}%`;
+                    desc = 'REPAIR HULL';
+                    displayStr = `${current}%/${target}%`;
                     if (comparator === '<=') {
                         percent = current <= target ? 100 : 0;
                     } else {
