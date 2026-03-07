@@ -2,7 +2,7 @@
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 2/25/26, ver. Balance v2
+Last Edit: 3/6/26, ver. Balance v2
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
@@ -110,6 +110,7 @@ Cybernetics
 
 III. Player-Driven Market Dynamics & Simulation
 Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems. These forces are designed to make the market a dynamic entity that the player actively manipulates. These forces are processed during the weekly TimeService.advanceDays simulation tick.
+
 1. Force: Availability Pressure (The Delayed Market Shock)
 This is the new, unified force that replaces the old "Player Pressure" and "Scarcity Pressure." It is the primary driver of all player-initiated price changes.
 Mechanic: This force directly simulates supply and demand. When a player buys or sells, they immediately change the item's quantity at that market. This change in stock is the only thing that drives the price change.
@@ -118,35 +119,45 @@ The 7-Day Delay (Anti-Abuse): This effect is intentionally delayed. The game che
 The Strength (High Impact): This effect is controlled by AVAILABILITY_PRESSURE_STRENGTH (currently 0.50). This high value makes market manipulation feel powerful and rewarding.
 Example (Sell): Doubling a market's stock (a 2.0 ratio) will cause the price to crash by 50% after the 7-day delay.
 Example (Buy): Buying half a market's stock (a 0.5 ratio) will cause the price to spike by 25% after the 7-day delay.
+
 2. Force: Price Lock (The Core Loop)
 This is the system that makes market manipulation viable.
 Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 2.5% pull back to the local average) is disabled for a long duration.
-Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item.
-Jan-Jun (Day 1-182): 75 to 120 days (2.5 - 4 months).
-Jul-Dec (Day 183-365): 105 to 195 days (3.5 - 6.5 months).
-Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade, allowing them to travel and return to exploit the price they created.
+Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item using a dynamic, distance-scaled formula: `Base Lock (60 days) + (Location Distance * 0.20) ± 10% Jitter`.
+Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade. Because the lock scales with distance, fringe outer-rim markets will lock prices for significantly longer (e.g., Pluto for ~276 days) than inner-system hubs (e.g., Earth for ~96 days), aligning the opportunity window with actual travel times.
 **Note:** Active Intel Deals also trigger a form of price lock where the price fluctuates by only ±3% around the deal price.
+
 3. Force: Depletion Bonus (The Panic)
 A special, one-time bonus for buying out a significant portion of a market's stock, simulating a supply panic.
 Technical Detail: This is a multi-part check originating in PlayerActionService.buyItem.
 Trigger: When a purchase reduces inventoryItem.quantity to <= 0.
 Threshold Check: The game checks if the amount purchased was >= 8% of the item's calculated targetStock.
 Cooldown Check: It then checks if 365 days have passed since the last bonus (depletionBonusDay).
-Effect: If all checks pass, isDepleted and depletionDay are set. For the next 7 days, evolveMarketPrices applies a 1.5x priceHikeMultiplier to the availabilityEffect, causing the price to rise 50% faster than normal.
-4. Force: Inventory Replenishment (The Bottleneck)
+Effect: If all checks pass, `isDepleted` and `depletionDay` are set. This initiates a macroeconomic panic era. `evolveMarketPrices` applies a 1.5x `priceHikeMultiplier` continuously until the market's stock naturally replenishes to at least 60% of its target capacity (which typically takes about 9 weeks). This ensures the panic lasts long enough to remain viable after a deep-space round trip.
+
+4. Force: Asymmetric Saturation (The Glut)
+The inverse of the Depletion Panic. A punitive mechanic that prevents players from dumping massive fleet-sized inventories onto a single market without consequence.
+Trigger: When a player's sale pushes a market's inventory above 300% (3.0x) of its targetStock, an `isSaturated` flag is triggered.
+Effect: While saturated, the market refuses to pay standard rates, applying a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion or pressure calculations.
+Recovery: The market sheds its excess inventory week by week. The saturation embargo is only lifted when the inventory naturally decays below 200% (2.0x) of its target capacity, forcing fleet haulers to diversify their drop-off locations.
+
+5. Force: Inventory Replenishment (The Bottleneck)
 The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
 Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock.
 Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week. `MARKET_PRESSURE_DECAY` is tuned to 0.65, aggressively decaying artificial margins by the 4th consecutive trip (the 4-Trip Crash).
 Effect: This slow rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
 Role of marketPressure: The marketPressure variable (set during a trade) is now used exclusively by this system. Negative pressure (from player buying) will dynamically increase the market's targetStock, simulating the market adapting to new demand.
-5. Force: Market Memory (The Reset)
+
+6. Force: Market Memory (The Reset)
 The passive fail-safe that prevents the universe from being permanently altered.
 Mechanic: This is the "garbage collector" for markets the player abandons.
-Technical Detail: In replenishMarketInventory, the system checks if lastPlayerInteractionTimestamp is older than 120 days.
-Effect: If the player has not traded that specific item at that specific location for 120 days, the item's state is completely reset.
+Technical Detail: In replenishMarketInventory, the system checks if lastPlayerInteractionTimestamp is older than 365 days.
+Effect: If the player has not traded that specific item at that specific location for a full year (365 days), the item's state is completely reset. This extended duration allows players to undertake massive multi-system arbitrage routes across the outer rim without their inner-system economic footprint being erased.
 marketPressure is reset to 0.
 priceLockEndDay is reset to 0, re-enabling Mean Reversion.
 depletionBonusDay is reset to 0, allowing the bonus to be triggered again.
+isDepleted is set to false.
+isSaturated is set to false.
 
 IV. How The Market Behaves (Simple Terms)
 (See existing file for basic behavior examples...)
@@ -187,7 +198,7 @@ Unique economic rules that apply only to specific stations, encouraging speciali
 
 * **Sol Station (Solar Forge):** +25% Sell Price for Graphene Lattices & Plasteel.
 * **Mercury (Desperate Thirst):** Pays 40% more for Water Ice.
-* **Venus (Data Haven):** Intel is 50% cheaper and deals last 2x longer.
+* **Venus (Data Haven):** Intel is 50% cheaper and deals last 30% longer.
 * **Earth (High Demand):** Cloned Organs & Xeno-Geologicals sell for 10% more.
 * **The Moon (Orbital Shipyards):** 20% discount on all ship repairs.
 * **Mars (Colonial Expansion):** +10% Sell Price for Water Ice and Hydroponics.
