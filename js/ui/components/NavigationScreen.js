@@ -59,7 +59,9 @@ export function renderNavigationScreen(gameState) {
     // ---------------------------------------------
 
     // --- TUTORIAL GUARDRAIL CHECK ---
-    const isTutorial5Active = missions?.activeMissionIds?.includes('mission_tutorial_05');
+    const isTut5 = missions?.activeMissionIds?.includes('mission_tutorial_05');
+    const isTut6 = missions?.activeMissionIds?.includes('mission_tutorial_06');
+    const isTut7 = missions?.activeMissionIds?.includes('mission_tutorial_07');
 
     return `
         <div class="scroll-panel navigation-scroll-panel">
@@ -70,7 +72,11 @@ export function renderNavigationScreen(gameState) {
                     const isCurrent = location.id === currentLocationId;
                     
                     // Specific tutorial lockout logic
-                    const isLockedOut = isTutorial5Active && location.id !== 'loc_luna';
+                    let isLockedOut = false;
+                    if (isTut5 && location.id !== 'loc_luna') isLockedOut = true;
+                    if (isTut6) isLockedOut = true;
+                    if (isTut7 && location.id !== 'loc_mars') isLockedOut = true;
+                    
                     const lockoutClass = isLockedOut ? 'opacity-50 grayscale pointer-events-none' : '';
                     const actionData = isLockedOut ? '' : `data-action="show-launch-modal" data-location-id="${location.id}"`;
                     

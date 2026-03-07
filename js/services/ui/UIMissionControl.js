@@ -78,7 +78,21 @@ export class UIMissionControl {
             let firstObj = null;
             
             if (mission.objectives) {
-                firstObj = mission.objectives[0];
+                // Find first uncompleted objective or default to the last objective
+                firstObj = mission.objectives.find(obj => {
+                    const localKey = obj.id || obj.goodId;
+                    const pObj = progress.objectives[localKey];
+                    const locCurrent = pObj ? pObj.current : 0;
+                    const locTarget = pObj ? pObj.target : (obj.quantity || obj.value || 1);
+                    
+                    if (['have_hull_pct', 'HAVE_HULL_PCT', 'have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {
+                        const comparator = obj.comparator || '>=';
+                        if (comparator === '<=') return locCurrent > locTarget;
+                        return locCurrent < locTarget;
+                    }
+                    return locCurrent < locTarget;
+                }) || mission.objectives[mission.objectives.length - 1];
+                
                 objKey = firstObj.id || firstObj.goodId;
                 
                 if (progress.objectives[objKey]) {
@@ -97,7 +111,7 @@ export class UIMissionControl {
             
             if (firstObj) {
                 if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
-                    displayStr = `[${current}]`;
+                    displayStr = `[${current}/${target}]`;
                     percent = Math.min(100, (current / (target || 100)) * 100);
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
@@ -144,14 +158,19 @@ export class UIMissionControl {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Deliver ${name}`;
         }
+        if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
+             const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
+             return `${action} ${name}`;
+        }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
         
-        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Fuel Tank';
-        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Hull Status';
+        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Refuel Ship';
+        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Repair Hull';
         if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
         if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
@@ -293,6 +312,11 @@ export class UIMissionControl {
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Deliver ${obj.quantity || 1}x ${name}`;
+        }
+        if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
+             const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
+             return `${action} ${obj.quantity || 1}x ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
