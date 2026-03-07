@@ -454,6 +454,13 @@ export class UIMissionControl {
                            
                            uiManager.render = originalRender;
                            closeHandler();
+
+                           // --- FORCE RENDER ---
+                           // Ensure the screen formally updates now that it is un-hijacked so 
+                           // we can catch empty logs and the automatic Terminal switch
+                           if (uiManager.lastKnownState) {
+                               uiManager.render(uiManager.lastKnownState);
+                           }
                        };
 
                        if (card) {

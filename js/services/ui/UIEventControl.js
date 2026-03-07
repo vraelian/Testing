@@ -262,6 +262,7 @@ export class UIEventControl {
     }
 
     showMapDetailModal(locationId) {
+        const state = this.manager.lastKnownState;
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
 
@@ -305,7 +306,9 @@ export class UIEventControl {
             quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">None reported</p>`;
         }
 
-        const navigateBtnHtml = `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
+        // --- TUTORIAL GUARDRAIL CHECK ---
+        const isMapNavLocked = state?.missions?.activeMissionIds?.some(id => ['mission_tutorial_04', 'mission_tutorial_05'].includes(id));
+        const navigateBtnHtml = isMapNavLocked ? '' : `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
 
         const contentHtml = `
             <div class="text-center">

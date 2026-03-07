@@ -224,6 +224,15 @@ export class IntroService {
                 
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
 
+                // --- RECORD LOAN TO LOG ---
+                this.gameState.player.financeLog.push({
+                    day: this.gameState.day,
+                    type: 'loan',
+                    amount: 25000,
+                    balance: this.gameState.player.credits,
+                    description: 'Merchant Guild Start-up Loan'
+                });
+
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
                 // Route through the meta help modals instead of immediately ending

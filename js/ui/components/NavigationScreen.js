@@ -4,7 +4,7 @@ import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export function renderNavigationScreen(gameState) {
-    const { player, currentLocationId, TRAVEL_DATA, systemState } = gameState;
+    const { player, currentLocationId, TRAVEL_DATA, systemState, missions } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
@@ -58,6 +58,9 @@ export function renderNavigationScreen(gameState) {
     const isFreeFuel = shipAttributes.includes('ATTR_NEWTONS_GHOST') || hasSleeper;
     // ---------------------------------------------
 
+    // --- TUTORIAL GUARDRAIL CHECK ---
+    const isTutorial5Active = missions?.activeMissionIds?.includes('mission_tutorial_05');
+
     return `
         <div class="scroll-panel navigation-scroll-panel">
             <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
@@ -65,6 +68,11 @@ export function renderNavigationScreen(gameState) {
                 .filter(loc => player.unlockedLocationIds.includes(loc.id))
                 .map(location => {
                     const isCurrent = location.id === currentLocationId;
+                    
+                    // Specific tutorial lockout logic
+                    const isLockedOut = isTutorial5Active && location.id !== 'loc_luna';
+                    const lockoutClass = isLockedOut ? 'opacity-50 grayscale pointer-events-none' : '';
+                    const actionData = isLockedOut ? '' : `data-action="show-launch-modal" data-location-id="${location.id}"`;
                     
                     let displayTime = 0;
                     let displayFuel = 0;
@@ -93,8 +101,8 @@ export function renderNavigationScreen(gameState) {
 
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg}" 
-                                     data-action="show-launch-modal" data-location-id="${location.id}" ${currentStyle}>
+                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
+                                     ${actionData} ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
