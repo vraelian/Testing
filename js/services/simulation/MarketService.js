@@ -263,14 +263,18 @@ export class MarketService {
 
                 // --- NEW: Depletion Price Hike ---
                 let priceHikeMultiplier = 1.0;
-                if (inventoryItem.isDepleted && this.gameState.day < inventoryItem.depletionDay + 7) {
+                if (inventoryItem.isDepleted) {
                     priceHikeMultiplier = location.ecoProfile?.panicMult ?? 1.5; // Defaults to 1.5, scaling up for fringe/desperate worlds
-                    // We check depletionDay + 7, so this effect lasts for the whole week
-                    // We reset the flag *after* it's been used in replenishment
                 }
                 // --- End Depletion Price Hike ---
 
                 let newPrice = price + randomFluctuation + reversionEffect + (pressureEffect * priceHikeMultiplier);
+                
+                // --- NEW: Saturation Penalty ---
+                if (inventoryItem.isSaturated) {
+                    newPrice *= 0.25; // Crash the price to floor values
+                }
+                // --- End Saturation Penalty ---
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                      newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
@@ -328,13 +332,15 @@ export class MarketService {
                 }
                 // --- END SYSTEM STATES V3 ---
 
-                // Market Memory: Reset if untouched for 120 days.
-                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 120) {
+                // Market Memory: Reset if untouched for 365 days.
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 365) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
                     inventoryItem.depletionDay = 0; // Clear depletion day on reset
                     inventoryItem.priceLockEndDay = 0; // <-- ADDED: Clear price lock on reset
+                    inventoryItem.isDepleted = false;
+                    inventoryItem.isSaturated = false; // Clear saturation flag
                 } else {
                     // Phase 1: Establish Dynamic Target Stock
                     const [minAvail, maxAvail] = c.canonicalAvailability;
@@ -372,8 +378,6 @@ export class MarketService {
                     if (inventoryItem.isDepleted) {
                         // If item was depleted, add a small emergency boost
                         emergencyStock = skewedRandom(1, 5);
-                        inventoryItem.isDepleted = false; // Reset depletion flag
-                        // We DO NOT reset depletionDay, as evolveMarketPrices uses it for 7 days
                     } else if (inventoryItem.quantity <= 0) {
                         // Also boost if it just happens to be 0
                         emergencyStock = skewedRandom(1, 5);
@@ -381,6 +385,16 @@ export class MarketService {
                     // --- End Emergency Stock Boost ---
 
                     inventoryItem.quantity += (replenishAmount + emergencyStock);
+
+                    // Threshold Check: Turn off panic if stock is restored to 60% of target
+                    if (inventoryItem.isDepleted && inventoryItem.quantity >= (targetStock * 0.60)) {
+                        inventoryItem.isDepleted = false;
+                    }
+
+                    // Threshold Check: Turn off saturation embargo if stock falls below 200% of target
+                    if (inventoryItem.isSaturated && inventoryItem.quantity <= (targetStock * 2.0)) {
+                        inventoryItem.isSaturated = false;
+                    }
                 }
 
                 // Phase 3: Apply Final Visual Fluctuation
@@ -422,21 +436,38 @@ export class MarketService {
             inventoryItem.marketPressure -= pressureChange;
         } else { // 'sell'
             inventoryItem.marketPressure += pressureChange;
+            
+            // --- NEW: Check for Market Saturation ---
+            const [minAvail, maxAvail] = good.canonicalAvailability;
+            const modifier = market.availabilityModifier?.[goodId] ?? 1.0;
+            const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+            
+            let pressureForAdaptation = inventoryItem.marketPressure;
+            if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
+            
+            const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+            const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
+            const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
+            
+            if (inventoryItem.quantity > (targetStock * 3.0)) {
+                inventoryItem.isSaturated = true;
+                // Log for System State footprint evaluation
+                if (this.gameState.systemState && this.gameState.systemState.economyFootprints) {
+                    this.gameState.systemState.economyFootprints.push({
+                        day: this.gameState.day, type: 'SATURATION', locationId: this.gameState.currentLocationId, commodityId: good.id
+                    });
+                }
+            }
+            // --- END SATURATION CHECK ---
         }
 
         // --- NEW: Set Variable Price Lock Duration ---
-        const dayOfYear = (this.gameState.day - 1) % 365 + 1;
-        let minDuration, maxDuration;
-
-        if (dayOfYear <= 182) { // First half of the year
-            minDuration = 75; // 2.5 months
-            maxDuration = 120; // 4 months
-        } else { // Second half of the year
-            minDuration = 105; // 3.5 months
-            maxDuration = 195; // 6.5 months
-        }
-
-        const lockDuration = Math.floor(Math.random() * (maxDuration - minDuration + 1)) + minDuration;
+        const baseLock = 60;
+        const distanceBonus = (market?.distance || 0) * 0.20;
+        const targetLock = baseLock + distanceBonus;
+        const jitter = targetLock * 0.10; // ±10% fluctuation
+        
+        const lockDuration = Math.floor(targetLock + (Math.random() * (jitter * 2) - jitter));
         inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
         // --- END CHANGE ---
 

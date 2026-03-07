@@ -247,7 +247,7 @@ export const DB = {
                 "Opulent spires pierce the thick, corrosive fog, offering a stark contrast between the lethal environment and the syndicate's extravagance.",
                 "The golden haze of the cloud-deck parts to reveal sprawling, buoyant estates anchored securely above the planetary inferno."
             ], 
-            specialty: "• 50% Intel Discount & 2x Duration<br>• Highly volatile Tech market<br>• Focused on Data & Tech Goods", 
+            specialty: "• 50% Intel Discount & 30% Longer Duration<br>• Highly volatile Tech market<br>• Focused on Data & Tech Goods", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
@@ -255,7 +255,7 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5
             },
             ecoProfile: { pressureMod: 1.15 },
-            intelProfile: { focusCats: ['TECH'] }
+            intelProfile: { costMod: 0.50, durationMod: 1.30, focusCats: ['TECH'] }
         },
         { 
             id: LOCATION_IDS.EARTH, 
