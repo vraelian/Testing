@@ -49,6 +49,25 @@ const getMissionTypeClass = (missionType) => {
     return 'm-type-standard';
 };
 
+// --- NEW HELPER: Dynamic Text Replacement ---
+const parseMissionText = (text, gameState) => {
+    if (!text) return '';
+    let parsedText = text;
+    
+    if (parsedText.includes('[playerName]')) {
+        const pName = gameState.player?.name || 'Captain';
+        parsedText = parsedText.replace(/\[playerName\]/g, pName);
+    }
+    
+    if (parsedText.includes('[shipName]')) {
+        const activeId = gameState.player?.activeShipId;
+        const shipName = activeId && DB.SHIPS[activeId] ? DB.SHIPS[activeId].name : 'Vessel';
+        parsedText = parsedText.replace(/\[shipName\]/g, shipName);
+    }
+    
+    return parsedText;
+};
+
 export function renderMissionsScreen(gameState, missionService) {
     const { missions, uiState, currentLocationId } = gameState;
     const { activeMissionIds, missionProgress, trackedMissionId } = missions;
@@ -97,7 +116,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 </div>
                 
                 <div class="mission-main-row">
-                    <div class="mission-title">${mission.name}</div>
+                    <div class="mission-title">${parseMissionText(mission.name, gameState)}</div>
                     <div class="mission-reward-data">${rewardText}</div>
                 </div>
             </div>`;
@@ -132,11 +151,10 @@ export function renderMissionsScreen(gameState, missionService) {
              // Prominent pulsing banner
              statusBannerHtml = `<div class="mission-status-banner ${bannerTextClass}">${bannerText}</div>`;
         }
-        // -------------------------------
 
         // Render Objectives with Continuous Flow Bars
         let objectivesHtml = '';
-        if (mission.objectives) {
+        if (mission.objectives && mission.objectives.length > 0) {
             objectivesHtml = '<div class="mission-objectives-list">';
             mission.objectives.forEach(obj => {
                 const objKey = obj.id || obj.goodId;
@@ -145,7 +163,6 @@ export function renderMissionsScreen(gameState, missionService) {
                 const target = pObj ? pObj.target : (obj.quantity || 1);
                 const comparator = obj.comparator || '>=';
 
-                // --- DESC & DISPLAY FORMATTING ---
                 let desc = 'OBJECTIVE';
                 let displayStr = `${current}/${target}`;
                 let percent = 0;
@@ -187,10 +204,15 @@ export function renderMissionsScreen(gameState, missionService) {
                         percent = Math.min(100, current);
                     }
                 }
+                else if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
+                    const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
+                    desc = `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
+                    displayStr = current === 1 ? 'COMPLETE' : 'PENDING';
+                    percent = current * 100;
+                }
 
                 const tallClass = !progress.isCompletable ? 'objective-row-tall' : '';
 
-                // --- NEW PROGRESS FILL LAYOUT ---
                 objectivesHtml += `
                     <div class="objective-row-filled ${tallClass}">
                         <div class="objective-fill-bar" style="width: ${percent}%"></div>
@@ -204,31 +226,33 @@ export function renderMissionsScreen(gameState, missionService) {
             objectivesHtml += '</div>';
         }
 
-        // [[NEW]] Star Tracking Logic
         const isTracked = mission.id === trackedMissionId;
         const starClass = isTracked ? 'active' : '';
-        const starIcon = `
+        const starIcon = '';
+        
+        let headerIcons = '';
+        if (mission.objectives && mission.objectives.length > 0) {
+            headerIcons = `
             <button class="mission-track-star ${starClass}" data-action="track-mission" data-mission-id="${mission.id}" title="Track on HUD">
                 <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
                     <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
                 </svg>
-            </button>
-        `;
+            </button>`;
+        }
 
         const contractStatusText = progress.isCompletable ? 'COMPLETE' : 'IN PROGRESS';
 
-        // [[UPDATED]] Added typeClass to the list
         return `
             <div class="mission-card ${hostClass} ${typeClass} ${statusClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
-                ${starIcon}
-                <div class="mission-meta-row pl-6"> <span class="mission-type-badge">${contractStatusText}</span>
+                ${headerIcons}
+                <div class="mission-meta-row ${headerIcons ? 'pl-6' : ''}"> 
+                     <span class="mission-type-badge">${contractStatusText}</span>
                      <span class="mission-host-label">${mission.host}</span>
                 </div>
                 
-                <div class="mission-title mb-2">${mission.name}</div>
+                <div class="mission-title mb-2">${parseMissionText(mission.name, gameState)}</div>
                 
                 ${statusBannerHtml}
-                
                 ${objectivesHtml}
             </div>
         `;
@@ -243,16 +267,12 @@ export function renderMissionsScreen(gameState, missionService) {
         `;
     };
 
-    // --- MAIN RENDER LOGIC ---
-
     let contentHtml = '';
 
     if (activeTab === 'terminal') {
-        // TERMINAL VIEW
         if (missionService) {
             const availableMissions = missionService.getAvailableMissions();
             if (availableMissions.length > 0) {
-                // [[FIX]] Removed space-y-0 to fix card crowding issue
                 contentHtml = '<div class="max-w-2xl mx-auto">'; 
                 availableMissions.forEach(m => contentHtml += renderTerminalCard(m));
                 contentHtml += '</div>';
@@ -261,25 +281,19 @@ export function renderMissionsScreen(gameState, missionService) {
             }
         }
     } else {
-        // LOG VIEW
         if (activeMissionIds && activeMissionIds.length > 0) {
             contentHtml = '<div class="max-w-2xl mx-auto">';
             
-            // --- NEW SORTING LOGIC ---
-            // 1. Map to Mission Objects
-            // 2. Sort: Completable First, then default
             const sortedMissions = activeMissionIds
                 .map(id => DB.MISSIONS[id])
-                .filter(m => m) // Safety check
+                .filter(m => m) 
                 .sort((a, b) => {
                     const progA = missionProgress[a.id] || { isCompletable: false };
                     const progB = missionProgress[b.id] || { isCompletable: false };
                     
-                    // Priority 1: Completable first
                     if (progA.isCompletable && !progB.isCompletable) return -1;
                     if (!progA.isCompletable && progB.isCompletable) return 1;
                     
-                    // Fallback: Keep original order (usually insertion order)
                     return 0; 
                 });
 
@@ -292,7 +306,6 @@ export function renderMissionsScreen(gameState, missionService) {
         }
     }
 
-    // [[PHASE 3]] Added missions-screen-container class for vignette support
     return `
         <div class="flex flex-col h-full ${themeClass} missions-screen-container">
             ${renderTabs()}

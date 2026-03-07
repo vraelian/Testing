@@ -11,12 +11,13 @@ export class MissionObjectiveEvaluator {
      * @param {object} objective - The objective schema object.
      * @param {import('../GameState.js').GameState} gameState - The current state of the game.
      * @param {import('../SimulationService.js').SimulationService} [simulationService] - Optional access to derived stats.
+     * @param {number} [currentProgress=0] - The existing progress of the objective, used for latching stateful events.
      * @returns {object} { current: number, target: number, isMet: boolean }
      */
-    evaluate(objective, gameState, simulationService) {
+    evaluate(objective, gameState, simulationService, currentProgress = 0) {
         let current = 0;
         
-        // [[FIX]] Allow 0 as a valid target (e.g. Empty Hold = 0 items)
+        // Allow 0 as a valid target (e.g. Empty Hold = 0 items)
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
         let target = val !== undefined ? val : 1; 
 
@@ -62,7 +63,10 @@ export class MissionObjectiveEvaluator {
                 const isCorrectNav = !reqNav || gameState.activeNav === reqNav;
                 const isCorrectScreen = !reqScreen || gameState.activeScreen === reqScreen;
                 
-                current = (isCorrectNav && isCorrectScreen) ? 1 : 0;
+                const isVisiting = (isCorrectNav && isCorrectScreen) ? 1 : 0;
+                
+                // Latch progress: Once the screen is visited, it stays met even if they navigate away
+                current = Math.max(currentProgress, isVisiting);
                 target = 1;
                 break;
             }
@@ -70,9 +74,8 @@ export class MissionObjectiveEvaluator {
             // --- ACTION / TRADE CHECKS ---
             case 'trade_item':
             case 'TRADE_ITEM': {
-                // A stateless check that verifies recent player trading actions via the financeLog
                 const itemId = objective.goodId || objective.target;
-                const tradeType = objective.tradeType; // 'buy' or 'sell' (optional)
+                const tradeType = objective.tradeType; 
                 let tradeCount = 0;
                 
                 const log = gameState.player.financeLog || [];
@@ -99,7 +102,8 @@ export class MissionObjectiveEvaluator {
                     }
                 });
                 
-                current = tradeCount;
+                // Latch progress to prevent transaction history culling from un-meeting the objective
+                current = Math.max(currentProgress, tradeCount);
                 break;
             }
 
@@ -178,7 +182,6 @@ export class MissionObjectiveEvaluator {
         }
 
         // --- EVALUATION LOGIC ---
-        // Ensure current is a number to prevent "null" display
         if (typeof current !== 'number' || isNaN(current)) {
             current = 0;
         }
@@ -186,12 +189,11 @@ export class MissionObjectiveEvaluator {
         switch (comparator) {
             case '>=':
                 if (current >= target) {
-                    current = target; // Visual cap
+                    current = target; 
                     isMet = true;
                 }
                 break;
             case '<=':
-                // For "Less Than" (e.g. Empty Hold), we do NOT cap visual progress.
                 if (current <= target) {
                     isMet = true;
                 }

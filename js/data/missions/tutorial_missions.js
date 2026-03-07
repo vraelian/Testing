@@ -11,9 +11,9 @@ export const TUTORIAL_MISSIONS = {
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain, welcome to the industry. I'm Audita, your Merchant's Guild liaison, and I've been assigned to service your recent loan—my role is to ensure your borrowed credits are repaid! As a new captain, I'll bring you up to speed on earning credits within the system. Completing contracts is a primary way to earn credits, as these missions reward you upon completion. To get started, accept this mission here in the terminal. Once accepted, toggle the switch above to the 'LOG' to review and complete your active missions.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. Your loan repayment journey begins now.<br><br>The easiest way to earn credits is by completing missions. Begin by accepting the mission within this terminal. Upon acceptance, the mission log will automatically open, allowing you to review your newly active mission.",
         triggers: [],
-        objectives: [],
+        objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
             navIds: ['data'], 
             screenIds: ['missions'] 
@@ -234,7 +234,8 @@ export const TUTORIAL_MISSIONS = {
             locationId: "loc_mars",
             title: "Tutorial Complete!",
             text: "A ship can accommodate a maximum of three permanent upgrades simultaneously. Once installed, these upgrades cannot be removed without being destroyed. Additionally, the installation cost for an upgrade is dependent on the overall value of the ship it is being applied to.",
-            buttonText: "Complete Tutorial"
+            buttonText: "Complete Tutorial",
+            clearNavLock: true // Unlocks navigation after finishing the whole tutorial block
         },
         rewards: []
     }

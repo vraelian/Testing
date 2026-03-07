@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.56] - 2026-3-7
+-  updated tutorial missions
+-  updated mission system tracking behavior
+
 # [36.54] - 2026-3-6
 -  updated market behavior
 -  market bug fixes

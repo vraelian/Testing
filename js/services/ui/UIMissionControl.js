@@ -14,14 +14,10 @@ export class UIMissionControl {
 
     /**
      * Handles switching between the 'Terminal' and 'Mission Log' tabs.
-     * [[UPDATED]] Removed redundant checkTriggers call; now handled by render loop.
      * @param {string} tabId - 'terminal' or 'log'
      */
     handleMissionTabSwitch(tabId) {
         if (tabId !== 'terminal' && tabId !== 'log') return;
-        
-        // Manual checkTriggers removed; UIManager.render() now auto-checks via MissionService.
-        
         this.manager.lastKnownState.uiState.activeMissionTab = tabId;
         this.manager.render();
     }
@@ -33,18 +29,28 @@ export class UIMissionControl {
     handleTrackMission(missionId) {
         if (!missionId) return;
         const gameState = this.manager.lastKnownState;
-        
-        // Update State
         gameState.missions.trackedMissionId = missionId;
-        
-        // Re-render UI to update star icons and sticky bar
         this.manager.render();
     }
 
     /**
+     * Hides the sticky bar with a 1s fade-out animation to prevent sudden popping.
+     */
+    _hideStickyBarWithFade(el) {
+        if (el.style.display !== 'none' && el.style.opacity !== '0') {
+            el.style.transition = 'opacity 1s ease-out';
+            el.style.opacity = '0';
+            setTimeout(() => {
+                if (el.style.opacity === '0') {
+                    el.style.display = 'none';
+                    el.style.transition = 'none';
+                }
+            }, 1000);
+        }
+    }
+
+    /**
      * Renders the persistent "Sticky Bar" at the top of the UI for active missions.
-     * [[UPDATED]] Now uses a CSS variable and pseudo-element mask to act as a progress bar 
-     * without fighting the !important CSS gradients of the host classes.
      * @param {object} gameState 
      */
     renderStickyBar(gameState) {
@@ -53,24 +59,24 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Use Tracked ID, fallback to first active if not set (sanity check)
         const activeMissionId = gameState.missions.trackedMissionId || gameState.missions.activeMissionIds[0];
 
         if (activeMissionId && gameState.missions.activeMissionIds.includes(activeMissionId)) {
             const mission = DB.MISSIONS[activeMissionId];
+            
+            // Immediately initiate fade out if the mission has no objectives
             if (!mission.objectives || mission.objectives.length === 0) {
-                stickyBarEl.style.display = 'none';
+                this._hideStickyBarWithFade(stickyBarEl);
                 return;
             }
+            
             const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
 
-            // Find first incomplete objective for HUD
             let objKey;
             let current = 0;
             let target = 1;
             let firstObj = null;
             
-            // Try to find the first objective that matches our progress map
             if (mission.objectives) {
                 firstObj = mission.objectives[0];
                 objKey = firstObj.id || firstObj.goodId;
@@ -79,7 +85,6 @@ export class UIMissionControl {
                     current = progress.objectives[objKey].current;
                     target = progress.objectives[objKey].target;
                 } else {
-                     // Fallback for immediate render before checkTriggers runs
                      current = 0;
                      target = firstObj.quantity || firstObj.value || 1;
                 }
@@ -87,7 +92,6 @@ export class UIMissionControl {
 
             const objectiveLabel = this._getObjectiveLabel(firstObj);
             
-            // Format display string based on objective type (Logic from MissionsScreen)
             let displayStr = `[${current}/${target}]`;
             let percent = 0;
             
@@ -107,7 +111,6 @@ export class UIMissionControl {
                     percent = Math.min(100, current);
                 }
                 else {
-                    // Standard quantity
                     percent = Math.min(100, (current / target) * 100);
                 }
             }
@@ -117,23 +120,21 @@ export class UIMissionControl {
 
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
-            // Check specific mission completability
             const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === gameState.currentLocationId;
             const isReady = progress.isCompletable && isAtCorrectLocation;
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
             contentEl.className = `sticky-content ${hostClass} ${turnInClass}`;
-
-            // We clear any inline background styling. The bright .host-* class gradient shines through naturally.
             contentEl.style.background = '';
-            
-            // We set the CSS variable, which drives the dark ::after pseudo-element mask in missions.css
             contentEl.style.setProperty('--sticky-progress', `${percent}%`);
 
+            // Apply solid visibility settings
+            stickyBarEl.style.transition = 'none';
+            stickyBarEl.style.opacity = '1';
             stickyBarEl.style.display = 'block';
         } else {
-            stickyBarEl.style.display = 'none';
+            this._hideStickyBarWithFade(stickyBarEl);
         }
     }
 
@@ -149,17 +150,17 @@ export class UIMissionControl {
         }
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
         
-        // Labels
         if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Fuel Tank';
         if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Hull Status';
         if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
+        if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
+            const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
+            return `Visit ${screenTarget} Screen`;
+        }
         
         return `Objective`;
     }
 
-    /**
-     * Visual effect for updating the sticky bar progress.
-     */
     flashObjectiveProgress() {
         const progressEl = this.manager.cache.stickyObjectiveProgress;
         if (progressEl) {
@@ -170,24 +171,16 @@ export class UIMissionControl {
         }
     }
 
-    /**
-     * Orchestrates showing the correct mission modal (Details vs Completion).
-     * @param {string} missionId 
-     */
     showMissionModal(missionId) {
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
 
         const { missions, currentLocationId } = this.manager.lastKnownState;
         
-        // Check if this specific mission is active
         const isActive = missions.activeMissionIds.includes(missionId);
-        
-        // Check specific progress
         const progress = missions.missionProgress[missionId];
         const isCompletable = progress ? progress.isCompletable : false;
 
-        // Allow null location (Anywhere)
         const isLocationValid = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
 
@@ -199,18 +192,16 @@ export class UIMissionControl {
     }
 
     _showMissionDetailsModal(mission) {
-        const { missions, tutorials, currentLocationId } = this.manager.lastKnownState;
+        const gameState = this.manager.lastKnownState;
+        const { missions, tutorials, currentLocationId } = gameState;
         const isActive = missions.activeMissionIds.includes(mission.id);
         
-        // --- NEW LOGIC FOR NAVIGATE BUTTON ---
         const progress = missions.missionProgress[mission.id];
         const isCompletable = progress ? progress.isCompletable : false;
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
-        // -------------------------------------
         
         let shouldBeDisabled = false;
         
-        // Check if we are at capacity (4) and this isn't active
         if (!isActive && missions.activeMissionIds.length >= 4) {
             shouldBeDisabled = true;
         }
@@ -219,12 +210,14 @@ export class UIMissionControl {
             shouldBeDisabled = true;
         }
 
+        const parsedDescription = this._parseMissionText(mission.description, gameState);
+        const parsedTitle = this._parseMissionText(mission.name, gameState);
+
         const options = {
             dismissOutside: true, 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 
-                // Safely clean up animation states from previous custom injections
                 modalContent.classList.remove('modal-blur-fade-out');
                 modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
@@ -239,9 +232,14 @@ export class UIMissionControl {
                 }
 
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
-                const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>${this._getObjectiveDescription(obj)}</li>`).join('') + '</ul>';
-                objectivesEl.innerHTML = objectivesHtml;
-                objectivesEl.style.display = 'block';
+                if (mission.objectives && mission.objectives.length > 0) {
+                    const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>${this._getObjectiveDescription(obj)}</li>`).join('') + '</ul>';
+                    objectivesEl.innerHTML = objectivesHtml;
+                    objectivesEl.style.display = 'block';
+                } else {
+                    objectivesEl.innerHTML = '';
+                    objectivesEl.style.display = 'none';
+                }
 
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (mission.rewards && mission.rewards.length > 0) {
@@ -261,7 +259,6 @@ export class UIMissionControl {
                     const isAbandonable = mission.isAbandonable !== false;
                     let navButtonHtml = '';
                     
-                    // Conditionally inject Navigate button if ready to complete but wrong location
                     if (isCompletable && !isAtCorrectLocation) {
                         navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-3 btn-pulse-green">NAVIGATE >></button>`;
                     }
@@ -272,14 +269,12 @@ export class UIMissionControl {
                      buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                 }
 
-                // Bind Navigate Event
                 const navBtn = modal.querySelector('#mission-navigate-btn');
                 if (navBtn) {
                     navBtn.addEventListener('click', () => {
                         if (this.manager.simulationService) {
                             this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
                         }
-                        // Small delay to let the screen transition resolve before launching the modal
                         setTimeout(() => {
                             this.manager.showLaunchModal(mission.completion.locationId);
                         }, 100);
@@ -291,11 +286,10 @@ export class UIMissionControl {
         if (mission.id === 'mission_tutorial_01' && tutorials.activeStepId === 'mission_1_1') {
             shouldBeDisabled = true;
         }
-        this.manager.queueModal('mission-modal', mission.name, mission.description, null, options);
+        this.manager.queueModal('mission-modal', parsedTitle, parsedDescription, null, options);
     }
     
     _getObjectiveDescription(obj) {
-        // Helper to textually describe generic objectives
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Deliver ${obj.quantity || 1}x ${name}`;
@@ -304,19 +298,23 @@ export class UIMissionControl {
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
-         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
+        if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
              return `Amass ${formatCredits(obj.value)} Credits`;
+        }
+        if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
+            const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
+            return `Visit the ${screenTarget} Screen`;
         }
         return `Complete Objective`;
     }
 
     _showMissionCompletionModal(mission) {
-        // --- PHASE 2: PREDICTIVE CARGO OVERFLOW CHECK ---
+        const gameState = this.manager.lastKnownState;
+        
         let rewardVolume = 0;
         if (mission.rewards) {
             mission.rewards.forEach(r => {
                 if (r.type === 'item' || r.type === 'cargo' || r.target) {
-                    // Quick check if target ID matches a physical commodity
                     const isCommodity = DB.COMMODITIES.some(c => c.id === (r.goodId || r.target));
                     if (isCommodity) {
                         rewardVolume += (r.amount || r.quantity || 1);
@@ -330,15 +328,14 @@ export class UIMissionControl {
 
         if (rewardVolume > 0) {
             let totalFreeSpace = 0;
-            const state = this.manager.lastKnownState;
-            if (state && state.player && state.player.ownedShipIds) {
-                for (const shipId of state.player.ownedShipIds) {
+            if (gameState && gameState.player && gameState.player.ownedShipIds) {
+                for (const shipId of gameState.player.ownedShipIds) {
                     const maxCap = this.manager.simulationService ? 
                         this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
                         (DB.SHIPS[shipId]?.cargoCapacity || 100);
                     
                     let used = 0;
-                    const inventory = state.player.inventories[shipId];
+                    const inventory = gameState.player.inventories[shipId];
                     if (inventory) {
                         for (const item of Object.values(inventory)) {
                             used += (item.quantity || 0);
@@ -356,14 +353,15 @@ export class UIMissionControl {
                 `;
             }
         }
-        // --- END OVERFLOW CHECK ---
+
+        const parsedTitle = this._parseMissionText(mission.completion.title, gameState);
+        const parsedText = this._parseMissionText(mission.completion.text, gameState);
 
         const options = {
-           dismissOutside: true, // Allow tapping away to cancel
+           dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
                
-               // Safely clean up animation states from previous custom injections
                modalContent.classList.remove('modal-blur-fade-out');
                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
@@ -371,12 +369,12 @@ export class UIMissionControl {
                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
                modalContent.classList.add(hostClass);
 
-               modal.querySelector('#mission-modal-title').textContent = mission.completion.title;
+               modal.querySelector('#mission-modal-title').textContent = parsedTitle;
                
                const typeEl = modal.querySelector('#mission-modal-type');
                if (typeEl) typeEl.style.display = 'none';
                
-               modal.querySelector('#mission-modal-description').innerHTML = mission.completion.text;
+               modal.querySelector('#mission-modal-description').innerHTML = parsedText;
 
                const objectivesEl = modal.querySelector('#mission-modal-objectives');
                objectivesEl.style.display = 'none';
@@ -409,17 +407,13 @@ export class UIMissionControl {
                completeBtn.onclick = () => {
                    completeBtn.disabled = true;
 
-                   // Lock the modal specifically so the player cannot back out mid-sequence
                    modal.dataset.dismissOutside = 'false';
                    modal.classList.add('dismiss-disabled');
 
-                   // Execute CSS blur-fade effect for content AND backdrop fade out
                    modalContent.classList.add('modal-blur-fade-out');
                    modal.classList.add('backdrop-fade-out-slow');
 
-                   // Wait for the 2-second modal fade to finish
                    setTimeout(() => {
-                       // SURGICAL MODAL CLEANUP (Bypass UIModalEngine hideModal entirely to prevent animationend conflicts)
                        modal.classList.add('hidden');
                        modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
                        delete modal.dataset.theme;
@@ -430,25 +424,20 @@ export class UIMissionControl {
                            this.manager.modalEngine.processModalQueue();
                        }
 
-                       // FIND AND ANIMATE THE CARD IN THE LOG
                        const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
                        
                        const finalizeCompletion = () => {
                            const uiManager = this.manager;
                            const originalRender = uiManager.render;
                            
-                           // RENDER HIJACK: Completely neutralize the aggressive DOM wipe!
                            uiManager.render = function(...args) {
                                const newState = args[0] || uiManager.lastKnownState;
-                               // Ensure the manager's cache is updated so subsequent local calls have fresh data
                                uiManager.lastKnownState = newState;
 
-                               // Manually sync the sticky bar HUD with the fresh state
                                if (uiManager.missionControl) {
                                    uiManager.missionControl.renderStickyBar(newState);
                                }
 
-                               // Manually sync the star tracking icons with the fresh state
                                const activeTrackedId = newState.missions.trackedMissionId;
                                document.querySelectorAll('.mission-track-star').forEach(star => {
                                    if (star.dataset.missionId === activeTrackedId) {
@@ -459,18 +448,15 @@ export class UIMissionControl {
                                });
                            };
 
-                           // Trigger State Update (Internal logic will hit our hijacked render)
                            if (this.manager.simulationService) {
                                this.manager.simulationService.missionService.completeMission(mission.id);
                            }
                            
-                           // Restore the standard render pipeline immediately after the state tick concludes
                            uiManager.render = originalRender;
-                           closeHandler(); // Signal modal engine that we are done
+                           closeHandler();
                        };
 
                        if (card) {
-                           // Capture exact dimensions to perform a perfectly smooth collapse
                            const height = card.offsetHeight;
                            const computedStyle = window.getComputedStyle(card);
                            const marginTop = computedStyle.marginTop;
@@ -478,39 +464,32 @@ export class UIMissionControl {
                            const paddingTop = computedStyle.paddingTop;
                            const paddingBottom = computedStyle.paddingBottom;
 
-                           // Lock layout to prevent jitter while shrinking
                            card.style.overflow = 'hidden';
                            card.style.boxSizing = 'border-box';
                            
-                           // PERF OPTIMIZATION: Two-Phase "Invisible Stripping" Animation
-                           // Phase 1: Scale and fade out (Visual)
                            const fadeAnim = card.animate([
                                { opacity: 1, transform: 'scale(1)' },
                                { opacity: 0, transform: 'scale(0.95)' }
                            ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
 
                            fadeAnim.onfinish = () => {
-                               // Strip heavy CSS rendering instantly now that it is invisible.
-                               // This prevents layout reflows from recalculating shadows and blurs.
                                card.style.backdropFilter = 'none';
                                card.style.webkitBackdropFilter = 'none';
                                card.style.boxShadow = 'none';
                                card.style.background = 'none';
                                card.style.border = 'none';
 
-                               // Phase 2: Collapse physical layout (Fast CPU calculation now)
                                const collapseAnim = card.animate([
                                    { height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom },
                                    { height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px' }
                                ], { duration: 350, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
 
                                collapseAnim.onfinish = () => {
-                                   card.remove(); // Safely rip it out of the DOM immediately
+                                   card.remove(); 
                                    finalizeCompletion();
                                };
                            };
                        } else {
-                           // Fallback if card isn't found (e.g. completed via Map context)
                            finalizeCompletion();
                        }
                    }, 2000);
@@ -518,10 +497,9 @@ export class UIMissionControl {
                buttonsEl.appendChild(completeBtn);
            }
         };
-       this.manager.queueModal('mission-modal', mission.completion.title, mission.completion.text, null, options);
+       this.manager.queueModal('mission-modal', parsedTitle, parsedText, null, options);
     }
     
-    // ... Intel methods remain unchanged ...
      /**
      * Handles switching tabs within the Intel Screen (Codex vs Market).
      * @param {HTMLElement} element 
@@ -674,7 +652,6 @@ export class UIMissionControl {
             this.manager.logger.warn('UIMissionControl', `SaveCompat: Found old packet with messageIndex ${packet.messageIndex}`);
             detailsTemplate = "Details for this expired intel packet are no longer available in the new system.";
         } else {
-            // Legacy/Fallback support
             const originalContent = {
                 "CORPORATE_LIQUIDATION": { "details": "PACKET DECRYPTED: A [commodity name] surplus at [location name] allows for purchase at [discount amount %] below galactic average. This price is locked for [durationDays] days. A minor Corporate State is quietly liquidating assets to meet quarterly quotas. This is a standard, low-risk procurement opportunity. This intel was secured for [⌬ credit price]." },
                  "SUPPLY_CHAIN_SHOCK": { "details": "DATA UNLOCKED: [commodity name] is available at [location name] for [discount amount %] off standard pricing. This window is open for [durationDays] days. A Merchant's Guild freighter was damaged, forcing them to offload their cargo here at a loss. Their misfortune is your gain. This access was [⌬ credit price]." }
@@ -689,7 +666,6 @@ export class UIMissionControl {
             dismissInside: true, 
             dismissOutside: true,
             
-            // [[FIX]] Custom setup to inject button and FORCE navigation via simulationService
             customSetup: (modal, closeHandler) => {
                 const btnContainer = modal.querySelector('#event-button-container');
                 if (btnContainer) {
@@ -701,19 +677,16 @@ export class UIMissionControl {
                     const btn = btnContainer.querySelector('#intel-navigate-btn');
                     if (btn) {
                         btn.addEventListener('click', () => {
-                             // 1. Force Screen Switch directly
                              if (this.manager.simulationService) {
                                  this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
                              }
 
-                             // 2. [[FIX]] Launch the navigation modal for the specific target
                              if (packet.dealLocationId) {
                                  setTimeout(() => {
                                      this.manager.showLaunchModal(packet.dealLocationId);
                                  }, 100);
                              }
 
-                             // 3. Close Modal
                              closeHandler();
                         });
                     }
@@ -752,5 +725,24 @@ export class UIMissionControl {
         result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
 
          return result;
+    }
+
+    // --- NEW HELPER: Dynamic Text Replacement ---
+    _parseMissionText(text, gameState) {
+        if (!text) return '';
+        let parsedText = text;
+        
+        if (parsedText.includes('[playerName]')) {
+            const pName = gameState.player?.name || 'Captain';
+            parsedText = parsedText.replace(/\[playerName\]/g, pName);
+        }
+        
+        if (parsedText.includes('[shipName]')) {
+            const activeId = gameState.player?.activeShipId;
+            const shipName = activeId && DB.SHIPS[activeId] ? DB.SHIPS[activeId].name : 'Vessel';
+            parsedText = parsedText.replace(/\[shipName\]/g, shipName);
+        }
+        
+        return parsedText;
     }
 }
