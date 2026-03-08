@@ -49,7 +49,7 @@ export const DB = {
         {
           id: 'lore_2',
           title: "The Price of Freedom",
-          description: "A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.<br><br>This is no simple loan; it's a bet on yourself and your future.",
+          description: "A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.",
           buttonText: 'Apply for Loan',
           contentClass: 'text-center',
           buttonClass: 'btn-pulse-green'

@@ -85,7 +85,7 @@ export const TUTORIAL_MISSIONS = {
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The solar system map displays all of the stations you can trade at. Each station is unique, with distinct market dynamics and behaviors. Available ships for purchase, ship upgrades, supply, demand, prices, and intel all vary by location.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station that is essential for successful arbitrage.<br><br>Review the map screen and then return here to complete the mission.",
+        description: "The solar system map displays all of the stations you can trade at. Each station has unique market dynamics and behaviors. Purchaseable ships and their upgrades, supply & demand, commodity prices, and intel all vary by location.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station that is essential for successful arbitrage.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_03" }
         ],
@@ -163,7 +163,7 @@ export const TUTORIAL_MISSIONS = {
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The most effective method for earning credits is with market arbitrage. This involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for a profit</b>.<br><br>To complete this mission you will need to buy some ice here on the Moon, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
+        description: "This involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon Market on the <b>Starport</b> tab, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_06" }
         ],
