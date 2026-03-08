@@ -188,15 +188,15 @@ export function renderMissionsScreen(gameState, missionService) {
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
                     desc = 'REFUEL SHIP';
                     displayStr = `${current}/${target}`;
-                    percent = Math.min(100, Math.floor((current / (target || 100)) * 100)); 
+                    percent = Math.min(100, Math.floor((current / (target || 1)) * 100)); 
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
                     desc = 'REPAIR HULL';
-                    displayStr = `${current}%/${target}%`;
+                    displayStr = `${current}/${target}`;
                     if (comparator === '<=') {
                         percent = current <= target ? 100 : 0;
                     } else {
-                        percent = Math.min(100, current); 
+                        percent = Math.min(100, Math.floor((current / (target || 1)) * 100)); 
                     }
                 }
                 else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {

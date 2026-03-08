@@ -6,12 +6,12 @@
 export const TUTORIAL_MISSIONS = {
     'mission_tutorial_01': {
         id: "mission_tutorial_01",
-        name: "Mission Terminal",
+        name: "Using the Mission Terminal",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. Your loan repayment journey begins now.<br><br>The easiest way to earn credits is by completing missions. Begin by accepting the mission within this terminal. Upon acceptance, the mission log will automatically open, allowing you to review your newly active mission.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, and I’ll be your liaison with the Merchant's Guild. I’ve been assigned to assist you in repaying your loan to the guild.<br><br>The easiest way to earn credits is by completing missions.<br><br>Begin by accepting this mission which will automatically be added to your mission log.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
@@ -20,20 +20,20 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_mars",
-            title: "Mission Terminal",
-            text: "The mission log is where you manage your active missions. You are limited to 4 missions at once. Most missions have specific requirements such as gathering a certain quantity of items and delivering them to a designated location. To monitor the progress of a specific mission, select the star icon on its mission card. The mission's progress will then be displayed in the mission bar at the bottom of the screen. Select this bar for a shortcut to the mission log.",
+            title: "Mission Log",
+            text: "The mission log is where you review and complete missions. Most missions have specific requirements, such as delivering commodities to a designated location.<br><br>To track the progress of a specific mission, select the star icon on its mission card.",
             buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_02': {
         id: "mission_tutorial_02",
-        name: "Finance",
+        name: "Review Your Finances",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Use the finance screen to monitor your transactions and manage your loan. You have three years before your guild debt is due; after that, your credits will be garnished to recover the loan amount. Accept this mission, then visit the finance screen. Return here afterwards.",
+        description: "You may review your transaction history and manage your loan on the finance screen, which is accessible in the <b>Data</b> tab on the navigation bar at the top.<br><br>You have three years before your guild debt is due, after which your credits will be garnished to recover the loan amount.<br><br>Take a look at the finance screen, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
         ],
@@ -47,19 +47,19 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Debt",
-            text: "When you possess a loan, interest accrues monthly. Pay off your debt as soon as possible to minimize the cost of borrowing credits!",
+            text: "While you have debt interest accrues monthly. Pay off your debt as soon as possible to minimize the cost of borrowing credits!",
             buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_03': {
         id: "mission_tutorial_03",
-        name: "Intel",
+        name: "Discover Intel and the Codex",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The intel screen serves as the hub for both your codex and the intel market. The codex tracks your progress and contains key story information, so remember to check it periodically for updates. The intel market offers guaranteed opportunities at other locations, but these are time-sensitive. Therefore, always factor in travel distances before committing to a purchase. Navigate to the intel screen, and then return here afterwards for mission completion.",
+        description: "The intel screen is home to both the codex and the intel market.<br><br>The codex tracks your progress and contains key story information, so remember to check it periodically for updates.<br><br>The intel market offers guaranteed opportunities at other locations, but these are time-sensitive and travel takes time. Carefully consider travel distances before committing to a purchase of information.<br><br>Take a tour of the intel screen and then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_02" }
         ],
@@ -73,19 +73,19 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Market Intelligence",
-            text: "You can only purchase one piece of intelligence (intel) at a time. The market for this intel can fluctuate, sometimes offering bargains and other times seeing price increases. It is important to ensure you have sufficient cargo space available to capitalize on the intel you acquire.",
+            text: "You can only purchase one piece of market intelligence at a time. The benefits of intel vary and may reveal bargains or profit opportunities.<br><br>It is a good idea to have cargo space available to capitalize on the intel that you acquire.",
             buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_04': {
         id: "mission_tutorial_04",
-        name: "Map",
+        name: "Review the Solar System Map",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The solar system map displays all travel destinations. Every location features a unique station, each with distinct market dynamics. Available ships for purchase, ship upgrades, supply, demand, prices, and intel all vary by location. By selecting a point of interest on the map, you can view critical market data for that station, which is essential for successful arbitrage. Review the map screen and then return here to complete the mission.",
+        description: "The solar system map displays all of the stations you can trade at. Each station is unique, with distinct market dynamics and behaviors. Available ships for purchase, ship upgrades, supply, demand, prices, and intel all vary by location.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station that is essential for successful arbitrage.<br><br>Review the map screen and then return here to complete the mission.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_03" }
         ],
@@ -98,20 +98,20 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_mars",
-            title: "Solar System Map",
-            text: "Your map will also indicate the target of your current mission or intel. Refer to it often to inform your trading and travel!",
+            title: "Refer to the Map",
+            text: "Your map will also indicate the target of your current mission or intel. Refer to it often to inform your trading and travel.",
             buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_05': {
         id: "mission_tutorial_05",
-        name: "Navigation",
+        name: "Navigating Space Flight",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The navigation screen serves as your primary launch interface. Each station's card provides details about the required travel time and fuel cost. Accept this mission then visit the navigation screen, select 'The Moon,' and begin your journey. This mission will be completed on the Moon!",
+        description: "The navigation screen is where space flight begins. Visit the navigation screen and select <b>The Moon</b> to begin your journey.<br><br>This mission will be completed on the Moon.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_04" }
         ],
@@ -125,19 +125,19 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_luna",
             title: "Maiden Voyage",
-            text: "Your new ship, the [shipName], has successfully completed its first voyage! As a result of the trip, you've used some fuel and the hull has experienced minor wear. We will address these factors shortly.",
-            buttonText: "I'm Captain Now"
+            text: "Your new ship, the [shipName], has successfully completed its first voyage!<br><br>The flight consumed some fuel and the hull experienced minor wear, but we will address this later.",
+            buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_06': {
         id: "mission_tutorial_06",
-        name: "Cargo",
+        name: "Inspect the Cargo Hold",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "A fleet is composed of multiple ships. The cargo screen allows you to see the combined cargo of your fleets, along with its total cost basis and total value. Proceed to the cargo screen now and then return here to complete this mission.",
+        description: "The cargo screen is useful for reviewing the total cargo of your fleet, its cost basis, and its total value.<br><br>Visit the cargo screen now, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_05" }
         ],
@@ -158,12 +158,12 @@ export const TUTORIAL_MISSIONS = {
     },
     'mission_tutorial_07': {
         id: "mission_tutorial_07",
-        name: "Market",
+        name: "Trading in the Market",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The most effective method for acquiring credits is engaging in market arbitrage. This involves purchasing items at a low price, transporting them to a different station, and then selling them for a profit. To get started, accept this mission: buy some water ice here on the Moon, travel to Mars, and sell it there. Once the transaction is complete, you can finalize the mission on Mars.",
+        description: "The most effective method for earning credits is with market arbitrage. This involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for a profit</b>.<br><br>To complete this mission you will need to buy some ice here on the Moon, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_06" }
         ],
@@ -178,20 +178,20 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_mars",
-            title: "First Trade",
-            text: "Every station operates with a distinct market, influencing supply, demand, imports, exports, and prices. Your trading decisions will directly impact these markets, sometimes even causing temporary crashes or inflation in commodity prices. The markets react and/or recover over time. To optimize your profits, leverage the data and intelligence available on the map screen.",
+            title: "Station Diversity",
+            text: "<b>Every station has a unique market with different supply, demand, imports, exports, and prices.</b><br><br> Your trading decisions will directly impact these markets, sometimes even causing temporary crashes or inflation in prices. The markets will react and recover over time.<br><br>To optimize your trades, review the <b>Station Details</b> on the map screen.",
             buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_08': {
         id: "mission_tutorial_08",
-        name: "Shipyard",
+        name: "Tour the Shipyard",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Shipyards at each station offer different ships for purchase. You can access your hangar, which stores your purchased ships, from any station. The ship you have currently boarded serves as your active, primary vessel and is the central point of contact for all fleet interactions. Accept this mission and visit the shipyard screen here at the Mars starport. Return here afterwards to complete this mission.",
+        description: "The shipyards at each station will offer different ships for purchase. The best ships are hard to find.<br><br>The hangar is your personal ship storage which is accessible from any station. Your currently boarded ship serves as your active, primary vessel and is the central point of contact for all fleet interactions.<br><br>Visit the shipyard screen here at the Martian starport, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_07" }
         ],
@@ -204,20 +204,20 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_mars",
-            title: "Tour the Shipyard",
-            text: "Your ships are valuable assets, each with attributes like fuel capacity, hull integrity, and cargo volume that directly impact your gameplay. Upgrade your fleet to maximize your profit!",
+            title: "Ship Attributes",
+            text: "Your ships are valuable assets, each with attributes like fuel capacity, hull integrity, and cargo volume that directly influence your trading. Upgrade your fleet to maximize your profit!",
             buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_09': {
         id: "mission_tutorial_09",
-        name: "Starport Services",
+        name: "Use Starport Services",
         type: "TUTORIAL",
         host: "GUILD",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Stations offer fuel and repair services for a fee, and valuable ship upgrades are available at the tuning shop. Accept this mission, then proceed to the services screen to fully refuel and repair your ship. Once complete, return here to finish the mission.",
+        description: "Stations offer fuel and repair services for a fee, and valuable ship upgrades can be purchased at the tuning shop.<br><br>Visit the services screen and fully refuel and repair your ship to complete this mission.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_08" }
         ],
@@ -232,8 +232,8 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_mars",
-            title: "Tutorial Complete!",
-            text: "A ship can accommodate a maximum of three permanent upgrades simultaneously. Once installed, these upgrades cannot be removed without being destroyed. Additionally, the installation cost for an upgrade is dependent on the overall value of the ship it is being applied to.",
+            title: "Ship Tuning",
+            text: "A ship can have up to three permanent upgrades at once. Once installed, these upgrades cannot be removed without being destroyed.<br><br>The installation cost for an upgrade is dependent on the overall value of the ship it is being applied to.",
             buttonText: "Complete Tutorial",
             clearNavLock: true // Unlocks navigation after finishing the whole tutorial block
         },
