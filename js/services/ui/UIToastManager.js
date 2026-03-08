@@ -30,6 +30,15 @@ export class UIToastManager {
     showToast(config, onComplete) {
         if (!this.container) return;
 
+        // --- TUTORIAL GUARDRAIL: Disable Toast System ---
+        const state = this.uiManager.lastKnownState;
+        if (state && state.missions && state.missions.completedMissionIds) {
+            if (!state.missions.completedMissionIds.includes('mission_tutorial_09')) {
+                if (onComplete) onComplete();
+                return; // Silently discard toast to prevent routing out of bounds
+            }
+        }
+
         // Force clear any immediate stragglers in the view controller
         this.forceClear();
 

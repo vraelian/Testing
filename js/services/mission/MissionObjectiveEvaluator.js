@@ -109,25 +109,32 @@ export class MissionObjectiveEvaluator {
 
             // --- SHIP STATE CHECKS ---
             case 'have_fuel_tank':
-            case 'HAVE_FUEL_TANK':
-                const fShipState = gameState.player.shipStates[gameState.player.activeShipId];
-                if (fShipState) {
+            case 'HAVE_FUEL_TANK': {
+                const activeShipId = gameState.player.activeShipId;
+                const fShipState = gameState.player.shipStates[activeShipId];
+                const fShipDef = getShipStats(activeShipId);
+                if (fShipState && fShipDef) {
                     current = Math.floor(fShipState.fuel); 
+                    target = Math.floor(fShipDef.maxFuel);
                 }
                 break;
+            }
 
             case 'have_hull_pct':
-            case 'HAVE_HULL_PCT':
+            case 'HAVE_HULL_PCT': {
                 const activeShipId = gameState.player.activeShipId;
                 const hShipState = gameState.player.shipStates[activeShipId];
                 const hShipDef = getShipStats(activeShipId);
                 
                 if (hShipState && hShipDef && hShipDef.maxHealth > 0) {
-                    current = Math.floor((hShipState.health / hShipDef.maxHealth) * 100);
+                    current = Math.floor(hShipState.health);
+                    // The objective value defines the target percentage (e.g. 100 means 100%)
+                    target = Math.floor((val / 100) * hShipDef.maxHealth);
                 } else {
                     current = 0;
                 }
                 break;
+            }
 
             // --- FLEET OVERFLOW SYSTEM: Aggregate Fleet Cargo Percentage ---
             case 'have_cargo_pct':

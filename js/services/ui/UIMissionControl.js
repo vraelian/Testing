@@ -116,8 +116,12 @@ export class UIMissionControl {
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
-                    displayStr = `[${current}% / ${comparator}${target}%]`;
-                    percent = Math.min(100, current); 
+                    displayStr = `[${current}/${target}]`;
+                    if (comparator === '<=') {
+                        percent = current <= target ? 100 : 0;
+                    } else {
+                        percent = Math.min(100, (current / (target || 100)) * 100);
+                    }
                 }
                 else if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
@@ -146,6 +150,8 @@ export class UIMissionControl {
             // Apply solid visibility settings
             stickyBarEl.style.transition = 'none';
             stickyBarEl.style.opacity = '1';
+            stickyBarEl.style.filter = 'none';
+            stickyBarEl.style.webkitFilter = 'none';
             stickyBarEl.style.display = 'block';
         } else {
             this._hideStickyBarWithFade(stickyBarEl);
@@ -325,6 +331,12 @@ export class UIMissionControl {
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
              return `Amass ${formatCredits(obj.value)} Credits`;
         }
+        if (obj.type === 'have_fuel_tank' || obj.type === 'HAVE_FUEL_TANK') {
+            return `Refuel Ship`;
+        }
+        if (obj.type === 'have_hull_pct' || obj.type === 'HAVE_HULL_PCT') {
+            return `Repair Hull`;
+        }
         if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `Visit the ${screenTarget} Screen`;
@@ -437,6 +449,25 @@ export class UIMissionControl {
                    modalContent.classList.add('modal-blur-fade-out');
                    modal.classList.add('backdrop-fade-out-slow');
 
+                   // Immediately begin 1.5s blur-fade on the background UI components
+                   const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
+                   const stickyBarEl = this.manager.cache.missionStickyBar;
+
+                   if (stickyBarEl && stickyBarEl.style.display !== 'none') {
+                       stickyBarEl.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out';
+                       stickyBarEl.style.opacity = '0';
+                       stickyBarEl.style.filter = 'blur(5px)';
+                       stickyBarEl.style.webkitFilter = 'blur(5px)';
+                   }
+
+                   if (card) {
+                       card.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out, transform 1.5s ease-out';
+                       card.style.opacity = '0';
+                       card.style.filter = 'blur(5px)';
+                       card.style.webkitFilter = 'blur(5px)';
+                       card.style.transform = 'scale(0.95)';
+                   }
+
                    setTimeout(() => {
                        modal.classList.add('hidden');
                        modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
@@ -448,9 +479,13 @@ export class UIMissionControl {
                            this.manager.modalEngine.processModalQueue();
                        }
 
-                       const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
-                       
                        const finalizeCompletion = () => {
+                           if (stickyBarEl) {
+                               stickyBarEl.style.transition = 'none';
+                               stickyBarEl.style.filter = 'none';
+                               stickyBarEl.style.webkitFilter = 'none';
+                           }
+
                            const uiManager = this.manager;
                            const originalRender = uiManager.render;
                            
@@ -497,33 +532,25 @@ export class UIMissionControl {
 
                            card.style.overflow = 'hidden';
                            card.style.boxSizing = 'border-box';
+                           card.style.backdropFilter = 'none';
+                           card.style.webkitBackdropFilter = 'none';
+                           card.style.boxShadow = 'none';
+                           card.style.background = 'none';
+                           card.style.border = 'none';
                            
-                           const fadeAnim = card.animate([
-                               { opacity: 1, transform: 'scale(1)' },
-                               { opacity: 0, transform: 'scale(0.95)' }
-                           ], { duration: 250, easing: 'ease-out', fill: 'forwards' });
+                           const collapseAnim = card.animate([
+                               { height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom },
+                               { height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px' }
+                           ], { duration: 350, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
 
-                           fadeAnim.onfinish = () => {
-                               card.style.backdropFilter = 'none';
-                               card.style.webkitBackdropFilter = 'none';
-                               card.style.boxShadow = 'none';
-                               card.style.background = 'none';
-                               card.style.border = 'none';
-
-                               const collapseAnim = card.animate([
-                                   { height: height + 'px', marginTop, marginBottom, paddingTop, paddingBottom },
-                                   { height: '0px', marginTop: '0px', marginBottom: '0px', paddingTop: '0px', paddingBottom: '0px' }
-                               ], { duration: 350, easing: 'cubic-bezier(0.4, 0, 0.2, 1)', fill: 'forwards' });
-
-                               collapseAnim.onfinish = () => {
-                                   card.remove(); 
-                                   finalizeCompletion();
-                               };
+                           collapseAnim.onfinish = () => {
+                               card.remove(); 
+                               finalizeCompletion();
                            };
                        } else {
                            finalizeCompletion();
                        }
-                   }, 2000);
+                   }, 1500); // Trigger after the 1.5s fade finishes
                };
                buttonsEl.appendChild(completeBtn);
            }
