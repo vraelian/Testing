@@ -23,6 +23,9 @@ export class MissionService {
         // Initialize Logic Engines
         this.objectiveEvaluator = new MissionObjectiveEvaluator();
         this.triggerEvaluator = new MissionTriggerEvaluator();
+        
+        // Internal flag to allow DEBUG missions to appear in the standard terminal
+        this._debugMissionsUnlocked = false; 
     }
 
     /**
@@ -59,10 +62,24 @@ export class MissionService {
             const isAvailable =
                 !activeMissionIds.includes(mission.id) &&
                 !completedMissionIds.includes(mission.id) &&
-                mission.type !== 'DEBUG' && // Hide debug missions from standard terminal
+                (mission.type !== 'DEBUG' || this._debugMissionsUnlocked) && // Hide debug missions from standard terminal UNLESS unlocked
                 this.arePrerequisitesMet(mission.id);
             return isAvailable;
         });
+    }
+
+    /**
+     * Exposes debug test missions into the available terminal for UI and fallback testing.
+     */
+    injectTestMissions() {
+        this._debugMissionsUnlocked = true;
+        
+        if (this.logger && this.logger.warn) {
+            this.logger.warn('MissionService', `Exposed test missions to the Mission Terminal.`);
+        }
+        
+        // Force a re-render to update the terminal UI immediately
+        this.uiManager.render(this.gameState.getState());
     }
 
     /**

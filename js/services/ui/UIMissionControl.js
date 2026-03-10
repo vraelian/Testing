@@ -239,6 +239,7 @@ export class UIMissionControl {
         const parsedTitle = this._parseMissionText(mission.name, gameState);
 
         const options = {
+            portraitId: mission.portraitId,
             dismissOutside: true, 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
@@ -254,6 +255,7 @@ export class UIMissionControl {
                 if (typeEl) {
                     typeEl.textContent = mission.type;
                     typeEl.style.display = 'block';
+                    // Reverted back to letting it sit underneath the title natively in center alignment
                 }
 
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
@@ -394,6 +396,7 @@ export class UIMissionControl {
         const parsedText = this._parseMissionText(mission.completion.text, gameState);
 
         const options = {
+           portraitId: mission.portraitId,
            dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
@@ -408,7 +411,9 @@ export class UIMissionControl {
                modal.querySelector('#mission-modal-title').textContent = parsedTitle;
                
                const typeEl = modal.querySelector('#mission-modal-type');
-               if (typeEl) typeEl.style.display = 'none';
+               if (typeEl) {
+                   typeEl.style.display = 'none';
+               }
                
                modal.querySelector('#mission-modal-description').innerHTML = parsedText;
 

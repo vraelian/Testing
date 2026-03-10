@@ -33,6 +33,7 @@
 
 /* General Modal Content Box Styling */
 .modal-content {
+    position: relative;
     background-color: #111827;
     padding: 1.5rem;
     border-radius: 12px;
@@ -1285,37 +1286,68 @@
 }
 
 /* ========================================================================= */
-/* --- PORTRAIT MODAL HEADER SYSTEM (PHASE 2) --- */
+/* --- COMM-LINK PORTRAIT SYSTEM (PHASE 2) --- */
 /* ========================================================================= */
 
-.modal-header-flex {
-    /* Flex utilities are largely handled via Tailwind classes injected by JS, 
-       but we define core structure here as a robust baseline */
+.comm-link-wrapper {
     display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     width: 100%;
-    margin-bottom: 0.5rem;
-    gap: 1rem;
+    /* Adjusted for the 30% larger portrait to pull it further out of the modal */
+    margin-top: -100px; 
+    margin-bottom: 1rem;
+    z-index: 10;
 }
 
-.portrait-thumbnail {
+.portrait-thumbnail.comm-active {
     width: 128px;
     height: 128px;
     flex-shrink: 0;
-    border-radius: 8px;
-    border: 1px solid #4b5563;
-    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    
+    /* Square with rounded corners */
+    border-radius: 16px; 
+    border: 3px solid #38bdf8;
+    background-color: #000;
+    
+    /* Sprite properties */
     background-repeat: no-repeat;
-    /* background-image and background-position are set inline dynamically by JS */
+    
+    /* Scale 30% up */
+    transform: scale(1.3);
+    /* Push the label down to account for the visual overflow of the scale */
+    margin-bottom: 22px; 
+    
+    /* Glowing active transmission animation */
+    animation: commPulse 2s infinite alternate;
 }
 
-.modal-title-group {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    flex-grow: 1;
-    text-align: right;
-    margin-bottom: 0;
+@keyframes commPulse {
+    0% { 
+        box-shadow: 0 0 10px rgba(56, 189, 248, 0.4), inset 0 0 5px rgba(56, 189, 248, 0.2); 
+        border-color: #38bdf8;
+    }
+    100% { 
+        box-shadow: 0 0 25px rgba(56, 189, 248, 0.8), inset 0 0 15px rgba(56, 189, 248, 0.5); 
+        border-color: #bae6fd;
+    }
+}
+
+.portrait-name-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #e0f2fe;
+    background: rgba(12, 74, 110, 0.9);
+    border: 1px solid #38bdf8;
+    padding: 3px 14px;
+    border-radius: 99px; /* Pill shape */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    
+    /* Overlap the bottom edge of the scaled portrait */
+    margin-top: -15px; 
+    z-index: 11;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
 }
