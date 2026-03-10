@@ -68,11 +68,51 @@ export class UIModalEngine {
             titleEl = modal.querySelector('.modal-title') || modal.querySelector('h3');
         }
 
+        // --- PORTRAIT INJECTION & CLEANUP ---
+        const existingPortrait = modal.querySelector('.portrait-thumbnail');
+        if (existingPortrait) existingPortrait.remove();
+
+        let headerFlex = modal.querySelector('.modal-header-flex');
+        if (headerFlex && (!options.portraitId || typeof window.getPortraitStyle !== 'function')) {
+            // Remove flex properties to restore normal flow when no portrait is present
+            headerFlex.classList.remove('modal-header-flex', 'flex', 'flex-row', 'justify-between', 'items-start', 'w-full', 'mb-2', 'gap-4');
+        }
+
+        if (titleEl) {
+            titleEl.classList.remove('modal-title-group');
+            titleEl.style.textAlign = '';
+            titleEl.style.flexGrow = '';
+            titleEl.style.marginBottom = '';
+            titleEl.innerHTML = title;
+        }
+
+        if (options.portraitId && typeof window.getPortraitStyle === 'function' && titleEl) {
+            const pStyle = window.getPortraitStyle(options.portraitId);
+            if (pStyle) {
+                if (!headerFlex) {
+                    headerFlex = document.createElement('div');
+                    titleEl.parentNode.insertBefore(headerFlex, titleEl);
+                    headerFlex.appendChild(titleEl);
+                }
+                headerFlex.className = 'modal-header-flex flex flex-row justify-between items-start w-full mb-2 gap-4';
+                
+                const pDiv = document.createElement('div');
+                pDiv.className = 'portrait-thumbnail shrink-0';
+                pDiv.style.cssText = pStyle;
+                
+                headerFlex.insertBefore(pDiv, titleEl);
+                
+                titleEl.classList.add('modal-title-group');
+                titleEl.style.textAlign = 'right';
+                titleEl.style.flexGrow = '1';
+                titleEl.style.marginBottom = '0';
+            }
+        }
+
         // --- DESCRIPTION ELEMENT RESOLUTION ---
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
         const descEl = modal.querySelector(`#${descElId}`) || modal.querySelector(`#${modalId.replace('-modal', '-scenario')}`);
 
-        if (titleEl) titleEl.innerHTML = title;
         if (descEl) {
             descEl.innerHTML = description;
             descEl.className = 'my-4 text-gray-300'; 
@@ -96,7 +136,6 @@ export class UIModalEngine {
         const closeHandler = () => {
             this.hideModal(modalId);
             if (callback) callback();
-            // [FIX] REMOVED strict processModalQueue call here.
             // We rely on the animationend listener in hideModal to trigger the next item.
             // This prevents the new modal from colliding with the exit animation of the old one.
         };
@@ -138,7 +177,7 @@ export class UIModalEngine {
             }
         }
 
-        // FIX: Ensure we start from a clean state.
+        // Ensure we start from a clean state.
         // If a zombie "modal-hiding" class exists, this removes it so the incoming fadeIn works.
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
@@ -155,7 +194,7 @@ export class UIModalEngine {
             modal.classList.add('modal-hiding');
             
             modal.addEventListener('animationend', () => {
-                // FIX: Zombie Listener Guard Clause
+                // Zombie Listener Guard Clause
                 // If the 'modal-hiding' class was removed (e.g. by a forced re-open),
                 // we abort this cleanup logic. This prevents the old listener from closing the new modal.
                 if (!modal.classList.contains('modal-hiding')) {
@@ -169,7 +208,7 @@ export class UIModalEngine {
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
 
-                // [FIX] Now that the DOM is clean, we check the queue.
+                // Now that the DOM is clean, we check the queue.
                 if (this.modalQueue.length > 0) {
                     this.processModalQueue();
                 }
@@ -194,7 +233,6 @@ export class UIModalEngine {
         const isContentClick = e.target.closest('.modal-content');
 
         if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
-            // [Truncated for brevity, logic remains same]
             if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) return modalBackdrop.id;
             if (modalBackdrop.id === 'eula-modal' && e.target.closest('#eula-modal-content')) return modalBackdrop.id;
             if (modalBackdrop.id !== 'lore-modal' &&  modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) return modalBackdrop.id;

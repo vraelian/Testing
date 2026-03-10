@@ -698,3 +698,16 @@ Consequences:
 * Pro: Guarantees a flawless, stutter-free cinematic transition without DOM flashing.
 * Pro: Decouples bespoke intro UI components from the rigid rules of the core UI library.
 * Con: Requires explicit timeout orchestration and careful cleanup of inline styles (`opacity`, `filter`) injected by the API to prevent breaking subsequent UI behavior.
+
+ADR-035: Asset Management: UI Sprite Sheets
+Status: Accepted (2026-03-09)
+
+Context: As the game expanded to include nearly 200 individual character portraits for missions, events, and the codex, loading these as individual image files created excessive HTTP bottlenecks. This severely bloated the memory footprint within the iOS WKWebView wrapper, risking application crashes and degrading overall load performance.
+
+Decision: All static, square UI portraits are compiled into a single, highly optimized WebP sprite sheet using a grid-based CSS packing algorithm. A JavaScript dictionary (`PortraitRegistry`) serves as the single source of truth, mapping logical character IDs (e.g., `Audita_1`) to their exact X/Y pixel coordinates. The UI engine (`UIModalEngine`) renders these portraits dynamically by applying the sprite sheet as a CSS `background-image` and mathematically shifting the viewable area via `background-position`.
+
+Consequences:
+* Pro: Drastically minimizes network requests to a single asset call.
+* Pro: Significantly limits image memory bloat on mobile targets.
+* Pro: Dynamic DOM injection allows modals to utilize these portraits contextually without hardcoding image tags into every HTML template.
+* Con: Requires an external build-step (batch cropping, scaling, and texture packing) whenever new character visual assets are generated.

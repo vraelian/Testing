@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbital Trading - Portrait Viewer</title>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            padding: 2rem;
+            margin: 0;
+        }
+        h1 {
+            font-size: 1.5rem;
+            margin-top: 0;
+            color: #38bdf8;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 1rem;
+        }
+        .controls {
+            margin-bottom: 2rem;
+        }
+        select {
+            background-color: #1e293b;
+            color: white;
+            border: 1px solid #475569;
+            padding: 0.5rem 1rem;
+            font-size: 1rem;
+            border-radius: 4px;
+            cursor: pointer;
+            outline: none;
+        }
+        select:hover {
+            border-color: #64748b;
+        }
+        #portrait-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        .portrait-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            transition: transform 0.1s, border-color 0.1s;
+        }
+        .portrait-card:hover {
+            transform: translateY(-2px);
+            border-color: #38bdf8;
+        }
+        .sprite-window {
+            width: 128px;
+            height: 128px;
+            border-radius: 4px;
+            background-image: url('assets/images/characters/characters_sprite.webp');
+            background-repeat: no-repeat;
+            margin-bottom: 1rem;
+            border: 1px solid #0f172a;
+        }
+        .id-label {
+            font-family: monospace;
+            font-size: 0.9rem;
+            color: #94a3b8;
+            background: #0f172a;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            cursor: pointer;
+            user-select: all;
+        }
+        .id-label:hover {
+            color: #fff;
+            background: #38bdf8;
+        }
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #22c55e;
+            color: #000;
+            padding: 10px 20px;
+            border-radius: 4px;
+            font-weight: bold;
+            opacity: 0;
+            transition: opacity 0.3s;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Orbital Trading - Character Asset Viewer</h1>
+    
+    <div class="controls">
+        <label for="category-select" style="margin-right: 10px;">Select Archetype:</label>
+        <select id="category-select"></select>
+    </div>
+
+    <div id="portrait-grid"></div>
+    <div id="toast" class="toast">ID Copied!</div>
+
+    <script>
+        const PortraitRegistry = {
+            "Affluent_1": { x: 0, y: 0 }, "Affluent_2": { x: 0, y: 128 }, "Affluent_3": { x: 0, y: 256 }, "Affluent_4": { x: 0, y: 384 }, "Affluent_5": { x: 0, y: 512 }, "Affluent_6": { x: 0, y: 640 }, "Affluent_7": { x: 0, y: 768 }, "Affluent_8": { x: 0, y: 896 }, "Affluent_9": { x: 0, y: 1024 }, "Affluent_10": { x: 0, y: 1152 }, "Affluent_11": { x: 0, y: 1280 }, "Affluent_12": { x: 0, y: 1408 }, "Affluent_13": { x: 0, y: 1536 }, "Affluent_14": { x: 128, y: 0 }, "Affluent_15": { x: 128, y: 128 }, "Affluent_16": { x: 128, y: 256 },
+            "AI_1": { x: 128, y: 384 }, "AI_2": { x: 128, y: 512 }, "AI_3": { x: 128, y: 640 }, "AI_4": { x: 128, y: 768 }, "AI_5": { x: 128, y: 896 }, "AI_6": { x: 128, y: 1024 }, "AI_7": { x: 128, y: 1152 }, "AI_8": { x: 128, y: 1280 }, "AI_9": { x: 128, y: 1408 }, "AI_10": { x: 128, y: 1536 }, "AI_11": { x: 256, y: 0 }, "AI_12": { x: 256, y: 128 }, "AI_13": { x: 256, y: 256 }, "AI_14": { x: 256, y: 384 },
+            "Arbiter_1": { x: 256, y: 512 },
+            "Audita_1": { x: 256, y: 640 },
+            "Business_1": { x: 256, y: 768 }, "Business_2": { x: 256, y: 896 }, "Business_3": { x: 256, y: 1024 }, "Business_4": { x: 256, y: 1152 }, "Business_5": { x: 256, y: 1280 }, "Business_6": { x: 256, y: 1408 }, "Business_7": { x: 256, y: 1536 }, "Business_8": { x: 384, y: 0 }, "Business_9": { x: 512, y: 0 }, "Business_10": { x: 640, y: 0 }, "Business_11": { x: 768, y: 0 }, "Business_12": { x: 896, y: 0 }, "Business_13": { x: 1024, y: 0 },
+            "Captain_1": { x: 1152, y: 0 }, "Captain_2": { x: 1280, y: 0 }, "Captain_3": { x: 1408, y: 0 }, "Captain_4": { x: 1536, y: 0 }, "Captain_5": { x: 1664, y: 0 }, "Captain_6": { x: 1792, y: 0 }, "Captain_7": { x: 384, y: 128 }, "Captain_8": { x: 384, y: 256 }, "Captain_9": { x: 384, y: 384 }, "Captain_10": { x: 384, y: 512 }, "Captain_11": { x: 384, y: 640 }, "Captain_12": { x: 384, y: 768 }, "Captain_13": { x: 384, y: 896 },
+            "Dockworker_1": { x: 384, y: 1024 }, "Dockworker_2": { x: 384, y: 1152 }, "Dockworker_3": { x: 384, y: 1280 }, "Dockworker_4": { x: 384, y: 1408 }, "Dockworker_5": { x: 384, y: 1536 }, "Dockworker_6": { x: 512, y: 128 }, "Dockworker_7": { x: 640, y: 128 }, "Dockworker_8": { x: 768, y: 128 }, "Dockworker_9": { x: 896, y: 128 }, "Dockworker_10": { x: 1024, y: 128 }, "Dockworker_11": { x: 1152, y: 128 }, "Dockworker_12": { x: 1280, y: 128 }, "Dockworker_13": { x: 1408, y: 128 },
+            "Expert_System_1": { x: 1536, y: 128 }, "Expert_System_2": { x: 1664, y: 128 }, "Expert_System_3": { x: 1792, y: 128 }, "Expert_System_4": { x: 512, y: 256 }, "Expert_System_5": { x: 512, y: 384 }, "Expert_System_6": { x: 512, y: 512 }, "Expert_System_7": { x: 512, y: 640 }, "Expert_System_8": { x: 512, y: 768 }, "Expert_System_9": { x: 512, y: 896 }, "Expert_System_10": { x: 512, y: 1024 }, "Expert_System_11": { x: 512, y: 1152 }, "Expert_System_12": { x: 512, y: 1280 }, "Expert_System_13": { x: 512, y: 1408 },
+            "Heavily_Augmented_1": { x: 512, y: 1536 }, "Heavily_Augmented_2": { x: 640, y: 256 }, "Heavily_Augmented_3": { x: 768, y: 256 }, "Heavily_Augmented_4": { x: 896, y: 256 }, "Heavily_Augmented_5": { x: 1024, y: 256 }, "Heavily_Augmented_6": { x: 1152, y: 256 }, "Heavily_Augmented_7": { x: 1280, y: 256 }, "Heavily_Augmented_8": { x: 1408, y: 256 }, "Heavily_Augmented_9": { x: 1536, y: 256 }, "Heavily_Augmented_10": { x: 1664, y: 256 }, "Heavily_Augmented_11": { x: 1792, y: 256 }, "Heavily_Augmented_12": { x: 640, y: 384 }, "Heavily_Augmented_13": { x: 640, y: 512 }, "Heavily_Augmented_14": { x: 640, y: 640 }, "Heavily_Augmented_15": { x: 640, y: 768 },
+            "Kintsugi_1": { x: 640, y: 896 }, "Kintsugi_2": { x: 640, y: 1024 }, "Kintsugi_3": { x: 640, y: 1152 },
+            "Lightly_Augmented_1": { x: 640, y: 1280 }, "Lightly_Augmented_2": { x: 640, y: 1408 }, "Lightly_Augmented_3": { x: 640, y: 1536 }, "Lightly_Augmented_4": { x: 768, y: 384 }, "Lightly_Augmented_5": { x: 896, y: 384 }, "Lightly_Augmented_6": { x: 1024, y: 384 }, "Lightly_Augmented_7": { x: 1152, y: 384 }, "Lightly_Augmented_8": { x: 1280, y: 384 }, "Lightly_Augmented_9": { x: 1408, y: 384 }, "Lightly_Augmented_10": { x: 1536, y: 384 }, "Lightly_Augmented_11": { x: 1664, y: 384 }, "Lightly_Augmented_12": { x: 1792, y: 384 }, "Lightly_Augmented_13": { x: 768, y: 512 }, "Lightly_Augmented_14": { x: 768, y: 640 },
+            "Merchants_Guild_1": { x: 768, y: 768 }, "Merchants_Guild_2": { x: 768, y: 896 }, "Merchants_Guild_3": { x: 768, y: 1024 }, "Merchants_Guild_4": { x: 768, y: 1152 }, "Merchants_Guild_5": { x: 768, y: 1280 }, "Merchants_Guild_6": { x: 768, y: 1408 }, "Merchants_Guild_7": { x: 768, y: 1536 }, "Merchants_Guild_8": { x: 896, y: 512 }, "Merchants_Guild_9": { x: 1024, y: 512 }, "Merchants_Guild_10": { x: 1152, y: 512 }, "Merchants_Guild_11": { x: 1280, y: 512 }, "Merchants_Guild_12": { x: 1408, y: 512 }, "Merchants_Guild_13": { x: 1536, y: 512 }, "Merchants_Guild_14": { x: 1664, y: 512 }, "Merchants_Guild_15": { x: 1792, y: 512 }, "Merchants_Guild_16": { x: 896, y: 640 }, "Merchants_Guild_17": { x: 896, y: 768 }, "Merchants_Guild_18": { x: 896, y: 896 }, "Merchants_Guild_19": { x: 896, y: 1024 }, "Merchants_Guild_20": { x: 896, y: 1152 }, "Merchants_Guild_21": { x: 896, y: 1280 }, "Merchants_Guild_22": { x: 896, y: 1408 },
+            "Miner_1": { x: 896, y: 1536 }, "Miner_2": { x: 1024, y: 640 }, "Miner_3": { x: 1152, y: 640 }, "Miner_4": { x: 1280, y: 640 }, "Miner_5": { x: 1408, y: 640 }, "Miner_6": { x: 1536, y: 640 }, "Miner_7": { x: 1664, y: 640 }, "Miner_8": { x: 1792, y: 640 }, "Miner_9": { x: 1024, y: 768 }, "Miner_10": { x: 1024, y: 896 },
+            "Scientist_1": { x: 1024, y: 1024 }, "Scientist_2": { x: 1024, y: 1152 }, "Scientist_3": { x: 1024, y: 1280 }, "Scientist_4": { x: 1024, y: 1408 }, "Scientist_5": { x: 1024, y: 1536 }, "Scientist_6": { x: 1152, y: 768 }, "Scientist_7": { x: 1280, y: 768 }, "Scientist_8": { x: 1408, y: 768 }, "Scientist_9": { x: 1536, y: 768 },
+            "Techie_1": { x: 1664, y: 768 }, "Techie_2": { x: 1792, y: 768 }, "Techie_3": { x: 1152, y: 896 }, "Techie_4": { x: 1152, y: 1024 }, "Techie_5": { x: 1152, y: 1152 }, "Techie_6": { x: 1152, y: 1280 }, "Techie_7": { x: 1152, y: 1408 }, "Techie_8": { x: 1152, y: 1536 }, "Techie_9": { x: 1280, y: 896 }, "Techie_10": { x: 1408, y: 896 }, "Techie_11": { x: 1536, y: 896 }, "Techie_12": { x: 1664, y: 896 }, "Techie_13": { x: 1792, y: 896 }, "Techie_14": { x: 1280, y: 1024 }, "Techie_15": { x: 1280, y: 1152 },
+            "Venusian_Syndicate_1": { x: 1280, y: 1280 }, "Venusian_Syndicate_2": { x: 1280, y: 1408 }, "Venusian_Syndicate_3": { x: 1280, y: 1536 }, "Venusian_Syndicate_4": { x: 1408, y: 1024 }, "Venusian_Syndicate_5": { x: 1536, y: 1024 }, "Venusian_Syndicate_6": { x: 1664, y: 1024 }, "Venusian_Syndicate_7": { x: 1792, y: 1024 }, "Venusian_Syndicate_8": { x: 1408, y: 1152 }, "Venusian_Syndicate_9": { x: 1408, y: 1280 }, "Venusian_Syndicate_10": { x: 1408, y: 1408 }, "Venusian_Syndicate_11": { x: 1408, y: 1536 }, "Venusian_Syndicate_12": { x: 1536, y: 1152 }, "Venusian_Syndicate_13": { x: 1664, y: 1152 }, "Venusian_Syndicate_14": { x: 1792, y: 1152 }, "Venusian_Syndicate_15": { x: 1536, y: 1280 }, "Venusian_Syndicate_16": { x: 1536, y: 1408 }, "Venusian_Syndicate_17": { x: 1536, y: 1536 }, "Venusian_Syndicate_18": { x: 1664, y: 1280 }, "Venusian_Syndicate_19": { x: 1792, y: 1280 }, "Venusian_Syndicate_20": { x: 1664, y: 1408 }, "Venusian_Syndicate_21": { x: 1664, y: 1536 }, "Venusian_Syndicate_22": { x: 1792, y: 1408 },
+            "Vrael_1": { x: 1792, y: 1536 }
+        };
+
+        const select = document.getElementById('category-select');
+        const grid = document.getElementById('portrait-grid');
+        const toast = document.getElementById('toast');
+
+        // Extract unique categories (e.g. "Affluent", "Expert_System") using Regex
+        const categories = new Set();
+        Object.keys(PortraitRegistry).forEach(key => {
+            const match = key.match(/^(.*)_\d+$/);
+            if (match) categories.add(match[1]);
+        });
+
+        // Populate Dropdown
+        Array.from(categories).sort().forEach(cat => {
+            const option = document.createElement('option');
+            option.value = cat;
+            option.textContent = cat.replace(/_/g, ' ');
+            select.appendChild(option);
+        });
+
+        // Render the Grid
+        function renderGrid(category) {
+            grid.innerHTML = '';
+            
+            // Filter registry for items matching the selected category
+            const items = Object.entries(PortraitRegistry).filter(([key]) => key.startsWith(category + '_'));
+            
+            // Sort them numerically so _2 comes before _10
+            items.sort((a, b) => {
+                const numA = parseInt(a[0].match(/_(\d+)$/)[1]);
+                const numB = parseInt(b[0].match(/_(\d+)$/)[1]);
+                return numA - numB;
+            });
+
+            items.forEach(([id, coords]) => {
+                const card = document.createElement('div');
+                card.className = 'portrait-card';
+
+                const sprite = document.createElement('div');
+                sprite.className = 'sprite-window';
+                sprite.style.backgroundPosition = `-${coords.x}px -${coords.y}px`;
+
+                const label = document.createElement('div');
+                label.className = 'id-label';
+                label.textContent = id;
+                label.title = "Click to copy ID";
+                
+                label.onclick = () => {
+                    navigator.clipboard.writeText(id);
+                    toast.style.opacity = '1';
+                    setTimeout(() => toast.style.opacity = '0', 2000);
+                };
+
+                card.appendChild(sprite);
+                card.appendChild(label);
+                grid.appendChild(card);
+            });
+        }
+
+        // Initialize
+        select.addEventListener('change', (e) => renderGrid(e.target.value));
+        renderGrid(select.value); // Render the first category on load
+    </script>
+</body>
+</html>
