@@ -328,7 +328,7 @@ export class TravelService {
 
         // --- PHASE 2: DISTANCE-BASED HULL ENTROPY ---
         const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
-        let travelHullDamage = baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod;
+        let travelHullDamage = Math.ceil(baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod * 0.8);
         
         // --- SYSTEM STATES V3 HOOKS (Hull Decay) ---
         if (activeStateDef && activeStateDef.modifiers) {
@@ -363,8 +363,11 @@ export class TravelService {
         activeShipState.fuel -= travelInfo.fuelCost;
 
         // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (TRAVEL) ---
-        let convoyFuelTax = Math.max(0, travelInfo.fuelCost * 0.05);
-        let convoyHullTax = Math.max(0, totalHullDamageValue * 0.05);
+        const additionalShips = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
+        const convoyTaxRate = additionalShips * 0.02; // 2% per inactive ship
+
+        let convoyFuelTax = Math.max(0, Math.ceil(travelInfo.fuelCost * convoyTaxRate));
+        let convoyHullTax = Math.max(0, Math.ceil(totalHullDamageValue * convoyTaxRate));
 
         // --- SYSTEM STATES V3 HOOKS (Convoy Tax) ---
         if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.convoyTaxWaiver) {
