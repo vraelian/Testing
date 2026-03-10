@@ -42,7 +42,7 @@ export const EVENTS_OPPORTUNITY = [
             'out_decrypt_success': {
                 title: 'Access Granted',
                 text: 'You crack the encryption just before the battery dies. It contains a forgotten, anonymous bank transfer authorization.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 2500 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 25000 } }]
             },
             'out_decrypt_fail': {
                 title: 'Data Corruption',
@@ -60,7 +60,7 @@ export const EVENTS_OPPORTUNITY = [
         id: 'evt_opp_noble',
         tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
         weight: 5,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5000 } }],
         template: {
             title: 'The Eccentric Noble',
             description: 'A flamboyant private yacht hails you. "My guests are dreadfully bored of this empty void! Do you have any entertaining stories or exotic goods to share?"'
@@ -68,8 +68,8 @@ export const EVENTS_OPPORTUNITY = [
         choices: [
             {
                 id: 'choice_entertain',
-                text: 'Provide Entertainment (-500 Credits)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
+                text: 'Provide Entertainment (Cost scales with ship class)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5000 } }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -89,14 +89,14 @@ export const EVENTS_OPPORTUNITY = [
                 title: 'Generous Patron',
                 text: 'You entertain them with tales of your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }, // Initial cost
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 5000 }  // Reward
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: -5000 } }, // Initial cost
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 50000 } }  // Reward
                 ]
             },
             'out_entertain_fail': {
                 title: 'Tough Crowd',
                 text: 'You entertain them with tales of your closest calls, but they quickly grow bored and cut the feed. You wasted your resources.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: -5000 } }]
             },
             'out_ignore': {
                 title: 'Connection Closed',

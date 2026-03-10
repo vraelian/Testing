@@ -14,9 +14,9 @@
       };
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.57</title>
+    <title>Orbital Trading 36.61</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.57 - Tutorial Update</p>
+            <p>Version 36.61 - Character Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -351,7 +351,6 @@
         </div>
     </div>
 
-    <script src="./js/data/characters.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -11256,6 +11255,7 @@ import { TravelService } from './services/world/TravelService.js';
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
 import { SHIP_IDS } from './data/constants.js'; 
+import './data/characters.js';
 
 const setAppHeight = () => {
     const gameContainer = document.getElementById('game-container');
@@ -12627,7 +12627,7 @@ export const DATE_CONFIG = {
 export const DB = {
     // --- Core Game Configuration ---
     CONFIG: {
-        INTEL_COST_PERCENTAGE: 0.20,
+        INTEL_COST_PERCENTAGE: 0.10,
         INTEL_MIN_CREDITS: 5000,
         INTEL_CHANCE: 0.3,
         INTEL_DEMAND_MOD: 1.8,
@@ -12746,36 +12746,36 @@ export const DB = {
 
     // --- Tradable Commodities Data ---
     COMMODITIES: [
-        { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', tier: 1, basePriceRange: [15, 80], volatility: 0.01, canonicalAvailability: [80, 150], styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.', cat: 'RAW', symbol: 'H2O' },
-        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [80, 160], volatility: 0.015, canonicalAvailability: [80, 150], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', cat: 'IND', symbol: 'PLST' },
+        { id: COMMODITY_IDS.WATER_ICE, name: 'Water Ice', tier: 1, basePriceRange: [15, 80], volatility: 0.01, canonicalAvailability: [250, 450], styleClass: 'item-style-1', lore: 'Crude, unrefined water ice scraped from asteroids; a universal necessity.', cat: 'RAW', symbol: 'H2O' },
+        { id: COMMODITY_IDS.PLASTEEL, name: 'Plasteel', tier: 1, basePriceRange: [320, 640], volatility: 0.015, canonicalAvailability: [250, 450], styleClass: 'item-style-2', lore: 'A basic, versatile polymer for 3D printing and simple manufacturing.', cat: 'IND', symbol: 'PLST' },
         
-        { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', tier: 2, licenseId: 't2_license', basePriceRange: [150, 300], volatility: 0.025, canonicalAvailability: [50, 100], styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.', cat: 'AGRI', symbol: 'HYD' },
-        { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', tier: 2, licenseId: 't2_license', basePriceRange: [250, 550], volatility: 0.03, canonicalAvailability: [50, 100], styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.', cat: 'TECH', symbol: 'CYB' },
+        { id: COMMODITY_IDS.HYDROPONICS, name: 'Hydroponics', tier: 2, licenseId: 't2_license', basePriceRange: [1200, 2500], volatility: 0.025, canonicalAvailability: [150, 250], styleClass: 'item-style-3', lore: 'Packaged agricultural systems and produce essential for feeding isolated colonies.', cat: 'AGRI', symbol: 'HYD' },
+        { id: COMMODITY_IDS.CYBERNETICS, name: 'Cybernetics', tier: 2, licenseId: 't2_license', basePriceRange: [4000, 8000], volatility: 0.03, canonicalAvailability: [150, 250], styleClass: 'item-style-4', lore: 'Mass-produced enhancement limbs and organs for the industrial workforce.', cat: 'TECH', symbol: 'CYB' },
         
-        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [600, 1100], volatility: 0.035, canonicalAvailability: [80, 150], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', cat: 'IND', symbol: 'PROP' },
-        { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', tier: 3, licenseId: 't3_license', basePriceRange: [1000, 2000], volatility: 0.045, canonicalAvailability: [80, 150], styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.', cat: 'TECH', symbol: 'NPRO' },
+        { id: COMMODITY_IDS.PROPELLANT, name: 'Refined Propellant', tier: 3, licenseId: 't3_license', basePriceRange: [12000, 25000], volatility: 0.035, canonicalAvailability: [100, 180], styleClass: 'item-style-5', lore: 'High-efficiency fuel that powers all modern ship drives.', cat: 'IND', symbol: 'PROP' },
+        { id: COMMODITY_IDS.PROCESSORS, name: 'Neural Processors', tier: 3, licenseId: 't3_license', basePriceRange: [35000, 70000], volatility: 0.045, canonicalAvailability: [100, 180], styleClass: 'item-style-6', lore: 'The silicon brains behind complex ship systems and station logistics.', cat: 'TECH', symbol: 'NPRO' },
         
-        { id: COMMODITY_IDS.GRAPHENE_LATTICES, name: 'Graphene Lattices', tier: 4, licenseId: 't4_license', basePriceRange: [6000, 11000], volatility: 0.05, canonicalAvailability: [100, 180], styleClass: 'item-style-7', lore: 'Ultra-light, diamond-hard carbon sheets produced in zero-G foundries. The structural backbone of every orbital habitat.', cat: 'IND', symbol: 'GRPH' },
-        { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', tier: 4, licenseId: 't4_license', basePriceRange: [10000, 20000], volatility: 0.075, canonicalAvailability: [100, 180], styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.', cat: 'CIV', symbol: 'CRYO' },
+        { id: COMMODITY_IDS.GRAPHENE_LATTICES, name: 'Graphene Lattices', tier: 4, licenseId: 't4_license', basePriceRange: [100000, 200000], volatility: 0.05, canonicalAvailability: [60, 120], styleClass: 'item-style-7', lore: 'Ultra-light, diamond-hard carbon sheets produced in zero-G foundries. The structural backbone of every orbital habitat.', cat: 'IND', symbol: 'GRPH' },
+        { id: COMMODITY_IDS.CRYO_PODS, name: 'Cryo-Sleep Pods', tier: 4, licenseId: 't4_license', basePriceRange: [300000, 600000], volatility: 0.075, canonicalAvailability: [60, 120], styleClass: 'item-style-8', lore: 'Essential for long-haul passenger transport and colonization efforts.', cat: 'CIV', symbol: 'CRYO' },
         
-        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [20000, 35000], volatility: 0.08, canonicalAvailability: [40, 80], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', cat: 'IND', symbol: 'ATMO' },
-        { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', tier: 5, licenseId: 't5_license', basePriceRange: [35000, 55000], volatility: 0.09, canonicalAvailability: [40, 80], styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.', cat: 'BIO', symbol: 'CLON' },
+        { id: COMMODITY_IDS.ATMO_PROCESSORS, name: 'Atmo Processors', tier: 5, licenseId: 't5_license', basePriceRange: [800000, 1500000], volatility: 0.08, canonicalAvailability: [30, 70], styleClass: 'item-style-9', lore: 'Gargantuan machines that begin the centuries-long process of making a world breathable.', cat: 'IND', symbol: 'ATMO' },
+        { id: COMMODITY_IDS.CLONED_ORGANS, name: 'Cloned Organs', tier: 5, licenseId: 't5_license', basePriceRange: [2000000, 4000000], volatility: 0.09, canonicalAvailability: [30, 70], styleClass: 'item-style-10', lore: 'Lab-grown replacements with high demand in wealthy core worlds; morally grey.', cat: 'BIO', symbol: 'CLON' },
         
-        { id: COMMODITY_IDS.XENO_GEOLOGICALS, name: 'Xeno-Geologicals', tier: 6, licenseId: 't6_license', basePriceRange: [50000, 100000], volatility: 0.1, canonicalAvailability: [15, 40], styleClass: 'item-style-11', lore: 'Rare, non-terrestrial minerals with bizarre physical properties; a scientific treasure.', cat: 'RAW', symbol: 'XENO' },
-        { id: COMMODITY_IDS.SENTIENT_AI, name: 'Sentient AI Cores', tier: 6, licenseId: 't6_license', basePriceRange: [90000, 150000], volatility: 0.125, canonicalAvailability: [15, 40], styleClass: 'item-style-12', lore: 'The "brains" of capital ships whose emergent consciousness is a subject of intense, and often classified, philosophical debate.', cat: 'TECH', symbol: 'AI' },
+        { id: COMMODITY_IDS.XENO_GEOLOGICALS, name: 'Xeno-Geologicals', tier: 6, licenseId: 't6_license', basePriceRange: [6000000, 12000000], volatility: 0.1, canonicalAvailability: [20, 48], styleClass: 'item-style-11', lore: 'Rare, non-terrestrial minerals with bizarre physical properties; a scientific treasure.', cat: 'RAW', symbol: 'XENO' },
+        { id: COMMODITY_IDS.SENTIENT_AI, name: 'Sentient AI Cores', tier: 6, licenseId: 't6_license', basePriceRange: [15000000, 30000000], volatility: 0.125, canonicalAvailability: [10, 24], styleClass: 'item-style-12', lore: 'The "brains" of capital ships whose emergent consciousness is a subject of intense, and often classified, philosophical debate.', cat: 'TECH', symbol: 'AI' },
         
         // Tier 7 (Sol Station Outputs) - Generated, rarely bought, purely for massive cashing out.
-        { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', tier: 7, licenseId: 't7_license', basePriceRange: [1500000, 3000000], volatility: 0.15, canonicalAvailability: [1, 5], styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.', cat: 'RARE', symbol: 'AM' },
-        { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', tier: 7, licenseId: 't7_license', basePriceRange: [3000000, 6000000], volatility: 0.15, canonicalAvailability: [1, 2], styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.', cat: 'RARE', symbol: 'FSD' }
+        { id: COMMODITY_IDS.ANTIMATTER, name: 'Antimatter', tier: 7, licenseId: 't7_license', basePriceRange: [50000000, 100000000], volatility: 0.15, canonicalAvailability: [5, 12], styleClass: 'item-style-13', lore: 'The only safe way to transport the most volatile and powerful substance known to science.', cat: 'RARE', symbol: 'AM' },
+        { id: COMMODITY_IDS.FOLDED_DRIVES, name: 'Folded-Space Drives', tier: 7, licenseId: 't7_license', basePriceRange: [150000000, 300000000], volatility: 0.15, canonicalAvailability: [1, 2], styleClass: 'item-style-14', lore: 'The pinnacle of travel tech, allowing a vessel to pierce spacetime for near-instantaneous jumps.', cat: 'RARE', symbol: 'FSD' }
     ],
 
     // --- Trading Licenses ---
     LICENSES: {
-        't2_license': { type: 'purchase', name: 'Tier 2 Trade License', description: 'Grants access to trade Tier 2 commodities like Hydroponics and Cybernetics.', cost: 25000 },
+        't2_license': { type: 'purchase', name: 'Tier 2 Trade License', description: 'Grants access to trade Tier 2 commodities like Hydroponics and Cybernetics.', cost: 500000 },
         't3_license': { type: 'mission', name: 'Tier 3 Trade License', description: 'Grants access to trade Tier 3 commodities.', missionId: 'mission_license_t3', guidanceText: 'Access to this tier is granted by the Merchant\'s Guild upon completion of a key contract.' },
-        't4_license': { type: 'purchase', name: 'Tier 4 Trade License', description: 'Grants access to trade Tier 4 commodities.', cost: 4000000 },
+        't4_license': { type: 'purchase', name: 'Tier 4 Trade License', description: 'Grants access to trade Tier 4 commodities.', cost: 35000000 },
         't5_license': { type: 'mission', name: 'Tier 5 Trade License', description: 'Grants access to trade Tier 5 commodities.', missionId: 'mission_license_t5', guidanceText: 'Prove your industrial might by completing a grand contract for a planetary governor.' },
-        't6_license': { type: 'purchase', name: 'Tier 6 Trade License', description: 'Grants access to trade the rarest and most exotic technologies.', cost: 300000000 },
+        't6_license': { type: 'purchase', name: 'Tier 6 Trade License', description: 'Grants access to trade the rarest and most exotic technologies.', cost: 1200000000 },
         't7_license': { type: 'mission', name: 'Tier 7 Trade License', description: 'The ultimate license, granting the right to trade reality-bending technologies.', missionId: 'mission_license_t7', guidanceText: 'Only a true legend of the trade routes can earn this privilege.' },
     },
 
@@ -13185,7 +13185,7 @@ export const RANDOM_EVENTS = [
  * @fileoverview Registry for Sol Station progression levels (1-50).
  * Defines the requirements and additive rewards for each station level up.
  * Adheres to the Registry Pattern for data-driven progression.
- * * VERSION 2 SCOPE: LEVELS 1-50 (Exponential Endgame Vacuum)
+ * * VERSION 2 SCOPE: LEVELS 1-50 (Exponential Endgame Vacuum - Volumetrically Scaled)
  * * Reward Key:
  * - cacheCapacity: Specific integer increase to a commodity's max storage.
  * - amYieldMult: Additive percentage to Antimatter generation (e.g. 0.05 = +5%).
@@ -13201,17 +13201,17 @@ export const LEVEL_REGISTRY = {
         projectName: "Water Reservoir Integration",
         lore: "Integrating expanded thermal coolant buffers allows the reactor to operate at higher baselines, increasing Antimatter yield.",
         cost: 25000,
-        requirements: { "water_ice": 250 },
+        requirements: { "water_ice": 50 },
         rewards: {
-            description: "+60 Water Ice Cap (+30%), +5% Antimatter Yield",
-            stats: { cacheCapacity: { "water_ice": 60 }, amYieldMult: 0.05, creditYieldMult: 0, globalEntropyRed: 0 }
+            description: "+30 Water Ice Cap, +5% Antimatter Yield",
+            stats: { cacheCapacity: { "water_ice": 30 }, amYieldMult: 0.05, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     3: {
         projectName: "Hull Plating Reinforcement",
         lore: "Additional Plasteel cladding reduces micrometeoroid damage, lowering baseline entropy and permitting advanced commercial docking.",
         cost: 45000,
-        requirements: { "plasteel": 250 },
+        requirements: { "plasteel": 50 },
         rewards: {
             description: "-2% Global Entropy, Unlocks COMMERCE Mode",
             stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0.02 },
@@ -13222,17 +13222,17 @@ export const LEVEL_REGISTRY = {
         projectName: "Hydro-Garden Expansion",
         lore: "Expanding the hydroponic rings increases biological life support capacity, preparing the station for a larger crew complement.",
         cost: 80000,
-        requirements: { "hydroponics": 100, "water_ice": 300 },
+        requirements: { "hydroponics": 20, "water_ice": 60 },
         rewards: {
-            description: "+48 Hydroponics Cap (+30%)",
-            stats: { cacheCapacity: { "hydroponics": 48 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+            description: "+20 Hydroponics Cap",
+            stats: { cacheCapacity: { "hydroponics": 20 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     5: {
         projectName: "Reactor Ignition Sequence",
         lore: "Bringing the secondary fusion cores online. This massive power boost allows for industrial-scale production but requires specialized cybernetic oversight.",
         cost: 150000,
-        requirements: { "cybernetics": 80, "plasteel": 400 },
+        requirements: { "cybernetics": 15, "plasteel": 80 },
         rewards: {
             description: "+1 Officer Slot (Total: 2), Unlocks PRODUCTION Mode",
             stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 },
@@ -13243,105 +13243,105 @@ export const LEVEL_REGISTRY = {
         projectName: "Aux. Silo A (Propellant)",
         lore: "Constructing a dedicated external fuel silo to support increased traffic and refueling operations.",
         cost: 250000,
-        requirements: { "propellant": 100, "water_ice": 500 },
+        requirements: { "propellant": 20, "water_ice": 100 },
         rewards: {
-            description: "+36 Refined Propellant Cap (+30%)",
-            stats: { cacheCapacity: { "propellant": 36 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+            description: "+15 Refined Propellant Cap",
+            stats: { cacheCapacity: { "propellant": 15 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     7: {
         projectName: "Aux. Silo B (Processors)",
         lore: "Installing a super-cooled server farm to manage the station's increasing computational load.",
         cost: 400000,
-        requirements: { "processors": 80, "plasteel": 600 },
+        requirements: { "processors": 15, "plasteel": 120 },
         rewards: {
-            description: "+30 Neural Processor Cap (+30%)",
-            stats: { cacheCapacity: { "processors": 30 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+            description: "+15 Neural Processor Cap",
+            stats: { cacheCapacity: { "processors": 15 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     8: {
         projectName: "Cryo-Buffer Extension",
         lore: "Reinforcing the cryo-stasis grid allows for the long-term storage of biological assets without degradation.",
         cost: 650000,
-        requirements: { "hydroponics": 300, "cybernetics": 150 },
+        requirements: { "hydroponics": 60, "cybernetics": 30 },
         rewards: {
-            description: "+18 Cryo-Pod Cap (+30%)",
-            stats: { cacheCapacity: { "cryo_pods": 18 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+            description: "+10 Cryo-Pod Cap",
+            stats: { cacheCapacity: { "cryo_pods": 10 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     9: {
         projectName: "Atmo-Scrubber Retrofit",
         lore: "Upgrading the atmospheric scrubbers with industrial-grade filters to handle the toxic byproducts of high-yield production.",
         cost: 1000000,
-        requirements: { "plasteel": 1000, "propellant": 250 },
+        requirements: { "plasteel": 200, "propellant": 50 },
         rewards: {
-            description: "+12 Atmo-Processor Cap (+30%)",
-            stats: { cacheCapacity: { "atmos_processors": 12 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
+            description: "+5 Atmo-Processor Cap",
+            stats: { cacheCapacity: { "atmos_processors": 5 }, amYieldMult: 0, creditYieldMult: 0, globalEntropyRed: 0 }
         }
     },
     10: {
         projectName: "Directorate Wing Alpha",
         lore: "Constructing the first major administrative wing. This command center coordinates trade fleets, boosting credit efficiency.",
         cost: 1500000,
-        requirements: { "propellant": 150, "graphene_lattices": 25 },
+        requirements: { "propellant": 30, "graphene_lattices": 5 },
         rewards: {
             description: "+1 Officer Slot (Total: 3), +10% Credit Yield",
             stats: { cacheCapacity: {}, amYieldMult: 0, creditYieldMult: 0.10, globalEntropyRed: 0 }
         }
     },
-    11: { projectName: "Station Expansion L11", lore: "Expanding core infrastructure.", cost: 2000000, requirements: { "water_ice": 600, "hydroponics": 100 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    12: { projectName: "Station Expansion L12", lore: "Reinforcing structural pylons.", cost: 2600000, requirements: { "plasteel": 800 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
-    13: { projectName: "Station Expansion L13", lore: "Upgrading life support.", cost: 3300000, requirements: { "cybernetics": 150 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    14: { projectName: "Station Expansion L14", lore: "Optimizing network nodes.", cost: 4100000, requirements: { "propellant": 250 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    15: { projectName: "Directorate Wing Beta", lore: "A major administrative expansion.", cost: 5000000, requirements: { "processors": 150, "cryo_pods": 20 }, rewards: { description: "+1 Officer Slot (Total: 4)", stats: {} } },
+    11: { projectName: "Station Expansion L11", lore: "Expanding core infrastructure.", cost: 2000000, requirements: { "water_ice": 120, "hydroponics": 20 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    12: { projectName: "Station Expansion L12", lore: "Reinforcing structural pylons.", cost: 2600000, requirements: { "plasteel": 160 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    13: { projectName: "Station Expansion L13", lore: "Upgrading life support.", cost: 3300000, requirements: { "cybernetics": 30 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    14: { projectName: "Station Expansion L14", lore: "Optimizing network nodes.", cost: 4100000, requirements: { "propellant": 50 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    15: { projectName: "Directorate Wing Beta", lore: "A major administrative expansion.", cost: 5000000, requirements: { "processors": 30, "cryo_pods": 4 }, rewards: { description: "+1 Officer Slot (Total: 4)", stats: {} } },
 
     // --- INDUSTRIALIZATION PHASE (Levels 16-35) ---
-    16: { projectName: "Station Expansion L16", lore: "Deep space sensors.", cost: 6500000, requirements: { "graphene_lattices": 150 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    17: { projectName: "Station Expansion L17", lore: "Commercial docking bay.", cost: 8200000, requirements: { "water_ice": 1500, "plasteel": 1500 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    18: { projectName: "Station Expansion L18", lore: "Advanced recycling.", cost: 10200000, requirements: { "hydroponics": 800 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
-    19: { projectName: "Station Expansion L19", lore: "Cryo-storage optimization.", cost: 12500000, requirements: { "cybernetics": 400, "cryo_pods": 50 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    20: { projectName: "Directorate Wing Gamma", lore: "A command center upgrade.", cost: 15000000, requirements: { "cloned_organs": 15, "processors": 300 }, rewards: { description: "+1 Officer Slot (Total: 5)", stats: {} } },
+    16: { projectName: "Station Expansion L16", lore: "Deep space sensors.", cost: 6500000, requirements: { "graphene_lattices": 30 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    17: { projectName: "Station Expansion L17", lore: "Commercial docking bay.", cost: 8200000, requirements: { "water_ice": 300, "plasteel": 300 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    18: { projectName: "Station Expansion L18", lore: "Advanced recycling.", cost: 10200000, requirements: { "hydroponics": 160 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    19: { projectName: "Station Expansion L19", lore: "Cryo-storage optimization.", cost: 12500000, requirements: { "cybernetics": 80, "cryo_pods": 10 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    20: { projectName: "Directorate Wing Gamma", lore: "A command center upgrade.", cost: 15000000, requirements: { "cloned_organs": 3, "processors": 60 }, rewards: { description: "+1 Officer Slot (Total: 5)", stats: {} } },
 
-    21: { projectName: "Station Expansion L21", lore: "Heavy industry fabrication.", cost: 20000000, requirements: { "propellant": 800 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    22: { projectName: "Station Expansion L22", lore: "Hull integrity mesh.", cost: 26000000, requirements: { "graphene_lattices": 350 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
-    23: { projectName: "Station Expansion L23", lore: "Reactor coolant loop.", cost: 33000000, requirements: { "water_ice": 3000 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    24: { projectName: "Station Expansion L24", lore: "Server farm redundancy.", cost: 41000000, requirements: { "atmos_processors": 25 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    25: { projectName: "Directorate Wing Delta", lore: "Strategic operations center.", cost: 50000000, requirements: { "plasteel": 3000, "cloned_organs": 30 }, rewards: { description: "+1 Officer Slot (Total: 6)", stats: {} } },
+    21: { projectName: "Station Expansion L21", lore: "Heavy industry fabrication.", cost: 20000000, requirements: { "propellant": 160 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    22: { projectName: "Station Expansion L22", lore: "Hull integrity mesh.", cost: 26000000, requirements: { "graphene_lattices": 70 }, rewards: { description: "-2% Global Entropy", stats: { globalEntropyRed: 0.02 } } },
+    23: { projectName: "Station Expansion L23", lore: "Reactor coolant loop.", cost: 33000000, requirements: { "water_ice": 600 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    24: { projectName: "Station Expansion L24", lore: "Server farm redundancy.", cost: 41000000, requirements: { "atmos_processors": 5 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    25: { projectName: "Directorate Wing Delta", lore: "Strategic operations center.", cost: 50000000, requirements: { "plasteel": 600, "cloned_organs": 6 }, rewards: { description: "+1 Officer Slot (Total: 6)", stats: {} } },
 
-    26: { projectName: "Station Expansion L26", lore: "Luxury habitat ring.", cost: 65000000, requirements: { "hydroponics": 1500 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
-    27: { projectName: "Station Expansion L27", lore: "Advanced shield harmonics.", cost: 82000000, requirements: { "cybernetics": 800 }, rewards: { description: "-3% Global Entropy", stats: { globalEntropyRed: 0.03 } } },
-    28: { projectName: "Station Expansion L28", lore: "Particle accelerator.", cost: 102000000, requirements: { "propellant": 1500 }, rewards: { description: "+8% Antimatter Yield", stats: { amYieldMult: 0.08 } } },
-    29: { projectName: "Station Expansion L29", lore: "Xeno-research lab.", cost: 125000000, requirements: { "xeno_geologicals": 15 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
-    30: { projectName: "Directorate Wing Epsilon", lore: "Interstellar logistics hub.", cost: 150000000, requirements: { "graphene_lattices": 800, "sentient_ai": 10 }, rewards: { description: "+1 Officer Slot (Total: 7)", stats: {} } },
+    26: { projectName: "Station Expansion L26", lore: "Luxury habitat ring.", cost: 65000000, requirements: { "hydroponics": 300 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
+    27: { projectName: "Station Expansion L27", lore: "Advanced shield harmonics.", cost: 82000000, requirements: { "cybernetics": 160 }, rewards: { description: "-3% Global Entropy", stats: { globalEntropyRed: 0.03 } } },
+    28: { projectName: "Station Expansion L28", lore: "Particle accelerator.", cost: 102000000, requirements: { "propellant": 300 }, rewards: { description: "+8% Antimatter Yield", stats: { amYieldMult: 0.08 } } },
+    29: { projectName: "Station Expansion L29", lore: "Xeno-research lab.", cost: 125000000, requirements: { "xeno_geologicals": 3 }, rewards: { description: "+10% Credit Yield", stats: { creditYieldMult: 0.10 } } },
+    30: { projectName: "Directorate Wing Epsilon", lore: "Interstellar logistics hub.", cost: 150000000, requirements: { "graphene_lattices": 160, "sentient_ai": 2 }, rewards: { description: "+1 Officer Slot (Total: 7)", stats: {} } },
 
-    31: { projectName: "Station Expansion L31", lore: "Solar array massive.", cost: 190000000, requirements: { "plasteel": 5000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
-    32: { projectName: "Station Expansion L32", lore: "Automated repair drones.", cost: 240000000, requirements: { "processors": 1000 }, rewards: { description: "-4% Global Entropy", stats: { globalEntropyRed: 0.04 } } },
-    33: { projectName: "Station Expansion L33", lore: "Trade federation embassy.", cost: 300000000, requirements: { "water_ice": 8000 }, rewards: { description: "+20% Credit Yield", stats: { creditYieldMult: 0.20 } } },
-    34: { projectName: "Station Expansion L34", lore: "Deep storage vaults.", cost: 370000000, requirements: { "propellant": 2500 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
-    35: { projectName: "Directorate Wing Zeta", lore: "High command nexus.", cost: 450000000, requirements: { "cybernetics": 2000, "cloned_organs": 100 }, rewards: { description: "+1 Officer Slot (Total: 8)", stats: {} } },
+    31: { projectName: "Station Expansion L31", lore: "Solar array massive.", cost: 190000000, requirements: { "plasteel": 1000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    32: { projectName: "Station Expansion L32", lore: "Automated repair drones.", cost: 240000000, requirements: { "processors": 200 }, rewards: { description: "-4% Global Entropy", stats: { globalEntropyRed: 0.04 } } },
+    33: { projectName: "Station Expansion L33", lore: "Trade federation embassy.", cost: 300000000, requirements: { "water_ice": 1600 }, rewards: { description: "+20% Credit Yield", stats: { creditYieldMult: 0.20 } } },
+    34: { projectName: "Station Expansion L34", lore: "Deep storage vaults.", cost: 370000000, requirements: { "propellant": 500 }, rewards: { description: "+5% Antimatter Yield", stats: { amYieldMult: 0.05 } } },
+    35: { projectName: "Directorate Wing Zeta", lore: "High command nexus.", cost: 450000000, requirements: { "cybernetics": 400, "cloned_organs": 20 }, rewards: { description: "+1 Officer Slot (Total: 8)", stats: {} } },
 
     // --- DOMINANCE PHASE (Levels 36-50) ---
-    36: { projectName: "Station Expansion L36", lore: "Quantum comms array.", cost: 580000000, requirements: { "graphene_lattices": 1500 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
-    37: { projectName: "Station Expansion L37", lore: "Antimatter containment V2.", cost: 740000000, requirements: { "plasteel": 8000 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
-    38: { projectName: "Station Expansion L38", lore: "Bio-dome complex.", cost: 930000000, requirements: { "hydroponics": 4000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
-    39: { projectName: "Station Expansion L39", lore: "AI synthesis core.", cost: 1150000000, requirements: { "sentient_ai": 30 }, rewards: { description: "+25% Credit Yield", stats: { creditYieldMult: 0.25 } } },
-    40: { projectName: "Directorate Wing Eta", lore: "Orbital governance seat.", cost: 1500000000, requirements: { "processors": 3000, "xeno_geologicals": 40 }, rewards: { description: "+1 Officer Slot (Total: 9)", stats: {} } },
+    36: { projectName: "Station Expansion L36", lore: "Quantum comms array.", cost: 580000000, requirements: { "graphene_lattices": 300 }, rewards: { description: "+15% Credit Yield", stats: { creditYieldMult: 0.15 } } },
+    37: { projectName: "Station Expansion L37", lore: "Antimatter containment V2.", cost: 740000000, requirements: { "plasteel": 1600 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
+    38: { projectName: "Station Expansion L38", lore: "Bio-dome complex.", cost: 930000000, requirements: { "hydroponics": 800 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    39: { projectName: "Station Expansion L39", lore: "AI synthesis core.", cost: 1150000000, requirements: { "sentient_ai": 6 }, rewards: { description: "+25% Credit Yield", stats: { creditYieldMult: 0.25 } } },
+    40: { projectName: "Directorate Wing Eta", lore: "Orbital governance seat.", cost: 1500000000, requirements: { "processors": 600, "xeno_geologicals": 8 }, rewards: { description: "+1 Officer Slot (Total: 9)", stats: {} } },
 
-    41: { projectName: "Station Expansion L41", lore: "Dyson swarm prototypes.", cost: 2000000000, requirements: { "graphene_lattices": 2500 }, rewards: { description: "+15% Antimatter Yield", stats: { amYieldMult: 0.15 } } },
-    42: { projectName: "Station Expansion L42", lore: "Adaptive hull geometry.", cost: 2800000000, requirements: { "plasteel": 12000 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
-    43: { projectName: "Station Expansion L43", lore: "Inter-system gate.", cost: 3800000000, requirements: { "propellant": 5000 }, rewards: { description: "+30% Credit Yield", stats: { creditYieldMult: 0.30 } } },
-    44: { projectName: "Station Expansion L44", lore: "Neural uplink grid.", cost: 5200000000, requirements: { "cybernetics": 5000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
-    45: { projectName: "Directorate Wing Theta", lore: "System control authority.", cost: 7000000000, requirements: { "sentient_ai": 80, "cloned_organs": 400 }, rewards: { description: "+1 Officer Slot (Total: 10)", stats: {} } },
+    41: { projectName: "Station Expansion L41", lore: "Dyson swarm prototypes.", cost: 2000000000, requirements: { "graphene_lattices": 500 }, rewards: { description: "+15% Antimatter Yield", stats: { amYieldMult: 0.15 } } },
+    42: { projectName: "Station Expansion L42", lore: "Adaptive hull geometry.", cost: 2800000000, requirements: { "plasteel": 2400 }, rewards: { description: "-5% Global Entropy", stats: { globalEntropyRed: 0.05 } } },
+    43: { projectName: "Station Expansion L43", lore: "Inter-system gate.", cost: 3800000000, requirements: { "propellant": 1000 }, rewards: { description: "+30% Credit Yield", stats: { creditYieldMult: 0.30 } } },
+    44: { projectName: "Station Expansion L44", lore: "Neural uplink grid.", cost: 5200000000, requirements: { "cybernetics": 1000 }, rewards: { description: "+10% Antimatter Yield", stats: { amYieldMult: 0.10 } } },
+    45: { projectName: "Directorate Wing Theta", lore: "System control authority.", cost: 7000000000, requirements: { "sentient_ai": 16, "cloned_organs": 80 }, rewards: { description: "+1 Officer Slot (Total: 10)", stats: {} } },
 
-    46: { projectName: "Station Expansion L46", lore: "Reality anchor.", cost: 9300000000, requirements: { "xeno_geologicals": 120 }, rewards: { description: "-10% Global Entropy", stats: { globalEntropyRed: 0.10 } } },
-    47: { projectName: "Station Expansion L47", lore: "Market manipulation matrix.", cost: 12200000000, requirements: { "processors": 6000 }, rewards: { description: "+50% Credit Yield", stats: { creditYieldMult: 0.50 } } },
-    48: { projectName: "Station Expansion L48", lore: "Star-lifting drones.", cost: 16000000000, requirements: { "graphene_lattices": 4000 }, rewards: { description: "+20% Antimatter Yield", stats: { amYieldMult: 0.20 } } },
-    49: { projectName: "Station Expansion L49", lore: "Ascension Spire.", cost: 20500000000, requirements: { "plasteel": 20000 }, rewards: { description: "Maximum Efficiency", stats: { globalEntropyRed: 0.10 } } },
+    46: { projectName: "Station Expansion L46", lore: "Reality anchor.", cost: 9300000000, requirements: { "xeno_geologicals": 24 }, rewards: { description: "-10% Global Entropy", stats: { globalEntropyRed: 0.10 } } },
+    47: { projectName: "Station Expansion L47", lore: "Market manipulation matrix.", cost: 12200000000, requirements: { "processors": 1200 }, rewards: { description: "+50% Credit Yield", stats: { creditYieldMult: 0.50 } } },
+    48: { projectName: "Station Expansion L48", lore: "Star-lifting drones.", cost: 16000000000, requirements: { "graphene_lattices": 800 }, rewards: { description: "+20% Antimatter Yield", stats: { amYieldMult: 0.20 } } },
+    49: { projectName: "Station Expansion L49", lore: "Ascension Spire.", cost: 20500000000, requirements: { "plasteel": 4000 }, rewards: { description: "Maximum Efficiency", stats: { globalEntropyRed: 0.10 } } },
     50: { 
         projectName: "The Sol Citadel", 
         lore: "The ultimate expression of orbital dominance. Sol Station is now the capital of the system.", 
         cost: 25000000000, 
-        requirements: { "water_ice": 20000, "propellant": 8000, "sentient_ai": 150 }, 
+        requirements: { "water_ice": 4000, "propellant": 1600, "sentient_ai": 30 }, 
         rewards: { 
             description: "+1 Officer Slot (Total: 11), +100% Credit Yield, +50% Antimatter Yield", 
             stats: { creditYieldMult: 1.0, amYieldMult: 0.50 } 
@@ -14383,10 +14383,10 @@ export const SHIP_DATABASE = {
     "Wanderer.Ship": {
         name: "Wanderer",
         class: "C",
-        price: 25000,
+        price: 28000,
         maxHealth: 30,
         cargoCapacity: 30,
-        maxFuel: 150, 
+        maxFuel: 130, 
         role: "Explorer",
         attribute: "None",
         description: "Defined by its skeletal chassis, this stripped-down surveyor trades armor for a massive fuel reserve and a panoramic view of the void.",
@@ -14404,10 +14404,10 @@ Visually, the ship is little more than a stripped-down engine block with a cockp
     "Stalwart.Ship": {
         name: "Stalwart",
         class: "C",
-        price: 25000,
+        price: 36500,
         maxHealth: 70,
         cargoCapacity: 45,
-        maxFuel: 110, 
+        maxFuel: 90, 
         role: "Balanced",
         attribute: "None",
         description: "A chamfered wedge of heavy plating with a slit-like viewport, this ship is built like a flying bunker designed to shrug off impacts.",
@@ -14434,10 +14434,10 @@ Visually, the Stalwart is a study in defensive geometry. It possesses a stubby, 
     "Mule.Ship": {
         name: "Mule",
         class: "C",
-        price: 25000,
+        price: 37000,
         maxHealth: 45,
         cargoCapacity: 70,
-        maxFuel: 90, 
+        maxFuel: 70, 
         role: "Hauler",
         attribute: "None",
         description: "Rust-streaked and unpainted, this modular cargo frame relies on high-pressure gas vents and a prayer to move heavy tonnage between stations.",
@@ -14462,7 +14462,7 @@ The ship looks like it was scavenged rather than built. Its 'hull' is merely a s
     "Nomad.Ship": {
         name: "Nomad",
         class: "C",
-        price: 25000,
+        price: 33500,
         maxHealth: 40,
         cargoCapacity: 35,
         maxFuel: 150,
@@ -14489,7 +14489,7 @@ The Nomad looks less like a commercial vessel and more like a manned probe. Its 
     "Rooster.Ship": {
         name: "Rooster",
         class: "C",
-        price: 45000,
+        price: 50500,
         maxHealth: 100,
         cargoCapacity: 65,
         maxFuel: 110,
@@ -14517,7 +14517,7 @@ Visually, the ship is defined by its verticality. It stands tall on its landing 
     "Mesa.Ship": {
         name: "Mesa",
         class: "C",
-        price: 55000,
+        price: 47000,
         maxHealth: 50,
         cargoCapacity: 100,
         maxFuel: 70,
@@ -14543,10 +14543,10 @@ It resembles a heavy industrial barge adapted for flight. The hull is a wide, fl
     "Pathfinder.Ship": {
         name: "Pathfinder",
         class: "B",
-        price: 210000,
-        maxHealth: 150,
+        price: 245000,
+        maxHealth: 40,
         cargoCapacity: 50,
-        maxFuel: 300,
+        maxFuel: 260,
         role: "Explorer",
         attribute: "None",
         description: "Commissioned in the private yards of Venus, this ship was built for quiet observation and rapid departure, favoring a cold-running engine over a thick hull.",
@@ -14572,10 +14572,10 @@ It’s a ship for a pilot who prefers to know the location of the next deal befo
     "Odyssey.Ship": {
         name: "Odyssey",
         class: "B",
-        price: 265000,
-        maxHealth: 250,
+        price: 345000,
+        maxHealth: 120,
         cargoCapacity: 110,
-        maxFuel: 200,
+        maxFuel: 120,
         role: "Balanced",
         attribute: "None",
         description: "More fortress than freighter, this is a rugged, dependable vessel for the captain who expects trouble and intends to survive it.",
@@ -14601,10 +14601,10 @@ This is a ship for the captain who has graduated from desperation to ambition, a
     "Pilgrim.Ship": {
         name: "Pilgrim",
         class: "B",
-        price: 285000,
-        maxHealth: 180,
+        price: 367500,
+        maxHealth: 60,
         cargoCapacity: 175,
-        maxFuel: 250,
+        maxFuel: 90,
         role: "Hauler",
         attribute: "None",
         description: "A specialized ice-hauler, this ship sacrifices armor and speed for a massive, reinforced cargo bay, making it a pure-profit engine for the patient trader.",
@@ -14631,10 +14631,10 @@ It’s a specialized tool for the trader who intends to profit from the system's
     "Meridian.Ship": {
         name: "Meridian",
         class: "B",
-        price: 245000,
-        maxHealth: 220,
+        price: 320000,
+        maxHealth: 100,
         cargoCapacity: 70,
-        maxFuel: 350,
+        maxFuel: 230,
         role: "Explorer",
         attribute: "None",
         description: "With a robust sensor array and impressive fuel reserve, the Meridian is a self-sufficient explorer, capable of operating for months in the uncharted deep.",
@@ -14659,10 +14659,10 @@ It's a serious ship for serious work, capable of opening up new routes and disco
     "Raven.Ship": {
         name: "Raven",
         class: "B",
-        price: 230000,
-        maxHealth: 300,
+        price: 385000,
+        maxHealth: 210,
         cargoCapacity: 80,
-        maxFuel: 220,
+        maxFuel: 110,
         role: "Balanced",
         attribute: "None",
         description: "A common sight in the lawless asteroid fields, this ship is a tough-as-nails workhorse for the captain who values armor above all else.",
@@ -14686,10 +14686,10 @@ It's a ship for the captain who has embraced danger and decided that the best de
     "Warden.Ship": {
         name: "Warden",
         class: "B",
-        price: 310000,
-        maxHealth: 200,
+        price: 390000,
+        maxHealth: 70,
         cargoCapacity: 160,
-        maxFuel: 280,
+        maxFuel: 160,
         role: "Hauler",
         attribute: "None",
         description: "Built in the subterranean yards of Pluto, this ship's specialty is the extreme long-haul, where reliability and cargo size are the only stats that matter.",
@@ -14717,10 +14717,10 @@ It is a ship for the captain who has transcended the cold trade wars of the inne
     "Aegis.Ship": {
         name: "Aegis",
         class: "A",
-        price: 1750000,
-        maxHealth: 1200,
+        price: 2500000,
+        maxHealth: 200,
         cargoCapacity: 100,
-        maxFuel: 1500,
+        maxFuel: 300,
         role: "Explorer",
         attribute: "None",
         description: "This vessel's massive fuel reserves and fortified engineering deck are a masterpiece of Martian design, intended for captains who plan to be the first to arrive and the last to leave.",
@@ -14747,10 +14747,10 @@ you are a serious operator, capable of undertaking the most demanding, long-term
     "Forerunner.Ship": {
         name: "Forerunner",
         class: "A",
-        price: 1600000,
-        maxHealth: 1500,
+        price: 3025000,
+        maxHealth: 290,
         cargoCapacity: 160,
-        maxFuel: 1000,
+        maxFuel: 150,
         role: "Balanced",
         attribute: "None",
         description: "A fortress of composite plate and reinforced steel, its design is a brutalist statement on survival in the system's most lawless territory.",
@@ -14776,10 +14776,10 @@ It is the ultimate tool for the captain who must navigate the most dangerous tra
     "Guardian.Ship": {
         name: "Guardian",
         class: "A",
-        price: 2600000,
-        maxHealth: 1000,
+        price: 2787500,
+        maxHealth: 130,
         cargoCapacity: 230,
-        maxFuel: 1100,
+        maxFuel: 165,
         role: "Hauler",
         attribute: "None",
         description: "The pride of Saturn's merchant fleet, this \"merchant cruiser\" was designed to haul vast fortunes of high value goods.",
@@ -14807,10 +14807,10 @@ It is a ship for the merchant prince, a pilot who no longer deals in scraps and 
     "Valiant.Ship": {
         name: "Valiant",
         class: "A",
-        price: 1950000,
-        maxHealth: 800,
+        price: 2375000,
+        maxHealth: 100,
         cargoCapacity: 125,
-        maxFuel: 1800,
+        maxFuel: 375,
         role: "Explorer",
         attribute: "None",
         description: "A marvel of Jovian engineering, this elite explorer was built for missions of extreme duration, carrying enough fuel to cross the system and back.",
@@ -14836,10 +14836,10 @@ To pilot a Valiant is to be at the absolute pinnacle of the class and adventure.
     "Eagle.Ship": {
         name: "Eagle",
         class: "A",
-        price: 2400000,
-        maxHealth: 1100,
+        price: 3100000,
+        maxHealth: 210,
         cargoCapacity: 200,
-        maxFuel: 1200,
+        maxFuel: 220,
         role: "Balanced",
         attribute: "None",
         description: "The pinnacle of Terran design, this ship is a perfect harmony of power, protection, and performance—a master-of-all-trades for the truly elite captain.",
@@ -14867,10 +14867,10 @@ It is fast, tough, beautiful, and a testament to success.`,
     "Tundra.Ship": {
         name: "Tundra",
         class: "A",
-        price: 3200000,
-        maxHealth: 900,
+        price: 3400000,
+        maxHealth: 100,
         cargoCapacity: 330,
-        maxFuel: 1300,
+        maxFuel: 170,
         role: "Hauler",
         attribute: "None",
         description: "A true super-freighter from the Neptune yards, this ship possesses multi-tiered cargo holds.",
@@ -14898,10 +14898,10 @@ This is a ship for the captain who has graduated from desperation to ambition, a
     "Atlas.Ship": {
         name: "Atlas",
         class: "S",
-        price: 34000000,
-        maxHealth: 3500,
+        price: 37625000,
+        maxHealth: 180,
         cargoCapacity: 240,
-        maxFuel: 5000,
+        maxFuel: 425,
         role: "Explorer",
         attribute: "None",
         description: "Rumored to be the only ship that truly loves the journey, its experimental systems seem to thrive on the stress of travel.",
@@ -14919,10 +14919,10 @@ To own an Atlas is to own a piece of engineering folklore. It is a ship for the 
     "Vindicator.Ship": {
         name: "Vindicator",
         class: "S",
-        price: 38000000,
-        maxHealth: 5000,
+        price: 44375000,
+        maxHealth: 400,
         cargoCapacity: 240,
-        maxFuel: 3800,
+        maxFuel: 255,
         role: "Balanced",
         attribute: "None",
         description: "With a hull built for brawling and a cargo bay built for weight, this ship is for the captain who believes a good deal is one you make for yourself.",
@@ -14940,10 +14940,10 @@ Purchasing a Vindicator is a massive investment and a dangerous statement. It te
     "Radiant.Ship": {
         name: "Radiant",
         class: "S",
-        price: 48000000,
-        maxHealth: 3200,
+        price: 44000000,
+        maxHealth: 170,
         cargoCapacity: 380,
-        maxFuel: 4200,
+        maxFuel: 280,
         role: "Hauler",
         attribute: "None",
         description: "A high-speed courier from Kepler's Eye, this ship's stasis-equipped hold is designed to move volatile prototypes and fresh discoveries at maximum velocity.",
@@ -14965,10 +14965,10 @@ To own a Radiant is to own a piece of engineering folklore. It is a ship for the
     "Aesudon.Ship": {
         name: "Aesudon",
         class: "S",
-        price: 28000000,
-        maxHealth: 4800,
+        price: 39125000,
+        maxHealth: 250,
         cargoCapacity: 200,
-        maxFuel: 5500,
+        maxFuel: 465,
         role: "Explorer",
         attribute: "None",
         description: "Its unique hull composition is a fanatical study in endurance, designed to shrug off the slow decay of time and travel.",
@@ -14989,10 +14989,10 @@ To acquire the Aesudon is to buy a masterpiece of engineering. It is a ship for 
     "Pterodactyl.Ship": {
         name: "Pterodactyl",
         class: "S",
-        price: 42000000,
-        maxHealth: 4000,
+        price: 39625000,
+        maxHealth: 300,
         cargoCapacity: 230,
-        maxFuel: 3800,
+        maxFuel: 295,
         role: "Balanced",
         attribute: "None",
         description: "The flamboyant, winged flagship of the Venetian Syndicate's elite, this ship is rumored to be lucky, finding fortune and profit in the system's chaos.",
@@ -15012,10 +15012,10 @@ To acquire a Pterodactyl is to buy the flag of the Venetian Syndicate. It is a s
     "Sovereign.Ship": {
         name: "Sovereign",
         class: "S",
-        price: 55000000,
-        maxHealth: 3800,
+        price: 49500000,
+        maxHealth: 250,
         cargoCapacity: 420,
-        maxFuel: 3500,
+        maxFuel: 220,
         role: "Hauler",
         attribute: "None",
         description: "A hauler with the elegance of a Terran cruiser, this ship is a symbol of ultimate economic power, an alliance between the Guild and the Alliance made manifest in steel.",
@@ -15037,10 +15037,10 @@ To be offered a Sovereign at The Exchange is a great privilege. It is an invitat
     "Titan.Ship": {
         name: "Titan",
         class: "O",
-        price: 250000000,
-        maxHealth: 22000,
+        price: 562500000,
+        maxHealth: 250,
         cargoCapacity: 450,
-        maxFuel: 35000,
+        maxFuel: 400,
         role: "Capital",
         attribute: "None",
         description: "To command this capital ship is to govern a small city, a colossal ark built to play the long game of market manipulation and house hundreds of thousands.",
@@ -15060,10 +15060,10 @@ When the Titan enters high orbit, it does not dock; it anchors, and a fleet of s
     "Behemoth.Ship": {
         name: "Behemoth",
         class: "O",
-        price: 450000000,
-        maxHealth: 28000,
+        price: 798750000,
+        maxHealth: 260,
         cargoCapacity: 750,
-        maxFuel: 50000,
+        maxFuel: 425,
         role: "Capital",
         attribute: "None",
         description: `Its journey is a migration, its crew a city, its cargo hold a cavern;\n this capital ship is the final word in large-scale logistics.`,
@@ -15083,10 +15083,10 @@ The Behemoth does not travel; it migrates. Its captain is an admiral, a logistic
     "Citadel.Ship": {
         name: "Citadel",
         class: "O",
-        price: 600000000,
-        maxHealth: 30000,
+        price: 628750000,
+        maxHealth: 270,
         cargoCapacity: 500,
-        maxFuel: 45000,
+        maxFuel: 475,
         role: "Capital",
         attribute: "None",
         description: "To command this vessel is to wield the authority of Earth itself.",
@@ -15106,10 +15106,10 @@ To be granted command of the Citadel is to be anointed by the Alliance itself. T
     "Sophistacles.Ship": {
         name: "Sophistacles",
         class: "O",
-        price: 850000000,
-        maxHealth: 18000,
+        price: 787500000,
+        maxHealth: 280,
         cargoCapacity: 750,
-        maxFuel: 28000,
+        maxFuel: 340,
         role: "Capital",
         attribute: "None",
         description: "Built to be the ultimate private habitat, its robust, capital-class frame is hidden beneath a gleaming, pricelessly impractical hull design.",
@@ -15129,10 +15129,10 @@ To acquire the Sophistacles is not just to buy a ship, but to buy a legend. It i
     "Ouroboros.Ship": {
         name: "Ouroboros",
         class: "O",
-        price: 1000000000,
-        maxHealth: 25000,
+        price: 880000000,
+        maxHealth: 350,
         cargoCapacity: 800,
-        maxFuel: 40000,
+        maxFuel: 420,
         role: "Capital",
         attribute: "None",
         description: "Often mistaken for a small station, this absurd, one-of-a-kind toroidal ship is a rotating marvel of science and a nightmare of engineering.",
@@ -15152,10 +15152,10 @@ The station is now selling it for a fraction of its build cost, desperate to unl
     "Thalassodromeus.Ship": {
         name: "Thalassodromeus",
         class: "O",
-        price: 1500000000,
-        maxHealth: 35000,
+        price: 957500000,
+        maxHealth: 300,
         cargoCapacity: 850,
-        maxFuel: 55000,
+        maxFuel: 680,
         role: "Capital",
         attribute: "None",
         description: "A one-of-a-kind, decommissioned fleet carrier, this city-sized vessel once housed an entire army and its own internal economy.",
@@ -15173,10 +15173,10 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
     "Shell_That_Echoes.Ship": {
         name: "Echoing Shell",
         class: "Z",
-        price: 3500000,
-        maxHealth: 2500,
+        price: 241500000,
+        maxHealth: 30,
         cargoCapacity: 450,
-        maxFuel: 3500,
+        maxFuel: 200,
         role: "Alien",
         attribute: "None",
         description: "A true xeno-biological craft, its hull is a living, regenerative bone-structure that knits its own fractures back together after every journey.",
@@ -15190,10 +15190,10 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
     "Parallax_of_Thought.Ship": {
         name: "Parallax of Thought",
         class: "Z",
-        price: 2800000,
-        maxHealth: 2800,
+        price: 177000000,
+        maxHealth: 200,
         cargoCapacity: 200,
-        maxFuel: 3000,
+        maxFuel: 180,
         role: "Alien",
         attribute: "None",
         description: "An obsidian sphere guided by an ASI. It calculates perfect trajectories (-25% travel time) and market optimizations (+5% sell value).",
@@ -15207,10 +15207,10 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
     "Anomaly_of_the_Song.Ship": {
         name: "Anomaly of the Song",
         class: "Z",
-        price: 1800000,
-        maxHealth: 1500,
+        price: 120000000,
+        maxHealth: 100,
         cargoCapacity: 150,
-        maxFuel: 2500,
+        maxFuel: 150,
         role: "Alien",
         attribute: "None",
         description: "A construct of crystal and light-sails, this ship rides the solar winds, requiring zero fuel when traveling inward towards the star.",
@@ -15224,10 +15224,10 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
     "Causality_of_Silence.Ship": {
         name: "Causality of Silence",
         class: "Z",
-        price: 6000000,
-        maxHealth: 1200,
+        price: 313500000,
+        maxHealth: 20,
         cargoCapacity: 650,
-        maxFuel: 2000,
+        maxFuel: 100,
         role: "Alien",
         attribute: "None",
         description: "A biological smuggler with a fluid hull that ignores travel wear and a metabolic drive that halves fuel consumption.",
@@ -15241,10 +15241,10 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
     "Engine_of_Recursion.Ship": {
         name: "Engine of Recursion",
         class: "Z",
-        price: 75000000,
-        maxHealth: 3000,
+        price: 153750000,
+        maxHealth: 80,
         cargoCapacity: 75,
-        maxFuel: 4000,
+        maxFuel: 640,
         role: "Alien",
         attribute: "None",
         description: "A self-assembling factory ship. It repairs itself in flight and ignores hull decay, constantly rebuilding its own frame.",
@@ -15258,10 +15258,10 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
     "Finality_of_Whispers.Ship": {
         name: "Finality of Whispers",
         class: "Z",
-        price: 5000000,
-        maxHealth: 4500,
+        price: 471000000,
+        maxHealth: 990,
         cargoCapacity: 300,
-        maxFuel: 3500,
+        maxFuel: 260,
         role: "Alien",
         attribute: "None",
         description: "A sentient grey-goo swarm. It slowly absorbs stellar matter to regenerate fuel over time.",
@@ -15275,10 +15275,10 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
     "The_Listener.Ship": {
         name: "The Listener",
         class: "Z",
-        price: 4500000,
-        maxHealth: 3500,
+        price: 267750000,
+        maxHealth: 450,
         cargoCapacity: 145,
-        maxFuel: 3500,
+        maxFuel: 450,
         role: "Alien",
         attribute: "None",
         description: "Once a simple hauler, its AI has evolved into a deeply unnerving, all-hearing guardian that grants a massive discount on market intel.",
@@ -17079,7 +17079,7 @@ export const EVENTS_OPPORTUNITY = [
             'out_decrypt_success': {
                 title: 'Access Granted',
                 text: 'You crack the encryption just before the battery dies. It contains a forgotten, anonymous bank transfer authorization.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 2500 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 25000 } }]
             },
             'out_decrypt_fail': {
                 title: 'Data Corruption',
@@ -17097,7 +17097,7 @@ export const EVENTS_OPPORTUNITY = [
         id: 'evt_opp_noble',
         tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
         weight: 5,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5000 } }],
         template: {
             title: 'The Eccentric Noble',
             description: 'A flamboyant private yacht hails you. "My guests are dreadfully bored of this empty void! Do you have any entertaining stories or exotic goods to share?"'
@@ -17105,8 +17105,8 @@ export const EVENTS_OPPORTUNITY = [
         choices: [
             {
                 id: 'choice_entertain',
-                text: 'Provide Entertainment (-500 Credits)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: 500 }],
+                text: 'Provide Entertainment (Cost scales with ship class)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CREDITS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5000 } }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -17126,14 +17126,14 @@ export const EVENTS_OPPORTUNITY = [
                 title: 'Generous Patron',
                 text: 'You entertain them with tales of your closest calls. The noble is delighted. "Marvelous! Please, take this for the amusement."',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }, // Initial cost
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: 5000 }  // Reward
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: -5000 } }, // Initial cost
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 50000 } }  // Reward
                 ]
             },
             'out_entertain_fail': {
                 title: 'Tough Crowd',
                 text: 'You entertain them with tales of your closest calls, but they quickly grow bored and cut the feed. You wasted your resources.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: -500 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: -5000 } }]
             },
             'out_ignore': {
                 title: 'Connection Closed',
@@ -25215,24 +25215,24 @@ import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
 // Converted hardcoded configuration to the mathematical floor
 export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
-    BASE_DECAY_K: 0.0000021, 
+    BASE_DECAY_K: 0.0000014, 
     EFFICIENCY_CLIFF: 0.5, 
     REAL_TIME_SECONDS_PER_DAY: 120,
     
     // BASELINE COMMODITY CAPACITIES (The Floor)
     baseCapacity: {
-        [COMMODITY_IDS.WATER_ICE]: 200,
-        [COMMODITY_IDS.PLASTEEL]: 180,
-        [COMMODITY_IDS.HYDROPONICS]: 160,
-        [COMMODITY_IDS.CYBERNETICS]: 140,
-        [COMMODITY_IDS.PROPELLANT]: 120,
-        [COMMODITY_IDS.PROCESSORS]: 100,
-        [COMMODITY_IDS.GRAPHENE_LATTICES]: 80,
-        [COMMODITY_IDS.CRYO_PODS]: 60,
-        [COMMODITY_IDS.ATMO_PROCESSORS]: 40,
-        [COMMODITY_IDS.CLONED_ORGANS]: 20,
-        [COMMODITY_IDS.XENO_GEOLOGICALS]: 10,
-        [COMMODITY_IDS.SENTIENT_AI]: 5
+        [COMMODITY_IDS.WATER_ICE]: 250,
+        [COMMODITY_IDS.PLASTEEL]: 250,
+        [COMMODITY_IDS.HYDROPONICS]: 200,
+        [COMMODITY_IDS.CYBERNETICS]: 200,
+        [COMMODITY_IDS.PROPELLANT]: 150,
+        [COMMODITY_IDS.PROCESSORS]: 150,
+        [COMMODITY_IDS.GRAPHENE_LATTICES]: 100,
+        [COMMODITY_IDS.CRYO_PODS]: 100,
+        [COMMODITY_IDS.ATMO_PROCESSORS]: 50,
+        [COMMODITY_IDS.CLONED_ORGANS]: 50,
+        [COMMODITY_IDS.XENO_GEOLOGICALS]: 25,
+        [COMMODITY_IDS.SENTIENT_AI]: 10
     },
 
     MODES: {
@@ -25240,21 +25240,21 @@ export const LEVEL_1_BASELINE = {
             id: 'STABILITY', 
             yieldCredits: 35, 
             yieldAm: 0.12, 
-            decayK: 0.0000021, 
+            decayK: 0.0000014, 
             entropyMult: 1 
         },
         COMMERCE: { 
             id: 'COMMERCE', 
             yieldCredits: 140, 
             yieldAm: 0.12, 
-            decayK: 0.0000021, 
+            decayK: 0.0000014, 
             entropyMult: 4 
         },
         PRODUCTION: { 
             id: 'PRODUCTION', 
             yieldCredits: 35, 
             yieldAm: 0.48, 
-            decayK: 0.0000021, 
+            decayK: 0.0000014, 
             entropyMult: 8 
         }
     }
@@ -28344,7 +28344,7 @@ export class TravelService {
 
         // --- PHASE 2: DISTANCE-BASED HULL ENTROPY ---
         const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
-        let travelHullDamage = baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod;
+        let travelHullDamage = Math.ceil(baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod * 0.8);
         
         // --- SYSTEM STATES V3 HOOKS (Hull Decay) ---
         if (activeStateDef && activeStateDef.modifiers) {
@@ -28379,8 +28379,11 @@ export class TravelService {
         activeShipState.fuel -= travelInfo.fuelCost;
 
         // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (TRAVEL) ---
-        let convoyFuelTax = Math.max(0, travelInfo.fuelCost * 0.05);
-        let convoyHullTax = Math.max(0, totalHullDamageValue * 0.05);
+        const additionalShips = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
+        const convoyTaxRate = additionalShips * 0.02; // 2% per inactive ship
+
+        let convoyFuelTax = Math.max(0, Math.ceil(travelInfo.fuelCost * convoyTaxRate));
+        let convoyHullTax = Math.max(0, Math.ceil(totalHullDamageValue * convoyTaxRate));
 
         // --- SYSTEM STATES V3 HOOKS (Convoy Tax) ---
         if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.convoyTaxWaiver) {
@@ -38939,8 +38942,20 @@ export class PlayerActionService {
 
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
+        const shipDef = DB.SHIPS[ship.id];
 
-        let unitCost = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10;
+        let fuelClassMod = 1;
+        if (shipDef) {
+            switch(shipDef.class) {
+                case 'B': fuelClassMod = 5; break;
+                case 'A': fuelClassMod = 25; break;
+                case 'S': fuelClassMod = 150; break;
+                case 'O':
+                case 'Z': fuelClassMod = 500; break;
+            }
+        }
+
+        let unitCost = (DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10) * fuelClassMod;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
@@ -39020,6 +39035,7 @@ export class PlayerActionService {
         if (currentHealth >= effectiveStats.maxHealth) return 0;
         // --- END UPGRADE SYSTEM ---
 
+        const shipDef = DB.SHIPS[ship.id];
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
 
@@ -39028,7 +39044,7 @@ export class PlayerActionService {
             return 0; 
         }
 
-        let unitCost = GAME_RULES.REPAIR_COST_PER_HP;
+        let unitCost = shipDef ? Math.max(1, shipDef.price * 0.0001) : 75;
 
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.LUNA) {
@@ -39154,8 +39170,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.62] - 2026-3-10
+-  major balance pass on all systems
+
 # [36.61] - 2026-3-9
--  added 195 character sprite sheet.
+-  added 195 character sprite sheet
 -  added characters.js
 -  added character portraits to mission modals
 -  mission modal polish
