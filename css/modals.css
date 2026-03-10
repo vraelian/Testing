@@ -1308,7 +1308,7 @@
     
     /* Square with rounded corners */
     border-radius: 16px; 
-    border: 3px solid #38bdf8;
+    border: 3px solid var(--comm-color, #38bdf8);
     background-color: #000;
     
     /* Sprite properties */
@@ -1325,12 +1325,12 @@
 
 @keyframes commPulse {
     0% { 
-        box-shadow: 0 0 10px rgba(56, 189, 248, 0.4), inset 0 0 5px rgba(56, 189, 248, 0.2); 
-        border-color: #38bdf8;
+        box-shadow: 0 0 10px var(--comm-color-glow-low, rgba(56, 189, 248, 0.4)), inset 0 0 5px var(--comm-color-glow-low, rgba(56, 189, 248, 0.2)); 
+        border-color: var(--comm-color, #38bdf8);
     }
     100% { 
-        box-shadow: 0 0 25px rgba(56, 189, 248, 0.8), inset 0 0 15px rgba(56, 189, 248, 0.5); 
-        border-color: #bae6fd;
+        box-shadow: 0 0 25px var(--comm-color-glow-high, rgba(56, 189, 248, 0.8)), inset 0 0 15px var(--comm-color-glow-mid, rgba(56, 189, 248, 0.5)); 
+        border-color: var(--comm-color-bright, #bae6fd);
     }
 }
 
@@ -1338,9 +1338,9 @@
     font-family: 'Orbitron', sans-serif;
     font-size: 0.85rem;
     font-weight: bold;
-    color: #e0f2fe;
-    background: rgba(12, 74, 110, 0.9);
-    border: 1px solid #38bdf8;
+    color: var(--nameplate-text, #e0f2fe);
+    background: var(--nameplate-bg, rgba(12, 74, 110, 0.9));
+    border: 1px solid var(--nameplate-border, #38bdf8);
     padding: 3px 14px;
     border-radius: 99px; /* Pill shape */
     text-transform: uppercase;
