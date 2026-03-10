@@ -16,6 +16,7 @@ import { TravelService } from './services/world/TravelService.js';
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
 import { SHIP_IDS } from './data/constants.js'; 
+import './data/characters.js';
 
 const setAppHeight = () => {
     const gameContainer = document.getElementById('game-container');
