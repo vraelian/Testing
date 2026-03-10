@@ -7,24 +7,24 @@ import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
 // Converted hardcoded configuration to the mathematical floor
 export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
-    BASE_DECAY_K: 0.0000021, 
+    BASE_DECAY_K: 0.0000014, 
     EFFICIENCY_CLIFF: 0.5, 
     REAL_TIME_SECONDS_PER_DAY: 120,
     
     // BASELINE COMMODITY CAPACITIES (The Floor)
     baseCapacity: {
-        [COMMODITY_IDS.WATER_ICE]: 200,
-        [COMMODITY_IDS.PLASTEEL]: 180,
-        [COMMODITY_IDS.HYDROPONICS]: 160,
-        [COMMODITY_IDS.CYBERNETICS]: 140,
-        [COMMODITY_IDS.PROPELLANT]: 120,
-        [COMMODITY_IDS.PROCESSORS]: 100,
-        [COMMODITY_IDS.GRAPHENE_LATTICES]: 80,
-        [COMMODITY_IDS.CRYO_PODS]: 60,
-        [COMMODITY_IDS.ATMO_PROCESSORS]: 40,
-        [COMMODITY_IDS.CLONED_ORGANS]: 20,
-        [COMMODITY_IDS.XENO_GEOLOGICALS]: 10,
-        [COMMODITY_IDS.SENTIENT_AI]: 5
+        [COMMODITY_IDS.WATER_ICE]: 250,
+        [COMMODITY_IDS.PLASTEEL]: 250,
+        [COMMODITY_IDS.HYDROPONICS]: 200,
+        [COMMODITY_IDS.CYBERNETICS]: 200,
+        [COMMODITY_IDS.PROPELLANT]: 150,
+        [COMMODITY_IDS.PROCESSORS]: 150,
+        [COMMODITY_IDS.GRAPHENE_LATTICES]: 100,
+        [COMMODITY_IDS.CRYO_PODS]: 100,
+        [COMMODITY_IDS.ATMO_PROCESSORS]: 50,
+        [COMMODITY_IDS.CLONED_ORGANS]: 50,
+        [COMMODITY_IDS.XENO_GEOLOGICALS]: 25,
+        [COMMODITY_IDS.SENTIENT_AI]: 10
     },
 
     MODES: {
@@ -32,21 +32,21 @@ export const LEVEL_1_BASELINE = {
             id: 'STABILITY', 
             yieldCredits: 35, 
             yieldAm: 0.12, 
-            decayK: 0.0000021, 
+            decayK: 0.0000014, 
             entropyMult: 1 
         },
         COMMERCE: { 
             id: 'COMMERCE', 
             yieldCredits: 140, 
             yieldAm: 0.12, 
-            decayK: 0.0000021, 
+            decayK: 0.0000014, 
             entropyMult: 4 
         },
         PRODUCTION: { 
             id: 'PRODUCTION', 
             yieldCredits: 35, 
             yieldAm: 0.48, 
-            decayK: 0.0000021, 
+            decayK: 0.0000014, 
             entropyMult: 8 
         }
     }

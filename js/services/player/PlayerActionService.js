@@ -810,8 +810,20 @@ export class PlayerActionService {
 
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
+        const shipDef = DB.SHIPS[ship.id];
 
-        let unitCost = DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10;
+        let fuelClassMod = 1;
+        if (shipDef) {
+            switch(shipDef.class) {
+                case 'B': fuelClassMod = 5; break;
+                case 'A': fuelClassMod = 25; break;
+                case 'S': fuelClassMod = 150; break;
+                case 'O':
+                case 'Z': fuelClassMod = 500; break;
+            }
+        }
+
+        let unitCost = (DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10) * fuelClassMod;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
@@ -891,6 +903,7 @@ export class PlayerActionService {
         if (currentHealth >= effectiveStats.maxHealth) return 0;
         // --- END UPGRADE SYSTEM ---
 
+        const shipDef = DB.SHIPS[ship.id];
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
 
@@ -899,7 +912,7 @@ export class PlayerActionService {
             return 0; 
         }
 
-        let unitCost = GAME_RULES.REPAIR_COST_PER_HP;
+        let unitCost = shipDef ? Math.max(1, shipDef.price * 0.0001) : 75;
 
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.LUNA) {
