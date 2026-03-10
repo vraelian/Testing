@@ -69,12 +69,18 @@ export class UIModalEngine {
         }
 
         // --- PORTRAIT INJECTION & CLEANUP ---
+        
+        const existingOldWrapper = modal.querySelector('.portrait-wrapper');
+        if (existingOldWrapper) existingOldWrapper.remove();
+        
+        const existingCommWrapper = modal.querySelector('.comm-link-wrapper');
+        if (existingCommWrapper) existingCommWrapper.remove();
+        
         const existingPortrait = modal.querySelector('.portrait-thumbnail');
         if (existingPortrait) existingPortrait.remove();
 
         let headerFlex = modal.querySelector('.modal-header-flex');
-        if (headerFlex && (!options.portraitId || typeof window.getPortraitStyle !== 'function')) {
-            // Remove flex properties to restore normal flow when no portrait is present
+        if (headerFlex) {
             headerFlex.classList.remove('modal-header-flex', 'flex', 'flex-row', 'justify-between', 'items-start', 'w-full', 'mb-2', 'gap-4');
         }
 
@@ -89,23 +95,59 @@ export class UIModalEngine {
         if (options.portraitId && typeof window.getPortraitStyle === 'function' && titleEl) {
             const pStyle = window.getPortraitStyle(options.portraitId);
             if (pStyle) {
-                if (!headerFlex) {
-                    headerFlex = document.createElement('div');
-                    titleEl.parentNode.insertBefore(headerFlex, titleEl);
-                    headerFlex.appendChild(titleEl);
+                const parsedName = options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
+
+                if (modalId === 'mission-modal') {
+                    // --- Comm-Link Layout (Missions Only) ---
+                    titleEl.style.textAlign = 'center';
+                    
+                    const wrapperDiv = document.createElement('div');
+                    wrapperDiv.className = 'comm-link-wrapper';
+                    
+                    const pDiv = document.createElement('div');
+                    pDiv.className = 'portrait-thumbnail comm-active';
+                    pDiv.style.cssText = pStyle;
+                    
+                    const nameLabel = document.createElement('div');
+                    nameLabel.className = 'portrait-name-label comm-label';
+                    nameLabel.textContent = parsedName;
+                    
+                    wrapperDiv.appendChild(pDiv);
+                    wrapperDiv.appendChild(nameLabel);
+                    
+                    const modalContent = modal.querySelector('.modal-content');
+                    if (modalContent) {
+                        modalContent.insertBefore(wrapperDiv, modalContent.firstChild);
+                    }
+                } else {
+                    // --- Standard Side-by-Side Layout (Events, Lore, etc.) ---
+                    if (!headerFlex) {
+                        headerFlex = document.createElement('div');
+                        titleEl.parentNode.insertBefore(headerFlex, titleEl);
+                        headerFlex.appendChild(titleEl);
+                    }
+                    headerFlex.className = 'modal-header-flex flex flex-row justify-between items-start w-full mb-2 gap-4';
+                    
+                    const wrapperDiv = document.createElement('div');
+                    wrapperDiv.className = 'portrait-wrapper';
+                    
+                    const pDiv = document.createElement('div');
+                    pDiv.className = 'portrait-thumbnail';
+                    pDiv.style.cssText = pStyle;
+                    
+                    const nameLabel = document.createElement('div');
+                    nameLabel.className = 'portrait-name-label';
+                    nameLabel.textContent = parsedName;
+                    
+                    wrapperDiv.appendChild(pDiv);
+                    wrapperDiv.appendChild(nameLabel);
+                    headerFlex.insertBefore(wrapperDiv, titleEl);
+                    
+                    titleEl.classList.add('modal-title-group');
+                    titleEl.style.textAlign = 'right';
+                    titleEl.style.flexGrow = '1';
+                    titleEl.style.marginBottom = '0';
                 }
-                headerFlex.className = 'modal-header-flex flex flex-row justify-between items-start w-full mb-2 gap-4';
-                
-                const pDiv = document.createElement('div');
-                pDiv.className = 'portrait-thumbnail shrink-0';
-                pDiv.style.cssText = pStyle;
-                
-                headerFlex.insertBefore(pDiv, titleEl);
-                
-                titleEl.classList.add('modal-title-group');
-                titleEl.style.textAlign = 'right';
-                titleEl.style.flexGrow = '1';
-                titleEl.style.marginBottom = '0';
             }
         }
 
@@ -136,8 +178,6 @@ export class UIModalEngine {
         const closeHandler = () => {
             this.hideModal(modalId);
             if (callback) callback();
-            // We rely on the animationend listener in hideModal to trigger the next item.
-            // This prevents the new modal from colliding with the exit animation of the old one.
         };
 
         if (options.customSetup) {
@@ -178,7 +218,6 @@ export class UIModalEngine {
         }
 
         // Ensure we start from a clean state.
-        // If a zombie "modal-hiding" class exists, this removes it so the incoming fadeIn works.
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
         modal.classList.add('modal-visible');
@@ -194,9 +233,6 @@ export class UIModalEngine {
             modal.classList.add('modal-hiding');
             
             modal.addEventListener('animationend', () => {
-                // Zombie Listener Guard Clause
-                // If the 'modal-hiding' class was removed (e.g. by a forced re-open),
-                // we abort this cleanup logic. This prevents the old listener from closing the new modal.
                 if (!modal.classList.contains('modal-hiding')) {
                     return;
                 }
@@ -208,7 +244,6 @@ export class UIModalEngine {
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
 
-                // Now that the DOM is clean, we check the queue.
                 if (this.modalQueue.length > 0) {
                     this.processModalQueue();
                 }
