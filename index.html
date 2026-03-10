@@ -176,11 +176,11 @@
         </button>
 
         <div id="mission-modal" class="modal-backdrop hidden">
-            <div class="modal-content sci-fi-frame flex flex-col items-center text-center">
+            <div class="modal-content sci-fi-frame flex flex-col items-center text-center relative">
+                <p id="mission-modal-type" class="absolute top-4 left-4 text-xs font-bold text-gray-500 uppercase tracking-widest z-20"></p>
                 <div class="modal-header">
                     <div>
                         <h3 id="mission-modal-title" class="text-xl font-orbitron mb-1"></h3>
-                        <p id="mission-modal-type" class="mission-type"></p>
                     </div>
                 </div>
                 <p id="mission-modal-description" class="my-4 text-gray-300"></p>
@@ -239,14 +239,6 @@
         </div>
     </div>
 
-     <div id="event-modal" class="modal-backdrop hidden">
-        <div class="modal-content">
-            <h3 id="event-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center"></h3>
-            <p id="event-description" class="mb-6 text-lg"></p>
-            <div id="event-button-container" class="mt-6 flex justify-center gap-4"></div>
-        </div>
-    </div>
-
     <div id="econ-weather-modal" class="modal-backdrop hidden z-[60]">
         <div class="modal-content relative">
             <button id="econ-weather-close-btn" class="absolute top-2 right-4 text-gray-400 hover:text-white text-4xl font-bold leading-none cursor-pointer transition-colors" title="Close">&minus;</button>
@@ -298,6 +290,7 @@
             <div id="event-result-button-container" class="mt-6 flex justify-center gap-4"></div>
         </div>
     </div>
+    
     <div id="age-event-modal" class="modal-backdrop hidden age-event-modal">
         <div class="modal-content">
             <h3 id="age-event-title" class="text-2xl font-orbitron mb-2"></h3>

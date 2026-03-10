@@ -223,7 +223,8 @@ function getPortraitStyle(portraitId) {
     }
     
     // Uses the negative offsets required to map the sprite sheet viewport correctly.
-    return `background-image: url('assets/images/characters/characters_sprite.webp'); background-position: -${coords.x}px -${coords.y}px;`;
+    // X is offset by +4 to correct the 3-4px framing issue.
+    return `background-image: url('assets/images/characters/characters_sprite.webp'); background-position: -${coords.x + 4}px -${coords.y}px;`;
 }
 
 // Global exposure for UI architecture

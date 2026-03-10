@@ -208,6 +208,15 @@
     --host-color: #fbbf24; 
     --host-bg-dark: rgba(69, 26, 3, 0.95); /* Dark Amber/Brown */
     background: linear-gradient(135deg, #52525b, #b45309) !important; /* Zinc-600 to Amber-700 */
+    --comm-color: #facc15;
+    --comm-color-bright: #fef08a;
+    --comm-color-glow-low: rgba(250, 204, 21, 0.4);
+    --comm-color-glow-mid: rgba(250, 204, 21, 0.5);
+    --comm-color-glow-high: rgba(250, 204, 21, 0.8);
+    
+    --nameplate-bg: #d97706; /* Amber */
+    --nameplate-border: #fcd34d;
+    --nameplate-text: #000000;
 }
 
 /* Syndicate: Orange to Violet */
@@ -215,6 +224,15 @@
     --host-color: #a855f7; 
     --host-bg-dark: rgba(59, 7, 100, 0.95); /* Dark Purple */
     background: linear-gradient(135deg, #c2410c, #7e22ce) !important; /* Orange-700 to Purple-700 */
+    --comm-color: #a855f7;
+    --comm-color-bright: #d8b4fe;
+    --comm-color-glow-low: rgba(168, 85, 247, 0.4);
+    --comm-color-glow-mid: rgba(168, 85, 247, 0.5);
+    --comm-color-glow-high: rgba(168, 85, 247, 0.8);
+    
+    --nameplate-bg: #c2410c; /* Orange */
+    --nameplate-border: #fdba74;
+    --nameplate-text: #ffffff;
 }
 
 /* Station: Black to Dark Blue */
@@ -222,6 +240,12 @@
     --host-color: #3b82f6; 
     --host-bg-dark: rgba(8, 47, 73, 0.95); /* Dark Blue */
     background: linear-gradient(135deg, #000000, #172554) !important; /* Black to Blue-950 */
+    --comm-color: #38bdf8;
+    --comm-color-bright: #bae6fd;
+    --comm-color-glow-low: rgba(56, 189, 248, 0.4);
+    --comm-color-glow-mid: rgba(56, 189, 248, 0.5);
+    --comm-color-glow-high: rgba(56, 189, 248, 0.8);
+    /* Defaults handle nameplate */
 }
 
 /* Unknown: Red to Black */
@@ -229,6 +253,15 @@
     --host-color: #ef4444; 
     --host-bg-dark: rgba(69, 10, 10, 0.95); /* Dark Red */
     background: linear-gradient(135deg, #7f1d1d, #000000) !important; /* Red-900 to Black */
+    --comm-color: #ef4444;
+    --comm-color-bright: #fca5a5;
+    --comm-color-glow-low: rgba(239, 68, 68, 0.4);
+    --comm-color-glow-mid: rgba(239, 68, 68, 0.5);
+    --comm-color-glow-high: rgba(239, 68, 68, 0.8);
+    
+    --nameplate-bg: #7f1d1d; /* Maroon */
+    --nameplate-border: #fca5a5;
+    --nameplate-text: #fee2e2;
 }
 
 /* --- MISSION TYPE GRADIENTS (FALLBACKS/TINT) --- */
@@ -601,3 +634,79 @@
     0% { color: #fff; text-shadow: 0 0 10px #fff; }
     100% { color: var(--theme-color-glow); text-shadow: none; }
 }
+
+/* ========================================================================= */
+/* --- MISSION MODAL BUTTON & TITLE THEMING --- */
+/* ========================================================================= */
+
+/* Title overrides */
+.host-guild #mission-modal-title { color: #facc15; text-shadow: 0 0 8px rgba(250, 204, 21, 0.4); }
+.host-unknown #mission-modal-title { color: #ef4444; text-shadow: 0 0 8px rgba(239, 68, 68, 0.4); } 
+.host-syndicate #mission-modal-title { color: #f97316; text-shadow: 0 0 8px rgba(249, 115, 22, 0.4); }
+
+/* Themed Mission Action Buttons (Accept / Complete) */
+
+/* Guild (Amber) */
+.host-guild .mission-action-btn {
+    background: linear-gradient(to bottom, #92400e, #78350f) !important;
+    border-color: #d97706 !important;
+    color: #fef3c7 !important;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+}
+.host-guild .mission-action-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #b45309, #92400e) !important;
+    border-color: #f59e0b !important;
+}
+@keyframes hostPulseGuild { 
+    0%, 100% { box-shadow: 0 0 5px rgba(245, 158, 11, 0.4); } 
+    50% { box-shadow: 0 0 20px rgba(245, 158, 11, 0.8); border-color: #fbbf24 !important; } 
+}
+.host-guild .host-btn-pulse { animation: hostPulseGuild 2s infinite; }
+
+/* Unknown (Maroon) */
+.host-unknown .mission-action-btn {
+    background: linear-gradient(to bottom, #7f1d1d, #450a0a) !important;
+    border-color: #991b1b !important;
+    color: #fecaca !important;
+}
+.host-unknown .mission-action-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #991b1b, #7f1d1d) !important;
+    border-color: #b91c1c !important;
+}
+@keyframes hostPulseUnknown { 
+    0%, 100% { box-shadow: 0 0 5px rgba(185, 28, 28, 0.4); } 
+    50% { box-shadow: 0 0 20px rgba(185, 28, 28, 0.8); border-color: #dc2626 !important; } 
+}
+.host-unknown .host-btn-pulse { animation: hostPulseUnknown 2s infinite; }
+
+/* Syndicate (Violet) */
+.host-syndicate .mission-action-btn {
+    background: linear-gradient(to bottom, #6b21a8, #4c1d95) !important;
+    border-color: #7e22ce !important;
+    color: #e9d5ff !important;
+}
+.host-syndicate .mission-action-btn:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #7e22ce, #581c87) !important;
+    border-color: #9333ea !important;
+}
+@keyframes hostPulseSyndicate { 
+    0%, 100% { box-shadow: 0 0 5px rgba(147, 51, 234, 0.4); } 
+    50% { box-shadow: 0 0 20px rgba(147, 51, 234, 0.8); border-color: #a855f7 !important; } 
+}
+.host-syndicate .host-btn-pulse { animation: hostPulseSyndicate 2s infinite; }
+
+/* Station (Default / Green Pulse) */
+.host-station .host-btn-pulse {
+    background: linear-gradient(to bottom, #065f46, #064e3b) !important;
+    border-color: #059669 !important;
+    color: #d1fae5 !important;
+}
+.host-station .host-btn-pulse:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #059669, #065f46) !important;
+    border-color: #10b981 !important;
+}
+@keyframes hostPulseStation { 
+    0%, 100% { box-shadow: 0 0 5px rgba(16, 185, 129, 0.4); } 
+    50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); border-color: #34d399 !important; } 
+}
+.host-station .host-btn-pulse { animation: hostPulseStation 2s infinite; }

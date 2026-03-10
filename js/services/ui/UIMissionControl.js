@@ -293,7 +293,7 @@ export class UIMissionControl {
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${navButtonHtml}`;
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
-                     buttonsEl.innerHTML = `<button class="btn w-full" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
+                     buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                 }
 
                 const navBtn = modal.querySelector('#mission-navigate-btn');
@@ -426,11 +426,6 @@ export class UIMissionControl {
                         if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                        return r.type.toUpperCase();
                    }).join(', ');
-                   rewardsEl.innerHTML = `
-                       <p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p>
-                       <p class="font-orbitron text-xl text-green-300">${rewardsHtml}</p>
-                       ${capacityWarningHtml}
-                   `;
                    rewardsEl.style.display = 'block';
                } else {
                    rewardsEl.innerHTML = '';
@@ -441,7 +436,7 @@ export class UIMissionControl {
                buttonsEl.innerHTML = '';
                
                const completeBtn = document.createElement('button');
-               completeBtn.className = hasSpace ? 'btn w-full btn-pulse-green' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
+               completeBtn.className = hasSpace ? 'btn w-full mission-action-btn host-btn-pulse' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
                completeBtn.textContent = hasSpace ? mission.completion.buttonText : 'INSUFFICIENT CARGO SPACE';
                completeBtn.disabled = !hasSpace;
 

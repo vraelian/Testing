@@ -2,9 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.59] - 2026-3-9
+# [36.61] - 2026-3-9
 -  added 195 character sprite sheet.
 -  added characters.js
+-  added character portraits to mission modals
+-  mission modal polish
 -  updated meta files
 
 # [36.57] - 2026-3-7
