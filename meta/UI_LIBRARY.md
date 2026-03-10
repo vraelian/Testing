@@ -73,20 +73,38 @@ HTML
 </button>
 
 2.4 Modal Dialog (.modal)
-Standard wrapper for popup content.
-HTML
+Standard wrapper for popup content. The `UIModalEngine` dynamically mutates the header into a flexbox layout if a `portraitId` is detected in the triggering payload.
+
+HTML (Standard):
 <div id="modal-overlay" class="hidden">
     <div class="modal">
         <div class="modal-header">
             <h2>{Title}</h2>
         </div>
-        <div class="modal-content">
-            </div>
+        <div class="modal-content">...</div>
         <div class="modal-footer">
             <button class="btn btn-secondary" type="button" data-action="close-modal">Close</button>
         </div>
     </div>
 </div>
+
+HTML (Dynamically Injected with Portrait):
+<div id="modal-overlay" class="hidden">
+    <div class="modal">
+        <div class="modal-header-flex">
+            <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
+            <h2 class="modal-title-group">{Title}</h2>
+        </div>
+        <div class="modal-content">...</div>
+        <div class="modal-footer">...</div>
+    </div>
+</div>
+
+Dynamic Injection Classes (Managed by UIModalEngine):
+- `.modal-header-flex`: Establishes the flex-row structure.
+- `.portrait-thumbnail`: The 128x128px fixed container utilizing the WebP sprite sheet.
+- `.modal-title-group`: Wraps the title text, forcing `text-align: right` to counterbalance the left-aligned portrait. 
+*Note: If no portrait ID is passed to the engine, it automatically unwraps these classes to gracefully restore the standard center/left alignment.*
 
 2.5 Tab Navigation (.mission-tabs-nav)
 Used in Missions/Data screens to toggle sub-views.

@@ -1283,3 +1283,39 @@
     animation: simpleFadeOut 2s ease-out forwards !important;
     pointer-events: none;
 }
+
+/* ========================================================================= */
+/* --- PORTRAIT MODAL HEADER SYSTEM (PHASE 2) --- */
+/* ========================================================================= */
+
+.modal-header-flex {
+    /* Flex utilities are largely handled via Tailwind classes injected by JS, 
+       but we define core structure here as a robust baseline */
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+    width: 100%;
+    margin-bottom: 0.5rem;
+    gap: 1rem;
+}
+
+.portrait-thumbnail {
+    width: 128px;
+    height: 128px;
+    flex-shrink: 0;
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.5);
+    background-repeat: no-repeat;
+    /* background-image and background-position are set inline dynamically by JS */
+}
+
+.modal-title-group {
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    flex-grow: 1;
+    text-align: right;
+    margin-bottom: 0;
+}

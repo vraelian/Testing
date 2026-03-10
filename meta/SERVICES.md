@@ -167,7 +167,7 @@ Key Behavior: Proxies requests from external services to the appropriate Control
 Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
 
 Controllers (Delegates):
-* UIModalEngine: Manages the modal queue, priority processing, and dismissal logic.
+* UIModalEngine: Manages the modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads to restructure modal headers and inject CSS sprite portraits via the global `PortraitRegistry`.
 * UIHelpManager: Manages the Contextual Help Modal system, micro-pagination tracks, and swipe threshold logic.
 * UIToastManager: Manages Universal Toast notifications, DOM injection, and animation timing.
 * UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
@@ -252,6 +252,7 @@ bot/AutomatedPlayerService.js: Contains the AutomatedPlayer class, a state-machi
 database.js: Aggregates and exports static game data.
 ship_database.js: Defines the static data for all player-tradable ships.
 assets_config.js: Defines configuration for ship asset variants.
+characters.js: Defines the PortraitRegistry mapping logical UI IDs to exact CSS sprite sheet pixel coordinates, and the overarching CharacterDatabase profiles.
 constants.js: Defines widely used constant values and enums.
 items.js: Defines the registry of Consumable Items.
 age_events.js: Defines static data for narrative events triggered by progression.

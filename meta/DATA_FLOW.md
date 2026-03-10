@@ -425,3 +425,27 @@ graph TD
         M --> N[Purge Queue & Timers];
         N --> O[UIToastManager.forceClear];
     end
+
+2.17 Dynamic UI Portrait Injection
+Flow for parsing portrait requests and dynamically mutating modal DOM structures via CSS sprite sheets.
+
+graph TD
+    subgraph Payload Request
+        A[Service/Event requests Modal] --> B{Contains options.portraitId?};
+    end
+
+    subgraph Resolution
+        B -- Yes --> C[UIModalEngine intercepts before render];
+        C --> D[Call window.getPortraitStyle];
+        D --> E[Lookup coords in PortraitRegistry / characters.js];
+    end
+
+    subgraph DOM Mutation
+        E --> F[Inject .portrait-thumbnail node];
+        F --> G[Apply inline CSS background-position];
+        G --> H[Wrap and align Header text via .modal-header-flex];
+    end
+
+    subgraph Fallback
+        B -- No --> I[Render Standard Center/Left Modal];
+    end
