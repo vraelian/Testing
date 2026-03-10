@@ -25,7 +25,7 @@ export const DATE_CONFIG = {
 export const DB = {
     // --- Core Game Configuration ---
     CONFIG: {
-        INTEL_COST_PERCENTAGE: 0.20,
+        INTEL_COST_PERCENTAGE: 0.10,
         INTEL_MIN_CREDITS: 5000,
         INTEL_CHANCE: 0.3,
         INTEL_DEMAND_MOD: 1.8,
