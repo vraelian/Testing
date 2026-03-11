@@ -240,7 +240,7 @@ graph TD
 
     subgraph Application
         G --> H[Resolve Outcome: RNG/Fixed];
-        H --> I[DynamicValueResolver: Calculate Quantities];
+        H --> I[DynamicValueResolver: Parse Base Values & SHIP_CLASS_SCALAR];
         I --> J[eventEffectResolver: Apply Effects];
         J --> K((Mutate GameState));
     end

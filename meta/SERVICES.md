@@ -34,7 +34,7 @@ PlayerActionService (F034)
 
 Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
 
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs, replacing flat volumetric fees. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
 
 Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
 
@@ -52,9 +52,10 @@ Responsibility: Manages the travel loop. Calculates fuel/time costs, applies Con
 
 Key Behavior:
 * Uses GameState.TRAVEL_DATA for distances.
-* Calculates and deducts the 'Convoy Tax' resource scaling based on active fleet size.
+* Calculates and deducts the 'Convoy Tax' resource scaling (a linear fractional offset) based on active fleet size.
 * Pauses travel for event resolution, including Blockade events.
 * Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
+* Applies integer-safe, flattened distance-based hull decay.
 * Consumable Logic: Handles the consumption of "Folded Space Drives" to execute instant travel via the `useFoldedDrive` argument.
 
 Dependencies: GameState, TimeService, RandomEventService.
@@ -145,7 +146,7 @@ DynamicValueResolver
 
 Responsibility: Calculates dynamic integer values for event effects based on game state context.
 
-Key Behavior: Resolves abstract value definitions into concrete numbers for rewards/penalties. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
+Key Behavior: Resolves abstract value definitions into concrete numbers for rewards/penalties. Parses the `SHIP_CLASS_SCALAR` directive for dynamic opportunity rewards. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
 
 Dependencies: GameState (Read-only), DB.
 

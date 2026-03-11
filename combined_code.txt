@@ -39172,6 +39172,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 # [36.62] - 2026-3-10
 -  major balance pass on all systems
+-  updated meta files
 
 # [36.61] - 2026-3-9
 -  added 195 character sprite sheet
@@ -40230,6 +40231,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
+Last Edit: 3/10/26, ver. Balance v2
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -40281,11 +40283,11 @@ TravelDays = (DistanceAU / ShipSpeed) * (1 - TravelSpeedBonus)
 TravelSpeedBonus: Accumulated from Age Perks or Upgrades.
 
 2.3 Distance-Based Hull Entropy
-Hull deterioration is decoupled from dynamic travel time and relies on the static base time of a route as a proxy for "distance".
+Hull deterioration is decoupled from dynamic travel time and relies on the static base time of a route as a proxy for "distance". The result is flattened and ceiling-rounded to safely apply to sub-1000 HP ship pools.
 
 JavaScript
 BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
-HullDecay = BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod
+HullDecay = Math.ceil(BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod * 0.8)
 HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
 
 2.4 Fuel-Coupled Event Delays
@@ -40300,42 +40302,53 @@ Repairing a ship at a station consumes both credits and time.
 
 JavaScript
 Time Cost = 1 In-Game Day per Repair Tick 
-(A Repair Tick typically restores 5% of Max Hull, or 1% if precision topping-off is required).
 
-3. Ship Economy
-3.1 Resale Value
-The credit value returned when selling a ship.
+2.6 Convoy Tax (Fleet Overhead)
+Operating multiple ships imposes a linear fractional offset against fuel burn and hull decay during travel.
 
 JavaScript
-SellValue = (BaseHullPrice + TotalUpgradeValue) * DEPRECIATION_FACTOR
-DEPRECIATION_FACTOR: 0.75 (Player loses 25% of value).
+ConvoyTaxRate = InactiveShipsCount * 0.02
+ConvoyFuelTax = Math.max(0, Math.ceil(TravelFuelCost * ConvoyTaxRate))
 
-TotalUpgradeValue: The sum of the purchase price of all installed upgrades.
-
-3.2 Destructive Replacement
-When installing an upgrade into a full (3/3) ship:
+3. Ship Economy & Tier-Scaled Upkeep
+3.1 Algorithmic Ship Pricing
+The base price of a ship is strictly determined by its physical capacity and a tiered luxury multiplier.
 
 JavaScript
-NewShipValue = OldShipValue - DestroyedUpgradeValue + NewUpgradeValue
-Note: The DestroyedUpgradeValue is lost completely; it is not refunded.
+BaseValue = (CargoCapacity * 300) + (MaxHealth * 200) + (MaxFuel * 100)
+FinalPrice = BaseValue * ClassMultiplier
+Class Multipliers: C = 1, B = 5, A = 25, S = 250, Z = 1500, O = 2500.
 
-3.3 Upgrade Hardware Cost
+3.2 Dynamic Hull Repair Cost
+Repairs scale proportionally to the value of the ship rather than relying on a flat fee.
+
+JavaScript
+CostPerHP = Math.max(1, ShipBasePrice * 0.0001) * LocationModifier * PerkModifiers
+
+3.3 Dynamic Fuel Cost
+Fuel purchases at starports are subjected to a Fuel Grade Multiplier based on the ship's class.
+
+JavaScript
+FinalPumpPrice = BaseLocationFuelPrice * FuelClassMultiplier
+Fuel Class Multipliers: C = 1, B = 5, A = 25, S = 150, Z/O = 500.
+
+3.4 Upgrade Hardware Cost & Resale
 The dynamic cost formula for ship upgrades (Balance v2 Hybrid Pricing).
 
 JavaScript
-Cost = FixedBaseCost + (ShipBasePrice * TierMultiplier)
+UpgradeCost = FixedBaseCost + (ShipBasePrice * TierMultiplier)
 TierMultiplier scales from 0.05 (Tier I) up to 0.30 (Tier V).
+SellValue = (BaseHullPrice + TotalUpgradeValue) * DEPRECIATION_FACTOR
+DEPRECIATION_FACTOR: 0.75 (Player loses 25% of value).
 
-4. Event System RNG
+4. Event System RNG & Dynamic Scaling
 4.1 Weighted Selection
 Events are chosen based on a "lottery ticket" system.
 
 JavaScript
 EventChance = BaseWeight + (PlayerTags * TagMultiplier)
 The system sums the total weight of all valid events.
-
 A random number 0..TotalWeight is rolled.
-
 The selector iterates through events until the running sum exceeds the roll.
 
 4.2 Outcome Resolution
@@ -40344,33 +40357,43 @@ For weighted choices within an event:
 JavaScript
 OutcomeRoll = Math.random() * 100
 Outcomes are defined with weight ranges (e.g., Success: 70, Fail: 30).
-
 If OutcomeRoll < 70, Success triggers.
 
-4.3 Wealth-Scaled Penalties
+4.3 Wealth-Scaled Penalties (Hazards)
 For event fines and bureaucratic hazards, penalizing the player based on liquidity.
 
 JavaScript
 Penalty = LiquidCredits * HazardSeverity%
 (Hard capped at 9% for the most catastrophic outcomes to preserve progression feasibility).
 
+4.4 Ship-Class Scaled Rewards (Opportunities)
+For positive windfalls and opportunities, dynamic resolution uses the active ship's algorithmic Class Multiplier.
+
+JavaScript
+Reward = BaseValue * ActiveShipClassMultiplier
+(Via the scaleWith: 'SHIP_CLASS_SCALAR' directive).
+
 5. Sol Station Directorate Engine
 5.1 Entropy Calculation
 The daily decay rate of station caches is dynamically altered by the sum of slotted officer buffs.
+
 JavaScript
-CurrentEntropy = BaseEntropy * (1 + Sum(OfficerEntropyBuffs))
+BASE_DECAY_K = 0.0000014
+CurrentEntropy = BaseEntropy * (1 + Sum(OfficerEntropyBuffs) - Sum(LevelEntropyReductions))
 
 5.2 Resource Consumption & Capacity Modifiers
 Officers dynamically alter the mathematics of how much specific commodities the station can hold and how fast they burn per tick via both additive and multiplicative modifiers.
+
 JavaScript
-EffectiveCapacity = BaseCapacity + Sum(OfficerCapacityMods[commodityId])
-EffectiveConsumption = BaseConsumption * (1 + Sum(OfficerConsumptionMods[commodityId]))
+EffectiveCapacity = BaseCapacity + Sum(OfficerCapacityMods) + Sum(LevelCapacityMods)
+EffectiveConsumptionRate = CurrentEntropy * Math.max(0, 1 - OfficerConsumptionReductions)
 
 5.3 Antimatter & Credit Yields
 Output yields during 'Commerce' and 'Production' modes are directly scaled by the Directorate roster.
+
 JavaScript
-DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults))
-DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults))
+DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults) + Sum(LevelCreditMults)) * EfficiencyCurve
+DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults) + Sum(LevelAMMults)) * EfficiencyCurve
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
@@ -40667,7 +40690,7 @@ Correction: Define these as constants in js/data/constants.js and import them.
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 3/6/26, ver. Balance v2
+Last Edit: 3/10/26, ver. Balance v2
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
 
@@ -40682,96 +40705,60 @@ Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength
 II. Local Price Influences by Location
 This is the full list of price influences for every market.
 Sol Station
-Exports (Price Reverts Toward a Lower Baseline):
-Antimatter
-Imports (Price Reverts Toward a Higher Baseline):
-Graphene Lattices
-Plasteel
+Exports (Price Reverts Toward a Lower Baseline): Antimatter
+Imports (Price Reverts Toward a Higher Baseline): Graphene Lattices, Plasteel
+
 Mercury
-Exports (Price Reverts Toward a Lower Baseline):
-Plasteel
-Imports (Price Reverts Toward a Higher Baseline):
-Water Ice (Strong Import)
+Exports (Price Reverts Toward a Lower Baseline): Plasteel
+Imports (Price Reverts Toward a Higher Baseline): Water Ice (Strong Import)
+
 Venus
-Exports (Price Reverts Toward a Lower Baseline):
-Cloned Organs
-Neural Processors
-Imports (Price Reverts Toward a Higher Baseline):
-Sentient AI Cores
-Atmo Processors
+Exports (Price Reverts Toward a Lower Baseline): Cloned Organs, Neural Processors
+Imports (Price Reverts Toward a Higher Baseline): Sentient AI Cores, Atmo Processors
+
 Earth
-Exports (Price Reverts Toward a Lower Baseline):
-Hydroponics
-Cybernetics
-Imports (Price Reverts Toward a Higher Baseline):
-Cloned Organs
-Xeno-Geologicals
+Exports (Price Reverts Toward a Lower Baseline): Hydroponics, Cybernetics
+Imports (Price Reverts Toward a Higher Baseline): Cloned Organs, Xeno-Geologicals
+
 The Moon
-Exports (Price Reverts Toward a Lower Baseline):
-Plasteel
-Graphene Lattices
-Imports (Price Reverts Toward a Higher Baseline):
-Water Ice
-Hydroponics
+Exports (Price Reverts Toward a Lower Baseline): Plasteel, Graphene Lattices
+Imports (Price Reverts Toward a Higher Baseline): Water Ice, Hydroponics
+
 Mars
-Exports (Price Reverts Toward a Lower Baseline):
-Plasteel
-Xeno-Geologicals
-Imports (Price Reverts Toward a Higher Baseline):
-Hydroponics
-Water Ice
+Exports (Price Reverts Toward a Lower Baseline): Plasteel, Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline): Hydroponics, Water Ice
+
 The Belt
-Exports (Price Reverts Toward a Lower Baseline):
-Water Ice
-Xeno-Geologicals
-Imports (Price Reverts Toward a Higher Baseline):
-Hydroponics
-Cybernetics
+Exports (Price Reverts Toward a Lower Baseline): Water Ice, Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline): Hydroponics, Cybernetics
+
 The Exchange
-Exports (Price Reverts Toward a Lower Baseline):
-Sentient AI Cores
-Cloned Organs
-Imports (Price Reverts Toward a Higher Baseline):
-Antimatter
-Xeno-Geologicals
+Exports (Price Reverts Toward a Lower Baseline): Sentient AI Cores, Cloned Organs
+Imports (Price Reverts Toward a Higher Baseline): Antimatter, Xeno-Geologicals
+
 Jupiter
-Exports (Price Reverts Toward a Lower Baseline):
-Refined Propellant
-Imports (Price Reverts Toward a Higher Baseline):
-Plasteel
-Atmo Processors
+Exports (Price Reverts Toward a Lower Baseline): Refined Propellant
+Imports (Price Reverts Toward a Higher Baseline): Plasteel, Atmo Processors
+
 Saturn
-Exports (Price Reverts Toward a Lower Baseline):
-Cybernetics
-Imports (Price Reverts Toward a Higher Baseline):
-Cryo-Sleep Pods
-Cloned Organs
+Exports (Price Reverts Toward a Lower Baseline): Cybernetics
+Imports (Price Reverts Toward a Higher Baseline): Cryo-Sleep Pods, Cloned Organs
+
 Uranus
-Exports (Price Reverts Toward a Lower Baseline):
-Neural Processors
-Imports (Price Reverts Toward a Higher Baseline):
-Sentient AI Cores
-Atmo Processors
+Exports (Price Reverts Toward a Lower Baseline): Neural Processors
+Imports (Price Reverts Toward a Higher Baseline): Sentient AI Cores, Atmo Processors
+
 Neptune
-Exports (Price Reverts Toward a Lower Baseline):
-Cryo-Sleep Pods
-Graphene Lattices
-Imports (Price Reverts Toward a Higher Baseline):
-Plasteel
-Refined Propellant
+Exports (Price Reverts Toward a Lower Baseline): Cryo-Sleep Pods, Graphene Lattices
+Imports (Price Reverts Toward a Higher Baseline): Plasteel, Refined Propellant
+
 Kepler's Eye
-Exports (Price Reverts Toward a Lower Baseline):
-Antimatter
-Imports (Price Reverts Toward a Higher Baseline):
-Folded-Space Drives
-Neural Processors
+Exports (Price Reverts Toward a Lower Baseline): Antimatter
+Imports (Price Reverts Toward a Higher Baseline): Folded-Space Drives, Neural Processors
+
 Pluto
-Exports (Price Reverts Toward a Lower Baseline):
-Graphene Lattices
-Xeno-Geologicals
-Imports (Price Reverts Toward a Higher Baseline):
-Antimatter
-Cybernetics
+Exports (Price Reverts Toward a Lower Baseline): Graphene Lattices, Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline): Antimatter, Cybernetics
 
 III. Player-Driven Market Dynamics & Simulation
 Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems. These forces are designed to make the market a dynamic entity that the player actively manipulates. These forces are processed during the weekly TimeService.advanceDays simulation tick.
@@ -40782,112 +40769,82 @@ Mechanic: This force directly simulates supply and demand. When a player buys or
 Technical Detail: In evolveMarketPrices, the system calculates an availabilityRatio (current quantity / targetStock). This ratio is used to create an availabilityEffect.
 The 7-Day Delay (Anti-Abuse): This effect is intentionally delayed. The game checks if 7 days have passed since the lastPlayerInteractionTimestamp. The availabilityEffect is only calculated after this 7-day window, preventing players from manipulating a price and exploiting it in the same visit.
 The Strength (High Impact): This effect is controlled by AVAILABILITY_PRESSURE_STRENGTH (currently 0.50). This high value makes market manipulation feel powerful and rewarding.
-Example (Sell): Doubling a market's stock (a 2.0 ratio) will cause the price to crash by 50% after the 7-day delay.
-Example (Buy): Buying half a market's stock (a 0.5 ratio) will cause the price to spike by 25% after the 7-day delay.
 
 2. Force: Price Lock (The Core Loop)
 This is the system that makes market manipulation viable.
 Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 2.5% pull back to the local average) is disabled for a long duration.
-Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item using a dynamic, distance-scaled formula: `Base Lock (60 days) + (Location Distance * 0.20) ± 10% Jitter`.
+Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item using a dynamic, distance-scaled formula: Base Lock (60 days) + (Location Distance * 0.20) ± 10% Jitter.
 Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade. Because the lock scales with distance, fringe outer-rim markets will lock prices for significantly longer (e.g., Pluto for ~276 days) than inner-system hubs (e.g., Earth for ~96 days), aligning the opportunity window with actual travel times.
-**Note:** Active Intel Deals also trigger a form of price lock where the price fluctuates by only ±3% around the deal price.
 
 3. Force: Depletion Bonus (The Panic)
 A special, one-time bonus for buying out a significant portion of a market's stock, simulating a supply panic.
-Technical Detail: This is a multi-part check originating in PlayerActionService.buyItem.
-Trigger: When a purchase reduces inventoryItem.quantity to <= 0.
-Threshold Check: The game checks if the amount purchased was >= 8% of the item's calculated targetStock.
-Cooldown Check: It then checks if 365 days have passed since the last bonus (depletionBonusDay).
-Effect: If all checks pass, `isDepleted` and `depletionDay` are set. This initiates a macroeconomic panic era. `evolveMarketPrices` applies a 1.5x `priceHikeMultiplier` continuously until the market's stock naturally replenishes to at least 60% of its target capacity (which typically takes about 9 weeks). This ensures the panic lasts long enough to remain viable after a deep-space round trip.
+Trigger: When a purchase reduces inventoryItem.quantity to <= 0 and the amount purchased was >= 8% of the item's calculated targetStock.
+Effect: Initiates a macroeconomic panic era. evolveMarketPrices applies a 1.5x priceHikeMultiplier continuously until the market's stock naturally replenishes to at least 60% of its target capacity (which typically takes about 9 weeks).
 
 4. Force: Asymmetric Saturation (The Glut)
 The inverse of the Depletion Panic. A punitive mechanic that prevents players from dumping massive fleet-sized inventories onto a single market without consequence.
-Trigger: When a player's sale pushes a market's inventory above 300% (3.0x) of its targetStock, an `isSaturated` flag is triggered.
-Effect: While saturated, the market refuses to pay standard rates, applying a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion or pressure calculations.
-Recovery: The market sheds its excess inventory week by week. The saturation embargo is only lifted when the inventory naturally decays below 200% (2.0x) of its target capacity, forcing fleet haulers to diversify their drop-off locations.
+Trigger: When a player's sale pushes a market's inventory above 300% (3.0x) of its targetStock, an isSaturated flag is triggered.
+Effect: While saturated, the market refuses to pay standard rates, applying a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion or pressure calculations. Recovery only happens when the inventory sheds down below 200%.
 
 5. Force: Inventory Replenishment (The Bottleneck)
 The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
-Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock.
-Technical Detail: In replenishMarketInventory, the market only moves 10% of the difference (targetStock - currentStock) each week. `MARKET_PRESSURE_DECAY` is tuned to 0.65, aggressively decaying artificial margins by the 4th consecutive trip (the 4-Trip Crash).
-Effect: This slow rate acts as the main "cooldown" for the manipulation loop. A player can lock a price, but they must wait for stock to slowly recover (or be shed, in a surplus) before they can trade against that locked price again.
-Role of marketPressure: The marketPressure variable (set during a trade) is now used exclusively by this system. Negative pressure (from player buying) will dynamically increase the market's targetStock, simulating the market adapting to new demand.
+Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock. The market only moves 10% of the difference each week. MARKET_PRESSURE_DECAY is tuned to 0.65, aggressively decaying artificial margins by the 4th consecutive trip (the 4-Trip Crash).
 
 6. Force: Market Memory (The Reset)
 The passive fail-safe that prevents the universe from being permanently altered.
-Mechanic: This is the "garbage collector" for markets the player abandons.
-Technical Detail: In replenishMarketInventory, the system checks if lastPlayerInteractionTimestamp is older than 365 days.
-Effect: If the player has not traded that specific item at that specific location for a full year (365 days), the item's state is completely reset. This extended duration allows players to undertake massive multi-system arbitrage routes across the outer rim without their inner-system economic footprint being erased.
-marketPressure is reset to 0.
-priceLockEndDay is reset to 0, re-enabling Mean Reversion.
-depletionBonusDay is reset to 0, allowing the bonus to be triggered again.
-isDepleted is set to false.
-isSaturated is set to false.
+Mechanic: If the player has not traded that specific item at that specific location for a full year (365 days), the item's state is completely reset (pressure, locks, and panic states are wiped).
 
-IV. How The Market Behaves (Simple Terms)
-(See existing file for basic behavior examples...)
+IV. The "Packing Peanut" Volume Constraints (Geometric Pricing)
+To prevent the "late-game singularity" where exponential wealth trivializes the game, the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing.
+Tier Stratification: Prices scale geometrically (e.g., Tier 1 Water Ice at ~50cr, Tier 6 Sentient AI at ~20,000,000cr). 
+Inverted Availability: The most expensive goods have their canonical availability artificially choked (e.g., Sentient AI is capped at 10-24 units system-wide). Cheap goods have massive canonical availability (up to 450 units).
+The Cargo Constraint: Because ship cargo capacities are strictly hard-capped below 1,000 slots, a Capital ship hauling 850 units can never fill its entire hold with Tier 6 goods. The player is forced to purchase the highly profitable, low-availability top-tier goods, and use lower-tier goods (Water Ice, Plasteel) as bulk "packing peanuts" to maximize the efficiency of their massive cargo bays. Every tier remains relevant from the early game to the endgame.
 
-V. Commodity Behavior
-(See existing file for full Commodity Tier list...)
+V. Ship Economy & Tier-Scaled Upkeep
+The game relies on Tier-Scaled Upkeep rather than Volumetric Sinks to drain late-game wealth, keeping absolute stat numbers readable while enforcing exponential costs.
 
-VI. Ship Upgrade Economy
-The Upgrade System introduces a secondary economy layer, turning ships into customizable assets. Upgrades have dynamic costs based on their Tier and the host ship, directly influencing a ship's resale value and the player's operating margins.
+1. Algorithmic Ship Pricing
+Ship base prices are no longer arbitrary; they are strictly calculated based on the utility of their metal. Cargo capacity is weighted highest (300cr/unit), followed by Hull (200cr/unit) and Fuel (100cr/unit). This base sum is then multiplied by an exponential Class Multiplier (up to 2,500x for Capital ships) to generate prices reaching nearly 1 Billion credits.
 
-1. Tiered Pricing Structure (Hybrid Formula)
-Upgrades utilize a Hybrid Pricing Formula: Fixed Base Cost + a percentage of the host ship's value. This ensures upgrades are affordable for early ships but serve as massive credit sinks for Capital vessels.
-Tier I (Basic): 5,000 + 5% Ship Value. Entry-level modifications.
-Tier II (Standard): 15,000 + 10% Ship Value. Advanced specialized equipment.
-Tier III (Advanced): 45,000 + 15% Ship Value. Experimental military-grade technology.
-Tier IV (Elite): 125,000 + 20% Ship Value. Unstable, high-performance experimental tech.
-Tier V (Experimental): 400,000 + 30% Ship Value. Unique, "best-in-class" artifacts.
+2. Tier-Scaled Service Costs (Upkeep)
+Because Capital ships are capped at low physical limits (< 1,000 HP/Fuel), flat service fees would render upkeep mathematically invisible to a billionaire player. 
+Fuel Grading: Station fuel prices are multiplied by the ship's class tier (e.g., Class C pays 1x the base pump price, Class O Capital ships pay 500x the base pump price for highly refined propellant).
+Dynamic Drydocking: Hull repair is no longer a flat 75cr/HP. It is dynamically calculated as ShipBasePrice * 0.0001 per HP. A single scratch on a 1 Billion credit Citadel costs 100,000 credits to buff out.
 
-2. Resale Value Logic
-Ships are valued based on the sum of their hull and their installed components.
-Base Calculation: (Ship Base Price + Sum of Installed Upgrade Purchase Values)
-Depreciation: The total is multiplied by the standard depreciation factor (0.75).
-Implication: Players do not lose the full cost of an upgrade when selling a ship; they recover 75% of the upgrade's value, making experimentation financially viable.
-Destructive Replacement: However, if a player installs an upgrade into a full slot (3/3), the replaced upgrade is destroyed (0% recovery).
+3. Ship Upgrade Economy (Hybrid Pricing)
+Upgrades utilize a Hybrid Pricing Formula: Fixed Base Cost + a percentage of the host ship's value. 
+Tier I: 5,000 + 5% Ship Value. 
+Tier V: 400,000 + 30% Ship Value.
+Because of the hard caps on physical stats (<1000), percentage-based upgrades (e.g., +20% Cargo) are exponentially valuable. An upgrade that grants a 10% fuel discount instantly saves a Capital ship tens of millions of credits per refuel tick.
 
-3. Economic Modifiers
-Specific upgrades directly alter the player's profit margins and operating costs.
-Signal Hacker (Buy Price): Reduces purchase prices (Tier I: 0.5% -> Tier V: 3.3%).
-Guild Badge (Sell Price): Increases sell prices (Tier I: 0.5% -> Tier V: 3.3%).
-Fuel Pass (Service Cost): Reduces refueling costs (Tier I: 10% -> Tier V: 50%).
-Syndicate Badge (Debt): Reduces monthly debt interest (Tier I: 20% -> Tier V: 66%).
-Engine Mod (Trade-Off): Increases travel speed (10-40%) but increases fuel consumption and hull stress (15-60%).
-
-VII. Service Economies & Quirks (See existing file...)
-
-VIII. Station-Specific Market Quirks
+VI. Station-Specific Market Quirks
 Unique economic rules that apply only to specific stations, encouraging specialized trade routes.
+* Sol Station (Solar Forge): +25% Sell Price for Graphene Lattices & Plasteel.
+* Mercury (Desperate Thirst): Pays 40% more for Water Ice.
+* Venus (Data Haven): Intel is 50% cheaper and deals last 30% longer.
+* Earth (High Demand): Cloned Organs & Xeno-Geologicals sell for 10% more.
+* The Moon (Orbital Shipyards): 20% discount on all ship repairs.
+* Mars (Colonial Expansion): +10% Sell Price for Water Ice and Hydroponics.
+* The Belt (Lawless Zone): 5% discount on Water Ice & Xeno-Geological purchases.
+* The Exchange (Black Market): Prices fluctuate dramatically (3x Volatility).
+* Jupiter (Gas Giant Refinery): Fuel is sold at a 50% discount.
+* Saturn (Luxury Tax): +20% Sell Price for Organs/Cryo Pods, but 200% Service Costs.
+* Uranus (Quantum Research): Increased chance for advanced ship upgrades in the tuning shop.
+* Neptune (Military Logistics): 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
+* Kepler's Eye (Financial Hub): 15% Discount on all financing and debt payments. Double intel packet generation.
+* Pluto (Fringe Outpost): +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
 
-* **Sol Station (Solar Forge):** +25% Sell Price for Graphene Lattices & Plasteel.
-* **Mercury (Desperate Thirst):** Pays 40% more for Water Ice.
-* **Venus (Data Haven):** Intel is 50% cheaper and deals last 30% longer.
-* **Earth (High Demand):** Cloned Organs & Xeno-Geologicals sell for 10% more.
-* **The Moon (Orbital Shipyards):** 20% discount on all ship repairs.
-* **Mars (Colonial Expansion):** +10% Sell Price for Water Ice and Hydroponics.
-* **The Belt (Lawless Zone):** (Classified).
-* **The Exchange (Black Market):** Prices fluctuate dramatically (3x Volatility).
-* **Jupiter (Gas Giant Refinery):** Fuel is sold at a 50% discount.
-* **Saturn (Luxury Tax):** +20% Sell Price for Organs/Cryo Pods, but 200% Service Costs.
-* **Uranus (Quantum Research):** Increased chance for advanced ship upgrades in the tuning shop.
-* **Neptune (Military Logistics):** 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
-* **Kepler's Eye (Financial Hub):** 15% Discount on all financing and debt payments.
-* **Pluto (Fringe Outpost):** +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
-
-IX. Sol Station Directorate (Macro-Economic Impact)
+VII. Sol Station Directorate (Macro-Economic Impact)
 The officers slotted into the Sol Station Engineering Interface act as dynamic macro-economic levers that shape the player's arbitrage strategy system-wide.
 1. Systemic Supply Bottlenecks
-Officers with severe negative `consumptionMods` (e.g., hyper-burning Plasteel or Water Ice) will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system. This fundamentally alters the global availability ratios, driving up localized prices for those specific commodities universally as the player hoards them for donation.
+Officers with severe negative consumptionMods (e.g., hyper-burning Plasteel or Water Ice) will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system. This fundamentally alters the global availability ratios, driving up localized prices for those specific commodities universally as the player hoards them for donation.
 2. Capacity Buffers
-Officers with high `capacityMods` drastically increase the "runway" a station has before reaching critical entropy. This allows the player to embark on longer deep-space trade routes without the station starving while they are gone, effectively expanding the viable geographic radius of arbitrage loops.
-3. Wealth Generation Swings
-Slotting officers with massive `creditMult` or `amMult` bonuses transforms the station into an exponential raw wealth engine, but typically at the cost of extreme resource consumption, transitioning the late-game loop from "Arbitrage Trader" to "Station Feeder".
+Officers with high capacityMods drastically increase the "runway" a station has before reaching critical entropy. This allows the player to embark on longer deep-space trade routes without the station starving while they are gone, effectively expanding the viable geographic radius of arbitrage loops.
+3. Volumetric Scaling
+The station's endgame requirements are volumetrically scaled down (maxing at ~4,000 units for Level 50) to perfectly align with Capital ship constraints, ensuring progression requires multiple focused supply runs.
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
-
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -40928,7 +40885,7 @@ Slotting officers with massive `creditMult` or `amMult` bonuses transforms the s
     "Station_Integrity": "The overall health percentage of the Sol Station, calculated as the average fill ratio of all Maintenance Caches. Efficiency drops significantly below 50%.",
     "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity.",
     "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands.",
-    "Convoy_Tax": "An exponentially scaling fuel and credit penalty applied during travel to offset the mechanical advantages of operating massive multi-ship fleets.",
+    "Convoy_Tax": "A linear percentage offset applied to fuel burn and hull decay during travel to balance the advantages of multi-ship fleets without creating a hard stranding barrier.",
     "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
     "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states.",
     "Dual-Write_Native_Bridge": "The persistence strategy that concurrently saves data to the browser's IndexedDB and the iOS native layer via WebKit message handlers, preventing save loss from cache eviction.",
@@ -40937,7 +40894,10 @@ Slotting officers with massive `creditMult` or `amMult` bonuses transforms the s
     "Micro-Pagination": "Navigation method within Help Modals utilizing horizontal swipe gestures (translating CSS X-axis) rather than vertical scrolling to prevent mobile gesture conflicts.",
     "Global_Context_Anchor": "A persistent '?' icon overlaid on the viewport that, when tapped, queries the GameState to instantiate the relevant Help Modal.",
     "Universal_Toast_System": "A scalable, non-blocking notification queue that triggers strictly upon location arrival, conveying critical system, financial, intel, and mission data. Capped at a maximum of two toasts per arrival.",
-    "Opt-In_Pulse": "A visual cue applied to the global help anchor to signal unread contextual information without intercepting the player's UI focus."
+    "Opt-In_Pulse": "A visual cue applied to the global help anchor to signal unread contextual information without intercepting the player's UI focus.",
+    "Geometric_Pricing": "The economic strategy of applying extreme, exponential price stratification between commodity tiers to enforce packing peanut volume constraints.",
+    "Tier-Scaled_Upkeep": "The operational philosophy where service costs (fuel, repair) scale exponentially based on a vessel's base price and class, acting as the primary endgame wealth tax.",
+    "Volumetric_Sink": "[OBSOLETE] A legacy balance mechanic that relied on massively inflated physical stats (>35,000 HP/Fuel) to drain wealth. Replaced by Tier-Scaled Upkeep to preserve UI legibility and stat consequence."
   },
   "service_summaries": {
     "SolStationService": {
@@ -42148,7 +42108,7 @@ PlayerActionService (F034)
 
 Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
 
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses MOD_FUEL_PRICE for refueling costs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs, replacing flat volumetric fees. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
 
 Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
 
@@ -42166,9 +42126,10 @@ Responsibility: Manages the travel loop. Calculates fuel/time costs, applies Con
 
 Key Behavior:
 * Uses GameState.TRAVEL_DATA for distances.
-* Calculates and deducts the 'Convoy Tax' resource scaling based on active fleet size.
+* Calculates and deducts the 'Convoy Tax' resource scaling (a linear fractional offset) based on active fleet size.
 * Pauses travel for event resolution, including Blockade events.
 * Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
+* Applies integer-safe, flattened distance-based hull decay.
 * Consumable Logic: Handles the consumption of "Folded Space Drives" to execute instant travel via the `useFoldedDrive` argument.
 
 Dependencies: GameState, TimeService, RandomEventService.
@@ -42259,7 +42220,7 @@ DynamicValueResolver
 
 Responsibility: Calculates dynamic integer values for event effects based on game state context.
 
-Key Behavior: Resolves abstract value definitions into concrete numbers for rewards/penalties. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
+Key Behavior: Resolves abstract value definitions into concrete numbers for rewards/penalties. Parses the `SHIP_CLASS_SCALAR` directive for dynamic opportunity rewards. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
 
 Dependencies: GameState (Read-only), DB.
 
@@ -42404,13 +42365,9 @@ Context: The initial prototype had game logic loosely distributed, making state 
 Decision: The application was architected around a strict unidirectional data flow model (Input -> Logic -> State -> Render). All mutable game data is held in a single GameState object. Game logic is encapsulated in specialized, single-responsibility services that are coordinated by a central SimulationService facade. The UIManager reads from the GameState to render the UI, but never modifies it directly.
 
 Consequences:
-
 Pro: State changes are highly predictable and easy to trace back to the service that initiated them.
-
 Pro: Prevents complex, circular dependencies and potential race conditions.
-
 Pro: Simplifies debugging by creating a single source of truth for all game data.
-
 Con: Can introduce boilerplate, as even minor state changes must flow through the entire service -> state -> UI loop.
 
 ADR-002: SimulationService as a Facade & EventManager Refactor
@@ -42421,13 +42378,9 @@ Context: As new features were added, SimulationService was becoming a "god objec
 Decision: SimulationService was refactored into a lean Facade. Its direct logic was extracted into new, specialized services (PlayerActionService, TravelService, TimeService, etc.). EventManager was refactored to delegate input handling to context-specific modules (MarketEventHandler, CarouselEventHandler, etc.).
 
 Consequences:
-
 Pro: Enforces the Single Responsibility Principle, making the codebase significantly more modular and organized.
-
 Pro: Logic for a specific domain (e.g., travel) is now located in a single, predictable place.
-
 Pro: Reduces the cognitive load required to understand and modify any single part of the system.
-
 Con: Increases the number of files and the initial setup complexity in SimulationService's constructor.
 
 ADR-003: Decommissioning of SystemSurgeEffect
@@ -42438,11 +42391,8 @@ Context: The SystemSurgeEffect was a visual effect intended to celebrate major p
 Decision: The entire feature was surgically removed from the codebase. This included its dedicated JavaScript and CSS files, all HTML containers, and every line of code that triggered the effect from other services (GameState, MissionService, DebugService).
 
 Consequences:
-
 Pro: Eliminates a source of critical, user-facing bugs, immediately improving application stability.
-
 Pro: Creates a clean slate, free of legacy code, for a future, more robust and performant replacement effect.
-
 Con: Temporarily removes a "juice" or "reward" feature from the player experience.
 
 ADR-004: Robust "Hold-to-Act" Event Handling
@@ -42451,21 +42401,14 @@ Status: Accepted (2025-10-22)
 Context: The "hold-to-act" buttons (Refuel, Repair) on the Services screen exhibited "sticky" or "toggle" behavior on the primary test target (iOS Simulator / WKWebView). A mousedown/touchstart would trigger the action, but the UI re-render (caused by the resulting state change) would destroy the original button element. This prevented the corresponding mouseup/touchend event from ever being received, leaving the action "stuck" in an active loop.
 
 Decision: A persistent, delegated, and capture-phase event model was implemented in HoldEventHandler.js.
-
 Use Pointer Events: Switched from separate mouse and touch events to the modern Pointer Events API (pointerdown, pointerup, pointercancel) for unified and more reliable input handling.
-
 Delegated "Start": A single, persistent pointerdown listener is attached to document.body. This listener never gets destroyed and delegates the event to the correct handler based on e.target.
-
 Capture-Phase "Stop": Single, persistent pointerup and pointercancel listeners are attached to the window object using the { capture: true } option. This ensures the "stop" event is intercepted before the UI re-render can stop its propagation.
-
 State-Based Logic: The _start... and _stop... functions no longer add/remove listeners. They only set internal state flags (e.g., this.activeElementId), which the persistent global listeners check.
 
 Consequences:
-
 Pro: Creates an extremely robust event handling model that is immune to UI re-renders, permanently fixing the "sticky button" bug.
-
 Pro: Simplifies the handler logic by removing the need to manually manage listener lifecycles.
-
 Pro: Consolidates mouse and touch logic into a single, cleaner API.
 
 ADR-005: Economic Model Refactor to "Delayed Supply"
@@ -42476,13 +42419,9 @@ Context: The previous economic model used two separate forces: an immediate avai
 Decision: The model was unified into a single force. The old pressureEffect and immediate availabilityEffect were removed from the price calculation. The new model uses a single availabilityEffect (derived from the availabilityRatio of current stock vs. target stock) as the sole driver of player-initiated price changes. To prevent same-day abuse, this new availabilityEffect is now delayed by 7 days (inheriting the delay logic from the old system). The strength of this effect was also tuned to 0.50 to make it a viable core gameplay loop.
 
 Consequences:
-
 Pro: Simplifies the economic model to a single, clean cause-and-effect (trade -> delayed price change).
-
 Pro: Eliminates the "double-dip," making the market's reaction more logical and easier to balance.
-
 Pro: Still achieves the primary goal of preventing same-day/same-visit market manipulation.
-
 Pro: The marketPressure variable is retained, but as correctly noted in ECONOMIC_BEHAVIOR.md, it is now used exclusively for its non-price-related logic (influencing targetStock in replenishment), not for price calculation.
 
 ADR-006: Intel System Refactor to "Local Data Broker"
@@ -42493,15 +42432,10 @@ Context: The original IntelScreen.js was a static, non-interactive lore reposito
 Decision: Refactored the Intel system into a two-tab component ('Codex' for lore, 'Intel Market' for gameplay). A new IntelService was created to procedurally generate, price, and manage 'Intel Packets'. A dedicated IntelMarketRenderer was created to dynamically build the 'shop' UI, separating dynamic content from the static IntelScreen shell. This implements the 'Local Data Broker' feature.
 
 Consequences:
-
 Pro: Separates logic (IntelService) from static presentation (IntelScreen) and dynamic presentation (IntelMarketRenderer), avoiding a monolithic component.
-
 Pro: Creates a systemic, scalable, and recyclable gameplay loop.
-
 Pro: Provides a scalable, dynamic credit-sink based on player wealth.
-
 Pro: Creates a strong, non-arbitrary incentive for player travel.
-
 Con: Increases the number of services and adds new dependencies to TimeService and MarketService.
 
 ADR-007: Dynamic Viewport "Letterbox" Scaling
@@ -42510,23 +42444,15 @@ Status: Accepted (2025-11-16)
 Context: The game's UI is designed for a tall phone screen aspect ratio (e.g., iPhone Pro Max, ~926px). On shorter devices (e.g., iPhone SE) or in mobile browsers where the URL bar reduces the visualViewport, the UI was "crushed" and clipped.
 
 Decision: Implemented a dynamic scaling mechanism to ensure layout integrity.
-
 CSS Foundation: body is set to display: flex, align-items: center, justify-content: center, and height: 100dvh. css/global.css padding for .game-container was corrected to use env(safe-area-inset-top).
-
 JS Scaling Logic: The setAppHeight function in js/main.js now runs on load and resize. It compares the window.visualViewport.height to a fixed DESIGN_TARGET_HEIGHT of 926px.
-
 Scaling (If Shorter): If visualHeight < DESIGN_TARGET_HEIGHT, a CSS transform: scale() is applied to the .game-container, and transform-origin is set to top center. The body's align-items is set to flex-start to align the scaled container to the top of the viewport.
-
 No Scaling (If Taller): If visualHeight >= DESIGN_TARGET_HEIGHT, the transform is set to none, and the body's align-items is set to center to vertically center the container.
 
 Consequences:
-
 Pro: Guarantees the game's UI fits proportionally on any screen shorter than the 926px design target, preventing all clipping and layout breakage.
-
 Pro: Maintains the intended 1:1 layout on the target device (iPhone Pro Max) and taller screens (where it is vertically centered).
-
 Pro: Uses visualViewport to correctly adapt to dynamic browser UI changes (URL bar, keyboard).
-
 Con: Results in black bars (letterboxing) on shorter devices, as the UI does not reflow. This is the accepted trade-off for layout integrity.
 
 ADR-008: iOS-Targeted Rendering & Performance Standards
@@ -42535,21 +42461,14 @@ Status: Accepted (2025-11-21)
 Context: The Hangar/Shipyard screen, containing lists of complex ship cards, exhibited significant frame rate drops and scrolling lag on the primary target device (iPhone/iOS). The use of "expensive" CSS properties (background-blend-mode, box-shadow animations, 3D transforms) and synchronous drag handlers saturated the GPU compositor and main thread.
 
 Decision: A strict "Performance-First" rendering strategy was adopted for all scrollable/draggable UI components:
-
 CSS Virtualization ("Virtualization-Lite"): All list items in a carousel or scroll view must utilize contain: paint layout style and content-visibility: auto. This allows the browser to skip rendering work for off-screen elements without the complexity of JavaScript-based virtualization libraries.
-
 Decoupled Input Handling: All high-frequency input handlers (drag, swipe, scroll) must use requestAnimationFrame to decouple the input event rate (which can be >120Hz) from the render update rate, preventing layout thrashing.
-
 GPU-Friendly Animations: Animations are restricted to Composite-only properties (transform, opacity). "Expensive" effects like pulses must be achieved by animating the opacity of a static, pre-rendered pseudo-element, rather than animating box-shadow or border-color directly.
-
 3D Context Budget: The use of perspective and transform-style: preserve-3d is strictly limited to active, single elements. Applying 3D contexts to entire lists is prohibited to prevent memory explosion.
 
 Consequences:
-
 Pro: Achieves native-like 60fps (or 120fps) scrolling performance on iOS devices.
-
 Pro: Significantly reduces battery drain and device heat.
-
 Con: Requires more disciplined CSS authoring and strict avoidance of certain "convenient" modern CSS features (like mix-blend-modes) in scrollable areas.
 
 ADR-009: Deterministic "Modulo" Asset Variants
@@ -42558,21 +42477,14 @@ Status: Accepted (2025-11-24)
 Context: As the game's art assets expanded, ships needed multiple visual variants (e.g., different paint jobs or configurations). Tracking these specific filenames or adding a complex "skin inventory" system was deemed unnecessary overhead for the current phase.
 
 Decision: A lightweight, deterministic system was implemented using the AssetService.
-
 Player State: A single integer, visualSeed, was added to the player's state.
-
 Modulo Logic: The UI (via AssetService) calculates which variant to display using the formula: seed % variantCount. The variantCount is defined per ship in assets_config.js.
-
 Cycling: The seed increments indefinitely, ensuring that as the player progresses (or triggers a debug command), the visuals cycle predictably through available options (A -> B -> C -> A...).
 
 Consequences:
-
 Pro: Extremely low state overhead (one integer).
-
 Pro: Guarantees perfect distribution of variants without random number generation quirks.
-
 Pro: Simplifies testing; a single button press ("Cycle Ship Pics") verifies all asset paths.
-
 Pro: Decouples the save state from physical file paths; if assets are added/removed, the logic adapts automatically.
 
 ADR-010: Automated "Sibling Repo" Deployment Workflow
@@ -42581,25 +42493,16 @@ Status: Accepted (2025-11-28)
 Context: The project maintains two repositories: a source repo (Testing) and a live distribution repo (OrbitalTrading). As the asset library grew (specifically ship images), the manual "drag-and-drop" upload method via the GitHub web interface became unviable due to file count/size limits. Additionally, the manual process of moving build tools in and out of the project root to perform obfuscation was error-prone and tedious.
 
 Decision: A local shell script (publish_game.sh) was implemented to automate the entire deployment pipeline.
-
 Tool Borrowing: Temporarily moves obfuscation tools (build.js, package.json, etc.) from a sibling directory into the project root.
-
 Build Execution: Runs npm run build to generate the obfuscated dist folder.
-
 Sibling Deployment: Uses cp -R to overwrite the contents of the local sibling OrbitalTrading repository with the new dist files (preserving Xcode configuration files).
-
 Git Automation: Automatically stages, commits, and pushes the changes in the OrbitalTrading repo to GitHub.
-
 Cleanup: Moves the build tools and the generated dist folder back to their storage directory, restoring the source workspace to its clean state.
 
 Consequences:
-
 Pro: Bypasses GitHub web interface limits entirely, allowing for unlimited asset expansion.
-
 Pro: Reduces the deployment time from minutes of manual work to seconds.
-
 Pro: Eliminates human error in the build/transfer process (e.g., forgetting to move a file).
-
 Pro: strict separation of concerns; the "clean" source repo remains free of build artifacts and tooling config files when not actively building.
 
 ADR-011: Responsive Mobile Interaction Isolation
@@ -42608,23 +42511,15 @@ Status: Accepted (2026-01-11)
 Context: Small interactive elements (specifically attribute pills) nested within the draggable Carousel component exhibited inconsistent responsiveness. Mobile touch-starts were being misinterpreted as the beginning of a drag operation, and proactive tooltip clearing in the input layer caused a race condition that required double-taps to activate tooltips.
 
 Decision: A multi-layered interaction isolation strategy was implemented.
-
 Semantic Button Upgrade: Attribute pills were upgraded from div to <button> elements to utilize native browser event prioritization for interactive targets.
-
 Input Layer Suppression: Modified EventManager.js to explicitly block the CarouselEventHandler from initializing a drag state if an actionable element ([data-action]) is targeted.
-
 Contextual Tooltip Cleanup: Updated the global touchstart wrapper to suppress proactive tooltip clearing when touching interactive elements, ensuring the subsequent click handler can properly manage the toggle state.
-
 Performance Overrides: Applied touch-action: manipulation and -webkit-tap-highlight-color: transparent to all small interactive pills to eliminate the 300ms iOS tap delay.
 
 Consequences:
-
 Pro: Guarantees native-like 1:1 responsiveness for all ship card interactions.
-
 Pro: Eliminates "double-tap" logic bugs by stabilizing the tooltip lifecycle.
-
 Pro: Prevents carousel jitter and accidental swiping during detailed interaction.
-
 Pro: Maintains existing carousel performance for background/non-interactive card areas.
 
 ADR-012: Modular Ship Upgrades & Destructive Replacement
@@ -42633,23 +42528,15 @@ Status: Accepted (2026-01-11)
 Context: The game's previous system used static "Attributes" hardcoded to specific ship classes. This limited player customization and economic strategy. A more flexible system was needed where upgrades could be acquired, installed, and traded.
 
 Decision: Transitioned to a "Modular Upgrade" system with a specific "Destructive Replacement" constraint.
-
 Mutable State: Upgrades are no longer static DB properties but are stored in the shipState.upgrades array (max 3).
-
 Economic Integration: Upgrades have intrinsic credit values. When a ship is sold, the value of its installed upgrades is added to the base price before depreciation is applied.
-
 Destructive Replacement: To enforce strategic decision-making without complex inventory management, a ship is limited to 3 slots. Installing a 4th upgrade forces the player to select and permanently destroy an existing one.
-
 Registry Pattern: GameAttributes.js was refactored from a static logic map to an Upgrade Registry, defining metadata and neutralizing legacy attribute logic.
 
 Consequences:
-
 Pro: Greatly expands player agency and customization options.
-
 Pro: Adds a new layer to the economy (upgrading ships to increase resale value).
-
 Pro: "Destructive Replacement" creates high-stakes decisions without the UI clutter of a "spare parts" inventory.
-
 Con: Requires safeguarding against accidental destruction (mitigated by the Triple-Confirmation modal).
 
 ADR-013: CSS-Driven News Ticker Layout (Infinite Loop)
@@ -42658,23 +42545,15 @@ Status: Accepted (2026-01-15)
 Context: The scrolling news ticker exhibited persistent "jitters" (pixel jumps) and "blinks" (layer repaints) at the end of each animation loop. This was caused by sub-pixel discrepancies between JavaScript width calculations and CSS % transforms, as well as hardware compositing issues on WebKit.
 
 Decision: Enforce a strict CSS-driven layout strategy.
-
 Single Source of Truth: NewsTickerService returns a single, non-duplicated string.
-
 Flexbox Wrapper: Content is wrapped in a dedicated .ticker-block flex item.
-
 CSS Duplication: The UI creates a specific DOM structure [Block A][Block B]. This guarantees that Width(Parent) === 2 * Width(Block).
-
 Blind Animation: The CSS animation moves translateX(-50%). Because of the rigid DOM structure, -50% is mathematically guaranteed to equal the exact width of Block A, ensuring a seamless visual loop without sub-pixel rounding errors.
-
 Hardware Acceleration: Strict use of will-change: transform and backface-visibility: hidden to prevent layout thrashing and repaints.
 
 Consequences:
-
 Pro: Eliminates visual jitter caused by JS/CSS measurement mismatches.
-
 Pro: Prevents "blinking" on loop reset by keeping the layer promoted to the GPU.
-
 Con: Creates a slightly more complex DOM structure (.news-ticker-content > .ticker-block).
 
 ADR-014: Persistent Asset Architecture (IndexedDB "Locker")
@@ -42683,21 +42562,14 @@ Status: Accepted (2026-01-15)
 Context: On iOS devices (the primary target), the OS aggressively evicts web cache to save space. This resulted in persistent "pop-in" or missing assets for the player, breaking immersion. Standard browser caching was unreliable.
 
 Decision: Implemented a manual "Locker" system using IndexedDB.
-
 AssetStorageService: A low-level wrapper handles reading/writing raw Blob data to an IndexedDB store named OrbitalAssetsDB.
-
 Hydration: On game start (and key events like travel), AssetService "hydrates" critical assets. It checks IDB first. If missing, it fetches from the network, saves the Blob to IDB, and creates a blob: URL.
-
 Memory Cache: AssetService maintains a Map of file paths to blob: URLs for instant, synchronous access during rendering.
 
 Consequences:
-
 Pro: Assets act like "installed" data (Documents & Data on iOS) and are protected from cache eviction.
-
 Pro: Zero-latency rendering for hydrated assets (no network request, even to localhost).
-
 Pro: Enables seamless offline play after initial load.
-
 Con: Increases initial memory usage slightly due to Blob URLs. Requires manual management of the asset lifecycle.
 
 ADR-015: Split Fuel Economy Logic
@@ -42706,17 +42578,12 @@ Status: Accepted (2026-01-15)
 Context: The MOD_FUEL_COST attribute was overloading two distinct mechanics: travel efficiency (burn rate) and service cost (station prices). This meant "Engine Mods" (which increase burn) inadvertently made refueling more expensive per unit, creating a "double tax" on the player.
 
 Decision: The logic was split into two distinct attribute types:
-
 MOD_FUEL_BURN: Multiplies the amount of fuel consumed during travel (TravelService). Affected by Engine Mods.
-
 MOD_FUEL_PRICE: Multiplies the credit cost of purchasing fuel at a station (PlayerActionService). Affected by Fuel Pass.
 
 Consequences:
-
 Pro: Decouples mechanics, allowing for finer balance control.
-
 Pro: Fixes the "Double Tax" bug, making Engine Mods a fair trade-off (Speed vs. Efficiency) rather than a pure penalty.
-
 Pro: Clarifies the UI stats for the player.
 
 ADR-016: Client-Side Economy Simulation (The Bot)
@@ -42725,21 +42592,14 @@ Status: Accepted (2026-01-17)
 Context: Validating the new "Delayed Supply" economic model (ADR-005) required long-term data on price stability and exploitability. Manual playtesting was too slow, and external modeling tools could not accurately replicate the game's specific logic/state coupled with the random event system.
 
 Decision: Implemented an internal "Headless Player" state machine (AutomatedPlayerService.js).
-
 Integration: The bot runs within the live game client, utilizing the exact same SimulationService and GameState as a human player.
-
 Architecture: It bypasses the EventManager and Input Layer entirely, calling service methods directly to execute trades and travel.
-
 Behavior: The bot uses a goal-oriented action planning (GOAP) approach, dynamically switching between strategies (e.g., "Crash Market", "Deplete Stock", "Maintenance") based on current resources and market conditions.
 
 Consequences:
-
 Pro: Provides 100% accurate validation of the economy, as it uses the actual production code.
-
 Pro: Allows for rapid "10-Year" simulations (running at ~100ms per day) to detect long-term inflation or deflation trends.
-
 Pro: Exposes edge cases in the logic layer that UI restrictions might otherwise hide.
-
 Con: Adds a large service file that is strictly for debug/dev purposes (must be excluded from production build or flagged off).
 
 ADR-017: Canvas-Driven Transition Overlays
@@ -42748,21 +42608,14 @@ Status: Accepted (2026-01-17)
 Context: The travel sequence required a high-fidelity visual transition to mask the data loading/processing time and provide immersion. CSS-based animations were insufficient for complex particle effects (starfields) and caused layout thrashing when manipulating large DOM overlays.
 
 Decision: Implemented a dedicated TravelAnimationService using the HTML5 Canvas API.
-
 Blocking Overlay: The transition acts as a modal, blocking all interaction and effectively pausing the "Game Loop" while the "Visual Loop" runs.
-
 Canvas Rendering: Starfields, engine particles, and celestial objects are rendered via requestAnimationFrame on a <canvas> element, separate from the main DOM tree.
-
 Asynchronous Handoff: The SimulationService calculates the result of travel instantly, but the UIManager defers the screen update until the TravelAnimationService signals completion via a callback.
 
 Consequences:
-
 Pro: High-performance rendering of particle effects (60fps) without touching the DOM.
-
 Pro: cleanly separates the "Simulation" (instant) from the "Experience" (time-based).
-
 Pro: Allows for complex, procedurally generated visuals (randomized star fields) that would be impossible with static CSS assets.
-
 Con: Requires manual management of the Canvas context and resize events.
 
 ADR-018: Procedural "3-Era" Age Progression System
@@ -42771,21 +42624,14 @@ Status: Accepted (2026-01-20)
 Context: The original "Age Event" system relied on static, hand-written narrative events in age_events.js (e.g., "Captain Who?" at Day 366). This approach was not scalable for a "forever game" loop, lacked granular progression (only 2 events existed), and was disconnected from the core simulation stats.
 
 Decision: Replaced static events with a procedural "3-Era Age Engine" managed entirely within TimeService.js.
-
 Era 1 (Prime Years, 25-99): Cyclic, small stat efficiency boosts (Profit -> Intel -> Fuel) triggered every birthday.
-
 Era 2 (Transhumanist, 100-199): Cybernetic augmentations triggered every 5 years, modifying global simulation parameters (Supply, Spawn Rates).
-
 Era 3 (Ancient, 200+): "Guild Tribute" grants triggered every 5 years, providing free service vouchers (Fuel/Repair) to sustain infinite play.
 
 Consequences:
-
 Pro: Infinite, scalable progression without writing new content.
-
 Pro: Deeply integrates player age into the economic simulation (e.g., actually modifying global supply vs. just giving a text popup).
-
 Pro: Allows for the deprecation of age_events.js and legacy tracking variables like birthdayProfitBonus.
-
 Con: Reduces narrative flavor text in favor of systemic tooltips.
 
 ADR-019: Data-Driven Event System (Registry Pattern)
@@ -42794,21 +42640,14 @@ Status: Accepted (2026-01-21)
 Context: The existing event system logic was often hard-coded or required modifying service files to add new content, making it difficult to scale or balance the "Travel Event" pool. A more data-centric approach was needed to allow for rapid content iteration and complex branching without touching logic code.
 
 Decision: Implemented a Registry & Resolver pattern (Event System 2.0).
-
 Registry (events.js): All event content (text, choices, conditions) is defined in a static JSON-like schema. It is purely passive data.
-
 Stateless Resolvers: Logic is moved to specialized, stateless services. ConditionEvaluator validates requirements (Items, Perks). OutcomeResolver processes the player's choice and determines the result (Deterministic vs. Weighted RNG).
-
 Decoupled Effects: The eventEffectResolver applies the final state mutations (Credits, Hull, Fuel) based on the outcome, completely separating the "Why" (Event) from the "How" (Effect).
 
 Consequences:
-
 Pro: Massive scalability; new events can be added by simply creating a new object in the registry.
-
 Pro: Supports complex dependency chains (e.g., "Must have X item AND Y perk") via the generic requirements array.
-
 Pro: Enables "Weighted RNG" outcomes (Risk vs. Reward) purely through configuration.
-
 Con: Adds a layer of abstraction; debugging a specific event requires checking both the data definition and the resolver logic.
 
 ADR-020: The "Switchboard" UI Architecture (Facade Pattern)
@@ -42817,27 +42656,17 @@ Status: Accepted (2026-01-22)
 Context: UIManager.js had grown into a 2,600+ line "God Object," handling everything from market SVG rendering to complex hangar interactions and mission HUD logic. This monolithic structure made maintenance error-prone and severely hampered AI code generation capabilities due to token limits.
 
 Decision: Refactored the UIManager into a thin Facade ("Switchboard") that delegates specific domain logic to six specialized Controllers:
-
 UIModalEngine: Lifecycle management for the global modal queue.
-
 UIHelpManager: Orchestration of the contextual help modals and micro-pagination slides. (Replaced UITutorialManager).
-
 UIMarketControl: Market screen rendering, state retention, and graph generation.
-
 UIMissionControl: Mission data screens, sticky bar HUD, and Intel interactions.
-
 UIHangarControl: Ship interactions, carousels, and upgrade installation flows.
-
 UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA).
 
 Consequences:
-
 Pro: Drastically reduces file size (UIManager is now <500 lines), ensuring AI tools can parse and update it without truncation.
-
 Pro: Enforces separation of concerns; Market logic is strictly isolated from Hangar logic.
-
 Pro: Preserves the public API; UIManager methods act as proxies, so no external services (SimulationService, ActionClickHandler) required refactoring.
-
 Con: Adds a slight layer of indirection (Proxy -> Controller -> Logic), but the maintenance benefits far outweigh this cost.
 
 ADR-021: Pre-Flight Asset Hydration & EULA Gate
@@ -42846,21 +42675,14 @@ Status: Accepted (2026-01-23)
 Context: The game requires a large number of heavy image assets (ships, backgrounds) that need to be loaded from the network and stored in IndexedDB (AssetStorageService) to prevent iOS cache eviction. Doing this during gameplay caused stutter. Additionally, legal requirements necessitated a mandatory EULA acceptance before the game loop could legally begin.
 
 Decision: Implemented a "Pre-Flight" Loading State in main.js.
-
 Boot Phase: On DOMContentLoaded, only AssetService and a lightweight UI subset are initialized. The "Start Game" button is disabled/gated.
-
 Background Hydration: The AssetService immediately begins fetching and caching "Boot Assets" (Title screen art, common UI elements) in the background.
-
 EULA Check: The user must explicitly interact with the EULA modal checkbox. This interaction is used as the "User Gesture" required by modern browsers to unlock AudioContext and other restricted APIs.
-
 Deferred Instantiation: The core game services (SimulationService, GameState) are only instantiated after the EULA is accepted and the "Start" button is clicked.
 
 Consequences:
-
 Pro: Ensures all critical assets are ready before the player sees the first screen, eliminating "pop-in".
-
 Pro: Satisfies legal compliance requirements.
-
 Pro: Optimizes the "First Contentful Paint" time by delaying heavy JS execution until after user intent is confirmed.
 
 ADR-022: Modular Event System (Facade Pattern)
@@ -42869,19 +42691,13 @@ Status: Accepted (2026-01-24)
 Context: The events.js file, which contained the definitions for all random events, had become unwieldy (>1000 lines). Navigating between "Traffic" events and "Hazard" events was difficult, and the file size risked hitting AI context limits.
 
 Decision: Split the monolithic event registry into specialized, domain-specific modules.
-
 Modular files: Created events_traffic.js, events_entropy.js, events_hazards.js, etc., each exporting a specific array of event objects.
-
 Facade: The main events.js file was converted into a Facade that imports these arrays and spreads them into a single master RANDOM_EVENTS export.
-
 Transparency: The rest of the codebase (e.g., RandomEventService) continues to import from events.js and remains unaware of the underlying file split.
 
 Consequences:
-
 Pro: drastically improves code organization and readability.
-
 Pro: Allows multiple developers (or AI sessions) to work on different event categories simultaneously without merge conflicts.
-
 Pro: No refactoring required for consuming services.
 
 ADR-023: Lore Data Registry (Facade Pattern)
@@ -42890,19 +42706,13 @@ Status: Accepted (2026-01-25)
 Context: Lore text was scattered or unavailable for scalable expansion. A structure was needed to allow for future "Acts/Volumes" of lore without cluttering a single file.
 
 Decision: Implemented a Registry Facade pattern for Lore (loreRegistry.js).
-
 Modular Storage: Lore content is stored in separate files based on category or volume (e.g., lore_broadstrokes.js).
-
 Central Aggregator: loreRegistry.js imports these modules and spreads them into a single LORE_REGISTRY object export.
-
 Consumption: The UI and other services consume the registry as a single source of truth, agnostic to the underlying file structure.
 
 Consequences:
-
 Pro: Scalable architecture for future narrative expansion.
-
 Pro: Keeps individual file sizes manageable.
-
 Pro: simplifies access for the UI layer.
 
 ADR-024: Tutorial Architecture (Logic-View Separation) [DEPRECATED]
@@ -42911,17 +42721,12 @@ Status: Deprecated (2026-02-22) - Replaced by ADR-033: Contextual Help Modal Sys
 Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
 
 Decision: Split the tutorial responsibilities into two distinct layers:
-
 TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock in the GameState. It knows what to show, but not how.
-
 UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
 
 Consequences:
-
 Pro: Clean separation of state (persisted) and view (ephemeral).
-
 Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
-
 Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller.
 
 ADR-025: Mission Data Registry (Facade Pattern)
@@ -42930,19 +42735,13 @@ Status: Accepted (2026-01-26)
 Context: The `missions.js` file was becoming a monolith, mixing tutorial logic, license unlocks, and generic delivery contracts. This structure made it difficult to integrate with external "Mission Maker" tools and complicated the addition of new mission "packs" (e.g., Story Act 1).
 
 Decision: Implemented a Registry Facade pattern for Missions, mirroring the Event and Lore architectures.
-
 Modular Storage: Missions are defined in specialized files within `js/data/missions/` (e.g., `tutorial_missions.js`, `license_missions.js`).
-
 Central Registry: `missionRegistry.js` aggregates these modules and exports a single `MISSION_REGISTRY` object.
-
 Database Integration: `database.js` imports the registry instead of individual files, maintaining a clean dependency graph.
 
 Consequences:
-
 Pro: Facilitates "plug-and-play" content expansion; new mission packs can be added by simply importing/spreading them in the registry.
-
 Pro: Isolates specific mission logic (e.g., Tutorial vs. Story), making the codebase easier to navigate.
-
 Pro: Prepares the architecture for automated content generation and ingestion.
 
 ADR-026: Defensive Button Interaction Strategy (The "Mars Revert" Protocol)
@@ -42955,11 +42754,8 @@ Decision: A strict "Safety First" protocol was adopted for all UI interactions:
 2. **Event default Prevention:** All delegated action handlers in `ActionClickHandler` (and similar) MUST call `e.preventDefault()` immediately, even if `type="button"` is present, to act as a double-layer fail-safe against browser quirks.
 
 Consequences:
-
 Pro: Permanently eliminates "phantom" page reloads and state reverts.
-
 Pro: Decouples game logic triggers from standard HTML form behaviors.
-
 Pro: Ensures consistent behavior across different browser engines (WebKit vs. Blink) which handle default button types differently.
 
 ADR-027: Mission System 2.0 (Logic/State Separation)
@@ -43104,6 +42900,20 @@ Consequences:
 * Pro: Significantly limits image memory bloat on mobile targets.
 * Pro: Dynamic DOM injection allows modals to utilize these portraits contextually without hardcoding image tags into every HTML template.
 * Con: Requires an external build-step (batch cropping, scaling, and texture packing) whenever new character visual assets are generated.
+
+ADR-036: Transition from Volumetric Sinks to Tier-Scaled Upkeep
+Status: Accepted (2026-03-10)
+
+Context: Balance v1 used "Volumetric Sinks" (Capital ships had 35,000 HP and 50,000 fuel) with flat service costs (e.g., 75cr/HP for repairs) to mathematically drain late-game wealth. However, inflating physical stats beyond 1,000 broke UI legibility, trivialized small mechanics (like 10 HP event damage), and violated the design constraints of a tactile, grounded simulation.
+
+Decision: Reverted all physical ship stats strictly below 1,000 capacity. Replaced the "Volumetric Sink" with a "Tier-Scaled Upkeep" economic model:
+* **Algorithmic Pricing:** Ship purchase prices are strictly derived from their stat weights (`Cargo*300 + HP*200 + Fuel*100`) multiplied by an exponential Class Multiplier. 
+* **Dynamic Service Costs:** Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0001`).
+
+Consequences:
+* Pro: Ensures ship physical stats remain clean, readable, and highly consequential. 
+* Pro: Late-game ships remain massive operational and financial sinks, preserving loss aversion and friction for billionaires.
+* Pro: "Packing Peanut" mechanics are enforced: because huge ships still have tiny holds (<1,000), players must fill them with mixed tiers of commodities instead of hoarding a single high-tier item.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -43349,7 +43159,7 @@ graph TD
 
     subgraph Application
         G --> H[Resolve Outcome: RNG/Fixed];
-        H --> I[DynamicValueResolver: Calculate Quantities];
+        H --> I[DynamicValueResolver: Parse Base Values & SHIP_CLASS_SCALAR];
         I --> J[eventEffectResolver: Apply Effects];
         J --> K((Mutate GameState));
     end
@@ -43603,6 +43413,8 @@ This object buffers data during the async travel/event loop.
 ## 2. Player State (`state.player`)
 
 Contains all progression, assets, and statistics for the user.
+
+**IMPORTANT NOTE ON SHIP ATTRIBUTES:** All physical ship attributes (`maxHealth`, `cargoCapacity`, `maxFuel`) stored here or retrieved via DB definitions are strictly bounded to remain `<= 1000`. This constraint is mathematically necessary to sustain the Tier-Scaled Upkeep economy and the "Packing Peanut" inventory strategy.
 
 | Property | Type | Description |
 | --- | --- | --- |

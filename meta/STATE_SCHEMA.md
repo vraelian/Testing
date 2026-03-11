@@ -41,6 +41,8 @@ This object buffers data during the async travel/event loop.
 
 Contains all progression, assets, and statistics for the user.
 
+**IMPORTANT NOTE ON SHIP ATTRIBUTES:** All physical ship attributes (`maxHealth`, `cargoCapacity`, `maxFuel`) stored here or retrieved via DB definitions are strictly bounded to remain `<= 1000`. This constraint is mathematically necessary to sustain the Tier-Scaled Upkeep economy and the "Packing Peanut" inventory strategy.
+
 | Property | Type | Description |
 | --- | --- | --- |
 | `name` | String | Player's chosen name. |
