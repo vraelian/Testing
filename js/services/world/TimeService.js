@@ -351,7 +351,24 @@ export class TimeService {
     // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---
     _applyGarnishment() {
         const { player, day } = this.gameState;
-        if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
+        if (player.debt <= 0 || !player.loanStartDate) return;
+
+        // Fallbacks for legacy saves before Phase 1 schema changes
+        const activeLoanType = player.loanType || 'guild';
+        const activeDueDate = player.loanDueDate || (player.loanStartDate + GAME_RULES.LOAN_GARNISHMENT_DAYS);
+        const isDelinquent = day > activeDueDate;
+        
+        if (activeLoanType === 'syndicate') {
+            // Syndicate Repo Logic
+            const baseDay = player.lastRepoStrikeDay || activeDueDate;
+            if (day >= baseDay + 60 && !player.repoNextEventDay) {
+                player.repoNextEventDay = day + Math.floor(Math.random() * (260 - 120 + 1)) + 120;
+                const msg = "A secure, untraceable message was routed directly to your personal terminal.<br><br><i>'You remain in debt to the Syndicate, and that debt is long past due. If we do not receive what is owed... then there will be consequences.'</i>";
+                this.uiManager.queueModal('event-modal', "<span style='font-size: smaller;'>Syndicate Communication</span>", msg, null, { buttonClass: 'bg-red-800/80' });
+            }
+        } else {
+            // Guild Garnishment Logic
+            if (!isDelinquent) return;
             // Apply garnishment on the same cycle as interest
             if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) return;
 
@@ -375,6 +392,10 @@ export class TimeService {
                 if (player.debt <= 0) {
                     player.debt = 0;
                     player.loanStartDate = null;
+                    player.loanDueDate = null;
+                    player.loanType = 'guild';
+                    player.repoNextEventDay = null;
+                    player.lastRepoStrikeDay = null;
                     player.monthlyInterestAmount = 0;
                     player.seenGarnishmentWarning = false; // Reset for future loans
 

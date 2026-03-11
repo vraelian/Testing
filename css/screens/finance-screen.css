@@ -78,34 +78,27 @@
     box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
 }
 
-.btn-module:hover:not(:disabled) {
-    background-color: #334155; /* slate-700 */
-    border-color: #475569; /* slate-600 */
-    color: #f1f5f9; /* slate-100 */
-    transform: translateY(-1px);
-    /* VIRTUAL WORKBENCH: Enhance shadow on hover */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
-}
-
 .btn-module:disabled {
     background-color: #0f172a; /* slate-900 */
     border-color: #1e293b; /* slate-800 */
     color: #334155; /* slate-700 */
     cursor: not-allowed;
     opacity: 0.6;
-    /* VIRTUAL WORKBENCH: Remove convex shadow on disabled */
     box-shadow: none;
 }
 
-/* --- VIRTUAL WORKBENCH START: Predatory Corporate Terminal --- */
+/* --- VIRTUAL WORKBENCH START: Corporate Terminal --- */
 .btn-module-credit {
-    background: linear-gradient(180deg, #0f172a 0%, #020617 100%); /* Dark industrial slate */
-    border: 1px solid #0891b2; /* Corporate Cyan */
-    color: #fbbf24; /* Predatory Gold */
     position: relative;
     overflow: hidden;
-    box-shadow: 0 0 8px rgba(8, 145, 178, 0.3), inset 0 0 15px rgba(8, 145, 178, 0.15);
-    text-shadow: 0 0 4px rgba(251, 191, 36, 0.3);
+    /* Added strong dimensional drop-shadow and top-highlight for 3D button effect */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Tactile touch feedback (replaces hover) */
+.btn-module-credit:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 /* Subtle scanline overlay for the terminal feel */
@@ -126,30 +119,23 @@
     z-index: 1;
 }
 
-.btn-module-credit:hover:not(:disabled) {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-    border-color: #22d3ee; /* Bright Cyan */
-    color: #fde68a; /* Brighter Gold */
-    box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), inset 0 0 20px rgba(34, 211, 238, 0.2);
-    transform: translateY(-1px);
-}
-
 /* Styling for the HTML structural labels */
 .btn-module-credit .loan-label {
-    color: #22d3ee; /* Cyan */
-    text-shadow: 0 0 6px rgba(34, 211, 238, 0.6);
+    color: var(--theme-text-color, #22d3ee); 
     font-weight: 700;
-    border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding-bottom: 2px;
     width: 80%;
 }
 
 .btn-module-credit .loan-details .detail-block {
-    background-color: rgba(0, 0, 0, 0.8);
-    padding: 3px 6px;
-    border-radius: 4px; /* Softened sharp corners */
-    border: 1px solid rgba(251, 191, 36, 0.3); /* Dimmer gold border */
-    color: #fde68a; 
+    /* Use the theme gradient but whitewash it by 90% for a light, location-themed pastel tint */
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), var(--theme-gradient, linear-gradient(135deg, #f8fafc, #f8fafc));
+    padding: 6px 8px; /* Increased padding */
+    border-radius: 6px; 
+    border: 2px solid var(--theme-border-color, #64748b); /* Distinct themed border */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); /* Inner shadow for depth */
+    color: #0f172a; /* Dark slate text */
     font-family: 'Roboto Mono', monospace;
 }
 
@@ -184,7 +170,7 @@
     align-items: center;
     justify-content: center;
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: #000000;
     opacity: 0;
@@ -197,6 +183,57 @@
 }
 /* --- VIRTUAL WORKBENCH END --- */
 
+/* --- VIRTUAL WORKBENCH: Custom Slider Styling --- */
+input[type=range]#debt-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]#debt-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    cursor: pointer;
+    margin-top: -6px; /* center thumb over track */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+input[type=range]#debt-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #4b5563; /* grey track */
+    border-radius: 4px;
+    border: 1px solid #374151;
+}
+
+input[type=range]#debt-slider:focus {
+    outline: none;
+}
+
+input[type=range]#debt-slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+input[type=range]#debt-slider::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #4b5563;
+    border-radius: 4px;
+    border: 1px solid #374151;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 /* --- VIRTUAL WORKBENCH: MODIFIED Muted destructive button --- */
 .btn-module-destructive {
@@ -205,10 +242,39 @@
     color: #fecaca; /* red-200 */
 }
 
-.btn-module-destructive:hover:not(:disabled) {
-    background-color: #991b1b; /* red-800 */
-    border-color: #dc2626; /* red-600 */
-    color: #ffffff;
+/* Two-Step confirm payload for the payment button */
+.btn-module-destructive.primed {
+    background: #e2e8f0 !important;
+    border-color: #991b1b !important;
+    color: #000000 !important;
+    box-shadow: 0 0 20px rgba(226, 232, 240, 0.6), inset 0 0 40px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(0,0,0,0.3) !important;
+    text-shadow: none !important;
+    transform: scale(0.98);
+}
+
+.btn-module-destructive .loan-normal-content {
+    transition: opacity 0.2s ease;
+    opacity: 1;
+}
+.btn-module-destructive.primed .loan-normal-content {
+    opacity: 0;
+}
+.btn-module-destructive .loan-confirm-content {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #000000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+.btn-module-destructive.primed .loan-confirm-content {
+    opacity: 1;
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
@@ -223,8 +289,6 @@
     overflow: hidden; /* Prevent this panel itself from scrolling */
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    
-    /* REMOVED: padding, border, background, shadow. Now handled by .finance-module-panel */
 }
 /* --- END VIRTUAL WORKBENCH --- */
 

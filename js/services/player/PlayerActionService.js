@@ -642,39 +642,64 @@ export class PlayerActionService {
 
 
     /**
-     * Pays off the player's entire outstanding debt.
+     * Pays off a specified amount of the player's outstanding debt.
+     * @param {number|Event} amount - The specific amount to pay off, or the Event object for pre-Phase 3 compatibility.
      * @param {Event} [event] - The click event for placing floating text.
      */
-    payOffDebt(event) {
+    payOffDebt(amount, event) {
         if (this.gameState.isGameOver) return;
         const { player, currentLocationId } = this.gameState;
         
-        let paymentRequired = player.debt;
+        // --- BACKWARD COMPATIBILITY SAFEGUARD ---
+        // Until Phase 3 updates ActionClickHandler, `amount` might be the MouseEvent
+        let paymentAmount = amount;
+        let domEvent = event;
+        if (amount instanceof Event || (amount && amount.type)) {
+            paymentAmount = null; // Pay full debt
+            domEvent = amount;
+        }
+        // ----------------------------------------
+
+        let paymentRequired = paymentAmount !== null && paymentAmount !== undefined ? paymentAmount : player.debt;
+        if (paymentRequired > player.debt) paymentRequired = player.debt;
+        if (paymentRequired <= 0) return;
+        
+        let actualCost = paymentRequired;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER DEBT DISCOUNT) ---
         if (currentLocationId === LOCATION_IDS.KEPLER) {
-            paymentRequired = Math.floor(player.debt * 0.85);
+            actualCost = Math.floor(paymentRequired * 0.85);
         }
         // --- END VIRTUAL WORKBENCH ---
 
-        if (player.credits < paymentRequired) {
+        if (player.credits < actualCost) {
             const extraText = (currentLocationId === LOCATION_IDS.KEPLER) ? 
-                ` Even with the Kepler discount (${formatCredits(paymentRequired)}), you are short.` : "";
-            this.uiManager.queueModal('event-modal', "Insufficient Funds", `You can't afford to pay off your entire debt.${extraText}`);
+                ` Even with the Kepler discount (${formatCredits(actualCost)}), you are short.` : "";
+            this.uiManager.queueModal('event-modal', "Insufficient Funds", `You can't afford to pay this amount.${extraText}`);
             return;
         }
 
-        player.credits -= paymentRequired;
+        player.credits -= actualCost;
+        player.debt -= paymentRequired;
 
-        if (event) {
-             this.uiManager.createFloatingText(`-${formatCredits(paymentRequired, false)}`, event.clientX, event.clientY, '#f87171');
+        if (domEvent) {
+             this.uiManager.createFloatingText(`-${formatCredits(actualCost, false)}`, domEvent.clientX, domEvent.clientY, '#f87171');
         }
 
-        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(player.debt)} in debt (Cost: ${formatCredits(paymentRequired)}).`);
-        this.simulationService._logTransaction('loan', -paymentRequired, `Paid off debt`);
-        player.debt = 0;
-        player.monthlyInterestAmount = 0;
-        player.loanStartDate = null;
+        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(paymentRequired)} in debt (Cost: ${formatCredits(actualCost)}).`);
+        this.simulationService._logTransaction('loan', -actualCost, `Paid down debt principal`);
+        
+        // Handle full repayment clears
+        if (player.debt <= 0) {
+            player.debt = 0;
+            player.monthlyInterestAmount = 0;
+            player.loanStartDate = null;
+            player.loanDueDate = null;
+            player.loanType = 'guild';
+            player.repoNextEventDay = null;
+            player.lastRepoStrikeDay = null;
+            player.seenGarnishmentWarning = false;
+        }
 
         this.timeService._checkMilestones();
         this.gameState.setState({});
@@ -682,7 +707,7 @@ export class PlayerActionService {
 
     /**
      * Allows the player to take out a loan, adding to their debt.
-     * @param {object} loanData - Contains amount, fee, and interest for the loan.
+     * @param {object} loanData - Contains amount, fee, interest, type, and termDays for the loan.
      * @param {Event} [event] - The click event for placing floating text.
      */
     takeLoan(loanData, event) {
@@ -706,7 +731,9 @@ export class PlayerActionService {
         }
 
         player.credits -= finalFee;
-        this.simulationService._logTransaction('loan', -finalFee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
+        if (finalFee > 0) {
+            this.simulationService._logTransaction('loan', -finalFee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
+        }
         
         player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
 
@@ -719,12 +746,17 @@ export class PlayerActionService {
         player.debt += loanData.amount;
         player.monthlyInterestAmount = loanData.interest;
         player.loanStartDate = day;
+        player.loanDueDate = day + (loanData.termDays || 1080);
+        player.loanType = loanData.type || 'guild';
+        player.repoNextEventDay = null;
+        player.lastRepoStrikeDay = null;
         player.seenGarnishmentWarning = false;
 
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-finalFee, true)}</span> was deducted.`;
+        let feeText = finalFee > 0 ? `<br>A financing fee of <span class="text-glow-red">${formatCredits(-finalFee, true)}</span> was deducted.` : `<br>No upfront financing fee was required.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.${feeText}`;
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
-        this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
+        this.logger.info.player(day, 'LOAN_TAKEN', `Took a ${player.loanType} loan for ${formatCredits(loanData.amount)}.`);
         this.gameState.setState({});
     }
 
