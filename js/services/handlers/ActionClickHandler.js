@@ -23,11 +23,32 @@ export class ActionClickHandler {
 
         // --- VIRTUAL WORKBENCH: Global click listener to dismiss primed loan buttons ---
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.btn-module-credit')) {
-                document.querySelectorAll('.btn-module-credit.primed').forEach(btn => {
-                    delete btn.dataset.primed;
-                    btn.classList.remove('primed');
+            const primedBtns = document.querySelectorAll('.primed');
+            if (primedBtns.length > 0) {
+                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"]');
+                primedBtns.forEach(btn => {
+                    if (btn !== closestTarget) {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                    }
                 });
+            }
+        });
+
+        // --- VIRTUAL WORKBENCH: Global input listener for Finance Slider ---
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'debt-slider') {
+                const display = document.getElementById('debt-payment-display');
+                if (display) {
+                    display.innerHTML = formatCredits(-parseInt(e.target.value, 10), true);
+                    
+                    // Unprime the pay button if sliding to prevent accidental payment of new amount
+                    const payBtn = document.querySelector('[data-action="pay_debt"].primed');
+                    if (payBtn) {
+                        delete payBtn.dataset.primed;
+                        payBtn.classList.remove('primed');
+                    }
+                }
             }
         });
         // --- END VIRTUAL WORKBENCH ---
@@ -459,14 +480,36 @@ export class ActionClickHandler {
                 this.uiManager.hideModal('mission-modal');
                 break;
 
-            case ACTION_IDS.PAY_DEBT:
-                this.simulationService.payOffDebt(e);
+            case ACTION_IDS.PAY_DEBT: {
+                if (!actionTarget.dataset.primed) {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('.primed').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                    });
+                    
+                    // Prime this button
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed');
+                    e.stopPropagation();
+                    return; // Prevent immediate execution
+                }
+
+                let payAmount = null;
+                if (dataset.inputId) {
+                    const slider = document.getElementById(dataset.inputId);
+                    if (slider) {
+                        payAmount = parseInt(slider.value, 10);
+                    }
+                }
+                this.simulationService.payOffDebt(payAmount !== null ? payAmount : e, e);
                 break;
+            }
             case ACTION_IDS.TAKE_LOAN:
                 // --- VIRTUAL WORKBENCH START: Two-Step Loan Confirmation ---
                 if (!actionTarget.dataset.primed) {
-                    // Reset any previously primed buttons
-                    document.querySelectorAll('.btn-module-credit[data-primed="true"]').forEach(btn => {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('.primed').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });

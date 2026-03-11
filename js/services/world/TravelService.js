@@ -168,6 +168,34 @@ export class TravelService {
              return;
         }
 
+        // --- VIRTUAL WORKBENCH: SYNDICATE SABOTAGE INTERCEPT ---
+        if (state.player.debt > 0 && state.player.loanType === 'syndicate' && state.player.repoNextEventDay && state.day >= state.player.repoNextEventDay) {
+            const activeShip = this.simulationService._getActiveShip();
+            const activeShipState = this.gameState.player.shipStates[activeShip.id];
+            
+            // 85% damage to *current* health
+            const damage = Math.floor(activeShipState.health * 0.85);
+            activeShipState.health = Math.max(1, activeShipState.health - damage);
+            
+            // Reset loop for next warning/strike
+            state.player.repoNextEventDay = null;
+            state.player.lastRepoStrikeDay = state.day;
+
+            this.gameState.setState({ pendingTravel: null });
+            
+            this.uiManager.showEventResultModal(
+                "<span style='font-size: smaller;'>Catastrophic Pre-Flight Sabotage</span>",
+                `Just as your ship engines begin to throttle up for launch, a violent explosion tears through the hull. Multiple systems cascade into failure, forcing an immediate emergency launch abort.<br><br>An untraceable message suddenly reaches your terminal: <i>'Consider this a courtesy notice. You owe the Syndicate. Pay your debts.'</i>`,
+                [
+                    { type: 'EFF_HULL', value: -damage }
+                ]
+            );
+            
+            this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+            return;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
         if (fromId === 'sol' && this.timeService.solStationService) {
             if (typeof this.timeService.solStationService.stopLocalLiveLoop === 'function') {

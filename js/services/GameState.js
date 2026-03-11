@@ -254,6 +254,9 @@ export class GameState {
                 introStep: 0,
                 credits: 3000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
+                // --- VIRTUAL WORKBENCH: CORPORATE DEBT UPDATE ---
+                loanType: 'guild', loanDueDate: null, repoNextEventDay: null, lastRepoStrikeDay: null,
+                // --- END VIRTUAL WORKBENCH ---
                 revealedTier: 1,
                 unlockedLicenseIds: [],
                 unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => 
