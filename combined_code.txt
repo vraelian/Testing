@@ -674,23 +674,7 @@
     overflow: hidden;
 }
 
-/* Ambient Lighting Vignette */
-.missions-screen-container::after {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 40%;
-    background: radial-gradient(
-        ellipse at bottom center,
-        var(--theme-color-translucent) 0%,
-        transparent 70%
-    );
-    pointer-events: none;
-    z-index: 10;
-    opacity: 0.6;
-}
+/* NOTE: .missions-screen-container::after has been removed */
 
 .missions-scroll-panel {
     -webkit-overflow-scrolling: touch;
@@ -1275,6 +1259,7 @@
     50% { box-shadow: 0 0 20px rgba(16, 185, 129, 0.8); border-color: #34d399 !important; } 
 }
 .host-station .host-btn-pulse { animation: hostPulseStation 2s infinite; }
+
 --- END OF FILE: ./css/missions.css ---
 
 --- START OF FILE: ./css/debug.css ---
@@ -3309,7 +3294,7 @@ card.
     border-radius: 15px;
     padding: 1rem;
     width: 80vw;
-    height: 366px;
+    height: 421px;
     margin: 0 auto;
     text-align: center;
     box-shadow: 0 0 25px rgba(0,0,0,0.7);
@@ -6938,34 +6923,27 @@ WORKBENCH --- */
     box-shadow: 0 2px 4px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
 }
 
-.btn-module:hover:not(:disabled) {
-    background-color: #334155; /* slate-700 */
-    border-color: #475569; /* slate-600 */
-    color: #f1f5f9; /* slate-100 */
-    transform: translateY(-1px);
-    /* VIRTUAL WORKBENCH: Enhance shadow on hover */
-    box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 1px 1px rgba(255,255,255,0.1);
-}
-
 .btn-module:disabled {
     background-color: #0f172a; /* slate-900 */
     border-color: #1e293b; /* slate-800 */
     color: #334155; /* slate-700 */
     cursor: not-allowed;
     opacity: 0.6;
-    /* VIRTUAL WORKBENCH: Remove convex shadow on disabled */
     box-shadow: none;
 }
 
-/* --- VIRTUAL WORKBENCH START: Predatory Corporate Terminal --- */
+/* --- VIRTUAL WORKBENCH START: Corporate Terminal --- */
 .btn-module-credit {
-    background: linear-gradient(180deg, #0f172a 0%, #020617 100%); /* Dark industrial slate */
-    border: 1px solid #0891b2; /* Corporate Cyan */
-    color: #fbbf24; /* Predatory Gold */
     position: relative;
     overflow: hidden;
-    box-shadow: 0 0 8px rgba(8, 145, 178, 0.3), inset 0 0 15px rgba(8, 145, 178, 0.15);
-    text-shadow: 0 0 4px rgba(251, 191, 36, 0.3);
+    /* Added strong dimensional drop-shadow and top-highlight for 3D button effect */
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(255, 255, 255, 0.25);
+}
+
+/* Tactile touch feedback (replaces hover) */
+.btn-module-credit:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.7), inset 0 1px 1px rgba(0, 0, 0, 0.3);
 }
 
 /* Subtle scanline overlay for the terminal feel */
@@ -6986,30 +6964,23 @@ WORKBENCH --- */
     z-index: 1;
 }
 
-.btn-module-credit:hover:not(:disabled) {
-    background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-    border-color: #22d3ee; /* Bright Cyan */
-    color: #fde68a; /* Brighter Gold */
-    box-shadow: 0 0 15px rgba(34, 211, 238, 0.5), inset 0 0 20px rgba(34, 211, 238, 0.2);
-    transform: translateY(-1px);
-}
-
 /* Styling for the HTML structural labels */
 .btn-module-credit .loan-label {
-    color: #22d3ee; /* Cyan */
-    text-shadow: 0 0 6px rgba(34, 211, 238, 0.6);
+    color: var(--theme-text-color, #22d3ee); 
     font-weight: 700;
-    border-bottom: 1px solid rgba(34, 211, 238, 0.3);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     padding-bottom: 2px;
     width: 80%;
 }
 
 .btn-module-credit .loan-details .detail-block {
-    background-color: rgba(0, 0, 0, 0.8);
-    padding: 3px 6px;
-    border-radius: 4px; /* Softened sharp corners */
-    border: 1px solid rgba(251, 191, 36, 0.3); /* Dimmer gold border */
-    color: #fde68a; 
+    /* Use the theme gradient but whitewash it by 90% for a light, location-themed pastel tint */
+    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), var(--theme-gradient, linear-gradient(135deg, #f8fafc, #f8fafc));
+    padding: 6px 8px; /* Increased padding */
+    border-radius: 6px; 
+    border: 2px solid var(--theme-border-color, #64748b); /* Distinct themed border */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); /* Inner shadow for depth */
+    color: #0f172a; /* Dark slate text */
     font-family: 'Roboto Mono', monospace;
 }
 
@@ -7044,7 +7015,7 @@ WORKBENCH --- */
     align-items: center;
     justify-content: center;
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: #000000;
     opacity: 0;
@@ -7057,6 +7028,57 @@ WORKBENCH --- */
 }
 /* --- VIRTUAL WORKBENCH END --- */
 
+/* --- VIRTUAL WORKBENCH: Custom Slider Styling --- */
+input[type=range]#debt-slider {
+    -webkit-appearance: none;
+    width: 100%;
+    background: transparent;
+}
+
+input[type=range]#debt-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    cursor: pointer;
+    margin-top: -6px; /* center thumb over track */
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+input[type=range]#debt-slider::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #4b5563; /* grey track */
+    border-radius: 4px;
+    border: 1px solid #374151;
+}
+
+input[type=range]#debt-slider:focus {
+    outline: none;
+}
+
+input[type=range]#debt-slider::-moz-range-thumb {
+    height: 20px;
+    width: 20px;
+    border-radius: 50%;
+    background: #e2e8f0;
+    cursor: pointer;
+    border: none;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+}
+
+input[type=range]#debt-slider::-moz-range-track {
+    width: 100%;
+    height: 8px;
+    cursor: pointer;
+    background: #4b5563;
+    border-radius: 4px;
+    border: 1px solid #374151;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 /* --- VIRTUAL WORKBENCH: MODIFIED Muted destructive button --- */
 .btn-module-destructive {
@@ -7065,10 +7087,39 @@ WORKBENCH --- */
     color: #fecaca; /* red-200 */
 }
 
-.btn-module-destructive:hover:not(:disabled) {
-    background-color: #991b1b; /* red-800 */
-    border-color: #dc2626; /* red-600 */
-    color: #ffffff;
+/* Two-Step confirm payload for the payment button */
+.btn-module-destructive.primed {
+    background: #e2e8f0 !important;
+    border-color: #991b1b !important;
+    color: #000000 !important;
+    box-shadow: 0 0 20px rgba(226, 232, 240, 0.6), inset 0 0 40px rgba(239, 68, 68, 0.4), inset 0 0 10px rgba(0,0,0,0.3) !important;
+    text-shadow: none !important;
+    transform: scale(0.98);
+}
+
+.btn-module-destructive .loan-normal-content {
+    transition: opacity 0.2s ease;
+    opacity: 1;
+}
+.btn-module-destructive.primed .loan-normal-content {
+    opacity: 0;
+}
+.btn-module-destructive .loan-confirm-content {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.15rem;
+    font-weight: 800;
+    color: #000000;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+    pointer-events: none;
+}
+.btn-module-destructive.primed .loan-confirm-content {
+    opacity: 1;
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
@@ -7083,8 +7134,6 @@ WORKBENCH --- */
     overflow: hidden; /* Prevent this panel itself from scrolling */
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
-    
-    /* REMOVED: padding, border, background, shadow. Now handled by .finance-module-panel */
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
@@ -9699,7 +9748,7 @@ export function renderNavigationScreen(gameState) {
 
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
+                    return `<div class="location-card p-6 rounded-xl text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
                                      ${actionData} ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
@@ -10058,7 +10107,7 @@ export function renderMissionsScreen(gameState, missionService) {
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
-import { ACTION_IDS, GAME_RULES } from '../../data/constants.js';
+import { ACTION_IDS, GAME_RULES, LOCATION_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 /**
@@ -10079,28 +10128,53 @@ export function renderFinanceScreen(gameState) {
     `;
     // --- END VIRTUAL WORKBENCH ---
 
+    // --- CORPORATE EXPANSION: Ship Net Worth Calculation ---
+    let shipNetWorth = 0;
+    const activeShipId = player.activeShipId;
+    const activeShip = DB.SHIPS[activeShipId];
+    if (activeShip) {
+        shipNetWorth += activeShip.price;
+        const shipState = player.shipStates[activeShipId];
+        if (shipState && shipState.upgrades) {
+            shipState.upgrades.forEach(upgradeId => {
+                const def = GameAttributes.getDefinition(upgradeId);
+                if (def) {
+                    shipNetWorth += GameAttributes.getUpgradeHardwareCost(def.tier || 1, activeShip.price);
+                }
+            });
+        }
+    }
+    // --------------------------------------------------------
+
     let loanHtml;
 
     // Display the current debt panel if the player has debt.
     if (player.debt > 0) {
         let garnishmentTimerHtml = '';
         if (player.loanStartDate) {
-            const daysRemaining = GAME_RULES.LOAN_GARNISHMENT_DAYS - (day - player.loanStartDate);
+            const activeLoanType = player.loanType || 'guild';
+            const termDays = player.loanDueDate ? (player.loanDueDate - player.loanStartDate) : GAME_RULES.LOAN_GARNISHMENT_DAYS;
             
-            // --- VIRTUAL WORKBENCH START: Garnishment UI ---
-            if (daysRemaining > 0) {
-                garnishmentTimerHtml = `<p class="text-sm text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
+            if (activeLoanType === 'syndicate') {
+                const daysRemaining = player.loanDueDate - day;
+                if (daysRemaining > 0) {
+                    garnishmentTimerHtml = `<p class="text-base text-red-400/70 mt-2">Due in ${daysRemaining} days</p>`;
+                } else {
+                    garnishmentTimerHtml = `<p class="text-base text-glow-red font-bold mt-2 animate-pulse">DELINQUENT: DEBT PAST DUE</p>`;
+                }
             } else {
-                // Calculate projected garnishment
-                const garnishmentAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
-                const displayGarnish = Math.min(garnishmentAmount, player.debt);
-                garnishmentTimerHtml = `<p class="text-sm text-glow-red font-bold mt-2 animate-pulse">Active Garnishment: ${formatCredits(displayGarnish)} / Mo</p>`;
+                const daysRemaining = termDays - (day - player.loanStartDate);
+                if (daysRemaining > 0) {
+                    garnishmentTimerHtml = `<p class="text-base text-red-400/70 mt-2">Garnishment in ${daysRemaining} days</p>`;
+                } else {
+                    const garnishmentAmount = Math.floor(player.credits * GAME_RULES.LOAN_GARNISHMENT_PERCENT);
+                    const displayGarnish = Math.min(garnishmentAmount, player.debt);
+                    garnishmentTimerHtml = `<p class="text-base text-glow-red font-bold mt-2 animate-pulse">Active Garnishment: ${formatCredits(displayGarnish)} / Mo</p>`;
+                }
             }
-            // --- VIRTUAL WORKBENCH END: Garnishment UI ---
         }
 
         // --- UPGRADE SYSTEM: INTEREST DISPLAY ---
-        const activeShipId = player.activeShipId;
         const shipState = player.shipStates[activeShipId];
         const upgrades = shipState ? (shipState.upgrades || []) : [];
         
@@ -10112,76 +10186,134 @@ export function renderFinanceScreen(gameState) {
         let interestHtml = '';
         if (interestMod < 1.0) {
             interestHtml = `
-                <div class="mt-2 text-xs text-gray-400">
+                <div class="mt-2 text-sm text-gray-400">
                     Monthly Interest: <span class="text-green-400">${formatCredits(effectiveInterest)}</span> 
                     <span class="line-through text-gray-600">${formatCredits(player.monthlyInterestAmount)}</span>
                 </div>
             `;
         } else {
-             // Optional: Show standard interest if desired, or keep hidden as per original design.
-             // Adding standard display for consistency if they have debt.
              interestHtml = `
-                <div class="mt-2 text-xs text-gray-400">
+                <div class="mt-2 text-sm text-gray-400">
                     Monthly Interest: <span class="text-red-400">${formatCredits(player.monthlyInterestAmount)}</span>
                 </div>
             `;
         }
         // ----------------------------------------
 
-        // --- VIRTUAL WORKBENCH START: Reorder ---
-        loanHtml = `
-            <div>
-                <div class="themed-header-bar" style="${themeStyleVars}">
-                    <div class="themed-header-title">Debt</div>
-                </div>
-                <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                    <button data-action="${ACTION_IDS.PAY_DEBT}" class="btn-module btn-module-destructive w-full font-roboto-mono" ${player.credits >= player.debt ? '' : 'disabled'}>
-                        <span class="text-base">Pay Off <span class="text-glow-red">${formatCredits(-player.debt, true)}</span></span>
-                    </button>
-                    ${garnishmentTimerHtml}
-                    ${interestHtml}
-                </div>
-            </div>`;
-        // --- VIRTUAL WORKBENCH END: Reorder ---
-    } else {
-        // Otherwise, display available loan options.
-        const dynamicLoanAmount = Math.floor(player.credits * 3.5);
-        const dynamicLoanFee = Math.floor(dynamicLoanAmount * 0.1);
-        const dynamicLoanInterest = Math.floor(dynamicLoanAmount * 0.04);
-        const dynamicLoanData = { amount: dynamicLoanAmount, fee: dynamicLoanFee, interest: dynamicLoanInterest };
-        
-        // --- VIRTUAL WORKBENCH START: Loan Terminal Two-Step Prep ---
-        const loanButtonsHtml = [
-            { key: '10000', amount: 10000, fee: 600, interest: 500 },
-            { key: 'dynamic', ...dynamicLoanData }
-        ].map((loan) => {
-            return `<button class="btn-module btn-module-credit w-full mt-2 relative overflow-hidden" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(loan)}' ${player.credits < loan.fee ? 'disabled' : ''}>
-                        <div class="loan-normal-content flex flex-col items-center w-full">
-                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">LOAN</span>
-                            <span class="credits-text-pulsing text-[21px]">${formatCredits(loan.amount, true)}</span>
-                            <div class="loan-details mt-2 text-[12px] flex gap-3">
-                                <div class="detail-block">FEE: <span class="text-glow-red">${formatCredits(-loan.fee)}</span></div>
-                                <div class="detail-block">INTEREST: <span class="text-glow-red">${formatCredits(-loan.interest)}</span>/mo</div>
-                            </div>
-                        </div>
-                        <div class="loan-confirm-content">
-                            CONFIRM LOAN?
-                        </div>
-                    </button>`;
-        }).join('');
-        // --- VIRTUAL WORKBENCH END: Loan Terminal Two-Step Prep ---
+        // --- VIRTUAL WORKBENCH: Interactive Payment Slider ---
+        const maxPayment = Math.min(player.credits, player.debt);
+        const sliderHtml = player.credits > 0 ? `
+            <div class="w-full mt-6 flex flex-col items-center px-4">
+                <label class="text-xs text-gray-400 tracking-widest mb-3 uppercase">Payment Amount</label>
+                <input type="range" id="debt-slider" class="w-full" min="1" max="${maxPayment}" value="${maxPayment}">
+                <button data-action="${ACTION_IDS.PAY_DEBT}" data-input-id="debt-slider" class="btn-module btn-module-destructive relative overflow-hidden w-full font-roboto-mono mt-4">
+                    <div class="loan-normal-content flex items-center justify-center w-full">
+                        <span class="text-lg">Pay <span id="debt-payment-display" class="text-glow-red">${formatCredits(-maxPayment, true)}</span></span>
+                    </div>
+                    <div class="loan-confirm-content">
+                        CONFIRM PAYMENT?
+                    </div>
+                </button>
+            </div>
+        ` : `
+            <div class="w-full mt-6 flex flex-col items-center px-4">
+                <button disabled class="btn-module btn-module-destructive w-full font-roboto-mono opacity-50 cursor-not-allowed">
+                    <span class="text-base">Insufficient Funds</span>
+                </button>
+            </div>
+        `;
+        // --- END VIRTUAL WORKBENCH ---
 
         loanHtml = `
             <div>
                 <div class="themed-header-bar" style="${themeStyleVars}">
-                    <div class="themed-header-title">Financing</div>
+                    <div class="themed-header-title">Debt Servicing</div>
                 </div>
                 <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                    <div class="flex flex-col justify-center gap-2 w-full">${loanButtonsHtml}</div>
+                    <div class="text-sm text-gray-400 mb-1 uppercase tracking-widest">Active Principal</div>
+                    <div class="text-2xl mb-2 text-red-400 font-bold">${formatCredits(player.debt)}</div>
+                    ${garnishmentTimerHtml}
+                    ${interestHtml}
+                    ${sliderHtml}
                 </div>
             </div>`;
+    } else {
+        // --- CORPORATE EXPANSION: Branching Loan Logic ---
+        
+        // 1. GUILD FINANCING
+        const guildAmount = Math.floor(shipNetWorth * 0.35);
+        const guildFee = Math.floor(guildAmount * 0.10);
+        const guildInterest = Math.floor(guildAmount * 0.04);
+        const guildData = { amount: guildAmount, fee: guildFee, interest: guildInterest, type: 'guild', termDays: 1080 };
+
+        let guildHtml = `
+            <div class="themed-header-bar" style="${themeStyleVars}">
+                <div class="themed-header-title">Guild Financing</div>
+            </div>
+            <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
+                <div class="text-base text-gray-400 mb-2">Asset-Backed Title Loan</div>
+                <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(guildData)}' ${player.credits < guildFee ? 'disabled' : ''}>
+                    <div class="loan-normal-content flex flex-col items-center w-full">
+                        <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">GUILD LOAN</span>
+                        <span class="credits-text-pulsing text-[21px]">${formatCredits(guildAmount, true)}</span>
+                        <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center">
+                            <div class="detail-block text-center flex-1">
+                                <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
+                                <div class="text-red-700 font-bold text-sm">${formatCredits(-guildFee)}</div>
+                            </div>
+                            <div class="detail-block text-center flex-1">
+                                <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
+                                <div class="text-red-700 font-bold text-sm">${formatCredits(-guildInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="loan-confirm-content">
+                        CONFIRM GUILD LOAN?
+                    </div>
+                </button>
+            </div>
+        `;
+
+        // 2. SYNDICATE CREDITORS
+        let syndicateHtml = '';
+        if ([LOCATION_IDS.EXCHANGE, LOCATION_IDS.VENUS, LOCATION_IDS.PLUTO].includes(currentLocationId)) {
+            const syndAmount = Math.floor(shipNetWorth * 0.55);
+            const syndFee = 0;
+            const syndInterest = Math.floor(syndAmount * 0.15);
+            const syndData = { amount: syndAmount, fee: syndFee, interest: syndInterest, type: 'syndicate', termDays: 1080 };
+
+            syndicateHtml = `
+                <div class="themed-header-bar mt-6" style="${themeStyleVars}">
+                    <div class="themed-header-title">Syndicate Creditors</div>
+                </div>
+                <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
+                    <div class="text-base text-red-400/80 mb-2">High-Risk Predatory Capital</div>
+                    <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(syndData)}'>
+                        <div class="loan-normal-content flex flex-col items-center w-full">
+                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70 text-red-500">SYNDICATE LOAN</span>
+                            <span class="text-red-500 font-bold text-[21px]" style="text-shadow: 0 0 8px rgba(239,68,68,0.5);">${formatCredits(syndAmount, true)}</span>
+                            <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center text-red-300">
+                                <div class="detail-block text-center flex-1">
+                                    <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
+                                    <div class="text-slate-800 font-bold text-sm">$0</div>
+                                </div>
+                                <div class="detail-block text-center flex-1">
+                                    <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
+                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-syndInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="loan-confirm-content">
+                            ACCEPT SYNDICATE TERMS?
+                        </div>
+                    </button>
+                </div>
+            `;
+        }
+
+        loanHtml = `<div>${guildHtml}${syndicateHtml}</div>`;
+        // --- END CORPORATE EXPANSION ---
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     // Render the transaction log.
     const logEntries = [...player.financeLog].reverse().map(entry => {
@@ -19521,7 +19653,7 @@ export class UIEventControl {
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
                     <h3 class="font-orbitron">${location.name}</h3>
-                     <p class="flavor-text italic text-lg">${location.launchFlavor}</p>
+                     <p class="flavor-text italic text-base">${location.launchFlavor}</p>
                 </div>
 
                 <div class="flex-grow flex items-center justify-center flex-col">
@@ -25001,6 +25133,9 @@ export class GameState {
                 introStep: 0,
                 credits: 3000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
+                // --- VIRTUAL WORKBENCH: CORPORATE DEBT UPDATE ---
+                loanType: 'guild', loanDueDate: null, repoNextEventDay: null, lastRepoStrikeDay: null,
+                // --- END VIRTUAL WORKBENCH ---
                 revealedTier: 1,
                 unlockedLicenseIds: [],
                 unlockedLocationIds: DB.MARKETS.map(m => m.id).filter(id => 
@@ -28184,6 +28319,34 @@ export class TravelService {
              return;
         }
 
+        // --- VIRTUAL WORKBENCH: SYNDICATE SABOTAGE INTERCEPT ---
+        if (state.player.debt > 0 && state.player.loanType === 'syndicate' && state.player.repoNextEventDay && state.day >= state.player.repoNextEventDay) {
+            const activeShip = this.simulationService._getActiveShip();
+            const activeShipState = this.gameState.player.shipStates[activeShip.id];
+            
+            // 85% damage to *current* health
+            const damage = Math.floor(activeShipState.health * 0.85);
+            activeShipState.health = Math.max(1, activeShipState.health - damage);
+            
+            // Reset loop for next warning/strike
+            state.player.repoNextEventDay = null;
+            state.player.lastRepoStrikeDay = state.day;
+
+            this.gameState.setState({ pendingTravel: null });
+            
+            this.uiManager.showEventResultModal(
+                "<span style='font-size: smaller;'>Catastrophic Pre-Flight Sabotage</span>",
+                `Just as your ship engines begin to throttle up for launch, a violent explosion tears through the hull. Multiple systems cascade into failure, forcing an immediate emergency launch abort.<br><br>An untraceable message suddenly reaches your terminal: <i>'Consider this a courtesy notice. You owe the Syndicate. Pay your debts.'</i>`,
+                [
+                    { type: 'EFF_HULL', value: -damage }
+                ]
+            );
+            
+            this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+            return;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
         if (fromId === 'sol' && this.timeService.solStationService) {
             if (typeof this.timeService.solStationService.stopLocalLiveLoop === 'function') {
@@ -29062,7 +29225,24 @@ export class TimeService {
     // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---
     _applyGarnishment() {
         const { player, day } = this.gameState;
-        if (player.debt > 0 && player.loanStartDate && (day - player.loanStartDate) >= GAME_RULES.LOAN_GARNISHMENT_DAYS) {
+        if (player.debt <= 0 || !player.loanStartDate) return;
+
+        // Fallbacks for legacy saves before Phase 1 schema changes
+        const activeLoanType = player.loanType || 'guild';
+        const activeDueDate = player.loanDueDate || (player.loanStartDate + GAME_RULES.LOAN_GARNISHMENT_DAYS);
+        const isDelinquent = day > activeDueDate;
+        
+        if (activeLoanType === 'syndicate') {
+            // Syndicate Repo Logic
+            const baseDay = player.lastRepoStrikeDay || activeDueDate;
+            if (day >= baseDay + 60 && !player.repoNextEventDay) {
+                player.repoNextEventDay = day + Math.floor(Math.random() * (260 - 120 + 1)) + 120;
+                const msg = "A secure, untraceable message was routed directly to your personal terminal.<br><br><i>'You remain in debt to the Syndicate, and that debt is long past due. If we do not receive what is owed... then there will be consequences.'</i>";
+                this.uiManager.queueModal('event-modal', "<span style='font-size: smaller;'>Syndicate Communication</span>", msg, null, { buttonClass: 'bg-red-800/80' });
+            }
+        } else {
+            // Guild Garnishment Logic
+            if (!isDelinquent) return;
             // Apply garnishment on the same cycle as interest
             if ((day - this.gameState.lastInterestChargeDay) % GAME_RULES.INTEREST_INTERVAL !== 0) return;
 
@@ -29086,6 +29266,10 @@ export class TimeService {
                 if (player.debt <= 0) {
                     player.debt = 0;
                     player.loanStartDate = null;
+                    player.loanDueDate = null;
+                    player.loanType = 'guild';
+                    player.repoNextEventDay = null;
+                    player.lastRepoStrikeDay = null;
                     player.monthlyInterestAmount = 0;
                     player.seenGarnishmentWarning = false; // Reset for future loans
 
@@ -33408,9 +33592,8 @@ export class UIManager {
                 });
                 break;
             case SCREEN_IDS.FINANCE:
-                this._preserveScrollAndRender(this.cache.financeScreen, () => {
-                    this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
-                });
+                // FIX: Bypassed _preserveScrollAndRender to force synchronous DOM update for the transaction log
+                this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
                 if (!previousState || previousState.activeScreen !== SCREEN_IDS.INTEL) {
@@ -37157,11 +37340,32 @@ export class ActionClickHandler {
 
         // --- VIRTUAL WORKBENCH: Global click listener to dismiss primed loan buttons ---
         document.addEventListener('click', (e) => {
-            if (!e.target.closest('.btn-module-credit')) {
-                document.querySelectorAll('.btn-module-credit.primed').forEach(btn => {
-                    delete btn.dataset.primed;
-                    btn.classList.remove('primed');
+            const primedBtns = document.querySelectorAll('.primed');
+            if (primedBtns.length > 0) {
+                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"]');
+                primedBtns.forEach(btn => {
+                    if (btn !== closestTarget) {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                    }
                 });
+            }
+        });
+
+        // --- VIRTUAL WORKBENCH: Global input listener for Finance Slider ---
+        document.addEventListener('input', (e) => {
+            if (e.target && e.target.id === 'debt-slider') {
+                const display = document.getElementById('debt-payment-display');
+                if (display) {
+                    display.innerHTML = formatCredits(-parseInt(e.target.value, 10), true);
+                    
+                    // Unprime the pay button if sliding to prevent accidental payment of new amount
+                    const payBtn = document.querySelector('[data-action="pay_debt"].primed');
+                    if (payBtn) {
+                        delete payBtn.dataset.primed;
+                        payBtn.classList.remove('primed');
+                    }
+                }
             }
         });
         // --- END VIRTUAL WORKBENCH ---
@@ -37593,14 +37797,36 @@ export class ActionClickHandler {
                 this.uiManager.hideModal('mission-modal');
                 break;
 
-            case ACTION_IDS.PAY_DEBT:
-                this.simulationService.payOffDebt(e);
+            case ACTION_IDS.PAY_DEBT: {
+                if (!actionTarget.dataset.primed) {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('.primed').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                    });
+                    
+                    // Prime this button
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed');
+                    e.stopPropagation();
+                    return; // Prevent immediate execution
+                }
+
+                let payAmount = null;
+                if (dataset.inputId) {
+                    const slider = document.getElementById(dataset.inputId);
+                    if (slider) {
+                        payAmount = parseInt(slider.value, 10);
+                    }
+                }
+                this.simulationService.payOffDebt(payAmount !== null ? payAmount : e, e);
                 break;
+            }
             case ACTION_IDS.TAKE_LOAN:
                 // --- VIRTUAL WORKBENCH START: Two-Step Loan Confirmation ---
                 if (!actionTarget.dataset.primed) {
-                    // Reset any previously primed buttons
-                    document.querySelectorAll('.btn-module-credit[data-primed="true"]').forEach(btn => {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('.primed').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });
@@ -38774,39 +39000,64 @@ export class PlayerActionService {
 
 
     /**
-     * Pays off the player's entire outstanding debt.
+     * Pays off a specified amount of the player's outstanding debt.
+     * @param {number|Event} amount - The specific amount to pay off, or the Event object for pre-Phase 3 compatibility.
      * @param {Event} [event] - The click event for placing floating text.
      */
-    payOffDebt(event) {
+    payOffDebt(amount, event) {
         if (this.gameState.isGameOver) return;
         const { player, currentLocationId } = this.gameState;
         
-        let paymentRequired = player.debt;
+        // --- BACKWARD COMPATIBILITY SAFEGUARD ---
+        // Until Phase 3 updates ActionClickHandler, `amount` might be the MouseEvent
+        let paymentAmount = amount;
+        let domEvent = event;
+        if (amount instanceof Event || (amount && amount.type)) {
+            paymentAmount = null; // Pay full debt
+            domEvent = amount;
+        }
+        // ----------------------------------------
+
+        let paymentRequired = paymentAmount !== null && paymentAmount !== undefined ? paymentAmount : player.debt;
+        if (paymentRequired > player.debt) paymentRequired = player.debt;
+        if (paymentRequired <= 0) return;
+        
+        let actualCost = paymentRequired;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER DEBT DISCOUNT) ---
         if (currentLocationId === LOCATION_IDS.KEPLER) {
-            paymentRequired = Math.floor(player.debt * 0.85);
+            actualCost = Math.floor(paymentRequired * 0.85);
         }
         // --- END VIRTUAL WORKBENCH ---
 
-        if (player.credits < paymentRequired) {
+        if (player.credits < actualCost) {
             const extraText = (currentLocationId === LOCATION_IDS.KEPLER) ? 
-                ` Even with the Kepler discount (${formatCredits(paymentRequired)}), you are short.` : "";
-            this.uiManager.queueModal('event-modal', "Insufficient Funds", `You can't afford to pay off your entire debt.${extraText}`);
+                ` Even with the Kepler discount (${formatCredits(actualCost)}), you are short.` : "";
+            this.uiManager.queueModal('event-modal', "Insufficient Funds", `You can't afford to pay this amount.${extraText}`);
             return;
         }
 
-        player.credits -= paymentRequired;
+        player.credits -= actualCost;
+        player.debt -= paymentRequired;
 
-        if (event) {
-             this.uiManager.createFloatingText(`-${formatCredits(paymentRequired, false)}`, event.clientX, event.clientY, '#f87171');
+        if (domEvent) {
+             this.uiManager.createFloatingText(`-${formatCredits(actualCost, false)}`, domEvent.clientX, domEvent.clientY, '#f87171');
         }
 
-        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(player.debt)} in debt (Cost: ${formatCredits(paymentRequired)}).`);
-        this.simulationService._logTransaction('loan', -paymentRequired, `Paid off debt`);
-        player.debt = 0;
-        player.monthlyInterestAmount = 0;
-        player.loanStartDate = null;
+        this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(paymentRequired)} in debt (Cost: ${formatCredits(actualCost)}).`);
+        this.simulationService._logTransaction('loan', -actualCost, `Paid down debt principal`);
+        
+        // Handle full repayment clears
+        if (player.debt <= 0) {
+            player.debt = 0;
+            player.monthlyInterestAmount = 0;
+            player.loanStartDate = null;
+            player.loanDueDate = null;
+            player.loanType = 'guild';
+            player.repoNextEventDay = null;
+            player.lastRepoStrikeDay = null;
+            player.seenGarnishmentWarning = false;
+        }
 
         this.timeService._checkMilestones();
         this.gameState.setState({});
@@ -38814,7 +39065,7 @@ export class PlayerActionService {
 
     /**
      * Allows the player to take out a loan, adding to their debt.
-     * @param {object} loanData - Contains amount, fee, and interest for the loan.
+     * @param {object} loanData - Contains amount, fee, interest, type, and termDays for the loan.
      * @param {Event} [event] - The click event for placing floating text.
      */
     takeLoan(loanData, event) {
@@ -38838,7 +39089,9 @@ export class PlayerActionService {
         }
 
         player.credits -= finalFee;
-        this.simulationService._logTransaction('loan', -finalFee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
+        if (finalFee > 0) {
+            this.simulationService._logTransaction('loan', -finalFee, `Financing fee for ${formatCredits(loanData.amount)} loan`);
+        }
         
         player.credits = Math.min(Number.MAX_SAFE_INTEGER, player.credits + loanData.amount);
 
@@ -38851,12 +39104,17 @@ export class PlayerActionService {
         player.debt += loanData.amount;
         player.monthlyInterestAmount = loanData.interest;
         player.loanStartDate = day;
+        player.loanDueDate = day + (loanData.termDays || 1080);
+        player.loanType = loanData.type || 'guild';
+        player.repoNextEventDay = null;
+        player.lastRepoStrikeDay = null;
         player.seenGarnishmentWarning = false;
 
-        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.<br>A financing fee of <span class="text-glow-red">${formatCredits(-finalFee, true)}</span> was deducted.`;
+        let feeText = finalFee > 0 ? `<br>A financing fee of <span class="text-glow-red">${formatCredits(-finalFee, true)}</span> was deducted.` : `<br>No upfront financing fee was required.`;
+        const loanDesc = `You've acquired a loan of <span class="credits-text-pulsing">${formatCredits(loanData.amount, true)}</span>.${feeText}`;
         
         this.uiManager.queueModal('event-modal', "Loan Acquired", loanDesc);
-        this.logger.info.player(day, 'LOAN_TAKEN', `Took a loan for ${formatCredits(loanData.amount)}.`);
+        this.logger.info.player(day, 'LOAN_TAKEN', `Took a ${player.loanType} loan for ${formatCredits(loanData.amount)}.`);
         this.gameState.setState({});
     }
 

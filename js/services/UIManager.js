@@ -477,9 +477,8 @@ export class UIManager {
                 });
                 break;
             case SCREEN_IDS.FINANCE:
-                this._preserveScrollAndRender(this.cache.financeScreen, () => {
-                    this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
-                });
+                // FIX: Bypassed _preserveScrollAndRender to force synchronous DOM update for the transaction log
+                this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
                 if (!previousState || previousState.activeScreen !== SCREEN_IDS.INTEL) {
