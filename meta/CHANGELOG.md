@@ -4,6 +4,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 
 # [36.62] - 2026-3-10
 -  major balance pass on all systems
+-  updated meta files
 
 # [36.61] - 2026-3-9
 -  added 195 character sprite sheet

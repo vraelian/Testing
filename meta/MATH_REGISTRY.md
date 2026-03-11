@@ -1,6 +1,7 @@
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
+Last Edit: 3/10/26, ver. Balance v2
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -52,11 +53,11 @@ TravelDays = (DistanceAU / ShipSpeed) * (1 - TravelSpeedBonus)
 TravelSpeedBonus: Accumulated from Age Perks or Upgrades.
 
 2.3 Distance-Based Hull Entropy
-Hull deterioration is decoupled from dynamic travel time and relies on the static base time of a route as a proxy for "distance".
+Hull deterioration is decoupled from dynamic travel time and relies on the static base time of a route as a proxy for "distance". The result is flattened and ceiling-rounded to safely apply to sub-1000 HP ship pools.
 
 JavaScript
 BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
-HullDecay = BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod
+HullDecay = Math.ceil(BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod * 0.8)
 HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
 
 2.4 Fuel-Coupled Event Delays
@@ -71,42 +72,53 @@ Repairing a ship at a station consumes both credits and time.
 
 JavaScript
 Time Cost = 1 In-Game Day per Repair Tick 
-(A Repair Tick typically restores 5% of Max Hull, or 1% if precision topping-off is required).
 
-3. Ship Economy
-3.1 Resale Value
-The credit value returned when selling a ship.
+2.6 Convoy Tax (Fleet Overhead)
+Operating multiple ships imposes a linear fractional offset against fuel burn and hull decay during travel.
 
 JavaScript
-SellValue = (BaseHullPrice + TotalUpgradeValue) * DEPRECIATION_FACTOR
-DEPRECIATION_FACTOR: 0.75 (Player loses 25% of value).
+ConvoyTaxRate = InactiveShipsCount * 0.02
+ConvoyFuelTax = Math.max(0, Math.ceil(TravelFuelCost * ConvoyTaxRate))
 
-TotalUpgradeValue: The sum of the purchase price of all installed upgrades.
-
-3.2 Destructive Replacement
-When installing an upgrade into a full (3/3) ship:
+3. Ship Economy & Tier-Scaled Upkeep
+3.1 Algorithmic Ship Pricing
+The base price of a ship is strictly determined by its physical capacity and a tiered luxury multiplier.
 
 JavaScript
-NewShipValue = OldShipValue - DestroyedUpgradeValue + NewUpgradeValue
-Note: The DestroyedUpgradeValue is lost completely; it is not refunded.
+BaseValue = (CargoCapacity * 300) + (MaxHealth * 200) + (MaxFuel * 100)
+FinalPrice = BaseValue * ClassMultiplier
+Class Multipliers: C = 1, B = 5, A = 25, S = 250, Z = 1500, O = 2500.
 
-3.3 Upgrade Hardware Cost
+3.2 Dynamic Hull Repair Cost
+Repairs scale proportionally to the value of the ship rather than relying on a flat fee.
+
+JavaScript
+CostPerHP = Math.max(1, ShipBasePrice * 0.0001) * LocationModifier * PerkModifiers
+
+3.3 Dynamic Fuel Cost
+Fuel purchases at starports are subjected to a Fuel Grade Multiplier based on the ship's class.
+
+JavaScript
+FinalPumpPrice = BaseLocationFuelPrice * FuelClassMultiplier
+Fuel Class Multipliers: C = 1, B = 5, A = 25, S = 150, Z/O = 500.
+
+3.4 Upgrade Hardware Cost & Resale
 The dynamic cost formula for ship upgrades (Balance v2 Hybrid Pricing).
 
 JavaScript
-Cost = FixedBaseCost + (ShipBasePrice * TierMultiplier)
+UpgradeCost = FixedBaseCost + (ShipBasePrice * TierMultiplier)
 TierMultiplier scales from 0.05 (Tier I) up to 0.30 (Tier V).
+SellValue = (BaseHullPrice + TotalUpgradeValue) * DEPRECIATION_FACTOR
+DEPRECIATION_FACTOR: 0.75 (Player loses 25% of value).
 
-4. Event System RNG
+4. Event System RNG & Dynamic Scaling
 4.1 Weighted Selection
 Events are chosen based on a "lottery ticket" system.
 
 JavaScript
 EventChance = BaseWeight + (PlayerTags * TagMultiplier)
 The system sums the total weight of all valid events.
-
 A random number 0..TotalWeight is rolled.
-
 The selector iterates through events until the running sum exceeds the roll.
 
 4.2 Outcome Resolution
@@ -115,30 +127,40 @@ For weighted choices within an event:
 JavaScript
 OutcomeRoll = Math.random() * 100
 Outcomes are defined with weight ranges (e.g., Success: 70, Fail: 30).
-
 If OutcomeRoll < 70, Success triggers.
 
-4.3 Wealth-Scaled Penalties
+4.3 Wealth-Scaled Penalties (Hazards)
 For event fines and bureaucratic hazards, penalizing the player based on liquidity.
 
 JavaScript
 Penalty = LiquidCredits * HazardSeverity%
 (Hard capped at 9% for the most catastrophic outcomes to preserve progression feasibility).
 
+4.4 Ship-Class Scaled Rewards (Opportunities)
+For positive windfalls and opportunities, dynamic resolution uses the active ship's algorithmic Class Multiplier.
+
+JavaScript
+Reward = BaseValue * ActiveShipClassMultiplier
+(Via the scaleWith: 'SHIP_CLASS_SCALAR' directive).
+
 5. Sol Station Directorate Engine
 5.1 Entropy Calculation
 The daily decay rate of station caches is dynamically altered by the sum of slotted officer buffs.
+
 JavaScript
-CurrentEntropy = BaseEntropy * (1 + Sum(OfficerEntropyBuffs))
+BASE_DECAY_K = 0.0000014
+CurrentEntropy = BaseEntropy * (1 + Sum(OfficerEntropyBuffs) - Sum(LevelEntropyReductions))
 
 5.2 Resource Consumption & Capacity Modifiers
 Officers dynamically alter the mathematics of how much specific commodities the station can hold and how fast they burn per tick via both additive and multiplicative modifiers.
+
 JavaScript
-EffectiveCapacity = BaseCapacity + Sum(OfficerCapacityMods[commodityId])
-EffectiveConsumption = BaseConsumption * (1 + Sum(OfficerConsumptionMods[commodityId]))
+EffectiveCapacity = BaseCapacity + Sum(OfficerCapacityMods) + Sum(LevelCapacityMods)
+EffectiveConsumptionRate = CurrentEntropy * Math.max(0, 1 - OfficerConsumptionReductions)
 
 5.3 Antimatter & Credit Yields
 Output yields during 'Commerce' and 'Production' modes are directly scaled by the Directorate roster.
+
 JavaScript
-DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults))
-DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults))
+DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults) + Sum(LevelCreditMults)) * EfficiencyCurve
+DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults) + Sum(LevelAMMults)) * EfficiencyCurve
