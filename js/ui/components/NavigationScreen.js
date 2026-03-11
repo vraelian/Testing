@@ -107,7 +107,7 @@ export function renderNavigationScreen(gameState) {
 
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-lg text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
+                    return `<div class="location-card p-6 rounded-xl text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
                                      ${actionData} ${currentStyle}>
                         <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
