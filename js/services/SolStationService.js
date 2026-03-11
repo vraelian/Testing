@@ -65,6 +65,24 @@ export class SolStationService {
         this.heartbeatInterval = null;
     }
 
+    /**
+     * Decays all player-owned Sol Station caches to 0. 
+     * Used during multi-year absences where the station's entropy consumes abandoned resources.
+     */
+    decayAbandonedCaches() {
+        const station = this.gameState.solStation;
+        if (!station || !station.unlocked) return;
+        
+        Object.values(station.caches).forEach(cache => {
+            if (cache) {
+                cache.current = 0;
+            }
+        });
+        
+        station.health = 0;
+        this.logger.info.system('SolStation', this.gameState.day, 'DECAY_ABANDONED', `All Sol Station caches decayed to 0 due to prolonged absence.`);
+    }
+
     setTimeService(timeService) {
         this.timeService = timeService;
         if (this.gameState && this.gameState.currentLocationId === 'sol') {

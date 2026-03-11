@@ -139,78 +139,97 @@ export function renderFinanceScreen(gameState) {
     } else {
         // --- CORPORATE EXPANSION: Branching Loan Logic ---
         
-        // 1. GUILD FINANCING
-        const guildAmount = Math.floor(shipNetWorth * 0.35);
-        const guildFee = Math.floor(guildAmount * 0.10);
-        const guildInterest = Math.floor(guildAmount * 0.04);
-        const guildData = { amount: guildAmount, fee: guildFee, interest: guildInterest, type: 'guild', termDays: 1080 };
-
-        let guildHtml = `
-            <div class="themed-header-bar" style="${themeStyleVars}">
-                <div class="themed-header-title">Guild Financing</div>
-            </div>
-            <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                <div class="text-base text-gray-400 mb-2">Asset-Backed Title Loan</div>
-                <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(guildData)}' ${player.credits < guildFee ? 'disabled' : ''}>
-                    <div class="loan-normal-content flex flex-col items-center w-full">
-                        <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">GUILD LOAN</span>
-                        <span class="credits-text-pulsing text-[21px]">${formatCredits(guildAmount, true)}</span>
-                        <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center">
-                            <div class="detail-block text-center flex-1">
-                                <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
-                                <div class="text-red-700 font-bold text-sm">${formatCredits(-guildFee)}</div>
-                            </div>
-                            <div class="detail-block text-center flex-1">
-                                <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
-                                <div class="text-red-700 font-bold text-sm">${formatCredits(-guildInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
-                            </div>
-                        </div>
+        // --- NEW: INDENTURED SERVITUDE LOCKOUT CHECK ---
+        const isCreditLocked = player.creditLockoutExpiryDate && day < player.creditLockoutExpiryDate;
+        
+        if (isCreditLocked) {
+            const yearsRemaining = Math.ceil((player.creditLockoutExpiryDate - day) / 365);
+            loanHtml = `
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title text-red-500">CREDIT BLACKLISTED</div>
+                </div>
+                <div class="finance-module-panel flex flex-col items-center justify-center space-y-4 text-center" style="border-color: #dc2626;">
+                    <div class="text-xl text-red-400 font-bold tracking-widest">ACCOUNT FROZEN</div>
+                    <div class="text-sm text-gray-400">Pursuant to bankruptcy restructuring, your ability to secure institutional or private credit has been suspended.</div>
+                    <div class="p-3 border border-red-800/50 bg-red-950/30 rounded w-full font-roboto-mono text-red-300">
+                        LOCKOUT EXPIRY: <br><span class="text-lg">${yearsRemaining} YEARS</span>
                     </div>
-                    <div class="loan-confirm-content">
-                        CONFIRM GUILD LOAN?
-                    </div>
-                </button>
-            </div>
-        `;
+                </div>
+            `;
+        } else {
+            // 1. GUILD FINANCING
+            const guildAmount = Math.floor(shipNetWorth * 0.35);
+            const guildFee = Math.floor(guildAmount * 0.10);
+            const guildInterest = Math.floor(guildAmount * 0.04);
+            const guildData = { amount: guildAmount, fee: guildFee, interest: guildInterest, type: 'guild', termDays: 1080 };
 
-        // 2. SYNDICATE CREDITORS
-        let syndicateHtml = '';
-        if ([LOCATION_IDS.EXCHANGE, LOCATION_IDS.VENUS, LOCATION_IDS.PLUTO].includes(currentLocationId)) {
-            const syndAmount = Math.floor(shipNetWorth * 0.55);
-            const syndFee = 0;
-            const syndInterest = Math.floor(syndAmount * 0.15);
-            const syndData = { amount: syndAmount, fee: syndFee, interest: syndInterest, type: 'syndicate', termDays: 1080 };
-
-            syndicateHtml = `
-                <div class="themed-header-bar mt-6" style="${themeStyleVars}">
-                    <div class="themed-header-title">Syndicate Creditors</div>
+            let guildHtml = `
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Guild Financing</div>
                 </div>
                 <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                    <div class="text-base text-red-400/80 mb-2">High-Risk Predatory Capital</div>
-                    <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(syndData)}'>
+                    <div class="text-base text-gray-400 mb-2">Asset-Backed Title Loan</div>
+                    <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(guildData)}' ${player.credits < guildFee ? 'disabled' : ''}>
                         <div class="loan-normal-content flex flex-col items-center w-full">
-                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70 text-red-500">SYNDICATE LOAN</span>
-                            <span class="text-red-500 font-bold text-[21px]" style="text-shadow: 0 0 8px rgba(239,68,68,0.5);">${formatCredits(syndAmount, true)}</span>
-                            <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center text-red-300">
+                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">GUILD LOAN</span>
+                            <span class="credits-text-pulsing text-[21px]">${formatCredits(guildAmount, true)}</span>
+                            <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center">
                                 <div class="detail-block text-center flex-1">
                                     <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
-                                    <div class="text-slate-800 font-bold text-sm">$0</div>
+                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-guildFee)}</div>
                                 </div>
                                 <div class="detail-block text-center flex-1">
                                     <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
-                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-syndInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-guildInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
                                 </div>
                             </div>
                         </div>
                         <div class="loan-confirm-content">
-                            ACCEPT SYNDICATE TERMS?
+                            CONFIRM GUILD LOAN?
                         </div>
                     </button>
                 </div>
             `;
-        }
 
-        loanHtml = `<div>${guildHtml}${syndicateHtml}</div>`;
+            // 2. SYNDICATE CREDITORS
+            let syndicateHtml = '';
+            if ([LOCATION_IDS.EXCHANGE, LOCATION_IDS.VENUS, LOCATION_IDS.PLUTO].includes(currentLocationId)) {
+                const syndAmount = Math.floor(shipNetWorth * 0.55);
+                const syndFee = 0;
+                const syndInterest = Math.floor(syndAmount * 0.15);
+                const syndData = { amount: syndAmount, fee: syndFee, interest: syndInterest, type: 'syndicate', termDays: 1080 };
+
+                syndicateHtml = `
+                    <div class="themed-header-bar mt-6" style="${themeStyleVars}">
+                        <div class="themed-header-title">Syndicate Creditors</div>
+                    </div>
+                    <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
+                        <div class="text-base text-red-400/80 mb-2">High-Risk Predatory Capital</div>
+                        <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(syndData)}'>
+                            <div class="loan-normal-content flex flex-col items-center w-full">
+                                <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70 text-red-500">SYNDICATE LOAN</span>
+                                <span class="text-red-500 font-bold text-[21px]" style="text-shadow: 0 0 8px rgba(239,68,68,0.5);">${formatCredits(syndAmount, true)}</span>
+                                <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center text-red-300">
+                                    <div class="detail-block text-center flex-1">
+                                        <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
+                                        <div class="text-slate-800 font-bold text-sm">$0</div>
+                                    </div>
+                                    <div class="detail-block text-center flex-1">
+                                        <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
+                                        <div class="text-red-700 font-bold text-sm">${formatCredits(-syndInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="loan-confirm-content">
+                                ACCEPT SYNDICATE TERMS?
+                            </div>
+                        </button>
+                    </div>
+                `;
+            }
+
+            loanHtml = `<div>${guildHtml}${syndicateHtml}</div>`;
+        }
         // --- END CORPORATE EXPANSION ---
     }
 

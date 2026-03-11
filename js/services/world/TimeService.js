@@ -49,6 +49,27 @@ export class TimeService {
     }
 
     /**
+     * Silently advances the game calendar by the specified number of years
+     * without triggering daily/weekly event loops. Used exclusively for extreme time-skips.
+     * @param {number} years 
+     */
+    advanceYearsSilently(years) {
+        const daysToSkip = years * 365;
+        this.gameState.day += daysToSkip;
+        this.gameState.player.playerAge += years;
+        
+        // Sync timers to prevent immediate backlog execution
+        this.gameState.lastMarketUpdateDay = this.gameState.day;
+        this.gameState.lastInterestChargeDay = this.gameState.day;
+        
+        if (this.gameState.solStation && this.gameState.solStation.unlocked) {
+            this.gameState.solStation.lastProcessedDay = this.gameState.day;
+        }
+        
+        this.logger.info.system('Time', this.gameState.day, 'TIME_SKIP', `Silently advanced ${years} years.`);
+    }
+
+    /**
      * Advances the game world by a specified number of days.
      * detailed mechanics like passive repairs, interest, and random events are handled here.
      * @param {number} days - The number of days to advance.

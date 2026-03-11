@@ -25,6 +25,35 @@ export class MarketService {
         this._systemStateExpirationDay = 0;
     }
 
+    /**
+     * Wipes all player-driven market pressure and interactions, resetting the simulation to a baseline state.
+     * Used during extreme time skips (indentured servitude).
+     */
+    wipePlayerInfluence() {
+        DB.MARKETS.forEach(market => {
+            DB.COMMODITIES.forEach(c => {
+                const inventoryItem = this.gameState.market.inventory[market.id]?.[c.id];
+                if (inventoryItem) {
+                    inventoryItem.marketPressure = 0;
+                    inventoryItem.lastPlayerInteractionTimestamp = 0;
+                    inventoryItem.priceLockEndDay = 0;
+                    inventoryItem.isDepleted = false;
+                    inventoryItem.isSaturated = false;
+                    inventoryItem.depletionDay = 0;
+                    inventoryItem.depletionBonusDay = 0;
+                    inventoryItem.hoverUntilDay = 0;
+                    inventoryItem.rivalArbitrage = { isActive: false, endDay: 0 };
+                    
+                    // Hard reset quantity to a neutral baseline
+                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
+                }
+            });
+        });
+        
+        // Evolve once to immediately align prices against the new baseline
+        this.evolveMarketPrices();
+    }
+
     // --- VIRTUAL WORKBENCH: UPDATED getPrice ---
 
     /**
@@ -218,7 +247,7 @@ export class MarketService {
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
                     if (commodityMods.volatility_mult) volatility *= commodityMods.volatility_mult;
-                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.mean_reversion_mult;
+                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.meanReversion_mult;
                 }
 
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];

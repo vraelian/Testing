@@ -130,4 +130,45 @@ export function spawnFloatingText(targetElement, text, colorClass = 'text-white 
         }
     }, 1500);
 }
+
+/**
+ * Executes a full-screen blackout animation for multi-year transitions.
+ * @param {function} callback - Logic to execute while the screen is completely black.
+ * @returns {Promise<void>}
+ */
+export async function playBankruptcyBlackout(callback) {
+    // 1. Construct Overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black pointer-events-auto opacity-0';
+    
+    const text = document.createElement('h2');
+    text.className = 'text-3xl md:text-5xl font-orbitron text-gray-400 tracking-widest opacity-0';
+    text.textContent = 'Years later...';
+    
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+
+    // 2. Fade to Black (2s)
+    const fadeIn = overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+    await fadeIn.finished;
+
+    // 3. Fade Text In (1s)
+    const textIn = text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1000, fill: 'forwards', easing: 'ease-out' });
+    await textIn.finished;
+
+    // 4. Execute Background Logic Callback
+    if (callback) {
+        await callback();
+    }
+
+    // 5. Hold Blackout with Text (2s)
+    await new Promise(r => setTimeout(r, 2000));
+
+    // 6. Fade everything out (2s)
+    const fadeOut = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+    await fadeOut.finished;
+
+    // 7. Cleanup
+    overlay.remove();
+}
 // --- [[END]] VIRTUAL WORKBENCH ---
