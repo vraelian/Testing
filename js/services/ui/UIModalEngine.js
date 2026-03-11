@@ -23,20 +23,26 @@ export class UIModalEngine {
             <div id="bankruptcy-guild-modal" class="modal-backdrop hidden z-[70]">
                 <div class="modal-content modal-theme-warning-yellow">
                     <h3 id="bankruptcy-guild-title" class="text-2xl font-orbitron mb-4 text-yellow-400 text-center"></h3>
-                    <div id="bankruptcy-guild-description" class="mb-4 text-lg text-gray-200"></div>
+                    <div id="bankruptcy-guild-description" class="mb-4 text-lg text-gray-200 text-center"></div>
                     <div id="guild-labor-options" class="flex flex-col gap-3 my-6">
-                        <label class="flex items-center gap-3 p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30">
-                            <input type="radio" name="guild-labor" value="mars" class="form-radio text-yellow-500" checked>
-                            <span>Mars Habitat Construction <br><span class="text-sm text-yellow-600">6 Years Labor, + ⌬ 10k</span></span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30">
-                            <input type="radio" name="guild-labor" value="uranus" class="form-radio text-yellow-500">
-                            <span>Uranus Orbital Assembly <br><span class="text-sm text-yellow-600">8 Years Labor, + ⌬ 16k</span></span>
-                        </label>
-                        <label class="flex items-center gap-3 p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30">
-                            <input type="radio" name="guild-labor" value="mercury" class="form-radio text-yellow-500">
-                            <span>Mercury Sub-Surface Mining <br><span class="text-sm text-yellow-600">10 Years Labor, + ⌬ 25k</span></span>
-                        </label>
+                        <div class="relative">
+                            <input type="radio" name="guild-labor" value="mars" id="guild-mars" class="hidden peer" checked>
+                            <label for="guild-mars" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                                Mars Habitat Construction <br><span class="text-red-500">6 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 10k</span>
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" name="guild-labor" value="uranus" id="guild-uranus" class="hidden peer">
+                            <label for="guild-uranus" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                                Uranus Orbital Assembly <br><span class="text-red-500">8 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 16k</span>
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" name="guild-labor" value="mercury" id="guild-mercury" class="hidden peer">
+                            <label for="guild-mercury" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                                Mercury Sub-Surface Mining <br><span class="text-red-500">10 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 25k</span>
+                            </label>
+                        </div>
                     </div>
                     <div id="bankruptcy-guild-button-container" class="mt-6 flex justify-center gap-4">
                         <button id="guild-accept-btn" class="btn bg-yellow-900 hover:bg-yellow-800 text-white border-yellow-600">Accept Terms</button>
@@ -47,9 +53,11 @@ export class UIModalEngine {
             <div id="bankruptcy-syndicate-modal" class="modal-backdrop hidden z-[70]">
                 <div class="modal-content modal-theme-glitching-red">
                     <h3 id="bankruptcy-syndicate-title" class="text-2xl font-orbitron mb-4 text-red-500 text-center"></h3>
-                    <div id="bankruptcy-syndicate-description" class="mb-6 text-lg text-red-200"></div>
-                    <div class="p-4 border border-red-800 bg-red-950/50 rounded mb-6 text-center font-roboto-mono text-red-400">
-                        10 Years Labor<br>+ ⌬ 25k<br>Ship Seized. Replacement Issued.
+                    <div id="bankruptcy-syndicate-description" class="mb-6 text-lg text-red-200 text-center"></div>
+                    <div class="p-4 border border-red-800 bg-red-950/50 rounded mb-6 text-center font-roboto-mono">
+                        <span class="text-red-500">10 Years Labor</span><br>
+                        <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 25k</span><br>
+                        <span class="text-red-600 font-bold mt-2 block">Ship Seized.</span>
                     </div>
                     <div id="bankruptcy-syndicate-button-container" class="mt-6 flex justify-center gap-4">
                         <button id="syndicate-accept-btn" class="btn bg-red-900 hover:bg-red-800 text-white border-red-600">Submit</button>
@@ -60,9 +68,10 @@ export class UIModalEngine {
             <div id="bankruptcy-vagrancy-modal" class="modal-backdrop hidden z-[70]">
                 <div class="modal-content modal-theme-drab-gray">
                     <h3 id="bankruptcy-vagrancy-title" class="text-2xl font-orbitron mb-4 text-gray-400 text-center"></h3>
-                    <div id="bankruptcy-vagrancy-description" class="mb-6 text-lg text-gray-300"></div>
-                    <div class="p-4 border border-gray-600 bg-gray-800/50 rounded mb-6 text-center font-roboto-mono text-gray-400">
-                        5 Years Labor<br>+ ⌬ 8k
+                    <div id="bankruptcy-vagrancy-description" class="mb-6 text-lg text-gray-300 text-center"></div>
+                    <div class="p-4 border border-gray-600 bg-gray-800/50 rounded mb-6 text-center font-roboto-mono">
+                        <span class="text-red-500">5 Years Labor</span><br>
+                        <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 8k</span>
                     </div>
                     <div id="bankruptcy-vagrancy-button-container" class="mt-6 flex justify-center gap-4">
                         <button id="vagrancy-accept-btn" class="btn bg-gray-700 hover:bg-gray-600 text-white border-gray-500">Comply</button>
