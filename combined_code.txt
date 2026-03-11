@@ -351,6 +351,7 @@
         </div>
     </div>
 
+    <script type="module" src="./js/services/BankruptcyService.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -4409,6 +4410,34 @@ card.
     margin-top: -15px; 
     z-index: 11;
     box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+}
+
+/* --- BANKRUPTCY THEMES --- */
+.modal-theme-warning-yellow {
+    border-color: #ca8a04 !important;
+    background: linear-gradient(145deg, rgba(66, 32, 6, 0.95), #111827) !important;
+    box-shadow: 0 0 25px rgba(202, 138, 4, 0.4), inset 0 0 15px rgba(202, 138, 4, 0.2) !important;
+}
+
+.modal-theme-glitching-red {
+    border-color: #dc2626 !important;
+    background: linear-gradient(145deg, rgba(69, 10, 10, 0.95), #111827) !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.5), inset 0 0 15px rgba(220, 38, 38, 0.3) !important;
+    animation: glitch-anim 2s infinite;
+}
+
+@keyframes glitch-anim {
+    0% { transform: translate(0) }
+    5% { transform: translate(-1px, 1px) }
+    10% { transform: translate(1px, -1px) }
+    15% { transform: translate(0) }
+    100% { transform: translate(0) }
+}
+
+.modal-theme-drab-gray {
+    border-color: #6b7280 !important;
+    background: linear-gradient(145deg, rgba(31, 41, 55, 0.95), #111827) !important;
+    box-shadow: 0 0 20px rgba(107, 114, 128, 0.3), inset 0 0 10px rgba(107, 114, 128, 0.2) !important;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -10240,78 +10269,97 @@ export function renderFinanceScreen(gameState) {
     } else {
         // --- CORPORATE EXPANSION: Branching Loan Logic ---
         
-        // 1. GUILD FINANCING
-        const guildAmount = Math.floor(shipNetWorth * 0.35);
-        const guildFee = Math.floor(guildAmount * 0.10);
-        const guildInterest = Math.floor(guildAmount * 0.04);
-        const guildData = { amount: guildAmount, fee: guildFee, interest: guildInterest, type: 'guild', termDays: 1080 };
-
-        let guildHtml = `
-            <div class="themed-header-bar" style="${themeStyleVars}">
-                <div class="themed-header-title">Guild Financing</div>
-            </div>
-            <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                <div class="text-base text-gray-400 mb-2">Asset-Backed Title Loan</div>
-                <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(guildData)}' ${player.credits < guildFee ? 'disabled' : ''}>
-                    <div class="loan-normal-content flex flex-col items-center w-full">
-                        <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">GUILD LOAN</span>
-                        <span class="credits-text-pulsing text-[21px]">${formatCredits(guildAmount, true)}</span>
-                        <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center">
-                            <div class="detail-block text-center flex-1">
-                                <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
-                                <div class="text-red-700 font-bold text-sm">${formatCredits(-guildFee)}</div>
-                            </div>
-                            <div class="detail-block text-center flex-1">
-                                <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
-                                <div class="text-red-700 font-bold text-sm">${formatCredits(-guildInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
-                            </div>
-                        </div>
+        // --- NEW: INDENTURED SERVITUDE LOCKOUT CHECK ---
+        const isCreditLocked = player.creditLockoutExpiryDate && day < player.creditLockoutExpiryDate;
+        
+        if (isCreditLocked) {
+            const yearsRemaining = Math.ceil((player.creditLockoutExpiryDate - day) / 365);
+            loanHtml = `
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title text-red-500">CREDIT BLACKLISTED</div>
+                </div>
+                <div class="finance-module-panel flex flex-col items-center justify-center space-y-4 text-center" style="border-color: #dc2626;">
+                    <div class="text-xl text-red-400 font-bold tracking-widest">ACCOUNT FROZEN</div>
+                    <div class="text-sm text-gray-400">Pursuant to bankruptcy restructuring, your ability to secure institutional or private credit has been suspended.</div>
+                    <div class="p-3 border border-red-800/50 bg-red-950/30 rounded w-full font-roboto-mono text-red-300">
+                        LOCKOUT EXPIRY: <br><span class="text-lg">${yearsRemaining} YEARS</span>
                     </div>
-                    <div class="loan-confirm-content">
-                        CONFIRM GUILD LOAN?
-                    </div>
-                </button>
-            </div>
-        `;
+                </div>
+            `;
+        } else {
+            // 1. GUILD FINANCING
+            const guildAmount = Math.floor(shipNetWorth * 0.35);
+            const guildFee = Math.floor(guildAmount * 0.10);
+            const guildInterest = Math.floor(guildAmount * 0.04);
+            const guildData = { amount: guildAmount, fee: guildFee, interest: guildInterest, type: 'guild', termDays: 1080 };
 
-        // 2. SYNDICATE CREDITORS
-        let syndicateHtml = '';
-        if ([LOCATION_IDS.EXCHANGE, LOCATION_IDS.VENUS, LOCATION_IDS.PLUTO].includes(currentLocationId)) {
-            const syndAmount = Math.floor(shipNetWorth * 0.55);
-            const syndFee = 0;
-            const syndInterest = Math.floor(syndAmount * 0.15);
-            const syndData = { amount: syndAmount, fee: syndFee, interest: syndInterest, type: 'syndicate', termDays: 1080 };
-
-            syndicateHtml = `
-                <div class="themed-header-bar mt-6" style="${themeStyleVars}">
-                    <div class="themed-header-title">Syndicate Creditors</div>
+            let guildHtml = `
+                <div class="themed-header-bar" style="${themeStyleVars}">
+                    <div class="themed-header-title">Guild Financing</div>
                 </div>
                 <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
-                    <div class="text-base text-red-400/80 mb-2">High-Risk Predatory Capital</div>
-                    <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(syndData)}'>
+                    <div class="text-base text-gray-400 mb-2">Asset-Backed Title Loan</div>
+                    <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(guildData)}' ${player.credits < guildFee ? 'disabled' : ''}>
                         <div class="loan-normal-content flex flex-col items-center w-full">
-                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70 text-red-500">SYNDICATE LOAN</span>
-                            <span class="text-red-500 font-bold text-[21px]" style="text-shadow: 0 0 8px rgba(239,68,68,0.5);">${formatCredits(syndAmount, true)}</span>
-                            <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center text-red-300">
+                            <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70">GUILD LOAN</span>
+                            <span class="credits-text-pulsing text-[21px]">${formatCredits(guildAmount, true)}</span>
+                            <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center">
                                 <div class="detail-block text-center flex-1">
                                     <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
-                                    <div class="text-slate-800 font-bold text-sm">$0</div>
+                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-guildFee)}</div>
                                 </div>
                                 <div class="detail-block text-center flex-1">
                                     <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
-                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-syndInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-guildInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
                                 </div>
                             </div>
                         </div>
                         <div class="loan-confirm-content">
-                            ACCEPT SYNDICATE TERMS?
+                            CONFIRM GUILD LOAN?
                         </div>
                     </button>
                 </div>
             `;
-        }
 
-        loanHtml = `<div>${guildHtml}${syndicateHtml}</div>`;
+            // 2. SYNDICATE CREDITORS
+            let syndicateHtml = '';
+            if ([LOCATION_IDS.EXCHANGE, LOCATION_IDS.VENUS, LOCATION_IDS.PLUTO].includes(currentLocationId)) {
+                const syndAmount = Math.floor(shipNetWorth * 0.55);
+                const syndFee = 0;
+                const syndInterest = Math.floor(syndAmount * 0.15);
+                const syndData = { amount: syndAmount, fee: syndFee, interest: syndInterest, type: 'syndicate', termDays: 1080 };
+
+                syndicateHtml = `
+                    <div class="themed-header-bar mt-6" style="${themeStyleVars}">
+                        <div class="themed-header-title">Syndicate Creditors</div>
+                    </div>
+                    <div class="finance-module-panel flex flex-col items-center justify-center space-y-2 text-center" style="border-color: ${theme.borderColor};">
+                        <div class="text-base text-red-400/80 mb-2">High-Risk Predatory Capital</div>
+                        <button class="btn-module btn-module-credit w-full relative overflow-hidden transition-colors duration-200" style="background: var(--theme-gradient); border-color: var(--theme-border-color);" data-action="${ACTION_IDS.TAKE_LOAN}" data-loan-details='${JSON.stringify(syndData)}'>
+                            <div class="loan-normal-content flex flex-col items-center w-full">
+                                <span class="loan-label text-[13px] tracking-widest mb-1 opacity-70 text-red-500">SYNDICATE LOAN</span>
+                                <span class="text-red-500 font-bold text-[21px]" style="text-shadow: 0 0 8px rgba(239,68,68,0.5);">${formatCredits(syndAmount, true)}</span>
+                                <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center text-red-300">
+                                    <div class="detail-block text-center flex-1">
+                                        <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
+                                        <div class="text-slate-800 font-bold text-sm">$0</div>
+                                    </div>
+                                    <div class="detail-block text-center flex-1">
+                                        <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
+                                        <div class="text-red-700 font-bold text-sm">${formatCredits(-syndInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="loan-confirm-content">
+                                ACCEPT SYNDICATE TERMS?
+                            </div>
+                        </button>
+                    </div>
+                `;
+            }
+
+            loanHtml = `<div>${guildHtml}${syndicateHtml}</div>`;
+        }
         // --- END CORPORATE EXPANSION ---
     }
 
@@ -22613,6 +22661,132 @@ export class UIModalEngine {
     constructor(manager) {
         this.manager = manager;
         this.modalQueue = [];
+        this._injectBankruptcyModals();
+    }
+
+    /**
+     * Injects the static DOM templates for the Bankruptcy flow into the document.
+     * @private
+     */
+    _injectBankruptcyModals() {
+        if (document.getElementById('bankruptcy-guild-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="bankruptcy-guild-modal" class="modal-backdrop hidden z-[70]">
+                <div class="modal-content modal-theme-warning-yellow">
+                    <h3 id="bankruptcy-guild-title" class="text-2xl font-orbitron mb-4 text-yellow-400 text-center"></h3>
+                    <div id="bankruptcy-guild-description" class="mb-4 text-lg text-gray-200 text-center"></div>
+                    <div id="guild-labor-options" class="flex flex-col gap-3 my-6">
+                        <div class="relative">
+                            <input type="radio" name="guild-labor" value="mars" id="guild-mars" class="hidden peer" checked>
+                            <label for="guild-mars" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                                Mars Habitat Construction <br><span class="text-red-500">6 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 10k</span>
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" name="guild-labor" value="uranus" id="guild-uranus" class="hidden peer">
+                            <label for="guild-uranus" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                                Uranus Orbital Assembly <br><span class="text-red-500">8 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 16k</span>
+                            </label>
+                        </div>
+                        <div class="relative">
+                            <input type="radio" name="guild-labor" value="mercury" id="guild-mercury" class="hidden peer">
+                            <label for="guild-mercury" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                                Mercury Sub-Surface Mining <br><span class="text-red-500">10 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 25k</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div id="bankruptcy-guild-button-container" class="mt-6 flex justify-center gap-4">
+                        <button id="guild-accept-btn" class="btn bg-yellow-900 hover:bg-yellow-800 text-white border-yellow-600">Accept Terms</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bankruptcy-syndicate-modal" class="modal-backdrop hidden z-[70]">
+                <div class="modal-content modal-theme-glitching-red">
+                    <h3 id="bankruptcy-syndicate-title" class="text-2xl font-orbitron mb-4 text-red-500 text-center"></h3>
+                    <div id="bankruptcy-syndicate-description" class="mb-6 text-lg text-red-200 text-center"></div>
+                    <div class="p-4 border border-red-800 bg-red-950/50 rounded mb-6 text-center font-roboto-mono">
+                        <span class="text-red-500">10 Years Labor</span><br>
+                        <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 25k</span><br>
+                        <span class="text-red-600 font-bold mt-2 block">Ship Seized.</span>
+                    </div>
+                    <div id="bankruptcy-syndicate-button-container" class="mt-6 flex justify-center gap-4">
+                        <button id="syndicate-accept-btn" class="btn bg-red-900 hover:bg-red-800 text-white border-red-600">Submit</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bankruptcy-vagrancy-modal" class="modal-backdrop hidden z-[70]">
+                <div class="modal-content modal-theme-drab-gray">
+                    <h3 id="bankruptcy-vagrancy-title" class="text-2xl font-orbitron mb-4 text-gray-400 text-center"></h3>
+                    <div id="bankruptcy-vagrancy-description" class="mb-6 text-lg text-gray-300 text-center"></div>
+                    <div class="p-4 border border-gray-600 bg-gray-800/50 rounded mb-6 text-center font-roboto-mono">
+                        <span class="text-red-500">5 Years Labor</span><br>
+                        <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 8k</span>
+                    </div>
+                    <div id="bankruptcy-vagrancy-button-container" class="mt-6 flex justify-center gap-4">
+                        <button id="vagrancy-accept-btn" class="btn bg-gray-700 hover:bg-gray-600 text-white border-gray-500">Comply</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Queues the appropriate bankruptcy modal and captures the UI selection.
+     * @param {string} type - 'guild', 'syndicate', or 'vagrancy'.
+     * @param {function} executeCallback - The BankruptcyService.executeTransition function to trigger on confirmation.
+     */
+    queueBankruptcyModal(type, executeCallback) {
+        let modalId, title, description, customSetup;
+
+        if (type === 'guild') {
+            modalId = 'bankruptcy-guild-modal';
+            title = 'MANDATORY LABOR PROGRAM';
+            description = "The Merchant's Guild has detected that you are effectively bankrupt. As a registered debtor to the Guild, your vessel has been impounded. To avoid permanent seizure of your ship, you are ordered to select a mandatory labor program to clear your debt.";
+            customSetup = (modal, closeHandler) => {
+                const acceptBtn = modal.querySelector('#guild-accept-btn');
+                acceptBtn.onclick = () => {
+                    const selected = modal.querySelector('input[name="guild-labor"]:checked').value;
+                    let years = 6, payout = 10000, location = 'mars';
+                    if (selected === 'uranus') { years = 8; payout = 16000; location = 'uranus'; }
+                    if (selected === 'mercury') { years = 10; payout = 25000; location = 'mercury'; }
+                    
+                    closeHandler();
+                    executeCallback(years, payout, false, location);
+                };
+            };
+        } else if (type === 'syndicate') {
+            modalId = 'bankruptcy-syndicate-modal';
+            title = 'SYNDICATE ASSET SEIZURE INITIATED';
+            description = "The Syndicate has detected that you are bankrupt while you still owe us. We have come to repossess whatever you have left, which appears to be your ship. You're being relocated to the Pluto ice-yards to work off the remainder of your balance.";
+            customSetup = (modal, closeHandler) => {
+                const acceptBtn = modal.querySelector('#syndicate-accept-btn');
+                acceptBtn.onclick = () => {
+                    closeHandler();
+                    executeCallback(10, 25000, true, 'pluto');
+                };
+            };
+        } else {
+            modalId = 'bankruptcy-vagrancy-modal';
+            title = 'CITATION: STATION VAGRANCY';
+            description = "You possess insufficient funds to maintain docking privileges. Local station authorities have remanded you to the public works detail at the local station until you can prove financial solvency.";
+            customSetup = (modal, closeHandler) => {
+                const acceptBtn = modal.querySelector('#vagrancy-accept-btn');
+                acceptBtn.onclick = () => {
+                    closeHandler();
+                    executeCallback(5, 8000, false, null); // location stays current
+                };
+            };
+        }
+
+        this.queueModal(modalId, title, description, null, {
+            nonDismissible: true,
+            customSetup: customSetup
+        });
     }
 
     /**
@@ -23058,6 +23232,47 @@ export function spawnFloatingText(targetElement, text, colorClass = 'text-white 
             floatEl.parentNode.removeChild(floatEl);
         }
     }, 1500);
+}
+
+/**
+ * Executes a full-screen blackout animation for multi-year transitions.
+ * @param {function} callback - Logic to execute while the screen is completely black.
+ * @returns {Promise<void>}
+ */
+export async function playBankruptcyBlackout(callback) {
+    // 1. Construct Overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center bg-black pointer-events-auto opacity-0';
+    
+    const text = document.createElement('h2');
+    text.className = 'text-3xl md:text-5xl font-orbitron text-gray-400 tracking-widest opacity-0';
+    text.textContent = 'Years later...';
+    
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+
+    // 2. Fade to Black (2s)
+    const fadeIn = overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+    await fadeIn.finished;
+
+    // 3. Fade Text In (1s)
+    const textIn = text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1000, fill: 'forwards', easing: 'ease-out' });
+    await textIn.finished;
+
+    // 4. Execute Background Logic Callback
+    if (callback) {
+        await callback();
+    }
+
+    // 5. Hold Blackout with Text (2s)
+    await new Promise(r => setTimeout(r, 2000));
+
+    // 6. Fade everything out (2s)
+    const fadeOut = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+    await fadeOut.finished;
+
+    // 7. Cleanup
+    overlay.remove();
 }
 // --- [[END]] VIRTUAL WORKBENCH ---
 --- END OF FILE: ./js/services/ui/AnimationService.js ---
@@ -23945,6 +24160,20 @@ ${logHistory}
         }
     }
 
+    /**
+     * Helper logic to instantly wipe player assets to prepare state for bankruptcy testing.
+     * @private
+     */
+    _clearAssetsForBankruptcy() {
+        const player = this.gameState.player;
+        player.ownedShipIds = [SHIP_IDS.WANDERER];
+        player.activeShipId = SHIP_IDS.WANDERER;
+        player.inventories = { [SHIP_IDS.WANDERER]: {} };
+        if (this.gameState.missions) {
+            this.gameState.missions.activeMissionIds = [];
+        }
+    }
+
     _registerDebugActions() {
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
@@ -24177,6 +24406,34 @@ ${logHistory}
                     });
                 }
                 this.simulationService.clearNavigationLock();
+            }},
+            
+            // --- BANKRUPTCY EVENTS ---
+            forceGuildBankruptcy: { name: 'Force Guild Servitude', type: 'button', handler: () => {
+                this.gameState.player.credits = 0;
+                this.gameState.player.debt = 50000;
+                this.gameState.player.loanType = 'guild';
+                this._clearAssetsForBankruptcy();
+                this.simulationService.bankruptcyService.triggerBankruptcyFlow();
+            }},
+            forceSyndicateBankruptcy: { name: 'Force Syndicate Seizure', type: 'button', handler: () => {
+                this.gameState.player.credits = 0;
+                this.gameState.player.debt = 50000;
+                this.gameState.player.loanType = 'syndicate';
+                this._clearAssetsForBankruptcy();
+                this.simulationService.bankruptcyService.triggerBankruptcyFlow();
+            }},
+            forceDestituteBankruptcy: { name: 'Force Vagrancy', type: 'button', handler: () => {
+                this.gameState.player.credits = 0;
+                this.gameState.player.debt = 0;
+                this.gameState.player.loanType = 'guild';
+                this._clearAssetsForBankruptcy();
+                this.simulationService.bankruptcyService.triggerBankruptcyFlow();
+            }},
+            clearLoanLockoutTimer: { name: 'Clear Credit Lockout', type: 'button', handler: () => {
+                this.gameState.player.creditLockoutExpiryDate = null;
+                this.gameState.setState({});
+                this.uiManager.createFloatingText('Credit Lockout Cleared', window.innerWidth/2, window.innerHeight/2, '#4ade80');
             }}
         };
     }
@@ -24239,6 +24496,12 @@ ${logHistory}
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
+        
+        const bankFolder = this.gui.addFolder('Bankruptcy Events');
+        bankFolder.add(this.actions.forceGuildBankruptcy, 'handler').name(this.actions.forceGuildBankruptcy.name);
+        bankFolder.add(this.actions.forceSyndicateBankruptcy, 'handler').name(this.actions.forceSyndicateBankruptcy.name);
+        bankFolder.add(this.actions.forceDestituteBankruptcy, 'handler').name(this.actions.forceDestituteBankruptcy.name);
+        bankFolder.add(this.actions.clearLoanLockoutTimer, 'handler').name(this.actions.clearLoanLockoutTimer.name);
 
         // --- NEW: UI Guides Folder ---
         const uiFolder = this.gui.addFolder('UI Guides');
@@ -25135,6 +25398,7 @@ export class GameState {
                 loanStartDate: null, seenGarnishmentWarning: false,
                 // --- VIRTUAL WORKBENCH: CORPORATE DEBT UPDATE ---
                 loanType: 'guild', loanDueDate: null, repoNextEventDay: null, lastRepoStrikeDay: null,
+                creditLockoutExpiryDate: null,
                 // --- END VIRTUAL WORKBENCH ---
                 revealedTier: 1,
                 unlockedLicenseIds: [],
@@ -25340,6 +25604,197 @@ export class GameState {
 }
 --- END OF FILE: ./js/services/GameState.js ---
 
+--- START OF FILE: ./js/services/BankruptcyService.js ---
+// js/services/BankruptcyService.js
+import { playBankruptcyBlackout } from './ui/AnimationService.js';
+import { SHIP_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+
+/**
+ * @class BankruptcyService
+ * @description Orchestrates the "Indentured Servitude" bankruptcy recovery system.
+ * Evaluates terminal financial softlocks and executes time-skip penalties (seizing assets, 
+ * resetting market influence, and applying credit lockouts) to keep the simulation playable
+ * without resorting to a hard Game Over state.
+ */
+export class BankruptcyService {
+    constructor() {
+        this.gameState = null;
+        this.timeService = null;
+        this.marketService = null;
+        this.solStationService = null;
+        this.uiManager = null;
+    }
+
+    /**
+     * Dependency injection initialization.
+     */
+    setServices(gameState, timeService, marketService, solStationService, uiManager) {
+        this.gameState = gameState;
+        this.timeService = timeService;
+        this.marketService = marketService;
+        this.solStationService = solStationService;
+        this.uiManager = uiManager;
+    }
+
+    /**
+     * Evaluates if the player is in a terminal economic softlock.
+     * Calculates if Total Potential Liquidity is fundamentally exhausted.
+     * Triggers only if liquid credits <= 0, cargo is empty across the fleet, fleet size is 1,
+     * credit lines are exhausted/locked, and no zero-cost missions exist.
+     * @param {object} state - The current GameState.state object.
+     * @returns {boolean} True if the player is fundamentally bankrupt.
+     */
+    isPlayerBankrupt(state) {
+        const player = state.player;
+
+        // 1. Liquidity check
+        if (player.credits > 0) return false;
+
+        // 2. Fleet size check (player could sell a backup ship)
+        if (player.ownedShipIds.length > 1) return false;
+
+        // 3. Cargo check (iterate all owned ships to ensure no cargo is hidden)
+        let hasCargo = false;
+        for (const shipId of player.ownedShipIds) {
+            const inventory = player.inventories[shipId] || {};
+            for (const commodityId in inventory) {
+                if (inventory[commodityId].quantity > 0) {
+                    hasCargo = true;
+                    break;
+                }
+            }
+            if (hasCargo) break;
+        }
+        if (hasCargo) return false;
+
+        // 4. Active debt / Credit Lockout check
+        // If debt is 0 and the player is not under a lockout penalty, they can legally take a Guild loan.
+        const isCreditLocked = player.creditLockoutExpiryDate && state.day < player.creditLockoutExpiryDate;
+        if (player.debt === 0 && !isCreditLocked) {
+            return false;
+        }
+
+        // 5. Active zero-cost missions check
+        // If the player has active missions, they might still earn a payout to recover.
+        if (state.missions && state.missions.activeMissionIds && state.missions.activeMissionIds.length > 0) {
+            return false;
+        }
+
+        // All economic lifelines exhausted.
+        return true;
+    }
+
+    /**
+     * Initiates the UI flow for bankruptcy, intercepting normal simulation interaction
+     * and pushing the correct modal template based on the active debt holder.
+     */
+    triggerBankruptcyFlow() {
+        if (!this.uiManager) return;
+        
+        const player = this.gameState.player;
+        let type = 'vagrancy';
+        
+        if (player.debt > 0) {
+            type = player.loanType === 'syndicate' ? 'syndicate' : 'guild';
+        }
+
+        // Use UIModalEngine specifically constructed for this flow
+        this.uiManager.modalEngine.queueBankruptcyModal(type, (years, payout, shipSeized, locationId) => {
+            this.executeTransition(years, payout, shipSeized, locationId);
+        });
+        this.uiManager.render();
+    }
+
+    /**
+     * Executes the background simulation state mutations during the blackout animation.
+     * Advances the calendar, wipes market influences, decays Sol Station caches, 
+     * and processes severance and asset seizure.
+     * @param {number} years - Years of servitude to skip.
+     * @param {number} payout - Severance capital granted upon return.
+     * @param {boolean} shipSeized - Whether the player's primary vessel is repossessed.
+     * @param {string|null} locationId - The location the player is remanded to.
+     */
+    async executeTransition(years, payout, shipSeized, locationId) {
+        if (!this.gameState || !this.timeService || !this.marketService || !this.uiManager) return;
+
+        // Call the canvas/div blackout animation
+        await playBankruptcyBlackout(async () => {
+            const player = this.gameState.player;
+
+            // --- CRITICAL FIX: Clear Travel State to avoid UI getting stuck ---
+            this.gameState.pendingTravel = null;
+            this.gameState.activeNav = NAV_IDS.DATA;
+            this.gameState.activeScreen = SCREEN_IDS.MISSIONS;
+
+            // 1. Execute Time Skip
+            this.timeService.advanceYearsSilently(years);
+
+            // 2. Wipe Market Influence
+            this.marketService.wipePlayerInfluence();
+
+            // 3. Decay Sol Station Caches
+            if (this.solStationService) {
+                this.solStationService.decayAbandonedCaches();
+            }
+
+            // 4. Financial Reset
+            player.debt = 0;
+            player.loanStartDate = null;
+            player.loanDueDate = null;
+            player.loanType = 'guild';
+            player.repoNextEventDay = null;
+            player.lastRepoStrikeDay = null;
+            player.monthlyInterestAmount = 0;
+            player.seenGarnishmentWarning = false;
+            
+            player.credits = payout;
+
+            // Apply the 6-year credit lockout
+            player.creditLockoutExpiryDate = this.gameState.day + (6 * 365);
+
+            // 5. Asset Seizure vs Cargo Wipe
+            if (shipSeized) {
+                player.ownedShipIds = [SHIP_IDS.WANDERER];
+                player.activeShipId = SHIP_IDS.WANDERER;
+                player.shipStates = {
+                    [SHIP_IDS.WANDERER]: this.gameState._getInitialShipState(SHIP_IDS.WANDERER)
+                };
+                player.inventories = {
+                    [SHIP_IDS.WANDERER]: {} 
+                };
+            } else {
+                // Just wipe cargo for existing ships (in case any straggler cargo was missed)
+                for (const shipId of player.ownedShipIds) {
+                    if (player.inventories[shipId]) {
+                        Object.values(player.inventories[shipId]).forEach(inv => {
+                            inv.quantity = 0;
+                            inv.avgCost = 0;
+                        });
+                    }
+                }
+            }
+
+            // 6. Relocation
+            if (locationId) {
+                this.gameState.currentLocationId = locationId;
+            }
+
+            // Reboot News Ticker for the new location context
+            if (this.uiManager.simulationService && this.uiManager.simulationService.newsTickerService) {
+                this.uiManager.simulationService.newsTickerService.onLocationChange(this.gameState.currentLocationId);
+            }
+
+            // Force a deep render update while screen is black
+            this.gameState.setState({});
+        });
+        
+        // Show Aftermath Modal once screen fades back in
+        this.uiManager.queueModal('event-modal', 'LABOR CONTRACT FULFILLED', `Your period of indentured servitude has ended. Your credit has been blacklisted for 6 years.`, null, { buttonClass: 'bg-cyan-800/80 hover:bg-cyan-700/80' });
+        this.uiManager.render();
+    }
+}
+--- END OF FILE: ./js/services/BankruptcyService.js ---
+
 --- START OF FILE: ./js/services/SolStationService.js ---
 // js/services/SolStationService.js
 import { DB } from '../data/database.js';
@@ -25406,6 +25861,24 @@ export class SolStationService {
         this.localTimeAccumulator = 0;
         this.pendingUniverseDays = 0; 
         this.heartbeatInterval = null;
+    }
+
+    /**
+     * Decays all player-owned Sol Station caches to 0. 
+     * Used during multi-year absences where the station's entropy consumes abandoned resources.
+     */
+    decayAbandonedCaches() {
+        const station = this.gameState.solStation;
+        if (!station || !station.unlocked) return;
+        
+        Object.values(station.caches).forEach(cache => {
+            if (cache) {
+                cache.current = 0;
+            }
+        });
+        
+        station.health = 0;
+        this.logger.info.system('SolStation', this.gameState.day, 'DECAY_ABANDONED', `All Sol Station caches decayed to 0 due to prolonged absence.`);
     }
 
     setTimeService(timeService) {
@@ -27347,6 +27820,35 @@ export class MarketService {
         this._systemStateExpirationDay = 0;
     }
 
+    /**
+     * Wipes all player-driven market pressure and interactions, resetting the simulation to a baseline state.
+     * Used during extreme time skips (indentured servitude).
+     */
+    wipePlayerInfluence() {
+        DB.MARKETS.forEach(market => {
+            DB.COMMODITIES.forEach(c => {
+                const inventoryItem = this.gameState.market.inventory[market.id]?.[c.id];
+                if (inventoryItem) {
+                    inventoryItem.marketPressure = 0;
+                    inventoryItem.lastPlayerInteractionTimestamp = 0;
+                    inventoryItem.priceLockEndDay = 0;
+                    inventoryItem.isDepleted = false;
+                    inventoryItem.isSaturated = false;
+                    inventoryItem.depletionDay = 0;
+                    inventoryItem.depletionBonusDay = 0;
+                    inventoryItem.hoverUntilDay = 0;
+                    inventoryItem.rivalArbitrage = { isActive: false, endDay: 0 };
+                    
+                    // Hard reset quantity to a neutral baseline
+                    inventoryItem.quantity = this._calculateBaselineStock(market, c);
+                }
+            });
+        });
+        
+        // Evolve once to immediately align prices against the new baseline
+        this.evolveMarketPrices();
+    }
+
     // --- VIRTUAL WORKBENCH: UPDATED getPrice ---
 
     /**
@@ -27540,7 +28042,7 @@ export class MarketService {
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
                     if (commodityMods.volatility_mult) volatility *= commodityMods.volatility_mult;
-                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.mean_reversion_mult;
+                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.meanReversion_mult;
                 }
 
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
@@ -28923,6 +29425,27 @@ export class TimeService {
     }
 
     /**
+     * Silently advances the game calendar by the specified number of years
+     * without triggering daily/weekly event loops. Used exclusively for extreme time-skips.
+     * @param {number} years 
+     */
+    advanceYearsSilently(years) {
+        const daysToSkip = years * 365;
+        this.gameState.day += daysToSkip;
+        this.gameState.player.playerAge += years;
+        
+        // Sync timers to prevent immediate backlog execution
+        this.gameState.lastMarketUpdateDay = this.gameState.day;
+        this.gameState.lastInterestChargeDay = this.gameState.day;
+        
+        if (this.gameState.solStation && this.gameState.solStation.unlocked) {
+            this.gameState.solStation.lastProcessedDay = this.gameState.day;
+        }
+        
+        this.logger.info.system('Time', this.gameState.day, 'TIME_SKIP', `Silently advanced ${years} years.`);
+    }
+
+    /**
      * Advances the game world by a specified number of days.
      * detailed mechanics like passive repairs, interest, and random events are handled here.
      * @param {number} days - The number of days to advance.
@@ -30092,6 +30615,7 @@ import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { RandomEventService } from './RandomEventService.js'; 
 import { SolStationService } from './SolStationService.js'; 
+import { BankruptcyService } from './BankruptcyService.js';
 import { OFFICERS } from '../data/officers.js'; 
 import { ToastService } from './ToastService.js';
 
@@ -30123,7 +30647,7 @@ export class SimulationService {
         this.solStationService.setTimeService(this.timeService);
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
-        
+        this.bankruptcyService = new BankruptcyService();
         this.toastService = new ToastService(gameState, uiManager, this);
 
         this.timeService.intelService = this.intelService;
@@ -30131,6 +30655,9 @@ export class SimulationService {
         this.timeService.simulationService = this;
         this.uiManager.setSimulationService(this);
         this.newsTickerService.setServices(this, this.marketService);
+        
+        // Initialize Bankruptcy hooks
+        this.bankruptcyService.setServices(this.gameState, this.timeService, this.marketService, this.solStationService, this.uiManager);
 
         if (this.gameState.currentLocationId === 'sol') {
             this.solStationService.startLocalLiveLoop();
@@ -30468,9 +30995,13 @@ export class SimulationService {
         }, { buttonText: 'Restart' });
     }
 
+    /**
+     * Hook into the core loop to evaluate if the player is fundamentally bankrupt.
+     * Triggers the "Indentured Servitude" time-skip mechanic to avoid a hard game over.
+     */
     _checkGameOverConditions() {
-        if (this.gameState.player.credits <= 0) {
-            this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
+        if (this.bankruptcyService && this.bankruptcyService.isPlayerBankrupt(this.gameState.getState())) {
+            this.bankruptcyService.triggerBankruptcyFlow();
         }
     }
 

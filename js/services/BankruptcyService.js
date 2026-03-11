@@ -1,6 +1,6 @@
 // js/services/BankruptcyService.js
 import { playBankruptcyBlackout } from './ui/AnimationService.js';
-import { SHIP_IDS } from '../data/constants.js';
+import { SHIP_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
 
 /**
  * @class BankruptcyService
@@ -114,6 +114,11 @@ export class BankruptcyService {
         await playBankruptcyBlackout(async () => {
             const player = this.gameState.player;
 
+            // --- CRITICAL FIX: Clear Travel State to avoid UI getting stuck ---
+            this.gameState.pendingTravel = null;
+            this.gameState.activeNav = NAV_IDS.DATA;
+            this.gameState.activeScreen = SCREEN_IDS.MISSIONS;
+
             // 1. Execute Time Skip
             this.timeService.advanceYearsSilently(years);
 
@@ -165,6 +170,11 @@ export class BankruptcyService {
             // 6. Relocation
             if (locationId) {
                 this.gameState.currentLocationId = locationId;
+            }
+
+            // Reboot News Ticker for the new location context
+            if (this.uiManager.simulationService && this.uiManager.simulationService.newsTickerService) {
+                this.uiManager.simulationService.newsTickerService.onLocationChange(this.gameState.currentLocationId);
             }
 
             // Force a deep render update while screen is black
