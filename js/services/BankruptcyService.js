@@ -1,6 +1,7 @@
 // js/services/BankruptcyService.js
 import { playBankruptcyBlackout } from './ui/AnimationService.js';
-import { SHIP_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+import { SHIP_IDS, NAV_IDS, SCREEN_IDS, LOCATION_IDS } from '../data/constants.js';
+import { formatCredits } from '../utils.js';
 
 /**
  * @class BankruptcyService
@@ -140,7 +141,9 @@ export class BankruptcyService {
             player.monthlyInterestAmount = 0;
             player.seenGarnishmentWarning = false;
             
-            player.credits = payout;
+            // Set credits to 0 while in blackout. 
+            // Stipend is granted upon waking/acknowledging the modal.
+            player.credits = 0;
 
             // Apply the 6-year credit lockout
             player.creditLockoutExpiryDate = this.gameState.day + (6 * 365);
@@ -170,6 +173,9 @@ export class BankruptcyService {
             // 6. Relocation
             if (locationId) {
                 this.gameState.currentLocationId = locationId;
+            } else if (this.gameState.currentLocationId === 'transit') {
+                // Failsafe: if Vagrancy somehow caught them during an edge case transit, drop them at Earth
+                this.gameState.currentLocationId = LOCATION_IDS.EARTH;
             }
 
             // Reboot News Ticker for the new location context
@@ -182,7 +188,30 @@ export class BankruptcyService {
         });
         
         // Show Aftermath Modal once screen fades back in
-        this.uiManager.queueModal('event-modal', 'LABOR CONTRACT FULFILLED', `Your period of indentured servitude has ended. Your credit has been blacklisted for 6 years.`, null, { buttonClass: 'bg-cyan-800/80 hover:bg-cyan-700/80' });
+        const aftermathCallback = () => {
+            // Grant the severance/stipend payout
+            this.gameState.player.credits += payout;
+            
+            // Log the transaction safely via SimulationService
+            if (this.uiManager.simulationService && typeof this.uiManager.simulationService._logTransaction === 'function') {
+                this.uiManager.simulationService._logTransaction('bankruptcy', payout, 'Labor Severance Stipend');
+            }
+
+            // Fire the floating green text animation
+            if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+                this.uiManager.createFloatingText(`+${formatCredits(payout)}`, window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
+            }
+
+            this.gameState.setState({});
+        };
+
+        this.uiManager.queueModal(
+            'event-modal', 
+            'LABOR CONTRACT FULFILLED', 
+            `Your period of indentured servitude has ended. Your credit has been blacklisted for 6 years.`, 
+            aftermathCallback, 
+            { buttonClass: 'bg-cyan-800/80 hover:bg-cyan-700/80' }
+        );
         this.uiManager.render();
     }
 }
