@@ -256,6 +256,7 @@ export class GameState {
                 loanStartDate: null, seenGarnishmentWarning: false,
                 // --- VIRTUAL WORKBENCH: CORPORATE DEBT UPDATE ---
                 loanType: 'guild', loanDueDate: null, repoNextEventDay: null, lastRepoStrikeDay: null,
+                creditLockoutExpiryDate: null,
                 // --- END VIRTUAL WORKBENCH ---
                 revealedTier: 1,
                 unlockedLicenseIds: [],

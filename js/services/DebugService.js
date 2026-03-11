@@ -549,6 +549,20 @@ ${logHistory}
         }
     }
 
+    /**
+     * Helper logic to instantly wipe player assets to prepare state for bankruptcy testing.
+     * @private
+     */
+    _clearAssetsForBankruptcy() {
+        const player = this.gameState.player;
+        player.ownedShipIds = [SHIP_IDS.WANDERER];
+        player.activeShipId = SHIP_IDS.WANDERER;
+        player.inventories = { [SHIP_IDS.WANDERER]: {} };
+        if (this.gameState.missions) {
+            this.gameState.missions.activeMissionIds = [];
+        }
+    }
+
     _registerDebugActions() {
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
@@ -781,6 +795,34 @@ ${logHistory}
                     });
                 }
                 this.simulationService.clearNavigationLock();
+            }},
+            
+            // --- BANKRUPTCY EVENTS ---
+            forceGuildBankruptcy: { name: 'Force Guild Servitude', type: 'button', handler: () => {
+                this.gameState.player.credits = 0;
+                this.gameState.player.debt = 50000;
+                this.gameState.player.loanType = 'guild';
+                this._clearAssetsForBankruptcy();
+                this.simulationService.bankruptcyService.triggerBankruptcyFlow();
+            }},
+            forceSyndicateBankruptcy: { name: 'Force Syndicate Seizure', type: 'button', handler: () => {
+                this.gameState.player.credits = 0;
+                this.gameState.player.debt = 50000;
+                this.gameState.player.loanType = 'syndicate';
+                this._clearAssetsForBankruptcy();
+                this.simulationService.bankruptcyService.triggerBankruptcyFlow();
+            }},
+            forceDestituteBankruptcy: { name: 'Force Vagrancy', type: 'button', handler: () => {
+                this.gameState.player.credits = 0;
+                this.gameState.player.debt = 0;
+                this.gameState.player.loanType = 'guild';
+                this._clearAssetsForBankruptcy();
+                this.simulationService.bankruptcyService.triggerBankruptcyFlow();
+            }},
+            clearLoanLockoutTimer: { name: 'Clear Credit Lockout', type: 'button', handler: () => {
+                this.gameState.player.creditLockoutExpiryDate = null;
+                this.gameState.setState({});
+                this.uiManager.createFloatingText('Credit Lockout Cleared', window.innerWidth/2, window.innerHeight/2, '#4ade80');
             }}
         };
     }
@@ -843,6 +885,12 @@ ${logHistory}
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
         flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
+        
+        const bankFolder = this.gui.addFolder('Bankruptcy Events');
+        bankFolder.add(this.actions.forceGuildBankruptcy, 'handler').name(this.actions.forceGuildBankruptcy.name);
+        bankFolder.add(this.actions.forceSyndicateBankruptcy, 'handler').name(this.actions.forceSyndicateBankruptcy.name);
+        bankFolder.add(this.actions.forceDestituteBankruptcy, 'handler').name(this.actions.forceDestituteBankruptcy.name);
+        bankFolder.add(this.actions.clearLoanLockoutTimer, 'handler').name(this.actions.clearLoanLockoutTimer.name);
 
         // --- NEW: UI Guides Folder ---
         const uiFolder = this.gui.addFolder('UI Guides');

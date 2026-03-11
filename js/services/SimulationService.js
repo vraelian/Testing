@@ -18,6 +18,7 @@ import { IntelService } from './IntelService.js';
 import { GameAttributes } from './GameAttributes.js'; 
 import { RandomEventService } from './RandomEventService.js'; 
 import { SolStationService } from './SolStationService.js'; 
+import { BankruptcyService } from './BankruptcyService.js';
 import { OFFICERS } from '../data/officers.js'; 
 import { ToastService } from './ToastService.js';
 
@@ -49,7 +50,7 @@ export class SimulationService {
         this.solStationService.setTimeService(this.timeService);
 
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
-        
+        this.bankruptcyService = new BankruptcyService();
         this.toastService = new ToastService(gameState, uiManager, this);
 
         this.timeService.intelService = this.intelService;
@@ -57,6 +58,9 @@ export class SimulationService {
         this.timeService.simulationService = this;
         this.uiManager.setSimulationService(this);
         this.newsTickerService.setServices(this, this.marketService);
+        
+        // Initialize Bankruptcy hooks
+        this.bankruptcyService.setServices(this.gameState, this.timeService, this.marketService, this.solStationService, this.uiManager);
 
         if (this.gameState.currentLocationId === 'sol') {
             this.solStationService.startLocalLiveLoop();
@@ -394,9 +398,13 @@ export class SimulationService {
         }, { buttonText: 'Restart' });
     }
 
+    /**
+     * Hook into the core loop to evaluate if the player is fundamentally bankrupt.
+     * Triggers the "Indentured Servitude" time-skip mechanic to avoid a hard game over.
+     */
     _checkGameOverConditions() {
-        if (this.gameState.player.credits <= 0) {
-            this._gameOver("Your credit balance has fallen to zero. With no funds to operate, your trading career has come to an end.");
+        if (this.bankruptcyService && this.bankruptcyService.isPlayerBankrupt(this.gameState.getState())) {
+            this.bankruptcyService.triggerBankruptcyFlow();
         }
     }
 

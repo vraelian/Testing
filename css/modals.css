@@ -1351,3 +1351,31 @@
     z-index: 11;
     box-shadow: 0 4px 8px rgba(0,0,0,0.6);
 }
+
+/* --- BANKRUPTCY THEMES --- */
+.modal-theme-warning-yellow {
+    border-color: #ca8a04 !important;
+    background: linear-gradient(145deg, rgba(66, 32, 6, 0.95), #111827) !important;
+    box-shadow: 0 0 25px rgba(202, 138, 4, 0.4), inset 0 0 15px rgba(202, 138, 4, 0.2) !important;
+}
+
+.modal-theme-glitching-red {
+    border-color: #dc2626 !important;
+    background: linear-gradient(145deg, rgba(69, 10, 10, 0.95), #111827) !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.5), inset 0 0 15px rgba(220, 38, 38, 0.3) !important;
+    animation: glitch-anim 2s infinite;
+}
+
+@keyframes glitch-anim {
+    0% { transform: translate(0) }
+    5% { transform: translate(-1px, 1px) }
+    10% { transform: translate(1px, -1px) }
+    15% { transform: translate(0) }
+    100% { transform: translate(0) }
+}
+
+.modal-theme-drab-gray {
+    border-color: #6b7280 !important;
+    background: linear-gradient(145deg, rgba(31, 41, 55, 0.95), #111827) !important;
+    box-shadow: 0 0 20px rgba(107, 114, 128, 0.3), inset 0 0 10px rgba(107, 114, 128, 0.2) !important;
+}

@@ -8,6 +8,123 @@ export class UIModalEngine {
     constructor(manager) {
         this.manager = manager;
         this.modalQueue = [];
+        this._injectBankruptcyModals();
+    }
+
+    /**
+     * Injects the static DOM templates for the Bankruptcy flow into the document.
+     * @private
+     */
+    _injectBankruptcyModals() {
+        if (document.getElementById('bankruptcy-guild-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="bankruptcy-guild-modal" class="modal-backdrop hidden z-[70]">
+                <div class="modal-content modal-theme-warning-yellow">
+                    <h3 id="bankruptcy-guild-title" class="text-2xl font-orbitron mb-4 text-yellow-400 text-center"></h3>
+                    <div id="bankruptcy-guild-description" class="mb-4 text-lg text-gray-200"></div>
+                    <div id="guild-labor-options" class="flex flex-col gap-3 my-6">
+                        <label class="flex items-center gap-3 p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30">
+                            <input type="radio" name="guild-labor" value="mars" class="form-radio text-yellow-500" checked>
+                            <span>Mars Habitat Construction <br><span class="text-sm text-yellow-600">6 Years Labor, + ⌬ 10k</span></span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30">
+                            <input type="radio" name="guild-labor" value="uranus" class="form-radio text-yellow-500">
+                            <span>Uranus Orbital Assembly <br><span class="text-sm text-yellow-600">8 Years Labor, + ⌬ 16k</span></span>
+                        </label>
+                        <label class="flex items-center gap-3 p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30">
+                            <input type="radio" name="guild-labor" value="mercury" class="form-radio text-yellow-500">
+                            <span>Mercury Sub-Surface Mining <br><span class="text-sm text-yellow-600">10 Years Labor, + ⌬ 25k</span></span>
+                        </label>
+                    </div>
+                    <div id="bankruptcy-guild-button-container" class="mt-6 flex justify-center gap-4">
+                        <button id="guild-accept-btn" class="btn bg-yellow-900 hover:bg-yellow-800 text-white border-yellow-600">Accept Terms</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bankruptcy-syndicate-modal" class="modal-backdrop hidden z-[70]">
+                <div class="modal-content modal-theme-glitching-red">
+                    <h3 id="bankruptcy-syndicate-title" class="text-2xl font-orbitron mb-4 text-red-500 text-center"></h3>
+                    <div id="bankruptcy-syndicate-description" class="mb-6 text-lg text-red-200"></div>
+                    <div class="p-4 border border-red-800 bg-red-950/50 rounded mb-6 text-center font-roboto-mono text-red-400">
+                        10 Years Labor<br>+ ⌬ 25k<br>Ship Seized. Replacement Issued.
+                    </div>
+                    <div id="bankruptcy-syndicate-button-container" class="mt-6 flex justify-center gap-4">
+                        <button id="syndicate-accept-btn" class="btn bg-red-900 hover:bg-red-800 text-white border-red-600">Submit</button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="bankruptcy-vagrancy-modal" class="modal-backdrop hidden z-[70]">
+                <div class="modal-content modal-theme-drab-gray">
+                    <h3 id="bankruptcy-vagrancy-title" class="text-2xl font-orbitron mb-4 text-gray-400 text-center"></h3>
+                    <div id="bankruptcy-vagrancy-description" class="mb-6 text-lg text-gray-300"></div>
+                    <div class="p-4 border border-gray-600 bg-gray-800/50 rounded mb-6 text-center font-roboto-mono text-gray-400">
+                        5 Years Labor<br>+ ⌬ 8k
+                    </div>
+                    <div id="bankruptcy-vagrancy-button-container" class="mt-6 flex justify-center gap-4">
+                        <button id="vagrancy-accept-btn" class="btn bg-gray-700 hover:bg-gray-600 text-white border-gray-500">Comply</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Queues the appropriate bankruptcy modal and captures the UI selection.
+     * @param {string} type - 'guild', 'syndicate', or 'vagrancy'.
+     * @param {function} executeCallback - The BankruptcyService.executeTransition function to trigger on confirmation.
+     */
+    queueBankruptcyModal(type, executeCallback) {
+        let modalId, title, description, customSetup;
+
+        if (type === 'guild') {
+            modalId = 'bankruptcy-guild-modal';
+            title = 'MANDATORY LABOR PROGRAM';
+            description = "The Merchant's Guild has detected that you are effectively bankrupt. As a registered debtor to the Guild, your vessel has been impounded. To avoid permanent seizure of your ship, you are ordered to select a mandatory labor program to clear your debt.";
+            customSetup = (modal, closeHandler) => {
+                const acceptBtn = modal.querySelector('#guild-accept-btn');
+                acceptBtn.onclick = () => {
+                    const selected = modal.querySelector('input[name="guild-labor"]:checked').value;
+                    let years = 6, payout = 10000, location = 'mars';
+                    if (selected === 'uranus') { years = 8; payout = 16000; location = 'uranus'; }
+                    if (selected === 'mercury') { years = 10; payout = 25000; location = 'mercury'; }
+                    
+                    closeHandler();
+                    executeCallback(years, payout, false, location);
+                };
+            };
+        } else if (type === 'syndicate') {
+            modalId = 'bankruptcy-syndicate-modal';
+            title = 'SYNDICATE ASSET SEIZURE INITIATED';
+            description = "The Syndicate has detected that you are bankrupt while you still owe us. We have come to repossess whatever you have left, which appears to be your ship. You're being relocated to the Pluto ice-yards to work off the remainder of your balance.";
+            customSetup = (modal, closeHandler) => {
+                const acceptBtn = modal.querySelector('#syndicate-accept-btn');
+                acceptBtn.onclick = () => {
+                    closeHandler();
+                    executeCallback(10, 25000, true, 'pluto');
+                };
+            };
+        } else {
+            modalId = 'bankruptcy-vagrancy-modal';
+            title = 'CITATION: STATION VAGRANCY';
+            description = "You possess insufficient funds to maintain docking privileges. Local station authorities have remanded you to the public works detail at the local station until you can prove financial solvency.";
+            customSetup = (modal, closeHandler) => {
+                const acceptBtn = modal.querySelector('#vagrancy-accept-btn');
+                acceptBtn.onclick = () => {
+                    closeHandler();
+                    executeCallback(5, 8000, false, null); // location stays current
+                };
+            };
+        }
+
+        this.queueModal(modalId, title, description, null, {
+            nonDismissible: true,
+            customSetup: customSetup
+        });
     }
 
     /**
