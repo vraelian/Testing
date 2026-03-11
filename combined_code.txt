@@ -22652,7 +22652,7 @@ export class UISolStationControl {
 
 --- START OF FILE: ./js/services/ui/UIModalEngine.js ---
 // js/services/ui/UIModalEngine.js
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS } from '../../data/constants.js';
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
 
 export class UIModalEngine {
     /**
@@ -22751,9 +22751,10 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#guild-accept-btn');
                 acceptBtn.onclick = () => {
                     const selected = modal.querySelector('input[name="guild-labor"]:checked').value;
-                    let years = 6, payout = 10000, location = 'mars';
-                    if (selected === 'uranus') { years = 8; payout = 16000; location = 'uranus'; }
-                    if (selected === 'mercury') { years = 10; payout = 25000; location = 'mercury'; }
+                    // FIX: Using robust LOCATION_IDS instead of incomplete strings
+                    let years = 6, payout = 10000, location = LOCATION_IDS.MARS;
+                    if (selected === 'uranus') { years = 8; payout = 16000; location = LOCATION_IDS.URANUS; }
+                    if (selected === 'mercury') { years = 10; payout = 25000; location = LOCATION_IDS.MERCURY; }
                     
                     closeHandler();
                     executeCallback(years, payout, false, location);
@@ -22767,7 +22768,7 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#syndicate-accept-btn');
                 acceptBtn.onclick = () => {
                     closeHandler();
-                    executeCallback(10, 25000, true, 'pluto');
+                    executeCallback(10, 25000, true, LOCATION_IDS.PLUTO); // FIX: Safe ID
                 };
             };
         } else {
@@ -22785,7 +22786,8 @@ export class UIModalEngine {
 
         this.queueModal(modalId, title, description, null, {
             nonDismissible: true,
-            customSetup: customSetup
+            customSetup: customSetup,
+            contentClass: 'text-center' // FIX: Enforces center alignment across modal body
         });
     }
 
@@ -22989,7 +22991,10 @@ export class UIModalEngine {
                 }
                 if (button) {
                     button.className = 'btn px-6 py-2';
-                    if (options.buttonClass) button.classList.add(options.buttonClass);
+                    if (options.buttonClass) {
+                        // FIX: Ensure class definitions with spaces don't crash the DOMTokenList
+                        button.classList.add(...options.buttonClass.split(' ').filter(Boolean));
+                    }
                     button.innerHTML = options.buttonText || 'Understood';
                     button.onclick = closeHandler;
                 }
@@ -25607,7 +25612,8 @@ export class GameState {
 --- START OF FILE: ./js/services/BankruptcyService.js ---
 // js/services/BankruptcyService.js
 import { playBankruptcyBlackout } from './ui/AnimationService.js';
-import { SHIP_IDS, NAV_IDS, SCREEN_IDS } from '../data/constants.js';
+import { SHIP_IDS, NAV_IDS, SCREEN_IDS, LOCATION_IDS } from '../data/constants.js';
+import { formatCredits } from '../utils.js';
 
 /**
  * @class BankruptcyService
@@ -25747,7 +25753,9 @@ export class BankruptcyService {
             player.monthlyInterestAmount = 0;
             player.seenGarnishmentWarning = false;
             
-            player.credits = payout;
+            // Set credits to 0 while in blackout. 
+            // Stipend is granted upon waking/acknowledging the modal.
+            player.credits = 0;
 
             // Apply the 6-year credit lockout
             player.creditLockoutExpiryDate = this.gameState.day + (6 * 365);
@@ -25777,6 +25785,9 @@ export class BankruptcyService {
             // 6. Relocation
             if (locationId) {
                 this.gameState.currentLocationId = locationId;
+            } else if (this.gameState.currentLocationId === 'transit') {
+                // Failsafe: if Vagrancy somehow caught them during an edge case transit, drop them at Earth
+                this.gameState.currentLocationId = LOCATION_IDS.EARTH;
             }
 
             // Reboot News Ticker for the new location context
@@ -25789,7 +25800,30 @@ export class BankruptcyService {
         });
         
         // Show Aftermath Modal once screen fades back in
-        this.uiManager.queueModal('event-modal', 'LABOR CONTRACT FULFILLED', `Your period of indentured servitude has ended. Your credit has been blacklisted for 6 years.`, null, { buttonClass: 'bg-cyan-800/80 hover:bg-cyan-700/80' });
+        const aftermathCallback = () => {
+            // Grant the severance/stipend payout
+            this.gameState.player.credits += payout;
+            
+            // Log the transaction safely via SimulationService
+            if (this.uiManager.simulationService && typeof this.uiManager.simulationService._logTransaction === 'function') {
+                this.uiManager.simulationService._logTransaction('bankruptcy', payout, 'Labor Severance Stipend');
+            }
+
+            // Fire the floating green text animation
+            if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+                this.uiManager.createFloatingText(`+${formatCredits(payout)}`, window.innerWidth / 2, window.innerHeight / 2, '#4ade80');
+            }
+
+            this.gameState.setState({});
+        };
+
+        this.uiManager.queueModal(
+            'event-modal', 
+            'LABOR CONTRACT FULFILLED', 
+            `Your period of indentured servitude has ended. Your credit has been blacklisted for 6 years.`, 
+            aftermathCallback, 
+            { buttonClass: 'bg-cyan-800/80 hover:bg-cyan-700/80' }
+        );
         this.uiManager.render();
     }
 }
@@ -39958,6 +39992,12 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.69] - 2026-3-11
+-  bankruptcy system v1
+-  added guild debt bankruptcy
+-  added syndicate debt bankruptcy
+-  added generic bankruptcy
 
 # [36.66] - 2026-3-10
 -  finance screen updade v3

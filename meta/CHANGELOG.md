@@ -2,6 +2,12 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.69] - 2026-3-11
+-  bankruptcy system v1
+-  added guild debt bankruptcy
+-  added syndicate debt bankruptcy
+-  added generic bankruptcy
+
 # [36.66] - 2026-3-10
 -  finance screen updade v3
 -  added syndicate loan

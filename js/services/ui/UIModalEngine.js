@@ -1,5 +1,5 @@
 // js/services/ui/UIModalEngine.js
-import { SCREEN_IDS, NAV_IDS, ACTION_IDS } from '../../data/constants.js';
+import { SCREEN_IDS, NAV_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
 
 export class UIModalEngine {
     /**
@@ -98,9 +98,10 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#guild-accept-btn');
                 acceptBtn.onclick = () => {
                     const selected = modal.querySelector('input[name="guild-labor"]:checked').value;
-                    let years = 6, payout = 10000, location = 'mars';
-                    if (selected === 'uranus') { years = 8; payout = 16000; location = 'uranus'; }
-                    if (selected === 'mercury') { years = 10; payout = 25000; location = 'mercury'; }
+                    // FIX: Using robust LOCATION_IDS instead of incomplete strings
+                    let years = 6, payout = 10000, location = LOCATION_IDS.MARS;
+                    if (selected === 'uranus') { years = 8; payout = 16000; location = LOCATION_IDS.URANUS; }
+                    if (selected === 'mercury') { years = 10; payout = 25000; location = LOCATION_IDS.MERCURY; }
                     
                     closeHandler();
                     executeCallback(years, payout, false, location);
@@ -114,7 +115,7 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#syndicate-accept-btn');
                 acceptBtn.onclick = () => {
                     closeHandler();
-                    executeCallback(10, 25000, true, 'pluto');
+                    executeCallback(10, 25000, true, LOCATION_IDS.PLUTO); // FIX: Safe ID
                 };
             };
         } else {
@@ -132,7 +133,8 @@ export class UIModalEngine {
 
         this.queueModal(modalId, title, description, null, {
             nonDismissible: true,
-            customSetup: customSetup
+            customSetup: customSetup,
+            contentClass: 'text-center' // FIX: Enforces center alignment across modal body
         });
     }
 
@@ -336,7 +338,10 @@ export class UIModalEngine {
                 }
                 if (button) {
                     button.className = 'btn px-6 py-2';
-                    if (options.buttonClass) button.classList.add(options.buttonClass);
+                    if (options.buttonClass) {
+                        // FIX: Ensure class definitions with spaces don't crash the DOMTokenList
+                        button.classList.add(...options.buttonClass.split(' ').filter(Boolean));
+                    }
                     button.innerHTML = options.buttonText || 'Understood';
                     button.onclick = closeHandler;
                 }
