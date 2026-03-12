@@ -26088,11 +26088,24 @@ import { OFFICERS } from '../data/officers.js';
 import { COMMODITY_IDS } from '../data/constants.js';
 import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
 
-// Converted hardcoded configuration to the mathematical floor
+/**
+ * Baseline parameters for Sol Station Level 1 (before officer or level progression modifiers).
+ * * OPERATIONAL MODES MATHEMATICAL PERFORMANCE:
+ * Based on 120 Real-Time Seconds = 1 In-Game Day at 100% Efficiency.
+ * * STABILITY MODE:
+ * - Generation: 1 Antimatter / Day, 2,000 Credits / Day
+ * - Consumption: 0.08% Cache Loss / Day (Entropy Multiplier: 1.0x)
+ * * COMMERCE MODE:
+ * - Generation: 1 Antimatter / Day, 16,000 Credits / Day
+ * - Consumption: 0.14% Cache Loss / Day (Entropy Multiplier: 1.75x)
+ * * PRODUCTION MODE:
+ * - Generation: 6 Antimatter / Day, 2,000 Credits / Day
+ * - Consumption: 0.21% Cache Loss / Day (Entropy Multiplier: 2.625x)
+ */
 export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
-    BASE_DECAY_K: 0.0000014, 
-    EFFICIENCY_CLIFF: 0.5, 
+    BASE_DECAY_K: 0.00000667, // Mathematically calibrated to yield exactly 0.08% decay over 120 seconds
+    EFFICIENCY_CLIFF: 0.25, // Station operates at peak yield until caches average below 25%
     REAL_TIME_SECONDS_PER_DAY: 120,
     
     // BASELINE COMMODITY CAPACITIES (The Floor)
@@ -26114,29 +26127,33 @@ export const LEVEL_1_BASELINE = {
     MODES: {
         STABILITY: { 
             id: 'STABILITY', 
-            yieldCredits: 35, 
-            yieldAm: 0.12, 
-            decayK: 0.0000014, 
+            yieldCredits: 2000 / 120, 
+            yieldAm: 1 / 120, 
+            decayK: 0.00000667, 
             entropyMult: 1 
         },
         COMMERCE: { 
             id: 'COMMERCE', 
-            yieldCredits: 140, 
-            yieldAm: 0.12, 
-            decayK: 0.0000014, 
-            entropyMult: 4 
+            yieldCredits: 16000 / 120, 
+            yieldAm: 1 / 120, 
+            decayK: 0.00000667, 
+            entropyMult: 1.75 
         },
         PRODUCTION: { 
             id: 'PRODUCTION', 
-            yieldCredits: 35, 
-            yieldAm: 0.48, 
-            decayK: 0.0000014, 
-            entropyMult: 8 
+            yieldCredits: 2000 / 120, 
+            yieldAm: 6 / 120, 
+            decayK: 0.00000667, 
+            entropyMult: 2.625 
         }
     }
 };
 
 export class SolStationService {
+    /**
+     * @param {import('./GameState.js').GameState} gameState 
+     * @param {import('./LoggingService.js').Logger} logger 
+     */
     constructor(gameState, logger) {
         this.gameState = gameState;
         this.logger = logger;
@@ -26174,6 +26191,11 @@ export class SolStationService {
         }
     }
 
+    /**
+     * Processes universe time that advanced while the player was away from the station
+     * or executed via forced skips (like repairs). JIT calculation of entropy and yield.
+     * @param {number} currentDay 
+     */
     catchUpDays(currentDay) {
         const station = this.gameState.solStation;
         if (!station || !station.unlocked) return;
@@ -26209,10 +26231,12 @@ export class SolStationService {
         console.groupEnd();
     }
 
+    /**
+     * Initiates the 1-second real-time simulation interval when actively docked at Sol.
+     */
     startLocalLiveLoop() {
         if (this.trackingActive) return;
         
-        // Ensure state is valid before starting loop
         if (this.gameState.solStation) {
             this._syncUnlocksWithLevel(this.gameState.solStation);
         }
@@ -26234,6 +26258,9 @@ export class SolStationService {
         }, 1000);
     }
 
+    /**
+     * Halts the real-time simulation interval and locks the final state.
+     */
     stopLocalLiveLoop() {
         if (!this.trackingActive) return;
         this.commitLiveTime();
@@ -26251,6 +26278,9 @@ export class SolStationService {
         this.logger.info.system('SolStation', this.gameState.day, 'SOL_TRACK', `Sol Station tracking terminated.`);
     }
 
+    /**
+     * Executes mathematical tick calculations based on real-world elapsed time.
+     */
     commitLiveTime() {
         if (!this.trackingActive) return;
         
@@ -26281,6 +26311,9 @@ export class SolStationService {
         }
     }
 
+    /**
+     * Pushes accumulated deferred days from the live loop into the global TimeService.
+     */
     commitPendingUniverseDays() {
         if (this.pendingUniverseDays > 0 && this.timeService) {
             const daysToProcess = this.pendingUniverseDays;
@@ -26290,6 +26323,10 @@ export class SolStationService {
         }
     }
 
+    /**
+     * Returns the raw output velocities for rendering purposes in the UI.
+     * @returns {object} { k, creditsPerSec, amPerSec }
+     */
     getPerSecondRates() {
         const liveState = this.gameState.solStation;
         if (!liveState || !liveState.unlocked) return { k: 0, creditsPerSec: 0, amPerSec: 0 };
@@ -26301,7 +26338,6 @@ export class SolStationService {
         const globalEntropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
         const k_global = LEVEL_1_BASELINE.BASE_DECAY_K * globalEntropyMult;
         
-        // Sanitize health to prevent NaN propagation
         const safeHealth = isNaN(liveState.health) ? 0 : liveState.health;
         const x0 = safeHealth / 100;
         let efficiency = x0 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
@@ -26324,51 +26360,45 @@ export class SolStationService {
         }
     }
 
-    // --- HELPER: Strict Unlock Sync Logic ---
     _syncUnlocksWithLevel(station) {
         if (!station.unlockedModes) station.unlockedModes = ["STABILITY"];
         
         const level = station.level || 1;
 
-        // COMMERCE: Level 3+
         if (level >= 3) {
             if (!station.unlockedModes.includes("COMMERCE")) station.unlockedModes.push("COMMERCE");
         } else {
-            // STRICT REMOVAL if level is too low (Fixes legacy saves)
             station.unlockedModes = station.unlockedModes.filter(m => m !== "COMMERCE");
-            // If active mode was removed, reset to Stability
             if (station.mode === "COMMERCE") station.mode = "STABILITY";
         }
 
-        // PRODUCTION: Level 5+
         if (level >= 5) {
             if (!station.unlockedModes.includes("PRODUCTION")) station.unlockedModes.push("PRODUCTION");
         } else {
-            // STRICT REMOVAL
             station.unlockedModes = station.unlockedModes.filter(m => m !== "PRODUCTION");
-            // If active mode was removed, reset to Stability
             if (station.mode === "PRODUCTION") station.mode = "STABILITY";
         }
     }
 
+    /**
+     * Core mathematical simulation engine for Sol Station state projection.
+     * Evaluates cache loss, generates yields based on area-under-the-curve efficiency math,
+     * and strictly adheres to officer modifications and specific commodity thresholds.
+     * @param {object} currentState The pre-simulated station state
+     * @param {number} dt Delta Time in real-time seconds
+     * @returns {object} The mutated, post-simulation state
+     */
     _calculateExactState(currentState, dt) {
         const newState = JSON.parse(JSON.stringify(currentState));
         
-        // --- 1. STRICT SLOT ENFORCEMENT ---
-        // Formula: 1 + floor(level / 5).
         const currentLevel = newState.level || 1;
         const targetSlots = 1 + Math.floor(currentLevel / 5);
-        
-        // Cap max slots to prevent UI overflow (e.g. 12 max)
         const maxAllowed = 12;
         const slotsToHave = Math.min(targetSlots, maxAllowed);
 
-        // Ensure array is initialized
         if (!newState.officers) newState.officers = [];
         
-        // STRICT ALIGNMENT:
         if (newState.officers.length < slotsToHave) {
-            // Grow: Add slots if level permits
             while (newState.officers.length < slotsToHave) {
                 newState.officers.push({ 
                     slotId: newState.officers.length + 1, 
@@ -26376,7 +26406,6 @@ export class SolStationService {
                 });
             }
         } else if (newState.officers.length > slotsToHave) {
-            // Shrink: Remove slots if level does NOT permit (fixes legacy saves)
             newState.officers = newState.officers.slice(0, slotsToHave);
         }
 
@@ -26386,28 +26415,26 @@ export class SolStationService {
         const officerBuffs = this._calculateOfficerBuffs(newState.officers);
         const levelBuffs = this._calculateLevelBuffs(newState.level || 1);
         
-        // Decoupled Integral Global Entropy
         const globalEntropyMult = this._calculateEntropyFromBuffs(modeConfig.entropyMult, officerBuffs, levelBuffs);
         const k_global = LEVEL_1_BASELINE.BASE_DECAY_K * globalEntropyMult;
-
-        let totalFillRatio = 0;
-        let activeCaches = 0;
 
         const validCaches = Object.entries(newState.caches || {}).filter(([id, cache]) => {
             return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && cache;
         });
 
+        let totalFillRatioStart = 0;
+        let totalFillRatioEnd = 0;
+        let activeCaches = 0;
+
+        // PASS 1: Calculate pristine starting efficiency (x0) and enforce baseline maxes
         validCaches.forEach(([id, c]) => {
-            // Establish Baseline Max using LEVEL_1_BASELINE or legacy backup
             if (!c.baseMax) {
                 c.baseMax = LEVEL_1_BASELINE.baseCapacity[id] || 100;
             }
             
-            // Calculate effective max capacity
             const actualMax = c.baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
             c.max = actualMax;
             
-            // Immediately clamp current to prevent overflow if max dropped due to un-slotting
             if (c.current > actualMax) {
                 c.current = actualMax; 
             }
@@ -26415,34 +26442,53 @@ export class SolStationService {
             const safeCurrent = isNaN(c.current) ? 0 : c.current;
             const safeMax = isNaN(actualMax) || actualMax <= 0 ? 1 : actualMax;
             
-            // Decoupled Specific Cache Decay using targeted friction
+            totalFillRatioStart += (safeCurrent / safeMax);
+            activeCaches++;
+        });
+
+        let x0 = activeCaches > 0 ? (totalFillRatioStart / activeCaches) : 0;
+        if (isNaN(x0)) x0 = 0;
+
+        // PASS 2: Apply specific cache decay, then calculate post-decay efficiency (x1)
+        validCaches.forEach(([id, c]) => {
             const specificBurnRed = officerBuffs.consumptionMods[id] || 0;
             const k_specific = k_global * Math.max(0, (1 - specificBurnRed));
             
-            c.current = safeCurrent * Math.exp(-k_specific * dt);
+            const safeCurrent = isNaN(c.current) ? 0 : c.current;
+            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
             
-            totalFillRatio += (c.current / safeMax);
-            activeCaches++;
+            c.current = safeCurrent * Math.exp(-k_specific * dt);
+            totalFillRatioEnd += (c.current / safeMax);
         });
-        
-        let x0 = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
-        if (isNaN(x0)) x0 = 0;
 
-        if (dt > 2.0) {
-            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | k_global=${k_global}`);
+        let x1 = activeCaches > 0 ? (totalFillRatioEnd / activeCaches) : 0;
+        if (isNaN(x1)) x1 = 0;
+
+        // Decouple Health from generic global projections; tether strictly to cache reality
+        newState.health = x1 * 100;
+
+        // Derive the effective 'k' slope between x0 and x1 for the yield integral
+        let effective_k = k_global;
+        if (dt > 0 && x0 > 0) {
+            if (x1 > 0 && x0 !== x1) {
+                effective_k = -Math.log(x1 / x0) / dt;
+            } else if (x0 === x1) {
+                effective_k = 0; 
+            }
         }
 
-        const x1 = x0 * Math.exp(-k_global * dt);
-        newState.health = x1 * 100;
+        if (dt > 2.0) {
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | dt=${dt.toFixed(2)}s | x0=${x0.toFixed(4)} | x1=${x1.toFixed(4)} | k_eff=${effective_k}`);
+        }
 
         const yieldCredits = modeConfig.yieldCredits * (1 + officerBuffs.creditMult + levelBuffs.creditMult);
         const yieldAm = modeConfig.yieldAm * (1 + officerBuffs.amMult + levelBuffs.amMult);
 
-        const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, k_global, dt);
-        const generatedAm = this._calculateYieldIntegral(yieldAm, x0, k_global, dt);
+        const generatedCredits = this._calculateYieldIntegral(yieldCredits, x0, effective_k, dt);
+        const generatedAm = this._calculateYieldIntegral(yieldAm, x0, effective_k, dt);
 
         if (dt > 2.0) {
-            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Final x1: ${x1.toFixed(4)}`);
+            console.log(`[SOL_MATH_DEBUG] _calculateExactState | Gen Credits: ${generatedCredits.toFixed(2)} | Gen AM: ${generatedAm.toFixed(2)}`);
         }
 
         const safeGeneratedCredits = isNaN(generatedCredits) ? 0 : generatedCredits;
@@ -26461,6 +26507,14 @@ export class SolStationService {
         return newState;
     }
 
+    /**
+     * Executes the yield integral spanning the dynamic efficiency slope across Delta Time.
+     * @param {number} yieldRate 
+     * @param {number} x0 
+     * @param {number} k 
+     * @param {number} dt 
+     * @returns {number} Integral Yield Result
+     */
     _calculateYieldIntegral(yieldRate, x0, k, dt) {
         if (k === 0) {
             const eff = x0 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x0 : 2 * Math.pow(x0, 2);
@@ -26584,7 +26638,6 @@ export class SolStationService {
     donateToCache(commodityId, quantity) {
         this._syncTime(); 
 
-        // Enforce strictly integer inputs for cache transfers
         quantity = Math.floor(quantity);
 
         const station = this.gameState.solStation;
@@ -26601,7 +26654,6 @@ export class SolStationService {
             return { success: false, message: "Insufficient fleet cargo." };
         }
         
-        // Strictly evaluate remaining floor capacity
         const spaceAvailable = Math.floor(cache.max - cache.current);
         if (quantity > spaceAvailable) {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
@@ -26768,7 +26820,6 @@ export class SolStationService {
         const nextLevelData = LEVEL_REGISTRY[station.level + 1];
         if (!nextLevelData) return { success: false };
         
-        // Validation check
         for (const [resId, reqQty] of Object.entries(nextLevelData.requirements)) {
             if ((station.activeProjectBank[resId] || 0) < reqQty) {
                 return { success: false, message: "Project requirements not met." };
@@ -26787,8 +26838,6 @@ export class SolStationService {
         
         this._syncUnlocksWithLevel(station);
         
-        // --- UPDATED SLOT LOGIC (Strict Alignment) ---
-        // Slots = 1 + floor(level/5)
         const maxSlots = 1 + Math.floor(station.level / 5);
         const slotsToHave = Math.min(maxSlots, 12);
         
@@ -26803,12 +26852,6 @@ export class SolStationService {
 
     // --- LOAD BEARING OFFICER MANAGEMENT ---
 
-    /**
-     * Projects the mathematical fallout of removing an officer from a slot.
-     * Required by UI intercept for severe consequences like venting overflow inventory.
-     * @param {number|string} slotId 
-     * @returns {object} { safe: boolean, ventedCargo: object, netEntropyChange: number }
-     */
     validateUnslotOfficer(slotId) {
         const station = this.gameState.solStation;
         const slotIndex = station.officers.findIndex(s => s.slotId === parseInt(slotId));
@@ -26820,7 +26863,6 @@ export class SolStationService {
         const currentOfficerBuffs = this._calculateOfficerBuffs(station.officers);
         const levelBuffs = this._calculateLevelBuffs(station.level || 1);
         
-        // Simulate removing the officer
         const simulatedOfficers = JSON.parse(JSON.stringify(station.officers));
         simulatedOfficers[slotIndex].assignedOfficerId = null;
         const newOfficerBuffs = this._calculateOfficerBuffs(simulatedOfficers);
@@ -26840,11 +26882,10 @@ export class SolStationService {
             
             if (c.current > newMax) {
                 ventedCargo[id] = Math.floor(c.current - newMax);
-                isSafe = false; // Overflow triggers explicit UI intervention
+                isSafe = false; 
             }
         });
 
-        // E.g., a net entropy increase of 0.1 represents +10% base entropy
         if (netEntropyChange >= 0.1) {
             isSafe = false;
         }
@@ -26852,14 +26893,6 @@ export class SolStationService {
         return { safe: isSafe, ventedCargo, netEntropyChange };
     }
 
-    /**
-     * Executes officer assignment or removal.
-     * Includes an optional 'force' flag for un-slotting bypassing validation (if player approved).
-     * @param {number|string} slotId 
-     * @param {string|null} officerId 
-     * @param {boolean} force - Override safety checks on removal
-     * @returns {object} Standard payload, can return `requiresConfirmation` if validation fails.
-     */
     assignOfficer(slotId, officerId, force = false) {
         this._syncTime();
 
@@ -26868,7 +26901,6 @@ export class SolStationService {
         
         if (slotIndex === -1) return { success: false, message: "Invalid slot." };
 
-        // Intercept Removal
         if (!officerId && !force) {
             const validation = this.validateUnslotOfficer(slotId);
             if (!validation.safe) {
@@ -26878,7 +26910,6 @@ export class SolStationService {
 
         station.officers[slotIndex].assignedOfficerId = officerId;
         
-        // Immediately enforce new capacities after un-slotting to execute venting
         if (!officerId) {
             const levelBuffs = this._calculateLevelBuffs(station.level || 1);
             const officerBuffs = this._calculateOfficerBuffs(station.officers);
@@ -26888,7 +26919,7 @@ export class SolStationService {
                 const newMax = baseMax + (levelBuffs.capacityMods[id] || 0) + (officerBuffs.capacityMods[id] || 0);
                 c.max = newMax;
                 if (c.current > newMax) {
-                    c.current = newMax; // Executes the permanent destruction of vented cargo
+                    c.current = newMax; 
                 }
             });
         }
@@ -29739,6 +29770,17 @@ export class TimeService {
     advanceDays(days) {
         this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
         
+        // --- VIRTUAL WORKBENCH: Phase 1 (Docked Time-Skip Sync) ---
+        // Suspend the real-time loop *before* modifying the global clock so that
+        // the station's lastProcessedDay anchors correctly to the pre-skip timeline.
+        let solLoopSuspended = false;
+        if (this.gameState.currentLocationId === 'sol' || this.gameState.currentLocationId === LOCATION_IDS.SUN) {
+            if (this.solStationService && this.solStationService.trackingActive) {
+                solLoopSuspended = true;
+                this.solStationService.stopLocalLiveLoop();
+            }
+        }
+
         // Update visual seed for procedural rotations
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
 
@@ -29878,6 +29920,13 @@ export class TimeService {
             this._applyGarnishment();
         }
         
+        // --- VIRTUAL WORKBENCH: Phase 1 (Docked Time-Skip Catch Up) ---
+        // Force the station to batch-process the skipped time before turning the loop back on.
+        if (solLoopSuspended && this.solStationService) {
+            this.solStationService.catchUpDays(this.gameState.day);
+            this.solStationService.startLocalLiveLoop();
+        }
+
         this.logger.groupEnd();
         this.gameState.setState({});
     }
@@ -40287,6 +40336,11 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.72] - 2026-3-12
+-  updated sol station math
+-  sol station bug fixes
+-  
 
 # [36.70] - 2026-3-11
 -  added ship upgrade animation sequence
