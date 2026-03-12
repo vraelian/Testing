@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.66</title>
+    <title>Orbital Trading 36.70</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.66 - Finance Update</p>
+            <p>Version 36.70 - Bankruptcy Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3055,6 +3055,34 @@ card.
     animation: econ-weather-fade-out 1s ease-in forwards;
     pointer-events: none;
 }
+
+/* ========================================================================= */
+/* --- SHIP UPGRADE ANIMATION (PHASE 1) --- */
+/* ========================================================================= */
+
+.ui-locked {
+    pointer-events: none !important;
+}
+
+.white-out-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: #ffffff;
+    z-index: 9999; /* Highest possible layer to obscure everything */
+    pointer-events: none;
+    opacity: 0;
+    animation: whiteOutFlash 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes whiteOutFlash {
+    0% { opacity: 0; }
+    40% { opacity: 1; }
+    60% { opacity: 1; } /* Hold at peak opacity */
+    100% { opacity: 0; }
+}
 --- END OF FILE: ./css/global.css ---
 
 --- START OF FILE: ./css/modals.css ---
@@ -4438,6 +4466,49 @@ card.
     border-color: #6b7280 !important;
     background: linear-gradient(145deg, rgba(31, 41, 55, 0.95), #111827) !important;
     box-shadow: 0 0 20px rgba(107, 114, 128, 0.3), inset 0 0 10px rgba(107, 114, 128, 0.2) !important;
+}
+
+/* ========================================================================= */
+/* --- SHIP UPGRADE PROGRESS MODAL (PHASE 1) --- */
+/* ========================================================================= */
+
+.upgrade-progress-modal .modal-content {
+    text-align: center;
+    border-color: #D4AF37;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    background: radial-gradient(circle, #2d3748, #111827);
+}
+
+.upgrade-progress-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: #D4AF37;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+.upgrade-progress-bar {
+    width: 100%;
+    height: 14px;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+}
+
+.upgrade-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #B8860B, #FFD700);
+    box-shadow: 0 0 10px #FFD700;
+    border-radius: 99px;
+    animation: fillProgressBar 2s linear forwards;
+}
+
+@keyframes fillProgressBar {
+    0% { width: 0%; }
+    100% { width: 100%; }
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -7987,6 +8058,53 @@ COMPONENT-SPECIFIC STYLING
     0%, 100% { box-shadow: 0 0 8px var(--pill-dark), inset 0 0 5px var(--pill-light); }
     50% { box-shadow: 0 0 15px var(--pill-color), inset 0 0 10px var(--pill-light); }
 }
+
+/* ================================================================================
+   SHIP UPGRADE ANIMATION REVEAL (PHASE 1)
+   ================================================================================ */
+
+.card-scanline-active {
+    position: relative;
+    overflow: hidden;
+}
+
+.card-scanline-active::after {
+    content: '';
+    position: absolute;
+    top: -10%;
+    left: 0;
+    width: 100%;
+    height: 20%;
+    background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.8), transparent);
+    box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
+    z-index: 25; /* Ensure it plays over the card content */
+    pointer-events: none;
+    animation: cardScanline 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes cardScanline {
+    0% { top: -10%; opacity: 0; }
+    10% { opacity: 1; }
+    90% { opacity: 1; }
+    100% { top: 110%; opacity: 0; }
+}
+
+.pill-instantiate {
+    animation: pillBlurFade 0.5s ease-out forwards;
+}
+
+@keyframes pillBlurFade {
+    0% {
+        opacity: 0;
+        filter: blur(8px) brightness(2);
+        transform: scale(1.2);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px) brightness(1);
+        transform: scale(1);
+    }
+}
 --- END OF FILE: ./css/screens/hangar-screen.css ---
 
 --- START OF FILE: ./css/screens/navigation-screen.css ---
@@ -9347,7 +9465,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             }).join('');
 
             attributesHtml = `
-                <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
+                <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
                     ${pills}
                 </div>
             `;
@@ -21222,7 +21340,7 @@ export class UIHangarControl {
                         </span>`;
             }).join('');
             
-            const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center">${upgradesHtml}</div>` : '';
+            const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center" id="upgrade-pill-container-${shipId}">${upgradesHtml}</div>` : '';
 
             modalContentHtml = `
                  <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
@@ -21481,6 +21599,48 @@ export class UIHangarControl {
         const gg = g.toString(16).padStart(2, '0');
         const bb = b.toString(16).padStart(2, '0');
         return `#${rr}${gg}${bb}`;
+    }
+
+    /**
+     * Executes the localized reveal animations (Scanline + Pill Blur-Fade) on a specific ship card.
+     * Overhauled for Phase 4 to celebrate all upgrades concurrently, ignoring sort-order limitations.
+     * @param {string} shipId The ID of the ship receiving the reveal effect.
+     */
+    async playUpgradeReveal(shipId) {
+        const hangarScreenEl = this.manager.cache.hangarScreen;
+        if (!hangarScreenEl) return;
+
+        // Target the specific carousel page containing the upgraded ship
+        const targetPage = hangarScreenEl.querySelector(`.carousel-page[data-ship-id="${shipId}"]`);
+        if (!targetPage) {
+            this.manager.logger.warn('UIHangarControl', `Target ship page not found for ID: ${shipId}`);
+            return;
+        }
+
+        const terminalCard = targetPage.querySelector('#ship-terminal');
+        const pillContainer = targetPage.querySelector(`#upgrade-pill-container-${shipId}`);
+
+        if (!terminalCard) return;
+
+        // 1. Play the sweeping scanline over the full card
+        terminalCard.classList.add('card-scanline-active');
+
+        // Wait the full duration of the scanline (1000ms)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        terminalCard.classList.remove('card-scanline-active');
+
+        // 2. Identify and animate the pills
+        if (pillContainer) {
+            // Animate all pills to celebrate the system reboot/upgrade visually
+            Array.from(pillContainer.children).forEach(pill => {
+                pill.classList.add('pill-instantiate');
+                // Remove the class after the short duration so standard hover states work again
+                setTimeout(() => {
+                    pill.classList.remove('pill-instantiate');
+                }, 500); 
+            });
+        }
     }
 }
 --- END OF FILE: ./js/services/ui/UIHangarControl.js ---
@@ -22662,6 +22822,7 @@ export class UIModalEngine {
         this.manager = manager;
         this.modalQueue = [];
         this._injectBankruptcyModals();
+        this._injectUpgradeProgressModal();
     }
 
     /**
@@ -22728,6 +22889,28 @@ export class UIModalEngine {
                     </div>
                     <div id="bankruptcy-vagrancy-button-container" class="mt-6 flex justify-center gap-4">
                         <button id="vagrancy-accept-btn" class="btn bg-gray-700 hover:bg-gray-600 text-white border-gray-500">Comply</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Injects the localized, non-standard DOM template for the Ship Upgrade Progress Modal.
+     * Required for Phase 1/2 of the Upgrade Orchestration Sequence.
+     * @private
+     */
+    _injectUpgradeProgressModal() {
+        if (document.getElementById('upgrade-progress-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="upgrade-progress-modal" class="modal-backdrop hidden z-[90] upgrade-progress-modal dismiss-disabled">
+                <div class="modal-content">
+                    <div id="upgrade-progress-text" class="upgrade-progress-text">Installing component...</div>
+                    <div class="upgrade-progress-bar">
+                        <div id="upgrade-progress-fill" class="upgrade-progress-fill"></div>
                     </div>
                 </div>
             </div>
@@ -23036,6 +23219,29 @@ export class UIModalEngine {
     }
 
     /**
+     * Silently and instantly destroys a modal without CSS fade-out animations.
+     * Crucial for masking DOM swaps behind external overlays (e.g. White-out transitions).
+     * @param {string} modalId - The ID of the modal to instantly hide.
+     */
+    destroyModalInstant(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal && !modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in');
+            
+            delete modal.dataset.theme;
+            delete modal.dataset.dismissInside;
+            delete modal.dataset.dismissOutside;
+
+            // Optional: If there are queued modals, process them.
+            // Normally avoided during a global sequence mask.
+            if (this.modalQueue.length > 0) {
+                this.processModalQueue();
+            }
+        }
+    }
+
+    /**
      * Determines the ID of the modal being clicked, respecting dismissal rules.
      * @param {Event} e 
      * @returns {string|null}
@@ -23101,6 +23307,52 @@ export class UIModalEngine {
                 if (callback) callback();
             }, 1000);
         }, 4000);
+    }
+
+    /**
+     * Executes the localized Upgrade Progress Modal sequence.
+     * Applies a global UI lock and resolves a Promise upon the completion
+     * of the 2-second fill animation, allowing external orchestration.
+     * @returns {Promise<void>} Resolves when the 2-second bar fill and text swap complete.
+     */
+    showUpgradeProgressModal() {
+        return new Promise((resolve) => {
+            // Apply global click lock
+            document.body.classList.add('ui-locked');
+
+            const modalId = 'upgrade-progress-modal';
+            const modal = document.getElementById(modalId);
+            const textEl = document.getElementById('upgrade-progress-text');
+            const fillEl = document.getElementById('upgrade-progress-fill');
+
+            if (!modal || !textEl || !fillEl) {
+                this.manager.logger.error('UIModalEngine', 'Upgrade progress modal DOM elements not found. Bypassing animation.');
+                document.body.classList.remove('ui-locked');
+                resolve();
+                return;
+            }
+
+            // Reset initial state to ensure repeatability 
+            textEl.textContent = 'Installing component...';
+            
+            // Force CSS reflow to restart animation reliably
+            fillEl.style.animation = 'none';
+            void fillEl.offsetWidth; 
+            fillEl.style.animation = 'fillProgressBar 2s linear forwards';
+
+            modal.classList.remove('hidden');
+            modal.classList.add('modal-visible');
+
+            // Wait exactly 2000ms for the bar fill to map to CSS timing
+            setTimeout(() => {
+                // Update dynamic flavor text
+                textEl.textContent = 'Ship upgrade complete!';
+                
+                // Resolve so the external orchestrator can begin the white-out DOM swap
+                // Note: The global .ui-locked class remains active intentionally until Phase 4.
+                resolve();
+            }, 2000);
+        });
     }
 }
 --- END OF FILE: ./js/services/ui/UIModalEngine.js ---
@@ -34728,6 +34980,46 @@ export class UIManager {
             finishCinematic();
         });
     }
+
+    /**
+     * Master orchestration for the Ship Upgrade Cinematic Sequence (Phases 3/4).
+     * Connects DOM hiding, screen routing, and sequential promise resolution.
+     * @param {string} shipId - Target ship receiving the upgrade.
+     */
+    async orchestrateUpgradeSequence(shipId) {
+        try {
+            // Step 1: Wait for localized modal fill (2000ms)
+            await this.modalEngine.showUpgradeProgressModal();
+
+            // Step 2: Inject Global White-Out Overlay
+            let overlay = document.createElement('div');
+            overlay.className = 'white-out-overlay';
+            document.body.appendChild(overlay);
+
+            // Step 3: Wait for peak opacity (1000ms into the 2000ms white-out)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // DOM Swap 1: Destroy modal invisibly behind white-out
+            this.modalEngine.destroyModalInstant('upgrade-progress-modal');
+            
+            // DOM Swap 2: Route screen natively using UIManager's routing.
+            // ActionClickHandler pre-set the GameState indices prior to calling this orchestrator.
+            this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+
+            // Step 4: Wait for White-Out to finish fading out (Remaining 1000ms)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+
+            // Step 5: Execute Localized Reveal on the Target Ship Node
+            await this.hangarControl.playUpgradeReveal(shipId);
+
+        } catch (e) {
+            this.logger.error('UIManager', `Upgrade sequence failed: ${e}`);
+        } finally {
+            // Safety Release: Ensure lock is always cleared
+            document.body.classList.remove('ui-locked');
+        }
+    }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 
@@ -38058,24 +38350,27 @@ export class ActionClickHandler {
                     return;
                 }
 
-                this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, (replaceIndex) => {
+                this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, async (replaceIndex) => {
                     if (totalCost > 0) {
                         this.gameState.player.credits -= totalCost;
-                        this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
+                        // Suppressed standard floating text to avoid overlapping with new white-out cinematic
+                        // this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
                     if (replaceIndex !== -1) {
                         shipState.upgrades.splice(replaceIndex, 1);
                     }
 
+                    // Execute logic mutation
                     this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
-
-                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                     
+                    // Prep target navigation state
+                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                     const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
-                    
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+
+                    // Trigger the overarching Cinematic Sequence via UIManager Facade
+                    await this.uiManager.orchestrateUpgradeSequence(activeShipId);
                 });
                 break;
             }
@@ -39992,6 +40287,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.70] - 2026-3-11
+-  added ship upgrade animation sequence
 
 # [36.69] - 2026-3-11
 -  bankruptcy system v1

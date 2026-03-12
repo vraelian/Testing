@@ -9,6 +9,7 @@ export class UIModalEngine {
         this.manager = manager;
         this.modalQueue = [];
         this._injectBankruptcyModals();
+        this._injectUpgradeProgressModal();
     }
 
     /**
@@ -75,6 +76,28 @@ export class UIModalEngine {
                     </div>
                     <div id="bankruptcy-vagrancy-button-container" class="mt-6 flex justify-center gap-4">
                         <button id="vagrancy-accept-btn" class="btn bg-gray-700 hover:bg-gray-600 text-white border-gray-500">Comply</button>
+                    </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Injects the localized, non-standard DOM template for the Ship Upgrade Progress Modal.
+     * Required for Phase 1/2 of the Upgrade Orchestration Sequence.
+     * @private
+     */
+    _injectUpgradeProgressModal() {
+        if (document.getElementById('upgrade-progress-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="upgrade-progress-modal" class="modal-backdrop hidden z-[90] upgrade-progress-modal dismiss-disabled">
+                <div class="modal-content">
+                    <div id="upgrade-progress-text" class="upgrade-progress-text">Installing component...</div>
+                    <div class="upgrade-progress-bar">
+                        <div id="upgrade-progress-fill" class="upgrade-progress-fill"></div>
                     </div>
                 </div>
             </div>
@@ -383,6 +406,29 @@ export class UIModalEngine {
     }
 
     /**
+     * Silently and instantly destroys a modal without CSS fade-out animations.
+     * Crucial for masking DOM swaps behind external overlays (e.g. White-out transitions).
+     * @param {string} modalId - The ID of the modal to instantly hide.
+     */
+    destroyModalInstant(modalId) {
+        const modal = document.getElementById(modalId);
+        if (modal && !modal.classList.contains('hidden')) {
+            modal.classList.add('hidden');
+            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in');
+            
+            delete modal.dataset.theme;
+            delete modal.dataset.dismissInside;
+            delete modal.dataset.dismissOutside;
+
+            // Optional: If there are queued modals, process them.
+            // Normally avoided during a global sequence mask.
+            if (this.modalQueue.length > 0) {
+                this.processModalQueue();
+            }
+        }
+    }
+
+    /**
      * Determines the ID of the modal being clicked, respecting dismissal rules.
      * @param {Event} e 
      * @returns {string|null}
@@ -448,5 +494,51 @@ export class UIModalEngine {
                 if (callback) callback();
             }, 1000);
         }, 4000);
+    }
+
+    /**
+     * Executes the localized Upgrade Progress Modal sequence.
+     * Applies a global UI lock and resolves a Promise upon the completion
+     * of the 2-second fill animation, allowing external orchestration.
+     * @returns {Promise<void>} Resolves when the 2-second bar fill and text swap complete.
+     */
+    showUpgradeProgressModal() {
+        return new Promise((resolve) => {
+            // Apply global click lock
+            document.body.classList.add('ui-locked');
+
+            const modalId = 'upgrade-progress-modal';
+            const modal = document.getElementById(modalId);
+            const textEl = document.getElementById('upgrade-progress-text');
+            const fillEl = document.getElementById('upgrade-progress-fill');
+
+            if (!modal || !textEl || !fillEl) {
+                this.manager.logger.error('UIModalEngine', 'Upgrade progress modal DOM elements not found. Bypassing animation.');
+                document.body.classList.remove('ui-locked');
+                resolve();
+                return;
+            }
+
+            // Reset initial state to ensure repeatability 
+            textEl.textContent = 'Installing component...';
+            
+            // Force CSS reflow to restart animation reliably
+            fillEl.style.animation = 'none';
+            void fillEl.offsetWidth; 
+            fillEl.style.animation = 'fillProgressBar 2s linear forwards';
+
+            modal.classList.remove('hidden');
+            modal.classList.add('modal-visible');
+
+            // Wait exactly 2000ms for the bar fill to map to CSS timing
+            setTimeout(() => {
+                // Update dynamic flavor text
+                textEl.textContent = 'Ship upgrade complete!';
+                
+                // Resolve so the external orchestrator can begin the white-out DOM swap
+                // Note: The global .ui-locked class remains active intentionally until Phase 4.
+                resolve();
+            }, 2000);
+        });
     }
 }

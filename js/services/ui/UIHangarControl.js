@@ -313,7 +313,7 @@ export class UIHangarControl {
                         </span>`;
             }).join('');
             
-            const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center">${upgradesHtml}</div>` : '';
+            const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center" id="upgrade-pill-container-${shipId}">${upgradesHtml}</div>` : '';
 
             modalContentHtml = `
                  <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
@@ -572,5 +572,47 @@ export class UIHangarControl {
         const gg = g.toString(16).padStart(2, '0');
         const bb = b.toString(16).padStart(2, '0');
         return `#${rr}${gg}${bb}`;
+    }
+
+    /**
+     * Executes the localized reveal animations (Scanline + Pill Blur-Fade) on a specific ship card.
+     * Overhauled for Phase 4 to celebrate all upgrades concurrently, ignoring sort-order limitations.
+     * @param {string} shipId The ID of the ship receiving the reveal effect.
+     */
+    async playUpgradeReveal(shipId) {
+        const hangarScreenEl = this.manager.cache.hangarScreen;
+        if (!hangarScreenEl) return;
+
+        // Target the specific carousel page containing the upgraded ship
+        const targetPage = hangarScreenEl.querySelector(`.carousel-page[data-ship-id="${shipId}"]`);
+        if (!targetPage) {
+            this.manager.logger.warn('UIHangarControl', `Target ship page not found for ID: ${shipId}`);
+            return;
+        }
+
+        const terminalCard = targetPage.querySelector('#ship-terminal');
+        const pillContainer = targetPage.querySelector(`#upgrade-pill-container-${shipId}`);
+
+        if (!terminalCard) return;
+
+        // 1. Play the sweeping scanline over the full card
+        terminalCard.classList.add('card-scanline-active');
+
+        // Wait the full duration of the scanline (1000ms)
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        terminalCard.classList.remove('card-scanline-active');
+
+        // 2. Identify and animate the pills
+        if (pillContainer) {
+            // Animate all pills to celebrate the system reboot/upgrade visually
+            Array.from(pillContainer.children).forEach(pill => {
+                pill.classList.add('pill-instantiate');
+                // Remove the class after the short duration so standard hover states work again
+                setTimeout(() => {
+                    pill.classList.remove('pill-instantiate');
+                }, 500); 
+            });
+        }
     }
 }

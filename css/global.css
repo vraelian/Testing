@@ -1194,3 +1194,31 @@ card.
     animation: econ-weather-fade-out 1s ease-in forwards;
     pointer-events: none;
 }
+
+/* ========================================================================= */
+/* --- SHIP UPGRADE ANIMATION (PHASE 1) --- */
+/* ========================================================================= */
+
+.ui-locked {
+    pointer-events: none !important;
+}
+
+.white-out-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-color: #ffffff;
+    z-index: 9999; /* Highest possible layer to obscure everything */
+    pointer-events: none;
+    opacity: 0;
+    animation: whiteOutFlash 2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes whiteOutFlash {
+    0% { opacity: 0; }
+    40% { opacity: 1; }
+    60% { opacity: 1; } /* Hold at peak opacity */
+    100% { opacity: 0; }
+}

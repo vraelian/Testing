@@ -176,24 +176,27 @@ export class ActionClickHandler {
                     return;
                 }
 
-                this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, (replaceIndex) => {
+                this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, async (replaceIndex) => {
                     if (totalCost > 0) {
                         this.gameState.player.credits -= totalCost;
-                        this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
+                        // Suppressed standard floating text to avoid overlapping with new white-out cinematic
+                        // this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
                     if (replaceIndex !== -1) {
                         shipState.upgrades.splice(replaceIndex, 1);
                     }
 
+                    // Execute logic mutation
                     this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
-
-                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                     
+                    // Prep target navigation state
+                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                     const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
-                    
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+
+                    // Trigger the overarching Cinematic Sequence via UIManager Facade
+                    await this.uiManager.orchestrateUpgradeSequence(activeShipId);
                 });
                 break;
             }
