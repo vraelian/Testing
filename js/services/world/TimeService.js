@@ -77,6 +77,17 @@ export class TimeService {
     advanceDays(days) {
         this.logger.group(`[System] Advancing time by ${days} day(s) from Day ${this.gameState.day}`);
         
+        // --- VIRTUAL WORKBENCH: Phase 1 (Docked Time-Skip Sync) ---
+        // Suspend the real-time loop *before* modifying the global clock so that
+        // the station's lastProcessedDay anchors correctly to the pre-skip timeline.
+        let solLoopSuspended = false;
+        if (this.gameState.currentLocationId === 'sol' || this.gameState.currentLocationId === LOCATION_IDS.SUN) {
+            if (this.solStationService && this.solStationService.trackingActive) {
+                solLoopSuspended = true;
+                this.solStationService.stopLocalLiveLoop();
+            }
+        }
+
         // Update visual seed for procedural rotations
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
 
@@ -216,6 +227,13 @@ export class TimeService {
             this._applyGarnishment();
         }
         
+        // --- VIRTUAL WORKBENCH: Phase 1 (Docked Time-Skip Catch Up) ---
+        // Force the station to batch-process the skipped time before turning the loop back on.
+        if (solLoopSuspended && this.solStationService) {
+            this.solStationService.catchUpDays(this.gameState.day);
+            this.solStationService.startLocalLiveLoop();
+        }
+
         this.logger.groupEnd();
         this.gameState.setState({});
     }
