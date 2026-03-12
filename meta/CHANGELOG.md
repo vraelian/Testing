@@ -2,6 +2,9 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.70] - 2026-3-11
+-  added ship upgrade animation sequence
+
 # [36.69] - 2026-3-11
 -  bankruptcy system v1
 -  added guild debt bankruptcy

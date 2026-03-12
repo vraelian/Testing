@@ -300,7 +300,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             }).join('');
 
             attributesHtml = `
-                <div class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
+                <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
                     ${pills}
                 </div>
             `;

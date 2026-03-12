@@ -1048,4 +1048,44 @@ export class UIManager {
             finishCinematic();
         });
     }
+
+    /**
+     * Master orchestration for the Ship Upgrade Cinematic Sequence (Phases 3/4).
+     * Connects DOM hiding, screen routing, and sequential promise resolution.
+     * @param {string} shipId - Target ship receiving the upgrade.
+     */
+    async orchestrateUpgradeSequence(shipId) {
+        try {
+            // Step 1: Wait for localized modal fill (2000ms)
+            await this.modalEngine.showUpgradeProgressModal();
+
+            // Step 2: Inject Global White-Out Overlay
+            let overlay = document.createElement('div');
+            overlay.className = 'white-out-overlay';
+            document.body.appendChild(overlay);
+
+            // Step 3: Wait for peak opacity (1000ms into the 2000ms white-out)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+
+            // DOM Swap 1: Destroy modal invisibly behind white-out
+            this.modalEngine.destroyModalInstant('upgrade-progress-modal');
+            
+            // DOM Swap 2: Route screen natively using UIManager's routing.
+            // ActionClickHandler pre-set the GameState indices prior to calling this orchestrator.
+            this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+
+            // Step 4: Wait for White-Out to finish fading out (Remaining 1000ms)
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
+
+            // Step 5: Execute Localized Reveal on the Target Ship Node
+            await this.hangarControl.playUpgradeReveal(shipId);
+
+        } catch (e) {
+            this.logger.error('UIManager', `Upgrade sequence failed: ${e}`);
+        } finally {
+            // Safety Release: Ensure lock is always cleared
+            document.body.classList.remove('ui-locked');
+        }
+    }
 }
