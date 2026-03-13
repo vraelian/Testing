@@ -8,6 +8,25 @@ import { spawnFloatingText, playBlockingAnimationAndRemove } from './AnimationSe
 import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 
 // --- PURE VISUAL HELPERS ---
+function getCommodityTheme(commId) {
+    switch (commId) {
+        case 'water_ice': return { bg: '#7dd3fc', text: '#000' };
+        case 'plasteel': return { bg: '#f0ead6', text: '#000' };
+        case 'hydroponics': return { bg: '#166534', text: '#fff' };
+        case 'cybernetics': return { bg: '#ffffff', text: '#000' };
+        case 'propellant': return { bg: '#8b5cf6', text: '#fff' };
+        case 'processors': return { bg: '#06b6d4', text: '#000' };
+        case 'graphene': return { bg: '#9ca3af', text: '#000' };
+        case 'cryo_pods': return { bg: '#40e0d0', text: '#000' };
+        case 'atmo_processors': return { bg: '#eab308', text: '#000' };
+        case 'cloned_organs': return { bg: '#f472b6', text: '#000' };
+        case 'xeno_geologicals': return { bg: '#a855f7', text: '#fff' };
+        case 'sentient_ai': return { bg: '#ef4444', text: '#fff' };
+        case 'antimatter': return { bg: '#4c1d95', text: '#fff' };
+        default: return { bg: '#3b82f6', text: '#fff' };
+    }
+}
+
 function getRarityColorClass(rarity) {
     switch (rarity) {
         case 'uncommon': return 'text-green-400';
@@ -58,21 +77,6 @@ function getModeDescription(mode) {
         case 'SYNTHESIS': return "<span style='color: #b87333;'>Manufacture Folded Space Drives.</span>";
         default: return "";
     }
-}
-
-function getProjectImpactDescription(stats) {
-    const parts = [];
-    if (stats.cacheCapacity) {
-        Object.keys(stats.cacheCapacity).forEach(k => {
-            const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-            parts.push(`Expand ${cName} storage.`);
-        });
-    }
-    if (stats.amYieldMult > 0) parts.push(`Increase Antimatter synthesis by ${Math.round(stats.amYieldMult * 100)}%.`);
-    if (stats.creditYieldMult > 0) parts.push(`Improve commercial revenue by ${Math.round(stats.creditYieldMult * 100)}%.`);
-    if (stats.globalEntropyRed > 0) parts.push(`Reinforce hull integrity against solar decay.`);
-    
-    return parts.length > 0 ? parts.join(" ") : "General station improvements.";
 }
 
 // --- MAIN CONTROLLER ---
@@ -1082,14 +1086,14 @@ export class UISolStationControl {
                 <div class="sol-output-container">
                     <div class="section-title">STATION OUTPUT</div>
                     
-                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem;">
-                        <div class="sol-cache-row-bg" style="${amBgStyle}"></div>
+                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 8px;">
+                        <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 8px;"></div>
                         
                         <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
                             <div class="sol-row-name" style="text-align: left; font-size: 1.1rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible;">ANTIMATTER</div>
                             
                             <div class="sol-row-track-container" style="width: 100%;">
-                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
                                     <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%;"></div>
                                     <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${amCurrent.toFixed(2)} / ${amMax}</div>
                                 </div>
@@ -1100,7 +1104,7 @@ export class UISolStationControl {
                             <button type="button" class="btn-deposit-all" 
                                     data-action="sol-claim-output"
                                     data-type="antimatter"
-                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px;"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px; background-color: #7e22ce; color: #fff; border-radius: 6px;"
                                     ${!hasAm ? 'disabled' : ''}>
                                 COLLECT
                             </button>
@@ -1108,14 +1112,14 @@ export class UISolStationControl {
                     </div>
 
                     ${station.level >= 10 ? `
-                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #b87333; border-radius: 4px; background-color: rgba(0,0,0,0.4);">
-                        <div class="sol-cache-row-bg" style="${fsdBgStyle}; border-radius: 4px;"></div>
+                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #b87333; border-radius: 8px; background-color: rgba(0,0,0,0.4);">
+                        <div class="sol-cache-row-bg" style="${fsdBgStyle}; border-radius: 8px;"></div>
                         
                         <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
-                            <div class="sol-row-name" style="text-align: left; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: #b87333;">FOLDED SPACE DRIVES</div>
+                            <div class="sol-row-name" style="text-align: left; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: #b87333;">SPACE DRIVES</div>
                             
                             <div class="sol-row-track-container" style="width: 100%;">
-                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
                                     <div class="sol-fsd-fill" style="width: ${fsdFillPct}%; background-color: #b87333; height: 100%;"></div>
                                     <div class="sol-fsd-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.7rem;">${fsdCurrent} UNITS (${(fsdFillPct).toFixed(1)}%)</div>
                                 </div>
@@ -1126,7 +1130,7 @@ export class UISolStationControl {
                             <button type="button" class="btn-deposit-all" 
                                     data-action="sol-claim-output"
                                     data-type="fsd"
-                                    style="height: 100%; border: 1px solid #b87333; background: linear-gradient(to bottom, #d97706, #9a3412); box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px;"
+                                    style="height: 100%; border: 1px solid #b87333; background: linear-gradient(to bottom, #d97706, #9a3412); box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px; border-radius: 6px; color: #fff;"
                                     ${!hasFsd ? 'disabled' : ''}>
                                 COLLECT
                             </button>
@@ -1141,7 +1145,7 @@ export class UISolStationControl {
                         <button type="button" class="btn-deposit-all" 
                                 data-action="sol-claim-output"
                                 data-type="credits"
-                                style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a; padding: 0 0.5rem; min-width: 70px;"
+                                style="background: linear-gradient(to bottom, #06b6d4, #0891b2); border-color: #06b6d4; padding: 0 0.5rem; min-width: 70px; border-radius: 6px; color: #fff;"
                                  ${!hasCredits ? 'disabled' : ''}>
                             COLLECT
                         </button>
@@ -1205,14 +1209,14 @@ export class UISolStationControl {
         const canDonateAm = playerAmStock > 0 && Math.floor(amCacheMax - amCacheCurrent) >= 1;
 
         return `
-        <div class="sol-cache-row" data-comm-id="${COMMODITY_IDS.ANTIMATTER}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; border: 1px dashed var(--tier-7-color, #a855f7); margin-bottom: 0; background-color: rgba(0,0,0,0.4); border-radius: 4px;">
-            <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 4px;"></div>
+        <div class="sol-cache-row" data-comm-id="${COMMODITY_IDS.ANTIMATTER}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; border: 1px dashed var(--tier-7-color, #a855f7); margin-bottom: 0; background-color: rgba(0,0,0,0.4); border-radius: 8px;">
+            <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 8px;"></div>
             
             <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
                 <div class="sol-row-name" title="Antimatter" style="text-align: left; font-size: 1.0rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: var(--tier-7-color, #a855f7); font-weight: bold;">ANTIMATTER</div>
                 
                 <div class="sol-row-track-container" style="width: 100%;">
-                    <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                    <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
                         <div class="sol-am-cache-fill sol-progress-fill" style="width: ${amCachePct}%; background-color: var(--tier-7-color, #a855f7);"></div>
                         <div class="sol-am-cache-text sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${Math.floor(amCacheCurrent)} / ${amCacheMax}</div>
                     </div>
@@ -1222,7 +1226,7 @@ export class UISolStationControl {
             <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
                 <button type="button" class="btn-deposit-all" 
                         data-local-action="eng-donate-am" 
-                        style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px;"
+                        style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px; border-radius: 6px; background-color: ${getCommodityTheme(COMMODITY_IDS.ANTIMATTER).bg}; color: ${getCommodityTheme(COMMODITY_IDS.ANTIMATTER).text};"
                         ${!canDonateAm ? 'disabled' : ''}>
                     DEPOSIT
                 </button>
@@ -1237,12 +1241,24 @@ export class UISolStationControl {
         const typeClass = modeId.toLowerCase(); 
         const isLocked = !unlockedModes.includes(modeId);
         
+        let extraStyle = '';
+        if (modeId === 'SYNTHESIS') {
+            if (isActive) {
+                extraStyle = 'width: 100%; background: linear-gradient(to bottom, #7f1d1d, #ea580c); border-color: red; color: white; text-shadow: 0 0 5px red;';
+            } else {
+                extraStyle = 'width: 100%; background: #9a3412; border-color: #800000; color: #9ca3af;';
+            }
+        } else {
+            extraStyle = 'flex: 1;';
+        }
+        if (isLocked) extraStyle += ' opacity: 0.3;';
+        
         return `
             <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive || isLocked ? 'disabled' : ''}
-                    style="${isLocked ? 'opacity: 0.3;' : ''} ${modeId === 'SYNTHESIS' ? 'width: 100%; border-color: #b87333;' : 'flex: 1;'}">
+                    style="${extraStyle}">
                 ${modeId}
             </button>
         `;
@@ -1272,16 +1288,18 @@ export class UISolStationControl {
                 const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
                 const bgStyle = bgImage ? `background-image: url('${bgImage}'); opacity: 1; filter: none;` : '';
                 const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
+                
+                const theme = getCommodityTheme(commodityId);
 
                 return `
-                    <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem;">
-                        <div class="sol-cache-row-bg" style="${bgStyle}"></div>
+                    <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 8px;">
+                        <div class="sol-cache-row-bg" style="${bgStyle}; border-radius: 8px;"></div>
                         
                         <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
                             <div class="sol-row-name" title="${commodity.name}" style="text-align: left; font-size: 1.1rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible;">${commodity.name}</div>
                             
                             <div class="sol-row-track-container" style="width: 100%;">
-                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
                                     <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
                                     <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}</div>
                                 </div>
@@ -1292,7 +1310,7 @@ export class UISolStationControl {
                             <button type="button" class="btn-deposit-all" 
                                     data-action="sol-donate-all" 
                                     data-commodity-id="${commodityId}"
-                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px;"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px; border-radius: 6px; background-color: ${theme.bg}; color: ${theme.text};"
                                     ${!canDonate ? 'disabled' : ''}>
                                 DEPOSIT
                             </button>
