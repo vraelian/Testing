@@ -8,6 +8,21 @@ import { spawnFloatingText, playBlockingAnimationAndRemove } from './AnimationSe
 import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 
 // --- PURE VISUAL HELPERS ---
+function getProjectImpactDescription(stats) {
+    const parts = [];
+    if (stats.cacheCapacity) {
+        Object.keys(stats.cacheCapacity).forEach(k => {
+            const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
+            parts.push(`Expand ${cName} storage.`);
+        });
+    }
+    if (stats.amYieldMult > 0) parts.push(`Increase Antimatter synthesis by ${Math.round(stats.amYieldMult * 100)}%.`);
+    if (stats.creditYieldMult > 0) parts.push(`Improve commercial revenue by ${Math.round(stats.creditYieldMult * 100)}%.`);
+    if (stats.globalEntropyRed > 0) parts.push(`Reinforce hull integrity against solar decay.`);
+    
+    return parts.length > 0 ? parts.join(" ") : "General station improvements.";
+}
+
 function getCommodityTheme(commId) {
     switch (commId) {
         case COMMODITY_IDS.WATER_ICE: return { bg: '#7dd3fc', text: '#000' };
@@ -165,68 +180,77 @@ export class UISolStationControl {
     }
 
     showDashboard(gameState) {
-        this._saveCurrentScrollPositions();
-        this.currentView = 'dashboard';
-        const station = this._getLiveStationState(gameState);
-        if (!station.unlocked) return; 
-
-        if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
-            const svc = this.uiManager.simulationService.solStationService;
-            if (!svc.trackingActive) {
-                svc.catchUpDays(gameState.day);
-                svc.startLocalLiveLoop();
-            }
-        }
-
-        const contentHtml = this._buildDashboardHtml(gameState);
-        const modalContainer = document.getElementById('event-modal');
-        
-        if (modalContainer) modalContainer.classList.remove('silent-exit');
-        
-        if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
-            modalContainer.classList.add('hidden');
-            modalContainer.classList.remove('modal-hiding');
-            modalContainer.classList.remove('modal-visible');
-        }
-
-        const existingRoot = document.getElementById('sol-dashboard-root');
-        const isModalVisible = modalContainer && !modalContainer.classList.contains('hidden');
-
-        if (existingRoot && isModalVisible) {
-            existingRoot.outerHTML = contentHtml;
-            this.domCache = null; 
-            this._bindLocalListeners(gameState);
+        try {
+            this._saveCurrentScrollPositions();
+            this.currentView = 'dashboard';
+            const station = this._getLiveStationState(gameState);
             
-            this._applyLevelTheme(station.level);
-
-            const footerBtn = document.querySelector('#event-button-container button');
-            if (footerBtn) {
-                footerBtn.innerHTML = 'Dismiss';
-                footerBtn.style.display = ''; 
-                footerBtn.onclick = () => {
-                    this._stopRefreshLoop();
-                    this.uiManager.hideModal('event-modal');
-                };
+            if (!station || !station.unlocked) {
+                console.warn("Sol Station Dashboard opened, but station is locked or undefined.");
+                return; 
             }
-        } else {
-            this.domCache = null; 
-            this.uiManager.queueModal('event-modal', '', contentHtml, () => {
-                this._stopRefreshLoop();
-            }, {
-                width: '800px', 
-                dismissOutside: true,
-                specialClass: 'sol-station-modal',
-                buttonText: 'Dismiss',
-                buttonClass: 'btn-dismiss-sm',
-                customSetup: (modal, closeHandler) => {
-                    this._updateThemeClasses(modal, station.level);
+
+            if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.solStationService) {
+                const svc = this.uiManager.simulationService.solStationService;
+                if (!svc.trackingActive) {
+                    svc.catchUpDays(gameState.day);
+                    svc.startLocalLiveLoop();
                 }
-            });
-            setTimeout(() => this._bindLocalListeners(gameState), 50);
+            }
+
+            const contentHtml = this._buildDashboardHtml(gameState);
+            const modalContainer = document.getElementById('event-modal');
+            
+            if (modalContainer) modalContainer.classList.remove('silent-exit');
+            
+            if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
+                modalContainer.classList.add('hidden');
+                modalContainer.classList.remove('modal-hiding');
+                modalContainer.classList.remove('modal-visible');
+            }
+
+            const existingRoot = document.getElementById('sol-dashboard-root');
+            const isModalVisible = modalContainer && !modalContainer.classList.contains('hidden');
+
+            if (existingRoot && isModalVisible) {
+                existingRoot.outerHTML = contentHtml;
+                this.domCache = null; 
+                this._bindLocalListeners(gameState);
+                
+                this._applyLevelTheme(station.level);
+
+                const footerBtn = document.querySelector('#event-button-container button');
+                if (footerBtn) {
+                    footerBtn.innerHTML = 'Dismiss';
+                    footerBtn.style.display = ''; 
+                    footerBtn.onclick = () => {
+                        this._stopRefreshLoop();
+                        this.uiManager.hideModal('event-modal');
+                    };
+                }
+            } else {
+                this.domCache = null; 
+                this.uiManager.queueModal('event-modal', '', contentHtml, () => {
+                    this._stopRefreshLoop();
+                }, {
+                    width: '800px', 
+                    dismissOutside: true,
+                    specialClass: 'sol-station-modal',
+                    buttonText: 'Dismiss',
+                    buttonClass: 'btn-dismiss-sm',
+                    customSetup: (modal, closeHandler) => {
+                        this._updateThemeClasses(modal, station.level);
+                    }
+                });
+                setTimeout(() => this._bindLocalListeners(gameState), 50);
+            }
+            
+            this._startRefreshLoop();
+            this._restoreScrollPosition();
+
+        } catch (err) {
+            console.error("Critical Error in UISolStationControl.showDashboard:", err);
         }
-        
-        this._startRefreshLoop();
-        this._restoreScrollPosition();
     }
 
     _updateThemeClasses(element, level) {
@@ -1016,7 +1040,7 @@ export class UISolStationControl {
 
         const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
-        const amMax = LEVEL_REGISTRY[1]?.MAX_ANTIMATTER_STOCKPILE || 150;
+        const amMax = (LEVEL_REGISTRY && LEVEL_REGISTRY[1] && LEVEL_REGISTRY[1].MAX_ANTIMATTER_STOCKPILE) ? LEVEL_REGISTRY[1].MAX_ANTIMATTER_STOCKPILE : 150;
         const amCurrent = Math.min(amMax, stockpile.antimatter);
         const amFillPct = (amCurrent / amMax) * 100;
         const hasAm = amCurrent >= 1;
@@ -1031,7 +1055,7 @@ export class UISolStationControl {
         let engOverview = '<div class="text-center text-gray-500 text-xs">STATION MAXIMIZED</div>';
         if (nextLvl) {
             const reqRows = Object.entries(nextLvl.requirements).map(([resId, qty]) => {
-                const banked = station.activeProjectBank[resId] || 0;
+                const banked = (station.activeProjectBank || {})[resId] || 0;
                 const isComplete = banked >= qty;
                 const name = resId === 'credits' ? 'Credits' : (DB.COMMODITIES.find(c => c.id === resId)?.name || resId);
                 const progressText = isComplete 
@@ -1208,6 +1232,8 @@ export class UISolStationControl {
         const amCachePct = (amCacheCurrent / amCacheMax) * 100;
         const canDonateAm = playerAmStock > 0 && Math.floor(amCacheMax - amCacheCurrent) >= 1;
 
+        const theme = getCommodityTheme(COMMODITY_IDS.ANTIMATTER) || { bg: '#4c1d95', text: '#fff' };
+
         return `
         <div class="sol-cache-row" data-comm-id="${COMMODITY_IDS.ANTIMATTER}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; border: 1px dashed var(--tier-7-color, #a855f7); margin-bottom: 0; background-color: rgba(0,0,0,0.4); border-radius: 8px;">
             <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 8px;"></div>
@@ -1226,7 +1252,7 @@ export class UISolStationControl {
             <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
                 <button type="button" class="btn-deposit-all" 
                         data-local-action="eng-donate-am" 
-                        style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px; border-radius: 6px; background-color: ${getCommodityTheme(COMMODITY_IDS.ANTIMATTER).bg}; color: ${getCommodityTheme(COMMODITY_IDS.ANTIMATTER).text};"
+                        style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px; border-radius: 6px; background-color: ${theme.bg}; color: ${theme.text};"
                         ${!canDonateAm ? 'disabled' : ''}>
                     DEPOSIT
                 </button>
@@ -1266,7 +1292,7 @@ export class UISolStationControl {
 
     _renderCacheList(gameState) {
         const station = this._getLiveStationState(gameState);
-        const caches = station.caches;
+        const caches = station.caches || {};
         const playerVisualSeed = gameState.player.visualSeed;
 
         return Object.entries(caches)
@@ -1289,7 +1315,7 @@ export class UISolStationControl {
                 const bgStyle = bgImage ? `background-image: url('${bgImage}'); opacity: 1; filter: none;` : '';
                 const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
                 
-                const theme = getCommodityTheme(commodityId);
+                const theme = getCommodityTheme(commodityId) || { bg: '#3b82f6', text: '#fff' };
 
                 return `
                     <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 8px;">
