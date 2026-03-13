@@ -329,7 +329,12 @@ export class GameState {
                 activeProjectBank: {
                     "c_water_ice": 0,
                     "credits": 0
-                }
+                },
+                // --- FOLDED SPACE DRIVE MANUFACTURING DEFAULTS ---
+                antimatterCache: 0,
+                synthesisProgress: 0,
+                fsdOutput: 0
+                // --- END FSD MANUFACTURING ---
             },
             // --- END VIRTUAL WORKBENCH ---
 
