@@ -179,8 +179,6 @@ export class ActionClickHandler {
                 this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, async (replaceIndex) => {
                     if (totalCost > 0) {
                         this.gameState.player.credits -= totalCost;
-                        // Suppressed standard floating text to avoid overlapping with new white-out cinematic
-                        // this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
                     if (replaceIndex !== -1) {
@@ -406,7 +404,7 @@ export class ActionClickHandler {
                 if (state.introSequenceActive) {
                     const helpHtml = `
                         <div class="text-left text-sm text-gray-300">
-                            <p class="mb-4">Choosing your first ship is an exciting first step on the road to becoming a wealthy captain.</p>
+                            <p class="mb-4">Choosing your first station is an exciting first step on the road to becoming a wealthy captain.</p>
                             <p class="mb-2">What play style will you choose?</p>
                             <ul class="list-disc pl-5 space-y-2">
                                 <li>Will you opt for the <span class="text-sky-400 font-bold">Explorer</span>, prioritizing its larger fuel tank for fewer refueling stops and more continuous travel?</li>
@@ -599,13 +597,19 @@ export class ActionClickHandler {
                     const amount = Math.floor(stockpile.credits);
                     if (amount > 0) {
                         text = `+${amount}`;
-                        color = '#34d399'; 
+                        color = '#06b6d4'; 
                     }
                 } else if (type === 'antimatter') {
                     const amount = Math.floor(stockpile.antimatter);
                     if (amount >= 1) {
-                        text = `+${amount} Antimatter`;
+                        text = `+${amount}`;
                         color = '#a855f7'; 
+                    }
+                } else if (type === 'fsd') {
+                    const amount = Math.floor(this.gameState.solStation.fsdOutput || 0);
+                    if (amount >= 1) {
+                        text = `+${amount}`;
+                        color = '#ea580c';
                     }
                 }
 
