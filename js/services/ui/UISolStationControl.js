@@ -98,6 +98,7 @@ export class UISolStationControl {
         
         // Handler references for cleanup
         this._clickHandler = null;
+        this._backdropHandler = null;
     }
 
     _getLiveStationState(gameState) {
@@ -181,7 +182,14 @@ export class UISolStationControl {
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
         
-        if (modalContainer) modalContainer.classList.remove('silent-exit');
+        if (modalContainer) {
+            modalContainer.classList.remove('silent-exit');
+            modalContainer.dataset.dismissOutside = 'true'; // Allow normal dismissal on dashboard
+            
+            // Clean up custom portrait if lingering from previous view
+            const existingPortrait = document.getElementById('custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+        }
         
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
@@ -229,8 +237,12 @@ export class UISolStationControl {
         this._restoreScrollPosition();
     }
 
-    _updateThemeClasses(element, level) {
-        element.classList.remove(
+    _updateThemeClasses(modalElement, level) {
+        // Enforce application strictly to the .modal-content container
+        const targetEl = modalElement.classList.contains('modal-content') ? modalElement : modalElement.querySelector('.modal-content');
+        if (!targetEl) return;
+
+        targetEl.classList.remove(
             'sol-theme-white', 
             'sol-theme-green', 
             'sol-theme-blue', 
@@ -238,13 +250,16 @@ export class UISolStationControl {
             'sol-theme-orange', 
             'sol-theme-red'
         );
+        
+        // Strip any dynamically injected rarity themes from Phase 3
+        targetEl.className = targetEl.className.replace(/\bmodal-theme-rarity-\S+/g, '').trim();
 
-        if (level < 10) element.classList.add('sol-theme-white');
-        else if (level < 20) element.classList.add('sol-theme-green');
-        else if (level < 30) element.classList.add('sol-theme-blue');
-        else if (level < 40) element.classList.add('sol-theme-gold');
-        else if (level < 50) element.classList.add('sol-theme-orange');
-        else element.classList.add('sol-theme-red');
+        if (level < 10) targetEl.classList.add('sol-theme-white');
+        else if (level < 20) targetEl.classList.add('sol-theme-green');
+        else if (level < 30) targetEl.classList.add('sol-theme-blue');
+        else if (level < 40) targetEl.classList.add('sol-theme-gold');
+        else if (level < 50) targetEl.classList.add('sol-theme-orange');
+        else targetEl.classList.add('sol-theme-red');
     }
 
     _applyLevelTheme(level) {
@@ -258,8 +273,28 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
 
+        // Cleanup local click handler
         if (this._clickHandler) {
             root.removeEventListener('click', this._clickHandler);
+        }
+
+        // Global backdrop click interception for sub-view backward navigation
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            if (this._backdropHandler) {
+                modal.removeEventListener('click', this._backdropHandler);
+            }
+            this._backdropHandler = (e) => {
+                if (e.target === modal) {
+                    if (this.currentView === 'officerDetail' || this.currentView === 'unslotWarning') {
+                        this.showOfficerManagement(gameState);
+                    } else if (this.currentView === 'officers' || this.currentView === 'engineering') {
+                        this.showDashboard(gameState);
+                    }
+                    // If currentView is dashboard, UIModalEngine handles the true dismissal inherently.
+                }
+            };
+            modal.addEventListener('click', this._backdropHandler);
         }
 
         this._clickHandler = (e) => {
@@ -308,7 +343,6 @@ export class UISolStationControl {
                     if (res.success) this.showEngineeringModal(svc.gameState);
                 }
             } else if (action === 'eng-donate-am') {
-                // Dedicated native handler to bypass generic commodity blocking
                 let pStock = 0;
                 for (const shipId of svc.gameState.player.ownedShipIds) {
                     pStock += (svc.gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
@@ -323,23 +357,23 @@ export class UISolStationControl {
                     if (res.success) this.update(svc.gameState);
                 }
             } else if (action === 'eng-complete-project') {
-                const modal = document.querySelector('.sol-station-modal');
-                if (modal) {
-                    playBlockingAnimationAndRemove(modal, 'project-complete-dematerialize').then(() => {
+                const modalEl = document.querySelector('.sol-station-modal');
+                if (modalEl) {
+                    playBlockingAnimationAndRemove(modalEl, 'project-complete-dematerialize').then(() => {
                         const oldLevel = svc.gameState.solStation.level;
                         const res = svc.completeActiveProject();
                         
                         if (res.success) {
-                            modal.classList.add('silent-exit');
+                            modalEl.classList.add('silent-exit');
                             this.uiManager.hideModal('event-modal');
                             
-                            const btn = document.getElementById('btn-sol-orbital-interface');
+                            const intBtn = document.getElementById('btn-sol-orbital-interface');
                             const lbl = document.getElementById('lbl-sol-level-indicator');
 
-                            if (btn && lbl) {
+                            if (intBtn && lbl) {
                                 lbl.textContent = oldLevel;
-                                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                btn.classList.add('sol-interface-levelup');
+                                intBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                intBtn.classList.add('sol-interface-levelup');
 
                                 setTimeout(() => {
                                     lbl.textContent = svc.gameState.solStation.level;
@@ -348,7 +382,7 @@ export class UISolStationControl {
                                 }, 1200);
 
                                 setTimeout(() => {
-                                    btn.classList.remove('sol-interface-levelup');
+                                    intBtn.classList.remove('sol-interface-levelup');
                                     this.showDashboard(svc.gameState);
                                     const dashRoot = document.getElementById('sol-dashboard-root');
                                     if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
@@ -603,6 +637,18 @@ export class UISolStationControl {
         if (!root) return;
 
         const station = this._getLiveStationState(gameState);
+        
+        // --- Phase 3 / 4 Implementation: Restore Level Theme on Return ---
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            modal.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+            this._updateThemeClasses(modal, station.level);
+            
+            // Clean up custom portrait if lingering from detail view
+            const existingPortrait = document.getElementById('custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+        }
+
         const roster = gameState.player.officerRoster || [];
         const slots = station.officers;
         const assignedIds = slots.map(s => s.assignedOfficerId).filter(id => id);
@@ -750,17 +796,51 @@ export class UISolStationControl {
         const officer = OFFICERS[officerId];
         if (!officer) return;
 
-        const rarityColor = getRarityColorClass(officer.rarity);
+        // --- Phase 3 / 4 Implementation: Dynamic Rarity Theming ---
+        const modalContainer = document.getElementById('event-modal');
+        const modalContent = modalContainer ? modalContainer.querySelector('.modal-content') : null;
+        
+        if (modalContainer) {
+            modalContainer.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+        }
+
+        if (modalContent) {
+            // Clear any existing level or rarity themes
+            modalContent.classList.remove('sol-theme-white', 'sol-theme-green', 'sol-theme-blue', 'sol-theme-gold', 'sol-theme-orange', 'sol-theme-red');
+            modalContent.className = modalContent.className.replace(/\bmodal-theme-rarity-\S+/g, '').trim();
+            
+            // Apply the new dynamic rarity theme for the officer
+            modalContent.classList.add(`modal-theme-rarity-${officer.rarity}`);
+            
+            // Clean up any old portrait injected previously
+            const existingPortrait = modalContent.querySelector('#custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+
+            // Inject portrait perfectly onto the top edge of .modal-content (avoids clipping in #event-description)
+            if (officer.portraitId && typeof window.getPortraitStyle === 'function') {
+                const pStyle = window.getPortraitStyle(officer.portraitId);
+                if (pStyle) {
+                    const parsedName = officer.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
+                    const portraitHtml = `
+                        <div id="custom-officer-portrait" class="comm-link-wrapper">
+                            <div class="portrait-thumbnail comm-active" style="${pStyle}"></div>
+                            <div class="portrait-name-label comm-label">${parsedName}</div>
+                        </div>
+                    `;
+                    modalContent.insertAdjacentHTML('afterbegin', portraitHtml);
+                }
+            }
+        }
+
         const baseStyle = "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.4;";
 
         let buffsHtml = '';
-        
         const formatStatRow = (label, valueStr, isGood) => {
             const colorClass = isGood ? 'text-green-400' : 'text-red-400';
             return `
-                <div class="flex justify-between items-center mb-1 pb-1 border-b border-gray-800/50 last:border-0" style="${baseStyle}">
-                    <span class="text-gray-400 font-bold uppercase tracking-wider text-[10px]">${label}</span>
-                    <span class="${colorClass} font-mono font-bold text-xs">${valueStr}</span>
+                <div class="flex justify-between items-center px-1 last:border-0" style="${baseStyle} height: 28px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span class="font-bold uppercase tracking-wider text-[10px]" style="color: var(--nameplate-text); opacity: 0.9;">${label}</span>
+                    <span class="${colorClass} font-mono font-bold text-xs" style="text-shadow: 0 0 5px rgba(0,0,0,0.8);">${valueStr}</span>
                 </div>
             `;
         };
@@ -801,34 +881,28 @@ export class UISolStationControl {
         }
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-center items-center mb-2 border-b border-gray-700 pb-2">
-                <div class="sol-level-header ${rarityColor} text-[22px] tracking-wider uppercase text-center w-full">${officer.name}</div>
+            <div class="sol-subview-header flex justify-center items-center mb-2 border-b pb-2 mt-2" style="border-color: var(--nameplate-border);">
+                <div class="sol-level-header text-[22px] tracking-wider uppercase text-center w-full" style="color: var(--nameplate-text);">${officer.name}</div>
             </div>
             
-            <div class="flex flex-col p-4 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
-                <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
-                    <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">${officer.role}</div>
-                    <div class="text-[10px] font-bold uppercase px-2 py-1 rounded border border-gray-600 ${rarityColor} opacity-80">
+            <div class="flex flex-col p-4 rounded-lg shadow-xl" style="background: var(--nameplate-bg); border: 1px solid var(--nameplate-border);">
+                <div class="flex items-center justify-between mb-3 pb-2" style="border-bottom: 1px solid var(--nameplate-border);">
+                    <div class="text-xs uppercase tracking-widest mt-1" style="color: var(--nameplate-text); opacity: 0.9;">${officer.role}</div>
+                    <div class="text-[10px] font-bold uppercase px-2 py-1 rounded" style="border: 1px solid var(--nameplate-border); color: var(--nameplate-text); background: rgba(0,0,0,0.3);">
                         ${(officer.rarity || 'common').replace('_', ' ')}
                     </div>
                 </div>
                 
-                <div id="roster-lore-scroll" class="text-sm text-gray-300 mb-4 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans max-h-32 overflow-y-auto" style="scrollbar-width: thin;">
+                <div id="roster-lore-scroll" class="text-sm mb-4 leading-relaxed p-3 rounded font-sans overflow-y-auto" style="height: 100px; scrollbar-width: thin; background: rgba(0,0,0,0.3); border-left: 2px solid var(--nameplate-border); color: var(--nameplate-text);">
                     "${officer.lore}"
                 </div>
                 
-                <div class="w-full flex flex-col" style="max-height: 220px;">
-                    <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-widest">Influence</div>
-                    <div id="roster-buffs-scroll" class="flex-1 overflow-y-auto bg-black/50 p-3 rounded border border-gray-800" style="scrollbar-width: thin;">
-                        ${buffsHtml || '<div class="text-sm text-gray-500 text-center italic mt-2">No measurable influence.</div>'}
+                <div class="w-full flex flex-col">
+                    <div class="text-xs font-bold mb-2 uppercase tracking-widest" style="color: var(--nameplate-text); opacity: 0.8;">Influence</div>
+                    <div id="roster-buffs-scroll" class="overflow-y-auto p-2 rounded" style="height: 128px; scrollbar-width: thin; background: rgba(0,0,0,0.5); border: 1px solid var(--nameplate-border);">
+                        ${buffsHtml || `<div class="text-sm text-center italic mt-2" style="color: var(--nameplate-text); opacity: 0.7;">No measurable influence.</div>`}
                     </div>
                 </div>
-            </div>
-
-            <div class="flex justify-center mt-2">
-                <button type="button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-sm shadow transition-colors" data-local-action="open-officer-mgmt">
-                    &larr; RETURN TO ROSTER
-                </button>
             </div>
         `;
 
@@ -847,6 +921,13 @@ export class UISolStationControl {
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
+
+        const modalContainer = document.getElementById('event-modal');
+        if (modalContainer) {
+            modalContainer.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+            const existingPortrait = document.getElementById('custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+        }
 
         const station = this._getLiveStationState(gameState);
         const nextLevelData = LEVEL_REGISTRY[station.level + 1];
@@ -959,6 +1040,11 @@ export class UISolStationControl {
         this.currentView = 'unslotWarning';
         const officer = OFFICERS[officerId];
         let warningsHtml = '';
+        
+        const modalContainer = document.getElementById('event-modal');
+        if (modalContainer) {
+            modalContainer.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+        }
 
         if (payload.netEntropyChange >= 0.1) {
             warningsHtml += `<div class="warning-item text-red-400 font-bold mb-2">⚠ WARNING: Net Entropy will increase by +${Math.round(payload.netEntropyChange * 100)}%!</div>`;

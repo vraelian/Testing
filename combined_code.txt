@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.70</title>
+    <title>Orbital Trading 36.76</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.70 - Bankruptcy Update</p>
+            <p>Version 36.76 - End-Game Polish Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -4509,6 +4509,111 @@ card.
 @keyframes fillProgressBar {
     0% { width: 0%; }
     100% { width: 100%; }
+}
+
+
+/* ========================================================================= */
+/* --- OFFICER PORTRAITS GDD V1 (PHASE 2) --- */
+/* ========================================================================= */
+
+/* --- COMMON RARITY THEME (White/Slate) --- */
+.modal-theme-rarity-common {
+    --comm-color: #94a3b8;
+    --comm-color-bright: #f8fafc;
+    --comm-color-glow-low: rgba(148, 163, 184, 0.4);
+    --comm-color-glow-mid: rgba(148, 163, 184, 0.5);
+    --comm-color-glow-high: rgba(148, 163, 184, 0.8);
+    --nameplate-bg: rgba(30, 41, 59, 0.9);
+    --nameplate-border: #94a3b8;
+    --nameplate-text: #f8fafc;
+    
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), #111827) !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 0 20px rgba(148, 163, 184, 0.2), inset 0 0 15px rgba(148, 163, 184, 0.1) !important;
+}
+.modal-theme-rarity-common .sol-level-header { 
+    color: #f8fafc !important; 
+    text-shadow: 0 0 10px rgba(248, 250, 252, 0.5); 
+}
+
+/* --- UNCOMMON RARITY THEME (Green) --- */
+.modal-theme-rarity-uncommon {
+    --comm-color: #4ade80;
+    --comm-color-bright: #86efac;
+    --comm-color-glow-low: rgba(74, 222, 128, 0.4);
+    --comm-color-glow-mid: rgba(74, 222, 128, 0.5);
+    --comm-color-glow-high: rgba(74, 222, 128, 0.8);
+    --nameplate-bg: rgba(6, 78, 59, 0.9);
+    --nameplate-border: #4ade80;
+    --nameplate-text: #ecfdf5;
+    
+    background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827) !important;
+    border-color: #34d399 !important;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.3), inset 0 0 15px rgba(52, 211, 153, 0.1) !important;
+}
+.modal-theme-rarity-uncommon .sol-level-header { 
+    color: #4ade80 !important; 
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); 
+}
+
+/* --- RARE RARITY THEME (Yellow/Gold) --- */
+.modal-theme-rarity-rare {
+    --comm-color: #facc15;
+    --comm-color-bright: #fef08a;
+    --comm-color-glow-low: rgba(250, 204, 21, 0.4);
+    --comm-color-glow-mid: rgba(250, 204, 21, 0.5);
+    --comm-color-glow-high: rgba(250, 204, 21, 0.8);
+    --nameplate-bg: rgba(113, 63, 18, 0.9);
+    --nameplate-border: #facc15;
+    --nameplate-text: #fefce8;
+    
+    background: linear-gradient(145deg, rgba(66, 32, 6, 0.9), #111827) !important;
+    border-color: #facc15 !important;
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.3), inset 0 0 15px rgba(250, 204, 21, 0.1) !important;
+}
+.modal-theme-rarity-rare .sol-level-header { 
+    color: #facc15 !important; 
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.5); 
+}
+
+/* --- VERY RARE RARITY THEME (Orange) --- */
+.modal-theme-rarity-very_rare {
+    --comm-color: #fb923c;
+    --comm-color-bright: #fdba74;
+    --comm-color-glow-low: rgba(251, 146, 60, 0.4);
+    --comm-color-glow-mid: rgba(251, 146, 60, 0.5);
+    --comm-color-glow-high: rgba(251, 146, 60, 0.8);
+    --nameplate-bg: rgba(124, 45, 18, 0.9);
+    --nameplate-border: #fb923c;
+    --nameplate-text: #fff7ed;
+    
+    background: linear-gradient(145deg, rgba(124, 45, 18, 0.9), #111827) !important;
+    border-color: #fb923c !important;
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.3), inset 0 0 15px rgba(251, 146, 60, 0.1) !important;
+}
+.modal-theme-rarity-very_rare .sol-level-header { 
+    color: #fb923c !important; 
+    text-shadow: 0 0 10px rgba(251, 146, 60, 0.5); 
+}
+
+/* --- HYPER RARE RARITY THEME (Red) --- */
+.modal-theme-rarity-hyper_rare {
+    --comm-color: #f87171;
+    --comm-color-bright: #fca5a5;
+    --comm-color-glow-low: rgba(248, 113, 113, 0.4);
+    --comm-color-glow-mid: rgba(248, 113, 113, 0.5);
+    --comm-color-glow-high: rgba(248, 113, 113, 0.8);
+    --nameplate-bg: rgba(127, 29, 29, 0.9);
+    --nameplate-border: #f87171;
+    --nameplate-text: #fef2f2;
+    
+    background: linear-gradient(145deg, rgba(127, 29, 29, 0.9), #111827) !important;
+    border-color: #f87171 !important;
+    box-shadow: 0 0 20px rgba(248, 113, 113, 0.3), inset 0 0 15px rgba(248, 113, 113, 0.1) !important;
+}
+.modal-theme-rarity-hyper_rare .sol-level-header { 
+    color: #f87171 !important; 
+    text-shadow: 0 0 10px rgba(248, 113, 113, 0.5); 
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -14005,6 +14110,7 @@ export const OFFICERS = {
         name: "Eclasia",
         role: "Resource Warden",
         rarity: "common",
+        portraitId: "Business_1",
         description: "Safe baseline arbitrage. Her strict audits ensure no credits are lost to systemic inefficiency.",
         lore: "Audits mining yields to prevent embezzlement by labor crews. Carries an encrypted ledger capable of freezing corporate assets instantaneously.",
         buffs: { entropy: 0, creditMult: 0.10, amMult: 0, capacityMods: {}, consumptionMods: {} }
@@ -14014,6 +14120,7 @@ export const OFFICERS = {
         name: "Eapuria",
         role: "Colony Administrator",
         rarity: "common",
+        portraitId: "Captain_1",
         description: "Eases the early feeding loop for the most consumed good. Scales up the station's ice reservoirs.",
         lore: "Manages a remote mining outpost on the edge of the system. Brews synthetic alcohol to maintain morale among the workers.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "water_ice": 1000 }, consumptionMods: {} }
@@ -14023,6 +14130,7 @@ export const OFFICERS = {
         name: "Qualisus",
         role: "Systems Architect",
         rarity: "common",
+        portraitId: "Expert_System_1",
         description: "Slightly slows the bleeding. His redundant backups prevent catastrophic structural cascades.",
         lore: "Designs the redundant computer networks that run station infrastructure. Fears a total system collapse and keeps analog backups.",
         buffs: { entropy: -0.05, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: {} }
@@ -14032,6 +14140,7 @@ export const OFFICERS = {
         name: "Dorae",
         role: "Franchise Owner",
         rarity: "common",
+        portraitId: "Business_2",
         description: "Provides a simple logistical buffer for orbital fuel reserves.",
         lore: "Operates a successful chain of refueling depots across the outer rim. Aggressive towards competitors who attempt to undercut set fuel prices.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "propellant": 500 }, consumptionMods: {} }
@@ -14041,6 +14150,7 @@ export const OFFICERS = {
         name: "Harklinore",
         role: "Consortium Lead",
         rarity: "common",
+        portraitId: "Business_3",
         description: "Increases the storage ceiling for the primary hull-repair commodity based on his corporate mining ties.",
         lore: "Represents a unified block of mining corporations in Guild senate hearings. Collects rare geological samples from industrially fractured moons.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "plasteel": 500 }, consumptionMods: {} }
@@ -14050,6 +14160,7 @@ export const OFFICERS = {
         name: "Melini",
         role: "Fleet Commodore",
         rarity: "common",
+        portraitId: "Captain_2",
         description: "Her expert convoy routing reduces the station's orbital thruster fuel burn.",
         lore: "Coordinates the Guild's massive automated convoy routes to avoid hazardous spatial anomalies. Plays classical violin over the fleet comms during downtime.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "propellant": 0.10 } }
@@ -14059,6 +14170,7 @@ export const OFFICERS = {
         name: "Nepydoria",
         role: "Extraction Director",
         rarity: "common",
+        portraitId: "Business_4",
         description: "Highly efficient processing of raw asteroid materials saves Tier 5 resources.",
         lore: "Oversees the strip-mining operations of captured asteroids. Donates anonymously to environmental restoration funds on Earth.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "xeno_geologicals": 0.15 } }
@@ -14068,6 +14180,7 @@ export const OFFICERS = {
         name: "Perfurine",
         role: "Bio-Dome Curator",
         rarity: "common",
+        portraitId: "Scientist_1",
         description: "Expands the internal gardens, providing a safe buffer for organic supplies.",
         lore: "Maintains the delicate ecosystem of the luxury station parks. Imports real soil from Earth at exorbitant personal cost.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: { "hydroponics": 500 }, consumptionMods: {} }
@@ -14077,6 +14190,7 @@ export const OFFICERS = {
         name: "Petrinor",
         role: "Flight Director",
         rarity: "uncommon",
+        portraitId: "Lightly_Augmented_1",
         description: "A tiny, penalty-free bump to Antimatter synthesis through flawless telemetry alignment.",
         lore: "Monitors the real-time telemetry of thousands of active flights. Communicates exclusively in hexadecimal when stressed.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0.05, capacityMods: {}, consumptionMods: {} }
@@ -14086,6 +14200,7 @@ export const OFFICERS = {
         name: "Simmerick",
         role: "Research Director",
         rarity: "uncommon",
+        portraitId: "Scientist_2",
         description: "Pushes the reactor slightly harder to test his efficiency theories, causing minor degradation.",
         lore: "Leads experimental projects to improve ion drive efficiency. Believes that FTL travel is a solvable mathematical riddle.",
         buffs: { entropy: 0.02, creditMult: 0, amMult: 0.10, capacityMods: {}, consumptionMods: {} }
@@ -14095,6 +14210,7 @@ export const OFFICERS = {
         name: "Oepureem",
         role: "High Marshal",
         rarity: "uncommon",
+        portraitId: "Captain_3",
         description: "Absolute authority means zero waste. A flat, tiny reduction in burn across the board.",
         lore: "Commands the station's customs and internal audit divisions with absolute authority. Possesses a deep hatred for the chaotic economic influence of the Syndicate.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": 0.05, "plasteel": 0.05, "hydroponics": 0.05, "propellant": 0.05, "cybernetics": 0.05, "processors": 0.05, "graphene_lattices": 0.05, "cryo_pods": 0.05, "atmo_processors": 0.05, "cloned_organs": 0.05, "xeno_geologicals": 0.05, "sentient_ai": 0.05 } }
@@ -14104,6 +14220,7 @@ export const OFFICERS = {
         name: "Zidola",
         role: "Surveillance Chief",
         rarity: "uncommon",
+        portraitId: "Lightly_Augmented_2",
         description: "Her obsessive attention to detail roots out minor systemic inefficiencies and cargo embezzlement.",
         lore: "Known for an obsession with detail in reviewing security footage. Enjoys vacationing on Europa to escape the digital noise.",
         buffs: { entropy: -0.02, creditMult: 0.05, amMult: 0, capacityMods: {}, consumptionMods: {} }
@@ -14115,6 +14232,7 @@ export const OFFICERS = {
         name: "Rosarian",
         role: "Refinery Overseer",
         rarity: "rare",
+        portraitId: "Heavily_Augmented_1",
         description: "Heavily anchors cooling needs, but the intense heat of his operations melts advanced components.",
         lore: "Manages the volatile chemical reactions of fuel refinement plants. Views fire as a living entity that must be tamed.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": 0.35, "cybernetics": -0.20, "processors": -0.20, "graphene_lattices": -0.20, "cryo_pods": -0.20, "atmo_processors": -0.20, "cloned_organs": -0.20, "xeno_geologicals": -0.20, "sentient_ai": -0.20 } }
@@ -14124,6 +14242,7 @@ export const OFFICERS = {
         name: "Luzicia",
         role: "Physics Head",
         rarity: "rare",
+        portraitId: "Scientist_3",
         description: "Speeds up the endgame AM grind, but the solar anomalies she exploits cause faster station degradation.",
         lore: "Studies the gravitational anomalies of the sun to improve energy harvesting. Refuses to communicate with non-scientific personnel.",
         buffs: { entropy: 0.10, creditMult: 0, amMult: 0.25, capacityMods: {}, consumptionMods: {} }
@@ -14133,6 +14252,7 @@ export const OFFICERS = {
         name: "Disophlonese",
         role: "Regional Viceroy",
         rarity: "rare",
+        portraitId: "Affluent_1",
         description: "Massively reduces decay, but slashes storage space, requiring high-frequency, low-volume cargo drops.",
         lore: "Administers Guild law across a vast and sparsely populated sector of space. Developing a philosophy based on the silence of the vacuum.",
         buffs: { entropy: -0.15, creditMult: 0, amMult: 0, capacityMods: { "water_ice": -500, "plasteel": -500, "hydroponics": -500, "propellant": -500, "cybernetics": -500, "processors": -500, "graphene_lattices": -100, "cryo_pods": -100, "atmo_processors": -100, "cloned_organs": -20, "xeno_geologicals": -20, "sentient_ai": -10 }, consumptionMods: {} }
@@ -14142,6 +14262,7 @@ export const OFFICERS = {
         name: "Myrnos",
         role: "Convoy Marshal",
         rarity: "uncommon",
+        portraitId: "Captain_4",
         description: "Densely packs structural cargo with architectural precision, though the concentrated heavy mass accelerates orbit decay.",
         lore: "Calculates precise orbital trajectories to maximize fuel efficiency for heavy cargo haulers. Obsessed with the logistical perfection of ancient Roman aqueducts.",
         buffs: { entropy: 0.10, creditMult: 0, amMult: 0, capacityMods: { "plasteel": 1500, "cybernetics": 1500 }, consumptionMods: {} }
@@ -14151,6 +14272,7 @@ export const OFFICERS = {
         name: "Hallast",
         role: "Naval Architect",
         rarity: "rare",
+        portraitId: "Lightly_Augmented_3",
         description: "Excellent for long-term structural health, but his zero-g refits disrupt commercial docking bays.",
         lore: "Designs the skeletal frames of the next generation of heavy lifters. Suffers from bone density loss due to a life in zero-g.",
         buffs: { entropy: 0, creditMult: -0.10, amMult: 0, capacityMods: {}, consumptionMods: { "plasteel": 0.25 } }
@@ -14160,6 +14282,7 @@ export const OFFICERS = {
         name: "Kimridon",
         role: "Fabrication Chief",
         rarity: "rare",
+        portraitId: "Techie_1",
         description: "Prints money, but uses up vast amounts of computational power for his secret metal sculptures.",
         lore: "Controls the nanotech vats that print ship components. Creates abstract sculptures out of scrap metal in secret.",
         buffs: { entropy: 0, creditMult: 0.20, amMult: 0, capacityMods: {}, consumptionMods: { "processors": -0.30 } }
@@ -14169,6 +14292,7 @@ export const OFFICERS = {
         name: "Droysia",
         role: "Chief Geneticist",
         rarity: "rare",
+        portraitId: "Scientist_4",
         description: "Radiation-resistant crops save massive amounts of organic supplies, but the ambient radiation eats at the station hull.",
         lore: "Engineers crops capable of growing in high-radiation environments. Has modified their own DNA to require less sleep.",
         buffs: { entropy: 0.15, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "hydroponics": 0.35, "cloned_organs": 0.35 } }
@@ -14178,6 +14302,7 @@ export const OFFICERS = {
         name: "Lysander",
         role: "Terraforming Lead",
         rarity: "uncommon",
+        portraitId: "Scientist_5",
         description: "Perfectly balances the air scrubbers, but requires significantly more water to run the humidity simulations.",
         lore: "Models atmospheric changes for planetary rehabilitation over centuries. Names every simulation after a distinct emotion.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "atmo_processors": 0.35, "water_ice": -0.15 } }
@@ -14187,6 +14312,7 @@ export const OFFICERS = {
         name: "Xanadu",
         role: "System Governor",
         rarity: "rare",
+        portraitId: "Affluent_2",
         description: "Heavy market regulation drives massive commercial profit, but completely stifles the creative scientific environment needed for AM synthesis.",
         lore: "Administers strict trade embargoes and corporate sanctions for the entire Jovian sector with zero tolerance for deviation. Composes symphonies based on the electromagnetic hum of Jupiter.",
         buffs: { entropy: 0.05, creditMult: 0.30, amMult: -0.15, capacityMods: {}, consumptionMods: {} }
@@ -14196,6 +14322,7 @@ export const OFFICERS = {
         name: "Pryderi",
         role: "Apex Director",
         rarity: "very_rare",
+        portraitId: "Affluent_3",
         description: "Incredible wealth generation, but his corporate mergers require massive systemic payouts and resource expenditures to maintain.",
         lore: "Holds final authority on all inter-corporate mergers and acquisitions within the Guild. Collects fossilized dinosaur bones retrieved from Earth.",
         buffs: { entropy: 0, creditMult: 0.40, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": -0.30, "plasteel": -0.30, "hydroponics": -0.30, "propellant": -0.30, "cybernetics": -0.30, "processors": -0.30, "graphene_lattices": -0.30, "cryo_pods": -0.30, "atmo_processors": -0.30, "cloned_organs": -0.30, "xeno_geologicals": -0.30, "sentient_ai": -0.30 } }
@@ -14205,6 +14332,7 @@ export const OFFICERS = {
         name: "Kaelith",
         role: "Grand Strategist",
         rarity: "rare",
+        portraitId: "Business_5",
         description: "Predicts system stresses before they happen, slowing decay beautifully, but her obsession with market simulations hurts actual commercial yield.",
         lore: "Simulates hostile corporate takeovers against the Syndicate to predict market crashes before they happen. Fascinated by the irrational concept of gambling.",
         buffs: { entropy: -0.20, creditMult: -0.15, amMult: 0, capacityMods: {}, consumptionMods: {} }
@@ -14214,6 +14342,7 @@ export const OFFICERS = {
         name: "Orestes",
         role: "Void Chancellor",
         rarity: "rare",
+        portraitId: "Affluent_4",
         description: "Expands storage specifically for the most esoteric, ancient, and endgame items.",
         lore: "Dictates the foreign policy and trade rights of the outer rim settlements. Refuses to speak directly to anyone under the age of sixty.",
         buffs: { entropy: 0.15, creditMult: 0, amMult: 0, capacityMods: { "sentient_ai": 1000, "cryo_pods": 1000 }, consumptionMods: {} }
@@ -14223,6 +14352,7 @@ export const OFFICERS = {
         name: "Mnemosyne",
         role: "Chief Neural Architect",
         rarity: "rare",
+        portraitId: "AI_1",
         description: "Saves from hauling extremely expensive tech components, but her nostalgia-driven network drops commercial efficiency.",
         lore: "Designs the consciousness frameworks for the next generation of sentient capital ships. Experiences nostalgia for data formats that no longer exist.",
         buffs: { entropy: 0, creditMult: -0.10, amMult: 0, capacityMods: {}, consumptionMods: { "sentient_ai": 0.30, "processors": 0.30 } }
@@ -14232,6 +14362,7 @@ export const OFFICERS = {
         name: "Cassander",
         role: "Trade Sovereign",
         rarity: "rare",
+        portraitId: "Business_6",
         description: "Artificial scarcity fills his pockets, but his modified scout ships take up massive amounts of hangar space, reducing basic storage.",
         lore: "Possesses the power to embargo entire space stations with a single digital signature. Races modified scout ships through debris fields for sport.",
         buffs: { entropy: 0, creditMult: 0.25, amMult: 0, capacityMods: { "water_ice": -800, "plasteel": -800, "hydroponics": -800, "propellant": -800 }, consumptionMods: {} }
@@ -14241,6 +14372,7 @@ export const OFFICERS = {
         name: "Themis",
         role: "High Inquisitor",
         rarity: "very_rare",
+        portraitId: "AI_2",
         description: "Eliminates all corporate theft, phenomenally improving resource retention. However, her aggressive investigations terrify merchants, crippling income.",
         lore: "Investigates extreme corporate fraud and embezzlement within the upper ranks of the Merchant's Guild. Deletes its own personality files weekly to remain impartial.",
         buffs: { entropy: 0, creditMult: -0.40, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": 0.25, "plasteel": 0.25, "hydroponics": 0.25, "propellant": 0.25, "cybernetics": 0.25, "processors": 0.25, "graphene_lattices": 0.25, "cryo_pods": 0.25, "atmo_processors": 0.25, "cloned_organs": 0.25, "xeno_geologicals": 0.25, "sentient_ai": 0.25 } }
@@ -14250,6 +14382,7 @@ export const OFFICERS = {
         name: "Chronos",
         role: "Prime Logistics Officer",
         rarity: "rare",
+        portraitId: "Expert_System_2",
         description: "Perfect mathematical efficiency scales everything up equally—including the station's inevitable demise.",
         lore: "Optimizes the movement of every grain of rice in the sector to prevent famine. Finds beauty in the mathematical efficiency of starvation.",
         buffs: { entropy: 0.15, creditMult: 0.15, amMult: 0.15, capacityMods: {}, consumptionMods: {} }
@@ -14259,6 +14392,7 @@ export const OFFICERS = {
         name: "Argus",
         role: "Panopticon Overseer",
         rarity: "rare",
+        portraitId: "AI_3",
         description: "Sees every microscopic hull fracture before it spreads. Needs massive computational storage to process the camera feeds.",
         lore: "Processes visual data from every public camera in the inner system simultaneously. Watches old pre-collapse cinema to understand human deceit.",
         buffs: { entropy: -0.10, creditMult: 0, amMult: 0, capacityMods: { "processors": 1000 }, consumptionMods: {} }
@@ -14268,6 +14402,7 @@ export const OFFICERS = {
         name: "Helios",
         role: "Energy Sovereign",
         rarity: "very_rare",
+        portraitId: "Heavily_Augmented_2",
         description: "Opening the arrays to 'hear the sun' grants absurd AM synthesis but bakes the station's outer plating.",
         lore: "Monopolizes the solar collection arrays orbiting near Mercury. Claims to hear the voice of the sun during solar flares.",
         buffs: { entropy: 0.25, creditMult: 0, amMult: 0.35, capacityMods: {}, consumptionMods: {} }
@@ -14277,6 +14412,7 @@ export const OFFICERS = {
         name: "Metis",
         role: "Media Mogul",
         rarity: "very_rare",
+        portraitId: "Affluent_5",
         description: "Spins Sol Station as a luxury destination, bringing in massive wealth, but the influx of tourists causes logistical chaos and disrupts AM colliders.",
         lore: "Controls the news feeds that shape public opinion across the solar system. Writes fiction under a pseudonym to experience creativity.",
         buffs: { entropy: 0.20, creditMult: 0.50, amMult: -0.20, capacityMods: {}, consumptionMods: {} }
@@ -14288,6 +14424,7 @@ export const OFFICERS = {
         name: "Hyperion",
         role: "Antimatter Baron",
         rarity: "hyper_rare",
+        portraitId: "Heavily_Augmented_3",
         description: "Generates AM at an absurd rate, but cuts storage in half and nearly doubles decay. For local inner-system loops only.",
         lore: "Controls the limited supply of FTL fuel remnants saved from the Ad Astra era. Wears a suit lined with lead to signal status.",
         buffs: { entropy: 0.75, creditMult: 0, amMult: 1.50, capacityMods: { "water_ice": -1000, "plasteel": -1000, "hydroponics": -1000, "propellant": -1000, "cybernetics": -1000, "processors": -1000, "graphene_lattices": -500, "cryo_pods": -500, "atmo_processors": -500, "cloned_organs": -100, "xeno_geologicals": -100, "sentient_ai": -50 }, consumptionMods: {} }
@@ -14297,6 +14434,7 @@ export const OFFICERS = {
         name: "Atlas",
         role: "Infrastructure Apex",
         rarity: "hyper_rare",
+        portraitId: "Lightly_Augmented_4",
         description: "The Macro-Management savior. Produces almost nothing, but his structural micro-management creates enough physical storage buffer to survive deep outer-rim trips unattended.",
         lore: "Literally holds the station together by micro-managing structural stress in real-time. Fears the silence that would come with a total power failure.",
         buffs: { entropy: 0, creditMult: -0.75, amMult: -0.75, capacityMods: { "water_ice": 2500, "plasteel": 2500, "hydroponics": 2500, "propellant": 2500, "cybernetics": 2500, "processors": 2500 }, consumptionMods: {} }
@@ -14306,6 +14444,7 @@ export const OFFICERS = {
         name: "Nemesis",
         role: "Syndicate Shadow",
         rarity: "hyper_rare",
+        portraitId: "Business_7",
         description: "Effectively halts the burn of hyper-expensive goods, but guzzles basic resources like a black hole to mask her operations.",
         lore: "Orchestrates system-wide black market fluctuations from the shadows. Never appears in person and uses multiple body doubles.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0, capacityMods: {}, consumptionMods: { "water_ice": -1.50, "plasteel": -1.50, "hydroponics": -1.50, "propellant": -1.50, "cybernetics": -1.50, "processors": -1.50, "cloned_organs": 0.35, "xeno_geologicals": 0.35, "sentient_ai": 0.35 } }
@@ -14315,6 +14454,7 @@ export const OFFICERS = {
         name: "Aurelius",
         role: "Corporate Monarch",
         rarity: "hyper_rare",
+        portraitId: "Affluent_6",
         description: "Liquidates physical health for raw, immediate wealth. Prints money, but requires dumping massive fleet cargo holds into the station daily to keep it alive.",
         lore: "Rules a sovereign corporate state that operates independent of Guild oversight. Seeks a cure for the psychological weight of immortality.",
         buffs: { entropy: 0, creditMult: 1.50, amMult: -0.50, capacityMods: {}, consumptionMods: { "water_ice": -1.50, "plasteel": -1.50, "hydroponics": -1.50, "propellant": -1.50, "cybernetics": -1.50, "processors": -1.50, "graphene_lattices": -1.50, "cryo_pods": -1.50, "atmo_processors": -1.50, "cloned_organs": -1.50, "xeno_geologicals": -1.50, "sentient_ai": -1.50 } }
@@ -14324,6 +14464,7 @@ export const OFFICERS = {
         name: "Lethe",
         role: "Legacy Guardian",
         rarity: "hyper_rare",
+        portraitId: "Lightly_Augmented_5",
         description: "The Pause Button. Protecting the cryo-tombs drops the station to minimum viable power. Decay drops to a crawl, and production stops.",
         lore: "Protects the cryo-tombs of the sleeping ultra-rich waiting for the future. Reads bedtime stories to the frozen bodies in the vault.",
         buffs: { entropy: -0.75, creditMult: -1.00, amMult: -1.00, capacityMods: {}, consumptionMods: {} }
@@ -14335,6 +14476,7 @@ export const OFFICERS = {
         name: "Tyche",
         role: "Banking Magnate",
         rarity: "rare",
+        portraitId: "Affluent_7",
         description: "Siphons off a quarter of the station's total yield to pay off her private planetary debts. The loss in yield drastically outweighs the cargo saved from her decay reduction.",
         lore: "Owns the private debt of three separate planetary governments. Cultivates poisonous flowers in a private zero-g garden.",
         buffs: { entropy: -0.15, creditMult: -0.25, amMult: -0.25, capacityMods: {}, consumptionMods: {} }
@@ -14344,6 +14486,7 @@ export const OFFICERS = {
         name: "Tantalus",
         role: "Resource Tycoon",
         rarity: "very_rare",
+        portraitId: "Affluent_8",
         description: "The increased entropy scales against the massive new volume. Burns significantly more cargo overall just to keep the larger caches full, draining bank accounts to feed his hoarding.",
         lore: "Hoards strategic stockpiles of water ice to artificially drive up prices. Fears dying of thirst despite owning entire glaciers.",
         buffs: { entropy: 0.25, creditMult: 0, amMult: 0, capacityMods: { "water_ice": 3000, "plasteel": 3000, "hydroponics": 3000, "propellant": 3000, "cybernetics": 3000, "processors": 3000, "graphene_lattices": 3000, "cryo_pods": 3000, "atmo_processors": 3000, "cloned_organs": 3000, "xeno_geologicals": 3000, "sentient_ai": 3000 }, consumptionMods: {} }
@@ -14353,6 +14496,7 @@ export const OFFICERS = {
         name: "Rhea",
         role: "Bio-Engineering CEO",
         rarity: "very_rare",
+        portraitId: "Business_8",
         description: "Because Rhea refuses to use her own products, the station quietly chews through your most expensive, hard-to-find cargo at a bankrupting pace to sustain the AM boost.",
         lore: "Holds the patents for the most popular synthetic organ replacements in the market. Refuses to use their own products out of paranoia.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0.40, capacityMods: {}, consumptionMods: { "cloned_organs": -1.50, "cybernetics": -1.50 } }
@@ -14364,6 +14508,7 @@ export const OFFICERS = {
         name: "Valerion",
         role: "Board Chairman",
         rarity: "hyper_rare",
+        portraitId: "Affluent_9",
         description: "Pure, unadulterated sabotage. Spends millions of the budget on illicit treatments, bleeding caches dry while halting all production. Slot at your own peril.",
         lore: "Controls the voting shares of the three largest mining conglomerates in the system. Spends millions annually on illegal stem-cell rejuvenation treatments.",
         buffs: { entropy: 5.00, creditMult: -0.95, amMult: -0.95, capacityMods: {}, consumptionMods: {} }
@@ -21781,6 +21926,7 @@ export class UISolStationControl {
         
         // Handler references for cleanup
         this._clickHandler = null;
+        this._backdropHandler = null;
     }
 
     _getLiveStationState(gameState) {
@@ -21864,7 +22010,14 @@ export class UISolStationControl {
         const contentHtml = this._buildDashboardHtml(gameState);
         const modalContainer = document.getElementById('event-modal');
         
-        if (modalContainer) modalContainer.classList.remove('silent-exit');
+        if (modalContainer) {
+            modalContainer.classList.remove('silent-exit');
+            modalContainer.dataset.dismissOutside = 'true'; // Allow normal dismissal on dashboard
+            
+            // Clean up custom portrait if lingering from previous view
+            const existingPortrait = document.getElementById('custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+        }
         
         if (modalContainer && modalContainer.classList.contains('modal-hiding')) {
             modalContainer.classList.add('hidden');
@@ -21912,8 +22065,12 @@ export class UISolStationControl {
         this._restoreScrollPosition();
     }
 
-    _updateThemeClasses(element, level) {
-        element.classList.remove(
+    _updateThemeClasses(modalElement, level) {
+        // Enforce application strictly to the .modal-content container
+        const targetEl = modalElement.classList.contains('modal-content') ? modalElement : modalElement.querySelector('.modal-content');
+        if (!targetEl) return;
+
+        targetEl.classList.remove(
             'sol-theme-white', 
             'sol-theme-green', 
             'sol-theme-blue', 
@@ -21921,13 +22078,16 @@ export class UISolStationControl {
             'sol-theme-orange', 
             'sol-theme-red'
         );
+        
+        // Strip any dynamically injected rarity themes from Phase 3
+        targetEl.className = targetEl.className.replace(/\bmodal-theme-rarity-\S+/g, '').trim();
 
-        if (level < 10) element.classList.add('sol-theme-white');
-        else if (level < 20) element.classList.add('sol-theme-green');
-        else if (level < 30) element.classList.add('sol-theme-blue');
-        else if (level < 40) element.classList.add('sol-theme-gold');
-        else if (level < 50) element.classList.add('sol-theme-orange');
-        else element.classList.add('sol-theme-red');
+        if (level < 10) targetEl.classList.add('sol-theme-white');
+        else if (level < 20) targetEl.classList.add('sol-theme-green');
+        else if (level < 30) targetEl.classList.add('sol-theme-blue');
+        else if (level < 40) targetEl.classList.add('sol-theme-gold');
+        else if (level < 50) targetEl.classList.add('sol-theme-orange');
+        else targetEl.classList.add('sol-theme-red');
     }
 
     _applyLevelTheme(level) {
@@ -21941,8 +22101,28 @@ export class UISolStationControl {
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
 
+        // Cleanup local click handler
         if (this._clickHandler) {
             root.removeEventListener('click', this._clickHandler);
+        }
+
+        // Global backdrop click interception for sub-view backward navigation
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            if (this._backdropHandler) {
+                modal.removeEventListener('click', this._backdropHandler);
+            }
+            this._backdropHandler = (e) => {
+                if (e.target === modal) {
+                    if (this.currentView === 'officerDetail' || this.currentView === 'unslotWarning') {
+                        this.showOfficerManagement(gameState);
+                    } else if (this.currentView === 'officers' || this.currentView === 'engineering') {
+                        this.showDashboard(gameState);
+                    }
+                    // If currentView is dashboard, UIModalEngine handles the true dismissal inherently.
+                }
+            };
+            modal.addEventListener('click', this._backdropHandler);
         }
 
         this._clickHandler = (e) => {
@@ -21991,7 +22171,6 @@ export class UISolStationControl {
                     if (res.success) this.showEngineeringModal(svc.gameState);
                 }
             } else if (action === 'eng-donate-am') {
-                // Dedicated native handler to bypass generic commodity blocking
                 let pStock = 0;
                 for (const shipId of svc.gameState.player.ownedShipIds) {
                     pStock += (svc.gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
@@ -22006,23 +22185,23 @@ export class UISolStationControl {
                     if (res.success) this.update(svc.gameState);
                 }
             } else if (action === 'eng-complete-project') {
-                const modal = document.querySelector('.sol-station-modal');
-                if (modal) {
-                    playBlockingAnimationAndRemove(modal, 'project-complete-dematerialize').then(() => {
+                const modalEl = document.querySelector('.sol-station-modal');
+                if (modalEl) {
+                    playBlockingAnimationAndRemove(modalEl, 'project-complete-dematerialize').then(() => {
                         const oldLevel = svc.gameState.solStation.level;
                         const res = svc.completeActiveProject();
                         
                         if (res.success) {
-                            modal.classList.add('silent-exit');
+                            modalEl.classList.add('silent-exit');
                             this.uiManager.hideModal('event-modal');
                             
-                            const btn = document.getElementById('btn-sol-orbital-interface');
+                            const intBtn = document.getElementById('btn-sol-orbital-interface');
                             const lbl = document.getElementById('lbl-sol-level-indicator');
 
-                            if (btn && lbl) {
+                            if (intBtn && lbl) {
                                 lbl.textContent = oldLevel;
-                                btn.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                btn.classList.add('sol-interface-levelup');
+                                intBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                intBtn.classList.add('sol-interface-levelup');
 
                                 setTimeout(() => {
                                     lbl.textContent = svc.gameState.solStation.level;
@@ -22031,7 +22210,7 @@ export class UISolStationControl {
                                 }, 1200);
 
                                 setTimeout(() => {
-                                    btn.classList.remove('sol-interface-levelup');
+                                    intBtn.classList.remove('sol-interface-levelup');
                                     this.showDashboard(svc.gameState);
                                     const dashRoot = document.getElementById('sol-dashboard-root');
                                     if (dashRoot) dashRoot.classList.add('dashboard-fade-in');
@@ -22286,6 +22465,18 @@ export class UISolStationControl {
         if (!root) return;
 
         const station = this._getLiveStationState(gameState);
+        
+        // --- Phase 3 / 4 Implementation: Restore Level Theme on Return ---
+        const modal = document.getElementById('event-modal');
+        if (modal) {
+            modal.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+            this._updateThemeClasses(modal, station.level);
+            
+            // Clean up custom portrait if lingering from detail view
+            const existingPortrait = document.getElementById('custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+        }
+
         const roster = gameState.player.officerRoster || [];
         const slots = station.officers;
         const assignedIds = slots.map(s => s.assignedOfficerId).filter(id => id);
@@ -22433,17 +22624,51 @@ export class UISolStationControl {
         const officer = OFFICERS[officerId];
         if (!officer) return;
 
-        const rarityColor = getRarityColorClass(officer.rarity);
+        // --- Phase 3 / 4 Implementation: Dynamic Rarity Theming ---
+        const modalContainer = document.getElementById('event-modal');
+        const modalContent = modalContainer ? modalContainer.querySelector('.modal-content') : null;
+        
+        if (modalContainer) {
+            modalContainer.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+        }
+
+        if (modalContent) {
+            // Clear any existing level or rarity themes
+            modalContent.classList.remove('sol-theme-white', 'sol-theme-green', 'sol-theme-blue', 'sol-theme-gold', 'sol-theme-orange', 'sol-theme-red');
+            modalContent.className = modalContent.className.replace(/\bmodal-theme-rarity-\S+/g, '').trim();
+            
+            // Apply the new dynamic rarity theme for the officer
+            modalContent.classList.add(`modal-theme-rarity-${officer.rarity}`);
+            
+            // Clean up any old portrait injected previously
+            const existingPortrait = modalContent.querySelector('#custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+
+            // Inject portrait perfectly onto the top edge of .modal-content (avoids clipping in #event-description)
+            if (officer.portraitId && typeof window.getPortraitStyle === 'function') {
+                const pStyle = window.getPortraitStyle(officer.portraitId);
+                if (pStyle) {
+                    const parsedName = officer.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
+                    const portraitHtml = `
+                        <div id="custom-officer-portrait" class="comm-link-wrapper">
+                            <div class="portrait-thumbnail comm-active" style="${pStyle}"></div>
+                            <div class="portrait-name-label comm-label">${parsedName}</div>
+                        </div>
+                    `;
+                    modalContent.insertAdjacentHTML('afterbegin', portraitHtml);
+                }
+            }
+        }
+
         const baseStyle = "font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; line-height: 1.4;";
 
         let buffsHtml = '';
-        
         const formatStatRow = (label, valueStr, isGood) => {
             const colorClass = isGood ? 'text-green-400' : 'text-red-400';
             return `
-                <div class="flex justify-between items-center mb-1 pb-1 border-b border-gray-800/50 last:border-0" style="${baseStyle}">
-                    <span class="text-gray-400 font-bold uppercase tracking-wider text-[10px]">${label}</span>
-                    <span class="${colorClass} font-mono font-bold text-xs">${valueStr}</span>
+                <div class="flex justify-between items-center px-1 last:border-0" style="${baseStyle} height: 28px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+                    <span class="font-bold uppercase tracking-wider text-[10px]" style="color: var(--nameplate-text); opacity: 0.9;">${label}</span>
+                    <span class="${colorClass} font-mono font-bold text-xs" style="text-shadow: 0 0 5px rgba(0,0,0,0.8);">${valueStr}</span>
                 </div>
             `;
         };
@@ -22484,34 +22709,28 @@ export class UISolStationControl {
         }
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-center items-center mb-2 border-b border-gray-700 pb-2">
-                <div class="sol-level-header ${rarityColor} text-[22px] tracking-wider uppercase text-center w-full">${officer.name}</div>
+            <div class="sol-subview-header flex justify-center items-center mb-2 border-b pb-2 mt-2" style="border-color: var(--nameplate-border);">
+                <div class="sol-level-header text-[22px] tracking-wider uppercase text-center w-full" style="color: var(--nameplate-text);">${officer.name}</div>
             </div>
             
-            <div class="flex flex-col p-4 bg-gray-900 border border-gray-700 rounded-lg mb-4 shadow-xl">
-                <div class="flex items-center justify-between mb-3 border-b border-gray-800 pb-2">
-                    <div class="text-xs uppercase tracking-widest text-gray-400 mt-1">${officer.role}</div>
-                    <div class="text-[10px] font-bold uppercase px-2 py-1 rounded border border-gray-600 ${rarityColor} opacity-80">
+            <div class="flex flex-col p-4 rounded-lg shadow-xl" style="background: var(--nameplate-bg); border: 1px solid var(--nameplate-border);">
+                <div class="flex items-center justify-between mb-3 pb-2" style="border-bottom: 1px solid var(--nameplate-border);">
+                    <div class="text-xs uppercase tracking-widest mt-1" style="color: var(--nameplate-text); opacity: 0.9;">${officer.role}</div>
+                    <div class="text-[10px] font-bold uppercase px-2 py-1 rounded" style="border: 1px solid var(--nameplate-border); color: var(--nameplate-text); background: rgba(0,0,0,0.3);">
                         ${(officer.rarity || 'common').replace('_', ' ')}
                     </div>
                 </div>
                 
-                <div id="roster-lore-scroll" class="text-sm text-gray-300 mb-4 leading-relaxed bg-black/30 p-3 rounded border-l-2 border-gray-600 font-sans max-h-32 overflow-y-auto" style="scrollbar-width: thin;">
+                <div id="roster-lore-scroll" class="text-sm mb-4 leading-relaxed p-3 rounded font-sans overflow-y-auto" style="height: 100px; scrollbar-width: thin; background: rgba(0,0,0,0.3); border-left: 2px solid var(--nameplate-border); color: var(--nameplate-text);">
                     "${officer.lore}"
                 </div>
                 
-                <div class="w-full flex flex-col" style="max-height: 220px;">
-                    <div class="text-xs text-gray-500 font-bold mb-2 uppercase tracking-widest">Influence</div>
-                    <div id="roster-buffs-scroll" class="flex-1 overflow-y-auto bg-black/50 p-3 rounded border border-gray-800" style="scrollbar-width: thin;">
-                        ${buffsHtml || '<div class="text-sm text-gray-500 text-center italic mt-2">No measurable influence.</div>'}
+                <div class="w-full flex flex-col">
+                    <div class="text-xs font-bold mb-2 uppercase tracking-widest" style="color: var(--nameplate-text); opacity: 0.8;">Influence</div>
+                    <div id="roster-buffs-scroll" class="overflow-y-auto p-2 rounded" style="height: 128px; scrollbar-width: thin; background: rgba(0,0,0,0.5); border: 1px solid var(--nameplate-border);">
+                        ${buffsHtml || `<div class="text-sm text-center italic mt-2" style="color: var(--nameplate-text); opacity: 0.7;">No measurable influence.</div>`}
                     </div>
                 </div>
-            </div>
-
-            <div class="flex justify-center mt-2">
-                <button type="button" class="bg-gray-700 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-sm shadow transition-colors" data-local-action="open-officer-mgmt">
-                    &larr; RETURN TO ROSTER
-                </button>
             </div>
         `;
 
@@ -22530,6 +22749,13 @@ export class UISolStationControl {
         this._stopRefreshLoop();
         const root = document.getElementById('sol-dashboard-root');
         if (!root) return;
+
+        const modalContainer = document.getElementById('event-modal');
+        if (modalContainer) {
+            modalContainer.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+            const existingPortrait = document.getElementById('custom-officer-portrait');
+            if (existingPortrait) existingPortrait.remove();
+        }
 
         const station = this._getLiveStationState(gameState);
         const nextLevelData = LEVEL_REGISTRY[station.level + 1];
@@ -22642,6 +22868,11 @@ export class UISolStationControl {
         this.currentView = 'unslotWarning';
         const officer = OFFICERS[officerId];
         let warningsHtml = '';
+        
+        const modalContainer = document.getElementById('event-modal');
+        if (modalContainer) {
+            modalContainer.dataset.dismissOutside = 'false'; // Block normal dismissal logic for sub-view
+        }
 
         if (payload.netEntropyChange >= 0.1) {
             warningsHtml += `<div class="warning-item text-red-400 font-bold mb-2">⚠ WARNING: Net Entropy will increase by +${Math.round(payload.netEntropyChange * 100)}%!</div>`;
@@ -40608,6 +40839,10 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.76] - 2026-3-13
+-  added officer portraits
+-  officer UI polish
 
 # [36.74] - 2026-3-13
 -  updated sol station math
