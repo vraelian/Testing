@@ -433,9 +433,12 @@
     white-space: nowrap;
 }
 
-.btn-deposit-all:hover:not(:disabled) {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
+/* Add media query block to prevent sticky iOS hovers */
+@media (hover: hover) {
+    .btn-deposit-all:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
 }
 
 .btn-deposit-all:active:not(:disabled) {
@@ -553,7 +556,8 @@
     
     font-family: 'Orbitron', sans-serif;
     font-weight: bold;
-    transition: all 0.2s;
+    /* Replaced 'all 0.2s' with explicit properties to prevent gradient interpolation black flashes */
+    transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background-color 0.2s, filter 0.2s;
     
     display: flex;
     align-items: center;
@@ -564,6 +568,26 @@
 .mode-btn.stability { color: #6b7280; border-color: #374151; }
 .mode-btn.commerce  { color: #0e7490; border-color: #164e63; } 
 .mode-btn.production{ color: #7e22ce; border-color: #581c87; } 
+
+.mode-btn.synthesis { 
+    background-color: #1e103c; 
+    background-image: none;
+    border-color: #3b0764; 
+    color: #9ca3af; 
+}
+
+/* Wrap the Synthesis hover in @media to prevent sticky hovers on iOS */
+@media (hover: hover) {
+    .mode-btn.synthesis:hover:not(:disabled) {
+        background-color: #2e1a5e;
+        border-color: #581c87;
+    }
+}
+
+.mode-btn.synthesis:active:not(:disabled) {
+    background-color: #170b2e;
+    border-color: #2e054e;
+}
 
 .mode-btn.active,
 .mode-btn.active:disabled {
@@ -593,6 +617,17 @@
     color: #d8b4fe !important;
     text-shadow: 0 0 8px #9333ea;
     box-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
+}
+
+.mode-btn.synthesis.active,
+.mode-btn.synthesis.active:disabled {
+    /* Critical Fix: Underlay matches the inactive state (#1e103c) to completely eliminate the orange transition flash */
+    background-color: #1e103c !important; 
+    background-image: linear-gradient(to bottom, #7f1d1d, #ea580c) !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    text-shadow: 0 0 5px #ef4444 !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
 /* Ensure Locked Modes are Visually Distinct */

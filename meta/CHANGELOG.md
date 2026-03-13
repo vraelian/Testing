@@ -2,10 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.72] - 2026-3-12
+# [36.74] - 2026-3-13
 -  updated sol station math
 -  sol station bug fixes
--  
+-  sol station UI polish
+-  added sol station synthesis pipeline
 
 # [36.70] - 2026-3-11
 -  added ship upgrade animation sequence
