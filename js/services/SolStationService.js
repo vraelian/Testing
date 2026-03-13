@@ -17,6 +17,9 @@ import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
  * * PRODUCTION MODE:
  * - Generation: 6 Antimatter / Day, 2,000 Credits / Day
  * - Consumption: 0.21% Cache Loss / Day (Entropy Multiplier: 2.625x)
+ * * SYNTHESIS MODE:
+ * - Generation: 0 Antimatter / Day, 0 Credits / Day
+ * - Consumption: 0.08% Cache Loss / Day (Entropy Multiplier: 1.0x), plus 10 Antimatter over 30 Days
  */
 export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
@@ -61,6 +64,13 @@ export const LEVEL_1_BASELINE = {
             yieldAm: 6 / 120, 
             decayK: 0.00000667, 
             entropyMult: 2.625 
+        },
+        SYNTHESIS: { 
+            id: 'SYNTHESIS', 
+            yieldCredits: 0, 
+            yieldAm: 0, 
+            decayK: 0.00000667, 
+            entropyMult: 1 
         }
     }
 };
@@ -294,6 +304,13 @@ export class SolStationService {
             station.unlockedModes = station.unlockedModes.filter(m => m !== "PRODUCTION");
             if (station.mode === "PRODUCTION") station.mode = "STABILITY";
         }
+
+        if (level >= 10) {
+            if (!station.unlockedModes.includes("SYNTHESIS")) station.unlockedModes.push("SYNTHESIS");
+        } else {
+            station.unlockedModes = station.unlockedModes.filter(m => m !== "SYNTHESIS");
+            if (station.mode === "SYNTHESIS") station.mode = "STABILITY";
+        }
     }
 
     /**
@@ -417,6 +434,26 @@ export class SolStationService {
             LEVEL_1_BASELINE.MAX_ANTIMATTER_STOCKPILE, 
             safeCurrentAm + safeGeneratedAm
         );
+
+        // PASS 3: Synthesis Manufacturing Loop
+        if (newState.mode === 'SYNTHESIS' && newState.level >= 10) {
+            // Requirement: 10 AM over 30 Days (1 day = 120s)
+            const amPerSec = (10 / 30) / LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY;
+            const wantedAm = amPerSec * dt;
+            const actualAm = Math.min(wantedAm, newState.antimatterCache || 0);
+            
+            newState.antimatterCache -= actualAm;
+            
+            // 10 AM consumed equals 30 days of synthesis progression.
+            // Ratio: 1 AM = 3 Days of Progress.
+            newState.synthesisProgress = (newState.synthesisProgress || 0) + (actualAm * 3);
+            
+            // Yield complete FSDs and rollover the remainder progress
+            while (newState.synthesisProgress >= 30) {
+                newState.synthesisProgress -= 30;
+                newState.fsdOutput = (newState.fsdOutput || 0) + 1;
+            }
+        }
 
         newState.currentEfficiency = x1 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
 
@@ -557,9 +594,11 @@ export class SolStationService {
         quantity = Math.floor(quantity);
 
         const station = this.gameState.solStation;
-        const cache = station.caches[commodityId];
+        const isAmCache = (commodityId === COMMODITY_IDS.ANTIMATTER);
+        let cacheRef = isAmCache ? { current: station.antimatterCache || 0, max: 250 + Math.max(0, ((station.level - 10) / 40) * 750) } : station.caches[commodityId];
 
-        if (!cache) return { success: false, message: "Invalid cache commodity." };
+        if (!cacheRef) return { success: false, message: "Invalid cache commodity." };
+        if (isAmCache && station.level < 10) return { success: false, message: "Synthesis not unlocked." };
 
         let totalFleetStock = 0;
         for (const shipId of this.gameState.player.ownedShipIds) {
@@ -570,7 +609,7 @@ export class SolStationService {
             return { success: false, message: "Insufficient fleet cargo." };
         }
         
-        const spaceAvailable = Math.floor(cache.max - cache.current);
+        const spaceAvailable = Math.floor(cacheRef.max - cacheRef.current);
         if (quantity > spaceAvailable) {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
@@ -601,38 +640,46 @@ export class SolStationService {
             }
         }
 
-        cache.current += quantity;
+        if (isAmCache) {
+            station.antimatterCache = (station.antimatterCache || 0) + quantity;
+            this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x Antimatter to Synthesis Cache.`);
+        } else {
+            station.caches[commodityId].current += quantity;
+            
+            // Health re-calculation relies strictly on entropy caches, not Synthesis buffer
+            let totalFillRatio = 0;
+            let activeCaches = 0;
+            const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
+                return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && c.max > 0;
+            });
 
-        let totalFillRatio = 0;
-        let activeCaches = 0;
-        const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
-            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && c.max > 0;
-        });
+            for (const [id, c] of validCacheEntries) {
+                const safeCurrent = isNaN(c.current) ? 0 : c.current;
+                const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
+                totalFillRatio += (safeCurrent / safeMax);
+                activeCaches++;
+            }
+            
+            const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+            station.health = averageFill * 100;
 
-        for (const [id, c] of validCacheEntries) {
-            const safeCurrent = isNaN(c.current) ? 0 : c.current;
-            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
-            totalFillRatio += (safeCurrent / safeMax);
-            activeCaches++;
+            this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         }
-        
-        const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
-        station.health = averageFill * 100;
 
-        this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         this.gameState.setState({});
-        
         return { success: true, message: "Resources transferred." };
     }
 
     claimStockpile(type = null) {
         this._syncTime();
 
-        const stockpile = this.gameState.solStation.stockpile;
+        const station = this.gameState.solStation;
+        const stockpile = station.stockpile;
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
         
         let claimedCredits = 0;
         let claimedAM = 0;
+        let claimedFsd = 0;
 
         if ((!type || type === 'credits') && stockpile.credits > 0) {
             const amount = Math.floor(stockpile.credits);
@@ -652,7 +699,17 @@ export class SolStationService {
             stockpile.antimatter -= amountToTake;
         }
 
-        if (claimedCredits === 0 && claimedAM === 0) {
+        if ((!type || type === 'fsd') && (station.fsdOutput || 0) >= 1) {
+            const amountToTake = Math.floor(station.fsdOutput);
+            if (!inventory[COMMODITY_IDS.FOLDED_DRIVES]) {
+                inventory[COMMODITY_IDS.FOLDED_DRIVES] = { quantity: 0, avgCost: 0 };
+            }
+            inventory[COMMODITY_IDS.FOLDED_DRIVES].quantity += amountToTake;
+            claimedFsd = amountToTake;
+            station.fsdOutput -= amountToTake;
+        }
+
+        if (claimedCredits === 0 && claimedAM === 0 && claimedFsd === 0) {
             return { success: false, message: "Nothing to collect." };
         }
 
@@ -661,6 +718,7 @@ export class SolStationService {
         const msgParts = [];
         if (claimedCredits > 0) msgParts.push(`${claimedCredits} Cr`);
         if (claimedAM > 0) msgParts.push(`${claimedAM} AM`);
+        if (claimedFsd > 0) msgParts.push(`${claimedFsd} FSD`);
         
         return { success: true, message: `Collected ${msgParts.join(' & ')}.` };
     }

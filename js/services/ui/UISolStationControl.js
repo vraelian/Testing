@@ -55,6 +55,7 @@ function getModeDescription(mode) {
         case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
         case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
         case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
+        case 'SYNTHESIS': return "<span style='color: #b87333;'>Manufacture Folded Space Drives.</span>";
         default: return "";
     }
 }
@@ -302,8 +303,22 @@ export class UISolStationControl {
                     const res = svc.contributeToProject(commId, depositQty);
                     if (res.success) this.showEngineeringModal(svc.gameState);
                 }
-            } 
-            else if (action === 'eng-complete-project') {
+            } else if (action === 'eng-donate-am') {
+                // Dedicated native handler to bypass generic commodity blocking
+                let pStock = 0;
+                for (const shipId of svc.gameState.player.ownedShipIds) {
+                    pStock += (svc.gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
+                }
+                const amCacheMax = 250 + Math.max(0, ((svc.gameState.solStation.level - 10) / 40) * 750);
+                const space = Math.floor(amCacheMax - (svc.gameState.solStation.antimatterCache || 0));
+                const depositQty = Math.min(pStock, space);
+                
+                if (depositQty > 0) {
+                    spawnFloatingText(btn, `-${depositQty.toLocaleString()}`, 'text-purple-500 font-bold text-lg');
+                    const res = svc.donateToCache(COMMODITY_IDS.ANTIMATTER, depositQty);
+                    if (res.success) this.update(svc.gameState);
+                }
+            } else if (action === 'eng-complete-project') {
                 const modal = document.querySelector('.sol-station-modal');
                 if (modal) {
                     playBlockingAnimationAndRemove(modal, 'project-complete-dematerialize').then(() => {
@@ -357,17 +372,23 @@ export class UISolStationControl {
             amBar: root.querySelector('.sol-am-fill'),
             amText: root.querySelector('.sol-am-text'),
             amCollectBtn: root.querySelector('button[data-action="sol-claim-output"][data-type="antimatter"]'),
+            fsdBar: root.querySelector('.sol-fsd-fill'),
+            fsdText: root.querySelector('.sol-fsd-text'),
+            fsdCollectBtn: root.querySelector('button[data-action="sol-claim-output"][data-type="fsd"]'),
             credVal: root.querySelector('[data-id="stock-credits"]'),
             credCollectBtn: root.querySelector('button[data-action="sol-claim-output"][data-type="credits"]'),
             modeBtns: Array.from(root.querySelectorAll('.mode-btn')),
             modeDesc: root.querySelector('.mode-description'),
+            amCacheBar: root.querySelector('.sol-am-cache-fill'),
+            amCacheText: root.querySelector('.sol-am-cache-text'),
+            amCacheBtn: root.querySelector(`button[data-local-action="eng-donate-am"]`),
             caches: {},
             engBars: {}
         };
 
         root.querySelectorAll('.sol-cache-row').forEach(row => {
             const commId = row.dataset.commId;
-            if (commId) {
+            if (commId && commId !== COMMODITY_IDS.ANTIMATTER) {
                 this.domCache.caches[commId] = {
                     bar: row.querySelector('.sol-progress-fill'),
                     text: row.querySelector('.sol-progress-text'),
@@ -420,6 +441,12 @@ export class UISolStationControl {
              c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
         }
 
+        const fsdCurrent = Math.floor(station.fsdOutput || 0);
+        if (c.fsdCollectBtn) {
+             c.fsdCollectBtn.disabled = fsdCurrent < 1; 
+             c.fsdCollectBtn.style.opacity = fsdCurrent >= 1 ? '1' : '0.5';
+        }
+
         const creds = Math.floor(station.stockpile.credits);
         if (c.credCollectBtn) {
             c.credCollectBtn.disabled = creds <= 0;
@@ -444,10 +471,23 @@ export class UISolStationControl {
             lr.hasCheckedLocks = true;
         }
 
-        const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
+        if (c.amCacheBtn && station.level >= 10) {
+            const amCacheMax = 250 + Math.max(0, ((station.level - 10) / 40) * 750);
+            let playerAm = 0;
+            for (const shipId of gameState.player.ownedShipIds) {
+                playerAm += (gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
+            }
+            const canDonateAm = playerAm > 0 && Math.floor(amCacheMax - (station.antimatterCache || 0)) >= 1;
+            c.amCacheBtn.disabled = !canDonateAm;
+            c.amCacheBtn.style.opacity = canDonateAm ? '1' : '0.5';
+        }
+
         Object.entries(station.caches).forEach(([commId, cache]) => {
-            if (commId !== COMMODITY_IDS.FOLDED_DRIVES) {
-                const playerStock = playerInventory[commId]?.quantity || 0;
+            if (commId !== COMMODITY_IDS.FOLDED_DRIVES && commId !== COMMODITY_IDS.ANTIMATTER) {
+                let playerStock = 0;
+                for (const shipId of gameState.player.ownedShipIds) {
+                    playerStock += (gameState.player.inventories[shipId]?.[commId]?.quantity || 0);
+                }
                 const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const ui = c.caches[commId];
                 if (ui && ui.btn) {
@@ -485,6 +525,22 @@ export class UISolStationControl {
             const projectedCredits = station.stockpile.credits + rates.creditsPerSec * dtReal;
             const projectedAm = Math.min(150, station.stockpile.antimatter + rates.amPerSec * dtReal);
 
+            let projectedAmCache = station.antimatterCache || 0;
+            let projectedFsdProgress = station.synthesisProgress || 0;
+            let projectedFsdOutput = station.fsdOutput || 0;
+
+            if (station.mode === 'SYNTHESIS' && station.level >= 10) {
+                const amPerSec = (10 / 30) / 120;
+                const wantedAm = amPerSec * dtReal;
+                const actualAm = Math.min(wantedAm, projectedAmCache);
+                projectedAmCache -= actualAm;
+                projectedFsdProgress += actualAm * 3;
+                while (projectedFsdProgress >= 30) {
+                    projectedFsdProgress -= 30;
+                    projectedFsdOutput++;
+                }
+            }
+
             if (this.domCache) {
                 if (this.domCache.credVal) this.domCache.credVal.textContent = formatCredits(Math.floor(projectedCredits));
                 
@@ -492,6 +548,15 @@ export class UISolStationControl {
                 const amFillPct = (projectedAm / 150) * 100;
                 if (this.domCache.amBar) this.domCache.amBar.style.width = `${amFillPct}%`;
                 
+                if (this.domCache.fsdText) this.domCache.fsdText.textContent = `${Math.floor(projectedFsdOutput)} UNITS (${(projectedFsdProgress / 30 * 100).toFixed(1)}%)`;
+                if (this.domCache.fsdBar) this.domCache.fsdBar.style.width = `${(projectedFsdProgress / 30) * 100}%`;
+
+                if (this.domCache.amCacheText) {
+                    const amCacheMax = 250 + Math.max(0, ((station.level - 10) / 40) * 750);
+                    this.domCache.amCacheText.textContent = `${Math.floor(projectedAmCache)} / ${amCacheMax}`;
+                    if (this.domCache.amCacheBar) this.domCache.amCacheBar.style.width = `${(projectedAmCache / amCacheMax) * 100}%`;
+                }
+
                 Object.entries(station.caches).forEach(([id, cache]) => {
                     if (id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER) {
                         const cacheUi = this.domCache.caches[id];
@@ -940,6 +1005,11 @@ export class UISolStationControl {
 
         const amBgImage = AssetService.getCommodityImage("Antimatter", playerVisualSeed);
         const amBgStyle = amBgImage ? `background-image: url('${amBgImage}'); opacity: 1; filter: none;` : '';
+
+        // Dynamic fetch of Folded Space Drive visual
+        const fsdBgImage = AssetService.getCommodityImage("Folded-Space Drives", playerVisualSeed);
+        const fsdBgStyle = fsdBgImage ? `background-image: url('${fsdBgImage}'); opacity: 1; filter: none;` : '';
+
         const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
         const amMax = LEVEL_REGISTRY[1]?.MAX_ANTIMATTER_STOCKPILE || 150;
@@ -947,6 +1017,11 @@ export class UISolStationControl {
         const amFillPct = (amCurrent / amMax) * 100;
         const hasAm = amCurrent >= 1;
         const hasCredits = stockpile.credits > 0;
+
+        const fsdCurrent = Math.floor(station.fsdOutput || 0);
+        const fsdProgress = station.synthesisProgress || 0;
+        const fsdFillPct = (fsdProgress / 30) * 100;
+        const hasFsd = fsdCurrent >= 1;
 
         const nextLvl = LEVEL_REGISTRY[station.level + 1];
         let engOverview = '<div class="text-center text-gray-500 text-xs">STATION MAXIMIZED</div>';
@@ -1025,12 +1100,38 @@ export class UISolStationControl {
                             <button type="button" class="btn-deposit-all" 
                                     data-action="sol-claim-output"
                                     data-type="antimatter"
-                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px;"
                                     ${!hasAm ? 'disabled' : ''}>
                                 COLLECT
                             </button>
                         </div>
                     </div>
+
+                    ${station.level >= 10 ? `
+                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #b87333; border-radius: 4px; background-color: rgba(0,0,0,0.4);">
+                        <div class="sol-cache-row-bg" style="${fsdBgStyle}; border-radius: 4px;"></div>
+                        
+                        <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
+                            <div class="sol-row-name" style="text-align: left; font-size: 0.85rem; font-weight: bold; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: #b87333;">FOLDED SPACE DRIVES</div>
+                            
+                            <div class="sol-row-track-container" style="width: 100%;">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                    <div class="sol-fsd-fill" style="width: ${fsdFillPct}%; background-color: #b87333; height: 100%;"></div>
+                                    <div class="sol-fsd-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.7rem;">${fsdCurrent} UNITS (${(fsdFillPct).toFixed(1)}%)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
+                            <button type="button" class="btn-deposit-all" 
+                                    data-action="sol-claim-output"
+                                    data-type="fsd"
+                                    style="height: 100%; border: 1px solid #b87333; background: linear-gradient(to bottom, #d97706, #9a3412); box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px;"
+                                    ${!hasFsd ? 'disabled' : ''}>
+                                COLLECT
+                            </button>
+                        </div>
+                    </div>` : ''}
 
                     <div class="sol-credits-block">
                         <div class="credits-info">
@@ -1040,7 +1141,7 @@ export class UISolStationControl {
                         <button type="button" class="btn-deposit-all" 
                                 data-action="sol-claim-output"
                                 data-type="credits"
-                                style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a;"
+                                style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a; padding: 0 0.5rem; min-width: 70px;"
                                  ${!hasCredits ? 'disabled' : ''}>
                             COLLECT
                         </button>
@@ -1049,10 +1150,20 @@ export class UISolStationControl {
 
                 <div class="sol-mode-control" style="margin-top: 0.75rem;">
                     <div class="section-title">OPERATIONAL MODE</div>
-                    <div class="mode-toggle-group">
-                        ${this._renderModeButton('STABILITY', station.mode, station.unlockedModes)}
-                        ${this._renderModeButton('COMMERCE', station.mode, station.unlockedModes)}
-                        ${this._renderModeButton('PRODUCTION', station.mode, station.unlockedModes)}
+                    <div class="mode-toggle-group" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; width: 100%; gap: 0.5rem;">
+                            ${this._renderModeButton('STABILITY', station.mode, station.unlockedModes)}
+                            ${this._renderModeButton('COMMERCE', station.mode, station.unlockedModes)}
+                            ${this._renderModeButton('PRODUCTION', station.mode, station.unlockedModes)}
+                        </div>
+                        ${station.level >= 10 ? `
+                        <div style="width: 100%; margin-top: 0.5rem;">
+                            ${this._renderAntimatterCacheRow(gameState, amBgStyle, textShadow)}
+                        </div>
+                        <div style="display: flex; width: 100%;">
+                            ${this._renderModeButton('SYNTHESIS', station.mode, station.unlockedModes)}
+                        </div>
+                        ` : ''}
                     </div>
                     <div class="mode-description">
                         ${getModeDescription(station.mode)}
@@ -1081,6 +1192,45 @@ export class UISolStationControl {
         `;
     }
 
+    _renderAntimatterCacheRow(gameState, amBgStyle, textShadow) {
+        const station = this._getLiveStationState(gameState);
+        let playerAmStock = 0;
+        for (const shipId of gameState.player.ownedShipIds) {
+            playerAmStock += (gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
+        }
+        
+        const amCacheMax = 250 + Math.max(0, ((station.level - 10) / 40) * 750);
+        const amCacheCurrent = station.antimatterCache || 0;
+        const amCachePct = (amCacheCurrent / amCacheMax) * 100;
+        const canDonateAm = playerAmStock > 0 && Math.floor(amCacheMax - amCacheCurrent) >= 1;
+
+        return `
+        <div class="sol-cache-row" data-comm-id="${COMMODITY_IDS.ANTIMATTER}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; border: 1px dashed var(--tier-7-color, #a855f7); margin-bottom: 0; background-color: rgba(0,0,0,0.4); border-radius: 4px;">
+            <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 4px;"></div>
+            
+            <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
+                <div class="sol-row-name" title="Antimatter" style="text-align: left; font-size: 1.0rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: var(--tier-7-color, #a855f7); font-weight: bold;">ANTIMATTER</div>
+                
+                <div class="sol-row-track-container" style="width: 100%;">
+                    <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                        <div class="sol-am-cache-fill sol-progress-fill" style="width: ${amCachePct}%; background-color: var(--tier-7-color, #a855f7);"></div>
+                        <div class="sol-am-cache-text sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${Math.floor(amCacheCurrent)} / ${amCacheMax}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
+                <button type="button" class="btn-deposit-all" 
+                        data-local-action="eng-donate-am" 
+                        style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px;"
+                        ${!canDonateAm ? 'disabled' : ''}>
+                    DEPOSIT
+                </button>
+            </div>
+        </div>
+        `;
+    }
+
     _renderModeButton(modeId, currentMode, unlockedModes = ["STABILITY"]) {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
@@ -1092,7 +1242,7 @@ export class UISolStationControl {
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive || isLocked ? 'disabled' : ''}
-                    style="${isLocked ? 'opacity: 0.3;' : ''}">
+                    style="${isLocked ? 'opacity: 0.3;' : ''} ${modeId === 'SYNTHESIS' ? 'width: 100%; border-color: #b87333;' : 'flex: 1;'}">
                 ${modeId}
             </button>
         `;
@@ -1101,7 +1251,6 @@ export class UISolStationControl {
     _renderCacheList(gameState) {
         const station = this._getLiveStationState(gameState);
         const caches = station.caches;
-        const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         const playerVisualSeed = gameState.player.visualSeed;
 
         return Object.entries(caches)
@@ -1111,16 +1260,21 @@ export class UISolStationControl {
                 if (!commodity) return `<div class="sol-cache-row-error">Error: ${commodityId}</div>`;
 
                 const fillPct = (cache.current / cache.max) * 100;
-                const playerStock = playerInventory[commodityId]?.quantity || 0;
+                
+                // Account for total fleet stock for deposit availability checks
+                let playerStock = 0;
+                for (const shipId of gameState.player.ownedShipIds) {
+                    playerStock += (gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0);
+                }
                 const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
+                
                 const tierColorVar = `--tier-${commodity.tier || 1}-color`;
-
                 const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
                 const bgStyle = bgImage ? `background-image: url('${bgImage}'); opacity: 1; filter: none;` : '';
                 const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
                 return `
-                    <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem;">
+                    <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem;">
                         <div class="sol-cache-row-bg" style="${bgStyle}"></div>
                         
                         <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
@@ -1138,7 +1292,7 @@ export class UISolStationControl {
                             <button type="button" class="btn-deposit-all" 
                                     data-action="sol-donate-all" 
                                     data-commodity-id="${commodityId}"
-                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px;"
                                     ${!canDonate ? 'disabled' : ''}>
                                 DEPOSIT
                             </button>
