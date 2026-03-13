@@ -5082,9 +5082,12 @@ card.
     white-space: nowrap;
 }
 
-.btn-deposit-all:hover:not(:disabled) {
-    filter: brightness(1.1);
-    transform: translateY(-1px);
+/* Add media query block to prevent sticky iOS hovers */
+@media (hover: hover) {
+    .btn-deposit-all:hover:not(:disabled) {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+    }
 }
 
 .btn-deposit-all:active:not(:disabled) {
@@ -5202,7 +5205,8 @@ card.
     
     font-family: 'Orbitron', sans-serif;
     font-weight: bold;
-    transition: all 0.2s;
+    /* Replaced 'all 0.2s' with explicit properties to prevent gradient interpolation black flashes */
+    transition: color 0.2s, border-color 0.2s, box-shadow 0.2s, background-color 0.2s, filter 0.2s;
     
     display: flex;
     align-items: center;
@@ -5213,6 +5217,26 @@ card.
 .mode-btn.stability { color: #6b7280; border-color: #374151; }
 .mode-btn.commerce  { color: #0e7490; border-color: #164e63; } 
 .mode-btn.production{ color: #7e22ce; border-color: #581c87; } 
+
+.mode-btn.synthesis { 
+    background-color: #1e103c; 
+    background-image: none;
+    border-color: #3b0764; 
+    color: #9ca3af; 
+}
+
+/* Wrap the Synthesis hover in @media to prevent sticky hovers on iOS */
+@media (hover: hover) {
+    .mode-btn.synthesis:hover:not(:disabled) {
+        background-color: #2e1a5e;
+        border-color: #581c87;
+    }
+}
+
+.mode-btn.synthesis:active:not(:disabled) {
+    background-color: #170b2e;
+    border-color: #2e054e;
+}
 
 .mode-btn.active,
 .mode-btn.active:disabled {
@@ -5242,6 +5266,17 @@ card.
     color: #d8b4fe !important;
     text-shadow: 0 0 8px #9333ea;
     box-shadow: 0 0 10px rgba(216, 180, 254, 0.4);
+}
+
+.mode-btn.synthesis.active,
+.mode-btn.synthesis.active:disabled {
+    /* Critical Fix: Underlay matches the inactive state (#1e103c) to completely eliminate the orange transition flash */
+    background-color: #1e103c !important; 
+    background-image: linear-gradient(to bottom, #7f1d1d, #ea580c) !important;
+    border-color: #ef4444 !important;
+    color: #ffffff !important;
+    text-shadow: 0 0 5px #ef4444 !important;
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4);
 }
 
 /* Ensure Locked Modes are Visually Distinct */
@@ -21656,6 +21691,25 @@ import { spawnFloatingText, playBlockingAnimationAndRemove } from './AnimationSe
 import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 
 // --- PURE VISUAL HELPERS ---
+function getCommodityTheme(commId) {
+    switch (commId) {
+        case COMMODITY_IDS.WATER_ICE: return { bg: '#7dd3fc', text: '#000' };
+        case COMMODITY_IDS.PLASTEEL: return { bg: '#f0ead6', text: '#000' };
+        case COMMODITY_IDS.HYDROPONICS: return { bg: '#166534', text: '#fff' };
+        case COMMODITY_IDS.CYBERNETICS: return { bg: '#ffffff', text: '#000' };
+        case COMMODITY_IDS.PROPELLANT: return { bg: '#8b5cf6', text: '#fff' };
+        case COMMODITY_IDS.PROCESSORS: return { bg: '#06b6d4', text: '#000' };
+        case COMMODITY_IDS.GRAPHENE_LATTICES: return { bg: '#9ca3af', text: '#000' };
+        case COMMODITY_IDS.CRYO_PODS: return { bg: '#40e0d0', text: '#000' };
+        case COMMODITY_IDS.ATMO_PROCESSORS: return { bg: '#eab308', text: '#000' };
+        case COMMODITY_IDS.CLONED_ORGANS: return { bg: '#f472b6', text: '#000' };
+        case COMMODITY_IDS.XENO_GEOLOGICALS: return { bg: '#a855f7', text: '#fff' };
+        case COMMODITY_IDS.SENTIENT_AI: return { bg: '#ef4444', text: '#fff' };
+        case COMMODITY_IDS.ANTIMATTER: return { bg: '#4c1d95', text: '#fff' };
+        default: return { bg: '#3b82f6', text: '#fff' };
+    }
+}
+
 function getRarityColorClass(rarity) {
     switch (rarity) {
         case 'uncommon': return 'text-green-400';
@@ -21703,23 +21757,9 @@ function getModeDescription(mode) {
         case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
         case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
         case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
+        case 'SYNTHESIS': return "<span style='color: #b87333;'>Manufacture Folded Space Drives.</span>";
         default: return "";
     }
-}
-
-function getProjectImpactDescription(stats) {
-    const parts = [];
-    if (stats.cacheCapacity) {
-        Object.keys(stats.cacheCapacity).forEach(k => {
-            const cName = DB.COMMODITIES.find(c => c.id === k)?.name || k;
-            parts.push(`Expand ${cName} storage.`);
-        });
-    }
-    if (stats.amYieldMult > 0) parts.push(`Increase Antimatter synthesis by ${Math.round(stats.amYieldMult * 100)}%.`);
-    if (stats.creditYieldMult > 0) parts.push(`Improve commercial revenue by ${Math.round(stats.creditYieldMult * 100)}%.`);
-    if (stats.globalEntropyRed > 0) parts.push(`Reinforce hull integrity against solar decay.`);
-    
-    return parts.length > 0 ? parts.join(" ") : "General station improvements.";
 }
 
 // --- MAIN CONTROLLER ---
@@ -21950,8 +21990,22 @@ export class UISolStationControl {
                     const res = svc.contributeToProject(commId, depositQty);
                     if (res.success) this.showEngineeringModal(svc.gameState);
                 }
-            } 
-            else if (action === 'eng-complete-project') {
+            } else if (action === 'eng-donate-am') {
+                // Dedicated native handler to bypass generic commodity blocking
+                let pStock = 0;
+                for (const shipId of svc.gameState.player.ownedShipIds) {
+                    pStock += (svc.gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
+                }
+                const amCacheMax = 250 + Math.max(0, ((svc.gameState.solStation.level - 10) / 40) * 750);
+                const space = Math.floor(amCacheMax - (svc.gameState.solStation.antimatterCache || 0));
+                const depositQty = Math.min(pStock, space);
+                
+                if (depositQty > 0) {
+                    spawnFloatingText(btn, `-${depositQty.toLocaleString()}`, 'text-purple-500 font-bold text-lg');
+                    const res = svc.donateToCache(COMMODITY_IDS.ANTIMATTER, depositQty);
+                    if (res.success) this.update(svc.gameState);
+                }
+            } else if (action === 'eng-complete-project') {
                 const modal = document.querySelector('.sol-station-modal');
                 if (modal) {
                     playBlockingAnimationAndRemove(modal, 'project-complete-dematerialize').then(() => {
@@ -22005,17 +22059,23 @@ export class UISolStationControl {
             amBar: root.querySelector('.sol-am-fill'),
             amText: root.querySelector('.sol-am-text'),
             amCollectBtn: root.querySelector('button[data-action="sol-claim-output"][data-type="antimatter"]'),
+            fsdBar: root.querySelector('.sol-fsd-fill'),
+            fsdText: root.querySelector('.sol-fsd-text'),
+            fsdCollectBtn: root.querySelector('button[data-action="sol-claim-output"][data-type="fsd"]'),
             credVal: root.querySelector('[data-id="stock-credits"]'),
             credCollectBtn: root.querySelector('button[data-action="sol-claim-output"][data-type="credits"]'),
             modeBtns: Array.from(root.querySelectorAll('.mode-btn')),
             modeDesc: root.querySelector('.mode-description'),
+            amCacheBar: root.querySelector('.sol-am-cache-fill'),
+            amCacheText: root.querySelector('.sol-am-cache-text'),
+            amCacheBtn: root.querySelector(`button[data-local-action="eng-donate-am"]`),
             caches: {},
             engBars: {}
         };
 
         root.querySelectorAll('.sol-cache-row').forEach(row => {
             const commId = row.dataset.commId;
-            if (commId) {
+            if (commId && commId !== COMMODITY_IDS.ANTIMATTER) {
                 this.domCache.caches[commId] = {
                     bar: row.querySelector('.sol-progress-fill'),
                     text: row.querySelector('.sol-progress-text'),
@@ -22068,6 +22128,12 @@ export class UISolStationControl {
              c.amCollectBtn.style.opacity = amCurrent >= 1 ? '1' : '0.5';
         }
 
+        const fsdCurrent = Math.floor(station.fsdOutput || 0);
+        if (c.fsdCollectBtn) {
+             c.fsdCollectBtn.disabled = fsdCurrent < 1; 
+             c.fsdCollectBtn.style.opacity = fsdCurrent >= 1 ? '1' : '0.5';
+        }
+
         const creds = Math.floor(station.stockpile.credits);
         if (c.credCollectBtn) {
             c.credCollectBtn.disabled = creds <= 0;
@@ -22092,10 +22158,23 @@ export class UISolStationControl {
             lr.hasCheckedLocks = true;
         }
 
-        const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
+        if (c.amCacheBtn && station.level >= 10) {
+            const amCacheMax = 250 + Math.max(0, ((station.level - 10) / 40) * 750);
+            let playerAm = 0;
+            for (const shipId of gameState.player.ownedShipIds) {
+                playerAm += (gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
+            }
+            const canDonateAm = playerAm > 0 && Math.floor(amCacheMax - (station.antimatterCache || 0)) >= 1;
+            c.amCacheBtn.disabled = !canDonateAm;
+            c.amCacheBtn.style.opacity = canDonateAm ? '1' : '0.5';
+        }
+
         Object.entries(station.caches).forEach(([commId, cache]) => {
-            if (commId !== COMMODITY_IDS.FOLDED_DRIVES) {
-                const playerStock = playerInventory[commId]?.quantity || 0;
+            if (commId !== COMMODITY_IDS.FOLDED_DRIVES && commId !== COMMODITY_IDS.ANTIMATTER) {
+                let playerStock = 0;
+                for (const shipId of gameState.player.ownedShipIds) {
+                    playerStock += (gameState.player.inventories[shipId]?.[commId]?.quantity || 0);
+                }
                 const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
                 const ui = c.caches[commId];
                 if (ui && ui.btn) {
@@ -22133,6 +22212,22 @@ export class UISolStationControl {
             const projectedCredits = station.stockpile.credits + rates.creditsPerSec * dtReal;
             const projectedAm = Math.min(150, station.stockpile.antimatter + rates.amPerSec * dtReal);
 
+            let projectedAmCache = station.antimatterCache || 0;
+            let projectedFsdProgress = station.synthesisProgress || 0;
+            let projectedFsdOutput = station.fsdOutput || 0;
+
+            if (station.mode === 'SYNTHESIS' && station.level >= 10) {
+                const amPerSec = (10 / 30) / 120;
+                const wantedAm = amPerSec * dtReal;
+                const actualAm = Math.min(wantedAm, projectedAmCache);
+                projectedAmCache -= actualAm;
+                projectedFsdProgress += actualAm * 3;
+                while (projectedFsdProgress >= 30) {
+                    projectedFsdProgress -= 30;
+                    projectedFsdOutput++;
+                }
+            }
+
             if (this.domCache) {
                 if (this.domCache.credVal) this.domCache.credVal.textContent = formatCredits(Math.floor(projectedCredits));
                 
@@ -22140,6 +22235,15 @@ export class UISolStationControl {
                 const amFillPct = (projectedAm / 150) * 100;
                 if (this.domCache.amBar) this.domCache.amBar.style.width = `${amFillPct}%`;
                 
+                if (this.domCache.fsdText) this.domCache.fsdText.textContent = `${Math.floor(projectedFsdOutput)} UNITS (${(projectedFsdProgress / 30 * 100).toFixed(1)}%)`;
+                if (this.domCache.fsdBar) this.domCache.fsdBar.style.width = `${(projectedFsdProgress / 30) * 100}%`;
+
+                if (this.domCache.amCacheText) {
+                    const amCacheMax = 250 + Math.max(0, ((station.level - 10) / 40) * 750);
+                    this.domCache.amCacheText.textContent = `${Math.floor(projectedAmCache)} / ${amCacheMax}`;
+                    if (this.domCache.amCacheBar) this.domCache.amCacheBar.style.width = `${(projectedAmCache / amCacheMax) * 100}%`;
+                }
+
                 Object.entries(station.caches).forEach(([id, cache]) => {
                     if (id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER) {
                         const cacheUi = this.domCache.caches[id];
@@ -22588,6 +22692,11 @@ export class UISolStationControl {
 
         const amBgImage = AssetService.getCommodityImage("Antimatter", playerVisualSeed);
         const amBgStyle = amBgImage ? `background-image: url('${amBgImage}'); opacity: 1; filter: none;` : '';
+
+        // Dynamic fetch of Folded Space Drive visual
+        const fsdBgImage = AssetService.getCommodityImage("Folded-Space Drives", playerVisualSeed);
+        const fsdBgStyle = fsdBgImage ? `background-image: url('${fsdBgImage}'); opacity: 1; filter: none;` : '';
+
         const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
 
         const amMax = LEVEL_REGISTRY[1]?.MAX_ANTIMATTER_STOCKPILE || 150;
@@ -22595,6 +22704,11 @@ export class UISolStationControl {
         const amFillPct = (amCurrent / amMax) * 100;
         const hasAm = amCurrent >= 1;
         const hasCredits = stockpile.credits > 0;
+
+        const fsdCurrent = Math.floor(station.fsdOutput || 0);
+        const fsdProgress = station.synthesisProgress || 0;
+        const fsdFillPct = (fsdProgress / 30) * 100;
+        const hasFsd = fsdCurrent >= 1;
 
         const nextLvl = LEVEL_REGISTRY[station.level + 1];
         let engOverview = '<div class="text-center text-gray-500 text-xs">STATION MAXIMIZED</div>';
@@ -22615,7 +22729,7 @@ export class UISolStationControl {
                 `;
             }).join('');
             
-            const descText = getProjectImpactDescription(nextLvl.rewards.stats);
+            const descText = nextLvl.rewards.description || "Station upgraded.";
 
             engOverview = `
                 <div style="display: flex; flex-direction: column; margin-top: 8px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; text-transform: none; letter-spacing: normal;">
@@ -22655,14 +22769,14 @@ export class UISolStationControl {
                 <div class="sol-output-container">
                     <div class="section-title">STATION OUTPUT</div>
                     
-                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem;">
-                        <div class="sol-cache-row-bg" style="${amBgStyle}"></div>
+                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 8px;">
+                        <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 8px;"></div>
                         
                         <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
                             <div class="sol-row-name" style="text-align: left; font-size: 1.1rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible;">ANTIMATTER</div>
                             
                             <div class="sol-row-track-container" style="width: 100%;">
-                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
                                     <div class="sol-am-fill" style="width: ${amFillPct}%; background-color: var(--tier-7-color, #a855f7); height: 100%;"></div>
                                     <div class="sol-am-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${amCurrent.toFixed(2)} / ${amMax}</div>
                                 </div>
@@ -22673,12 +22787,38 @@ export class UISolStationControl {
                             <button type="button" class="btn-deposit-all" 
                                     data-action="sol-claim-output"
                                     data-type="antimatter"
-                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px; background: #7e22ce; color: #fff; border-radius: 6px;"
                                     ${!hasAm ? 'disabled' : ''}>
                                 COLLECT
                             </button>
                         </div>
                     </div>
+
+                    ${station.level >= 10 ? `
+                    <div class="sol-cache-row" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border: 1px solid #b87333; border-radius: 8px; background-color: rgba(0,0,0,0.4);">
+                        <div class="sol-cache-row-bg" style="${fsdBgStyle}; border-radius: 8px;"></div>
+                        
+                        <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
+                            <div class="sol-row-name" style="text-align: left; font-size: 0.95rem; font-weight: bold; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: #b87333;">SPACE DRIVES</div>
+                            
+                            <div class="sol-row-track-container" style="width: 100%;">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
+                                    <div class="sol-fsd-fill" style="width: ${fsdFillPct}%; background-color: #b87333; height: 100%;"></div>
+                                    <div class="sol-fsd-text" style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.7rem;">${fsdCurrent} UNITS (${(fsdFillPct).toFixed(1)}%)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
+                            <button type="button" class="btn-deposit-all" 
+                                    data-action="sol-claim-output"
+                                    data-type="fsd"
+                                    style="height: 100%; border: 1px solid #b87333; background: linear-gradient(to bottom, #d97706, #9a3412); box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px; border-radius: 6px; color: #fff;"
+                                    ${!hasFsd ? 'disabled' : ''}>
+                                COLLECT
+                            </button>
+                        </div>
+                    </div>` : ''}
 
                     <div class="sol-credits-block">
                         <div class="credits-info">
@@ -22688,7 +22828,7 @@ export class UISolStationControl {
                         <button type="button" class="btn-deposit-all" 
                                 data-action="sol-claim-output"
                                 data-type="credits"
-                                style="background: linear-gradient(to bottom, #16a34a, #15803d); border-color: #16a34a;"
+                                style="background: linear-gradient(to bottom, #06b6d4, #0891b2); border-color: #06b6d4; padding: 0 0.5rem; min-width: 70px; border-radius: 6px; color: #fff;"
                                  ${!hasCredits ? 'disabled' : ''}>
                             COLLECT
                         </button>
@@ -22697,10 +22837,20 @@ export class UISolStationControl {
 
                 <div class="sol-mode-control" style="margin-top: 0.75rem;">
                     <div class="section-title">OPERATIONAL MODE</div>
-                    <div class="mode-toggle-group">
-                        ${this._renderModeButton('STABILITY', station.mode, station.unlockedModes)}
-                        ${this._renderModeButton('COMMERCE', station.mode, station.unlockedModes)}
-                        ${this._renderModeButton('PRODUCTION', station.mode, station.unlockedModes)}
+                    <div class="mode-toggle-group" style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                        <div style="display: flex; width: 100%; gap: 0.5rem;">
+                            ${this._renderModeButton('STABILITY', station.mode, station.unlockedModes)}
+                            ${this._renderModeButton('COMMERCE', station.mode, station.unlockedModes)}
+                            ${this._renderModeButton('PRODUCTION', station.mode, station.unlockedModes)}
+                        </div>
+                        ${station.level >= 10 ? `
+                        <div style="width: 100%; margin-top: 0.5rem;">
+                            ${this._renderAntimatterCacheRow(gameState, amBgStyle, textShadow)}
+                        </div>
+                        <div style="display: flex; width: 100%;">
+                            ${this._renderModeButton('SYNTHESIS', station.mode, station.unlockedModes)}
+                        </div>
+                        ` : ''}
                     </div>
                     <div class="mode-description">
                         ${getModeDescription(station.mode)}
@@ -22729,18 +22879,65 @@ export class UISolStationControl {
         `;
     }
 
+    _renderAntimatterCacheRow(gameState, amBgStyle, textShadow) {
+        const station = this._getLiveStationState(gameState);
+        let playerAmStock = 0;
+        for (const shipId of gameState.player.ownedShipIds) {
+            playerAmStock += (gameState.player.inventories[shipId]?.[COMMODITY_IDS.ANTIMATTER]?.quantity || 0);
+        }
+        
+        const amCacheMax = 250 + Math.max(0, ((station.level - 10) / 40) * 750);
+        const amCacheCurrent = station.antimatterCache || 0;
+        const amCachePct = (amCacheCurrent / amCacheMax) * 100;
+        const canDonateAm = playerAmStock > 0 && Math.floor(amCacheMax - amCacheCurrent) >= 1;
+
+        return `
+        <div class="sol-cache-row" data-comm-id="${COMMODITY_IDS.ANTIMATTER}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; border: 1px dashed var(--tier-7-color, #a855f7); margin-bottom: 0; background-color: rgba(0,0,0,0.4); border-radius: 8px;">
+            <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 8px;"></div>
+            
+            <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
+                <div class="sol-row-name" title="Antimatter" style="text-align: left; font-size: 1.0rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: var(--tier-7-color, #a855f7); font-weight: bold;">ANTIMATTER</div>
+                
+                <div class="sol-row-track-container" style="width: 100%;">
+                    <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
+                        <div class="sol-am-cache-fill sol-progress-fill" style="width: ${amCachePct}%; background-color: var(--tier-7-color, #a855f7);"></div>
+                        <div class="sol-am-cache-text sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold; font-family: 'Roboto Mono', monospace; font-size: 0.75rem;">${Math.floor(amCacheCurrent)} / ${amCacheMax}</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sol-cache-action-right" style="z-index: 2; flex-shrink: 0;">
+                <button type="button" class="btn-deposit-all" 
+                        data-local-action="eng-donate-am" 
+                        style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; font-size: 0.75rem; min-width: 70px; border-radius: 6px; background: ${getCommodityTheme(COMMODITY_IDS.ANTIMATTER).bg}; color: ${getCommodityTheme(COMMODITY_IDS.ANTIMATTER).text};"
+                        ${!canDonateAm ? 'disabled' : ''}>
+                    DEPOSIT
+                </button>
+            </div>
+        </div>
+        `;
+    }
+
     _renderModeButton(modeId, currentMode, unlockedModes = ["STABILITY"]) {
         const isActive = modeId === currentMode;
         const activeClass = isActive ? 'active' : '';
         const typeClass = modeId.toLowerCase(); 
         const isLocked = !unlockedModes.includes(modeId);
         
+        let extraStyle = '';
+        if (modeId === 'SYNTHESIS') {
+            extraStyle = 'width: 100%;';
+        } else {
+            extraStyle = 'flex: 1;';
+        }
+        if (isLocked) extraStyle += ' opacity: 0.3;';
+        
         return `
             <button type="button" class="mode-btn ${typeClass} ${activeClass}" 
                     data-action="sol-set-mode" 
                     data-mode="${modeId}"
                     ${isActive || isLocked ? 'disabled' : ''}
-                    style="${isLocked ? 'opacity: 0.3;' : ''}">
+                    style="${extraStyle}">
                 ${modeId}
             </button>
         `;
@@ -22749,7 +22946,6 @@ export class UISolStationControl {
     _renderCacheList(gameState) {
         const station = this._getLiveStationState(gameState);
         const caches = station.caches;
-        const playerInventory = gameState.player.inventories[gameState.player.activeShipId];
         const playerVisualSeed = gameState.player.visualSeed;
 
         return Object.entries(caches)
@@ -22759,23 +22955,30 @@ export class UISolStationControl {
                 if (!commodity) return `<div class="sol-cache-row-error">Error: ${commodityId}</div>`;
 
                 const fillPct = (cache.current / cache.max) * 100;
-                const playerStock = playerInventory[commodityId]?.quantity || 0;
+                
+                // Account for total fleet stock for deposit availability checks
+                let playerStock = 0;
+                for (const shipId of gameState.player.ownedShipIds) {
+                    playerStock += (gameState.player.inventories[shipId]?.[commodityId]?.quantity || 0);
+                }
                 const canDonate = playerStock > 0 && Math.floor(cache.max - cache.current) >= 1;
+                
                 const tierColorVar = `--tier-${commodity.tier || 1}-color`;
-
                 const bgImage = AssetService.getCommodityImage(commodity.name, playerVisualSeed);
                 const bgStyle = bgImage ? `background-image: url('${bgImage}'); opacity: 1; filter: none;` : '';
                 const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
+                
+                const theme = getCommodityTheme(commodityId);
 
                 return `
-                    <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem;">
-                        <div class="sol-cache-row-bg" style="${bgStyle}"></div>
+                    <div class="sol-cache-row" data-comm-id="${commodityId}" style="display: flex; flex-direction: row; align-items: center; justify-content: space-between; height: auto; min-height: 70px; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 8px;">
+                        <div class="sol-cache-row-bg" style="${bgStyle}; border-radius: 8px;"></div>
                         
                         <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
                             <div class="sol-row-name" title="${commodity.name}" style="text-align: left; font-size: 1.1rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible;">${commodity.name}</div>
                             
                             <div class="sol-row-track-container" style="width: 100%;">
-                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5);">
+                                <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">
                                     <div class="sol-progress-fill" style="width: ${fillPct}%; background-color: var(${tierColorVar}, #fff);"></div>
                                     <div class="sol-progress-text" style="text-shadow: ${textShadow}; font-weight: bold;">${formatCredits(Math.floor(cache.current), false)} / ${formatCredits(cache.max, false)}</div>
                                 </div>
@@ -22786,7 +22989,7 @@ export class UISolStationControl {
                             <button type="button" class="btn-deposit-all" 
                                     data-action="sol-donate-all" 
                                     data-commodity-id="${commodityId}"
-                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5);"
+                                    style="height: 100%; border: 1px solid #000; box-shadow: 0 2px 5px rgba(0,0,0,0.5); padding: 0 0.5rem; min-width: 70px; border-radius: 6px; background: ${theme.bg}; color: ${theme.text};"
                                     ${!canDonate ? 'disabled' : ''}>
                                 DEPOSIT
                             </button>
@@ -25728,7 +25931,12 @@ export class GameState {
                 activeProjectBank: {
                     "c_water_ice": 0,
                     "credits": 0
-                }
+                },
+                // --- FOLDED SPACE DRIVE MANUFACTURING DEFAULTS ---
+                antimatterCache: 0,
+                synthesisProgress: 0,
+                fsdOutput: 0
+                // --- END FSD MANUFACTURING ---
             },
             // --- END VIRTUAL WORKBENCH ---
 
@@ -26101,6 +26309,9 @@ import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
  * * PRODUCTION MODE:
  * - Generation: 6 Antimatter / Day, 2,000 Credits / Day
  * - Consumption: 0.21% Cache Loss / Day (Entropy Multiplier: 2.625x)
+ * * SYNTHESIS MODE:
+ * - Generation: 0 Antimatter / Day, 0 Credits / Day
+ * - Consumption: 0.08% Cache Loss / Day (Entropy Multiplier: 1.0x), plus 10 Antimatter over 30 Days
  */
 export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
@@ -26145,6 +26356,13 @@ export const LEVEL_1_BASELINE = {
             yieldAm: 6 / 120, 
             decayK: 0.00000667, 
             entropyMult: 2.625 
+        },
+        SYNTHESIS: { 
+            id: 'SYNTHESIS', 
+            yieldCredits: 0, 
+            yieldAm: 0, 
+            decayK: 0.00000667, 
+            entropyMult: 1 
         }
     }
 };
@@ -26378,6 +26596,13 @@ export class SolStationService {
             station.unlockedModes = station.unlockedModes.filter(m => m !== "PRODUCTION");
             if (station.mode === "PRODUCTION") station.mode = "STABILITY";
         }
+
+        if (level >= 10) {
+            if (!station.unlockedModes.includes("SYNTHESIS")) station.unlockedModes.push("SYNTHESIS");
+        } else {
+            station.unlockedModes = station.unlockedModes.filter(m => m !== "SYNTHESIS");
+            if (station.mode === "SYNTHESIS") station.mode = "STABILITY";
+        }
     }
 
     /**
@@ -26501,6 +26726,26 @@ export class SolStationService {
             LEVEL_1_BASELINE.MAX_ANTIMATTER_STOCKPILE, 
             safeCurrentAm + safeGeneratedAm
         );
+
+        // PASS 3: Synthesis Manufacturing Loop
+        if (newState.mode === 'SYNTHESIS' && newState.level >= 10) {
+            // Requirement: 10 AM over 30 Days (1 day = 120s)
+            const amPerSec = (10 / 30) / LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY;
+            const wantedAm = amPerSec * dt;
+            const actualAm = Math.min(wantedAm, newState.antimatterCache || 0);
+            
+            newState.antimatterCache -= actualAm;
+            
+            // 10 AM consumed equals 30 days of synthesis progression.
+            // Ratio: 1 AM = 3 Days of Progress.
+            newState.synthesisProgress = (newState.synthesisProgress || 0) + (actualAm * 3);
+            
+            // Yield complete FSDs and rollover the remainder progress
+            while (newState.synthesisProgress >= 30) {
+                newState.synthesisProgress -= 30;
+                newState.fsdOutput = (newState.fsdOutput || 0) + 1;
+            }
+        }
 
         newState.currentEfficiency = x1 >= LEVEL_1_BASELINE.EFFICIENCY_CLIFF ? x1 : 2 * Math.pow(x1, 2);
 
@@ -26641,9 +26886,11 @@ export class SolStationService {
         quantity = Math.floor(quantity);
 
         const station = this.gameState.solStation;
-        const cache = station.caches[commodityId];
+        const isAmCache = (commodityId === COMMODITY_IDS.ANTIMATTER);
+        let cacheRef = isAmCache ? { current: station.antimatterCache || 0, max: 250 + Math.max(0, ((station.level - 10) / 40) * 750) } : station.caches[commodityId];
 
-        if (!cache) return { success: false, message: "Invalid cache commodity." };
+        if (!cacheRef) return { success: false, message: "Invalid cache commodity." };
+        if (isAmCache && station.level < 10) return { success: false, message: "Synthesis not unlocked." };
 
         let totalFleetStock = 0;
         for (const shipId of this.gameState.player.ownedShipIds) {
@@ -26654,7 +26901,7 @@ export class SolStationService {
             return { success: false, message: "Insufficient fleet cargo." };
         }
         
-        const spaceAvailable = Math.floor(cache.max - cache.current);
+        const spaceAvailable = Math.floor(cacheRef.max - cacheRef.current);
         if (quantity > spaceAvailable) {
             return { success: false, message: `Cache full. Can only accept ${Math.floor(spaceAvailable)} units.` };
         }
@@ -26685,38 +26932,46 @@ export class SolStationService {
             }
         }
 
-        cache.current += quantity;
+        if (isAmCache) {
+            station.antimatterCache = (station.antimatterCache || 0) + quantity;
+            this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x Antimatter to Synthesis Cache.`);
+        } else {
+            station.caches[commodityId].current += quantity;
+            
+            // Health re-calculation relies strictly on entropy caches, not Synthesis buffer
+            let totalFillRatio = 0;
+            let activeCaches = 0;
+            const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
+                return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && c.max > 0;
+            });
 
-        let totalFillRatio = 0;
-        let activeCaches = 0;
-        const validCacheEntries = Object.entries(station.caches).filter(([id, c]) => {
-            return id !== COMMODITY_IDS.FOLDED_DRIVES && id !== COMMODITY_IDS.ANTIMATTER && c.max > 0;
-        });
+            for (const [id, c] of validCacheEntries) {
+                const safeCurrent = isNaN(c.current) ? 0 : c.current;
+                const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
+                totalFillRatio += (safeCurrent / safeMax);
+                activeCaches++;
+            }
+            
+            const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
+            station.health = averageFill * 100;
 
-        for (const [id, c] of validCacheEntries) {
-            const safeCurrent = isNaN(c.current) ? 0 : c.current;
-            const safeMax = isNaN(c.max) || c.max <= 0 ? 1 : c.max;
-            totalFillRatio += (safeCurrent / safeMax);
-            activeCaches++;
+            this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         }
-        
-        const averageFill = activeCaches > 0 ? (totalFillRatio / activeCaches) : 0;
-        station.health = averageFill * 100;
 
-        this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         this.gameState.setState({});
-        
         return { success: true, message: "Resources transferred." };
     }
 
     claimStockpile(type = null) {
         this._syncTime();
 
-        const stockpile = this.gameState.solStation.stockpile;
+        const station = this.gameState.solStation;
+        const stockpile = station.stockpile;
         const inventory = this.gameState.player.inventories[this.gameState.player.activeShipId];
         
         let claimedCredits = 0;
         let claimedAM = 0;
+        let claimedFsd = 0;
 
         if ((!type || type === 'credits') && stockpile.credits > 0) {
             const amount = Math.floor(stockpile.credits);
@@ -26736,7 +26991,17 @@ export class SolStationService {
             stockpile.antimatter -= amountToTake;
         }
 
-        if (claimedCredits === 0 && claimedAM === 0) {
+        if ((!type || type === 'fsd') && (station.fsdOutput || 0) >= 1) {
+            const amountToTake = Math.floor(station.fsdOutput);
+            if (!inventory[COMMODITY_IDS.FOLDED_DRIVES]) {
+                inventory[COMMODITY_IDS.FOLDED_DRIVES] = { quantity: 0, avgCost: 0 };
+            }
+            inventory[COMMODITY_IDS.FOLDED_DRIVES].quantity += amountToTake;
+            claimedFsd = amountToTake;
+            station.fsdOutput -= amountToTake;
+        }
+
+        if (claimedCredits === 0 && claimedAM === 0 && claimedFsd === 0) {
             return { success: false, message: "Nothing to collect." };
         }
 
@@ -26745,6 +27010,7 @@ export class SolStationService {
         const msgParts = [];
         if (claimedCredits > 0) msgParts.push(`${claimedCredits} Cr`);
         if (claimedAM > 0) msgParts.push(`${claimedAM} AM`);
+        if (claimedFsd > 0) msgParts.push(`${claimedFsd} FSD`);
         
         return { success: true, message: `Collected ${msgParts.join(' & ')}.` };
     }
@@ -38402,8 +38668,6 @@ export class ActionClickHandler {
                 this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, async (replaceIndex) => {
                     if (totalCost > 0) {
                         this.gameState.player.credits -= totalCost;
-                        // Suppressed standard floating text to avoid overlapping with new white-out cinematic
-                        // this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, e.clientX, e.clientY, '#f87171');
                     }
 
                     if (replaceIndex !== -1) {
@@ -38766,6 +39030,8 @@ export class ActionClickHandler {
                 break;
 
             case 'open-sol-dashboard':
+                e.preventDefault();
+                e.stopPropagation();
                 this.uiManager.showSolStationDashboard(state);
                 break;
 
@@ -38822,13 +39088,19 @@ export class ActionClickHandler {
                     const amount = Math.floor(stockpile.credits);
                     if (amount > 0) {
                         text = `+${amount}`;
-                        color = '#34d399'; 
+                        color = '#06b6d4'; 
                     }
                 } else if (type === 'antimatter') {
                     const amount = Math.floor(stockpile.antimatter);
                     if (amount >= 1) {
-                        text = `+${amount} Antimatter`;
+                        text = `+${amount}`;
                         color = '#a855f7'; 
+                    }
+                } else if (type === 'fsd') {
+                    const amount = Math.floor(this.gameState.solStation.fsdOutput || 0);
+                    if (amount >= 1) {
+                        text = `+${amount}`;
+                        color = '#ea580c';
                     }
                 }
 
@@ -40337,10 +40609,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.72] - 2026-3-12
+# [36.74] - 2026-3-13
 -  updated sol station math
 -  sol station bug fixes
--  
+-  sol station UI polish
+-  added sol station synthesis pipeline
 
 # [36.70] - 2026-3-11
 -  added ship upgrade animation sequence
