@@ -541,7 +541,12 @@ export class ActionClickHandler {
                 break;
 
             case 'open-sol-dashboard':
-                this.uiManager.showSolStationDashboard(state);
+                e.preventDefault(); // ADR-026 Compliance added
+                try {
+                    this.uiManager.showSolStationDashboard(state);
+                } catch (err) {
+                    console.error("ActionClickHandler failed to open Sol Dashboard:", err);
+                }
                 break;
 
             case 'sol-set-mode': {
@@ -606,7 +611,8 @@ export class ActionClickHandler {
                         color = '#a855f7'; 
                     }
                 } else if (type === 'fsd') {
-                    const amount = Math.floor(this.gameState.solStation.fsdOutput || 0);
+                    const fsdOutput = this.gameState.solStation?.fsdOutput || 0;
+                    const amount = Math.floor(fsdOutput);
                     if (amount >= 1) {
                         text = `+${amount}`;
                         color = '#ea580c';
