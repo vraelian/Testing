@@ -10,19 +10,19 @@ import { LEVEL_REGISTRY } from '../../data/solProgressionRegistry.js';
 // --- PURE VISUAL HELPERS ---
 function getCommodityTheme(commId) {
     switch (commId) {
-        case 'water_ice': return { bg: '#7dd3fc', text: '#000' };
-        case 'plasteel': return { bg: '#f0ead6', text: '#000' };
-        case 'hydroponics': return { bg: '#166534', text: '#fff' };
-        case 'cybernetics': return { bg: '#ffffff', text: '#000' };
-        case 'propellant': return { bg: '#8b5cf6', text: '#fff' };
-        case 'processors': return { bg: '#06b6d4', text: '#000' };
-        case 'graphene': return { bg: '#9ca3af', text: '#000' };
-        case 'cryo_pods': return { bg: '#40e0d0', text: '#000' };
-        case 'atmo_processors': return { bg: '#eab308', text: '#000' };
-        case 'cloned_organs': return { bg: '#f472b6', text: '#000' };
-        case 'xeno_geologicals': return { bg: '#a855f7', text: '#fff' };
-        case 'sentient_ai': return { bg: '#ef4444', text: '#fff' };
-        case 'antimatter': return { bg: '#4c1d95', text: '#fff' };
+        case COMMODITY_IDS.WATER_ICE: return { bg: '#7dd3fc', text: '#000' };
+        case COMMODITY_IDS.PLASTEEL: return { bg: '#f0ead6', text: '#000' };
+        case COMMODITY_IDS.HYDROPONICS: return { bg: '#166534', text: '#fff' };
+        case COMMODITY_IDS.CYBERNETICS: return { bg: '#ffffff', text: '#000' };
+        case COMMODITY_IDS.PROPELLANT: return { bg: '#8b5cf6', text: '#fff' };
+        case COMMODITY_IDS.PROCESSORS: return { bg: '#06b6d4', text: '#000' };
+        case COMMODITY_IDS.GRAPHENE_LATTICES: return { bg: '#9ca3af', text: '#000' };
+        case COMMODITY_IDS.CRYO_PODS: return { bg: '#40e0d0', text: '#000' };
+        case COMMODITY_IDS.ATMO_PROCESSORS: return { bg: '#eab308', text: '#000' };
+        case COMMODITY_IDS.CLONED_ORGANS: return { bg: '#f472b6', text: '#000' };
+        case COMMODITY_IDS.XENO_GEOLOGICALS: return { bg: '#a855f7', text: '#fff' };
+        case COMMODITY_IDS.SENTIENT_AI: return { bg: '#ef4444', text: '#fff' };
+        case COMMODITY_IDS.ANTIMATTER: return { bg: '#4c1d95', text: '#fff' };
         default: return { bg: '#3b82f6', text: '#fff' };
     }
 }

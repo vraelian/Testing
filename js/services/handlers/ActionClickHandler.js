@@ -404,7 +404,7 @@ export class ActionClickHandler {
                 if (state.introSequenceActive) {
                     const helpHtml = `
                         <div class="text-left text-sm text-gray-300">
-                            <p class="mb-4">Choosing your first station is an exciting first step on the road to becoming a wealthy captain.</p>
+                            <p class="mb-4">Choosing your first ship is an exciting first step on the road to becoming a wealthy captain.</p>
                             <p class="mb-2">What play style will you choose?</p>
                             <ul class="list-disc pl-5 space-y-2">
                                 <li>Will you opt for the <span class="text-sky-400 font-bold">Explorer</span>, prioritizing its larger fuel tank for fewer refueling stops and more continuous travel?</li>

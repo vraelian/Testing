@@ -1,7 +1,7 @@
 // js/data/database.js
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
 import { MISSION_REGISTRY } from './missions/missionRegistry.js';
-import { RANDOM_TS } from './events.js';
+import { RANDOM_EVENTS } from './events.js';
 import { AGE_EVENTS } from './age_events.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
 import { SHIP_DATABASE } from './ship_database.js';
