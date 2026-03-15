@@ -793,13 +793,25 @@ export class UIManager {
             tooltip.innerHTML = this.marketControl.renderFinanceGraph(gameState);
         }
 
+        tooltip.classList.remove('graph-blur-fade-out');
+        tooltip.classList.add('graph-blur-fade-in');
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
     }
 
     hideGraph() {
          if (this.activeGraphAnchor) {
-            this.cache.graphTooltip.style.display = 'none';
+            const tooltip = this.cache.graphTooltip;
+            tooltip.classList.remove('graph-blur-fade-in');
+            tooltip.classList.add('graph-blur-fade-out');
+            
+            tooltip.addEventListener('animationend', () => {
+                if (tooltip.classList.contains('graph-blur-fade-out')) {
+                    tooltip.style.display = 'none';
+                    tooltip.classList.remove('graph-blur-fade-out');
+                }
+            }, { once: true });
+            
             this.activeGraphAnchor = null;
         }
     }

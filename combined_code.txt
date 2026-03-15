@@ -4615,6 +4615,42 @@ card.
     color: #f87171 !important; 
     text-shadow: 0 0 10px rgba(248, 113, 113, 0.5); 
 }
+
+/* --- PRICE GRAPH BLUR-FADE ANIMATIONS --- */
+@keyframes graphBlurFadeIn {
+    0% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+}
+
+@keyframes graphBlurFadeOut {
+    0% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: scale(1.05);
+    }
+}
+
+.graph-blur-fade-in {
+    animation: graphBlurFadeIn 0.5s ease-out forwards;
+}
+
+.graph-blur-fade-out {
+    animation: graphBlurFadeOut 0.5s ease-out forwards;
+    pointer-events: none;
+}
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -20721,9 +20757,15 @@ export class UIMarketControl {
         }
 
         if (mode === 'buy') {
-            priceEl.textContent = formatCredits(basePrice);
+            const displayPrice = quantity > 0 ? basePrice * quantity : basePrice;
+            priceEl.textContent = formatCredits(displayPrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
-            effectivePriceEl.textContent = '';
+            
+            if (quantity > 1) {
+                effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
+            } else {
+                effectivePriceEl.textContent = '';
+            }
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
@@ -20761,7 +20803,6 @@ export class UIMarketControl {
 
         const basePrice = this.getItemPrice(state, goodId, true);
         const effectivePrice = basePrice; 
-        const totalPrice = Math.floor(effectivePrice * quantity);
 
         // --- FLEET OVERFLOW SYSTEM: EXACT COST BASIS SIMULATION ---
         // Instead of using the blended average, simulate the exact drain order
@@ -20769,8 +20810,11 @@ export class UIMarketControl {
         const activeShipId = state.player.activeShipId;
         const shipInventories = [];
         
+        let totalOwnedQty = 0;
+        
         for (const shipId of state.player.ownedShipIds) {
             const qty = state.player.inventories[shipId]?.[goodId]?.quantity || 0;
+            totalOwnedQty += qty;
             // Safely fetch max capacity, falling back to static DB if simulation service isn't ready
             const maxCapacity = this.manager.simulationService ? 
                 this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
@@ -20779,13 +20823,17 @@ export class UIMarketControl {
             shipInventories.push({ shipId, qty, maxCapacity });
         }
 
+        // Clamp the evaluable quantity to the actual total inventory owned to prevent false projections
+        const evaluableQty = Math.min(quantity, totalOwnedQty);
+        const totalPrice = Math.floor(effectivePrice * evaluableQty);
+
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
             return b.maxCapacity - a.maxCapacity;
         });
 
-        let remainingToSell = quantity;
+        let remainingToSell = evaluableQty;
         let exactCostBasis = 0;
 
         for (const shipData of shipInventories) {
@@ -35456,13 +35504,25 @@ export class UIManager {
             tooltip.innerHTML = this.marketControl.renderFinanceGraph(gameState);
         }
 
+        tooltip.classList.remove('graph-blur-fade-out');
+        tooltip.classList.add('graph-blur-fade-in');
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
     }
 
     hideGraph() {
          if (this.activeGraphAnchor) {
-            this.cache.graphTooltip.style.display = 'none';
+            const tooltip = this.cache.graphTooltip;
+            tooltip.classList.remove('graph-blur-fade-in');
+            tooltip.classList.add('graph-blur-fade-out');
+            
+            tooltip.addEventListener('animationend', () => {
+                if (tooltip.classList.contains('graph-blur-fade-out')) {
+                    tooltip.style.display = 'none';
+                    tooltip.classList.remove('graph-blur-fade-out');
+                }
+            }, { once: true });
+            
             this.activeGraphAnchor = null;
         }
     }
@@ -41199,8 +41259,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.77] - 2026-3-14
+# [36.78] - 2026-3-14
 -  commodity card polish and animations
+-  updated profit projection logic
 
 # [36.76] - 2026-3-13
 -  added officer portraits
