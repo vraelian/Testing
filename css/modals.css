@@ -1527,3 +1527,39 @@
     color: #f87171 !important; 
     text-shadow: 0 0 10px rgba(248, 113, 113, 0.5); 
 }
+
+/* --- PRICE GRAPH BLUR-FADE ANIMATIONS --- */
+@keyframes graphBlurFadeIn {
+    0% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+}
+
+@keyframes graphBlurFadeOut {
+    0% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        filter: blur(8px);
+        transform: scale(1.05);
+    }
+}
+
+.graph-blur-fade-in {
+    animation: graphBlurFadeIn 0.5s ease-out forwards;
+}
+
+.graph-blur-fade-out {
+    animation: graphBlurFadeOut 0.5s ease-out forwards;
+    pointer-events: none;
+}

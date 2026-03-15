@@ -166,9 +166,15 @@ export class UIMarketControl {
         }
 
         if (mode === 'buy') {
-            priceEl.textContent = formatCredits(basePrice);
+            const displayPrice = quantity > 0 ? basePrice * quantity : basePrice;
+            priceEl.textContent = formatCredits(displayPrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
-            effectivePriceEl.textContent = '';
+            
+            if (quantity > 1) {
+                effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
+            } else {
+                effectivePriceEl.textContent = '';
+            }
             
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
@@ -206,7 +212,6 @@ export class UIMarketControl {
 
         const basePrice = this.getItemPrice(state, goodId, true);
         const effectivePrice = basePrice; 
-        const totalPrice = Math.floor(effectivePrice * quantity);
 
         // --- FLEET OVERFLOW SYSTEM: EXACT COST BASIS SIMULATION ---
         // Instead of using the blended average, simulate the exact drain order
@@ -214,8 +219,11 @@ export class UIMarketControl {
         const activeShipId = state.player.activeShipId;
         const shipInventories = [];
         
+        let totalOwnedQty = 0;
+        
         for (const shipId of state.player.ownedShipIds) {
             const qty = state.player.inventories[shipId]?.[goodId]?.quantity || 0;
+            totalOwnedQty += qty;
             // Safely fetch max capacity, falling back to static DB if simulation service isn't ready
             const maxCapacity = this.manager.simulationService ? 
                 this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
@@ -224,13 +232,17 @@ export class UIMarketControl {
             shipInventories.push({ shipId, qty, maxCapacity });
         }
 
+        // Clamp the evaluable quantity to the actual total inventory owned to prevent false projections
+        const evaluableQty = Math.min(quantity, totalOwnedQty);
+        const totalPrice = Math.floor(effectivePrice * evaluableQty);
+
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
             return b.maxCapacity - a.maxCapacity;
         });
 
-        let remainingToSell = quantity;
+        let remainingToSell = evaluableQty;
         let exactCostBasis = 0;
 
         for (const shipData of shipInventories) {
