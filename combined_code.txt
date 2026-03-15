@@ -6655,6 +6655,191 @@ card.
         0 0 10px rgba(0,0,0,0.7),
         1px 1px 0 #000; /* Hard edge for readability */
 }
+
+/* --- TRANSACTION UI POLISH: KEYFRAMES & UTILITIES --- */
+
+/* Elevate the container so the card sits firmly ABOVE the fixed cyan glow */
+.item-card-container {
+    z-index: 10;
+}
+
+/* Neutralize iOS Safari sticky tap highlights and focus states on the Confirm button */
+.transaction-controls [data-action="confirm-trade"] {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+.transaction-controls [data-action="confirm-trade"]:focus,
+.transaction-controls [data-action="confirm-trade"]:active {
+    outline: none !important;
+}
+
+@keyframes toggle-aura-burst {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes value-pop-anim {
+    0% { transform: scale(1); }
+    50% { 
+        transform: scale(1.35); 
+        color: #fff; 
+        text-shadow: 0 0 10px rgba(255,255,255,0.9); 
+    }
+    100% { transform: scale(1); }
+}
+
+/* --- Y-AXIS SPRING BOUNCE (DIRECTIONAL MOMENTUM) --- */
+
+/* Expanding downwards: initial momentum is DOWN (+Y) */
+@keyframes spring-bounce-down {
+    0%, 100% { transform: translateY(0); }
+    15% { transform: translateY(15px); }
+    35% { transform: translateY(-10px); }
+    55% { transform: translateY(6px); }
+    75% { transform: translateY(-3px); }
+    90% { transform: translateY(1px); }
+}
+
+/* Contracting upwards: initial momentum is UP (-Y) */
+@keyframes spring-bounce-up {
+    0%, 100% { transform: translateY(0); }
+    15% { transform: translateY(-15px); }
+    35% { transform: translateY(10px); }
+    55% { transform: translateY(-6px); }
+    75% { transform: translateY(3px); }
+    90% { transform: translateY(-1px); }
+}
+
+@keyframes max-flare {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* --- STEPPER PROLONGED POPPING --- */
+/* Transitions allow the scaled state to be held via JS class toggling */
+.transaction-controls input[type="number"] {
+    transition: transform 0.225s ease-out, color 0.225s ease-out, text-shadow 0.225s ease-out;
+}
+
+.transaction-controls input[type="number"].is-popped {
+    transform: scale(2.0);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.9);
+}
+
+/* --- MASSIVE INVENTORY POPPING (Avail / Own text) --- */
+@keyframes inventory-pop-anim {
+    0% { transform: scale(2.0); }
+    100% { transform: scale(1); }
+}
+
+.inventory-pop {
+    display: inline-block; 
+    animation: inventory-pop-anim 1.3s ease-out forwards;
+}
+
+/* --- UNIFORM CONFIRM LEVER STROKE --- */
+@keyframes lever-pull-uniform {
+    0% { transform: scale(1) translateY(0); }
+    100% { transform: scale(0.99) translateY(1px); }
+}
+
+/* --- DYNAMIC COMMODITY RADIATION GLOW --- */
+.confirm-cyan-glow-overlay {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5; /* Safely placed below the z-index 10 card container */
+    animation: dynamic-radiate 1.3s ease-out forwards;
+}
+
+@keyframes dynamic-radiate {
+    0% { 
+        box-shadow: 0 0 0px 8px var(--dynamic-glow-color, rgba(0, 210, 255, 0.9)); 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    100% { 
+        box-shadow: 0 0 20px 24px transparent; 
+        opacity: 0; 
+        transform: scale(1.02);
+    }
+}
+
+/* --- TOGGLE SCAN-LINE WIPE --- */
+.scanline-overlay {
+    position: absolute;
+    top: 0; 
+    bottom: 0; 
+    width: 50%;
+    pointer-events: none;
+    z-index: 50; /* Above the card background, beneath text if text has position */
+}
+
+/* Red Left-to-Right wipe for Sell */
+.scanline-sell {
+    background: linear-gradient(to right, transparent, rgba(248, 113, 113, 0.6), transparent);
+    animation: scanline-sell-anim 0.4s linear forwards;
+}
+
+/* Blue Right-to-Left wipe for Buy */
+.scanline-buy {
+    background: linear-gradient(to left, transparent, rgba(56, 189, 248, 0.6), transparent);
+    animation: scanline-buy-anim 0.4s linear forwards;
+}
+
+@keyframes scanline-sell-anim {
+    0% { left: -50%; }
+    100% { left: 100%; }
+}
+
+@keyframes scanline-buy-anim {
+    0% { right: -50%; left: auto; }
+    100% { right: 100%; left: auto; }
+}
+
+/* --- UTILITY CLASSES --- */
+
+/* Neutralize the double-indent by freezing the native button shrink while the card sinks */
+.confirm-lever [data-action="confirm-trade"] {
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Spammable, ultra-fast 40ms downstroke holds until JS DOM wipe snaps it back */
+.confirm-lever { 
+    animation: lever-pull-uniform 0.04s ease-out forwards; 
+}
+
+.toggle-radiate::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--accent-color, rgba(255,255,255,0.5));
+    border-radius: inherit;
+    pointer-events: none;
+    animation: toggle-aura-burst 0.4s ease-out forwards;
+}
+
+.card-spring-bounce-down {
+    animation: spring-bounce-down 1s ease-out forwards;
+}
+
+.card-spring-bounce-up {
+    animation: spring-bounce-up 1s ease-out forwards;
+}
+
+.max-super-slam::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* Doubled thickness to 8px inset */
+    box-shadow: inset 0 0 0 8px var(--accent-color, #fff);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: var(--market-card-border-radius) !important; 
+    animation: max-flare 0.25s ease-out forwards;
+}
 --- END OF FILE: ./css/screens/market-screen.css ---
 
 --- START OF FILE: ./css/screens/intel-screen.css ---
@@ -37908,6 +38093,65 @@ export class MarketEventHandler {
         this.gameState = gameState;
         this.simulationService = simulationService;
         this.uiManager = uiManager;
+
+        // --- UI JUICE: Min/Max View Toggle Shake (Directional Momentum) ---
+        // Bound globally to intercept the state change routed by the main EventManager.
+        document.addEventListener('click', (e) => {
+            const toggleBtn = e.target.closest('.card-toggle-btn');
+            if (toggleBtn) {
+                const goodId = toggleBtn.dataset.goodId;
+                if (goodId) {
+                    // 15ms allows the UIManager DOM wipe to finish while appearing instant.
+                    // The spring animation will run concurrently with the CSS height transition.
+                    setTimeout(() => {
+                        const cardContainer = document.getElementById(`item-card-container-${goodId}`);
+                        if (cardContainer) {
+                            // Check the newly rendered state to determine the direction of momentum
+                            const isMinimized = cardContainer.classList.contains('minimized');
+                            const bounceClass = isMinimized ? 'card-spring-bounce-up' : 'card-spring-bounce-down';
+                            this._triggerAnimation(cardContainer, bounceClass, 1000);
+                        }
+                    }, 15); 
+                }
+            }
+        });
+    }
+
+    /**
+     * Utility to trigger reflow-safe CSS animations for tactile UI feedback.
+     * @param {HTMLElement} element The target DOM element.
+     * @param {string} className The CSS animation class to apply.
+     * @param {number} duration The duration of the animation in milliseconds.
+     * @private
+     */
+    _triggerAnimation(element, className, duration) {
+        if (!element) return;
+        
+        element.classList.remove(className);
+        void element.offsetWidth; // Force DOM reflow
+        element.classList.add(className);
+        
+        setTimeout(() => {
+            if (element) element.classList.remove(className);
+        }, duration);
+    }
+
+    /**
+     * Applies a prolonged scale state to an input, refreshing the timeout if spammed.
+     * @param {HTMLElement} inputEl The input element to scale.
+     * @private
+     */
+    _triggerProlongedPop(inputEl) {
+        if (!inputEl) return;
+        inputEl.classList.add('is-popped');
+        
+        if (inputEl.dataset.popTimeout) {
+            clearTimeout(parseInt(inputEl.dataset.popTimeout));
+        }
+        
+        inputEl.dataset.popTimeout = setTimeout(() => {
+            inputEl.classList.remove('is-popped');
+        }, 225); // 50% slower return to normal size
     }
 
     /**
@@ -37923,15 +38167,19 @@ export class MarketEventHandler {
             this.uiManager.updateMarketCardDisplay(goodId, quantity, mode);
 
             this._updateMaxButtonState(controls, quantity, mode, goodId);
+
+            // --- UI JUICE: Prolonged Stepper Rattle on Input ---
+            this._triggerProlongedPop(qtyInput);
         }
     }
 
     /**
      * Handles click events within the market transaction controls.
+     * Now async to support mechanical animation delays prior to state mutation.
      * @param {Event} e The click event object.
      * @param {HTMLElement} actionTarget The DOM element with the data-action attribute.
      */
-    handleClick(e, actionTarget) {
+    async handleClick(e, actionTarget) {
         const { action } = actionTarget.dataset;
 
         switch (action) {
@@ -37940,7 +38188,7 @@ export class MarketEventHandler {
             case 'set-max-trade':
             case ACTION_IDS.INCREMENT:
             case ACTION_IDS.DECREMENT:
-                this._performMarketAction(actionTarget, action, e);
+                await this._performMarketAction(actionTarget, action, e);
                 break;
         }
     }
@@ -37952,13 +38200,19 @@ export class MarketEventHandler {
      * @param {Event} [e] - The original click event, for effects.
      * @private
      */
-    _performMarketAction(target, action, e) {
+    async _performMarketAction(target, action, e) {
+        // Fix for sticky hover/focus states on mobile Safari/WebKit
+        if (target && typeof target.blur === 'function') {
+            target.blur();
+        }
+
         const controls = target.closest('.transaction-controls');
         if (!controls) return;
 
         const { goodId, mode } = controls.dataset;
         const qtyInput = controls.querySelector('input');
         const state = this.gameState.getState();
+        const cardContainer = target.closest('.item-card-container');
 
         switch (action) {
             case 'toggle-trade-mode': {
@@ -37968,39 +38222,138 @@ export class MarketEventHandler {
                 this.uiManager.updateMarketCardDisplay(goodId, currentQty, newMode);
 
                 this._updateMaxButtonState(controls, currentQty, newMode, goodId);
+
+                // --- UI JUICE: Toggle Aura & Scan-line ---
+                const toggleSwitch = target.closest('.toggle-switch');
+                this._triggerAnimation(toggleSwitch, 'toggle-radiate', 400);
+
+                const innerCard = cardContainer.querySelector('.rounded-lg');
+                if (innerCard) {
+                    // Reset if spammed
+                    const existingScanline = innerCard.querySelector('.scanline-overlay');
+                    if (existingScanline) existingScanline.remove();
+
+                    const scanline = document.createElement('div');
+                    scanline.className = `scanline-overlay scanline-${newMode}`;
+                    innerCard.appendChild(scanline);
+
+                    setTimeout(() => {
+                        if (scanline.parentNode) scanline.remove();
+                    }, 400);
+                }
                 break;
             }
             case 'confirm-trade': {
                 const quantity = parseInt(qtyInput.value) || 0;
                 if (quantity <= 0) return;
 
+                const animClass = 'confirm-lever';
+                let cardRect = null;
+                let cardRadius = '21px'; // Fallback to CSS var default
+                let glowColor = '#00d2ff'; // Fallback cyan
+
+                if (cardContainer) {
+                    // Capture dimensions before any DOM wipe
+                    cardRect = cardContainer.getBoundingClientRect();
+                    const innerCard = cardContainer.querySelector('.rounded-lg');
+                    
+                    if (innerCard) {
+                        const computedStyle = window.getComputedStyle(innerCard);
+                        cardRadius = computedStyle.borderTopLeftRadius || '21px';
+                        
+                        // Extract specific commodity gradient color for matching glow
+                        const gradColor = computedStyle.getPropertyValue('--market-card-gradient-color1').trim();
+                        if (gradColor) glowColor = gradColor;
+                    }
+
+                    // Apply specific color overrides based on commodity ID/name
+                    const normalizedId = goodId.toLowerCase().replace(/-/g, '_');
+                    if (normalizedId.includes('hydroponics')) glowColor = '#065f46'; // darker green
+                    else if (normalizedId.includes('cryo')) glowColor = '#0891b2'; // bluer turquoise
+                    else if (normalizedId.includes('sentient') || normalizedId.includes('ai')) glowColor = '#800000'; // maroon
+                    else if (normalizedId.includes('antimatter')) glowColor = '#4c1d95'; // dark purple
+                    else if (normalizedId.includes('folded')) glowColor = '#ea580c'; // orange
+                    
+                    // Force reflow for downstroke animation
+                    cardContainer.classList.remove(animClass);
+                    void cardContainer.offsetWidth;
+                    cardContainer.classList.add(animClass);
+
+                    // --- UI JUICE: Dynamic Commodity-Colored Radiation Spawn ---
+                    const glow = document.createElement('div');
+                    glow.className = 'confirm-cyan-glow-overlay';
+                    // Shrink by 4px and shift inward to hide the inner edge behind the card
+                    glow.style.left = `${cardRect.left + 2}px`;
+                    glow.style.top = `${cardRect.top + 2}px`;
+                    glow.style.width = `${cardRect.width - 4}px`;
+                    glow.style.height = `${cardRect.height - 4}px`;
+                    glow.style.borderRadius = cardRadius;
+                    glow.style.setProperty('--dynamic-glow-color', glowColor);
+                    
+                    document.body.appendChild(glow);
+                    
+                    setTimeout(() => {
+                        if (glow.parentNode) glow.parentNode.removeChild(glow);
+                    }, 1300);
+                    
+                    // 15ms minimum frame delay ensures extreme responsiveness while allowing CSS to paint
+                    await new Promise(resolve => setTimeout(resolve, 15));
+                }
+
                 const result = (mode === 'buy')
                     ? this.simulationService.buyItem(goodId, quantity)
                     : this.simulationService.sellItem(goodId, quantity);
 
-                if (result) {
-                    const value = (mode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : result;
+                if (result !== false && result !== undefined) {
+                    let delta = result;
+                    if (mode === 'sell' && typeof result !== 'number') {
+                        delta = this.uiManager.getItemPrice(state, goodId) * quantity;
+                    }
+                    const value = (mode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : delta;
+                    
                     const text = mode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
                     const color = mode === 'buy' ? '#f87171' : '#34d399';
                     this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
 
                     if (mode === 'sell') {
                         const actionData = { type: 'ACTION', action: 'sell-item', goodId };
-                        this.simulationService.tutorialService.checkState(actionData);
+                        this.simulationService.tutorialService?.checkState?.(actionData);
                     }
+
+                    // --- UI JUICE: Massive Inventory Popping (Delayed for UI Render) ---
+                    setTimeout(() => {
+                        const availNode = document.getElementById(`m-stock-${goodId}`);
+                        const ownNode = document.getElementById(`p-inv-${goodId}`);
+                        
+                        if (mode === 'buy' && ownNode) {
+                            this._triggerAnimation(ownNode, 'inventory-pop', 1300);
+                        } else if (mode === 'sell' && availNode) {
+                            this._triggerAnimation(availNode, 'inventory-pop', 1300);
+                        }
+                    }, 50);
+
+                } else {
+                    // Instantly clean up the downstroke if an error/warning modal is thrown
+                    if (cardContainer) cardContainer.classList.remove(animClass);
                 }
+
+                // Final safety net cleanup in case the element gets orphaned
+                setTimeout(() => {
+                    if (cardContainer && cardContainer.parentNode) {
+                        cardContainer.classList.remove(animClass);
+                    }
+                }, 100);
+                
                 break;
             }
             case 'set-max-trade': {
                 if (mode === 'sell') {
-                    // --- FLEET OVERFLOW SYSTEM: MAX SELL ---
                     let fleetOwnedQty = 0;
                     state.player.ownedShipIds.forEach(shipId => {
                         fleetOwnedQty += state.player.inventories[shipId]?.[goodId]?.quantity || 0;
                     });
                     qtyInput.value = fleetOwnedQty;
-                } else { // 'buy'
-                    // --- FLEET OVERFLOW SYSTEM: MAX BUY ---
+                } else { 
                     let fleetAvailableSpace = 0;
                     state.player.ownedShipIds.forEach(shipId => {
                         const stats = this.simulationService.getEffectiveShipStats(shipId);
@@ -38017,6 +38370,11 @@ export class MarketEventHandler {
                 const newQuantity = parseInt(qtyInput.value) || 0;
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
+
+                // --- UI JUICE: Super Slam ---
+                // Reuse the downward momentum bounce for the heavy max slam
+                this._triggerAnimation(cardContainer, 'card-spring-bounce-down', 1000);
+                this._triggerAnimation(cardContainer, 'max-super-slam', 250);
                 break;
             }
             case ACTION_IDS.INCREMENT:
@@ -38026,6 +38384,9 @@ export class MarketEventHandler {
                 qtyInput.value = newQuantity;
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
+
+                // --- UI JUICE: Prolonged Stepper Rattle ---
+                this._triggerProlongedPop(qtyInput);
                 break;
             }
         }
@@ -38045,12 +38406,10 @@ export class MarketEventHandler {
         let maxQty = 0;
 
         if (mode === 'sell') {
-            // --- FLEET OVERFLOW SYSTEM: MAX SELL ---
             state.player.ownedShipIds.forEach(shipId => {
                 maxQty += state.player.inventories[shipId]?.[goodId]?.quantity || 0;
             });
-        } else { // 'buy'
-            // --- FLEET OVERFLOW SYSTEM: MAX BUY ---
+        } else { 
             let fleetAvailableSpace = 0;
             state.player.ownedShipIds.forEach(shipId => {
                 const stats = this.simulationService.getEffectiveShipStats(shipId);
@@ -40839,6 +41198,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [36.77] - 2026-3-14
+-  commodity card polish and animations
 
 # [36.76] - 2026-3-13
 -  added officer portraits
@@ -43714,24 +44076,16 @@ All progression math is reverse-engineered from Mihaly Csikszentmihalyi’s conc
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 ## Immediate
-Economy
-A. Mercury market personality and performance
-B. Sol market personality and performance
-C. Give both Intel recipiency
-
+Office Acquisition Pipeline
+A. Animation
+B. Sequence
+C. Acquisition
 
 Officers
 A. Perks - economic stimulus: increase available commodities at given location
+B Balance officer perks
 
-Help System
-A. The helper modal ‘(?)’ icon should be made 10% larger in diameter.
-
-Mission Sticky Bar
-A. The mission sticky bar should be made vertically 10% shorter and its position moved up vertically on the screen 20% of its height to afford the helper modal button more room. 
-B. Reduce the activation padding on the mission stick bar on the lateral left and right sides of the bar slightly so that attempting to select the helper modal button doesn’t more often actuate the mission sticky bar. 
-
-Missions
-A. Add mission completion animation/effect
+—————————————————
 
 ## Ongoing, WIP Efforts
 -  How to increase scaling  risk and difficulty mid-game through to end game?
@@ -43752,14 +44106,14 @@ A. Add mission completion animation/effect
 - System states influencing market performance
 - Add more events: reward type, story type, voucher type
 
-## DEFERRED
+DEFERRED
 - Achievements
 - Art design refinement
 - Sound design (Audiomachine?)
 - Install tailwind CSS resources locally
 - Tactile feedback
 
-## Far-Future Wishlist Ideas
+## Far-Future Wishlist Ideas ()
 - Purchasable stations
 - Each ship has a unique nav bar
 - Desktop version with super ultra wide compatibility

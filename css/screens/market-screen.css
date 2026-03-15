@@ -715,3 +715,188 @@
         0 0 10px rgba(0,0,0,0.7),
         1px 1px 0 #000; /* Hard edge for readability */
 }
+
+/* --- TRANSACTION UI POLISH: KEYFRAMES & UTILITIES --- */
+
+/* Elevate the container so the card sits firmly ABOVE the fixed cyan glow */
+.item-card-container {
+    z-index: 10;
+}
+
+/* Neutralize iOS Safari sticky tap highlights and focus states on the Confirm button */
+.transaction-controls [data-action="confirm-trade"] {
+    -webkit-tap-highlight-color: transparent !important;
+    outline: none !important;
+}
+.transaction-controls [data-action="confirm-trade"]:focus,
+.transaction-controls [data-action="confirm-trade"]:active {
+    outline: none !important;
+}
+
+@keyframes toggle-aura-burst {
+    0% { transform: scale(1); opacity: 0.5; }
+    100% { transform: scale(1.8); opacity: 0; }
+}
+
+@keyframes value-pop-anim {
+    0% { transform: scale(1); }
+    50% { 
+        transform: scale(1.35); 
+        color: #fff; 
+        text-shadow: 0 0 10px rgba(255,255,255,0.9); 
+    }
+    100% { transform: scale(1); }
+}
+
+/* --- Y-AXIS SPRING BOUNCE (DIRECTIONAL MOMENTUM) --- */
+
+/* Expanding downwards: initial momentum is DOWN (+Y) */
+@keyframes spring-bounce-down {
+    0%, 100% { transform: translateY(0); }
+    15% { transform: translateY(15px); }
+    35% { transform: translateY(-10px); }
+    55% { transform: translateY(6px); }
+    75% { transform: translateY(-3px); }
+    90% { transform: translateY(1px); }
+}
+
+/* Contracting upwards: initial momentum is UP (-Y) */
+@keyframes spring-bounce-up {
+    0%, 100% { transform: translateY(0); }
+    15% { transform: translateY(-15px); }
+    35% { transform: translateY(10px); }
+    55% { transform: translateY(-6px); }
+    75% { transform: translateY(3px); }
+    90% { transform: translateY(-1px); }
+}
+
+@keyframes max-flare {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* --- STEPPER PROLONGED POPPING --- */
+/* Transitions allow the scaled state to be held via JS class toggling */
+.transaction-controls input[type="number"] {
+    transition: transform 0.225s ease-out, color 0.225s ease-out, text-shadow 0.225s ease-out;
+}
+
+.transaction-controls input[type="number"].is-popped {
+    transform: scale(2.0);
+    color: #fff;
+    text-shadow: 0 0 10px rgba(255,255,255,0.9);
+}
+
+/* --- MASSIVE INVENTORY POPPING (Avail / Own text) --- */
+@keyframes inventory-pop-anim {
+    0% { transform: scale(2.0); }
+    100% { transform: scale(1); }
+}
+
+.inventory-pop {
+    display: inline-block; 
+    animation: inventory-pop-anim 1.3s ease-out forwards;
+}
+
+/* --- UNIFORM CONFIRM LEVER STROKE --- */
+@keyframes lever-pull-uniform {
+    0% { transform: scale(1) translateY(0); }
+    100% { transform: scale(0.99) translateY(1px); }
+}
+
+/* --- DYNAMIC COMMODITY RADIATION GLOW --- */
+.confirm-cyan-glow-overlay {
+    position: fixed;
+    pointer-events: none;
+    z-index: 5; /* Safely placed below the z-index 10 card container */
+    animation: dynamic-radiate 1.3s ease-out forwards;
+}
+
+@keyframes dynamic-radiate {
+    0% { 
+        box-shadow: 0 0 0px 8px var(--dynamic-glow-color, rgba(0, 210, 255, 0.9)); 
+        opacity: 1; 
+        transform: scale(1);
+    }
+    100% { 
+        box-shadow: 0 0 20px 24px transparent; 
+        opacity: 0; 
+        transform: scale(1.02);
+    }
+}
+
+/* --- TOGGLE SCAN-LINE WIPE --- */
+.scanline-overlay {
+    position: absolute;
+    top: 0; 
+    bottom: 0; 
+    width: 50%;
+    pointer-events: none;
+    z-index: 50; /* Above the card background, beneath text if text has position */
+}
+
+/* Red Left-to-Right wipe for Sell */
+.scanline-sell {
+    background: linear-gradient(to right, transparent, rgba(248, 113, 113, 0.6), transparent);
+    animation: scanline-sell-anim 0.4s linear forwards;
+}
+
+/* Blue Right-to-Left wipe for Buy */
+.scanline-buy {
+    background: linear-gradient(to left, transparent, rgba(56, 189, 248, 0.6), transparent);
+    animation: scanline-buy-anim 0.4s linear forwards;
+}
+
+@keyframes scanline-sell-anim {
+    0% { left: -50%; }
+    100% { left: 100%; }
+}
+
+@keyframes scanline-buy-anim {
+    0% { right: -50%; left: auto; }
+    100% { right: 100%; left: auto; }
+}
+
+/* --- UTILITY CLASSES --- */
+
+/* Neutralize the double-indent by freezing the native button shrink while the card sinks */
+.confirm-lever [data-action="confirm-trade"] {
+    transform: none !important;
+    transition: none !important;
+}
+
+/* Spammable, ultra-fast 40ms downstroke holds until JS DOM wipe snaps it back */
+.confirm-lever { 
+    animation: lever-pull-uniform 0.04s ease-out forwards; 
+}
+
+.toggle-radiate::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: var(--accent-color, rgba(255,255,255,0.5));
+    border-radius: inherit;
+    pointer-events: none;
+    animation: toggle-aura-burst 0.4s ease-out forwards;
+}
+
+.card-spring-bounce-down {
+    animation: spring-bounce-down 1s ease-out forwards;
+}
+
+.card-spring-bounce-up {
+    animation: spring-bounce-up 1s ease-out forwards;
+}
+
+.max-super-slam::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    /* Doubled thickness to 8px inset */
+    box-shadow: inset 0 0 0 8px var(--accent-color, #fff);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: var(--market-card-border-radius) !important; 
+    animation: max-flare 0.25s ease-out forwards;
+}
