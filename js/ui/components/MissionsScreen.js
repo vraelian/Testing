@@ -6,6 +6,7 @@
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
+import { GameAttributes } from '../../services/GameAttributes.js';
 
 // --- THEME MAPPING ---
 const THEME_MAP = {
@@ -104,7 +105,11 @@ export function renderMissionsScreen(gameState, missionService) {
         
         // Format Rewards
         const rewardText = mission.rewards.map(r => {
-            if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+            if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+            if(r.type.toLowerCase() === 'upgrade') {
+                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                return upgName.toUpperCase();
+            }
             return r.type.toUpperCase();
         }).join(', ');
 
@@ -132,7 +137,7 @@ export function renderMissionsScreen(gameState, missionService) {
         let statusClass = 'mission-active';
         
         // Allow null location (Anywhere)
-        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
 
         if (progress.isCompletable && isAtCorrectLocation) {
             statusClass += ' mission-turn-in';
@@ -143,10 +148,12 @@ export function renderMissionsScreen(gameState, missionService) {
         if (progress.isCompletable) {
              let bannerText = 'READY TO COMPLETE';
              let bannerTextClass = 'banner-text-ready';
-             if (mission.completion.locationId && !isAtCorrectLocation) {
+             if (mission.completion.locationId && mission.completion.locationId !== 'any' && !isAtCorrectLocation) {
                  const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
                  bannerText = `RETURN TO ${locName.toUpperCase()}`;
                  bannerTextClass = 'banner-text-return';
+             } else if (mission.objectives && mission.objectives.some(o => ['HAVE_DEBT', 'have_debt'].includes(o.type))) {
+                 bannerText = 'CLEAR ALL DEBT'; 
              }
              // Prominent pulsing banner
              statusBannerHtml = `<div class="mission-status-banner ${bannerTextClass}">${bannerText}</div>`;
@@ -169,7 +176,13 @@ export function renderMissionsScreen(gameState, missionService) {
 
                 // Handle specific types
                 if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
-                    desc = `DELIVER ${DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase()}`;
+                    const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase() || 'ITEM';
+                    if (obj.target) {
+                        const locName = DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase() || 'UNKNOWN';
+                        desc = `DELIVER ${commName} TO ${locName}`;
+                    } else {
+                        desc = `DELIVER ${commName}`;
+                    }
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
                 else if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
@@ -184,6 +197,11 @@ export function renderMissionsScreen(gameState, missionService) {
                 else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
                     desc = 'EARN CREDITS';
                     percent = Math.min(100, Math.floor((current / target) * 100));
+                }
+                else if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) {
+                    desc = 'CLEAR ALL DEBT';
+                    displayStr = `${formatCredits(current)}`;
+                    percent = current <= target ? 100 : 0;
                 }
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
                     desc = 'REFUEL SHIP';

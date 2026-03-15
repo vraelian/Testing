@@ -3,6 +3,7 @@ import { DB } from '../../data/database.js';
 import { INTEL_CONTENT } from '../../data/intelContent.js';
 import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { GameAttributes } from '../GameAttributes.js';
 
 export class UIMissionControl {
     /**
@@ -128,6 +129,10 @@ export class UIMissionControl {
                     displayStr = `[${current}% / ${comparator}${target}%]`;
                     percent = Math.min(100, current);
                 }
+                else if (['have_debt', 'HAVE_DEBT'].includes(firstObj.type)) {
+                    displayStr = `[${formatCredits(current)}]`;
+                    percent = current <= target ? 100 : 0;
+                }
                 else {
                     percent = Math.min(100, (current / target) * 100);
                 }
@@ -138,7 +143,7 @@ export class UIMissionControl {
 
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
-            const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === gameState.currentLocationId;
+            const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
             const isReady = progress.isCompletable && isAtCorrectLocation;
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
@@ -173,6 +178,7 @@ export class UIMissionControl {
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
+        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'Clear All Debt';
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
         
         if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Refuel Ship';
@@ -206,7 +212,7 @@ export class UIMissionControl {
         const progress = missions.missionProgress[missionId];
         const isCompletable = progress ? progress.isCompletable : false;
 
-        const isLocationValid = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+        const isLocationValid = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
 
         if (canComplete) {
@@ -223,7 +229,7 @@ export class UIMissionControl {
         
         const progress = missions.missionProgress[mission.id];
         const isCompletable = progress ? progress.isCompletable : false;
-        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === currentLocationId;
+        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         
         let shouldBeDisabled = false;
         
@@ -255,45 +261,99 @@ export class UIMissionControl {
                 if (typeEl) {
                     typeEl.textContent = mission.type;
                     typeEl.style.display = 'block';
-                    // Reverted back to letting it sit underneath the title natively in center alignment
+                    typeEl.style.fontSize = '0.65rem'; // Shrink type by 1pt
                 }
 
+                // --- HORIZONTAL TELEMETRY HUD (FLEX ROW) ---
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
+                const rewardsEl = modal.querySelector('#mission-modal-rewards');
+                if (rewardsEl) rewardsEl.style.display = 'none'; // Hide native rewards block
+
+                let flexColumns = [];
+
+                // 1. INBOUND (Granted Cargo)
+                if (mission.grantedCargo && mission.grantedCargo.length > 0) {
+                    const grantedItems = mission.grantedCargo.map(cargo => {
+                        const name = DB.COMMODITIES.find(c => c.id === cargo.goodId)?.name || 'ITEM';
+                        return `${cargo.quantity}x ${name.toUpperCase()}`;
+                    }).join('<br>');
+                    
+                    flexColumns.push(`
+                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
+                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">INBOUND</div>
+                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${grantedItems}</div>
+                        </div>
+                    `);
+                }
+
+                // 2. DIRECTIVE (Objectives)
                 if (mission.objectives && mission.objectives.length > 0) {
-                    const objectivesHtml = '<h6 class="font-bold text-sm uppercase tracking-widest text-gray-400 text-center">OBJECTIVES:</h6><ul class="list-disc list-inside text-gray-300">' + mission.objectives.map(obj => `<li>${this._getObjectiveDescription(obj)}</li>`).join('') + '</ul>';
-                    objectivesEl.innerHTML = objectivesHtml;
+                    const obsList = mission.objectives.map(obj => this._getObjectiveDescription(obj).toUpperCase()).join('<br>');
+                    flexColumns.push(`
+                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
+                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">DIRECTIVE</div>
+                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${obsList}</div>
+                        </div>
+                    `);
+                }
+
+                // 3. PAYOUT (Rewards)
+                if (mission.rewards && mission.rewards.length > 0) {
+                    const rewsList = mission.rewards.map(r => {
+                        if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                        if(r.type.toLowerCase() === 'upgrade') {
+                            const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                            return upgName.toUpperCase();
+                        }
+                        return r.type.toUpperCase();
+                    }).join('<br>');
+                    flexColumns.push(`
+                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
+                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">PAYOUT</div>
+                            <div class="text-lg text-yellow-400 tracking-wide leading-tight">${rewsList}</div>
+                        </div>
+                    `);
+                }
+
+                if (flexColumns.length > 0) {
+                    objectivesEl.innerHTML = `
+                        <div class="w-full flex flex-row justify-center items-stretch divide-x divide-gray-700/60 bg-gray-900/50 border border-gray-700/60 rounded-sm my-4 shadow-inner">
+                            ${flexColumns.join('')}
+                        </div>
+                    `;
                     objectivesEl.style.display = 'block';
                 } else {
                     objectivesEl.innerHTML = '';
                     objectivesEl.style.display = 'none';
                 }
 
-                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-                if (mission.rewards && mission.rewards.length > 0) {
-                     const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        return r.type.toUpperCase();
-                     }).join(', ');
-                     rewardsEl.innerHTML = `<p class="font-roboto-mono text-sm text-gray-400 mb-1">REWARDS:</p><p class="font-orbitron text-xl text-yellow-300">${rewardsHtml}</p>`;
-                    rewardsEl.style.display = 'block';
-                } else {
-                    rewardsEl.innerHTML = '';
-                    rewardsEl.style.display = 'none';
+                // --- APPLY SCROLLABILITY WRAPPER ---
+                const descEl = modal.querySelector('#mission-modal-description');
+                if (descEl && objectivesEl && !modal.querySelector('.mission-scroll-wrapper')) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
+                    wrapper.style.maxHeight = '264px'; // 20% taller max-height
+                    
+                    descEl.parentNode.insertBefore(wrapper, descEl);
+                    wrapper.appendChild(descEl);
+                    wrapper.appendChild(objectivesEl);
                 }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
+                const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
+                
                 if (isActive) {
                     const isAbandonable = mission.isAbandonable !== false;
                     let navButtonHtml = '';
                     
-                    if (isCompletable && !isAtCorrectLocation) {
-                        navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-3 btn-pulse-green">NAVIGATE >></button>`;
+                    if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any') {
+                        navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${navButtonHtml}`;
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${navButtonHtml}`;
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
-                     buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
+                     buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                 }
 
                 const navBtn = modal.querySelector('#mission-navigate-btn');
@@ -319,7 +379,12 @@ export class UIMissionControl {
     _getObjectiveDescription(obj) {
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             return `Deliver ${obj.quantity || 1}x ${name}`;
+             let text = `Deliver ${obj.quantity || 1}x ${name}`;
+             if (obj.target) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
+                 text += ` to ${locName}`;
+             }
+             return text;
         }
         if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
@@ -330,6 +395,7 @@ export class UIMissionControl {
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
+        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'Clear All Debt';
         if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
              return `Amass ${formatCredits(obj.value)} Credits`;
         }
@@ -350,6 +416,8 @@ export class UIMissionControl {
         const gameState = this.manager.lastKnownState;
         
         let rewardVolume = 0;
+        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade');
+
         if (mission.rewards) {
             mission.rewards.forEach(r => {
                 if (r.type === 'item' || r.type === 'cargo' || r.target) {
@@ -423,21 +491,50 @@ export class UIMissionControl {
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
                if (mission.rewards && mission.rewards.length > 0) {
                    const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                        if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                        if(r.type.toLowerCase() === 'upgrade') {
+                            const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                            return upgName.toUpperCase();
+                        }
                        return r.type.toUpperCase();
-                   }).join(', ');
+                   }).join('<br>');
+                   
                    rewardsEl.style.display = 'block';
+                   // Convert Completion Rewards to use the Telemetry HUD layout
+                   rewardsEl.innerHTML = `
+                        <div class="w-full flex flex-row justify-center items-stretch bg-gray-900/50 border border-gray-700/60 rounded-sm my-4 shadow-inner">
+                            <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
+                                <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">PAYOUT SECURED</div>
+                                <div class="text-lg text-yellow-400 tracking-wide leading-tight">${rewardsHtml}</div>
+                            </div>
+                        </div>
+                   `;
                } else {
                    rewardsEl.innerHTML = '';
                    rewardsEl.style.display = 'none';
                }
 
+               // --- APPLY SCROLLABILITY WRAPPER ---
+               const descEl = modal.querySelector('#mission-modal-description');
+               if (descEl && rewardsEl && !modal.querySelector('.mission-scroll-wrapper')) {
+                    const wrapper = document.createElement('div');
+                    wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
+                    wrapper.style.maxHeight = '264px'; // 20% taller max-height
+                    
+                    descEl.parentNode.insertBefore(wrapper, descEl);
+                    wrapper.appendChild(descEl);
+                    if(objectivesEl) wrapper.appendChild(objectivesEl);
+                    wrapper.appendChild(rewardsEl);
+               }
+
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
                buttonsEl.innerHTML = '';
                
+               const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
                const completeBtn = document.createElement('button');
                completeBtn.className = hasSpace ? 'btn w-full mission-action-btn host-btn-pulse' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
                completeBtn.textContent = hasSpace ? mission.completion.buttonText : 'INSUFFICIENT CARGO SPACE';
+               completeBtn.style.cssText = btnStyles;
                completeBtn.disabled = !hasSpace;
 
                completeBtn.onclick = () => {
@@ -468,7 +565,7 @@ export class UIMissionControl {
                        card.style.transform = 'scale(0.95)';
                    }
 
-                   setTimeout(() => {
+                   setTimeout(async () => {
                        modal.classList.add('hidden');
                        modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
                        delete modal.dataset.theme;
@@ -479,48 +576,59 @@ export class UIMissionControl {
                            this.manager.modalEngine.processModalQueue();
                        }
 
-                       const finalizeCompletion = () => {
-                           if (stickyBarEl) {
-                               stickyBarEl.style.transition = 'none';
-                               stickyBarEl.style.filter = 'none';
-                               stickyBarEl.style.webkitFilter = 'none';
+                       if (stickyBarEl) {
+                           stickyBarEl.style.transition = 'none';
+                           stickyBarEl.style.filter = 'none';
+                           stickyBarEl.style.webkitFilter = 'none';
+                       }
+
+                       const uiManager = this.manager;
+                       const originalRender = uiManager.render;
+                       
+                       uiManager.render = function(...args) {
+                           const newState = args[0] || uiManager.lastKnownState;
+                           uiManager.lastKnownState = newState;
+
+                           if (uiManager.missionControl) {
+                               uiManager.missionControl.renderStickyBar(newState);
                            }
 
-                           const uiManager = this.manager;
-                           const originalRender = uiManager.render;
-                           
-                           uiManager.render = function(...args) {
-                               const newState = args[0] || uiManager.lastKnownState;
-                               uiManager.lastKnownState = newState;
-
-                               if (uiManager.missionControl) {
-                                   uiManager.missionControl.renderStickyBar(newState);
+                           const activeTrackedId = newState.missions.trackedMissionId;
+                           document.querySelectorAll('.mission-track-star').forEach(star => {
+                               if (star.dataset.missionId === activeTrackedId) {
+                                   star.classList.add('active');
+                               } else {
+                                   star.classList.remove('active');
                                }
+                           });
+                       };
 
-                               const activeTrackedId = newState.missions.trackedMissionId;
-                               document.querySelectorAll('.mission-track-star').forEach(star => {
-                                   if (star.dataset.missionId === activeTrackedId) {
-                                       star.classList.add('active');
-                                   } else {
-                                       star.classList.remove('active');
-                                   }
-                               });
-                           };
+                       if (this.manager.simulationService) {
+                           this.manager.simulationService.missionService.completeMission(mission.id);
+                       }
+                       
+                       uiManager.render = originalRender;
+                       closeHandler();
 
-                           if (this.manager.simulationService) {
-                               this.manager.simulationService.missionService.completeMission(mission.id);
-                           }
+                       if (hasUpgradeReward && this.manager.simulationService) {
+                           // Navigate to Hangar Screen to watch the sequence play out
+                           this.manager.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                           uiManager.lastKnownState.uiState.hangarShipyardToggleState = 'hangar';
                            
-                           uiManager.render = originalRender;
-                           closeHandler();
-
+                           const activeShipId = uiManager.lastKnownState.player.activeShipId;
+                           const shipIndex = uiManager.lastKnownState.player.ownedShipIds.indexOf(activeShipId);
+                           uiManager.lastKnownState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                           
+                           uiManager.render(uiManager.lastKnownState);
+                           await uiManager.orchestrateUpgradeSequence(activeShipId);
+                       } else {
                            // --- FORCE RENDER ---
                            // Ensure the screen formally updates now that it is un-hijacked so 
                            // we can catch empty logs and the automatic Terminal switch
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
                            }
-                       };
+                       }
 
                        if (card) {
                            const height = card.offsetHeight;
@@ -545,10 +653,7 @@ export class UIMissionControl {
 
                            collapseAnim.onfinish = () => {
                                card.remove(); 
-                               finalizeCompletion();
                            };
-                       } else {
-                           finalizeCompletion();
                        }
                    }, 1500); // Trigger after the 1.5s fade finishes
                };

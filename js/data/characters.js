@@ -1,3 +1,4 @@
+// js/data/characters.js
 /**
  * Character Database & Portrait Sprite Registry
  * This file establishes the core character profiles and the mapped coordinates 
@@ -207,7 +208,9 @@ const CharacterDatabase = {
     "Audita": { portraitId: "Audita_1", name: "Audita", faction: "Unknown", bio: "" },
     "Vrael": { portraitId: "Vrael_1", name: "Vrael", faction: "Unknown", bio: "" },
     "Kintsugi": { portraitId: "Kintsugi_1", name: "Kintsugi", faction: "Unknown", bio: "" },
-    "Arbiter": { portraitId: "Arbiter_1", name: "Arbiter", faction: "Unknown", bio: "" }
+    "Arbiter": { portraitId: "Arbiter_1", name: "Arbiter", faction: "Unknown", bio: "" },
+    "Vance": { portraitId: "Dockworker_1", name: "Vance", faction: "Independent", bio: "" },
+    "Aegis-7": { portraitId: "AI_4", name: "Aegis-7", faction: "Corporate", bio: "" }
 };
 
 /**

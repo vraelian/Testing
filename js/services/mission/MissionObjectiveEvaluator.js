@@ -23,7 +23,7 @@ export class MissionObjectiveEvaluator {
 
         let isMet = false;
         
-        const comparator = objective.comparator || '>='; 
+        let comparator = objective.comparator || '>='; 
 
         // Helper to get ship stats (Effective > Base)
         const getShipStats = (shipId) => {
@@ -53,6 +53,15 @@ export class MissionObjectiveEvaluator {
             case 'have_credits':
             case 'WEALTH_CHECK':
                 current = gameState.player.credits;
+                break;
+                
+            case 'have_debt':
+            case 'HAVE_DEBT':
+                current = gameState.player.debt;
+                // Force comparator to <= if we are targeting 0 debt and none is provided
+                if (target === 0 && !objective.comparator) {
+                    comparator = '<=';
+                }
                 break;
 
             // --- UI / NAVIGATION CHECKS ---

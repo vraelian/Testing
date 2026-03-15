@@ -708,6 +708,12 @@ ${logHistory}
                     this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
                 }
             }},
+            forceAddTerminalMission: { name: 'Force to Terminal', type: 'button', handler: () => {
+                if (this.debugState.selectedMission && this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.forceToTerminal(this.debugState.selectedMission);
+                    this.uiManager.createFloatingText('Mission Added to Terminal', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                }
+            }},
             forceAcceptMission: { name: 'Force Accept Mission', type: 'button', handler: () => {
                 if (this.debugState.selectedMission) {
                     this.simulationService.missionService.acceptMission(this.debugState.selectedMission, true); 
@@ -997,17 +1003,17 @@ ${logHistory}
             triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
         }
         
-        const missionOptions = Object.values(DB.MISSIONS)
-            .sort((a, b) => {
-                const aIsDebug = a.id.startsWith('debug_');
-                const bIsDebug = b.id.startsWith('debug_');
-                if (aIsDebug && !bIsDebug) return -1;
-                if (!aIsDebug && bIsDebug) return 1;
-                return a.name.localeCompare(b.name);
-            })
-            .reduce((acc, m) => ({...acc, [m.name]: m.id}), {});
+        const sortedMissions = Object.values(DB.MISSIONS).map(m => {
+            const match = m.id.match(/\d+$/);
+            const prefix = match ? `${match[0].padStart(2, '0')} ` : '';
+            return { label: `${prefix}${m.name}`, id: m.id };
+        }).sort((a, b) => a.label.localeCompare(b.label));
+
+        const missionOptions = {};
+        sortedMissions.forEach(m => missionOptions[m.label] = m.id);
 
         triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+        triggerFolder.add(this.actions.forceAddTerminalMission, 'handler').name('Force to Terminal');
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 

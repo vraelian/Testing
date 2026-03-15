@@ -605,7 +605,8 @@ export class SimulationService {
         if (!rewards || rewards.length === 0) return;
 
         rewards.forEach(reward => {
-            switch (reward.type) {
+            const rewardType = reward.type.toLowerCase();
+            switch (rewardType) {
                 case 'credits':
                     this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
                     this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
@@ -619,13 +620,13 @@ export class SimulationService {
                         inventory[reward.goodId].quantity += reward.quantity;
                     }
                     break;
-                case 'UNLOCK_LOCATION':
+                case 'unlock_location':
                     if (!this.gameState.player.unlockedLocationIds.includes(reward.target)) {
                         this.gameState.player.unlockedLocationIds.push(reward.target);
                         this.logger.info.player(this.gameState.day, 'UNLOCK', `Unlocked location: ${reward.target}`);
                     }
                     break;
-                case 'UNLOCK_TIER':
+                case 'unlock_tier':
                     const newTier = Math.max(this.gameState.player.revealedTier, reward.value);
                     if (newTier > this.gameState.player.revealedTier) {
                         this.gameState.player.revealedTier = newTier;
@@ -640,7 +641,7 @@ export class SimulationService {
                         this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license ? license.name : reward.licenseId}.`);
                     }
                     break;
-                case 'SHIP':
+                case 'ship':
                     const targetShipId = reward.target;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
                         this.gameState.player.ownedShipIds.push(targetShipId);
@@ -648,31 +649,35 @@ export class SimulationService {
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
                     }
                     break;
-                case 'TELEPORT':
+                case 'teleport':
                     this.gameState.currentLocationId = reward.target;
                     this.gameState.pendingTravel = null; 
                     this.logger.info.player(this.gameState.day, 'TELEPORT', `Teleported to ${reward.target}`);
                     break;
-                case 'REPAIR':
+                case 'repair':
                     const activeShip = this.gameState.player.activeShipId;
                     if (this.gameState.player.shipStates[activeShip]) {
                         this.gameState.player.shipStates[activeShip].health = DB.SHIPS[activeShip].maxHealth;
                     }
                     break;
-                case 'REFUEL':
+                case 'refuel':
                     const currentShip = this.gameState.player.activeShipId;
                     if (this.gameState.player.shipStates[currentShip]) {
                         this.gameState.player.shipStates[currentShip].fuel = DB.SHIPS[currentShip].maxFuel;
                     }
                     break;
-                case 'UPGRADE':
+                case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState && shipState.upgrades) {
-                         shipState.upgrades.push(reward.target);
-                         this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target}`);
+                         if (shipState.upgrades.length < 3) {
+                             shipState.upgrades.push(reward.target || reward.id);
+                         } else {
+                             shipState.upgrades[2] = reward.target || reward.id; // overwrite last if full, to guarantee receipt
+                         }
+                         this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target || reward.id}`);
                      }
                      break;
-                case 'OFFICER':
+                case 'officer':
                     const officerId = reward.officerId;
                     const officer = OFFICERS[officerId];
                     if (officer && !this.gameState.solStation.roster.includes(officerId)) {
