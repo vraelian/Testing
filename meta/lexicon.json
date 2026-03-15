@@ -12,7 +12,10 @@
       "modular_ship_upgrades",
       "station_quirks",
       "sol_station_management",
-      "fleet_trading"
+      "fleet_trading",
+      "bankruptcy",
+      "system_states",
+      "synthesis_pipeline"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
@@ -47,20 +50,27 @@
     "Micro-Pagination": "Navigation method within Help Modals utilizing horizontal swipe gestures (translating CSS X-axis) rather than vertical scrolling to prevent mobile gesture conflicts.",
     "Global_Context_Anchor": "A persistent '?' icon overlaid on the viewport that, when tapped, queries the GameState to instantiate the relevant Help Modal.",
     "Universal_Toast_System": "A scalable, non-blocking notification queue that triggers strictly upon location arrival, conveying critical system, financial, intel, and mission data. Capped at a maximum of two toasts per arrival.",
-    "Opt-In_Pulse": "A visual cue applied to the global help anchor to signal unread contextual information without intercepting the player's UI focus.",
     "Geometric_Pricing": "The economic strategy of applying extreme, exponential price stratification between commodity tiers to enforce packing peanut volume constraints.",
     "Tier-Scaled_Upkeep": "The operational philosophy where service costs (fuel, repair) scale exponentially based on a vessel's base price and class, acting as the primary endgame wealth tax.",
-    "Volumetric_Sink": "[OBSOLETE] A legacy balance mechanic that relied on massively inflated physical stats (>35,000 HP/Fuel) to drain wealth. Replaced by Tier-Scaled Upkeep to preserve UI legibility and stat consequence."
+    "Volumetric_Sink": "[OBSOLETE] A legacy balance mechanic that relied on massively inflated physical stats (>35,000 HP/Fuel) to drain wealth. Replaced by Tier-Scaled Upkeep to preserve UI legibility and stat consequence.",
+    "Bankruptcy": "A financial failure state triggered when debt overwhelmingly exceeds liquid assets and projected income, leading to severe penalties, restricted actions, or repo events.",
+    "Syndicate_Debt": "High-risk loans acquired from black market or syndicate sources, often carrying steep immediate consequences for default, such as Repo Events.",
+    "Guild_Debt": "Standard, regulated loans acquired from the merchant guild. Features strict long-term garnishment rules but standard interest.",
+    "Repo_Event": "A punitive event triggered by defaulting on Syndicate Debt, where assets or ship upgrades are forcibly repossessed.",
+    "System_States": "Procedurally generated macroeconomic conditions (Economic Weather) that apply temporary, system-wide modifiers to commodity prices, availability, and event generation.",
+    "Synthesis_Pipeline": "An advanced operational pipeline at the Sol Station that mathematically converts standard commodities into high-value Antimatter.",
+    "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs."
   },
   "service_summaries": {
     "SolStationService": {
-      "description": "Manages the logic for the Sol Station endgame engine. Handles Level 1-50 progression, deferred universe calculations, and JIT commits.",
+      "description": "Manages the logic for the Sol Station endgame engine. Handles Level 1-50 progression, deferred universe calculations, Synthesis Pipeline math, and JIT commits.",
       "dependencies": [
         "GameState",
         "Logger"
       ],
       "key_functions": {
         "processTick": "Calculates daily decay and output generation utilizing the deferred state buffer.",
+        "processSynthesis": "Executes the Synthesis Pipeline math to convert cache resources into Antimatter.",
         "setMode": "Switches the station's operating mode (Stability/Commerce/Production).",
         "donateToCache": "Transfers cargo from player ship to station maintenance caches.",
         "calculateEntropy": "Determines the current decay multiplier."
@@ -89,7 +99,8 @@
         "uiState",
         "intelMarket",
         "activeIntelDeal",
-        "solStation"
+        "solStation",
+        "systemStates"
       ]
     },
     "SimulationService": {
@@ -108,7 +119,9 @@
         "IntelService",
         "SolStationService",
         "js/services/ui/AnimationService.js",
-        "ToastService"
+        "ToastService",
+        "SystemStateService",
+        "BankruptcyService"
       ],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
@@ -221,7 +234,9 @@
         "SimulationService (Facade)",
         "js/data/age_events.js",
         "IntelService",
-        "SolStationService"
+        "SolStationService",
+        "SystemStateService",
+        "BankruptcyService"
       ],
       "key_functions": {
         "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
@@ -234,26 +249,62 @@
         "market.prices",
         "market.inventory",
         "activeIntelDeal",
-        "solStation"
+        "solStation",
+        "systemStates"
       ]
     },
     "MarketService": {
-      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides, apply Station Quirks, and apply player-specific `applyModifiers` (e.g. Signal Hacker).",
+      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides, apply Station Quirks, System States, and apply player-specific `applyModifiers` (e.g. Signal Hacker).",
       "dependencies": [
         "GameState",
-        "IntelService"
+        "IntelService",
+        "SystemStateService"
       ],
       "key_functions": {
         "evolveMarketPrices": "Simulates daily price changes for all commodities.",
         "replenishMarketInventory": "Handles the weekly restocking of all markets.",
         "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
         "_updateShipyardStock": "Updates the available ships for sale at each location.",
-        "getPrice": "Gets the price, checking for Intel overrides, Station Quirks, and Upgrade modifiers."
+        "getPrice": "Gets the price, checking for Intel overrides, Station Quirks, System States, and Upgrade modifiers."
       },
       "mutates_state": [
         "market.prices",
         "market.inventory",
         "market.shipyardStock"
+      ]
+    },
+    "BankruptcyService": {
+      "description": "Evaluates financial health, manages distinct debt pools (Guild vs Syndicate), and executes punitive actions like Repo Events or total bankruptcy declarations.",
+      "dependencies": [
+        "GameState",
+        "PlayerActionService",
+        "SimulationService",
+        "Logger"
+      ],
+      "key_functions": {
+        "evaluateSolvency": "Checks player debt against liquid wealth.",
+        "triggerRepo": "Forces the surrender of ship assets to clear syndicate debt."
+      },
+      "mutates_state": [
+        "player.debt",
+        "player.credits",
+        "player.shipStates",
+        "isGameOver"
+      ]
+    },
+    "SystemStateService": {
+      "description": "Manages procedural Economic Weather and systemic states across the solar system, modifying baseline market generation.",
+      "dependencies": [
+        "GameState",
+        "TimeService",
+        "Logger"
+      ],
+      "key_functions": {
+        "rollWeather": "Generates new macroeconomic conditions.",
+        "applyStateModifiers": "Modifies base market calculations based on current weather."
+      },
+      "mutates_state": [
+        "systemStates"
       ]
     },
     "RandomEventService": {
@@ -350,7 +401,7 @@
       "mutates_state": []
     },
     "UIModalEngine": {
-      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic.",
+      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads.",
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "queueModal": "Adds a modal to the queue.",
@@ -429,7 +480,7 @@
       "mutates_state": []
     },
     "SaveStorageService": {
-      "description": "Manages game saves using IndexedDB with a bulletproof iOS Native Bridge fallback. Implements a dual-write architecture for indestructible persistence.",
+      "description": "Manages game saves using IndexedDB with a bulletproof iOS Native Bridge fallback. Implements a dual-write architecture, and file I/O operations for Import/Export functionality.",
       "dependencies": [
         "IndexedDB",
         "WebKit Message Handlers"
@@ -438,7 +489,9 @@
         "saveGame": "Saves payload to IDB and native iOS.",
         "loadGame": "Loads save, prioritizing native iOS fallback and healing IDB.",
         "getAllSaveMetadata": "Retrieves and merges save metadata for the splash screen.",
-        "deleteGame": "Removes save from both IDB and native iOS."
+        "deleteGame": "Removes save from both IDB and native iOS.",
+        "exportSave": "Serializes the GameState for external download.",
+        "importSave": "Parses an uploaded save file and hydrates the GameState."
       },
       "mutates_state": []
     },
@@ -1089,6 +1142,22 @@
       "path": "./js/services/ToastService.js",
       "role": "LOGIC_SERVICE",
       "description": "Logic layer for managing the Universal Toast notification queue and thresholds."
+    },
+    "F107": {
+      "path": "./js/services/BankruptcyService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F108": {
+      "path": "./js/services/world/SystemStateService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F109": {
+      "path": "./js/data/systemStateRegistry.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F110": {
+      "path": "./js/data/solProgressionRegistry.js",
+      "role": "DATA_DEFINITION"
     }
   }
 }

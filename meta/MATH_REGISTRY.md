@@ -1,7 +1,7 @@
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
-Last Edit: 3/10/26, ver. Balance v2
+Last Edit: 3/14/26, ver. Balance v2
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -30,10 +30,19 @@ Result: If Ratio is 0.5 (Half stock), Price increases by 25%.
 
 1.4 Final Price Calculation
 JavaScript
-FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation
+FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation * SystemStateModifier
 RandomFluctuation: ±5-10% daily noise.
 MEAN_REVERSION_STRENGTH: 0.025 (2.5% daily pull toward TargetPrice).
 MARKET_PRESSURE_DECAY: 0.65 (Decay rate for player-driven availability margins).
+SystemStateModifier: Procedural multiplier from active Economic Weather.
+
+1.5 Profit Projection Calculation
+Determines the expected return on cargo inventory before executing a trade, accounting for dynamic fleet overhead.
+
+JavaScript
+ExpectedRevenue = CurrentMarketSellPrice * TotalFleetQuantity
+TotalCostBasis = AverageFleetCostPerUnit * TotalFleetQuantity
+EstimatedProfit = ExpectedRevenue - TotalCostBasis - ProjectedConvoyTax
 
 2. Travel, Fuel & Entropy Formulas
 2.1 Fuel Consumption (Burn)
@@ -42,7 +51,6 @@ How much fuel is removed from the tank per trip.
 JavaScript
 FuelBurn = DistanceAU * BASE_FUEL_BURN * (1 + ShipBurnMod + EngineUpgradeMod)
 BASE_FUEL_BURN: Defined per ship class.
-
 EngineUpgradeMod: Typically positive (increases burn) for speed upgrades (e.g., +0.20).
 
 2.2 Travel Time
@@ -116,7 +124,7 @@ DEPRECIATION_FACTOR: 0.75 (Player loses 25% of value).
 Events are chosen based on a "lottery ticket" system.
 
 JavaScript
-EventChance = BaseWeight + (PlayerTags * TagMultiplier)
+EventChance = (BaseWeight + (PlayerTags * TagMultiplier)) * SystemStateEventModifier
 The system sums the total weight of all valid events.
 A random number 0..TotalWeight is rolled.
 The selector iterates through events until the running sum exceeds the roll.
@@ -164,3 +172,25 @@ Output yields during 'Commerce' and 'Production' modes are directly scaled by th
 JavaScript
 DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults) + Sum(LevelCreditMults)) * EfficiencyCurve
 DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults) + Sum(LevelAMMults)) * EfficiencyCurve
+
+5.4 Synthesis Pipeline Conversion
+The mathematical translation of standard commodities into Antimatter via the active processing pipeline.
+
+JavaScript
+SynthesisYield = (InputCommodityVolume * CommodityTierValueMultiplier) * StationEfficiencyCurve
+PipelineDuration = BaseSynthesisDays * Math.max(0.2, (1 - OfficerSynthesisSpeedBuffs))
+
+6. Debt & Bankruptcy Formulas
+6.1 Guild vs. Syndicate Interest Rates
+Loans utilize divergent mathematical compounding rules based on the originating entity.
+
+JavaScript
+GuildInterest = Principal * 0.02 // (2% standard 30-day term)
+SyndicateInterest = Principal * 0.07 // (7% predatory 15-day term)
+
+6.2 Bankruptcy Insolvency Threshold
+The debt-to-asset ratio evaluated daily to trigger repo events or game-over states.
+
+JavaScript
+TotalLiquidity = PlayerCredits + (TotalFleetResaleValue * 0.5)
+IsInsolvent = TotalDebt > (TotalLiquidity * 1.5)
