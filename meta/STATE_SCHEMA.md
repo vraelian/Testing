@@ -16,6 +16,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `introSequenceActive` | Boolean | Flag for the initial prologue sequence. |
 | `player` | Object | **(See Section 2)** All player-specific data. |
 | `market` | Object | **(See Section 3)** All economic data. |
+| `systemStates` | Object | **(See Section 10)** System-wide macroeconomic conditions (Economic Weather). |
 | `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
 | `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
@@ -50,9 +51,8 @@ Contains all progression, assets, and statistics for the user.
 | `playerAge` | Number | Current age (starts at 24). |
 | `lastBirthdayYear` | Number | Year of the last processed birthday event. |
 | `credits` | Number | Current currency balance. |
-| `debt` | Number | Outstanding loan principal. |
-| `monthlyInterestAmount` | Number | Amount of interest added every 30 days. |
-| `loanStartDate` | Number | Day the loan was taken (for garnishment logic). |
+| `debt` | Object | Structured debt ledgers for 'guild' and 'syndicate' balances, tracking principal, interest rates, and loan start/due dates. |
+| `bankruptcy` | Object | Flags and trackers for insolvency status, grace periods, and active Repo Events. |
 | `revealedTier` | Number | Highest commodity tier visible (1-7). |
 | `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
 | **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
@@ -164,6 +164,7 @@ Manages the Endgame Engine mechanics.
 | `engineering` | Object | State data for the engineering interface, including active systemic upgrades and layout configurations. |
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
+| `synthesisPipeline` | Object | Pipeline metrics for conversion, including `{ active, inputCommodities, targetAntimatter, completionDay }`. |
 | `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed entropy and yields before JIT commits. |
 
 ---
@@ -200,3 +201,15 @@ When the game is saved via `SaveStorageService`, the core `GameState` is wrapped
 |   `locationId` | String | The player's location. |
 |   `timestamp` | Number | Standard UNIX epoch timestamp of the save event. |
 | `...payload` | Object | The full, stringified (or direct, depending on bridge) `GameState` root object unpacked into the save object. |
+
+---
+
+## 10. System States (`state.systemStates`)
+
+Manages procedural Economic Weather modifiers impacting global behavior.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `activeWeatherId` | String | ID of the currently active macroeconomic modifier. |
+| `expirationDay` | Number | The game day the current weather naturally ends. |
+| `weatherModifiers` | Object | Current active stat weights affecting global pricing, event rates, and availability. |

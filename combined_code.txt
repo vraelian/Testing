@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.76</title>
+    <title>Orbital Trading 36.78</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.76 - End-Game Polish Update</p>
+            <p>Version 36.78 - Market Polish Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -41262,6 +41262,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [36.78] - 2026-3-14
 -  commodity card polish and animations
 -  updated profit projection logic
+-  updated meta files
 
 # [36.76] - 2026-3-13
 -  added officer portraits
@@ -42349,7 +42350,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
-Last Edit: 3/10/26, ver. Balance v2
+Last Edit: 3/14/26, ver. Balance v2
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -42378,10 +42379,19 @@ Result: If Ratio is 0.5 (Half stock), Price increases by 25%.
 
 1.4 Final Price Calculation
 JavaScript
-FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation
+FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation * SystemStateModifier
 RandomFluctuation: ±5-10% daily noise.
 MEAN_REVERSION_STRENGTH: 0.025 (2.5% daily pull toward TargetPrice).
 MARKET_PRESSURE_DECAY: 0.65 (Decay rate for player-driven availability margins).
+SystemStateModifier: Procedural multiplier from active Economic Weather.
+
+1.5 Profit Projection Calculation
+Determines the expected return on cargo inventory before executing a trade, accounting for dynamic fleet overhead.
+
+JavaScript
+ExpectedRevenue = CurrentMarketSellPrice * TotalFleetQuantity
+TotalCostBasis = AverageFleetCostPerUnit * TotalFleetQuantity
+EstimatedProfit = ExpectedRevenue - TotalCostBasis - ProjectedConvoyTax
 
 2. Travel, Fuel & Entropy Formulas
 2.1 Fuel Consumption (Burn)
@@ -42390,7 +42400,6 @@ How much fuel is removed from the tank per trip.
 JavaScript
 FuelBurn = DistanceAU * BASE_FUEL_BURN * (1 + ShipBurnMod + EngineUpgradeMod)
 BASE_FUEL_BURN: Defined per ship class.
-
 EngineUpgradeMod: Typically positive (increases burn) for speed upgrades (e.g., +0.20).
 
 2.2 Travel Time
@@ -42464,7 +42473,7 @@ DEPRECIATION_FACTOR: 0.75 (Player loses 25% of value).
 Events are chosen based on a "lottery ticket" system.
 
 JavaScript
-EventChance = BaseWeight + (PlayerTags * TagMultiplier)
+EventChance = (BaseWeight + (PlayerTags * TagMultiplier)) * SystemStateEventModifier
 The system sums the total weight of all valid events.
 A random number 0..TotalWeight is rolled.
 The selector iterates through events until the running sum exceeds the roll.
@@ -42512,6 +42521,28 @@ Output yields during 'Commerce' and 'Production' modes are directly scaled by th
 JavaScript
 DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults) + Sum(LevelCreditMults)) * EfficiencyCurve
 DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults) + Sum(LevelAMMults)) * EfficiencyCurve
+
+5.4 Synthesis Pipeline Conversion
+The mathematical translation of standard commodities into Antimatter via the active processing pipeline.
+
+JavaScript
+SynthesisYield = (InputCommodityVolume * CommodityTierValueMultiplier) * StationEfficiencyCurve
+PipelineDuration = BaseSynthesisDays * Math.max(0.2, (1 - OfficerSynthesisSpeedBuffs))
+
+6. Debt & Bankruptcy Formulas
+6.1 Guild vs. Syndicate Interest Rates
+Loans utilize divergent mathematical compounding rules based on the originating entity.
+
+JavaScript
+GuildInterest = Principal * 0.02 // (2% standard 30-day term)
+SyndicateInterest = Principal * 0.07 // (7% predatory 15-day term)
+
+6.2 Bankruptcy Insolvency Threshold
+The debt-to-asset ratio evaluated daily to trigger repo events or game-over states.
+
+JavaScript
+TotalLiquidity = PlayerCredits + (TotalFleetResaleValue * 0.5)
+IsInsolvent = TotalDebt > (TotalLiquidity * 1.5)
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
@@ -42553,6 +42584,7 @@ Help Anchor800Global Contextual Help '?' Button.
 Modal Mask900The generic modal-overlay background.
 Modal1000Active Modal Dialogs, Help Modals.
 Toast2000Notifications, Floating Battle Text.
+Cinematic Skip2500Floating skip buttons during overlays.
 Cursor9999Custom hardware cursors (if applicable).
 
 2. Component Blueprints
@@ -42574,7 +42606,7 @@ HTML
     </div>
     
     <div class="card-actions">
-        <button class="btn btn-secondary" data-action="...">Action</button>
+        <button class="btn btn-secondary" type="button" data-action="...">Action</button>
     </div>
 </div>
 
@@ -42687,6 +42719,36 @@ HTML
         </div>
 </div>
 
+2.10 Officer Roster Grid (.officer-grid)
+Used within the Sol Station Sub-view to display recruitable/active officers in a dense CSS grid utilizing the global sprite sheet.
+HTML
+<div class="officer-grid">
+    <button class="officer-cell" type="button" data-action="select-officer" data-id="Audita_1">
+        <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
+        <div class="officer-nameplate">AUDITA</div>
+    </button>
+</div>
+
+2.11 Options & Save Management Modal (.options-modal)
+A specialized modal layout for the systems menu incorporating destructive action warnings and file I/O triggers.
+HTML
+<div class="modal options-modal">
+    <div class="modal-header"><h2>SYSTEM OPTIONS</h2></div>
+    <div class="modal-content flex-col">
+        <button class="btn btn-secondary" type="button" data-action="export-save">EXPORT SAVE</button>
+        <button class="btn btn-secondary" type="button" data-action="trigger-import">IMPORT SAVE</button>
+        <div class="spacer"></div>
+        <button class="btn btn-danger" type="button" data-action="delete-save">WIPE DATA</button>
+    </div>
+</div>
+
+2.12 Cinematic Skip Interface (.cinematic-skip-container)
+A floating action button overlaid on top of blocking animations (Intros, Ship Upgrades) allowing the player to safely bypass the visual sequence while ensuring the underlying state promises resolve correctly.
+HTML
+<div class="cinematic-skip-container">
+    <button class="btn btn-skip" type="button" data-action="skip-cinematic">SKIP >></button>
+</div>
+
 3. CSS Utilities
 .hidden: display: none !important. Used for toggling visibility.
 .text-center: text-align: center.
@@ -42702,57 +42764,41 @@ HTML
 // meta/CODING_STANDARDS.md
 
 Orbital Trading: Coding Standards & Protocols
+
 1. AI Implementation Protocols
 These rules govern how the AI Assistant (Gemini) must interact with the codebase.
 
 1.1 The "Append/Merge" Strategy
 Constraint: Never provide truncated files.
-
 Rule: When updating a file, provide the Full, Complete, Executable file content.
-
 Reasoning: Partial updates (e.g., "// ... existing code ...") lead to context loss and copy-paste errors by the user.
 
 1.2 The "Virtual Workbench"
 Methodology: Before generating code, mentally identify the specific "blocks" of logic affected.
-
 Process:
-
 Parse the existing file from the provided context.
-
 Apply the changes internally.
-
 Verify the integrity of the closing braces } and parentheses ).
-
 Output the final result.
 
 1.3 Strict "Zero-Inference"
 Rule: Do not guess at user intent regarding game design changes.
-
 Protocol: If a request is ambiguous, ask clarifying questions before writing code.
-
 Logic: Code changes must be "Surgical" and "Intentional."
 
 2. JavaScript Architecture
 2.1 Service-Oriented Pattern
 Services are Singletons: Logic services (e.g., MarketService) are instantiated once by SimulationService.
-
 State Separation: Services contain Logic, GameState contains Data. Services should not hold state properties unless they are ephemeral (e.g., lastFrameTime).
-
 Facade Access:
-
 SimulationService is the entry point for Game Logic.
-
 UIManager is the entry point for Rendering.
 
 2.2 Naming Conventions
 Classes: PascalCase (e.g., PlayerActionService).
-
 Methods: camelCase (e.g., calculateFuelCost).
-
 Private Methods: Prefix with underscore _ (e.g., _updateInternalState).
-
 Constants: UPPER_SNAKE_CASE (e.g., MAX_INVENTORY_SLOTS).
-
 DOM Elements: Variables holding DOM refs should ideally be cached in this.cache or named clearly (e.g., submitBtn).
 
 2.3 JSDoc Requirements
@@ -42764,15 +42810,12 @@ JavaScript
  * @param {Type} paramName - Description of the parameter.
  * @returns {Type} Description of the return value.
  */
+
 2.4 Logging
 Prohibited: console.log, console.warn, console.error.
-
 Required: Use the LoggingService (injected as logger).
-
 this.logger.info(...)
-
 this.logger.warn(...)
-
 this.logger.error(...)
 
 3. Forbidden Patterns
@@ -42781,12 +42824,10 @@ Security: Never use .innerHTML to insert strings that could contain user-generat
 
 3.2 No Direct GameState Mutation from UI
 Flow Violation: The UI Layer (UIManager and Controllers) must READ from GameState but NEVER WRITE to it.
-
 Correction: UI interactions must call a Service method (via ActionClickHandler or SimulationService) to request a change.
 
 3.3 No Magic Numbers
 Maintenance: Avoid hardcoded numbers in logic files (e.g., if (price > 1000)).
-
 Correction: Define these as constants in js/data/constants.js and import them.
 
 3.4 Implicit Button Types
@@ -42799,8 +42840,9 @@ Correction: Define these as constants in js/data/constants.js and import them.
 **Correction:** Explicitly call `event.preventDefault()` at the start of the handler case.
 
 3.6 Cinematic Transitions and Web Animations API
-**Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence) must not rely on standard CSS `.hidden` class toggling to handle fades, as this can create race conditions and visible flashing when the `UIManager` executes its aggressive DOM wiping and state re-renders.
-**Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. The actual `GameState` mutations and `UIManager.render()` calls should be executed *during* the blackout/hold phase of the animation. Explicitly ensure all inline styling injected by the API (e.g., opacity, filter) is cleaned up to prevent breaking subsequent UI behavior.
+**Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence) or localized inline component sequences (like the Ship Upgrade Animation) must not rely on standard CSS `.hidden` class toggling to handle complex fades, as this creates race conditions and visible flashing when the `UIManager` executes aggressive DOM wiping and state re-renders.
+**Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. The actual `GameState` mutations and `UIManager.render()` calls should be executed *during* the blackout/hold phase of the animation. 
+**Strict Cleanup Mandate:** You MUST explicitly ensure all inline styling injected by the API (e.g., `opacity`, `filter`, `transform`) is fully stripped or reset to its baseline state within the `.onfinish` callback. Failure to clean up injected Web Animations API styles will permanently break subsequent UI rendering behavior for those elements.
 --- END OF FILE: ./meta/CODING_STANDARDS.md ---
 
 --- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
@@ -42808,9 +42850,9 @@ Correction: Define these as constants in js/data/constants.js and import them.
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 3/10/26, ver. Balance v2
+Last Edit: 3/14/26, ver. Balance v2
 
-This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, and the specific forces that govern the player-driven simulation.
+This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
 I. Core Price Mechanics Explained
 These are the foundational rules that establish the baseline price of a commodity before any player actions are taken.
@@ -42878,88 +42920,64 @@ Pluto
 Exports (Price Reverts Toward a Lower Baseline): Graphene Lattices, Xeno-Geologicals
 Imports (Price Reverts Toward a Higher Baseline): Antimatter, Cybernetics
 
-III. Player-Driven Market Dynamics & Simulation
-Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems. These forces are designed to make the market a dynamic entity that the player actively manipulates. These forces are processed during the weekly TimeService.advanceDays simulation tick.
+III. System States (Economic Weather)
+A macro-economic layer that applies procedural, system-wide modifiers dynamically to augment or disrupt the baseline market math over set durations.
+Mechanic: The SystemStateService evaluates condition cycles weekly. Active "weather" (e.g., 'Solar Flare', 'Guild Strike', 'Economic Boom') overrides global parameters.
+Impact: Weather forces can universally inflate commodity prices (e.g., +15% to all goods), suppress shipyard inventories, severely limit fuel supplies causing station pump prices to skyrocket, or dynamically inject weighted parameters into the RandomEventService to guarantee specific event types (e.g., Pirate activity surges during 'Lawless' states).
+
+IV. Player-Driven Market Dynamics & Simulation
+Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems.
 
 1. Force: Availability Pressure (The Delayed Market Shock)
-This is the new, unified force that replaces the old "Player Pressure" and "Scarcity Pressure." It is the primary driver of all player-initiated price changes.
-Mechanic: This force directly simulates supply and demand. When a player buys or sells, they immediately change the item's quantity at that market. This change in stock is the only thing that drives the price change.
-Technical Detail: In evolveMarketPrices, the system calculates an availabilityRatio (current quantity / targetStock). This ratio is used to create an availabilityEffect.
-The 7-Day Delay (Anti-Abuse): This effect is intentionally delayed. The game checks if 7 days have passed since the lastPlayerInteractionTimestamp. The availabilityEffect is only calculated after this 7-day window, preventing players from manipulating a price and exploiting it in the same visit.
-The Strength (High Impact): This effect is controlled by AVAILABILITY_PRESSURE_STRENGTH (currently 0.50). This high value makes market manipulation feel powerful and rewarding.
+This is the primary driver of all player-initiated price changes.
+Mechanic: When a player buys or sells, they immediately change the item's quantity at that market. This change in stock drives the price change via the availabilityRatio.
+The 7-Day Delay (Anti-Abuse): This effect is delayed. The game checks if 7 days have passed since the last interaction. The availabilityEffect is only calculated after this 7-day window, preventing same-visit exploitation.
+The Strength: Controlled by AVAILABILITY_PRESSURE_STRENGTH (0.50), making market manipulation feel powerful.
 
 2. Force: Price Lock (The Core Loop)
-This is the system that makes market manipulation viable.
-Mechanic: When a player makes a trade, the market's natural "Mean Reversion" (the 2.5% pull back to the local average) is disabled for a long duration.
-Technical Detail: When applyMarketImpact is called, it sets a priceLockEndDay on the inventory item using a dynamic, distance-scaled formula: Base Lock (60 days) + (Location Distance * 0.20) ± 10% Jitter.
-Effect: In evolveMarketPrices, the system checks if this.gameState.day < inventoryItem.priceLockEndDay. If true, reversionEffect is set to 0. This "locks" the price at the new level created by the player's trade. Because the lock scales with distance, fringe outer-rim markets will lock prices for significantly longer (e.g., Pluto for ~276 days) than inner-system hubs (e.g., Earth for ~96 days), aligning the opportunity window with actual travel times.
+Mechanic: When a player makes a trade, the market's natural "Mean Reversion" is disabled for a long duration based on distance.
+Technical Detail: The priceLockEndDay is set using: Base Lock (60 days) + (Location Distance * 0.20) ± 10% Jitter. This allows fringe outer-rim markets to lock prices for significantly longer (e.g., Pluto for ~276 days) than inner-system hubs (e.g., Earth for ~96 days).
 
 3. Force: Depletion Bonus (The Panic)
-A special, one-time bonus for buying out a significant portion of a market's stock, simulating a supply panic.
-Trigger: When a purchase reduces inventoryItem.quantity to <= 0 and the amount purchased was >= 8% of the item's calculated targetStock.
-Effect: Initiates a macroeconomic panic era. evolveMarketPrices applies a 1.5x priceHikeMultiplier continuously until the market's stock naturally replenishes to at least 60% of its target capacity (which typically takes about 9 weeks).
+A special, one-time bonus for buying out a significant portion of a market's stock.
+Trigger: Purchasing reduces quantity to <= 0 and the amount purchased was >= 8% of targetStock.
+Effect: Applies a 1.5x priceHikeMultiplier continuously until the market naturally replenishes to at least 60% of capacity.
 
 4. Force: Asymmetric Saturation (The Glut)
-The inverse of the Depletion Panic. A punitive mechanic that prevents players from dumping massive fleet-sized inventories onto a single market without consequence.
-Trigger: When a player's sale pushes a market's inventory above 300% (3.0x) of its targetStock, an isSaturated flag is triggered.
-Effect: While saturated, the market refuses to pay standard rates, applying a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion or pressure calculations. Recovery only happens when the inventory sheds down below 200%.
+A punitive mechanic preventing players from dumping massive fleet-sized inventories onto a single market.
+Trigger: A player's sale pushes a market's inventory above 300% (3.0x) of its targetStock.
+Effect: Applies a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion. Recovery only happens when the inventory sheds below 200%.
 
 5. Force: Inventory Replenishment (The Bottleneck)
-The market's supply-side response. This is the primary balancing factor that bottlenecks market manipulation.
-Mechanic: The market slowly restocks (or sheds) its inventory to move back toward its targetStock. The market only moves 10% of the difference each week. MARKET_PRESSURE_DECAY is tuned to 0.65, aggressively decaying artificial margins by the 4th consecutive trip (the 4-Trip Crash).
+The market slowly restocks (or sheds) its inventory to move back toward its targetStock by 10% each week. MARKET_PRESSURE_DECAY aggressively decays artificial margins by the 4th consecutive trip.
 
-6. Force: Market Memory (The Reset)
-The passive fail-safe that prevents the universe from being permanently altered.
-Mechanic: If the player has not traded that specific item at that specific location for a full year (365 days), the item's state is completely reset (pressure, locks, and panic states are wiped).
-
-IV. The "Packing Peanut" Volume Constraints (Geometric Pricing)
-To prevent the "late-game singularity" where exponential wealth trivializes the game, the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing.
+V. The "Packing Peanut" Volume Constraints (Geometric Pricing)
+To prevent the "late-game singularity", the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing.
 Tier Stratification: Prices scale geometrically (e.g., Tier 1 Water Ice at ~50cr, Tier 6 Sentient AI at ~20,000,000cr). 
-Inverted Availability: The most expensive goods have their canonical availability artificially choked (e.g., Sentient AI is capped at 10-24 units system-wide). Cheap goods have massive canonical availability (up to 450 units).
-The Cargo Constraint: Because ship cargo capacities are strictly hard-capped below 1,000 slots, a Capital ship hauling 850 units can never fill its entire hold with Tier 6 goods. The player is forced to purchase the highly profitable, low-availability top-tier goods, and use lower-tier goods (Water Ice, Plasteel) as bulk "packing peanuts" to maximize the efficiency of their massive cargo bays. Every tier remains relevant from the early game to the endgame.
+Inverted Availability: Expensive goods have their canonical availability artificially choked (e.g., Sentient AI capped at 10-24 units system-wide). Cheap goods have massive availability.
+The Cargo Constraint: Because ship cargo capacities are strictly hard-capped below 1,000 slots, players must use lower-tier goods (Water Ice, Plasteel) as bulk "packing peanuts" to maximize the efficiency of their massive cargo bays alongside highly profitable top-tier goods.
 
-V. Ship Economy & Tier-Scaled Upkeep
-The game relies on Tier-Scaled Upkeep rather than Volumetric Sinks to drain late-game wealth, keeping absolute stat numbers readable while enforcing exponential costs.
+VI. Ship Economy & Tier-Scaled Upkeep
+The game relies on Tier-Scaled Upkeep to drain late-game wealth, keeping absolute stat numbers readable while enforcing exponential costs.
+Algorithmic Ship Pricing: Ship base prices are derived from utility: Cargo (300cr), Hull (200cr), and Fuel (100cr) multiplied by an exponential Class Multiplier (up to 2,500x).
+Tier-Scaled Service Costs (Upkeep): Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0001`).
+Upgrade Economy (Hybrid Pricing): Upgrades cost a Fixed Base + a percentage of the host ship's value.
 
-1. Algorithmic Ship Pricing
-Ship base prices are no longer arbitrary; they are strictly calculated based on the utility of their metal. Cargo capacity is weighted highest (300cr/unit), followed by Hull (200cr/unit) and Fuel (100cr/unit). This base sum is then multiplied by an exponential Class Multiplier (up to 2,500x for Capital ships) to generate prices reaching nearly 1 Billion credits.
+VII. Debt & Bankruptcy Dynamics
+The financial system imposes severe, game-altering consequences for over-leveraging capital.
+1. Bifurcated Debt Structures
+Guild Debt is highly regulated, offering lower interest (2%) but implementing strict 30-day garnishments that automatically deduct from player liquidity.
+Syndicate Debt is high-risk, high-interest (7%) and lacks automatic garnishment, relying instead on punitive "Repo Strikes" if payments are ignored.
+2. Solvency & The Repo Loop
+The BankruptcyService continually evaluates the player's debt-to-liquidity ratio. If a player holding Syndicate Debt enters insolvency (debt exceeds 150% of liquid assets plus fleet value), a Repo Strike is issued.
+3. Asset Forfeiture
+Maxing out Repo Strikes forces a Syndicate Repo Event: the service identifies the highest value asset (a fleet ship or an installed Tier IV/V upgrade), forces a hostile liquidation, and seizes the credits to instantly clear the balance, destroying player progression.
 
-2. Tier-Scaled Service Costs (Upkeep)
-Because Capital ships are capped at low physical limits (< 1,000 HP/Fuel), flat service fees would render upkeep mathematically invisible to a billionaire player. 
-Fuel Grading: Station fuel prices are multiplied by the ship's class tier (e.g., Class C pays 1x the base pump price, Class O Capital ships pay 500x the base pump price for highly refined propellant).
-Dynamic Drydocking: Hull repair is no longer a flat 75cr/HP. It is dynamically calculated as ShipBasePrice * 0.0001 per HP. A single scratch on a 1 Billion credit Citadel costs 100,000 credits to buff out.
-
-3. Ship Upgrade Economy (Hybrid Pricing)
-Upgrades utilize a Hybrid Pricing Formula: Fixed Base Cost + a percentage of the host ship's value. 
-Tier I: 5,000 + 5% Ship Value. 
-Tier V: 400,000 + 30% Ship Value.
-Because of the hard caps on physical stats (<1000), percentage-based upgrades (e.g., +20% Cargo) are exponentially valuable. An upgrade that grants a 10% fuel discount instantly saves a Capital ship tens of millions of credits per refuel tick.
-
-VI. Station-Specific Market Quirks
-Unique economic rules that apply only to specific stations, encouraging specialized trade routes.
-* Sol Station (Solar Forge): +25% Sell Price for Graphene Lattices & Plasteel.
-* Mercury (Desperate Thirst): Pays 40% more for Water Ice.
-* Venus (Data Haven): Intel is 50% cheaper and deals last 30% longer.
-* Earth (High Demand): Cloned Organs & Xeno-Geologicals sell for 10% more.
-* The Moon (Orbital Shipyards): 20% discount on all ship repairs.
-* Mars (Colonial Expansion): +10% Sell Price for Water Ice and Hydroponics.
-* The Belt (Lawless Zone): 5% discount on Water Ice & Xeno-Geological purchases.
-* The Exchange (Black Market): Prices fluctuate dramatically (3x Volatility).
-* Jupiter (Gas Giant Refinery): Fuel is sold at a 50% discount.
-* Saturn (Luxury Tax): +20% Sell Price for Organs/Cryo Pods, but 200% Service Costs.
-* Uranus (Quantum Research): Increased chance for advanced ship upgrades in the tuning shop.
-* Neptune (Military Logistics): 10% Bulk Discount on Propellant & Plasteel (when buying >50 units).
-* Kepler's Eye (Financial Hub): 15% Discount on all financing and debt payments. Double intel packet generation.
-* Pluto (Fringe Outpost): +25% Sell Price on Cybernetics & Antimatter. Supplies are scarce.
-
-VII. Sol Station Directorate (Macro-Economic Impact)
+VIII. Sol Station Directorate (Macro-Economic Impact)
 The officers slotted into the Sol Station Engineering Interface act as dynamic macro-economic levers that shape the player's arbitrage strategy system-wide.
-1. Systemic Supply Bottlenecks
-Officers with severe negative consumptionMods (e.g., hyper-burning Plasteel or Water Ice) will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system. This fundamentally alters the global availability ratios, driving up localized prices for those specific commodities universally as the player hoards them for donation.
-2. Capacity Buffers
-Officers with high capacityMods drastically increase the "runway" a station has before reaching critical entropy. This allows the player to embark on longer deep-space trade routes without the station starving while they are gone, effectively expanding the viable geographic radius of arbitrage loops.
-3. Volumetric Scaling
-The station's endgame requirements are volumetrically scaled down (maxing at ~4,000 units for Level 50) to perfectly align with Capital ship constraints, ensuring progression requires multiple focused supply runs.
+1. Systemic Supply Bottlenecks: Officers with severe negative consumptionMods will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system, driving up localized prices globally.
+2. Capacity Buffers: Officers with high capacityMods drastically increase the "runway" a station has before reaching critical entropy, expanding the viable geographic radius of arbitrage loops.
+3. Volumetric Scaling: The station's endgame requirements are volumetrically scaled down (maxing at ~4,000 units for Level 50) to perfectly align with Capital ship constraints, ensuring progression requires multiple focused supply runs.
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
@@ -42977,7 +42995,10 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
       "modular_ship_upgrades",
       "station_quirks",
       "sol_station_management",
-      "fleet_trading"
+      "fleet_trading",
+      "bankruptcy",
+      "system_states",
+      "synthesis_pipeline"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
@@ -43012,20 +43033,27 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
     "Micro-Pagination": "Navigation method within Help Modals utilizing horizontal swipe gestures (translating CSS X-axis) rather than vertical scrolling to prevent mobile gesture conflicts.",
     "Global_Context_Anchor": "A persistent '?' icon overlaid on the viewport that, when tapped, queries the GameState to instantiate the relevant Help Modal.",
     "Universal_Toast_System": "A scalable, non-blocking notification queue that triggers strictly upon location arrival, conveying critical system, financial, intel, and mission data. Capped at a maximum of two toasts per arrival.",
-    "Opt-In_Pulse": "A visual cue applied to the global help anchor to signal unread contextual information without intercepting the player's UI focus.",
     "Geometric_Pricing": "The economic strategy of applying extreme, exponential price stratification between commodity tiers to enforce packing peanut volume constraints.",
     "Tier-Scaled_Upkeep": "The operational philosophy where service costs (fuel, repair) scale exponentially based on a vessel's base price and class, acting as the primary endgame wealth tax.",
-    "Volumetric_Sink": "[OBSOLETE] A legacy balance mechanic that relied on massively inflated physical stats (>35,000 HP/Fuel) to drain wealth. Replaced by Tier-Scaled Upkeep to preserve UI legibility and stat consequence."
+    "Volumetric_Sink": "[OBSOLETE] A legacy balance mechanic that relied on massively inflated physical stats (>35,000 HP/Fuel) to drain wealth. Replaced by Tier-Scaled Upkeep to preserve UI legibility and stat consequence.",
+    "Bankruptcy": "A financial failure state triggered when debt overwhelmingly exceeds liquid assets and projected income, leading to severe penalties, restricted actions, or repo events.",
+    "Syndicate_Debt": "High-risk loans acquired from black market or syndicate sources, often carrying steep immediate consequences for default, such as Repo Events.",
+    "Guild_Debt": "Standard, regulated loans acquired from the merchant guild. Features strict long-term garnishment rules but standard interest.",
+    "Repo_Event": "A punitive event triggered by defaulting on Syndicate Debt, where assets or ship upgrades are forcibly repossessed.",
+    "System_States": "Procedurally generated macroeconomic conditions (Economic Weather) that apply temporary, system-wide modifiers to commodity prices, availability, and event generation.",
+    "Synthesis_Pipeline": "An advanced operational pipeline at the Sol Station that mathematically converts standard commodities into high-value Antimatter.",
+    "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs."
   },
   "service_summaries": {
     "SolStationService": {
-      "description": "Manages the logic for the Sol Station endgame engine. Handles Level 1-50 progression, deferred universe calculations, and JIT commits.",
+      "description": "Manages the logic for the Sol Station endgame engine. Handles Level 1-50 progression, deferred universe calculations, Synthesis Pipeline math, and JIT commits.",
       "dependencies": [
         "GameState",
         "Logger"
       ],
       "key_functions": {
         "processTick": "Calculates daily decay and output generation utilizing the deferred state buffer.",
+        "processSynthesis": "Executes the Synthesis Pipeline math to convert cache resources into Antimatter.",
         "setMode": "Switches the station's operating mode (Stability/Commerce/Production).",
         "donateToCache": "Transfers cargo from player ship to station maintenance caches.",
         "calculateEntropy": "Determines the current decay multiplier."
@@ -43054,7 +43082,8 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
         "uiState",
         "intelMarket",
         "activeIntelDeal",
-        "solStation"
+        "solStation",
+        "systemStates"
       ]
     },
     "SimulationService": {
@@ -43073,7 +43102,9 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
         "IntelService",
         "SolStationService",
         "js/services/ui/AnimationService.js",
-        "ToastService"
+        "ToastService",
+        "SystemStateService",
+        "BankruptcyService"
       ],
       "key_functions": {
         "constructor": "Instantiates all specialized services.",
@@ -43186,7 +43217,9 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
         "SimulationService (Facade)",
         "js/data/age_events.js",
         "IntelService",
-        "SolStationService"
+        "SolStationService",
+        "SystemStateService",
+        "BankruptcyService"
       ],
       "key_functions": {
         "advanceDays": "Advances game time and triggers all associated daily, weekly, and monthly logic."
@@ -43199,26 +43232,62 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
         "market.prices",
         "market.inventory",
         "activeIntelDeal",
-        "solStation"
+        "solStation",
+        "systemStates"
       ]
     },
     "MarketService": {
-      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides, apply Station Quirks, and apply player-specific `applyModifiers` (e.g. Signal Hacker).",
+      "description": "Handles the simulation of the in-game economy, including price evolution, inventory replenishment, and applying market pressure from player trades. Its `getPrice` logic is modified to check for `activeIntelDeal` overrides, apply Station Quirks, System States, and apply player-specific `applyModifiers` (e.g. Signal Hacker).",
       "dependencies": [
         "GameState",
-        "IntelService"
+        "IntelService",
+        "SystemStateService"
       ],
       "key_functions": {
         "evolveMarketPrices": "Simulates daily price changes for all commodities.",
         "replenishMarketInventory": "Handles the weekly restocking of all markets.",
         "applyMarketImpact": "Adjusts market pressure based on player buy/sell actions.",
         "_updateShipyardStock": "Updates the available ships for sale at each location.",
-        "getPrice": "Gets the price, checking for Intel overrides, Station Quirks, and Upgrade modifiers."
+        "getPrice": "Gets the price, checking for Intel overrides, Station Quirks, System States, and Upgrade modifiers."
       },
       "mutates_state": [
         "market.prices",
         "market.inventory",
         "market.shipyardStock"
+      ]
+    },
+    "BankruptcyService": {
+      "description": "Evaluates financial health, manages distinct debt pools (Guild vs Syndicate), and executes punitive actions like Repo Events or total bankruptcy declarations.",
+      "dependencies": [
+        "GameState",
+        "PlayerActionService",
+        "SimulationService",
+        "Logger"
+      ],
+      "key_functions": {
+        "evaluateSolvency": "Checks player debt against liquid wealth.",
+        "triggerRepo": "Forces the surrender of ship assets to clear syndicate debt."
+      },
+      "mutates_state": [
+        "player.debt",
+        "player.credits",
+        "player.shipStates",
+        "isGameOver"
+      ]
+    },
+    "SystemStateService": {
+      "description": "Manages procedural Economic Weather and systemic states across the solar system, modifying baseline market generation.",
+      "dependencies": [
+        "GameState",
+        "TimeService",
+        "Logger"
+      ],
+      "key_functions": {
+        "rollWeather": "Generates new macroeconomic conditions.",
+        "applyStateModifiers": "Modifies base market calculations based on current weather."
+      },
+      "mutates_state": [
+        "systemStates"
       ]
     },
     "RandomEventService": {
@@ -43315,7 +43384,7 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
       "mutates_state": []
     },
     "UIModalEngine": {
-      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic.",
+      "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads.",
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "queueModal": "Adds a modal to the queue.",
@@ -43394,7 +43463,7 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
       "mutates_state": []
     },
     "SaveStorageService": {
-      "description": "Manages game saves using IndexedDB with a bulletproof iOS Native Bridge fallback. Implements a dual-write architecture for indestructible persistence.",
+      "description": "Manages game saves using IndexedDB with a bulletproof iOS Native Bridge fallback. Implements a dual-write architecture, and file I/O operations for Import/Export functionality.",
       "dependencies": [
         "IndexedDB",
         "WebKit Message Handlers"
@@ -43403,7 +43472,9 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
         "saveGame": "Saves payload to IDB and native iOS.",
         "loadGame": "Loads save, prioritizing native iOS fallback and healing IDB.",
         "getAllSaveMetadata": "Retrieves and merges save metadata for the splash screen.",
-        "deleteGame": "Removes save from both IDB and native iOS."
+        "deleteGame": "Removes save from both IDB and native iOS.",
+        "exportSave": "Serializes the GameState for external download.",
+        "importSave": "Parses an uploaded save file and hydrates the GameState."
       },
       "mutates_state": []
     },
@@ -44054,6 +44125,22 @@ The station's endgame requirements are volumetrically scaled down (maxing at ~4,
       "path": "./js/services/ToastService.js",
       "role": "LOGIC_SERVICE",
       "description": "Logic layer for managing the Universal Toast notification queue and thresholds."
+    },
+    "F107": {
+      "path": "./js/services/BankruptcyService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F108": {
+      "path": "./js/services/world/SystemStateService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F109": {
+      "path": "./js/data/systemStateRegistry.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F110": {
+      "path": "./js/data/solProgressionRegistry.js",
+      "role": "DATA_DEFINITION"
     }
   }
 }
@@ -44190,165 +44277,94 @@ SimulationService acts as the central Facade. It is the only service that the Ev
 
 1. State Management
 GameState (F009)
-
 Responsibility: Single source of truth. Holds all mutable data (player, market, day, ships).
-
 Key Behavior: Emits notifications to subscribers (UIManager) whenever setState is called.
-
 Dependencies: None (Leaf node).
 
 2. Game Logic Services
 SimulationService (F011) [FACADE]
-
 Responsibility: The core game engine Facade. Instantiates and coordinates all specialized services.
-
 Key Behavior: Receives calls from the EventManager and delegates them to the appropriate domain service. Orchestrates multi-step flows like ship purchasing.
-
-Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService.
+Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService, BankruptcyService, SystemStateService.
 
 IntroService (F033)
-
 Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
-
-Key Behavior: Mutates the player's starting state, debt, and handles bespoke UI transitions bypassing standard navigation logic.
-
 Dependencies: GameState, UIManager, Logger, SimulationService.
 
 PlayerActionService (F034)
-
 Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
-
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs, replacing flat volumetric fees. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
-
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
 Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
 
 GameAttributes (F069)
-
 Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
-
-Key Behavior: Mathematically calculates the dynamic Hybrid Upgrade Cost (`Fixed Base + (ShipValue * TierMultiplier)`) and installation fees. Distinguishes between MOD_FUEL_BURN (Travel) and MOD_FUEL_PRICE (Station).
-
 Dependencies: None.
 
 TravelService (F036)
-
 Responsibility: Manages the travel loop. Calculates fuel/time costs, applies Convoy Taxes, and triggers random events.
-
-Key Behavior:
-* Uses GameState.TRAVEL_DATA for distances.
-* Calculates and deducts the 'Convoy Tax' resource scaling (a linear fractional offset) based on active fleet size.
-* Pauses travel for event resolution, including Blockade events.
-* Validates ship integrity (Hull destruction, Fuel depletion) post-event before resuming or aborting travel.
-* Applies integer-safe, flattened distance-based hull decay.
-* Consumable Logic: Handles the consumption of "Folded Space Drives" to execute instant travel via the `useFoldedDrive` argument.
-
 Dependencies: GameState, TimeService, RandomEventService.
 
 MarketService (F010)
-
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
-
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Triggers asset hydration when new ships are spawned.
-
-Dependencies: GameState, IntelService, AssetService.
+Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Applies System State weather modifiers and Station Quirks dynamically.
+Dependencies: GameState, IntelService, AssetService, SystemStateService.
 
 IntelService (F057)
-
 Responsibility: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
-
-Key Behavior: Creates temporary activeIntelDeal objects in GameState that override market prices.
-
 Dependencies: GameState.
 
 TimeService (F035)
-
 Responsibility: Advances the calendar and manages long-term progression.
-
-Key Behavior:
-* Triggers daily/weekly simulation ticks (Market, News).
-* Manages the "3-Era Age Engine", applying procedural stat bonuses and world modifiers based on player age.
-* Checks for debt interest, Intel expiration, and loan garnishment.
-
-Dependencies: GameState, MarketService.
+Key Behavior: Triggers daily/weekly simulation ticks (Market, News, Weather). Manages the "3-Era Age Engine".
+Dependencies: GameState, MarketService, BankruptcyService, SystemStateService, SolStationService.
 
 MissionService (F018)
-
 Responsibility: Coordinators the Mission System 2.0 lifecycle. Delegates logic to evaluators.
-
-Key Behavior: 
-* Orchestrates `MissionTriggerEvaluator` to check prerequisites for available missions.
-* Orchestrates `MissionObjectiveEvaluator` to update progress on active missions.
-* Manages the "Terminal" vs "Log" state flow and completion logic.
-
 Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator.
 
 SolStationService (F098)
-
 Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
-
-Key Behavior:
-* Manages progression from Level 1-50.
-* Implements deferred universe calculations and view-model interpolation to handle rapid ticking without layout thrashing.
-* Executes Just-In-Time (JIT) commits to accurately flush deferred state variables into the persistent GameState.
-
+Key Behavior: Manages progression from Level 1-50. Implements deferred universe calculations and view-model interpolation. Executes Just-In-Time (JIT) commits. Manages the Synthesis Pipeline for Antimatter conversion.
 Dependencies: GameState, Logger.
 
 ToastService (F106)
-
 Responsibility: Manages the volatile notification queue and evaluates thresholds upon location arrival.
-
-Key Behavior: Checks state thresholds (financial, intel, missions) post-travel, populates the queue, sorts by priority, and culls excess alerts before handing them to the UI.
-
 Dependencies: GameState, UIManager, SimulationService.
+
+BankruptcyService (F107)
+Responsibility: Evaluates financial health, manages distinct debt pools (Guild vs Syndicate), and executes punitive actions.
+Key Behavior: Triggers Repo Events forcibly liquidating player assets to cover outstanding Syndicate Debt.
+Dependencies: GameState, PlayerActionService, SimulationService, Logger.
+
+SystemStateService (F108)
+Responsibility: Manages procedural Economic Weather and systemic states across the solar system.
+Key Behavior: Rolls conditions weekly that apply temporary, global modifiers to baseline market math and event generation.
+Dependencies: GameState, TimeService, Logger.
 
 3. Event System Services (Event 2.0)
 RandomEventService
-
-Responsibility: The high-level coordinator for the random event system. Determines if an event occurs and which event is selected.
-
-Key Behavior: Filters the RANDOM_EVENTS registry based on current context (location, tags) and relative weights. Passes the selected event to the UI for display.
-
+Responsibility: The high-level coordinator for the random event system. Determines if an event occurs and which event is selected based on contextual weight and active System States.
 Dependencies: GameState, ConditionEvaluator.
 
 ConditionEvaluator
-
 Responsibility: A stateless utility service that validates requirements.
-
-Key Behavior: Parses the requirements array of an event or choice. Returns true or false based on the current GameState.
-
 Dependencies: GameState (Read-only).
 
 OutcomeResolver
-
 Responsibility: Handles the logic of the player's choice.
-
-Key Behavior: Processes the resolution block of a selected choice. Determines the final outcome using Deterministic logic or Weighted RNG. Passes the result to eventEffectResolver for application.
-
 Dependencies: GameState, eventEffectResolver.
 
 DynamicValueResolver
-
 Responsibility: Calculates dynamic integer values for event effects based on game state context.
-
-Key Behavior: Resolves abstract value definitions into concrete numbers for rewards/penalties. Parses the `SHIP_CLASS_SCALAR` directive for dynamic opportunity rewards. Calculates percentage-based liquid wealth (`PLAYER_CREDITS`) scaling for event penalties.
-
 Dependencies: GameState (Read-only), DB.
 
 eventEffectResolver
-
 Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome.
-
-Key Behavior: Routes effect types to specific handler functions. Mutates GameState or pendingTravel accordingly. Pure state mutation only.
-
 Dependencies: GameState, SimulationService, DynamicValueResolver.
 
 4. UI & Presentation Services
 UIManager (F017) [FACADE]
-
 Responsibility: The master "Switchboard". Instantiates and coordinates the Domain Controllers. Handles the main render loop.
-
-Key Behavior: Proxies requests from external services to the appropriate Controller. Manages Generic Tooltips and the News Ticker.
-
 Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
 
 Controllers (Delegates):
@@ -44362,103 +44378,34 @@ Controllers (Delegates):
 * UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
 
 IntelMarketRenderer (F058)
-
 Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content.
-
 Dependencies: IntelService.
 
 NewsTickerService (F053)
-
 Responsibility: Manages the scrolling text bar content.
-
-Key Behavior: Implements V2 logic with dynamic message types (SYSTEM, INTEL, FLAVOR, ALERT, STORY, STATUS) and live data injection.
-
 Dependencies: GameState.
 
 AssetService (F065)
-
 Responsibility: Centralized path resolution and "Hydration" for visual assets.
-
 Dependencies: AssetStorageService, assets_config.js.
 
 TravelAnimationService (F044)
-
 Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
-
 Dependencies: DB (Travel Visuals).
 
 AnimationService (F060)
-
-Responsibility: Provides a generic, promise-based utility (`playBlockingAnimation`) to run CSS animations and block further execution until completion. Used for ship buy/sell transitions.
-
+Responsibility: Provides a generic, promise-based utility (`playBlockingAnimation`) to run CSS animations and block further execution until completion.
 Dependencies: None.
 
 5. Persistence Services
 SaveStorageService (F101)
-
-Responsibility: Manages game saves using a dual-write architecture for indestructible persistence.
-
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB (OrbitalSavesDB) while concurrently broadcasting to the iOS native layer (Swift UserDefaults) via WebKit message handlers. Prioritizes iOS native saves during hydration to silently heal wiped IndexedDB data.
-
+Responsibility: Manages game saves using a dual-write architecture and local file I/O operations.
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation.
 Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
 AssetStorageService (F070)
-
 Responsibility: Low-level IndexedDB wrapper.
-
-Key Behavior: Manages the OrbitalAssetsDB. Stores raw Blob data to prevent iOS cache eviction.
-
 Dependencies: Native IndexedDB API.
-
-6. Input & Event Handling
-EventManager (F015): The root listener. Binds global click/touch events.
-
-ActionClickHandler (F039): Routes data-action clicks to services. Handles Upgrade Installation, ship cycling, and Travel initiation.
-
-HoldEventHandler (F041): Manages "press-and-hold" for Refuel/Repair using Pointer Events.
-
-CarouselEventHandler (F042): Manages swipe/drag for the Hangar.
-
-MarketEventHandler (F040): Manages the buy/sell sliders on market cards.
-
-TooltipHandler (F043): Manages hover states and popups for graphs and attribute pills.
-
-7. Effects
-EffectsManager.js: Manages the queueing and execution of visual effects.
-
-BaseEffect.js: The abstract base class for all visual effects.
-
-8. Debug & Automation
-DebugService.js: Manages the debug panel (lil-gui), synchronizing its UI controls with the GameState and providing cheat/test functionalities.
-
-bot/AutomatedPlayerService.js: Contains the AutomatedPlayer class, a state-machine-driven bot designed to stress-test the economy. Bypasses the input layer.
-
-9. Static Data Files (js/data/)
-database.js: Aggregates and exports static game data.
-ship_database.js: Defines the static data for all player-tradable ships.
-assets_config.js: Defines configuration for ship asset variants.
-characters.js: Defines the PortraitRegistry mapping logical UI IDs to exact CSS sprite sheet pixel coordinates, and the overarching CharacterDatabase profiles.
-constants.js: Defines widely used constant values and enums.
-items.js: Defines the registry of Consumable Items.
-age_events.js: Defines static data for narrative events triggered by progression.
-events.js: (Facade) Aggregates all event categories.
-events_traffic.js: Encounters & Distress signals.
-events_entropy.js: System failures & maintenance issues.
-events_hazards.js: Environmental threats.
-events_bureaucracy.js: Customs, fines, and inspections.
-events_logistics.js: Cargo spoilage & storage issues.
-events_salvage.js: Derelict recovery & looting.
-events_opportunity.js: Trade deals & windfalls.
-events_story.js: Unique narrative encounters.
-missions.js: Defines static data for all player missions.
-helpRegistry.js: Defines static HTML string payloads organized by context IDs.
-flavorAds.js: Defines static, location-specific flavor text ads.
-intelMessages.js: Defines message templates for free and purchased market intel.
-intelContent.js: Defines the "Sample" and "Details" message pairs.
-eulaContent.js: Defines the static HTML content for the EULA modal.
-lore/loreRegistry.js: (Facade) Aggregates all lore modules.
-lore/lore_broadstrokes.js: Defines the base lore content.
-officers.js: Defines the registry of Sol Station Directorate officers.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -44767,7 +44714,7 @@ Context: UIManager.js had grown into a 2,600+ line "God Object," handling everyt
 
 Decision: Refactored the UIManager into a thin Facade ("Switchboard") that delegates specific domain logic to six specialized Controllers:
 UIModalEngine: Lifecycle management for the global modal queue.
-UIHelpManager: Orchestration of the contextual help modals and micro-pagination slides. (Replaced UITutorialManager).
+UIHelpManager: Orchestration of the contextual help modals and micro-pagination slides.
 UIMarketControl: Market screen rendering, state retention, and graph generation.
 UIMissionControl: Mission data screens, sticky bar HUD, and Intel interactions.
 UIHangarControl: Ship interactions, carousels, and upgrade installation flows.
@@ -44826,18 +44773,7 @@ Pro: Keeps individual file sizes manageable.
 Pro: simplifies access for the UI layer.
 
 ADR-024: Tutorial Architecture (Logic-View Separation) [DEPRECATED]
-Status: Deprecated (2026-02-22) - Replaced by ADR-033: Contextual Help Modal System (V1)
-
-Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
-
-Decision: Split the tutorial responsibilities into two distinct layers:
-TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock in the GameState. It knows what to show, but not how.
-UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
-
-Consequences:
-Pro: Clean separation of state (persisted) and view (ephemeral).
-Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
-Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller.
+Status: Deprecated (2026-02-22) - Replaced by ADR-033
 
 ADR-025: Mission Data Registry (Facade Pattern)
 Status: Accepted (2026-01-26)
@@ -44850,9 +44786,8 @@ Central Registry: `missionRegistry.js` aggregates these modules and exports a si
 Database Integration: `database.js` imports the registry instead of individual files, maintaining a clean dependency graph.
 
 Consequences:
-Pro: Facilitates "plug-and-play" content expansion; new mission packs can be added by simply importing/spreading them in the registry.
-Pro: Isolates specific mission logic (e.g., Tutorial vs. Story), making the codebase easier to navigate.
-Pro: Prepares the architecture for automated content generation and ingestion.
+Pro: Facilitates "plug-and-play" content expansion.
+Pro: Isolates specific mission logic.
 
 ADR-026: Defensive Button Interaction Strategy (The "Mars Revert" Protocol)
 Status: Accepted (2026-02-06)
@@ -44866,7 +44801,6 @@ Decision: A strict "Safety First" protocol was adopted for all UI interactions:
 Consequences:
 Pro: Permanently eliminates "phantom" page reloads and state reverts.
 Pro: Decouples game logic triggers from standard HTML form behaviors.
-Pro: Ensures consistent behavior across different browser engines (WebKit vs. Blink) which handle default button types differently.
 
 ADR-027: Mission System 2.0 (Logic/State Separation)
 Status: Accepted (2026-02-08)
@@ -44882,25 +44816,23 @@ Decision: The system was rebuilt into a modular "Engine" architecture.
 
 Consequences:
 * **Pro:** Supports concurrent active missions (currently capped at 4).
-* **Pro:** Enables "Live Tracking" on the HUD by simply referencing the `missionProgress` state.
-* **Pro:** Decouples complex logic from the service, making it easier to add new Objective Types without modifying the core service loop.
+* **Pro:** Enables "Live Tracking" on the HUD.
+* **Pro:** Decouples complex logic from the service.
 
 ADR-028: Decoupling of Time and Distance (Travel Entropy)
 Status: Accepted (2026-02-12)
 
-Context: Previously, hull decay from travel was dynamically tied to the *actual* time spent traveling. This created a mechanical loophole where players could min-max engine speed upgrades to drastically reduce hull damage. Conversely, an event-induced delay unfairly caused exponential hull damage because the player was stuck in space longer. Time lost to events was a narrative annoyance rather than a systemic resource drain.
+Context: Previously, hull decay from travel was dynamically tied to the *actual* time spent traveling. This created a mechanical loophole where players could min-max engine speed upgrades to drastically reduce hull damage. Conversely, an event-induced delay unfairly caused exponential hull damage because the player was stuck in space longer.
 
 Decision: Time and Distance have been mechanically decoupled.
 * **Distance Proxy:** The base, unmodified route duration is now statically evaluated at launch and used as a proxy for "Distance". Hull decay scales against this static distance proxy, entirely ignoring how fast or slow the ship actually travels.
-* **Stress Penalty:** Engine Mods that increase speed now inject an exponential "Hull Stress" multiplier against the distance-based hull decay, forcing a strategic tradeoff (speed vs. maintenance costs).
-* **Fuel-Coupled Delays:** Time delays rolled from random events now actively deduct travel fuel, mathematically mapping time loss into the resource economy.
+* **Stress Penalty:** Engine Mods that increase speed now inject an exponential "Hull Stress" multiplier against the distance-based hull decay, forcing a strategic tradeoff.
+* **Fuel-Coupled Delays:** Time delays rolled from random events now actively deduct travel fuel.
 * **Stranding Mechanic:** If fuel requirements for a trip (plus event delays) exceed current reserves, a critical "Stranding" state forces the loss of all travel time and fuel, returning the ship to the origin port.
-* **Drydocking:** Hull repairs at a station now advance the global game clock (1 Day per Repair Tick), weaponizing time against ship damage.
 
 Consequences:
 * **Pro:** Prevents "Speed" from acting as the ultimate armor stat.
-* **Pro:** Imbues "Time" with tangible, punitive weight, turning random event delays into real economic threats.
-* **Pro:** Creates a balanced risk/reward framework where flying faster directly correlates with higher maintenance costs.
+* **Pro:** Imbues "Time" with tangible, punitive weight.
 
 ADR-029: Deferred Simulation Logic & JIT Commits (Sol Station)
 Status: Accepted (2026-02-18)
@@ -44913,9 +44845,9 @@ Decision: Implemented a deferred state architecture using View-Model Interpolati
 * State writes only occur JIT when strictly necessary (e.g., when the user leaves the screen or interacts).
 
 Consequences:
-* **Pro:** Drastically improves frame rate and performance by decoupling background math from the DOM render cycle.
+* **Pro:** Drastically improves frame rate and performance.
 * **Pro:** Allows the station to process complex multi-variable equations smoothly.
-* **Con:** Adds complexity to state tracking, as UI must interpolate visual progress before the true state is officially committed.
+* **Con:** Adds complexity to state tracking.
 
 ADR-030: Fleet Management & The "Convoy Tax"
 Status: Accepted (2026-02-18)
@@ -44928,126 +44860,106 @@ Decision: Implemented Fleet Trading and Storage with an associated "Convoy Tax".
 * A "Convoy Tax" is assessed during travel, dynamically increasing resource burn based on the total number of ships traversing the route.
 
 Consequences:
-* **Pro:** Expands player progression, allowing for specialized ship collections and massive late-game arbitrage.
-* **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource/credit costs based on fleet size during travel, making massive fleets high-risk/high-reward.
-* **Pro:** Dynamic fleet cost averaging integrates smoothly into the existing inventory profit displays.
+* **Pro:** Expands player progression, allowing for specialized ship collections.
+* **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource costs.
 
 ADR-031: Balance v2 - Parametric Pacing & Volumetric Sinks
 Status: Accepted (2026-02-20)
 
-Context: Balance v1 suffered from "whack-a-mole" tuning, where adjusting one value broke the economy elsewhere. Late-game players experienced a "singularity" where profits grew exponentially into the trillions, rendering operating costs meaningless.
-
 Decision: A comprehensive, mathematically anchored parametric engine was implemented.
 1. The 120-Trip Anchor: Progression is strictly scaled so that optimal trading yields enough profit to afford the next tier of ship/upgrade in ~120 trips.
-2. Volumetric Sinks: Capital ships were given absurdly high HP/Fuel pools, turning percentage-based travel decay into a massive credit sink purely through scale.
-3. Hybrid Upgrade Pricing: Upgrades now cost `Base + (ShipValue * Tier%)`, ensuring they remain significant investments at all stages of the game.
+2. Volumetric Sinks: Capital ships were given absurdly high HP/Fuel pools (later revised in ADR-036).
+3. Hybrid Upgrade Pricing: Upgrades now cost `Base + (ShipValue * Tier%)`, ensuring they remain significant investments.
 4. Wealth-Scaled Hazards: Flat event fines were replaced with percentage deductions of liquid wealth (capped at 9%).
-5. Supply Bottlenecks: T6 commodities are strictly hard-capped in system availability to prevent Capital ships from sequence-breaking the economy.
-
-Consequences:
-Pro: The economy is now self-regulating and easily tunable via global variables.
-Pro: Late-game players still experience loss aversion and operating friction.
-Pro: Removes the need for arbitrary "hard caps" on wealth.
 
 ADR-032: Dual-Write iOS Native Persistence Bridge
 Status: Accepted (2026-02-20)
 
-Context: On iOS devices (the primary target platform via WKWebView/PWA), the operating system aggressively evicts web cache, IndexedDB, and LocalStorage data to save space. This resulted in devastating, unpredictable loss of player save data. Standard browser storage mechanisms proved insufficiently durable for a persistent game.
+Context: On iOS devices, the operating system aggressively evicts web cache, IndexedDB, and LocalStorage data to save space. Standard browser storage mechanisms proved insufficiently durable.
 
 Decision: Implemented a dual-write persistence architecture via `SaveStorageService.js`.
-* **Primary Storage (Web):** Saves are still written to IndexedDB (`OrbitalSavesDB`) to support standard browser play and development.
+* **Primary Storage (Web):** Saves are written to IndexedDB (`OrbitalSavesDB`).
 * **Native Bridge (iOS):** Concurrently, the save payload is stringified and broadcast to the native Swift layer via `window.webkit.messageHandlers.iosSaveBackup`.
 * **Indestructible Fallback:** Swift stores this data in the native `UserDefaults`, completely immune to WebKit cache eviction.
 * **Silent Healing:** On load, the game checks for the native injected fallback (`window.__IOS_SAVES`). If found, it prioritizes this data and silently rewrites it back into IndexedDB to repair the wiped web state.
 
-Consequences:
-* **Pro:** Perfect save retention on iOS; saves survive OS-level cache purges and app updates.
-* **Pro:** Seamless background healing means the player never knows their web data was actually wiped.
-* **Pro:** Maintains full compatibility with standard desktop web browsers (they gracefully ignore the iOS bridge).
-* **Con:** Introduces slight overhead in serializing large state objects and requires native Swift code maintenance (`ViewController.swift`).
-
 ADR-033: Contextual Help Modal System (V1)
 Status: Accepted (2026-02-22)
 
-Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers to guide players through virtualized UI lists. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design, leading to clipped text, gesture conflicts, and UI blocking.
+Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design.
 
 Decision: Abandon "DOM-hunting" tooltip tutorials entirely in favor of a Contextual Help Modal System.
 * Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio ($1/1$ or $4/3$).
-* Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling to eliminate mobile X/Y touch-gesture conflicts.
-* State-Driven Context: Relies purely on the abstract GameState (current Nav, Screen, and Sub-tabs) to resolve context and auto-instantiate the relevant help modal.
-* Centralized Data: Help slide content is stored in a static registry (`helpRegistry.js`).
-
-Consequences:
-* Pro: Guarantees 100% stability across all devices (iPhone SE to Desktop).
-* Pro: Eliminates complex DOM-tracking bugs and performance overhead.
-* Pro: Affords spatial luxury for multimedia explanations (SVGs, CSS diagrams) over dense text.
-* Con: Less direct visual pointing; relies on the player to map the modal's explanations to the UI elements.
+* Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling.
+* State-Driven Context: Relies purely on the abstract GameState to resolve context and auto-instantiate the relevant help modal.
 
 ADR-034: Cinematic UI Crossfades via Web Animations API
 Status: Accepted (2026-02-25)
 
-Context: The conclusion of the Intro Sequence required a seamless transition from a bespoke "Starter Ship Selection" screen to the fully rendered core game loop (Hangar screen). Standard CSS class toggling (`.hidden`, `.fade-out`) interfered with the `UIManager`'s aggressive DOM wiping and state re-renders, causing visual flashing or premature exposure of the game UI before the cinematic finished.
+Context: The conclusion of the Intro Sequence required a seamless transition. Standard CSS class toggling (`.hidden`, `.fade-out`) interfered with the `UIManager`'s aggressive DOM wiping and state re-renders, causing visual flashing.
 
 Decision: Bypassed standard CSS state classes for critical cinematic transitions in favor of the Javascript Web Animations API (`Element.animate()`).
-* External Overlay: The cinematic screen (`starter-ship-selection-overlay`) is injected directly into the `document.body`, outside the control of the `#game-container` and `UIManager`.
+* External Overlay: The cinematic screen is injected directly into the `document.body`, outside the control of the `#game-container` and `UIManager`.
 * Independent Animation: The API executes a 6-second crossfade phase (blur/opacity) that runs entirely independent of CSS transition rules.
-* Invisible State Mutation: The actual `GameState` updates (credit deduction, ship assignment) and the initial `UIManager.render()` are executed *during* the blackout hold phase of the animation.
-
-Consequences:
-* Pro: Guarantees a flawless, stutter-free cinematic transition without DOM flashing.
-* Pro: Decouples bespoke intro UI components from the rigid rules of the core UI library.
-* Con: Requires explicit timeout orchestration and careful cleanup of inline styles (`opacity`, `filter`) injected by the API to prevent breaking subsequent UI behavior.
 
 ADR-035: Asset Management: UI Sprite Sheets
 Status: Accepted (2026-03-09)
 
-Context: As the game expanded to include nearly 200 individual character portraits for missions, events, and the codex, loading these as individual image files created excessive HTTP bottlenecks. This severely bloated the memory footprint within the iOS WKWebView wrapper, risking application crashes and degrading overall load performance.
+Context: Loading nearly 200 individual character portraits created excessive HTTP bottlenecks and memory bloat on mobile targets.
 
-Decision: All static, square UI portraits are compiled into a single, highly optimized WebP sprite sheet using a grid-based CSS packing algorithm. A JavaScript dictionary (`PortraitRegistry`) serves as the single source of truth, mapping logical character IDs (e.g., `Audita_1`) to their exact X/Y pixel coordinates. The UI engine (`UIModalEngine`) renders these portraits dynamically by applying the sprite sheet as a CSS `background-image` and mathematically shifting the viewable area via `background-position`.
-
-Consequences:
-* Pro: Drastically minimizes network requests to a single asset call.
-* Pro: Significantly limits image memory bloat on mobile targets.
-* Pro: Dynamic DOM injection allows modals to utilize these portraits contextually without hardcoding image tags into every HTML template.
-* Con: Requires an external build-step (batch cropping, scaling, and texture packing) whenever new character visual assets are generated.
+Decision: All static, square UI portraits are compiled into a single, highly optimized WebP sprite sheet. A JavaScript dictionary (`PortraitRegistry`) serves as the single source of truth, mapping logical character IDs to their exact X/Y pixel coordinates. The UI engine renders these portraits dynamically via CSS `background-image` and `background-position`.
 
 ADR-036: Transition from Volumetric Sinks to Tier-Scaled Upkeep
 Status: Accepted (2026-03-10)
 
-Context: Balance v1 used "Volumetric Sinks" (Capital ships had 35,000 HP and 50,000 fuel) with flat service costs (e.g., 75cr/HP for repairs) to mathematically drain late-game wealth. However, inflating physical stats beyond 1,000 broke UI legibility, trivialized small mechanics (like 10 HP event damage), and violated the design constraints of a tactile, grounded simulation.
+Context: Balance v1 used "Volumetric Sinks" (Capital ships >35,000 HP). Inflating physical stats broke UI legibility and trivialized small mechanics.
 
 Decision: Reverted all physical ship stats strictly below 1,000 capacity. Replaced the "Volumetric Sink" with a "Tier-Scaled Upkeep" economic model:
-* **Algorithmic Pricing:** Ship purchase prices are strictly derived from their stat weights (`Cargo*300 + HP*200 + Fuel*100`) multiplied by an exponential Class Multiplier. 
-* **Dynamic Service Costs:** Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0001`).
+* **Algorithmic Pricing:** Ship base prices use weights (`Cargo*300 + HP*200 + Fuel*100`) multiplied by an exponential Class Multiplier. 
+* **Dynamic Service Costs:** Fuel and Repair costs scale algorithmically off the ship's class and base price.
 
-Consequences:
-* Pro: Ensures ship physical stats remain clean, readable, and highly consequential. 
-* Pro: Late-game ships remain massive operational and financial sinks, preserving loss aversion and friction for billionaires.
-* Pro: "Packing Peanut" mechanics are enforced: because huge ships still have tiny holds (<1,000), players must fill them with mixed tiers of commodities instead of hoarding a single high-tier item.
+ADR-037: Bankruptcy & Tiered Debt System
+Status: Accepted (2026-03-11)
+
+Context: The generic debt pool was mechanically flat. A system was needed to introduce high stakes for alternative financing routes and prevent soft-locks where players fell into unrecoverable debt spirals without resolution.
+
+Decision: Implemented a split debt architecture (Guild vs. Syndicate) via the `BankruptcyService`.
+* Guild Debt: Highly regulated, low interest (2%), with enforced 30-day garnishments drawn directly from liquid assets.
+* Syndicate Debt: High-risk, predatory interest (7%), no automatic garnishment. 
+* Solvency Evaluation: If total debt exceeds 150% of the player's total liquid and physical asset value, insolvency is triggered.
+* Repo Events: Defaulting on Syndicate Debt triggers automated, forced liquidations of the player's highest-value ship or upgrade to clear the balance.
+
+ADR-038: System States and Economic Weather
+Status: Accepted (2026-03-13)
+
+Context: Despite "Delayed Supply," markets were ultimately predictable. A macro-layer was required to force players to adapt their established trade routes dynamically.
+
+Decision: Implemented the `SystemStateService` to inject procedural, system-wide macroeconomic modifiers.
+* Weather Generation: Conditions (e.g., 'Solar Flare', 'Guild Strike') are rolled weekly.
+* Global Impact: Active states apply dynamic multipliers to target prices, commodity availability, and event generation probabilities across the entire game universe, temporarily overriding local quirks and standard math algorithms.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
 // meta/DATA_FLOW.md
 
-Orbital Trading - Data Flow Architecture
-1. System Overview
+# Orbital Trading - Data Flow Architecture
+
+## 1. System Overview
 The application follows a Strict Unidirectional Data Flow: Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)
 
-Core Layers
-Input Layer: EventManager (Global Listeners), ActionClickHandler (Delegation).
+### Core Layers
+**Input Layer:** EventManager (Global Listeners), ActionClickHandler (Delegation).
+**Logic Layer:** SimulationService (Facade), Domain Services (MarketService, PlayerActionService, BankruptcyService, SystemStateService).
+**State Layer:** GameState (Single Source of Truth).
+**Output Layer:** UIManager (Facade), Domain Controllers (UIMarketControl, etc.).
+**Persistence Layer:** SaveStorageService (IndexedDB, File I/O, Native Bridge), AssetStorageService (IndexedDB).
 
-Logic Layer: SimulationService (Facade), Domain Services (MarketService, PlayerActionService).
+## 2. Process Diagrams
 
-State Layer: GameState (Single Source of Truth).
-
-Output Layer: UIManager (Facade), Domain Controllers (UIMarketControl, etc.).
-
-Persistence Layer: AssetStorageService (IndexedDB), AssetService (Memory Cache).
-
-2. Process Diagrams
-2.1 Core Game Loop
+### 2.1 Core Game Loop
 The primary cycle for user interaction and state updates.
 
+```mermaid
 graph TD
     subgraph Input Layer
         A[User Interaction] --> B{EventManager};
@@ -45071,10 +44983,10 @@ graph TD
     end
 
     H --> A;
-
 2.2 Boot Sequence & Pre-Flight (ADR-021 & ADR-034)
 Initialization logic satisfying legal (EULA), performance (Asset Hydration), and cinematic (Web Animations API) constraints.
 
+Code snippet
 graph TD
     subgraph Phase 1: DOM Ready
         A[main.js executes] --> B[Initialize AssetService];
@@ -45097,10 +45009,10 @@ graph TD
         L --> M[Web Animations API: Crossfade Overlay to Game Container];
         M --> N[UIManager.render: Hangar/Shipyard];
     end
-
 2.3 Asset Hydration Architecture
 Persistence strategy to prevent iOS cache eviction.
 
+Code snippet
 graph TD
     subgraph Request
         A[Asset Requested] --> B[AssetService.hydrateAssets];
@@ -45123,10 +45035,10 @@ graph TD
     subgraph Render
         D & H --> K[DOM Image Element];
     end
-
 2.4 Intel Market System (Local Data Broker)
 Flow for generating and purchasing temporary market advantages.
 
+Code snippet
 graph TD
     subgraph UI Interaction
         A[Click 'Intel Market' Tab] --> B[UIManager calls IntelMarketRenderer];
@@ -45150,10 +45062,10 @@ graph TD
         M -- Yes --> N[Return Override Price];
         M -- No --> O[Return Standard Price];
     end
-
 2.5 Upgrade Installation (Destructive Replacement)
 Logic handling the 3-slot limit and replacement confirmation.
 
+Code snippet
 graph TD
     subgraph User Input
         A[Click 'Buy Upgrade'] --> B[ActionClickHandler];
@@ -45175,10 +45087,10 @@ graph TD
         H & J --> K[PlayerActionService.executeInstallUpgrade];
         K --> L((Update Ship State));
     end
-
 2.6 Animated Transaction Flow
 Handling asynchronous visual blocking during state transitions.
 
+Code snippet
 graph TD
     subgraph Input
         A[Buy Ship Click] --> B[ActionClickHandler];
@@ -45200,10 +45112,10 @@ graph TD
         H --> I((Mutate GameState));
         I --> J[UIManager.render];
     end
-
 2.7 Automated Testing Bot
 Headless execution path bypassing the input layer.
 
+Code snippet
 graph TD
     subgraph AI Decision
         A[Bot Loop] --> B[State Machine];
@@ -45220,10 +45132,10 @@ graph TD
         E & F --> G((GameState));
         G --> A;
     end
-
 2.8 Travel Sequence (Visual Handoff & Stranding Interception)
 Separation of instant logic calculation, fuel/stranding checks, and delayed visual presentation.
 
+Code snippet
 graph TD
     subgraph Initiation
         A[Launch Click] --> B[TravelService.initiateTravel];
@@ -45247,10 +45159,10 @@ graph TD
         L -- No --> N[ToastService.evaluateArrivalTriggers];
         F --> O[UIManager.render: Origin Location];
     end
-
 2.9 Event System 2.0 Resolution
 Data-driven event selection and effect application.
 
+Code snippet
 graph TD
     subgraph Trigger
         A[Travel Logic] --> B[RandomEventService.tryTriggerEvent];
@@ -45273,10 +45185,10 @@ graph TD
         I --> J[eventEffectResolver: Apply Effects];
         J --> K((Mutate GameState));
     end
-
 2.10 Contextual Help Modal Flow
 The interaction loop for context-sensitive player assistance, replacing the legacy tutorial triggers.
 
+Code snippet
 graph TD
     subgraph Triggering
         A[User Action / Screen Load] --> B[UIManager._evaluateHelpContext];
@@ -45299,10 +45211,10 @@ graph TD
         L -- Yes --> M[Update CSS transform: translateX];
         L -- No --> N[Snap back to current slide];
     end
-
 2.11 Mission System Architecture
 Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
+Code snippet
 graph TD
     subgraph Definition
         A[Mission Modules] --> B[missionRegistry.js];
@@ -45334,10 +45246,10 @@ graph TD
         O --> P[MissionService.completeMission];
         P --> Q[Grant Rewards & Archive];
     end
-
 2.12 Consumable Item Usage (Folded Space)
 Flow for using an item to bypass standard travel costs.
 
+Code snippet
 graph TD
     subgraph UI Interaction
         A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};
@@ -45361,10 +45273,10 @@ graph TD
     subgraph Resolution
         J & K --> L[Execute Travel (Anim + State)];
     end
-
 2.13 Sol Station Deferred Simulation (JIT Commits)
 Flow for managing high-frequency logic calculations securely and smoothly.
 
+Code snippet
 graph TD
     subgraph Engine Tick
         A[TimeService/SolStationService Ticks] --> B[Compute Entropy & Resource Generation];
@@ -45382,10 +45294,10 @@ graph TD
         G --> H[Flush Deferred Data into GameState];
         H --> I[Perform standard render cycle];
     end
-
 2.14 Fleet Management Flow
 Process for handling multi-ship arrays during arbitrage and travel.
 
+Code snippet
 graph TD
     subgraph Core
         A[Player Triggers Cargo Transaction] --> B[PlayerActionService Evaluates Cost];
@@ -45402,10 +45314,10 @@ graph TD
         F --> G[TravelService counts active Ships in Fleet];
         G --> H[Assess Scaling Convoy Tax against resources];
     end
-
 2.15 Game State Persistence & Dual-Write Storage
-Flow for saving and loading game data, utilizing an iOS native bridge to prevent IndexedDB cache eviction.
+Flow for saving and loading game data, utilizing an iOS native bridge, IDB, and manual File I/O for Imports/Exports.
 
+Code snippet
 graph TD
     subgraph Save Operation
         A1[User Saves Game] --> B1[SaveStorageService.saveGame];
@@ -45425,9 +45337,17 @@ graph TD
         E2 & F2 --> G2[Hydrate GameState];
     end
 
+    subgraph Import / Export
+        H1[User Exports Save] --> I1[SaveStorageService.exportSave];
+        I1 --> J1[Serialize & Trigger File Download];
+        H2[User Imports File] --> I2[SaveStorageService.importSave];
+        I2 --> J2[Parse JSON & Overwrite IDB];
+        J2 --> G2;
+    end
 2.16 Universal Toast System Queue
 Flow for evaluating, capping, and rendering non-blocking notifications upon location arrival.
 
+Code snippet
 graph TD
     subgraph Trigger Post-Travel
         A[Travel Animation Completes] --> B[ToastService.evaluateArrivalTriggers];
@@ -45454,10 +45374,10 @@ graph TD
         M --> N[Purge Queue & Timers];
         N --> O[UIToastManager.forceClear];
     end
-
 2.17 Dynamic UI Portrait Injection
 Flow for parsing portrait requests and dynamically mutating modal DOM structures via CSS sprite sheets.
 
+Code snippet
 graph TD
     subgraph Payload Request
         A[Service/Event requests Modal] --> B{Contains options.portraitId?};
@@ -45477,6 +45397,45 @@ graph TD
 
     subgraph Fallback
         B -- No --> I[Render Standard Center/Left Modal];
+    end
+2.18 Bankruptcy Evaluation & Repo Event Loop
+Evaluation of deep financial insolvency leading to dynamic player asset forfeiture.
+
+Code snippet
+graph TD
+    subgraph Solvency Check
+        A[Daily Tick / Large Purchase] --> B[BankruptcyService.evaluateSolvency];
+        B --> C{Syndicate Debt > Threshold?};
+    end
+    
+    subgraph Repo Trigger
+        C -- Yes --> D[Flag Repo Strike];
+        D --> E{Strike Count == Max?};
+        E -- Yes --> F[Trigger Repo Event];
+    end
+    
+    subgraph Asset Forfeiture
+        F --> G[Identify Highest Value Ship/Upgrade];
+        G --> H[Force Liquidation into Credits];
+        H --> I[Apply to Syndicate Debt];
+        I --> J[Render Punitive Repo Modal to Player];
+    end
+2.19 System State / Economic Weather Propagation
+Procedural macro-economic variables influencing trade conditions.
+
+Code snippet
+graph TD
+    subgraph Weather Generation
+        A[Weekly Simulation Tick] --> B[SystemStateService.rollWeather];
+        B --> C[Select weather ID from Registry];
+        C --> D[Apply globally to GameState.systemStates];
+    end
+
+    subgraph Propagation
+        D --> E[MarketService Pricing Engine];
+        E --> F[Adjust Target Price baselines system-wide];
+        D --> G[RandomEventService Context Weights];
+        G --> H[Increase/Decrease encounter probabilities];
     end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
@@ -45499,6 +45458,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `introSequenceActive` | Boolean | Flag for the initial prologue sequence. |
 | `player` | Object | **(See Section 2)** All player-specific data. |
 | `market` | Object | **(See Section 3)** All economic data. |
+| `systemStates` | Object | **(See Section 10)** System-wide macroeconomic conditions (Economic Weather). |
 | `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
 | `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
@@ -45533,9 +45493,8 @@ Contains all progression, assets, and statistics for the user.
 | `playerAge` | Number | Current age (starts at 24). |
 | `lastBirthdayYear` | Number | Year of the last processed birthday event. |
 | `credits` | Number | Current currency balance. |
-| `debt` | Number | Outstanding loan principal. |
-| `monthlyInterestAmount` | Number | Amount of interest added every 30 days. |
-| `loanStartDate` | Number | Day the loan was taken (for garnishment logic). |
+| `debt` | Object | Structured debt ledgers for 'guild' and 'syndicate' balances, tracking principal, interest rates, and loan start/due dates. |
+| `bankruptcy` | Object | Flags and trackers for insolvency status, grace periods, and active Repo Events. |
 | `revealedTier` | Number | Highest commodity tier visible (1-7). |
 | `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
 | **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
@@ -45647,6 +45606,7 @@ Manages the Endgame Engine mechanics.
 | `engineering` | Object | State data for the engineering interface, including active systemic upgrades and layout configurations. |
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
+| `synthesisPipeline` | Object | Pipeline metrics for conversion, including `{ active, inputCommodities, targetAntimatter, completionDay }`. |
 | `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed entropy and yields before JIT commits. |
 
 ---
@@ -45683,6 +45643,18 @@ When the game is saved via `SaveStorageService`, the core `GameState` is wrapped
 |   `locationId` | String | The player's location. |
 |   `timestamp` | Number | Standard UNIX epoch timestamp of the save event. |
 | `...payload` | Object | The full, stringified (or direct, depending on bridge) `GameState` root object unpacked into the save object. |
+
+---
+
+## 10. System States (`state.systemStates`)
+
+Manages procedural Economic Weather modifiers impacting global behavior.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `activeWeatherId` | String | ID of the currently active macroeconomic modifier. |
+| `expirationDay` | Number | The game day the current weather naturally ends. |
+| `weatherModifiers` | Object | Current active stat weights affecting global pricing, event rates, and availability. |
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
 --- START OF FILE: ./manifest.json ---

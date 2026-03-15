@@ -5,6 +5,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [36.78] - 2026-3-14
 -  commodity card polish and animations
 -  updated profit projection logic
+-  updated meta files
 
 # [36.76] - 2026-3-13
 -  added officer portraits

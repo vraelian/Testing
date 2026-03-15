@@ -36,6 +36,7 @@ Help Anchor800Global Contextual Help '?' Button.
 Modal Mask900The generic modal-overlay background.
 Modal1000Active Modal Dialogs, Help Modals.
 Toast2000Notifications, Floating Battle Text.
+Cinematic Skip2500Floating skip buttons during overlays.
 Cursor9999Custom hardware cursors (if applicable).
 
 2. Component Blueprints
@@ -57,7 +58,7 @@ HTML
     </div>
     
     <div class="card-actions">
-        <button class="btn btn-secondary" data-action="...">Action</button>
+        <button class="btn btn-secondary" type="button" data-action="...">Action</button>
     </div>
 </div>
 
@@ -168,6 +169,36 @@ HTML
 <div id="starter-ship-selection-overlay" class="intro-starfield-bg">
     <div class="starter-selection-container">
         </div>
+</div>
+
+2.10 Officer Roster Grid (.officer-grid)
+Used within the Sol Station Sub-view to display recruitable/active officers in a dense CSS grid utilizing the global sprite sheet.
+HTML
+<div class="officer-grid">
+    <button class="officer-cell" type="button" data-action="select-officer" data-id="Audita_1">
+        <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
+        <div class="officer-nameplate">AUDITA</div>
+    </button>
+</div>
+
+2.11 Options & Save Management Modal (.options-modal)
+A specialized modal layout for the systems menu incorporating destructive action warnings and file I/O triggers.
+HTML
+<div class="modal options-modal">
+    <div class="modal-header"><h2>SYSTEM OPTIONS</h2></div>
+    <div class="modal-content flex-col">
+        <button class="btn btn-secondary" type="button" data-action="export-save">EXPORT SAVE</button>
+        <button class="btn btn-secondary" type="button" data-action="trigger-import">IMPORT SAVE</button>
+        <div class="spacer"></div>
+        <button class="btn btn-danger" type="button" data-action="delete-save">WIPE DATA</button>
+    </div>
+</div>
+
+2.12 Cinematic Skip Interface (.cinematic-skip-container)
+A floating action button overlaid on top of blocking animations (Intros, Ship Upgrades) allowing the player to safely bypass the visual sequence while ensuring the underlying state promises resolve correctly.
+HTML
+<div class="cinematic-skip-container">
+    <button class="btn btn-skip" type="button" data-action="skip-cinematic">SKIP >></button>
 </div>
 
 3. CSS Utilities

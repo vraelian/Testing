@@ -303,7 +303,7 @@ Context: UIManager.js had grown into a 2,600+ line "God Object," handling everyt
 
 Decision: Refactored the UIManager into a thin Facade ("Switchboard") that delegates specific domain logic to six specialized Controllers:
 UIModalEngine: Lifecycle management for the global modal queue.
-UIHelpManager: Orchestration of the contextual help modals and micro-pagination slides. (Replaced UITutorialManager).
+UIHelpManager: Orchestration of the contextual help modals and micro-pagination slides.
 UIMarketControl: Market screen rendering, state retention, and graph generation.
 UIMissionControl: Mission data screens, sticky bar HUD, and Intel interactions.
 UIHangarControl: Ship interactions, carousels, and upgrade installation flows.
@@ -362,18 +362,7 @@ Pro: Keeps individual file sizes manageable.
 Pro: simplifies access for the UI layer.
 
 ADR-024: Tutorial Architecture (Logic-View Separation) [DEPRECATED]
-Status: Deprecated (2026-02-22) - Replaced by ADR-033: Contextual Help Modal System (V1)
-
-Context: The tutorial system required complex visual positioning (Popper.js) and SVG highlights. Implementing this directly within the TutorialService (Game Logic) or the main UIManager would violate separation of concerns and bloat the logic layer with DOM-specific calculations.
-
-Decision: Split the tutorial responsibilities into two distinct layers:
-TutorialService (Logic/State): Manages the "brain". Checks triggers, tracks progress, manages the activeBatchId/activeStepId, and enforces navLock in the GameState. It knows what to show, but not how.
-UITutorialManager (View/Render): Manages the "presentation". It is a domain controller under UIManager. It handles Popper.js instantiation, DOM element positioning, and drawing SVG highlights.
-
-Consequences:
-Pro: Clean separation of state (persisted) and view (ephemeral).
-Pro: TutorialService remains testable and platform-agnostic (could work for a non-DOM renderer).
-Pro: Encapsulates the complexity of Popper.js and SVG rendering within a single UI controller.
+Status: Deprecated (2026-02-22) - Replaced by ADR-033
 
 ADR-025: Mission Data Registry (Facade Pattern)
 Status: Accepted (2026-01-26)
@@ -386,9 +375,8 @@ Central Registry: `missionRegistry.js` aggregates these modules and exports a si
 Database Integration: `database.js` imports the registry instead of individual files, maintaining a clean dependency graph.
 
 Consequences:
-Pro: Facilitates "plug-and-play" content expansion; new mission packs can be added by simply importing/spreading them in the registry.
-Pro: Isolates specific mission logic (e.g., Tutorial vs. Story), making the codebase easier to navigate.
-Pro: Prepares the architecture for automated content generation and ingestion.
+Pro: Facilitates "plug-and-play" content expansion.
+Pro: Isolates specific mission logic.
 
 ADR-026: Defensive Button Interaction Strategy (The "Mars Revert" Protocol)
 Status: Accepted (2026-02-06)
@@ -402,7 +390,6 @@ Decision: A strict "Safety First" protocol was adopted for all UI interactions:
 Consequences:
 Pro: Permanently eliminates "phantom" page reloads and state reverts.
 Pro: Decouples game logic triggers from standard HTML form behaviors.
-Pro: Ensures consistent behavior across different browser engines (WebKit vs. Blink) which handle default button types differently.
 
 ADR-027: Mission System 2.0 (Logic/State Separation)
 Status: Accepted (2026-02-08)
@@ -418,25 +405,23 @@ Decision: The system was rebuilt into a modular "Engine" architecture.
 
 Consequences:
 * **Pro:** Supports concurrent active missions (currently capped at 4).
-* **Pro:** Enables "Live Tracking" on the HUD by simply referencing the `missionProgress` state.
-* **Pro:** Decouples complex logic from the service, making it easier to add new Objective Types without modifying the core service loop.
+* **Pro:** Enables "Live Tracking" on the HUD.
+* **Pro:** Decouples complex logic from the service.
 
 ADR-028: Decoupling of Time and Distance (Travel Entropy)
 Status: Accepted (2026-02-12)
 
-Context: Previously, hull decay from travel was dynamically tied to the *actual* time spent traveling. This created a mechanical loophole where players could min-max engine speed upgrades to drastically reduce hull damage. Conversely, an event-induced delay unfairly caused exponential hull damage because the player was stuck in space longer. Time lost to events was a narrative annoyance rather than a systemic resource drain.
+Context: Previously, hull decay from travel was dynamically tied to the *actual* time spent traveling. This created a mechanical loophole where players could min-max engine speed upgrades to drastically reduce hull damage. Conversely, an event-induced delay unfairly caused exponential hull damage because the player was stuck in space longer.
 
 Decision: Time and Distance have been mechanically decoupled.
 * **Distance Proxy:** The base, unmodified route duration is now statically evaluated at launch and used as a proxy for "Distance". Hull decay scales against this static distance proxy, entirely ignoring how fast or slow the ship actually travels.
-* **Stress Penalty:** Engine Mods that increase speed now inject an exponential "Hull Stress" multiplier against the distance-based hull decay, forcing a strategic tradeoff (speed vs. maintenance costs).
-* **Fuel-Coupled Delays:** Time delays rolled from random events now actively deduct travel fuel, mathematically mapping time loss into the resource economy.
+* **Stress Penalty:** Engine Mods that increase speed now inject an exponential "Hull Stress" multiplier against the distance-based hull decay, forcing a strategic tradeoff.
+* **Fuel-Coupled Delays:** Time delays rolled from random events now actively deduct travel fuel.
 * **Stranding Mechanic:** If fuel requirements for a trip (plus event delays) exceed current reserves, a critical "Stranding" state forces the loss of all travel time and fuel, returning the ship to the origin port.
-* **Drydocking:** Hull repairs at a station now advance the global game clock (1 Day per Repair Tick), weaponizing time against ship damage.
 
 Consequences:
 * **Pro:** Prevents "Speed" from acting as the ultimate armor stat.
-* **Pro:** Imbues "Time" with tangible, punitive weight, turning random event delays into real economic threats.
-* **Pro:** Creates a balanced risk/reward framework where flying faster directly correlates with higher maintenance costs.
+* **Pro:** Imbues "Time" with tangible, punitive weight.
 
 ADR-029: Deferred Simulation Logic & JIT Commits (Sol Station)
 Status: Accepted (2026-02-18)
@@ -449,9 +434,9 @@ Decision: Implemented a deferred state architecture using View-Model Interpolati
 * State writes only occur JIT when strictly necessary (e.g., when the user leaves the screen or interacts).
 
 Consequences:
-* **Pro:** Drastically improves frame rate and performance by decoupling background math from the DOM render cycle.
+* **Pro:** Drastically improves frame rate and performance.
 * **Pro:** Allows the station to process complex multi-variable equations smoothly.
-* **Con:** Adds complexity to state tracking, as UI must interpolate visual progress before the true state is officially committed.
+* **Con:** Adds complexity to state tracking.
 
 ADR-030: Fleet Management & The "Convoy Tax"
 Status: Accepted (2026-02-18)
@@ -464,99 +449,80 @@ Decision: Implemented Fleet Trading and Storage with an associated "Convoy Tax".
 * A "Convoy Tax" is assessed during travel, dynamically increasing resource burn based on the total number of ships traversing the route.
 
 Consequences:
-* **Pro:** Expands player progression, allowing for specialized ship collections and massive late-game arbitrage.
-* **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource/credit costs based on fleet size during travel, making massive fleets high-risk/high-reward.
-* **Pro:** Dynamic fleet cost averaging integrates smoothly into the existing inventory profit displays.
+* **Pro:** Expands player progression, allowing for specialized ship collections.
+* **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource costs.
 
 ADR-031: Balance v2 - Parametric Pacing & Volumetric Sinks
 Status: Accepted (2026-02-20)
 
-Context: Balance v1 suffered from "whack-a-mole" tuning, where adjusting one value broke the economy elsewhere. Late-game players experienced a "singularity" where profits grew exponentially into the trillions, rendering operating costs meaningless.
-
 Decision: A comprehensive, mathematically anchored parametric engine was implemented.
 1. The 120-Trip Anchor: Progression is strictly scaled so that optimal trading yields enough profit to afford the next tier of ship/upgrade in ~120 trips.
-2. Volumetric Sinks: Capital ships were given absurdly high HP/Fuel pools, turning percentage-based travel decay into a massive credit sink purely through scale.
-3. Hybrid Upgrade Pricing: Upgrades now cost `Base + (ShipValue * Tier%)`, ensuring they remain significant investments at all stages of the game.
+2. Volumetric Sinks: Capital ships were given absurdly high HP/Fuel pools (later revised in ADR-036).
+3. Hybrid Upgrade Pricing: Upgrades now cost `Base + (ShipValue * Tier%)`, ensuring they remain significant investments.
 4. Wealth-Scaled Hazards: Flat event fines were replaced with percentage deductions of liquid wealth (capped at 9%).
-5. Supply Bottlenecks: T6 commodities are strictly hard-capped in system availability to prevent Capital ships from sequence-breaking the economy.
-
-Consequences:
-Pro: The economy is now self-regulating and easily tunable via global variables.
-Pro: Late-game players still experience loss aversion and operating friction.
-Pro: Removes the need for arbitrary "hard caps" on wealth.
 
 ADR-032: Dual-Write iOS Native Persistence Bridge
 Status: Accepted (2026-02-20)
 
-Context: On iOS devices (the primary target platform via WKWebView/PWA), the operating system aggressively evicts web cache, IndexedDB, and LocalStorage data to save space. This resulted in devastating, unpredictable loss of player save data. Standard browser storage mechanisms proved insufficiently durable for a persistent game.
+Context: On iOS devices, the operating system aggressively evicts web cache, IndexedDB, and LocalStorage data to save space. Standard browser storage mechanisms proved insufficiently durable.
 
 Decision: Implemented a dual-write persistence architecture via `SaveStorageService.js`.
-* **Primary Storage (Web):** Saves are still written to IndexedDB (`OrbitalSavesDB`) to support standard browser play and development.
+* **Primary Storage (Web):** Saves are written to IndexedDB (`OrbitalSavesDB`).
 * **Native Bridge (iOS):** Concurrently, the save payload is stringified and broadcast to the native Swift layer via `window.webkit.messageHandlers.iosSaveBackup`.
 * **Indestructible Fallback:** Swift stores this data in the native `UserDefaults`, completely immune to WebKit cache eviction.
 * **Silent Healing:** On load, the game checks for the native injected fallback (`window.__IOS_SAVES`). If found, it prioritizes this data and silently rewrites it back into IndexedDB to repair the wiped web state.
 
-Consequences:
-* **Pro:** Perfect save retention on iOS; saves survive OS-level cache purges and app updates.
-* **Pro:** Seamless background healing means the player never knows their web data was actually wiped.
-* **Pro:** Maintains full compatibility with standard desktop web browsers (they gracefully ignore the iOS bridge).
-* **Con:** Introduces slight overhead in serializing large state objects and requires native Swift code maintenance (`ViewController.swift`).
-
 ADR-033: Contextual Help Modal System (V1)
 Status: Accepted (2026-02-22)
 
-Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers to guide players through virtualized UI lists. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design, leading to clipped text, gesture conflicts, and UI blocking.
+Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design.
 
 Decision: Abandon "DOM-hunting" tooltip tutorials entirely in favor of a Contextual Help Modal System.
 * Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio ($1/1$ or $4/3$).
-* Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling to eliminate mobile X/Y touch-gesture conflicts.
-* State-Driven Context: Relies purely on the abstract GameState (current Nav, Screen, and Sub-tabs) to resolve context and auto-instantiate the relevant help modal.
-* Centralized Data: Help slide content is stored in a static registry (`helpRegistry.js`).
-
-Consequences:
-* Pro: Guarantees 100% stability across all devices (iPhone SE to Desktop).
-* Pro: Eliminates complex DOM-tracking bugs and performance overhead.
-* Pro: Affords spatial luxury for multimedia explanations (SVGs, CSS diagrams) over dense text.
-* Con: Less direct visual pointing; relies on the player to map the modal's explanations to the UI elements.
+* Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling.
+* State-Driven Context: Relies purely on the abstract GameState to resolve context and auto-instantiate the relevant help modal.
 
 ADR-034: Cinematic UI Crossfades via Web Animations API
 Status: Accepted (2026-02-25)
 
-Context: The conclusion of the Intro Sequence required a seamless transition from a bespoke "Starter Ship Selection" screen to the fully rendered core game loop (Hangar screen). Standard CSS class toggling (`.hidden`, `.fade-out`) interfered with the `UIManager`'s aggressive DOM wiping and state re-renders, causing visual flashing or premature exposure of the game UI before the cinematic finished.
+Context: The conclusion of the Intro Sequence required a seamless transition. Standard CSS class toggling (`.hidden`, `.fade-out`) interfered with the `UIManager`'s aggressive DOM wiping and state re-renders, causing visual flashing.
 
 Decision: Bypassed standard CSS state classes for critical cinematic transitions in favor of the Javascript Web Animations API (`Element.animate()`).
-* External Overlay: The cinematic screen (`starter-ship-selection-overlay`) is injected directly into the `document.body`, outside the control of the `#game-container` and `UIManager`.
+* External Overlay: The cinematic screen is injected directly into the `document.body`, outside the control of the `#game-container` and `UIManager`.
 * Independent Animation: The API executes a 6-second crossfade phase (blur/opacity) that runs entirely independent of CSS transition rules.
-* Invisible State Mutation: The actual `GameState` updates (credit deduction, ship assignment) and the initial `UIManager.render()` are executed *during* the blackout hold phase of the animation.
-
-Consequences:
-* Pro: Guarantees a flawless, stutter-free cinematic transition without DOM flashing.
-* Pro: Decouples bespoke intro UI components from the rigid rules of the core UI library.
-* Con: Requires explicit timeout orchestration and careful cleanup of inline styles (`opacity`, `filter`) injected by the API to prevent breaking subsequent UI behavior.
 
 ADR-035: Asset Management: UI Sprite Sheets
 Status: Accepted (2026-03-09)
 
-Context: As the game expanded to include nearly 200 individual character portraits for missions, events, and the codex, loading these as individual image files created excessive HTTP bottlenecks. This severely bloated the memory footprint within the iOS WKWebView wrapper, risking application crashes and degrading overall load performance.
+Context: Loading nearly 200 individual character portraits created excessive HTTP bottlenecks and memory bloat on mobile targets.
 
-Decision: All static, square UI portraits are compiled into a single, highly optimized WebP sprite sheet using a grid-based CSS packing algorithm. A JavaScript dictionary (`PortraitRegistry`) serves as the single source of truth, mapping logical character IDs (e.g., `Audita_1`) to their exact X/Y pixel coordinates. The UI engine (`UIModalEngine`) renders these portraits dynamically by applying the sprite sheet as a CSS `background-image` and mathematically shifting the viewable area via `background-position`.
-
-Consequences:
-* Pro: Drastically minimizes network requests to a single asset call.
-* Pro: Significantly limits image memory bloat on mobile targets.
-* Pro: Dynamic DOM injection allows modals to utilize these portraits contextually without hardcoding image tags into every HTML template.
-* Con: Requires an external build-step (batch cropping, scaling, and texture packing) whenever new character visual assets are generated.
+Decision: All static, square UI portraits are compiled into a single, highly optimized WebP sprite sheet. A JavaScript dictionary (`PortraitRegistry`) serves as the single source of truth, mapping logical character IDs to their exact X/Y pixel coordinates. The UI engine renders these portraits dynamically via CSS `background-image` and `background-position`.
 
 ADR-036: Transition from Volumetric Sinks to Tier-Scaled Upkeep
 Status: Accepted (2026-03-10)
 
-Context: Balance v1 used "Volumetric Sinks" (Capital ships had 35,000 HP and 50,000 fuel) with flat service costs (e.g., 75cr/HP for repairs) to mathematically drain late-game wealth. However, inflating physical stats beyond 1,000 broke UI legibility, trivialized small mechanics (like 10 HP event damage), and violated the design constraints of a tactile, grounded simulation.
+Context: Balance v1 used "Volumetric Sinks" (Capital ships >35,000 HP). Inflating physical stats broke UI legibility and trivialized small mechanics.
 
 Decision: Reverted all physical ship stats strictly below 1,000 capacity. Replaced the "Volumetric Sink" with a "Tier-Scaled Upkeep" economic model:
-* **Algorithmic Pricing:** Ship purchase prices are strictly derived from their stat weights (`Cargo*300 + HP*200 + Fuel*100`) multiplied by an exponential Class Multiplier. 
-* **Dynamic Service Costs:** Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0001`).
+* **Algorithmic Pricing:** Ship base prices use weights (`Cargo*300 + HP*200 + Fuel*100`) multiplied by an exponential Class Multiplier. 
+* **Dynamic Service Costs:** Fuel and Repair costs scale algorithmically off the ship's class and base price.
 
-Consequences:
-* Pro: Ensures ship physical stats remain clean, readable, and highly consequential. 
-* Pro: Late-game ships remain massive operational and financial sinks, preserving loss aversion and friction for billionaires.
-* Pro: "Packing Peanut" mechanics are enforced: because huge ships still have tiny holds (<1,000), players must fill them with mixed tiers of commodities instead of hoarding a single high-tier item.
+ADR-037: Bankruptcy & Tiered Debt System
+Status: Accepted (2026-03-11)
+
+Context: The generic debt pool was mechanically flat. A system was needed to introduce high stakes for alternative financing routes and prevent soft-locks where players fell into unrecoverable debt spirals without resolution.
+
+Decision: Implemented a split debt architecture (Guild vs. Syndicate) via the `BankruptcyService`.
+* Guild Debt: Highly regulated, low interest (2%), with enforced 30-day garnishments drawn directly from liquid assets.
+* Syndicate Debt: High-risk, predatory interest (7%), no automatic garnishment. 
+* Solvency Evaluation: If total debt exceeds 150% of the player's total liquid and physical asset value, insolvency is triggered.
+* Repo Events: Defaulting on Syndicate Debt triggers automated, forced liquidations of the player's highest-value ship or upgrade to clear the balance.
+
+ADR-038: System States and Economic Weather
+Status: Accepted (2026-03-13)
+
+Context: Despite "Delayed Supply," markets were ultimately predictable. A macro-layer was required to force players to adapt their established trade routes dynamically.
+
+Decision: Implemented the `SystemStateService` to inject procedural, system-wide macroeconomic modifiers.
+* Weather Generation: Conditions (e.g., 'Solar Flare', 'Guild Strike') are rolled weekly.
+* Global Impact: Active states apply dynamic multipliers to target prices, commodity availability, and event generation probabilities across the entire game universe, temporarily overriding local quirks and standard math algorithms.

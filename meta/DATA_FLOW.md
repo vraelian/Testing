@@ -1,24 +1,23 @@
 // meta/DATA_FLOW.md
 
-Orbital Trading - Data Flow Architecture
-1. System Overview
+# Orbital Trading - Data Flow Architecture
+
+## 1. System Overview
 The application follows a Strict Unidirectional Data Flow: Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)
 
-Core Layers
-Input Layer: EventManager (Global Listeners), ActionClickHandler (Delegation).
+### Core Layers
+**Input Layer:** EventManager (Global Listeners), ActionClickHandler (Delegation).
+**Logic Layer:** SimulationService (Facade), Domain Services (MarketService, PlayerActionService, BankruptcyService, SystemStateService).
+**State Layer:** GameState (Single Source of Truth).
+**Output Layer:** UIManager (Facade), Domain Controllers (UIMarketControl, etc.).
+**Persistence Layer:** SaveStorageService (IndexedDB, File I/O, Native Bridge), AssetStorageService (IndexedDB).
 
-Logic Layer: SimulationService (Facade), Domain Services (MarketService, PlayerActionService).
+## 2. Process Diagrams
 
-State Layer: GameState (Single Source of Truth).
-
-Output Layer: UIManager (Facade), Domain Controllers (UIMarketControl, etc.).
-
-Persistence Layer: AssetStorageService (IndexedDB), AssetService (Memory Cache).
-
-2. Process Diagrams
-2.1 Core Game Loop
+### 2.1 Core Game Loop
 The primary cycle for user interaction and state updates.
 
+```mermaid
 graph TD
     subgraph Input Layer
         A[User Interaction] --> B{EventManager};
@@ -42,10 +41,10 @@ graph TD
     end
 
     H --> A;
-
 2.2 Boot Sequence & Pre-Flight (ADR-021 & ADR-034)
 Initialization logic satisfying legal (EULA), performance (Asset Hydration), and cinematic (Web Animations API) constraints.
 
+Code snippet
 graph TD
     subgraph Phase 1: DOM Ready
         A[main.js executes] --> B[Initialize AssetService];
@@ -68,10 +67,10 @@ graph TD
         L --> M[Web Animations API: Crossfade Overlay to Game Container];
         M --> N[UIManager.render: Hangar/Shipyard];
     end
-
 2.3 Asset Hydration Architecture
 Persistence strategy to prevent iOS cache eviction.
 
+Code snippet
 graph TD
     subgraph Request
         A[Asset Requested] --> B[AssetService.hydrateAssets];
@@ -94,10 +93,10 @@ graph TD
     subgraph Render
         D & H --> K[DOM Image Element];
     end
-
 2.4 Intel Market System (Local Data Broker)
 Flow for generating and purchasing temporary market advantages.
 
+Code snippet
 graph TD
     subgraph UI Interaction
         A[Click 'Intel Market' Tab] --> B[UIManager calls IntelMarketRenderer];
@@ -121,10 +120,10 @@ graph TD
         M -- Yes --> N[Return Override Price];
         M -- No --> O[Return Standard Price];
     end
-
 2.5 Upgrade Installation (Destructive Replacement)
 Logic handling the 3-slot limit and replacement confirmation.
 
+Code snippet
 graph TD
     subgraph User Input
         A[Click 'Buy Upgrade'] --> B[ActionClickHandler];
@@ -146,10 +145,10 @@ graph TD
         H & J --> K[PlayerActionService.executeInstallUpgrade];
         K --> L((Update Ship State));
     end
-
 2.6 Animated Transaction Flow
 Handling asynchronous visual blocking during state transitions.
 
+Code snippet
 graph TD
     subgraph Input
         A[Buy Ship Click] --> B[ActionClickHandler];
@@ -171,10 +170,10 @@ graph TD
         H --> I((Mutate GameState));
         I --> J[UIManager.render];
     end
-
 2.7 Automated Testing Bot
 Headless execution path bypassing the input layer.
 
+Code snippet
 graph TD
     subgraph AI Decision
         A[Bot Loop] --> B[State Machine];
@@ -191,10 +190,10 @@ graph TD
         E & F --> G((GameState));
         G --> A;
     end
-
 2.8 Travel Sequence (Visual Handoff & Stranding Interception)
 Separation of instant logic calculation, fuel/stranding checks, and delayed visual presentation.
 
+Code snippet
 graph TD
     subgraph Initiation
         A[Launch Click] --> B[TravelService.initiateTravel];
@@ -218,10 +217,10 @@ graph TD
         L -- No --> N[ToastService.evaluateArrivalTriggers];
         F --> O[UIManager.render: Origin Location];
     end
-
 2.9 Event System 2.0 Resolution
 Data-driven event selection and effect application.
 
+Code snippet
 graph TD
     subgraph Trigger
         A[Travel Logic] --> B[RandomEventService.tryTriggerEvent];
@@ -244,10 +243,10 @@ graph TD
         I --> J[eventEffectResolver: Apply Effects];
         J --> K((Mutate GameState));
     end
-
 2.10 Contextual Help Modal Flow
 The interaction loop for context-sensitive player assistance, replacing the legacy tutorial triggers.
 
+Code snippet
 graph TD
     subgraph Triggering
         A[User Action / Screen Load] --> B[UIManager._evaluateHelpContext];
@@ -270,10 +269,10 @@ graph TD
         L -- Yes --> M[Update CSS transform: translateX];
         L -- No --> N[Snap back to current slide];
     end
-
 2.11 Mission System Architecture
 Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
+Code snippet
 graph TD
     subgraph Definition
         A[Mission Modules] --> B[missionRegistry.js];
@@ -305,10 +304,10 @@ graph TD
         O --> P[MissionService.completeMission];
         P --> Q[Grant Rewards & Archive];
     end
-
 2.12 Consumable Item Usage (Folded Space)
 Flow for using an item to bypass standard travel costs.
 
+Code snippet
 graph TD
     subgraph UI Interaction
         A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};
@@ -332,10 +331,10 @@ graph TD
     subgraph Resolution
         J & K --> L[Execute Travel (Anim + State)];
     end
-
 2.13 Sol Station Deferred Simulation (JIT Commits)
 Flow for managing high-frequency logic calculations securely and smoothly.
 
+Code snippet
 graph TD
     subgraph Engine Tick
         A[TimeService/SolStationService Ticks] --> B[Compute Entropy & Resource Generation];
@@ -353,10 +352,10 @@ graph TD
         G --> H[Flush Deferred Data into GameState];
         H --> I[Perform standard render cycle];
     end
-
 2.14 Fleet Management Flow
 Process for handling multi-ship arrays during arbitrage and travel.
 
+Code snippet
 graph TD
     subgraph Core
         A[Player Triggers Cargo Transaction] --> B[PlayerActionService Evaluates Cost];
@@ -373,10 +372,10 @@ graph TD
         F --> G[TravelService counts active Ships in Fleet];
         G --> H[Assess Scaling Convoy Tax against resources];
     end
-
 2.15 Game State Persistence & Dual-Write Storage
-Flow for saving and loading game data, utilizing an iOS native bridge to prevent IndexedDB cache eviction.
+Flow for saving and loading game data, utilizing an iOS native bridge, IDB, and manual File I/O for Imports/Exports.
 
+Code snippet
 graph TD
     subgraph Save Operation
         A1[User Saves Game] --> B1[SaveStorageService.saveGame];
@@ -396,9 +395,17 @@ graph TD
         E2 & F2 --> G2[Hydrate GameState];
     end
 
+    subgraph Import / Export
+        H1[User Exports Save] --> I1[SaveStorageService.exportSave];
+        I1 --> J1[Serialize & Trigger File Download];
+        H2[User Imports File] --> I2[SaveStorageService.importSave];
+        I2 --> J2[Parse JSON & Overwrite IDB];
+        J2 --> G2;
+    end
 2.16 Universal Toast System Queue
 Flow for evaluating, capping, and rendering non-blocking notifications upon location arrival.
 
+Code snippet
 graph TD
     subgraph Trigger Post-Travel
         A[Travel Animation Completes] --> B[ToastService.evaluateArrivalTriggers];
@@ -425,10 +432,10 @@ graph TD
         M --> N[Purge Queue & Timers];
         N --> O[UIToastManager.forceClear];
     end
-
 2.17 Dynamic UI Portrait Injection
 Flow for parsing portrait requests and dynamically mutating modal DOM structures via CSS sprite sheets.
 
+Code snippet
 graph TD
     subgraph Payload Request
         A[Service/Event requests Modal] --> B{Contains options.portraitId?};
@@ -448,4 +455,43 @@ graph TD
 
     subgraph Fallback
         B -- No --> I[Render Standard Center/Left Modal];
+    end
+2.18 Bankruptcy Evaluation & Repo Event Loop
+Evaluation of deep financial insolvency leading to dynamic player asset forfeiture.
+
+Code snippet
+graph TD
+    subgraph Solvency Check
+        A[Daily Tick / Large Purchase] --> B[BankruptcyService.evaluateSolvency];
+        B --> C{Syndicate Debt > Threshold?};
+    end
+    
+    subgraph Repo Trigger
+        C -- Yes --> D[Flag Repo Strike];
+        D --> E{Strike Count == Max?};
+        E -- Yes --> F[Trigger Repo Event];
+    end
+    
+    subgraph Asset Forfeiture
+        F --> G[Identify Highest Value Ship/Upgrade];
+        G --> H[Force Liquidation into Credits];
+        H --> I[Apply to Syndicate Debt];
+        I --> J[Render Punitive Repo Modal to Player];
+    end
+2.19 System State / Economic Weather Propagation
+Procedural macro-economic variables influencing trade conditions.
+
+Code snippet
+graph TD
+    subgraph Weather Generation
+        A[Weekly Simulation Tick] --> B[SystemStateService.rollWeather];
+        B --> C[Select weather ID from Registry];
+        C --> D[Apply globally to GameState.systemStates];
+    end
+
+    subgraph Propagation
+        D --> E[MarketService Pricing Engine];
+        E --> F[Adjust Target Price baselines system-wide];
+        D --> G[RandomEventService Context Weights];
+        G --> H[Increase/Decrease encounter probabilities];
     end
