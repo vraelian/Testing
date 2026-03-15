@@ -331,6 +331,50 @@ export class IntelService {
     }
 
     /**
+     * Grants a specific narrative intel deal, forcibly overriding any existing deal.
+     * Bypasses standard credit checks and replaces the activeIntelDeal.
+     * @param {object} intelParams - Parameters for the forced deal.
+     * @param {string} intelParams.commodityId - The ID of the commodity to discount.
+     * @param {string} intelParams.dealLocationId - The location where the deal is active.
+     * @param {number} intelParams.discountPercent - The percentage discount (e.g., 0.80 for 80%).
+     * @param {number} intelParams.durationDays - How many days the deal should last.
+     * @JSDoc
+     */
+    grantNarrativeIntel(intelParams) {
+        const state = this.gameState.getState();
+        
+        const overridePrice = Math.floor(this.getGalacticAverage(intelParams.commodityId) * (1 - (intelParams.discountPercent || 0.5)));
+        const expiryDay = this.timeService.getCurrentDay() + (intelParams.durationDays || 60);
+
+        const newActiveDeal = {
+            locationId: intelParams.dealLocationId,
+            commodityId: intelParams.commodityId,
+            overridePrice: overridePrice,
+            expiryDay: expiryDay,
+            sourcePacketId: 'narrative_grant',
+            sourceSaleLocationId: state.currentLocationId
+        };
+
+        this.logger.info.system('IntelService', state.day, 'INTEL_GRANT', `Narrative intel granted for ${intelParams.commodityId} at ${intelParams.dealLocationId}. Overriding current deal.`);
+
+        // Push message to NewsTicker
+        try {
+            const commodityName = this.db.COMMODITIES.find(c => c.id === intelParams.commodityId)?.name || 'goods';
+            const locationName = this.db.MARKETS.find(m => m.id === intelParams.dealLocationId)?.name || 'a local market';
+            let msgTemplate = PURCHASED_INTEL_MESSAGES[Math.floor(Math.random() * PURCHASED_INTEL_MESSAGES.length)];
+            if (!msgTemplate) msgTemplate = "Secure data link established. {Commodity Name} heavily demanded at {Location Name}.";
+            let message = msgTemplate.replace('{Commodity Name}', commodityName).replace('{Location Name}', locationName);
+            this.newsTickerService.pushMessage(message, 'INTEL', true); 
+        } catch (e) {
+            this.logger.error('IntelService', 'Failed to push news ticker message for narrative intel.', e);
+        }
+
+        this.gameState.setState({ 
+            activeIntelDeal: newActiveDeal 
+        });
+    }
+
+    /**
      * Gets the galactic average price for a commodity.
      * @param {string} commodityId - The ID of the commodity.
      * @returns {number} The galactic average price.

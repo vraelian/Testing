@@ -26,6 +26,9 @@ export class MissionService {
         
         // Internal flag to allow DEBUG missions to appear in the standard terminal
         this._debugMissionsUnlocked = false; 
+        
+        // Dynamic set to force-allow specific missions to appear in the terminal
+        this._forcedTerminalMissions = new Set();
     }
 
     /**
@@ -53,17 +56,28 @@ export class MissionService {
     }
     
     /**
+     * Forces a specific mission to bypass prerequisites and render in the terminal.
+     * @param {string} missionId 
+     */
+    forceToTerminal(missionId) {
+        if (!this._forcedTerminalMissions) this._forcedTerminalMissions = new Set();
+        this._forcedTerminalMissions.add(missionId);
+        this.uiManager.render(this.gameState.getState());
+    }
+    
+    /**
      * Gets a list of all missions that are currently available to the player.
      * @returns {Array<object>} An array of available mission objects.
      */
     getAvailableMissions() {
         const { activeMissionIds, completedMissionIds } = this.gameState.missions;
         return Object.values(DB.MISSIONS).filter(mission => {
+            const isForced = this._forcedTerminalMissions && this._forcedTerminalMissions.has(mission.id);
             const isAvailable =
                 !activeMissionIds.includes(mission.id) &&
                 !completedMissionIds.includes(mission.id) &&
-                (mission.type !== 'DEBUG' || this._debugMissionsUnlocked) && // Hide debug missions from standard terminal UNLESS unlocked
-                this.arePrerequisitesMet(mission.id);
+                (mission.type !== 'DEBUG' || this._debugMissionsUnlocked || isForced) &&
+                (this.arePrerequisitesMet(mission.id) || isForced);
             return isAvailable;
         });
     }
@@ -97,7 +111,8 @@ export class MissionService {
                 this.logger.warn('MissionService', `Cannot accept ${missionId}: Mission log full (4/4).`);
                 return;
             }
-            if (!mission || !this.arePrerequisitesMet(missionId)) {
+            const isForcedTerminal = this._forcedTerminalMissions && this._forcedTerminalMissions.has(missionId);
+            if (!mission || (!this.arePrerequisitesMet(missionId) && !isForcedTerminal)) {
                 return;
             }
         }
@@ -107,8 +122,43 @@ export class MissionService {
             return; 
         }
 
-        // 3. Initialize State
+        // 3. Cargo Space Validation
+        if (mission.grantedCargo && mission.grantedCargo.length > 0) {
+            let totalGrantedSpace = 0;
+            mission.grantedCargo.forEach(cargo => totalGrantedSpace += cargo.quantity);
+            
+            const activeShipId = this.gameState.player.activeShipId;
+            let currentUsedSpace = 0;
+            if (this.gameState.player.inventories[activeShipId]) {
+                Object.values(this.gameState.player.inventories[activeShipId]).forEach(item => {
+                    currentUsedSpace += item.quantity;
+                });
+            }
+            
+            const maxCapacity = this.simulationService ? 
+                this.simulationService.getEffectiveShipStats(activeShipId).cargoCapacity : 
+                (DB.SHIPS[activeShipId]?.cargoCapacity || 100);
+                
+            const availableSpace = maxCapacity - currentUsedSpace;
+            
+            if (availableSpace < totalGrantedSpace) {
+                const errorMsg = `Cannot accept mission: Insufficient cargo space. You need space in your cargo hold for ${totalGrantedSpace} units.`;
+                if (this.uiManager && this.uiManager.toastManager) {
+                     this.uiManager.toastManager.showToast(errorMsg, 'ALERT');
+                } else if (this.uiManager && typeof this.uiManager.showToast === 'function') {
+                     this.uiManager.showToast(errorMsg, 'ALERT');
+                }
+                return; // Abort acceptance
+            }
+        }
+
+        // 4. Initialize State
         this.gameState.missions.activeMissionIds.push(missionId);
+        
+        // Remove from forced terminal state if it was there
+        if (this._forcedTerminalMissions) {
+            this._forcedTerminalMissions.delete(missionId);
+        }
         
         // Initialize progress with isCompletable flag
         this.gameState.missions.missionProgress[missionId] = {
@@ -123,12 +173,35 @@ export class MissionService {
         
         this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
         
-        // 4. Grant Start Items
-        if (this.simulationService) {
+        // 5. Grant Start Items
+        if (mission.grantedCargo && this.simulationService) {
+            mission.grantedCargo.forEach(cargo => {
+                const activeShipId = this.gameState.player.activeShipId;
+                if (!this.gameState.player.inventories[activeShipId]) {
+                    this.gameState.player.inventories[activeShipId] = {};
+                }
+                if (!this.gameState.player.inventories[activeShipId][cargo.goodId]) {
+                    this.gameState.player.inventories[activeShipId][cargo.goodId] = { quantity: 0, avgCost: 0 };
+                }
+                this.gameState.player.inventories[activeShipId][cargo.goodId].quantity += cargo.quantity;
+            });
+        }
+
+        if (this.simulationService && typeof this.simulationService.grantMissionCargo === 'function') {
             this.simulationService.grantMissionCargo(missionId);
         }
 
-        // 5. Apply Navigation Locks if specified
+        // --- VIRTUAL WORKBENCH: Narrative Intel Granting ---
+        if (missionId === 'mission_10' && this.simulationService && this.simulationService.intelService) {
+             this.simulationService.intelService.grantNarrativeIntel({
+                 commodityId: 'water_ice',
+                 dealLocationId: 'loc_earth',
+                 discountPercent: 0.80, // Heavy markup to ensure it stands out
+                 durationDays: 120 // Long runway for the player to figure out navigation
+             });
+        }
+
+        // 6. Apply Navigation Locks if specified
         if (mission.navLock && this.simulationService) {
             this.simulationService.setNavigationLock(
                 mission.navLock.navIds || [],
@@ -136,7 +209,7 @@ export class MissionService {
             );
         }
         
-        // 6. Initial Check & Render
+        // 7. Initial Check & Render
         this.checkTriggers(); 
 
         // If the mission has no objectives, mark it as completable immediately, but do NOT auto-complete it.
