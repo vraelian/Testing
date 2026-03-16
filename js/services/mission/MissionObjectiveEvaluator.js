@@ -11,11 +11,14 @@ export class MissionObjectiveEvaluator {
      * @param {object} objective - The objective schema object.
      * @param {import('../GameState.js').GameState} gameState - The current state of the game.
      * @param {import('../SimulationService.js').SimulationService} [simulationService] - Optional access to derived stats.
-     * @param {number} [currentProgress=0] - The existing progress of the objective, used for latching stateful events.
+     * @param {object} [objProgress={}] - The existing progress object of the objective (contains current, target, deposited).
      * @returns {object} { current: number, target: number, isMet: boolean }
      */
-    evaluate(objective, gameState, simulationService, currentProgress = 0) {
+    evaluate(objective, gameState, simulationService, objProgress = {}) {
         let current = 0;
+        
+        const currentProgress = objProgress.current || 0;
+        const deposited = objProgress.deposited || 0;
         
         // Allow 0 as a valid target (e.g. Empty Hold = 0 items)
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
@@ -46,7 +49,7 @@ export class MissionObjectiveEvaluator {
                         totalQty += (inventory[itemId].quantity || 0);
                     }
                 }
-                current = totalQty;
+                current = totalQty + deposited;
                 break;
             }
 

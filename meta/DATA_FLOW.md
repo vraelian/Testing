@@ -495,3 +495,25 @@ graph TD
         D --> G[RandomEventService Context Weights];
         G --> H[Increase/Decrease encounter probabilities];
     end
+2.20 Mission Freight Depositing Flow
+Flow for piecemeal fulfillment of massive cargo requirements.
+
+Code snippet
+graph TD
+    subgraph User Input
+        A[Click 'Deposit Freight'] --> B[UIMissionControl captures coordinates];
+    end
+
+    subgraph Logic Execution
+        B --> C[MissionService.depositMissionCargo];
+        C --> D[Iterate Fleet Inventories];
+        D --> E{Relevant Cargo > 0?};
+        E -- Yes --> F[Deduct from Fleet, Increment 'deposited'];
+    end
+
+    subgraph State Mutation & UI
+        F --> G((Force GameState.setState));
+        G --> H[Return deposited amount to UI];
+        H --> I[UIManager.createFloatingText at Coordinates];
+        I --> J[UIManager.render updates Navigation Bar and Modal];
+    end

@@ -183,7 +183,7 @@ Manages the active concurrent missions and their granular progress.
 **MissionProgress Structure:**
 
 * `isCompletable`: Boolean flag indicating if all objectives are met.
-* `objectives`: Map of `objectiveId` -> `{ current, target }`.
+* `objectives`: Map of `objectiveId` -> `{ current, target, deposited }`.
 
 ---
 

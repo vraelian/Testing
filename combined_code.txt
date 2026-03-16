@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.82</title>
+    <title>Orbital Trading 36.86</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.82 - Game Intro Update</p>
+            <p>Version 36.86 - Game Intro Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -1261,6 +1261,175 @@
 }
 .host-station .host-btn-pulse { animation: hostPulseStation 2s infinite; }
 
+/* ========================================================================= */
+/* --- TELEMETRY DASHBOARD (PHASE 2 & 4 REDESIGN) --- */
+/* ========================================================================= */
+
+.telemetry-dashboard {
+    background: var(--host-bg-dark, rgba(15, 20, 30, 0.85));
+    border: 1px solid var(--host-color, var(--theme-border, #4b5563));
+    border-radius: 6px;
+    box-shadow: inset 0 0 15px rgba(0, 0, 0, 0.8), 0 4px 6px rgba(0, 0, 0, 0.3);
+    overflow: hidden;
+}
+
+.telemetry-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1px; 
+    background: rgba(255, 255, 255, 0.1); /* Subtle divider lines */
+}
+
+/* Allow dynamic panels to span fully if needed */
+.telemetry-panel.panel-directive,
+.telemetry-panel.panel-destination,
+.telemetry-panel.full-width {
+    grid-column: 1 / -1;
+}
+
+.telemetry-panel {
+    background: transparent;
+    padding: 0.75rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    text-align: left;
+}
+
+.telemetry-header {
+    font-family: 'Oxanium', sans-serif;
+    font-size: calc(0.65rem + 1pt);
+    letter-spacing: 0.15em;
+    color: #9ca3af;
+    font-weight: 700;
+    text-transform: uppercase;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+/* Glowing leading dot for header */
+.telemetry-header::before {
+    content: '';
+    display: inline-block;
+    width: 4px;
+    height: 4px;
+    background-color: var(--host-color, var(--theme-color-glow, #38bdf8));
+    border-radius: 50%;
+    box-shadow: 0 0 5px var(--host-color, var(--theme-color-glow, #38bdf8));
+}
+
+.telemetry-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+}
+
+.telemetry-item {
+    font-family: 'Oxanium', sans-serif;
+    font-size: calc(0.85rem + 1pt);
+    line-height: 1.3;
+    color: #e5e7eb;
+    /* Phase 4 Animation properties */
+    opacity: 0;
+    transform: translateX(-5px);
+    animation: data-cascade 0.3s ease-out forwards;
+}
+
+/* Credits styling override inside Telemetry data */
+.telemetry-item .credits-text-pulsing {
+    font-size: calc(100% + 4pt);
+}
+
+@keyframes data-cascade {
+    0% { opacity: 0; transform: translateX(-5px); }
+    100% { opacity: 1; transform: translateX(0); }
+}
+
+.t-qty {
+    font-weight: 700;
+    color: var(--host-color, var(--theme-color-glow, #38bdf8));
+    font-feature-settings: "tnum";
+    margin-right: 0.15rem;
+}
+
+.t-subject {
+    font-weight: 400;
+    color: #d1d5db;
+    letter-spacing: 0.02em;
+}
+
+/* --- HERO COMPLETION STATE --- */
+.hero-dashboard {
+    border-color: var(--host-color, var(--theme-color-glow, #fbbf24));
+    box-shadow: 0 0 15px var(--theme-color-translucent, rgba(251, 191, 36, 0.2)), inset 0 0 20px rgba(0, 0, 0, 0.8);
+    animation: hero-dashboard-pulse 2s infinite alternate;
+}
+
+@keyframes hero-dashboard-pulse {
+    0% { border-color: var(--theme-border, #f59e0b); }
+    100% { 
+        border-color: var(--host-color, var(--theme-color-glow, #fbbf24)); 
+        box-shadow: 0 0 25px var(--theme-color-translucent, rgba(251, 191, 36, 0.4)), inset 0 0 20px rgba(0, 0, 0, 0.8); 
+    }
+}
+
+.panel-hero-payout {
+    background: radial-gradient(circle at center, rgba(30, 40, 50, 0.9) 0%, rgba(10, 15, 20, 0.95) 100%);
+    align-items: center;
+    text-align: center;
+    padding: 1.5rem 1rem;
+}
+
+.hero-header {
+    font-size: calc(0.75rem + 1pt);
+    color: var(--host-color, #fcd34d);
+    justify-content: center;
+    margin-bottom: 1rem;
+}
+
+.hero-header::before {
+    display: none; /* Hide standard dot */
+}
+
+.hero-header::after, .hero-header::before {
+    content: '✦';
+    display: inline-block;
+    font-size: 0.6rem;
+    color: var(--host-color, var(--theme-color-glow, #fcd34d));
+    margin: 0 0.5rem;
+    text-shadow: 0 0 5px var(--host-color, var(--theme-color-glow, #fcd34d));
+}
+
+.hero-payout-item {
+    font-size: calc(1.25rem + 1pt);
+    font-weight: 700;
+    color: #fef08a;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    margin-bottom: 0.5rem;
+}
+
+.hero-payout-item .t-subject {
+    color: #fef08a;
+    font-weight: 700;
+}
+
+.hero-payout-item .credits-text-pulsing {
+    font-size: calc(1.5rem + 1pt);
+}
+
+/* Responsive adjustments for narrow screens */
+@media (max-width: 380px) {
+    .telemetry-grid {
+        grid-template-columns: 1fr; /* Stack on very small screens */
+    }
+    .telemetry-panel.panel-directive,
+    .telemetry-panel.panel-destination,
+    .telemetry-panel.full-width {
+        grid-column: auto;
+    }
+}
 --- END OF FILE: ./css/missions.css ---
 
 --- START OF FILE: ./css/debug.css ---
@@ -19523,9 +19692,9 @@ export class UIMissionControl {
             let firstObj = null;
             
             if (mission.objectives) {
-                // Find first uncompleted objective or default to the last objective
+                // Find first uncompleted objective
                 firstObj = mission.objectives.find(obj => {
-                    const localKey = obj.id || obj.goodId;
+                    const localKey = obj.id || obj.goodId || obj.target;
                     const pObj = progress.objectives[localKey];
                     const locCurrent = pObj ? pObj.current : 0;
                     const locTarget = pObj ? pObj.target : (obj.quantity || obj.value || 1);
@@ -19536,16 +19705,32 @@ export class UIMissionControl {
                         return locCurrent < locTarget;
                     }
                     return locCurrent < locTarget;
-                }) || mission.objectives[mission.objectives.length - 1];
+                });
                 
-                objKey = firstObj.id || firstObj.goodId;
-                
-                if (progress.objectives[objKey]) {
-                    current = progress.objectives[objKey].current;
-                    target = progress.objectives[objKey].target;
-                } else {
-                     current = 0;
-                     target = firstObj.quantity || firstObj.value || 1;
+                // Synthesize travel objective if all objectives are met but we are at the wrong location
+                if (!firstObj) {
+                    const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
+                    
+                    if (!isAtCorrectLocation) {
+                        firstObj = { type: 'travel_to', target: mission.completion.locationId };
+                        objKey = 'travel_fallback';
+                        current = 0;
+                        target = 1;
+                    } else {
+                        // Fully ready to turn in
+                        firstObj = mission.objectives[mission.objectives.length - 1];
+                    }
+                }
+
+                if (objKey !== 'travel_fallback') {
+                    objKey = firstObj.id || firstObj.goodId || firstObj.target;
+                    if (progress.objectives[objKey]) {
+                        current = progress.objectives[objKey].current;
+                        target = progress.objectives[objKey].target;
+                    } else {
+                         current = 0;
+                         target = firstObj.quantity || firstObj.value || 1;
+                    }
                 }
             }
 
@@ -19708,77 +19893,144 @@ export class UIMissionControl {
                     typeEl.style.fontSize = '0.65rem'; // Shrink type by 1pt
                 }
 
-                // --- HORIZONTAL TELEMETRY HUD (FLEX ROW) ---
+                // --- TELEMETRY DASHBOARD (CSS GRID) ---
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (rewardsEl) rewardsEl.style.display = 'none'; // Hide native rewards block
 
                 let flexColumns = [];
+                let animDelayIdx = 0;
+
+                // Evaluate Payout to inform Inbound stretching
+                const hasPayout = mission.rewards && mission.rewards.length > 0;
 
                 // 1. INBOUND (Granted Cargo / Intel / Credits)
                 let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
                     mission.grantedCargo.forEach(cargo => {
                         const name = DB.COMMODITIES.find(c => c.id === cargo.goodId)?.name || 'ITEM';
-                        inboundItems.push(`${cargo.quantity}x ${name.toUpperCase()}`);
+                        inboundItems.push(`<span class="t-qty">${cargo.quantity}x</span> <span class="t-subject">${name.toUpperCase()}</span>`);
                     });
                 }
                 if (mission.grantedIntel && mission.grantedIntel.length > 0) {
                     mission.grantedIntel.forEach(intel => {
-                        inboundItems.push(`1x ${intel.name.toUpperCase()}`);
+                        inboundItems.push(`<span class="t-qty">1x</span> <span class="t-subject">${intel.name.toUpperCase()}</span>`);
                     });
                 }
                 if (mission.onAccept && mission.onAccept.length > 0) {
                     mission.onAccept.forEach(action => {
                         if (action.type === 'GRANT_CREDITS') {
-                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span> GRANT`);
+                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span> <span class="t-subject">GRANT</span>`);
                         }
                     });
                 }
 
                 if (inboundItems.length > 0) {
-                    const grantedStr = inboundItems.join('<br>');
+                    const inboundFullWidthClass = !hasPayout ? ' full-width' : '';
+                    const grantedStr = inboundItems.map(item => {
+                        const delay = animDelayIdx++ * 0.05;
+                        return `<div class="telemetry-item" style="animation-delay: ${delay}s">${item}</div>`;
+                    }).join('');
+                    
                     flexColumns.push(`
-                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">INBOUND</div>
-                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${grantedStr}</div>
+                        <div class="telemetry-panel panel-inbound${inboundFullWidthClass}">
+                            <div class="telemetry-header">INBOUND</div>
+                            <div class="telemetry-content">${grantedStr}</div>
                         </div>
                     `);
                 }
 
-                // 2. DIRECTIVE (Objectives)
-                if (mission.objectives && mission.objectives.length > 0) {
-                    const obsList = mission.objectives.map(obj => this._getObjectiveDescription(obj).toUpperCase()).join('<br>');
-                    flexColumns.push(`
-                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">DIRECTIVE</div>
-                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${obsList}</div>
-                        </div>
-                    `);
-                }
-
-                // 3. PAYOUT (Rewards)
-                if (mission.rewards && mission.rewards.length > 0) {
+                // 2. PAYOUT (Rewards) - Dynamically spans if inbound is empty
+                let payoutPanelHtml = '';
+                if (hasPayout) {
                     const rewsList = mission.rewards.map(r => {
-                        if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        if(r.type.toLowerCase() === 'upgrade') {
+                        const delay = animDelayIdx++ * 0.05;
+                        let content = '';
+                        if(r.type.toLowerCase() === 'credits') {
+                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                        } else if(r.type.toLowerCase() === 'upgrade') {
                             const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            return upgName.toUpperCase();
+                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                        } else {
+                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                         }
-                        return r.type.toUpperCase();
-                    }).join('<br>');
+                        return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
+                    }).join('');
+                    
+                    const fullWidthClass = inboundItems.length === 0 ? ' full-width' : '';
+                    payoutPanelHtml = `
+                        <div class="telemetry-panel panel-payout${fullWidthClass}">
+                            <div class="telemetry-header">PAYOUT</div>
+                            <div class="telemetry-content">${rewsList}</div>
+                        </div>
+                    `;
+                }
+                
+                // Add Payout here to ensure CSS Grid layout orders correctly
+                if (payoutPanelHtml) flexColumns.push(payoutPanelHtml);
+
+                // Analyze Locations for Aggregate Destination block
+                let uniqueDestinations = new Set();
+                if (mission.objectives) {
+                    mission.objectives.forEach(obj => {
+                        if (['have_item', 'DELIVER_ITEM', 'travel_to', 'TRAVEL_TO'].includes(obj.type)) {
+                            if (obj.target) uniqueDestinations.add(obj.target);
+                        }
+                    });
+                }
+                const hasSingleDestination = uniqueDestinations.size === 1;
+
+                // 3. DIRECTIVE (Objectives)
+                if (mission.objectives && mission.objectives.length > 0) {
+                    const obsList = mission.objectives.map(obj => {
+                        const delay = animDelayIdx++ * 0.05;
+                        let text = this._getObjectiveDescription(obj, hasSingleDestination).toUpperCase();
+                        
+                        // Wrap preceding numbers and "x" in t-qty FIRST to avoid breaking HTML classes below
+                        text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                        
+                        // Append deposited info visually AFTER regex, with line break
+                        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                            const objKey = obj.id || obj.goodId || obj.target;
+                            const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
+                            const targetQty = obj.quantity || obj.value || 1;
+                            if (depositedAmt > 0) {
+                                text += `<br><span class="text-blue-400 font-bold">[DEPOSITED: ${depositedAmt}/${targetQty}]</span>`;
+                            }
+                        }
+                        
+                        return `<div class="telemetry-item" style="animation-delay: ${delay}s">${text}</div>`;
+                    }).join('');
+                    
                     flexColumns.push(`
-                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">PAYOUT</div>
-                            <div class="text-lg text-yellow-400 tracking-wide leading-tight">${rewsList}</div>
+                        <div class="telemetry-panel panel-directive">
+                            <div class="telemetry-header">DIRECTIVE</div>
+                            <div class="telemetry-content">${obsList}</div>
+                        </div>
+                    `);
+                }
+
+                // 4. DESTINATION (Extracted if unified)
+                if (hasSingleDestination) {
+                    const destId = Array.from(uniqueDestinations)[0];
+                    const destName = DB.MARKETS.find(m => m.id === destId)?.name || 'UNKNOWN';
+                    const delay = animDelayIdx++ * 0.05;
+                    flexColumns.push(`
+                        <div class="telemetry-panel panel-destination">
+                            <div class="telemetry-header">DESTINATION</div>
+                            <div class="telemetry-content">
+                                <div class="telemetry-item" style="animation-delay: ${delay}s"><span class="t-subject">${destName.toUpperCase()}</span></div>
+                            </div>
                         </div>
                     `);
                 }
 
                 if (flexColumns.length > 0) {
                     objectivesEl.innerHTML = `
-                        <div class="w-full flex flex-row justify-center items-stretch divide-x divide-gray-700/60 bg-gray-900/50 border border-gray-700/60 rounded-sm my-4 shadow-inner">
-                            ${flexColumns.join('')}
+                        <div class="telemetry-dashboard w-full my-4">
+                            <div class="telemetry-grid">
+                                ${flexColumns.join('')}
+                            </div>
                         </div>
                     `;
                     objectivesEl.style.display = 'block';
@@ -19793,14 +20045,14 @@ export class UIMissionControl {
                 let wrapper = modal.querySelector('.mission-scroll-wrapper');
                 let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                // Generate structural wrappers if they don't already exist for this recycled modal
+                // Generate structural wrappers if they don't already exist
                 if (!wrapper && descEl && objectivesEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '264px'; // 20% taller max-height
+                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -19821,8 +20073,9 @@ export class UIMissionControl {
 
                 // Evaluate initial scroll state upon opening the modal
                 if (wrapper && indicator) {
-                    wrapper.scrollTop = 0; // Reset scroll position for newly opened missions
+                    wrapper.scrollTop = 0; // Immediate reset
                     setTimeout(() => {
+                        wrapper.scrollTop = 0; // Strict layout lock reset
                         if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                             indicator.style.display = 'block';
                             const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
@@ -19831,7 +20084,7 @@ export class UIMissionControl {
                             indicator.style.display = 'none';
                             indicator.style.opacity = '0';
                         }
-                    }, 50); // Small layout tick buffer
+                    }, 150); // 150ms delay ensures DOM is fully painted and sized
                 }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -19840,12 +20093,41 @@ export class UIMissionControl {
                 if (isActive) {
                     const isAbandonable = mission.isAbandonable !== false;
                     let navButtonHtml = '';
+                    let depositButtonHtml = '';
                     
                     if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any') {
                         navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${navButtonHtml}`;
+                    if (isAtCorrectLocation) {
+                        let canDeposit = false;
+                        if (mission.objectives) {
+                            mission.objectives.forEach(obj => {
+                                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                                    const itemId = obj.goodId || obj.target;
+                                    const objKey = obj.id || obj.goodId || obj.target;
+                                    const targetQty = obj.quantity || obj.value || 1;
+                                    const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
+                                    
+                                    if (targetQty - depositedAmt > 0) {
+                                        for (const shipId of gameState.player.ownedShipIds) {
+                                            if (gameState.player.inventories[shipId]?.[itemId]?.quantity > 0) {
+                                                canDeposit = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // Solid amber styling with static glow, no pulse animation
+                        if (canDeposit) {
+                            depositButtonHtml = `<button id="mission-deposit-btn" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">DEPOSIT FREIGHT</button>`;
+                        }
+                    }
+                    
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${navButtonHtml}`;
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
@@ -19863,6 +20145,27 @@ export class UIMissionControl {
                         closeHandler();
                     });
                 }
+                
+                const depositBtn = modal.querySelector('#mission-deposit-btn');
+                if (depositBtn) {
+                    depositBtn.addEventListener('click', (e) => {
+                        if (this.manager.simulationService) {
+                            const depositedAmt = this.manager.simulationService.missionService.depositMissionCargo(mission.id);
+                            
+                            if (depositedAmt > 0) {
+                                // Extract bounding rect to ensure coordinates on mobile touch where clientX/Y might be missing
+                                const rect = depositBtn.getBoundingClientRect();
+                                const x = e.clientX || rect.left + (rect.width / 2);
+                                const y = e.clientY || rect.top;
+                                
+                                this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff');
+                            }
+
+                            // The modal now stays closed, seamlessly returning gameplay to the user without a forced refresh.
+                            closeHandler();
+                        }
+                    });
+                }
             }
         };
         if (mission.id === 'mission_tutorial_01' && tutorials.activeStepId === 'mission_1_1') {
@@ -19871,11 +20174,11 @@ export class UIMissionControl {
         this.manager.queueModal('mission-modal', parsedTitle, parsedDescription, null, options);
     }
     
-    _getObjectiveDescription(obj) {
+    _getObjectiveDescription(obj, omitLocation = false) {
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              let text = `Deliver ${obj.quantity || 1}x ${name}`;
-             if (obj.target) {
+             if (obj.target && !omitLocation) {
                  const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
                  text += ` to ${locName}`;
              }
@@ -19887,6 +20190,7 @@ export class UIMissionControl {
              return `${action} ${obj.quantity || 1}x ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             if (omitLocation) return `Establish Presence`;
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
@@ -19985,22 +20289,29 @@ export class UIMissionControl {
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
                if (mission.rewards && mission.rewards.length > 0) {
-                   const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        if(r.type.toLowerCase() === 'upgrade') {
+                   const rewardsHtml = mission.rewards.map((r, i) => {
+                        const delay = i * 0.1;
+                        let content = '';
+                        if(r.type.toLowerCase() === 'credits') {
+                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                        } else if(r.type.toLowerCase() === 'upgrade') {
                             const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            return upgName.toUpperCase();
+                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                        } else {
+                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                         }
-                       return r.type.toUpperCase();
-                   }).join('<br>');
+                        // Replaced telemetry-item to eliminate pseudo-element bullets. Added centering and margin.
+                        return `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
+                   }).join('');
                    
                    rewardsEl.style.display = 'block';
-                   // Convert Completion Rewards to use the Telemetry HUD layout
+                   // Retain panel-payout wrapper to preserve the visual host theme borders/glows, 
+                   // but strip out the telemetry-header and telemetry-content structural classes to clear list styles.
                    rewardsEl.innerHTML = `
-                        <div class="w-full flex flex-row justify-center items-stretch bg-gray-900/50 border border-gray-700/60 rounded-sm my-4 shadow-inner">
-                            <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                                <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">PAYOUT SECURED</div>
-                                <div class="text-lg text-yellow-400 tracking-wide leading-tight">${rewardsHtml}</div>
+                        <div class="telemetry-dashboard hero-dashboard w-full my-4">
+                            <div class="telemetry-panel panel-payout full-width flex flex-col items-center">
+                                <div class="hero-header w-full text-center font-bold mb-2 tracking-widest text-lg">PAYOUT SECURED</div>
+                                <div class="hero-content w-full flex flex-col items-center justify-center">${rewardsHtml}</div>
                             </div>
                         </div>
                    `;
@@ -20021,7 +20332,7 @@ export class UIMissionControl {
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '264px'; // 20% taller max-height
+                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -20043,8 +20354,9 @@ export class UIMissionControl {
 
                // Evaluate initial scroll state upon opening the modal
                if (wrapper && indicator) {
-                   wrapper.scrollTop = 0; // Reset scroll position
+                   wrapper.scrollTop = 0; // Immediate reset
                    setTimeout(() => {
+                       wrapper.scrollTop = 0; // Strict layout lock reset
                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                            indicator.style.display = 'block';
                            const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
@@ -20053,7 +20365,7 @@ export class UIMissionControl {
                            indicator.style.display = 'none';
                            indicator.style.opacity = '0';
                        }
-                   }, 50);
+                   }, 150); // 150ms delay ensures DOM is fully painted and sized
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -28426,13 +28738,13 @@ export class MissionService {
                     const objKey = obj.id || obj.goodId || obj.target;
                     
                     if (!progress.objectives[objKey]) {
-                        progress.objectives[objKey] = { current: 0, target: 1 };
+                        progress.objectives[objKey] = { current: 0, target: 1, deposited: 0 };
                     }
                     
-                    const currentObjProgress = progress.objectives[objKey].current;
+                    const currentObjProgress = progress.objectives[objKey];
                     const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService, currentObjProgress);
                     
-                    if (progress.objectives[objKey].current !== result.current) {
+                    if (progress.objectives[objKey].current !== result.current || progress.objectives[objKey].target !== result.target) {
                         progress.objectives[objKey].current = result.current;
                         progress.objectives[objKey].target = result.target; 
                         progressChanged = true;
@@ -28466,6 +28778,90 @@ export class MissionService {
     }
 
     /**
+     * Attempts to deposit cargo from the player's fleet into the specified mission.
+     * Assumes the player is currently at the correct location.
+     * @param {string} missionId 
+     * @returns {number} The total amount of freight deposited.
+     */
+    depositMissionCargo(missionId) {
+        if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
+        const mission = DB.MISSIONS[missionId];
+        if (!mission || !mission.objectives) return 0;
+
+        const progress = this.gameState.missions.missionProgress[missionId];
+        if (!progress) return 0;
+
+        let totalDepositedThisCall = 0;
+
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                const itemId = obj.goodId || obj.target;
+                const targetQty = obj.quantity || obj.value || 1;
+                const objKey = obj.id || obj.goodId || obj.target;
+                
+                if (!progress.objectives[objKey]) {
+                    progress.objectives[objKey] = { current: 0, target: targetQty, deposited: 0 };
+                }
+                if (progress.objectives[objKey].deposited === undefined) {
+                    progress.objectives[objKey].deposited = 0;
+                }
+
+                let depositedSoFar = progress.objectives[objKey].deposited;
+                let remainingNeeded = targetQty - depositedSoFar;
+
+                if (remainingNeeded > 0) {
+                    // Collect inventory across fleet
+                    const activeShipId = this.gameState.player.activeShipId;
+                    const shipInventories = [];
+                    
+                    for (const shipId of this.gameState.player.ownedShipIds) {
+                        const qty = this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0;
+                        shipInventories.push({ shipId, qty });
+                    }
+
+                    // Prioritize draining from the active ship first
+                    shipInventories.sort((a, b) => {
+                        if (a.shipId === activeShipId) return -1;
+                        if (b.shipId === activeShipId) return 1;
+                        return b.qty - a.qty;
+                    });
+
+                    let amountDepositedThisTime = 0;
+
+                    for (const shipData of shipInventories) {
+                        if (remainingNeeded <= 0) break;
+                        const toRemove = Math.min(remainingNeeded, shipData.qty);
+                        if (toRemove > 0) {
+                            const invItem = this.gameState.player.inventories[shipData.shipId][itemId];
+                            invItem.quantity -= toRemove;
+                            if (invItem.quantity === 0) invItem.avgCost = 0;
+                            
+                            remainingNeeded -= toRemove;
+                            amountDepositedThisTime += toRemove;
+                        }
+                    }
+
+                    if (amountDepositedThisTime > 0) {
+                        progress.objectives[objKey].deposited += amountDepositedThisTime;
+                        totalDepositedThisCall += amountDepositedThisTime;
+                        this.logger.info.player(this.gameState.day, 'MISSION_DEPOSIT', `Deposited ${amountDepositedThisTime}x ${itemId} for mission ${missionId}.`);
+                    }
+                }
+            }
+        });
+
+        if (totalDepositedThisCall > 0) {
+            this.checkTriggers(); // This will recalculate progress with the newly deposited cargo + remaining hold
+            this.gameState.setState({}); // Force update to reflect inventory changes in global UI
+            if (this.uiManager && typeof this.uiManager.render === 'function') {
+                this.uiManager.render(this.gameState.getState());
+            }
+        }
+        
+        return totalDepositedThisCall;
+    }
+
+    /**
      * Completes a specific active mission.
      * @param {string} missionId - The ID of the mission to complete.
      * @param {boolean} [force=false] If true, bypasses "Objectives Met" check.
@@ -28488,7 +28884,11 @@ export class MissionService {
             mission.objectives.forEach(obj => {
                 if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
                     const itemId = obj.goodId || obj.target;
-                    let remainingToRemove = obj.quantity || 1;
+                    const objKey = obj.id || obj.goodId || obj.target;
+                    const deposited = progress?.objectives?.[objKey]?.deposited || 0;
+                    
+                    let remainingToRemove = (obj.quantity || 1) - deposited;
+                    remainingToRemove = Math.max(0, remainingToRemove); // Floor at 0
                     
                     if (remainingToRemove > 0) {
                         const activeShipId = this.gameState.player.activeShipId;
@@ -31918,11 +32318,14 @@ export class MissionObjectiveEvaluator {
      * @param {object} objective - The objective schema object.
      * @param {import('../GameState.js').GameState} gameState - The current state of the game.
      * @param {import('../SimulationService.js').SimulationService} [simulationService] - Optional access to derived stats.
-     * @param {number} [currentProgress=0] - The existing progress of the objective, used for latching stateful events.
+     * @param {object} [objProgress={}] - The existing progress object of the objective (contains current, target, deposited).
      * @returns {object} { current: number, target: number, isMet: boolean }
      */
-    evaluate(objective, gameState, simulationService, currentProgress = 0) {
+    evaluate(objective, gameState, simulationService, objProgress = {}) {
         let current = 0;
+        
+        const currentProgress = objProgress.current || 0;
+        const deposited = objProgress.deposited || 0;
         
         // Allow 0 as a valid target (e.g. Empty Hold = 0 items)
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
@@ -31953,7 +32356,7 @@ export class MissionObjectiveEvaluator {
                         totalQty += (inventory[itemId].quantity || 0);
                     }
                 }
-                current = totalQty;
+                current = totalQty + deposited;
                 break;
             }
 
@@ -41880,6 +42283,14 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [36.86] - 2026-3-16
+-  updated mission system
+-  bug fixes
+-  mission modal polish
+-  added missions #14 - #15
+-  updated meta files
+
 # [36.82] - 2026-3-15
 -  updated mission system
 -  mission polish
@@ -43385,6 +43796,20 @@ HTML
 .spacer: flex-grow: 1. Pushes flex items apart.
 .scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
 .silent-exit: Forces a modal to close instantly without an exit animation. Used for cinematic transitions.
+
+### Mission UI Button Hierarchy
+
+The mission system modals require a distinct visual hierarchy to guide the player's choices safely and clearly, separating destructive actions from progression steps.
+
+* **Progression (Navigate):** Uses the standard "Proceed" style.
+    * *Classes:* `btn btn-pulse-green`
+    * *Behavior:* Animated green pulse to indicate a safe, forward-moving action (travel).
+* **Destructive (Abandon):** Uses the standard "Danger" style.
+    * *Classes:* `bg-red-800/80 hover:bg-red-700/80 border-red-500`
+    * *Behavior:* Static red background, no pulse, to prevent accidental clicks.
+* **Transaction (Deposit Freight):** Uses a unique, high-contrast "Gold" style.
+    * *Classes:* `bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold`
+    * *Behavior:* A solid, bright amber background with a static gold drop-shadow. No pulse animation. This creates a distinct "Transaction/Turn-in" aesthetic that stands out without distracting the eye via animation.
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---
@@ -43669,7 +44094,9 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
     "Repo_Event": "A punitive event triggered by defaulting on Syndicate Debt, where assets or ship upgrades are forcibly repossessed.",
     "System_States": "Procedurally generated macroeconomic conditions (Economic Weather) that apply temporary, system-wide modifiers to commodity prices, availability, and event generation.",
     "Synthesis_Pipeline": "An advanced operational pipeline at the Sol Station that mathematically converts standard commodities into high-value Antimatter.",
-    "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs."
+    "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs.",
+    "Freight_Depositing": "The mechanic allowing piecemeal fulfillment of massive cargo requirements at a destination without monopolizing the fleet's entire hold.",
+    "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not at the turn-in destination."
   },
   "service_summaries": {
     "SolStationService": {
@@ -44217,7 +44644,7 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
       "mutates_state": []
     },
     "MissionService": {
-      "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
+      "description": "Manages the state and flow of player missions. Handles freight depositing by iterating through fleet holds to drain specific commodities.",
       "dependencies": [
         "GameState",
         "UIManager",
@@ -44229,7 +44656,8 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
         "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
         "acceptMission": "Sets a mission as active and initializes its progress tracking.",
         "checkTriggers": "Checks if the objectives for the active mission are met based on the current game state.",
-        "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
+        "completeActiveMission": "Grants rewards and updates mission state upon successful completion.",
+        "depositMissionCargo": "Drains the necessary cargo from fleet inventories and increments the objective's deposited value."
       },
       "mutates_state": [
         "missions.activeMissionId",
@@ -44237,6 +44665,9 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
         "missions.missionProgress",
         "missions.activeMissionObjectivesMet"
       ]
+    },
+    "MissionObjectiveEvaluator": {
+      "description": "Stateless logic engine for evaluating mission objectives. Evaluates full progress objects, dynamically aggregating fleet cargo and deposited freight to determine current value."
     },
     "DebugService": {
       "description": "Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities. Now includes asset manipulation tools.",
@@ -45087,7 +45518,7 @@ Context: The "hold-to-act" buttons (Refuel, Repair) on the Services screen exhib
 Decision: A persistent, delegated, and capture-phase event model was implemented in HoldEventHandler.js.
 Use Pointer Events: Switched from separate mouse and touch events to the modern Pointer Events API (pointerdown, pointerup, pointercancel) for unified and more reliable input handling.
 Delegated "Start": A single, persistent pointerdown listener is attached to document.body. This listener never gets destroyed and delegates the event to the correct handler based on e.target.
-Capture-Phase "Stop": Single, persistent pointerup and pointercancel listeners are attached to the window object using the { capture: true } option. This ensures the "stop" event is intercepted before the UI re-render can stop its propagation.
+Capture-Phase "Stop": Single, persistent pointerup and cancel listeners are attached to the window object using the { capture: true } option. This ensures the "stop" event is intercepted before the UI re-render can stop its propagation.
 State-Based Logic: The _start... and _stop... functions no longer add/remove listeners. They only set internal state flags (e.g., this.activeElementId), which the persistent global listeners check.
 
 Consequences:
@@ -45516,7 +45947,7 @@ Status: Accepted (2026-02-22)
 Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design.
 
 Decision: Abandon "DOM-hunting" tooltip tutorials entirely in favor of a Contextual Help Modal System.
-* Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio ($1/1$ or $4/3$).
+* Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio (1:1 or 4:3).
 * Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling.
 * State-Driven Context: Relies purely on the abstract GameState to resolve context and auto-instantiate the relevant help modal.
 
@@ -45564,6 +45995,21 @@ Context: Despite "Delayed Supply," markets were ultimately predictable. A macro-
 Decision: Implemented the `SystemStateService` to inject procedural, system-wide macroeconomic modifiers.
 * Weather Generation: Conditions (e.g., 'Solar Flare', 'Guild Strike') are rolled weekly.
 * Global Impact: Active states apply dynamic multipliers to target prices, commodity availability, and event generation probabilities across the entire game universe, temporarily overriding local quirks and standard math algorithms.
+
+ADR-039: Partial Freight Depositing for Missions
+Status: Accepted (2026-03-16)
+
+Context: Missions requiring massive cargo volumes (e.g., 120 Plasteel) created a bottleneck where players had to hoard items simultaneously, monopolizing their entire fleet's capacity and preventing them from engaging in standard arbitrage trading during the mission's lifecycle.
+
+Decision: Implemented a "Freight Depositing" mechanic.
+* Mutable State: Mission objectives now track a `deposited` integer alongside `current` and `target`.
+* UI Integration: A static amber "DEPOSIT FREIGHT" button appears when the player is at the correct destination and has relevant cargo in their fleet.
+* Resolution: The `MissionObjectiveEvaluator` calculates progress as `fleetInventory + deposited`. Final completion turn-in only deducts the remaining undeposited balance.
+
+Consequences:
+* Pro: Enables massive-scale logistics missions without soft-locking fleet capacity.
+* Pro: Creates a satisfying, incremental progression loop for the player.
+* Con: Adds complexity to the state tracking and requires a forced state broadcast to synchronize the global navigation bar's cargo indicator.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -46064,6 +46510,28 @@ graph TD
         D --> G[RandomEventService Context Weights];
         G --> H[Increase/Decrease encounter probabilities];
     end
+2.20 Mission Freight Depositing Flow
+Flow for piecemeal fulfillment of massive cargo requirements.
+
+Code snippet
+graph TD
+    subgraph User Input
+        A[Click 'Deposit Freight'] --> B[UIMissionControl captures coordinates];
+    end
+
+    subgraph Logic Execution
+        B --> C[MissionService.depositMissionCargo];
+        C --> D[Iterate Fleet Inventories];
+        D --> E{Relevant Cargo > 0?};
+        E -- Yes --> F[Deduct from Fleet, Increment 'deposited'];
+    end
+
+    subgraph State Mutation & UI
+        F --> G((Force GameState.setState));
+        G --> H[Return deposited amount to UI];
+        H --> I[UIManager.createFloatingText at Coordinates];
+        I --> J[UIManager.render updates Navigation Bar and Modal];
+    end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
@@ -46252,7 +46720,7 @@ Manages the active concurrent missions and their granular progress.
 **MissionProgress Structure:**
 
 * `isCompletable`: Boolean flag indicating if all objectives are met.
-* `objectives`: Map of `objectiveId` -> `{ current, target }`.
+* `objectives`: Map of `objectiveId` -> `{ current, target, deposited }`.
 
 ---
 

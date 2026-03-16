@@ -210,3 +210,17 @@ HTML
 .spacer: flex-grow: 1. Pushes flex items apart.
 .scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
 .silent-exit: Forces a modal to close instantly without an exit animation. Used for cinematic transitions.
+
+### Mission UI Button Hierarchy
+
+The mission system modals require a distinct visual hierarchy to guide the player's choices safely and clearly, separating destructive actions from progression steps.
+
+* **Progression (Navigate):** Uses the standard "Proceed" style.
+    * *Classes:* `btn btn-pulse-green`
+    * *Behavior:* Animated green pulse to indicate a safe, forward-moving action (travel).
+* **Destructive (Abandon):** Uses the standard "Danger" style.
+    * *Classes:* `bg-red-800/80 hover:bg-red-700/80 border-red-500`
+    * *Behavior:* Static red background, no pulse, to prevent accidental clicks.
+* **Transaction (Deposit Freight):** Uses a unique, high-contrast "Gold" style.
+    * *Classes:* `bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold`
+    * *Behavior:* A solid, bright amber background with a static gold drop-shadow. No pulse animation. This creates a distinct "Transaction/Turn-in" aesthetic that stands out without distracting the eye via animation.
