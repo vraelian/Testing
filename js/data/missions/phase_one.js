@@ -7,15 +7,18 @@
 export const PHASE_ONE_MISSIONS = {
     'mission_10': {
         id: "mission_10",
-        name: "The Hook",
+        name: "Ice Crisis",
         type: "STORY",
         host: "GUILD",
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], I must remind you that your loan deadline is in three short years. This is no time at all when you factor in the distances between planetary stations. Do not waste time repaying your debt to the Merchant’s Guild. To further assist you, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and leverage the opportunity to your benefit. Your success will reflect well on me with the guild.",
+        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when you factor in the distances between planetary stations. Do not waste time repaying your debt to the Merchant’s Guild. To further assist you, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and leverage the opportunity to your benefit. Your success will reflect well on me with the guild.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_09" }
+        ],
+        grantedIntel: [
+            { name: "Intel", location: "loc_earth" }
         ],
         objectives: [
             { "id": "travel_earth", "type": "TRAVEL_TO", "target": "loc_earth" }
@@ -23,7 +26,7 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_earth",
             title: "Arrival",
-            text: "I see that you’ve made it to the Earth in your [shipName]. Continue to travel for arbitrage, buying low and selling high. Don’t forget to review station details on your map.",
+            text: "I see that you’ve made it to the Earth in your [shipName]. Continue to travel for arbitrage, buying low and selling high while fulfilling contracts and building up your network of clients. Don’t forget to review station details on your map.",
             buttonText: "Understood"
         },
         rewards: []
@@ -50,23 +53,26 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Understood"
         },
         rewards: [
-            { "type": "UPGRADE", "id": "UPG_GUILD_BADGE_1" }
+            { "type": "UPGRADE", "id": "UPG_ECO_SELL_1" }
         ]
     },
     'mission_12': {
         id: "mission_12",
         name: "The Storm",
         type: "LOGISTICS",
-        host: "INDEPENDENT",
+        host: "STATION",
         portraitId: "Dockworker_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hey there. A Guild rep. passed your transponder code my way. We've got a sudden market shift—a micro-meteoroid storm is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for Water Ice.<br><br>I've already loaded the cargo into your hold. Just get it to the Belt promptly and the delivery fee is yours.",
+        description: "Hey there. A Guild rep. passed your transponder code my way. We've got a sudden market shift—a micro-meteoroid storm is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for Water Ice.<br><br>If you can get it to the Belt promptly, then the delivery fee is yours.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
         grantedCargo: [
             { goodId: 'water_ice', quantity: 25 }
+        ],
+        onAccept: [
+            { type: 'TRIGGER_SYSTEM_STATE', stateId: 'CORONAL_MASS_EJECTION' }
         ],
         objectives: [
             { "id": "deliver_ice", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "water_ice", "quantity": 25 }
@@ -85,13 +91,13 @@ export const PHASE_ONE_MISSIONS = {
         id: "mission_13",
         name: "High-Society Hardware",
         type: "PROCUREMENT",
-        host: "CORPORATE",
+        host: "STATION",
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
         description: "Greetings, Captain. I represent a medical manufacturing collective on Earth. We are experiencing a critical shortage of Plasteel, which is required for high-end cybernetic enhancements.<br><br>My client is in the market for a reliable supplier. If you can procure the requested amount of freight yourself, deliver it to our Earth facilities for generous compensation. We may have more work for you if you prove to be reliable.",
         triggers: [
-            { "type": "mission_completed", "missionId": "mission_12" }
+            { "type": "mission_completed", "missionId": "mission_10" }
         ],
         objectives: [
             { "id": "deliver_plasteel", "type": "DELIVER_ITEM", "target": "loc_earth", "goodId": "plasteel", "quantity": 10 }

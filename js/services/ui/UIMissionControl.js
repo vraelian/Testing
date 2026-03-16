@@ -271,17 +271,26 @@ export class UIMissionControl {
 
                 let flexColumns = [];
 
-                // 1. INBOUND (Granted Cargo)
+                // 1. INBOUND (Granted Cargo / Intel)
+                let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
-                    const grantedItems = mission.grantedCargo.map(cargo => {
+                    mission.grantedCargo.forEach(cargo => {
                         const name = DB.COMMODITIES.find(c => c.id === cargo.goodId)?.name || 'ITEM';
-                        return `${cargo.quantity}x ${name.toUpperCase()}`;
-                    }).join('<br>');
-                    
+                        inboundItems.push(`${cargo.quantity}x ${name.toUpperCase()}`);
+                    });
+                }
+                if (mission.grantedIntel && mission.grantedIntel.length > 0) {
+                    mission.grantedIntel.forEach(intel => {
+                        inboundItems.push(`1x ${intel.name.toUpperCase()}`);
+                    });
+                }
+
+                if (inboundItems.length > 0) {
+                    const grantedStr = inboundItems.join('<br>');
                     flexColumns.push(`
                         <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
                             <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">INBOUND</div>
-                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${grantedItems}</div>
+                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${grantedStr}</div>
                         </div>
                     `);
                 }
@@ -329,14 +338,49 @@ export class UIMissionControl {
 
                 // --- APPLY SCROLLABILITY WRAPPER ---
                 const descEl = modal.querySelector('#mission-modal-description');
-                if (descEl && objectivesEl && !modal.querySelector('.mission-scroll-wrapper')) {
-                    const wrapper = document.createElement('div');
+                let outerWrapper = modal.querySelector('.mission-scroll-outer');
+                let wrapper = modal.querySelector('.mission-scroll-wrapper');
+                let indicator = modal.querySelector('.scroll-indicator-arrow');
+
+                // Generate structural wrappers if they don't already exist for this recycled modal
+                if (!wrapper && descEl && objectivesEl) {
+                    outerWrapper = document.createElement('div');
+                    outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
+                    
+                    wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
                     wrapper.style.maxHeight = '264px'; // 20% taller max-height
                     
-                    descEl.parentNode.insertBefore(wrapper, descEl);
+                    descEl.parentNode.insertBefore(outerWrapper, descEl);
+                    outerWrapper.appendChild(wrapper);
                     wrapper.appendChild(descEl);
                     wrapper.appendChild(objectivesEl);
+                    
+                    indicator = document.createElement('div');
+                    indicator.className = 'scroll-indicator-arrow';
+                    indicator.innerHTML = '&#8964;';
+                    outerWrapper.appendChild(indicator);
+                    
+                    wrapper.addEventListener('scroll', () => {
+                        if (!indicator) return;
+                        const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
+                        indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                    });
+                }
+
+                // Evaluate initial scroll state upon opening the modal
+                if (wrapper && indicator) {
+                    wrapper.scrollTop = 0; // Reset scroll position for newly opened missions
+                    setTimeout(() => {
+                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                            indicator.style.display = 'block';
+                            const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
+                            indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                        } else {
+                            indicator.style.display = 'none';
+                            indicator.style.opacity = '0';
+                        }
+                    }, 50); // Small layout tick buffer
                 }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -516,15 +560,49 @@ export class UIMissionControl {
 
                // --- APPLY SCROLLABILITY WRAPPER ---
                const descEl = modal.querySelector('#mission-modal-description');
-               if (descEl && rewardsEl && !modal.querySelector('.mission-scroll-wrapper')) {
-                    const wrapper = document.createElement('div');
+               let outerWrapper = modal.querySelector('.mission-scroll-outer');
+               let wrapper = modal.querySelector('.mission-scroll-wrapper');
+               let indicator = modal.querySelector('.scroll-indicator-arrow');
+
+               if (!wrapper && descEl && rewardsEl) {
+                    outerWrapper = document.createElement('div');
+                    outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
+                    
+                    wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
                     wrapper.style.maxHeight = '264px'; // 20% taller max-height
                     
-                    descEl.parentNode.insertBefore(wrapper, descEl);
+                    descEl.parentNode.insertBefore(outerWrapper, descEl);
+                    outerWrapper.appendChild(wrapper);
                     wrapper.appendChild(descEl);
                     if(objectivesEl) wrapper.appendChild(objectivesEl);
                     wrapper.appendChild(rewardsEl);
+                    
+                    indicator = document.createElement('div');
+                    indicator.className = 'scroll-indicator-arrow';
+                    indicator.innerHTML = '&#8964;';
+                    outerWrapper.appendChild(indicator);
+                    
+                    wrapper.addEventListener('scroll', () => {
+                        if (!indicator) return;
+                        const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
+                        indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                    });
+               }
+
+               // Evaluate initial scroll state upon opening the modal
+               if (wrapper && indicator) {
+                   wrapper.scrollTop = 0; // Reset scroll position
+                   setTimeout(() => {
+                       if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                           indicator.style.display = 'block';
+                           const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
+                           indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                       } else {
+                           indicator.style.display = 'none';
+                           indicator.style.opacity = '0';
+                       }
+                   }, 50);
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -613,13 +691,13 @@ export class UIMissionControl {
                        if (hasUpgradeReward && this.manager.simulationService) {
                            // Navigate to Hangar Screen to watch the sequence play out
                            this.manager.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                           uiManager.lastKnownState.uiState.hangarShipyardToggleState = 'hangar';
                            
                            const activeShipId = uiManager.lastKnownState.player.activeShipId;
                            const shipIndex = uiManager.lastKnownState.player.ownedShipIds.indexOf(activeShipId);
-                           uiManager.lastKnownState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
                            
-                           uiManager.render(uiManager.lastKnownState);
+                           this.manager.simulationService.setHangarShipyardMode('hangar');
+                           this.manager.simulationService.setHangarCarouselIndex(shipIndex !== -1 ? shipIndex : 0, 'hangar');
+                           
                            await uiManager.orchestrateUpgradeSequence(activeShipId);
                        } else {
                            // --- FORCE RENDER ---

@@ -355,6 +355,26 @@ export class IntelService {
             sourceSaleLocationId: state.currentLocationId
         };
 
+        const mockPacket = {
+            id: 'narrative_grant',
+            locationId: state.currentLocationId,
+            dealLocationId: intelParams.dealLocationId,
+            commodityId: intelParams.commodityId,
+            discountPercent: intelParams.discountPercent || 0.5,
+            durationDays: intelParams.durationDays || 60,
+            messageKey: 'STORY_HOOK_01', // Changed to bespoke narrative registry entry
+            isPurchased: true,
+            pricePaid: 0,
+            expiryDay: expiryDay
+        };
+
+        const intelMarket = { ...state.intelMarket };
+        if (!intelMarket[state.currentLocationId]) {
+            intelMarket[state.currentLocationId] = [];
+        }
+        intelMarket[state.currentLocationId] = intelMarket[state.currentLocationId].filter(p => p.id !== 'narrative_grant');
+        intelMarket[state.currentLocationId].push(mockPacket);
+
         this.logger.info.system('IntelService', state.day, 'INTEL_GRANT', `Narrative intel granted for ${intelParams.commodityId} at ${intelParams.dealLocationId}. Overriding current deal.`);
 
         // Push message to NewsTicker
@@ -370,7 +390,8 @@ export class IntelService {
         }
 
         this.gameState.setState({ 
-            activeIntelDeal: newActiveDeal 
+            activeIntelDeal: newActiveDeal,
+            intelMarket: intelMarket 
         });
     }
 

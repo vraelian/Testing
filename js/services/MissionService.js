@@ -7,6 +7,7 @@ import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
 import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.js';
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
+import { SystemStateService } from './world/SystemStateService.js';
 
 export class MissionService {
     /**
@@ -199,6 +200,34 @@ export class MissionService {
                  discountPercent: 0.80, // Heavy markup to ensure it stands out
                  durationDays: 120 // Long runway for the player to figure out navigation
              });
+        }
+
+        // --- NEW: ON ACCEPT ACTIONS (System State Triggers) ---
+        if (mission.onAccept) {
+            mission.onAccept.forEach(action => {
+                if (action.type === 'TRIGGER_SYSTEM_STATE') {
+                    const sysStateService = new SystemStateService(this.gameState, this.logger);
+                    sysStateService.triggerState(action.stateId);
+                    
+                    // Force a re-render so the state is recognized before the modal tries to display it
+                    this.gameState.setState({});
+                    
+                    // Queue the modal to display to the user
+                    if (this.uiManager && typeof this.uiManager.showEconWeatherModal === 'function') {
+                        setTimeout(() => {
+                            this.uiManager.showEconWeatherModal(this.gameState.getState());
+                        }, 600); // Slight delay to ensure modal queue is clear of the mission modal
+                    }
+                }
+            });
+        }
+
+        // --- NEW: Auto-Navigate for Intel ---
+        if (mission.grantedIntel && mission.grantedIntel.length > 0) {
+            if (this.simulationService) {
+                this.simulationService.setScreen('data', 'intel');
+                this.simulationService.setIntelTab('intel-market-content');
+            }
         }
 
         // 6. Apply Navigation Locks if specified

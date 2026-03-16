@@ -134,5 +134,9 @@ export const INTEL_CONTENT = {
     "DEMAND_SPIKE_05": {
         "sample": "A new, unexpected corporate construction charter was just approved.",
         "details": "A new, unexpected corporate construction charter was just approved. The corporation is rushing to build and is paying a premium to bypass normal supply channels.<br><br>Their project managers are buying [commodity name] at [location name] for [discount amount %] above the average price.<br><br>This buy-order will be filled in [durationDays].<br><br>You paid <span class=\"credits-text-pulsing\">⌬ [credit price]</span> for this intel."
+    },
+    "STORY_HOOK_01": {
+        "sample": "A Guild-subsidized operational charter has been secured.",
+        "details": "My sources report that [commodity name] is currently in high demand on [location name] due to some sort of terraforming mishap. The market is offering [discount amount %] profit margin above galactic average.<br><br>This intelligence is likely good for only [durationDays], however, so take advantage of it while you can.<br><br>- Audita"
     }
 };

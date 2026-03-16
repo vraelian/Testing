@@ -6,13 +6,13 @@
 export const TUTORIAL_MISSIONS = {
     'mission_tutorial_01': {
         id: "mission_tutorial_01",
-        name: "Using the Mission Terminal",
+        name: "Welcome to Orbital Trading",
         type: "TUTORIAL",
         host: "GUILD",
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, and I’ll be your liaison with the Merchant's Guild. I’ve been assigned to assist you in repaying your loan to the guild.<br><br>The easiest way to earn credits is by completing missions.<br><br>Begin by accepting this mission which will automatically be added to your mission log.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, and I’ll be your liaison with the Merchant's Guild. I’ve been assigned to assist you in <b>repaying your ⌬ 25,000 credit loan</b> to the guild.<br><br>The easiest way to earn credits is by completing missions.<br><br>Begin by accepting this mission which will automatically be added to your mission log.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
@@ -22,7 +22,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Mission Log",
-            text: "The mission log is where you review and complete missions. Most missions have specific requirements, such as delivering commodities to a designated location.<br><br>To track the progress of a specific mission, select the star icon on its mission card.",
+            text: "The mission log is where you will review and complete missions. Most missions have specific requirements, such as delivering commodities to a designated location.<br><br>To track the progress of a specific mission, select the star icon on its mission card.",
             buttonText: "Understood"
         },
         rewards: []
@@ -35,7 +35,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You may review your transaction history and manage your loan on the finance screen, which is accessible in the <b>Data</b> tab on the navigation bar at the top.<br><br>You have three years before your guild debt is due, after which your credits will be garnished to recover the loan amount.<br><br>Take a look at the finance screen, then return here.",
+        description: "You may review your transaction history and manage your loan on the finance screen, which is accessible in the <b>Data</b> tab on the navigation bar at the top.<br><br><b>You have three years before your guild debt is due</b>, after which your credits will be garnished to recover the loan amount.<br><br>Take a look at the finance screen, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
         ],
@@ -49,14 +49,14 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Debt",
-            text: "While you have debt interest accrues monthly. Pay off your debt as soon as possible to minimize the cost of borrowing credits!",
+            text: "While you possess debt interest will accrue monthly.<br><br>Pay off your debt as soon as possible to minimize the cost of borrowing credits!",
             buttonText: "Understood"
         },
         rewards: []
     },
     'mission_tutorial_03': {
         id: "mission_tutorial_03",
-        name: "Discover Intel and the Codex",
+        name: "Intel and the Codex",
         type: "TUTORIAL",
         host: "GUILD",
         portraitId: "Audita_1",
@@ -83,7 +83,7 @@ export const TUTORIAL_MISSIONS = {
     },
     'mission_tutorial_04': {
         id: "mission_tutorial_04",
-        name: "Review the Solar System Map",
+        name: "Solar System Map",
         type: "TUTORIAL",
         host: "GUILD",
         portraitId: "Audita_1",
@@ -102,7 +102,7 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_mars",
-            title: "Refer to the Map",
+            title: "Use the Map Often",
             text: "Your map will also indicate the target of your current mission or intel. Refer to it often to inform your trading and travel.",
             buttonText: "Understood"
         },
@@ -129,7 +129,7 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_luna",
-            title: "Maiden Voyage",
+            title: "Welcome to Luna",
             text: "Your new ship, the [shipName], has successfully completed its first voyage!<br><br>The flight consumed some fuel and the hull experienced minor wear, but we will address this later.",
             buttonText: "Understood"
         },
@@ -156,7 +156,7 @@ export const TUTORIAL_MISSIONS = {
         },
         completion: {
             locationId: "loc_luna",
-            title: "Cargo Summary",
+            title: "Review Your Cargo",
             text: "You may also review the cost basis and average value of individual commodities on the cargo screen.",
             buttonText: "Understood"
         },
@@ -170,7 +170,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "This involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon Market on the <b>Starport</b> tab, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
+        description: "Arbitrage involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for less than they cost and earning a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon Market on the <b>Starport</b> tab, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_06" }
         ],
@@ -220,13 +220,13 @@ export const TUTORIAL_MISSIONS = {
     },
     'mission_tutorial_09': {
         id: "mission_tutorial_09",
-        name: "Use Starport Services",
+        name: "Starport Services",
         type: "TUTORIAL",
         host: "GUILD",
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Stations offer fuel and repair services for a fee, and valuable ship upgrades can be purchased at the tuning shop.<br><br>Visit the services screen and fully refuel and repair your ship to complete this mission.",
+        description: "Stations offer fuel and repair services for a fee, and valuable ship upgrades can be purchased at the tuning shop.<br><br>Visit the services screen and fully refuel and repair your ship to complete this mission.<br><br>The guild has granted you a one-time service subsidy to cover your expenses.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_08" }
         ],
