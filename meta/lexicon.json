@@ -59,7 +59,9 @@
     "Repo_Event": "A punitive event triggered by defaulting on Syndicate Debt, where assets or ship upgrades are forcibly repossessed.",
     "System_States": "Procedurally generated macroeconomic conditions (Economic Weather) that apply temporary, system-wide modifiers to commodity prices, availability, and event generation.",
     "Synthesis_Pipeline": "An advanced operational pipeline at the Sol Station that mathematically converts standard commodities into high-value Antimatter.",
-    "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs."
+    "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs.",
+    "Freight_Depositing": "The mechanic allowing piecemeal fulfillment of massive cargo requirements at a destination without monopolizing the fleet's entire hold.",
+    "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not at the turn-in destination."
   },
   "service_summaries": {
     "SolStationService": {
@@ -607,7 +609,7 @@
       "mutates_state": []
     },
     "MissionService": {
-      "description": "Manages the state, progression, and availability of player missions. Draws mission data from `js/data/missions.js`.",
+      "description": "Manages the state and flow of player missions. Handles freight depositing by iterating through fleet holds to drain specific commodities.",
       "dependencies": [
         "GameState",
         "UIManager",
@@ -619,7 +621,8 @@
         "getAvailableMissions": "Returns a list of all missions whose prerequisites are met.",
         "acceptMission": "Sets a mission as active and initializes its progress tracking.",
         "checkTriggers": "Checks if the objectives for the active mission are met based on the current game state.",
-        "completeActiveMission": "Grants rewards and updates mission state upon successful completion."
+        "completeActiveMission": "Grants rewards and updates mission state upon successful completion.",
+        "depositMissionCargo": "Drains the necessary cargo from fleet inventories and increments the objective's deposited value."
       },
       "mutates_state": [
         "missions.activeMissionId",
@@ -627,6 +630,9 @@
         "missions.missionProgress",
         "missions.activeMissionObjectivesMet"
       ]
+    },
+    "MissionObjectiveEvaluator": {
+      "description": "Stateless logic engine for evaluating mission objectives. Evaluates full progress objects, dynamically aggregating fleet cargo and deposited freight to determine current value."
     },
     "DebugService": {
       "description": "Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities. Now includes asset manipulation tools.",

@@ -49,7 +49,7 @@ Context: The "hold-to-act" buttons (Refuel, Repair) on the Services screen exhib
 Decision: A persistent, delegated, and capture-phase event model was implemented in HoldEventHandler.js.
 Use Pointer Events: Switched from separate mouse and touch events to the modern Pointer Events API (pointerdown, pointerup, pointercancel) for unified and more reliable input handling.
 Delegated "Start": A single, persistent pointerdown listener is attached to document.body. This listener never gets destroyed and delegates the event to the correct handler based on e.target.
-Capture-Phase "Stop": Single, persistent pointerup and pointercancel listeners are attached to the window object using the { capture: true } option. This ensures the "stop" event is intercepted before the UI re-render can stop its propagation.
+Capture-Phase "Stop": Single, persistent pointerup and cancel listeners are attached to the window object using the { capture: true } option. This ensures the "stop" event is intercepted before the UI re-render can stop its propagation.
 State-Based Logic: The _start... and _stop... functions no longer add/remove listeners. They only set internal state flags (e.g., this.activeElementId), which the persistent global listeners check.
 
 Consequences:
@@ -478,7 +478,7 @@ Status: Accepted (2026-02-22)
 Context: The previous tutorial iterations (V3 and V4) relied on absolute DOM positioning, Popper.js anchoring, and Mutation Observers. This approach proved highly fragile, computationally expensive, and fundamentally incompatible with responsive mobile design.
 
 Decision: Abandon "DOM-hunting" tooltip tutorials entirely in favor of a Contextual Help Modal System.
-* Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio ($1/1$ or $4/3$).
+* Containerized UI: Decoupled from specific DOM elements, strictly containerized via a fixed aspect ratio (1:1 or 4:3).
 * Micro-Pagination: Relies on horizontal micro-pagination (slides) via CSS `transform: translateX()` rather than vertical scrolling.
 * State-Driven Context: Relies purely on the abstract GameState to resolve context and auto-instantiate the relevant help modal.
 
@@ -526,3 +526,18 @@ Context: Despite "Delayed Supply," markets were ultimately predictable. A macro-
 Decision: Implemented the `SystemStateService` to inject procedural, system-wide macroeconomic modifiers.
 * Weather Generation: Conditions (e.g., 'Solar Flare', 'Guild Strike') are rolled weekly.
 * Global Impact: Active states apply dynamic multipliers to target prices, commodity availability, and event generation probabilities across the entire game universe, temporarily overriding local quirks and standard math algorithms.
+
+ADR-039: Partial Freight Depositing for Missions
+Status: Accepted (2026-03-16)
+
+Context: Missions requiring massive cargo volumes (e.g., 120 Plasteel) created a bottleneck where players had to hoard items simultaneously, monopolizing their entire fleet's capacity and preventing them from engaging in standard arbitrage trading during the mission's lifecycle.
+
+Decision: Implemented a "Freight Depositing" mechanic.
+* Mutable State: Mission objectives now track a `deposited` integer alongside `current` and `target`.
+* UI Integration: A static amber "DEPOSIT FREIGHT" button appears when the player is at the correct destination and has relevant cargo in their fleet.
+* Resolution: The `MissionObjectiveEvaluator` calculates progress as `fleetInventory + deposited`. Final completion turn-in only deducts the remaining undeposited balance.
+
+Consequences:
+* Pro: Enables massive-scale logistics missions without soft-locking fleet capacity.
+* Pro: Creates a satisfying, incremental progression loop for the player.
+* Con: Adds complexity to the state tracking and requires a forced state broadcast to synchronize the global navigation bar's cargo indicator.

@@ -312,13 +312,13 @@ export class MissionService {
                     const objKey = obj.id || obj.goodId || obj.target;
                     
                     if (!progress.objectives[objKey]) {
-                        progress.objectives[objKey] = { current: 0, target: 1 };
+                        progress.objectives[objKey] = { current: 0, target: 1, deposited: 0 };
                     }
                     
-                    const currentObjProgress = progress.objectives[objKey].current;
+                    const currentObjProgress = progress.objectives[objKey];
                     const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService, currentObjProgress);
                     
-                    if (progress.objectives[objKey].current !== result.current) {
+                    if (progress.objectives[objKey].current !== result.current || progress.objectives[objKey].target !== result.target) {
                         progress.objectives[objKey].current = result.current;
                         progress.objectives[objKey].target = result.target; 
                         progressChanged = true;
@@ -352,6 +352,90 @@ export class MissionService {
     }
 
     /**
+     * Attempts to deposit cargo from the player's fleet into the specified mission.
+     * Assumes the player is currently at the correct location.
+     * @param {string} missionId 
+     * @returns {number} The total amount of freight deposited.
+     */
+    depositMissionCargo(missionId) {
+        if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
+        const mission = DB.MISSIONS[missionId];
+        if (!mission || !mission.objectives) return 0;
+
+        const progress = this.gameState.missions.missionProgress[missionId];
+        if (!progress) return 0;
+
+        let totalDepositedThisCall = 0;
+
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                const itemId = obj.goodId || obj.target;
+                const targetQty = obj.quantity || obj.value || 1;
+                const objKey = obj.id || obj.goodId || obj.target;
+                
+                if (!progress.objectives[objKey]) {
+                    progress.objectives[objKey] = { current: 0, target: targetQty, deposited: 0 };
+                }
+                if (progress.objectives[objKey].deposited === undefined) {
+                    progress.objectives[objKey].deposited = 0;
+                }
+
+                let depositedSoFar = progress.objectives[objKey].deposited;
+                let remainingNeeded = targetQty - depositedSoFar;
+
+                if (remainingNeeded > 0) {
+                    // Collect inventory across fleet
+                    const activeShipId = this.gameState.player.activeShipId;
+                    const shipInventories = [];
+                    
+                    for (const shipId of this.gameState.player.ownedShipIds) {
+                        const qty = this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0;
+                        shipInventories.push({ shipId, qty });
+                    }
+
+                    // Prioritize draining from the active ship first
+                    shipInventories.sort((a, b) => {
+                        if (a.shipId === activeShipId) return -1;
+                        if (b.shipId === activeShipId) return 1;
+                        return b.qty - a.qty;
+                    });
+
+                    let amountDepositedThisTime = 0;
+
+                    for (const shipData of shipInventories) {
+                        if (remainingNeeded <= 0) break;
+                        const toRemove = Math.min(remainingNeeded, shipData.qty);
+                        if (toRemove > 0) {
+                            const invItem = this.gameState.player.inventories[shipData.shipId][itemId];
+                            invItem.quantity -= toRemove;
+                            if (invItem.quantity === 0) invItem.avgCost = 0;
+                            
+                            remainingNeeded -= toRemove;
+                            amountDepositedThisTime += toRemove;
+                        }
+                    }
+
+                    if (amountDepositedThisTime > 0) {
+                        progress.objectives[objKey].deposited += amountDepositedThisTime;
+                        totalDepositedThisCall += amountDepositedThisTime;
+                        this.logger.info.player(this.gameState.day, 'MISSION_DEPOSIT', `Deposited ${amountDepositedThisTime}x ${itemId} for mission ${missionId}.`);
+                    }
+                }
+            }
+        });
+
+        if (totalDepositedThisCall > 0) {
+            this.checkTriggers(); // This will recalculate progress with the newly deposited cargo + remaining hold
+            this.gameState.setState({}); // Force update to reflect inventory changes in global UI
+            if (this.uiManager && typeof this.uiManager.render === 'function') {
+                this.uiManager.render(this.gameState.getState());
+            }
+        }
+        
+        return totalDepositedThisCall;
+    }
+
+    /**
      * Completes a specific active mission.
      * @param {string} missionId - The ID of the mission to complete.
      * @param {boolean} [force=false] If true, bypasses "Objectives Met" check.
@@ -374,7 +458,11 @@ export class MissionService {
             mission.objectives.forEach(obj => {
                 if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
                     const itemId = obj.goodId || obj.target;
-                    let remainingToRemove = obj.quantity || 1;
+                    const objKey = obj.id || obj.goodId || obj.target;
+                    const deposited = progress?.objectives?.[objKey]?.deposited || 0;
+                    
+                    let remainingToRemove = (obj.quantity || 1) - deposited;
+                    remainingToRemove = Math.max(0, remainingToRemove); // Floor at 0
                     
                     if (remainingToRemove > 0) {
                         const activeShipId = this.gameState.player.activeShipId;

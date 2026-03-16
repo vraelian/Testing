@@ -79,9 +79,9 @@ export class UIMissionControl {
             let firstObj = null;
             
             if (mission.objectives) {
-                // Find first uncompleted objective or default to the last objective
+                // Find first uncompleted objective
                 firstObj = mission.objectives.find(obj => {
-                    const localKey = obj.id || obj.goodId;
+                    const localKey = obj.id || obj.goodId || obj.target;
                     const pObj = progress.objectives[localKey];
                     const locCurrent = pObj ? pObj.current : 0;
                     const locTarget = pObj ? pObj.target : (obj.quantity || obj.value || 1);
@@ -92,16 +92,32 @@ export class UIMissionControl {
                         return locCurrent < locTarget;
                     }
                     return locCurrent < locTarget;
-                }) || mission.objectives[mission.objectives.length - 1];
+                });
                 
-                objKey = firstObj.id || firstObj.goodId;
-                
-                if (progress.objectives[objKey]) {
-                    current = progress.objectives[objKey].current;
-                    target = progress.objectives[objKey].target;
-                } else {
-                     current = 0;
-                     target = firstObj.quantity || firstObj.value || 1;
+                // Synthesize travel objective if all objectives are met but we are at the wrong location
+                if (!firstObj) {
+                    const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
+                    
+                    if (!isAtCorrectLocation) {
+                        firstObj = { type: 'travel_to', target: mission.completion.locationId };
+                        objKey = 'travel_fallback';
+                        current = 0;
+                        target = 1;
+                    } else {
+                        // Fully ready to turn in
+                        firstObj = mission.objectives[mission.objectives.length - 1];
+                    }
+                }
+
+                if (objKey !== 'travel_fallback') {
+                    objKey = firstObj.id || firstObj.goodId || firstObj.target;
+                    if (progress.objectives[objKey]) {
+                        current = progress.objectives[objKey].current;
+                        target = progress.objectives[objKey].target;
+                    } else {
+                         current = 0;
+                         target = firstObj.quantity || firstObj.value || 1;
+                    }
                 }
             }
 
@@ -356,8 +372,20 @@ export class UIMissionControl {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
                         let text = this._getObjectiveDescription(obj, hasSingleDestination).toUpperCase();
-                        // Wrap preceding numbers and "x" in t-qty
+                        
+                        // Wrap preceding numbers and "x" in t-qty FIRST to avoid breaking HTML classes below
                         text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                        
+                        // Append deposited info visually AFTER regex, with line break
+                        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                            const objKey = obj.id || obj.goodId || obj.target;
+                            const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
+                            const targetQty = obj.quantity || obj.value || 1;
+                            if (depositedAmt > 0) {
+                                text += `<br><span class="text-blue-400 font-bold">[DEPOSITED: ${depositedAmt}/${targetQty}]</span>`;
+                            }
+                        }
+                        
                         return `<div class="telemetry-item" style="animation-delay: ${delay}s">${text}</div>`;
                     }).join('');
                     
@@ -433,7 +461,7 @@ export class UIMissionControl {
                 // Evaluate initial scroll state upon opening the modal
                 if (wrapper && indicator) {
                     wrapper.scrollTop = 0; // Immediate reset
-                    requestAnimationFrame(() => {
+                    setTimeout(() => {
                         wrapper.scrollTop = 0; // Strict layout lock reset
                         if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                             indicator.style.display = 'block';
@@ -443,7 +471,7 @@ export class UIMissionControl {
                             indicator.style.display = 'none';
                             indicator.style.opacity = '0';
                         }
-                    });
+                    }, 150); // 150ms delay ensures DOM is fully painted and sized
                 }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -452,12 +480,41 @@ export class UIMissionControl {
                 if (isActive) {
                     const isAbandonable = mission.isAbandonable !== false;
                     let navButtonHtml = '';
+                    let depositButtonHtml = '';
                     
                     if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any') {
                         navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${navButtonHtml}`;
+                    if (isAtCorrectLocation) {
+                        let canDeposit = false;
+                        if (mission.objectives) {
+                            mission.objectives.forEach(obj => {
+                                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                                    const itemId = obj.goodId || obj.target;
+                                    const objKey = obj.id || obj.goodId || obj.target;
+                                    const targetQty = obj.quantity || obj.value || 1;
+                                    const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
+                                    
+                                    if (targetQty - depositedAmt > 0) {
+                                        for (const shipId of gameState.player.ownedShipIds) {
+                                            if (gameState.player.inventories[shipId]?.[itemId]?.quantity > 0) {
+                                                canDeposit = true;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            });
+                        }
+                        
+                        // Solid amber styling with static glow, no pulse animation
+                        if (canDeposit) {
+                            depositButtonHtml = `<button id="mission-deposit-btn" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">DEPOSIT FREIGHT</button>`;
+                        }
+                    }
+                    
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${navButtonHtml}`;
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
@@ -473,6 +530,27 @@ export class UIMissionControl {
                             this.manager.showLaunchModal(mission.completion.locationId);
                         }, 100);
                         closeHandler();
+                    });
+                }
+                
+                const depositBtn = modal.querySelector('#mission-deposit-btn');
+                if (depositBtn) {
+                    depositBtn.addEventListener('click', (e) => {
+                        if (this.manager.simulationService) {
+                            const depositedAmt = this.manager.simulationService.missionService.depositMissionCargo(mission.id);
+                            
+                            if (depositedAmt > 0) {
+                                // Extract bounding rect to ensure coordinates on mobile touch where clientX/Y might be missing
+                                const rect = depositBtn.getBoundingClientRect();
+                                const x = e.clientX || rect.left + (rect.width / 2);
+                                const y = e.clientY || rect.top;
+                                
+                                this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff');
+                            }
+
+                            // The modal now stays closed, seamlessly returning gameplay to the user without a forced refresh.
+                            closeHandler();
+                        }
                     });
                 }
             }
@@ -609,16 +687,18 @@ export class UIMissionControl {
                         } else {
                             content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                         }
-                        return `<div class="telemetry-item hero-payout-item" style="animation-delay: ${delay}s">${content}</div>`;
+                        // Replaced telemetry-item to eliminate pseudo-element bullets. Added centering and margin.
+                        return `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
                    }).join('');
                    
                    rewardsEl.style.display = 'block';
-                   // Hero Completion HUD
+                   // Retain panel-payout wrapper to preserve the visual host theme borders/glows, 
+                   // but strip out the telemetry-header and telemetry-content structural classes to clear list styles.
                    rewardsEl.innerHTML = `
                         <div class="telemetry-dashboard hero-dashboard w-full my-4">
-                            <div class="telemetry-panel panel-hero-payout">
-                                <div class="telemetry-header hero-header">PAYOUT SECURED</div>
-                                <div class="telemetry-content hero-content">${rewardsHtml}</div>
+                            <div class="telemetry-panel panel-payout full-width flex flex-col items-center">
+                                <div class="hero-header w-full text-center font-bold mb-2 tracking-widest text-lg">PAYOUT SECURED</div>
+                                <div class="hero-content w-full flex flex-col items-center justify-center">${rewardsHtml}</div>
                             </div>
                         </div>
                    `;
@@ -662,7 +742,7 @@ export class UIMissionControl {
                // Evaluate initial scroll state upon opening the modal
                if (wrapper && indicator) {
                    wrapper.scrollTop = 0; // Immediate reset
-                   requestAnimationFrame(() => {
+                   setTimeout(() => {
                        wrapper.scrollTop = 0; // Strict layout lock reset
                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                            indicator.style.display = 'block';
@@ -672,7 +752,7 @@ export class UIMissionControl {
                            indicator.style.display = 'none';
                            indicator.style.opacity = '0';
                        }
-                   });
+                   }, 150); // 150ms delay ensures DOM is fully painted and sized
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
