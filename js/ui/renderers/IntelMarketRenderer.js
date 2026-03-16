@@ -31,9 +31,19 @@ export class IntelMarketRenderer {
     render(containerElement, gameState) {
         this.currentGameState = gameState;
         const state = gameState;
-        const { currentLocationId, activeIntelDeal, intelMarket } = state;
+        const { currentLocationId, activeIntelDeal, intelMarket, missions } = state;
         
-        // --- VIRTUAL WORKBENCH: MODIFICATION (REQUEST A) ---
+        // --- VIRTUAL WORKBENCH: MODIFICATION (TUTORIAL RESTRICTION) ---
+        // If mission_tutorial_03 is active, force the market to be empty
+        // to prevent the player from buying intel and leaving the tutorial loop.
+        const isTutorial3Active = missions && missions.activeMissionIds && missions.activeMissionIds.includes('mission_tutorial_03');
+
+        if (isTutorial3Active) {
+            containerElement.innerHTML = `<p class="text-gray-400 text-center italic p-4">No intel data available at this location.</p>`;
+            return;
+        }
+        // --- END MODIFICATION ---
+
         // 1. Get the *single* active purchased packet, if it exists
         const globalPurchasedPackets = [];
         if (activeIntelDeal) {
@@ -52,7 +62,6 @@ export class IntelMarketRenderer {
 
         // 3. Combine lists, with purchased intel always at the top
         const combinedList = [...globalPurchasedPackets, ...localUnpurchasedPackets];
-        // --- END MODIFICATION ---
 
         const isLocked = activeIntelDeal !== null;
 
@@ -93,7 +102,6 @@ export class IntelMarketRenderer {
      * @JSDoc
      */
     _renderPurchasedButton(packet) {
-        // --- VIRTUAL WORKBENCH: MODIFICATION (THEMING - REQUEST A) ---
         const dealLocation = this.db.MARKETS.find(m => m.id === packet.dealLocationId);
         const dealLocationName = dealLocation?.name || 'Unknown Location';
         
@@ -109,7 +117,6 @@ export class IntelMarketRenderer {
             --theme-border-color: ${theme.borderColor};
             --theme-text-color: ${theme.textColor};
         `;
-        // --- END MODIFICATION ---
         
         return `
             <button class="btn btn-intel btn-intel-purchased" style="${style}" data-action="show_intel_details" 
@@ -129,15 +136,12 @@ export class IntelMarketRenderer {
      * @JSDoc
      */
     _renderOfferButton(packet, price, isLocked) {
-        // --- VIRTUAL WORKBENCH: MODIFICATION ---
         // Display the DEAL location name, not the SALE location name.
         const dealLocationName = this.db.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'Unknown Location';
-        // --- END MODIFICATION ---
 
         const disabledAttr = isLocked ? 'disabled' : '';
         const title = isLocked ? 'You already have an active intel deal.' : `Purchase intel for a deal at ${dealLocationName}`;
         
-        // --- VIRTUAL WORKBENCH START: Phase 3 ---
         // Conditionally apply pulsing class only if not locked
         const priceHtml = isLocked
             ? formatCredits(price, true) // Plain text (with symbol) for disabled button
@@ -152,6 +156,5 @@ export class IntelMarketRenderer {
                     ${disabledAttr}>
                 ${dealLocationName} ${priceHtml}
             </button>`;
-        // --- VIRTUAL WORKBENCH END: Phase 3 ---
     }
 }

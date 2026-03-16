@@ -202,7 +202,7 @@ export class MissionService {
              });
         }
 
-        // --- NEW: ON ACCEPT ACTIONS (System State Triggers) ---
+        // --- NEW: ON ACCEPT ACTIONS (System State Triggers & Credit Grants) ---
         if (mission.onAccept) {
             mission.onAccept.forEach(action => {
                 if (action.type === 'TRIGGER_SYSTEM_STATE') {
@@ -218,6 +218,11 @@ export class MissionService {
                             this.uiManager.showEconWeatherModal(this.gameState.getState());
                         }, 600); // Slight delay to ensure modal queue is clear of the mission modal
                     }
+                } else if (action.type === 'GRANT_CREDITS') {
+                    this.gameState.player.credits += action.amount;
+                    this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ⌬ ${formatCredits(action.amount)} upon mission acceptance.`);
+                    
+                    this.gameState.setState({});
                 }
             });
         }

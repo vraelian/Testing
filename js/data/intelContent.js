@@ -137,6 +137,6 @@ export const INTEL_CONTENT = {
     },
     "STORY_HOOK_01": {
         "sample": "A Guild-subsidized operational charter has been secured.",
-        "details": "My sources report that [commodity name] is currently in high demand on [location name] due to some sort of terraforming mishap. The market is offering [discount amount %] profit margin above galactic average.<br><br>This intelligence is likely good for only [durationDays], however, so take advantage of it while you can.<br><br>- Audita"
+        "details": "My sources report that [commodity name] is currently in high demand on [location name] in anticipationg of some sort of anomolous Sun activity. As a result, the markets of Earth are paying enormous sums to get their hands on fresh water. Rumours are that there is an [discount amount %] profit margin above normal.<br><br>This intelligence is likely good for only [durationDays] so take advantage of it while you can.<br><br>- Audita"
     }
 };

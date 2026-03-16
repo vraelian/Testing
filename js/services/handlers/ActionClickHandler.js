@@ -460,7 +460,18 @@ export class ActionClickHandler {
                 break;
             }
 
-            case 'accept-mission':
+            case 'accept-mission': {
+                const mission = DB.MISSIONS[dataset.missionId];
+                if (mission && mission.onAccept) {
+                    mission.onAccept.forEach(action => {
+                        if (action.type === 'GRANT_CREDITS') {
+                            if (e) {
+                                this.uiManager.createFloatingText(`+${formatCredits(action.amount, false)}`, e.clientX, e.clientY, '#4ade80');
+                            }
+                        }
+                    });
+                }
+
                 this.simulationService.missionService.acceptMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');
                 if (this.uiManager.missionControl) {
@@ -472,6 +483,7 @@ export class ActionClickHandler {
                     });
                 }
                 break;
+            }
             case 'abandon-mission':
                 this.simulationService.missionService.abandonMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');

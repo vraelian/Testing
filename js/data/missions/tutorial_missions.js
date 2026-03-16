@@ -230,6 +230,9 @@ export const TUTORIAL_MISSIONS = {
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_08" }
         ],
+        onAccept: [
+            { type: "GRANT_CREDITS", amount: 7000 }
+        ],
         objectives: [
             { "id": "visit_services", "type": "VISIT_SCREEN", "navId": "starport", "screenId": "services" },
             { "id": "max_hull", "type": "HAVE_HULL_PCT", "value": 100 },
