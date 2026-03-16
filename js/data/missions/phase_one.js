@@ -1,8 +1,8 @@
 // js/data/missions/phase_one.js
 /**
  * @fileoverview
- * Defines the Phase 1: Act 1 (The Cog) missions 10-13, focusing on early game logistics,
- * debt, and the first taste of specialized corporate and independent actors.
+ * Defines the Phase 1: Act 1 (The Cog) missions 10-15, focusing on early game logistics,
+ * debt, the introduction of higher-level Guild contracts, and the contrast of the transhuman economy.
  */
 export const PHASE_ONE_MISSIONS = {
     'mission_10': {
@@ -81,7 +81,7 @@ export const PHASE_ONE_MISSIONS = {
             locationId: "loc_belt",
             title: "Delivery Complete",
             text: "The belt farms will distribute the water to the scattered hydroponics farms shortly. The valuable plants cultivated for food and oxygen will persist for a while longer now thanks to you.",
-            buttonText: "Understood"
+            buttonText: "Unload the Water Ice"
         },
         rewards: [
             { "type": "credits", "amount": 3500 }
@@ -106,10 +106,62 @@ export const PHASE_ONE_MISSIONS = {
             locationId: "loc_earth",
             title: "Delivery Complete",
             text: "The client is prepared to remit payment once the freight has been unloaded from the [shipName].",
-            buttonText: "Understood"
+            buttonText: "Unload the Plasteel"
         },
         rewards: [
             { "type": "credits", "amount": 6500 }
+        ]
+    },
+    'mission_14': {
+        id: "mission_14",
+        name: "Economies of Scale",
+        type: "LOGISTICS",
+        host: "GUILD",
+        portraitId: "Merchants_Guild_3",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets. I see you've cleared your Guild loan and successfully executed that Earth hardware procurement. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Let’s see if your heavy logistics are as good as your accounting. The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] likely cannot hold that all at once, so get comfortable with the transit routes. You will likely need to source the freight from multiple stations. Time is money.",
+        triggers: [
+            { "type": "mission_completed", "missionId": "mission_11" },
+            { "type": "mission_completed", "missionId": "mission_13" }
+        ],
+        objectives: [
+            { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 120 }
+        ],
+        completion: {
+            locationId: "loc_mars",
+            title: "Contract Fulfilled",
+            text: "The Martian dockmasters are ready to confirm receipt of the final Plasteel shipment. The orbital tether construction continues on schedule. The Guild has authorized your payment.",
+            buttonText: "Unload the Plasteel"
+        },
+        rewards: [
+            { "type": "credits", "amount": 20000 }
+        ]
+    },
+    'mission_15': {
+        id: "mission_15",
+        name: "Life Extension",
+        type: "PROCUREMENT",
+        host: "GUILD",
+        portraitId: "Merchants_Guild_3",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain [playerName], I have a specialized procurement order. A senior board member of the Guild requires a pristine shipment for their personal estate on Luna.<br><br><b>They will need substantial amounts of Water Ice for a localized cryo-therapy life-extension suite, and high-grade Plasteel for structural reinforcements of the estate.</b><br>Do not keep them waiting.",
+        triggers: [
+            { "type": "mission_completed", "missionId": "mission_14" }
+        ],
+        objectives: [
+            { "id": "deliver_ice_luxury", "type": "DELIVER_ITEM", "target": "loc_luna", "goodId": "water_ice", "quantity": 15 },
+            { "id": "deliver_plasteel_luxury", "type": "DELIVER_ITEM", "target": "loc_luna", "goodId": "plasteel", "quantity": 15 }
+        ],
+        completion: {
+            locationId: "loc_luna",
+            title: "Cryo-Delivery Complete",
+            text: "The lunar estate eagerly awaits the supplies to resume construction are prepared to transfer the credits upon delivery.",
+            buttonText: "Unload the Freight"
+        },
+        rewards: [
+            { "type": "credits", "amount": 14000 }
         ]
     }
 };
