@@ -271,7 +271,7 @@ export class UIMissionControl {
 
                 let flexColumns = [];
 
-                // 1. INBOUND (Granted Cargo / Intel)
+                // 1. INBOUND (Granted Cargo / Intel / Credits)
                 let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
                     mission.grantedCargo.forEach(cargo => {
@@ -282,6 +282,13 @@ export class UIMissionControl {
                 if (mission.grantedIntel && mission.grantedIntel.length > 0) {
                     mission.grantedIntel.forEach(intel => {
                         inboundItems.push(`1x ${intel.name.toUpperCase()}`);
+                    });
+                }
+                if (mission.onAccept && mission.onAccept.length > 0) {
+                    mission.onAccept.forEach(action => {
+                        if (action.type === 'GRANT_CREDITS') {
+                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span> GRANT`);
+                        }
                     });
                 }
 
