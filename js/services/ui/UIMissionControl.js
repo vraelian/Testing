@@ -264,77 +264,132 @@ export class UIMissionControl {
                     typeEl.style.fontSize = '0.65rem'; // Shrink type by 1pt
                 }
 
-                // --- HORIZONTAL TELEMETRY HUD (FLEX ROW) ---
+                // --- TELEMETRY DASHBOARD (CSS GRID) ---
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
                 if (rewardsEl) rewardsEl.style.display = 'none'; // Hide native rewards block
 
                 let flexColumns = [];
+                let animDelayIdx = 0;
+
+                // Evaluate Payout to inform Inbound stretching
+                const hasPayout = mission.rewards && mission.rewards.length > 0;
 
                 // 1. INBOUND (Granted Cargo / Intel / Credits)
                 let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
                     mission.grantedCargo.forEach(cargo => {
                         const name = DB.COMMODITIES.find(c => c.id === cargo.goodId)?.name || 'ITEM';
-                        inboundItems.push(`${cargo.quantity}x ${name.toUpperCase()}`);
+                        inboundItems.push(`<span class="t-qty">${cargo.quantity}x</span> <span class="t-subject">${name.toUpperCase()}</span>`);
                     });
                 }
                 if (mission.grantedIntel && mission.grantedIntel.length > 0) {
                     mission.grantedIntel.forEach(intel => {
-                        inboundItems.push(`1x ${intel.name.toUpperCase()}`);
+                        inboundItems.push(`<span class="t-qty">1x</span> <span class="t-subject">${intel.name.toUpperCase()}</span>`);
                     });
                 }
                 if (mission.onAccept && mission.onAccept.length > 0) {
                     mission.onAccept.forEach(action => {
                         if (action.type === 'GRANT_CREDITS') {
-                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span> GRANT`);
+                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span> <span class="t-subject">GRANT</span>`);
                         }
                     });
                 }
 
                 if (inboundItems.length > 0) {
-                    const grantedStr = inboundItems.join('<br>');
+                    const inboundFullWidthClass = !hasPayout ? ' full-width' : '';
+                    const grantedStr = inboundItems.map(item => {
+                        const delay = animDelayIdx++ * 0.05;
+                        return `<div class="telemetry-item" style="animation-delay: ${delay}s">${item}</div>`;
+                    }).join('');
+                    
                     flexColumns.push(`
-                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">INBOUND</div>
-                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${grantedStr}</div>
+                        <div class="telemetry-panel panel-inbound${inboundFullWidthClass}">
+                            <div class="telemetry-header">INBOUND</div>
+                            <div class="telemetry-content">${grantedStr}</div>
                         </div>
                     `);
                 }
 
-                // 2. DIRECTIVE (Objectives)
-                if (mission.objectives && mission.objectives.length > 0) {
-                    const obsList = mission.objectives.map(obj => this._getObjectiveDescription(obj).toUpperCase()).join('<br>');
-                    flexColumns.push(`
-                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">DIRECTIVE</div>
-                            <div class="text-sm text-gray-200 tracking-wide leading-tight">${obsList}</div>
-                        </div>
-                    `);
-                }
-
-                // 3. PAYOUT (Rewards)
-                if (mission.rewards && mission.rewards.length > 0) {
+                // 2. PAYOUT (Rewards) - Dynamically spans if inbound is empty
+                let payoutPanelHtml = '';
+                if (hasPayout) {
                     const rewsList = mission.rewards.map(r => {
-                        if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        if(r.type.toLowerCase() === 'upgrade') {
+                        const delay = animDelayIdx++ * 0.05;
+                        let content = '';
+                        if(r.type.toLowerCase() === 'credits') {
+                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                        } else if(r.type.toLowerCase() === 'upgrade') {
                             const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            return upgName.toUpperCase();
+                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                        } else {
+                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                         }
-                        return r.type.toUpperCase();
-                    }).join('<br>');
+                        return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
+                    }).join('');
+                    
+                    const fullWidthClass = inboundItems.length === 0 ? ' full-width' : '';
+                    payoutPanelHtml = `
+                        <div class="telemetry-panel panel-payout${fullWidthClass}">
+                            <div class="telemetry-header">PAYOUT</div>
+                            <div class="telemetry-content">${rewsList}</div>
+                        </div>
+                    `;
+                }
+                
+                // Add Payout here to ensure CSS Grid layout orders correctly
+                if (payoutPanelHtml) flexColumns.push(payoutPanelHtml);
+
+                // Analyze Locations for Aggregate Destination block
+                let uniqueDestinations = new Set();
+                if (mission.objectives) {
+                    mission.objectives.forEach(obj => {
+                        if (['have_item', 'DELIVER_ITEM', 'travel_to', 'TRAVEL_TO'].includes(obj.type)) {
+                            if (obj.target) uniqueDestinations.add(obj.target);
+                        }
+                    });
+                }
+                const hasSingleDestination = uniqueDestinations.size === 1;
+
+                // 3. DIRECTIVE (Objectives)
+                if (mission.objectives && mission.objectives.length > 0) {
+                    const obsList = mission.objectives.map(obj => {
+                        const delay = animDelayIdx++ * 0.05;
+                        let text = this._getObjectiveDescription(obj, hasSingleDestination).toUpperCase();
+                        // Wrap preceding numbers and "x" in t-qty
+                        text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                        return `<div class="telemetry-item" style="animation-delay: ${delay}s">${text}</div>`;
+                    }).join('');
+                    
                     flexColumns.push(`
-                        <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                            <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">PAYOUT</div>
-                            <div class="text-lg text-yellow-400 tracking-wide leading-tight">${rewsList}</div>
+                        <div class="telemetry-panel panel-directive">
+                            <div class="telemetry-header">DIRECTIVE</div>
+                            <div class="telemetry-content">${obsList}</div>
+                        </div>
+                    `);
+                }
+
+                // 4. DESTINATION (Extracted if unified)
+                if (hasSingleDestination) {
+                    const destId = Array.from(uniqueDestinations)[0];
+                    const destName = DB.MARKETS.find(m => m.id === destId)?.name || 'UNKNOWN';
+                    const delay = animDelayIdx++ * 0.05;
+                    flexColumns.push(`
+                        <div class="telemetry-panel panel-destination">
+                            <div class="telemetry-header">DESTINATION</div>
+                            <div class="telemetry-content">
+                                <div class="telemetry-item" style="animation-delay: ${delay}s"><span class="t-subject">${destName.toUpperCase()}</span></div>
+                            </div>
                         </div>
                     `);
                 }
 
                 if (flexColumns.length > 0) {
                     objectivesEl.innerHTML = `
-                        <div class="w-full flex flex-row justify-center items-stretch divide-x divide-gray-700/60 bg-gray-900/50 border border-gray-700/60 rounded-sm my-4 shadow-inner">
-                            ${flexColumns.join('')}
+                        <div class="telemetry-dashboard w-full my-4">
+                            <div class="telemetry-grid">
+                                ${flexColumns.join('')}
+                            </div>
                         </div>
                     `;
                     objectivesEl.style.display = 'block';
@@ -349,14 +404,14 @@ export class UIMissionControl {
                 let wrapper = modal.querySelector('.mission-scroll-wrapper');
                 let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                // Generate structural wrappers if they don't already exist for this recycled modal
+                // Generate structural wrappers if they don't already exist
                 if (!wrapper && descEl && objectivesEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '264px'; // 20% taller max-height
+                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -377,8 +432,9 @@ export class UIMissionControl {
 
                 // Evaluate initial scroll state upon opening the modal
                 if (wrapper && indicator) {
-                    wrapper.scrollTop = 0; // Reset scroll position for newly opened missions
-                    setTimeout(() => {
+                    wrapper.scrollTop = 0; // Immediate reset
+                    requestAnimationFrame(() => {
+                        wrapper.scrollTop = 0; // Strict layout lock reset
                         if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                             indicator.style.display = 'block';
                             const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
@@ -387,7 +443,7 @@ export class UIMissionControl {
                             indicator.style.display = 'none';
                             indicator.style.opacity = '0';
                         }
-                    }, 50); // Small layout tick buffer
+                    });
                 }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -427,11 +483,11 @@ export class UIMissionControl {
         this.manager.queueModal('mission-modal', parsedTitle, parsedDescription, null, options);
     }
     
-    _getObjectiveDescription(obj) {
+    _getObjectiveDescription(obj, omitLocation = false) {
         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              let text = `Deliver ${obj.quantity || 1}x ${name}`;
-             if (obj.target) {
+             if (obj.target && !omitLocation) {
                  const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
                  text += ` to ${locName}`;
              }
@@ -443,6 +499,7 @@ export class UIMissionControl {
              return `${action} ${obj.quantity || 1}x ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             if (omitLocation) return `Establish Presence`;
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
@@ -541,22 +598,27 @@ export class UIMissionControl {
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
                if (mission.rewards && mission.rewards.length > 0) {
-                   const rewardsHtml = mission.rewards.map(r => {
-                        if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        if(r.type.toLowerCase() === 'upgrade') {
+                   const rewardsHtml = mission.rewards.map((r, i) => {
+                        const delay = i * 0.1;
+                        let content = '';
+                        if(r.type.toLowerCase() === 'credits') {
+                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                        } else if(r.type.toLowerCase() === 'upgrade') {
                             const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            return upgName.toUpperCase();
+                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                        } else {
+                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                         }
-                       return r.type.toUpperCase();
-                   }).join('<br>');
+                        return `<div class="telemetry-item hero-payout-item" style="animation-delay: ${delay}s">${content}</div>`;
+                   }).join('');
                    
                    rewardsEl.style.display = 'block';
-                   // Convert Completion Rewards to use the Telemetry HUD layout
+                   // Hero Completion HUD
                    rewardsEl.innerHTML = `
-                        <div class="w-full flex flex-row justify-center items-stretch bg-gray-900/50 border border-gray-700/60 rounded-sm my-4 shadow-inner">
-                            <div class="flex-1 p-2 py-2 text-center flex flex-col justify-start">
-                                <div class="text-[11px] text-gray-500 uppercase tracking-widest mb-2 font-bold">PAYOUT SECURED</div>
-                                <div class="text-lg text-yellow-400 tracking-wide leading-tight">${rewardsHtml}</div>
+                        <div class="telemetry-dashboard hero-dashboard w-full my-4">
+                            <div class="telemetry-panel panel-hero-payout">
+                                <div class="telemetry-header hero-header">PAYOUT SECURED</div>
+                                <div class="telemetry-content hero-content">${rewardsHtml}</div>
                             </div>
                         </div>
                    `;
@@ -577,7 +639,7 @@ export class UIMissionControl {
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '264px'; // 20% taller max-height
+                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -599,8 +661,9 @@ export class UIMissionControl {
 
                // Evaluate initial scroll state upon opening the modal
                if (wrapper && indicator) {
-                   wrapper.scrollTop = 0; // Reset scroll position
-                   setTimeout(() => {
+                   wrapper.scrollTop = 0; // Immediate reset
+                   requestAnimationFrame(() => {
+                       wrapper.scrollTop = 0; // Strict layout lock reset
                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                            indicator.style.display = 'block';
                            const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
@@ -609,7 +672,7 @@ export class UIMissionControl {
                            indicator.style.display = 'none';
                            indicator.style.opacity = '0';
                        }
-                   }, 50);
+                   });
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
