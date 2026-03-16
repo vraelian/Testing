@@ -1563,3 +1563,27 @@
     animation: graphBlurFadeOut 0.5s ease-out forwards;
     pointer-events: none;
 }
+
+/* --- SCROLL INDICATOR --- */
+.mission-scroll-outer {
+    position: relative;
+}
+
+.scroll-indicator-arrow {
+    position: absolute;
+    bottom: 0px;
+    right: 15px;
+    font-size: 3rem; /* Doubled size */
+    font-weight: bold;
+    color: var(--theme-color-glow, #38bdf8);
+    text-shadow: 0 0 8px var(--theme-color-glow, #38bdf8);
+    animation: scrollBounceGlow 1.5s infinite;
+    pointer-events: none;
+    z-index: 10;
+    transition: opacity 0.3s ease;
+}
+
+@keyframes scrollBounceGlow {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(4px); opacity: 1; }
+}
