@@ -18,10 +18,14 @@ class StarfieldService {
         
         // Configuration for the visual effect
         this.config = {
-            starCount: 200,
-            baseSpeed: 0.5,
-            zIndex: 40 // Lowered to 40 to sit strictly behind .modal-backdrop (50)
+            starCount: 300,
+            baseSpeed: 1.5, // Base Z-axis reduction rate
+            zIndex: 40 
         };
+
+        // Dynamic Velocity State
+        this.currentSpeedMultiplier = 0.2;
+        this.targetSpeedMultiplier = 0.2;
     }
 
     /**
@@ -53,15 +57,38 @@ class StarfieldService {
     }
 
     /**
+     * Velocity Control: Slow drift for idling/menus
+     */
+    setIdleWarp() {
+        this.targetSpeedMultiplier = 0.2;
+    }
+
+    /**
+     * Velocity Control: Massive acceleration for travel sequence
+     */
+    setEngageWarp() {
+        this.targetSpeedMultiplier = 12.0;
+    }
+
+    /**
+     * Velocity Control: Braking sequence for arriving at destination
+     */
+    setDecelerateWarp() {
+        this.targetSpeedMultiplier = 0.2;
+    }
+
+    /**
      * Applies the 1-second blur-fade-in CSS class.
      */
     triggerEntry() {
         if (!this.container) return;
         this._resetClasses();
-        // Small timeout ensures the DOM registers the base state before applying transition
-        requestAnimationFrame(() => {
-            this.container.classList.add('starfield-entry');
-        });
+        
+        // Force a synchronous DOM reflow so the transition executes cleanly
+        void this.container.offsetWidth;
+        
+        this.container.classList.add('starfield-entry');
+        this.setIdleWarp(); // Ensure it begins in idle state
     }
 
     /**
@@ -119,13 +146,20 @@ class StarfieldService {
     }
 
     /**
-     * Adjusts canvas dimensions to match the viewport.
+     * Adjusts canvas dimensions to match the viewport, calculating for Retina displays.
      * @private
      */
     _resizeCanvas() {
         if (!this.canvas) return;
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        const dpr = window.devicePixelRatio || 1;
+
+        // Lock CSS size to standard viewport dimensions
+        this.canvas.style.width = `${window.innerWidth}px`;
+        this.canvas.style.height = `${window.innerHeight}px`;
+
+        // Scale the internal rendering buffer to the hardware pixel density
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
     }
 
     /**
@@ -135,37 +169,72 @@ class StarfieldService {
     _initStars() {
         this.stars = [];
         for (let i = 0; i < this.config.starCount; i++) {
-            this.stars.push({
-                x: Math.random() * this.canvas.width,
-                y: Math.random() * this.canvas.height,
-                size: Math.random() * 2,
-                speed: (Math.random() * 1) + this.config.baseSpeed
-            });
+            this.stars.push(this._createStar());
         }
     }
 
     /**
-     * Recursive animation loop for moving and drawing stars.
+     * Generates a 3D coordinate for a star, mapping to the Retina buffer size.
+     * @private
+     */
+    _createStar() {
+        const dpr = window.devicePixelRatio || 1;
+        return {
+            x: (Math.random() - 0.5) * window.innerWidth * dpr * 2,
+            y: (Math.random() - 0.5) * window.innerHeight * dpr * 2,
+            z: Math.random() * 1000,
+            pz: Math.random() * 1000 // Previous Z (used to draw the speed streak)
+        };
+    }
+
+    /**
+     * Recursive animation loop for moving and drawing stars in 3D space.
      * @private
      */
     _renderLoop() {
-        if (!this.ctx) return;
+        if (!this.ctx || !this.canvas) return;
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-        this.ctx.fillStyle = '#ffffff';
+
+        const cx = this.canvas.width / 2;
+        const cy = this.canvas.height / 2;
+
+        // Smoothly interpolate current speed towards the target speed (The "Punch It" effect)
+        this.currentSpeedMultiplier += (this.targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.05;
+
+        this.ctx.strokeStyle = 'rgba(220, 240, 255, 0.9)';
+        this.ctx.lineCap = 'round';
 
         for (let star of this.stars) {
-            this.ctx.beginPath();
-            this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
-            this.ctx.fill();
+            star.pz = star.z; 
+            star.z -= this.config.baseSpeed * this.currentSpeedMultiplier;
 
-            // Move star downward
-            star.y += star.speed;
+            // Reset star to the far distance if it passes the camera plane
+            if (star.z <= 1) {
+                Object.assign(star, this._createStar());
+                star.z = 1000;
+                star.pz = 1000;
+            }
 
-            // Reset star to top if it goes off screen
-            if (star.y > this.canvas.height) {
-                star.y = 0;
-                star.x = Math.random() * this.canvas.width;
+            // 3D to 2D Projection mapping
+            const factor = 400 / star.z;
+            const px = cx + star.x * factor;
+            const py = cy + star.y * factor;
+            
+            const pFactor = 400 / star.pz;
+            const ppx = cx + star.x * pFactor;
+            const ppy = cy + star.y * pFactor;
+
+            // Size scales up as it gets closer to the camera
+            const size = Math.max(0.5, (1 - star.z / 1000) * 3.5);
+
+            // Only draw if the projected coordinates are within the native bounds
+            if (px >= 0 && px <= this.canvas.width && py >= 0 && py <= this.canvas.height) {
+                this.ctx.lineWidth = size;
+                this.ctx.beginPath();
+                this.ctx.moveTo(ppx, ppy);
+                this.ctx.lineTo(px + (px === ppx ? 0.1 : 0), py + (py === ppy ? 0.1 : 0));
+                this.ctx.stroke();
             }
         }
 

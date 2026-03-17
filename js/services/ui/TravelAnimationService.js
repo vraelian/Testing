@@ -17,10 +17,8 @@ export class TravelAnimationService {
         this.hullDamageText = document.getElementById('travel-hull-damage');
         this.confirmButton = document.getElementById('travel-confirm-button');
         
-        // Canvas (Legacy) - Kept in DOM check but unused logic-wise
-        this.canvas = document.getElementById('travel-canvas');
-        
         this.animationFrame = null;
+        this.isDecelerating = false; // State flag for the braking sequence
 
         // Ensure the DOM structure for the Cinematic Image view exists
         this._ensureDomStructure();
@@ -44,7 +42,7 @@ export class TravelAnimationService {
             
             wrapper.appendChild(img);
 
-            // Insert after the header panel, replacing/hiding the canvas visually
+            // Insert after the header panel, replacing/hiding the legacy canvas visually
             const header = document.getElementById('travel-header-panel');
             if (header && header.nextSibling) {
                 header.parentNode.insertBefore(wrapper, header.nextSibling);
@@ -71,6 +69,9 @@ export class TravelAnimationService {
         this._setupInitialState(to, travelInfo);
         this._startCinematicSequence(to);
 
+        // Initiate the "Punch It" high-speed warp effect
+        starfieldService.setEngageWarp();
+
         let startTime = null;
         const duration = 2500; // Duration of travel sequence
 
@@ -81,6 +82,12 @@ export class TravelAnimationService {
 
             // Ease-out cubic for the slow-down effect at the end
             if (progress > 0.8) {
+                // Trigger the warp deceleration sequence once
+                if (!this.isDecelerating) {
+                    starfieldService.setDecelerateWarp();
+                    this.isDecelerating = true;
+                }
+
                 const normalized = (progress - 0.8) / 0.2;
                 progress = 0.8 + (1 - Math.pow(1 - normalized, 3)) * 0.2;
             }
@@ -161,28 +168,24 @@ export class TravelAnimationService {
         this.confirmButton.style.opacity = 0;
         this.confirmButton.disabled = true;
         this.progressBar.style.width = '0%';
+        this.isDecelerating = false;
     }
 
     /**
      * Initializes the static artwork and triggers the zoom effect.
-     * Replaces the old _setupAnimationElements method.
      */
     _startCinematicSequence(to) {
-        // 1. Fetch the random variant image for this location
-        // Example: 'loc_mars' -> 'assets/locations/mars_C.jpeg'
         const imagePath = AssetService.getLocationImage(to.id);
         
         if (imagePath) {
             this.imageElement.src = imagePath;
             
-            // 2. Trigger Fade In and Zoom
-            // Small delay to ensure the src is applied before opacity transition starts
+            // Trigger Fade In and Zoom
             setTimeout(() => {
                 this.imageElement.style.opacity = 1;
                 this.imageElement.classList.add('travel-zoom-active');
             }, 50);
         } else {
-            // Fallback if no image found (shouldn't happen with correct config)
             console.warn(`[TravelAnimation] No image found for ${to.id}`);
         }
     }
