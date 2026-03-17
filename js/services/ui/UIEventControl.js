@@ -6,6 +6,7 @@ import { formatCredits, getCommodityStyle } from '../../utils.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
+import { starfieldService } from './StarfieldService.js';
 
 export class UIEventControl {
     /**
@@ -250,11 +251,19 @@ export class UIEventControl {
                      wrapper.classList.add('is-glowing');
                 });
             }
+            
+            // Initiate Starfield Effect behind Launch Modal
+            starfieldService.mount(document.body);
+            starfieldService.triggerEntry();
         });
 
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {
                 this.manager.hideModal('launch-modal');
+                
+                // Trigger quick exit transition upon explicit player dismissal
+                starfieldService.triggerQuickExit();
+                
                 modal.removeEventListener('click', closeHandler);
             }
         };

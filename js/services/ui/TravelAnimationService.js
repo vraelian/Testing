@@ -1,6 +1,7 @@
 // js/services/ui/TravelAnimationService.js
 import { DB } from '../../data/database.js';
 import { AssetService } from '../AssetService.js';
+import { starfieldService } from './StarfieldService.js';
 
 export class TravelAnimationService {
     constructor(isMobile) {
@@ -54,6 +55,9 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
+        
+        // Ensure Travel Modal sits strictly above the Starfield Background Overlay
+        this.modal.style.zIndex = '60';
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
 
@@ -97,6 +101,9 @@ export class TravelAnimationService {
             cancelAnimationFrame(this.animationFrame);
         
             this.modal.classList.add('modal-hiding');
+            
+            // Trigger 0.6s extended exit fade upon confirmation of arrival
+            starfieldService.triggerArrivalExit();
             
             // Execute the callback to render the market screen *before* the fade-in starts.
             if (finalCallback) {

@@ -1,7 +1,7 @@
 /**
  * Service responsible for managing the lifecycle, rendering, and state transitions 
  * of the starfield background effect across different UI layers.
- * * @class StarfieldService
+ * @class StarfieldService
  */
 class StarfieldService {
     constructor() {
@@ -20,7 +20,7 @@ class StarfieldService {
         this.config = {
             starCount: 200,
             baseSpeed: 0.5,
-            zIndex: 50 // Positioned to render behind modals but above base UI
+            zIndex: 40 // Lowered to 40 to sit strictly behind .modal-backdrop (50)
         };
     }
 
@@ -28,7 +28,7 @@ class StarfieldService {
      * Injects the starfield container into the DOM and initializes the canvas.
      * Starts the render loop but keeps the layer visually hidden (opacity 0) 
      * until an entry state is triggered.
-     * * @param {HTMLElement} [parentElement=document.body] - The DOM node to append the starfield to.
+     * @param {HTMLElement} [parentElement=document.body] - The DOM node to append the starfield to.
      */
     mount(parentElement = document.body) {
         if (this.container) return; // Prevent multiple mounts
@@ -36,9 +36,12 @@ class StarfieldService {
         this.container = document.createElement('div');
         this.container.id = 'starfield-overlay';
         this.container.style.zIndex = this.config.zIndex;
+        this.container.style.pointerEvents = 'none';
 
         this.canvas = document.createElement('canvas');
+        this.canvas.style.pointerEvents = 'none'; // Bulletproof click-through for WebKit
         this.ctx = this.canvas.getContext('2d');
+        
         this.container.appendChild(this.canvas);
         parentElement.appendChild(this.container);
 
@@ -156,7 +159,7 @@ class StarfieldService {
             this.ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
             this.ctx.fill();
 
-            // Move star downward/outward (adjust vector logic to match the specific intro effect)
+            // Move star downward
             star.y += star.speed;
 
             // Reset star to top if it goes off screen
