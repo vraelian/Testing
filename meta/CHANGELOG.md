@@ -3,6 +3,13 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [36.90] - 2026-3-17
+-  updated intel writing
+-  fixed intro sequence bugs
+-  market screen polish
+-  travel animation polish
+-  added StarfieldService.js
+
 # [36.86] - 2026-3-16
 -  updated mission system
 -  bug fixes
