@@ -116,10 +116,6 @@
     height: var(--market-card-min-height);
 }
 
-
-/* --- [[START]] MODIFIED LICENSE LOCK STYLES --- */
-/* ... */
-
 /* Container for the license-locked content */
 .license-locked-content {
     display: flex;
@@ -144,16 +140,16 @@
     background-color: rgba(0,0,0,0.1);
 }
 
-/* Sideways Tier watermark (Change c) */
+/* Sideways Tier watermark */
 .license-locked-tier-watermark {
     position: absolute;
-    right: -25px; /* Adjust positioning */
+    right: -25px; 
     top: 50%;
-    transform: translateY(-50%) rotate(-90deg); /* Change c: Flipped rotation */
+    transform: translateY(-50%) rotate(-90deg); 
     font-family: 'Orbitron', sans-serif;
-    font-size: 3.0rem; /* Change c: Slightly smaller */
+    font-size: 3.0rem; 
     font-weight: 900;
-    color: rgba(255, 255, 255, 0.08); /* Change c: Slightly more visible */
+    color: rgba(255, 255, 255, 0.08); 
     letter-spacing: 0.1em;
     pointer-events: none;
     z-index: -1;
@@ -173,10 +169,10 @@
     transform: scale(1.05);
 }
 
-/* Styles for the "TIER X LICENSE" text (Changes a & b) */
+/* Styles for the "TIER X LICENSE" text */
 .license-required-text {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.62rem; /* Change a: Increased size (0.9rem * 1.8 = 1.62rem) */
+    font-size: 1.62rem; 
     margin-top: 0.5rem;
     font-weight: bold;
     letter-spacing: 0.1em;
@@ -184,13 +180,10 @@
     text-align: center;
     padding: 0 0.5rem;
     color: #ffffff;
-    /* Change b: Darker shadow + adjusted glow */
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), /* Slightly reduced glow intensity */
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 
                  0 0 6px rgba(255, 255, 255, 0.4),
-                 1px 1px 5px rgba(0,0,0,0.9); /* Darker, larger shadow */
+                 1px 1px 5px rgba(0,0,0,0.9); 
 }
-/* --- [[END]] MODIFIED LICENSE LOCK STYLES --- */
-
 
 .commodity-name {
     position: absolute;
@@ -219,7 +212,7 @@
     left: var(--market-card-price-left);
     font-size: var(--market-card-price-font-size);
     font-family: var(--market-card-price-font-family);
-    color: #4ade80; /* bright green */
+    color: #4ade80; 
     text-shadow: 0 0 20px #16a34a, 0 0 10px #22c55e, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
 }
 
@@ -229,7 +222,7 @@
     left: var(--market-card-price-left);
     font-size: var(--market-card-price-font-size);
     font-family: var(--market-card-price-font-family);
-    color: #f87171; /* bright red */
+    color: #f87171; 
     text-shadow: 0 0 20px #b91c1c, 0 0 10px #ef4444, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
 }
 
@@ -260,17 +253,17 @@
 .avg-cost-display {
     position: absolute;
     bottom: 8px;
-    right: 16px; /* Positioned to the bottom right */
+    right: 16px; 
     font-size: 0.7rem;
     color: #e8e8e8;
     font-family: 'Roboto Mono', monospace;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    display: none; /* Hidden by default */
+    display: none; 
     text-align: right;
 }
 
 .avg-cost-display.visible {
-    display: block; /* Show when in sell mode */
+    display: block; 
 }
 
 /* --- [[START]] INDICATOR STYLES --- */
@@ -309,6 +302,14 @@
 .indicator-pill.neutral {
     background-color: var(--market-card-indicator-neutral-bg);
     color: var(--market-card-indicator-neutral-color);
+}
+.indicator-pill.extreme-positive {
+    box-shadow: 0 0 8px #10b981, inset 0 0 5px rgba(16, 185, 129, 0.5);
+    border-color: #34d399;
+}
+.indicator-pill.extreme-negative {
+    box-shadow: 0 0 8px #ef4444, inset 0 0 5px rgba(239, 68, 68, 0.5);
+    border-color: #f87171;
 }
 /* --- [[END]] INDICATOR STYLES --- */
 
@@ -546,8 +547,12 @@
     border: none;
     font-size: var(--market-card-module-stepper-arrow-size);
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.3s ease-out, text-shadow 0.3s ease-out;
     line-height: 1;
+}
+.stepper-glow {
+    color: #fbbf24 !important;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.8), 0 0 15px rgba(251, 191, 36, 0.5) !important;
 }
 .action-group {
     display: flex;
@@ -753,26 +758,39 @@
 /* Expanding downwards: initial momentum is DOWN (+Y) */
 @keyframes spring-bounce-down {
     0%, 100% { transform: translateY(0); }
-    15% { transform: translateY(15px); }
-    35% { transform: translateY(-10px); }
-    55% { transform: translateY(6px); }
-    75% { transform: translateY(-3px); }
+    15% { transform: translateY(10px); }
+    35% { transform: translateY(-7px); }
+    55% { transform: translateY(4px); }
+    75% { transform: translateY(-2px); }
     90% { transform: translateY(1px); }
 }
 
 /* Contracting upwards: initial momentum is UP (-Y) */
 @keyframes spring-bounce-up {
     0%, 100% { transform: translateY(0); }
-    15% { transform: translateY(-15px); }
-    35% { transform: translateY(10px); }
-    55% { transform: translateY(-6px); }
-    75% { transform: translateY(3px); }
+    15% { transform: translateY(-10px); }
+    35% { transform: translateY(7px); }
+    55% { transform: translateY(-4px); }
+    75% { transform: translateY(2px); }
     90% { transform: translateY(-1px); }
 }
 
-@keyframes max-flare {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
+/* --- MAX BUTTON FLASH STATE --- */
+.item-card-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: var(--market-card-border-radius);
+    transition: opacity 0.6s ease-out;
+}
+
+.item-card-container.is-max-flared::after {
+    opacity: 1;
+    transition: none; /* Instant flash on */
 }
 
 /* --- STEPPER PROLONGED POPPING --- */
@@ -881,22 +899,9 @@
 }
 
 .card-spring-bounce-down {
-    animation: spring-bounce-down 1s ease-out forwards;
+    animation: spring-bounce-down 0.75s ease-out forwards;
 }
 
 .card-spring-bounce-up {
-    animation: spring-bounce-up 1s ease-out forwards;
-}
-
-.max-super-slam::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    /* Doubled thickness to 8px inset */
-    box-shadow: inset 0 0 0 8px var(--accent-color, #fff);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 10;
-    border-radius: var(--market-card-border-radius) !important; 
-    animation: max-flare 0.25s ease-out forwards;
+    animation: spring-bounce-up 0.75s ease-out forwards;
 }

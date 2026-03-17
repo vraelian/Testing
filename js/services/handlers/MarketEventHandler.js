@@ -32,7 +32,7 @@ export class MarketEventHandler {
                             // Check the newly rendered state to determine the direction of momentum
                             const isMinimized = cardContainer.classList.contains('minimized');
                             const bounceClass = isMinimized ? 'card-spring-bounce-up' : 'card-spring-bounce-down';
-                            this._triggerAnimation(cardContainer, bounceClass, 1000);
+                            this._triggerAnimation(cardContainer, bounceClass, 750);
                         }
                     }, 15); 
                 }
@@ -294,10 +294,19 @@ export class MarketEventHandler {
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
 
-                // --- UI JUICE: Super Slam ---
-                // Reuse the downward momentum bounce for the heavy max slam
-                this._triggerAnimation(cardContainer, 'card-spring-bounce-down', 1000);
-                this._triggerAnimation(cardContainer, 'max-super-slam', 250);
+                // --- UI JUICE: Super Slam Flash (Spammable Transition) ---
+                if (cardContainer) {
+                    cardContainer.classList.add('is-max-flared');
+
+                    if (cardContainer.dataset.maxFlareTimeout) {
+                        clearTimeout(parseInt(cardContainer.dataset.maxFlareTimeout));
+                    }
+
+                    // Release the flash slightly after to trigger the CSS opacity transition
+                    cardContainer.dataset.maxFlareTimeout = setTimeout(() => {
+                        cardContainer.classList.remove('is-max-flared');
+                    }, 50); 
+                }
                 break;
             }
             case ACTION_IDS.INCREMENT:
@@ -308,8 +317,19 @@ export class MarketEventHandler {
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
 
-                // --- UI JUICE: Prolonged Stepper Rattle ---
+                // --- UI JUICE: Prolonged Stepper Rattle & Arrow Glow ---
                 this._triggerProlongedPop(qtyInput);
+                
+                if (target) {
+                    target.classList.add('stepper-glow');
+                    if (target.dataset.glowTimeout) {
+                        clearTimeout(parseInt(target.dataset.glowTimeout));
+                    }
+                    target.dataset.glowTimeout = setTimeout(() => {
+                        target.classList.remove('stepper-glow');
+                    }, 300);
+                }
+                
                 break;
             }
         }
