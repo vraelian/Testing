@@ -13365,7 +13365,7 @@ export const EVENT_CONSTANTS = Object.freeze({
  * A collection of core game balance numbers and rules.
  */
 export const GAME_RULES = Object.freeze({
-    STARTING_CREDITS: 5000,
+    STARTING_CREDITS: 6000,
     STARTING_DEBT_INTEREST: 125,
     REPAIR_COST_PER_HP: 75,
     REPAIR_AMOUNT_PER_TICK: 5,
@@ -13516,7 +13516,7 @@ export const DB = {
       modals: [
         {
           id: 'lore_1',
-          title: 'Year 2140',
+          title: 'Year 2220',
           description: "Humanity has expanded throughout the Solar System.<br><br> <span class=\"hl\">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.",
           buttonText: 'Begin',
           contentClass: 'text-center'
@@ -15414,7 +15414,7 @@ export const INTEL_CONTENT = {
     },
     "STORY_HOOK_01": {
         "sample": "A Guild-subsidized operational charter has been secured.",
-        "details": "My sources report that [commodity name] is currently in high demand on [location name] in anticipationg of some sort of anomolous Sun activity. As a result, the markets of Earth are paying enormous sums to get their hands on fresh water. Rumours are that there is an [discount amount %] profit margin above normal.<br><br>This intelligence is likely good for only [durationDays] so take advantage of it while you can.<br><br>- Audita"
+        "details": "My sources report that [commodity name] is currently in a state of stagnant oversupply on [location name] following the unexpected arrival of a massive automated hauling fleet from the outer rim. The markets of Earth are completely saturated, with local distributors refusing to even store more fresh water. Rumours are that there is an [discount amount %] loss margin below galactic average.<br><br>This intelligence is likely good for only [durationDays] so take advantage of it while you can.<br><br>- Audita"
     }
 };
 --- END OF FILE: ./js/data/intelContent.js ---
@@ -20062,24 +20062,24 @@ export class UIMissionControl {
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
                     indicator.innerHTML = '&#8964;';
+                    indicator.style.transition = 'opacity 0.2s ease-in-out';
                     outerWrapper.appendChild(indicator);
-                    
-                    wrapper.addEventListener('scroll', () => {
-                        if (!indicator) return;
-                        const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                        indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
-                    });
                 }
 
-                // Evaluate initial scroll state upon opening the modal
+                // Evaluate initial scroll state upon opening the modal securely binding listener
                 if (wrapper && indicator) {
+                    wrapper.onscroll = () => {
+                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                    };
+                    
                     wrapper.scrollTop = 0; // Immediate reset
                     setTimeout(() => {
                         wrapper.scrollTop = 0; // Strict layout lock reset
                         if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                             indicator.style.display = 'block';
-                            const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                            indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                            indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                         } else {
                             indicator.style.display = 'none';
                             indicator.style.opacity = '0';
@@ -20343,24 +20343,24 @@ export class UIMissionControl {
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
                     indicator.innerHTML = '&#8964;';
+                    indicator.style.transition = 'opacity 0.2s ease-in-out';
                     outerWrapper.appendChild(indicator);
-                    
-                    wrapper.addEventListener('scroll', () => {
-                        if (!indicator) return;
-                        const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                        indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
-                    });
                }
 
-               // Evaluate initial scroll state upon opening the modal
+               // Evaluate initial scroll state upon opening the modal securely binding listener
                if (wrapper && indicator) {
+                   wrapper.onscroll = () => {
+                       const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                       indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                   };
+                   
                    wrapper.scrollTop = 0; // Immediate reset
                    setTimeout(() => {
                        wrapper.scrollTop = 0; // Strict layout lock reset
                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                            indicator.style.display = 'block';
-                           const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                           indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                           const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                           indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                        } else {
                            indicator.style.display = 'none';
                            indicator.style.opacity = '0';
@@ -22354,7 +22354,12 @@ export class UIHangarControl {
         modalContent.classList.remove('modal-theme-amber', 'modal-theme-blue', 'modal-theme-green');
 
         if (context === 'shipyard' || context === 'intro_shipyard') {
-            const canAfford = player.credits >= shipStatic.price;
+            let displayPrice = shipStatic.price;
+            if (context === 'intro_shipyard') {
+                displayPrice = 25000;
+            }
+            
+            const canAfford = player.credits >= displayPrice;
             let isDisabled = false;
             let actionId = ACTION_IDS.BUY_SHIP;
 
@@ -22415,7 +22420,7 @@ export class UIHangarControl {
                             <p class="text-sm text-gray-400" ${pStyle}>Class ${shipStatic.class}</p>
                          </div>
                         <div class="text-right">
-                             <p class="text-lg font-bold text-cyan-300" ${costStyle}>${formatCredits(shipStatic.price)}</p>
+                             <p class="text-lg font-bold text-cyan-300" ${costStyle}>${formatCredits(displayPrice)}</p>
                         </div>
                     </div>
                      <p class="text-sm text-gray-400 flex-grow text-left" ${pStyle}>${textContent}</p>
@@ -24963,9 +24968,11 @@ export class UIToastManager {
     showToast(config, onComplete) {
         if (!this.container) return;
 
-        // --- TUTORIAL GUARDRAIL: Disable Toast System ---
+        // --- TUTORIAL GUARDRAIL: Disable Toast System (with DEBUG bypass) ---
+        const isDebugToast = (config.title && config.title.includes('[DEBUG]')) || (config.message && config.message.includes('[DEBUG]'));
         const state = this.uiManager.lastKnownState;
-        if (state && state.missions && state.missions.completedMissionIds) {
+        
+        if (!isDebugToast && state && state.missions && state.missions.completedMissionIds) {
             if (!state.missions.completedMissionIds.includes('mission_tutorial_09')) {
                 if (onComplete) onComplete();
                 return; // Silently discard toast to prevent routing out of bounds
@@ -25491,6 +25498,15 @@ ${logHistory}
         
         this._markAllTutorialsSeen();
 
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
+
         this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
 
         this.gameState.player.ownedShipIds = [];
@@ -25515,6 +25531,15 @@ ${logHistory}
         
         this._markAllTutorialsSeen();
 
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
+
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
         this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
@@ -25534,6 +25559,16 @@ ${logHistory}
         
         // Setup initial intro parameters
         this.gameState.introSequenceActive = true;
+        
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
+
         this.gameState.player.credits = 25000;
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
@@ -25561,6 +25596,15 @@ ${logHistory}
     skipToHangarTutorial() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
         this.gameState.introSequenceActive = true;
+
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
 
         this.gameState.player.credits = 25000;
         this.gameState.player.ownedShipIds = [];
@@ -27053,7 +27097,7 @@ export class GameState {
             player: {
                 name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
                 introStep: 0,
-                credits: 3000, debt: 0, monthlyInterestAmount: 0,
+                credits: 6000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
                 // --- VIRTUAL WORKBENCH: CORPORATE DEBT UPDATE ---
                 loanType: 'guild', loanDueDate: null, repoNextEventDay: null, lastRepoStrikeDay: null,
@@ -27144,9 +27188,9 @@ export class GameState {
                 helpSlideMemory: {},
                 // --- VIRTUAL WORKBENCH: UI GUIDE LOCK ---
                 guidedNavPath: {
-                    active: false,
-                    navIds: [],
-                    screenIds: []
+                    active: true,
+                    navIds: ['data'],
+                    screenIds: ['missions']
                 }
             },
             missions: {
@@ -28570,10 +28614,8 @@ export class MissionService {
             
             if (availableSpace < totalGrantedSpace) {
                 const errorMsg = `Cannot accept mission: Insufficient cargo space. You need space in your cargo hold for ${totalGrantedSpace} units.`;
-                if (this.uiManager && this.uiManager.toastManager) {
-                     this.uiManager.toastManager.showToast(errorMsg, 'ALERT');
-                } else if (this.uiManager && typeof this.uiManager.showToast === 'function') {
-                     this.uiManager.showToast(errorMsg, 'ALERT');
+                if (this.uiManager) {
+                    this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
                 }
                 return; // Abort acceptance
             }
@@ -32216,7 +32258,7 @@ export class IntroService {
 
         // Mutate State during the blackout window
         const shipStatic = DB.SHIPS[shipId];
-        this.gameState.player.credits -= shipStatic.price;
+        this.gameState.player.credits -= 25000; // Deduct exactly the loan amount
         this.gameState.player.ownedShipIds.push(shipId);
         this.gameState.player.activeShipId = shipId;
         this.gameState.player.shipStates[shipId] = {

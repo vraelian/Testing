@@ -401,7 +401,7 @@ export class IntroService {
 
         // Mutate State during the blackout window
         const shipStatic = DB.SHIPS[shipId];
-        this.gameState.player.credits -= shipStatic.price;
+        this.gameState.player.credits -= 25000; // Deduct exactly the loan amount
         this.gameState.player.ownedShipIds.push(shipId);
         this.gameState.player.activeShipId = shipId;
         this.gameState.player.shipStates[shipId] = {

@@ -287,7 +287,7 @@ export const EVENT_CONSTANTS = Object.freeze({
  * A collection of core game balance numbers and rules.
  */
 export const GAME_RULES = Object.freeze({
-    STARTING_CREDITS: 5000,
+    STARTING_CREDITS: 6000,
     STARTING_DEBT_INTEREST: 125,
     REPAIR_COST_PER_HP: 75,
     REPAIR_AMOUNT_PER_TICK: 5,

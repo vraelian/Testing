@@ -41,7 +41,7 @@ export const DB = {
       modals: [
         {
           id: 'lore_1',
-          title: 'Year 2140',
+          title: 'Year 2220',
           description: "Humanity has expanded throughout the Solar System.<br><br> <span class=\"hl\">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.",
           buttonText: 'Begin',
           contentClass: 'text-center'

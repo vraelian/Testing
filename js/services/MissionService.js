@@ -144,10 +144,8 @@ export class MissionService {
             
             if (availableSpace < totalGrantedSpace) {
                 const errorMsg = `Cannot accept mission: Insufficient cargo space. You need space in your cargo hold for ${totalGrantedSpace} units.`;
-                if (this.uiManager && this.uiManager.toastManager) {
-                     this.uiManager.toastManager.showToast(errorMsg, 'ALERT');
-                } else if (this.uiManager && typeof this.uiManager.showToast === 'function') {
-                     this.uiManager.showToast(errorMsg, 'ALERT');
+                if (this.uiManager) {
+                    this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
                 }
                 return; // Abort acceptance
             }

@@ -227,6 +227,15 @@ ${logHistory}
         
         this._markAllTutorialsSeen();
 
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
+
         this.gameState.player.credits = Number.MAX_SAFE_INTEGER;
 
         this.gameState.player.ownedShipIds = [];
@@ -251,6 +260,15 @@ ${logHistory}
         
         this._markAllTutorialsSeen();
 
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
+
         this.gameState.player.ownedShipIds = [];
         this.simulationService.addShipToHangar(SHIP_IDS.WANDERER);
         this.gameState.player.activeShipId = SHIP_IDS.WANDERER;
@@ -270,6 +288,16 @@ ${logHistory}
         
         // Setup initial intro parameters
         this.gameState.introSequenceActive = true;
+        
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
+
         this.gameState.player.credits = 25000;
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
@@ -297,6 +325,15 @@ ${logHistory}
     skipToHangarTutorial() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO HANGAR (DEPRECATED - Normal Start).');
         this.gameState.introSequenceActive = true;
+
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
+        if (!this.gameState.missions.completedMissionIds.includes('mission_tutorial_09')) {
+            this.gameState.missions.completedMissionIds.push('mission_tutorial_09');
+        }
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
 
         this.gameState.player.credits = 25000;
         this.gameState.player.ownedShipIds = [];
