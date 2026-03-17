@@ -18,7 +18,7 @@ class StarfieldService {
         
         // Configuration for the visual effect
         this.config = {
-            starCount: 300,
+            starCount: 600, // Density of stars in the field
             baseSpeed: 1.5, // Base Z-axis reduction rate
             zIndex: 40 
         };
@@ -41,6 +41,9 @@ class StarfieldService {
         this.container.id = 'starfield-overlay';
         this.container.style.zIndex = this.config.zIndex;
         this.container.style.pointerEvents = 'none';
+        
+        // Failsafe deep black background injection
+        this.container.style.backgroundColor = '#000000';
 
         this.canvas = document.createElement('canvas');
         this.canvas.style.pointerEvents = 'none'; // Bulletproof click-through for WebKit
@@ -202,7 +205,8 @@ class StarfieldService {
         // Smoothly interpolate current speed towards the target speed (The "Punch It" effect)
         this.currentSpeedMultiplier += (this.targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.05;
 
-        this.ctx.strokeStyle = 'rgba(220, 240, 255, 0.9)';
+        // Pure white lines for maximum contrast against the deep black background
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 1.0)';
         this.ctx.lineCap = 'round';
 
         for (let star of this.stars) {
@@ -225,8 +229,8 @@ class StarfieldService {
             const ppx = cx + star.x * pFactor;
             const ppy = cy + star.y * pFactor;
 
-            // Size scales up as it gets closer to the camera
-            const size = Math.max(0.5, (1 - star.z / 1000) * 3.5);
+            // Size scales up as it gets closer to the camera (Increased minimum thickness for visibility)
+            const size = Math.max(1.2, (1 - star.z / 1000) * 4.0);
 
             // Only draw if the projected coordinates are within the native bounds
             if (px >= 0 && px <= this.canvas.width && py >= 0 && py <= this.canvas.height) {

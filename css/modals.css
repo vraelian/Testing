@@ -1601,8 +1601,21 @@
 }
 
 /* ========================================================================= */
-/* --- STARFIELD OVERLAY STATES --- */
+/* --- STARFIELD OVERLAY STATES & VISIBILITY FIXES --- */
 /* ========================================================================= */
+
+/* 1. Make the modal backdrops completely transparent so they don't dim the starfield */
+#launch-modal.modal-backdrop,
+#travel-animation-modal.modal-backdrop {
+    background-color: transparent !important;
+}
+
+/* 2. Give the launch wrapper a slight transparency so it floats elegantly over the stars */
+.launch-modal-wrapper {
+    background: radial-gradient(circle, rgba(26, 32, 48, 0.85) 0%, rgba(12, 16, 29, 0.95) 100%);
+}
+
+/* 3. Set the starfield to Deep Black and remove the redundant blur filters */
 #starfield-overlay {
     position: fixed;
     top: 0;
@@ -1611,30 +1624,21 @@
     height: 100vh;
     pointer-events: none;
     opacity: 0;
-    -webkit-backdrop-filter: blur(0px);
-    backdrop-filter: blur(0px);
+    background-color: #000000; /* Deep black background */
+    z-index: 40; /* Stays strictly behind modal content (z-index 50) */
 }
 
-/* 1s Entry Transition */
 #starfield-overlay.starfield-entry {
     opacity: 1;
-    -webkit-backdrop-filter: blur(8px);
-    backdrop-filter: blur(8px);
-    transition: opacity 1s ease, -webkit-backdrop-filter 1s ease, backdrop-filter 1s ease;
+    transition: opacity 1s ease;
 }
 
-/* 0.4s Quick Exit (Dismissal) */
 #starfield-overlay.starfield-exit-quick {
     opacity: 0;
-    -webkit-backdrop-filter: blur(0px);
-    backdrop-filter: blur(0px);
-    transition: opacity 0.4s ease, -webkit-backdrop-filter 0.4s ease, backdrop-filter 0.4s ease;
+    transition: opacity 0.4s ease;
 }
 
-/* 0.6s Arrival Exit (Enter Station) */
 #starfield-overlay.starfield-exit-arrival {
     opacity: 0;
-    -webkit-backdrop-filter: blur(0px);
-    backdrop-filter: blur(0px);
-    transition: opacity 0.6s ease, -webkit-backdrop-filter 0.6s ease, backdrop-filter 0.6s ease;
+    transition: opacity 0.6s ease;
 }

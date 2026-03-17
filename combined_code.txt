@@ -210,7 +210,7 @@
                 <h3 id="travel-status-text" class="text-2xl font-orbitron text-cyan-300"></h3>
                 <p id="travel-arrival-lore" class="text-base text-gray-300 italic mt-2"></p>
             </div>
-            <canvas id="travel-canvas"></canvas>
+            
             <div id="travel-footer-panel">
                 <div id="travel-progress-container" class="w-full bg-slate-700 rounded-full h-1.5 my-4">
                     <div id="travel-progress-bar" class="h-1.5 rounded-full" style="width: 0%"></div>
@@ -3345,7 +3345,7 @@ card.
 
 /* Travel Animation Modal */
 #travel-animation-modal.modal-backdrop {
-    background-color: #0c101d; 
+    background-color: rgba(12, 16, 29, 0.6); /* Converted from solid #0c101d to bleed starfield */
     transition: opacity 0.5s ease-out;
 }
 
@@ -3357,7 +3357,8 @@ card.
     width: 90%;
     max-width: 800px;
     padding: 0;
-    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    /* Converted from solid gradient to semi-transparent */
+    background: radial-gradient(circle, rgba(26, 32, 48, 0.7) 0%, rgba(12, 16, 29, 0.9) 100%);
     border-color: #4a6a8a;
     overflow: hidden;
 }
@@ -3389,9 +3390,20 @@ card.
 
 /* --- [[PHASE 2]] TRAVEL CINEMATIC STYLES --- */
 
-/* Hide the legacy canvas */
 #travel-canvas {
     display: none !important;
+}
+
+#travel-image-wrapper {
+    width: 100%;
+    height: 350px; 
+    overflow: hidden; 
+    position: relative;
+    background-color: transparent; /* Converted from #000 */
+    border-left: 1px solid #374151;
+    border-right: 1px solid #374151;
+    z-index: 5; 
+    pointer-events: none;
 }
 
 /* Container for the cinematic image */
@@ -4844,6 +4856,49 @@ card.
     0%, 100% { transform: translateY(0); opacity: 0.4; }
     50% { transform: translateY(4px); opacity: 1; }
 }
+
+/* ========================================================================= */
+/* --- STARFIELD OVERLAY STATES & VISIBILITY FIXES --- */
+/* ========================================================================= */
+
+/* 1. Make the modal backdrops completely transparent so they don't dim the starfield */
+#launch-modal.modal-backdrop,
+#travel-animation-modal.modal-backdrop {
+    background-color: transparent !important;
+}
+
+/* 2. Give the launch wrapper a slight transparency so it floats elegantly over the stars */
+.launch-modal-wrapper {
+    background: radial-gradient(circle, rgba(26, 32, 48, 0.85) 0%, rgba(12, 16, 29, 0.95) 100%);
+}
+
+/* 3. Set the starfield to Deep Black and remove the redundant blur filters */
+#starfield-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    opacity: 0;
+    background-color: #000000; /* Deep black background */
+    z-index: 40; /* Stays strictly behind modal content (z-index 50) */
+}
+
+#starfield-overlay.starfield-entry {
+    opacity: 1;
+    transition: opacity 1s ease;
+}
+
+#starfield-overlay.starfield-exit-quick {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+#starfield-overlay.starfield-exit-arrival {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -6285,10 +6340,6 @@ card.
     height: var(--market-card-min-height);
 }
 
-
-/* --- [[START]] MODIFIED LICENSE LOCK STYLES --- */
-/* ... */
-
 /* Container for the license-locked content */
 .license-locked-content {
     display: flex;
@@ -6313,16 +6364,16 @@ card.
     background-color: rgba(0,0,0,0.1);
 }
 
-/* Sideways Tier watermark (Change c) */
+/* Sideways Tier watermark */
 .license-locked-tier-watermark {
     position: absolute;
-    right: -25px; /* Adjust positioning */
+    right: -25px; 
     top: 50%;
-    transform: translateY(-50%) rotate(-90deg); /* Change c: Flipped rotation */
+    transform: translateY(-50%) rotate(-90deg); 
     font-family: 'Orbitron', sans-serif;
-    font-size: 3.0rem; /* Change c: Slightly smaller */
+    font-size: 3.0rem; 
     font-weight: 900;
-    color: rgba(255, 255, 255, 0.08); /* Change c: Slightly more visible */
+    color: rgba(255, 255, 255, 0.08); 
     letter-spacing: 0.1em;
     pointer-events: none;
     z-index: -1;
@@ -6342,10 +6393,10 @@ card.
     transform: scale(1.05);
 }
 
-/* Styles for the "TIER X LICENSE" text (Changes a & b) */
+/* Styles for the "TIER X LICENSE" text */
 .license-required-text {
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.62rem; /* Change a: Increased size (0.9rem * 1.8 = 1.62rem) */
+    font-size: 1.62rem; 
     margin-top: 0.5rem;
     font-weight: bold;
     letter-spacing: 0.1em;
@@ -6353,13 +6404,10 @@ card.
     text-align: center;
     padding: 0 0.5rem;
     color: #ffffff;
-    /* Change b: Darker shadow + adjusted glow */
-    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), /* Slightly reduced glow intensity */
+    text-shadow: 0 0 12px rgba(255, 255, 255, 0.6), 
                  0 0 6px rgba(255, 255, 255, 0.4),
-                 1px 1px 5px rgba(0,0,0,0.9); /* Darker, larger shadow */
+                 1px 1px 5px rgba(0,0,0,0.9); 
 }
-/* --- [[END]] MODIFIED LICENSE LOCK STYLES --- */
-
 
 .commodity-name {
     position: absolute;
@@ -6388,7 +6436,7 @@ card.
     left: var(--market-card-price-left);
     font-size: var(--market-card-price-font-size);
     font-family: var(--market-card-price-font-family);
-    color: #4ade80; /* bright green */
+    color: #4ade80; 
     text-shadow: 0 0 20px #16a34a, 0 0 10px #22c55e, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
 }
 
@@ -6398,7 +6446,7 @@ card.
     left: var(--market-card-price-left);
     font-size: var(--market-card-price-font-size);
     font-family: var(--market-card-price-font-family);
-    color: #f87171; /* bright red */
+    color: #f87171; 
     text-shadow: 0 0 20px #b91c1c, 0 0 10px #ef4444, 1.10px 0.00px 0 #000000, 0.78px 0.78px 0 #000000, 0.00px 1.10px 0 #000000, -0.78px 0.78px 0 #000000, -1.10px 0.00px 0 #000000, -0.78px -0.78px 0 #000000, 0.00px -1.10px 0 #000000, 0.78px -0.78px 0 #000000;
 }
 
@@ -6429,17 +6477,17 @@ card.
 .avg-cost-display {
     position: absolute;
     bottom: 8px;
-    right: 16px; /* Positioned to the bottom right */
+    right: 16px; 
     font-size: 0.7rem;
     color: #e8e8e8;
     font-family: 'Roboto Mono', monospace;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
-    display: none; /* Hidden by default */
+    display: none; 
     text-align: right;
 }
 
 .avg-cost-display.visible {
-    display: block; /* Show when in sell mode */
+    display: block; 
 }
 
 /* --- [[START]] INDICATOR STYLES --- */
@@ -6478,6 +6526,14 @@ card.
 .indicator-pill.neutral {
     background-color: var(--market-card-indicator-neutral-bg);
     color: var(--market-card-indicator-neutral-color);
+}
+.indicator-pill.extreme-positive {
+    box-shadow: 0 0 8px #10b981, inset 0 0 5px rgba(16, 185, 129, 0.5);
+    border-color: #34d399;
+}
+.indicator-pill.extreme-negative {
+    box-shadow: 0 0 8px #ef4444, inset 0 0 5px rgba(239, 68, 68, 0.5);
+    border-color: #f87171;
 }
 /* --- [[END]] INDICATOR STYLES --- */
 
@@ -6715,8 +6771,12 @@ card.
     border: none;
     font-size: var(--market-card-module-stepper-arrow-size);
     cursor: pointer;
-    transition: color 0.2s;
+    transition: color 0.3s ease-out, text-shadow 0.3s ease-out;
     line-height: 1;
+}
+.stepper-glow {
+    color: #fbbf24 !important;
+    text-shadow: 0 0 8px rgba(251, 191, 36, 0.8), 0 0 15px rgba(251, 191, 36, 0.5) !important;
 }
 .action-group {
     display: flex;
@@ -6922,26 +6982,39 @@ card.
 /* Expanding downwards: initial momentum is DOWN (+Y) */
 @keyframes spring-bounce-down {
     0%, 100% { transform: translateY(0); }
-    15% { transform: translateY(15px); }
-    35% { transform: translateY(-10px); }
-    55% { transform: translateY(6px); }
-    75% { transform: translateY(-3px); }
+    15% { transform: translateY(10px); }
+    35% { transform: translateY(-7px); }
+    55% { transform: translateY(4px); }
+    75% { transform: translateY(-2px); }
     90% { transform: translateY(1px); }
 }
 
 /* Contracting upwards: initial momentum is UP (-Y) */
 @keyframes spring-bounce-up {
     0%, 100% { transform: translateY(0); }
-    15% { transform: translateY(-15px); }
-    35% { transform: translateY(10px); }
-    55% { transform: translateY(-6px); }
-    75% { transform: translateY(3px); }
+    15% { transform: translateY(-10px); }
+    35% { transform: translateY(7px); }
+    55% { transform: translateY(-4px); }
+    75% { transform: translateY(2px); }
     90% { transform: translateY(-1px); }
 }
 
-@keyframes max-flare {
-    0% { opacity: 1; }
-    100% { opacity: 0; }
+/* --- MAX BUTTON FLASH STATE --- */
+.item-card-container::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.4) 0%, transparent 100%);
+    opacity: 0;
+    pointer-events: none;
+    z-index: 10;
+    border-radius: var(--market-card-border-radius);
+    transition: opacity 0.6s ease-out;
+}
+
+.item-card-container.is-max-flared::after {
+    opacity: 1;
+    transition: none; /* Instant flash on */
 }
 
 /* --- STEPPER PROLONGED POPPING --- */
@@ -7050,24 +7123,11 @@ card.
 }
 
 .card-spring-bounce-down {
-    animation: spring-bounce-down 1s ease-out forwards;
+    animation: spring-bounce-down 0.75s ease-out forwards;
 }
 
 .card-spring-bounce-up {
-    animation: spring-bounce-up 1s ease-out forwards;
-}
-
-.max-super-slam::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    /* Doubled thickness to 8px inset */
-    box-shadow: inset 0 0 0 8px var(--accent-color, #fff);
-    opacity: 0;
-    pointer-events: none;
-    z-index: 10;
-    border-radius: var(--market-card-border-radius) !important; 
-    animation: max-flare 0.25s ease-out forwards;
+    animation: spring-bounce-up 0.75s ease-out forwards;
 }
 --- END OF FILE: ./css/screens/market-screen.css ---
 
@@ -12845,6 +12905,10 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
     let marketClass = 'neutral';
     if (marketPct > 5) marketClass = 'positive';
     if (marketPct < -5) marketClass = 'negative';
+    
+    if (marketPct >= 20) marketClass += ' extreme-positive';
+    if (marketPct <= -20) marketClass += ' extreme-negative';
+    
     const marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
     const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
 
@@ -20761,6 +20825,7 @@ import { formatCredits, getCommodityStyle } from '../../utils.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
+import { starfieldService } from './StarfieldService.js';
 
 export class UIEventControl {
     /**
@@ -21005,11 +21070,19 @@ export class UIEventControl {
                      wrapper.classList.add('is-glowing');
                 });
             }
+            
+            // Initiate Starfield Effect behind Launch Modal
+            starfieldService.mount(document.body);
+            starfieldService.triggerEntry();
         });
 
         const closeHandler = (e) => {
             if (e.target.id === 'launch-modal') {
                 this.manager.hideModal('launch-modal');
+                
+                // Trigger quick exit transition upon explicit player dismissal
+                starfieldService.triggerQuickExit();
+                
                 modal.removeEventListener('click', closeHandler);
             }
         };
@@ -21954,6 +22027,7 @@ export class UIHelpManager {
 // js/services/ui/TravelAnimationService.js
 import { DB } from '../../data/database.js';
 import { AssetService } from '../AssetService.js';
+import { starfieldService } from './StarfieldService.js';
 
 export class TravelAnimationService {
     constructor(isMobile) {
@@ -21969,10 +22043,8 @@ export class TravelAnimationService {
         this.hullDamageText = document.getElementById('travel-hull-damage');
         this.confirmButton = document.getElementById('travel-confirm-button');
         
-        // Canvas (Legacy) - Kept in DOM check but unused logic-wise
-        this.canvas = document.getElementById('travel-canvas');
-        
         this.animationFrame = null;
+        this.isDecelerating = false; // State flag for the braking sequence
 
         // Ensure the DOM structure for the Cinematic Image view exists
         this._ensureDomStructure();
@@ -21996,7 +22068,7 @@ export class TravelAnimationService {
             
             wrapper.appendChild(img);
 
-            // Insert after the header panel, replacing/hiding the canvas visually
+            // Insert after the header panel, replacing/hiding the legacy canvas visually
             const header = document.getElementById('travel-header-panel');
             if (header && header.nextSibling) {
                 header.parentNode.insertBefore(wrapper, header.nextSibling);
@@ -22007,6 +22079,9 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
+        
+        // Ensure Travel Modal sits strictly above the Starfield Background Overlay
+        this.modal.style.zIndex = '60';
 
         const theme = to.navTheme || { gradient: 'linear-gradient(to right, #06b6d4, #67e8f9)', borderColor: '#06b6d4' };
 
@@ -22020,6 +22095,9 @@ export class TravelAnimationService {
         this._setupInitialState(to, travelInfo);
         this._startCinematicSequence(to);
 
+        // Initiate the "Punch It" high-speed warp effect
+        starfieldService.setEngageWarp();
+
         let startTime = null;
         const duration = 2500; // Duration of travel sequence
 
@@ -22030,6 +22108,12 @@ export class TravelAnimationService {
 
             // Ease-out cubic for the slow-down effect at the end
             if (progress > 0.8) {
+                // Trigger the warp deceleration sequence once
+                if (!this.isDecelerating) {
+                    starfieldService.setDecelerateWarp();
+                    this.isDecelerating = true;
+                }
+
                 const normalized = (progress - 0.8) / 0.2;
                 progress = 0.8 + (1 - Math.pow(1 - normalized, 3)) * 0.2;
             }
@@ -22050,6 +22134,9 @@ export class TravelAnimationService {
             cancelAnimationFrame(this.animationFrame);
         
             this.modal.classList.add('modal-hiding');
+            
+            // Trigger 0.6s extended exit fade upon confirmation of arrival
+            starfieldService.triggerArrivalExit();
             
             // Execute the callback to render the market screen *before* the fade-in starts.
             if (finalCallback) {
@@ -22107,28 +22194,24 @@ export class TravelAnimationService {
         this.confirmButton.style.opacity = 0;
         this.confirmButton.disabled = true;
         this.progressBar.style.width = '0%';
+        this.isDecelerating = false;
     }
 
     /**
      * Initializes the static artwork and triggers the zoom effect.
-     * Replaces the old _setupAnimationElements method.
      */
     _startCinematicSequence(to) {
-        // 1. Fetch the random variant image for this location
-        // Example: 'loc_mars' -> 'assets/locations/mars_C.jpeg'
         const imagePath = AssetService.getLocationImage(to.id);
         
         if (imagePath) {
             this.imageElement.src = imagePath;
             
-            // 2. Trigger Fade In and Zoom
-            // Small delay to ensure the src is applied before opacity transition starts
+            // Trigger Fade In and Zoom
             setTimeout(() => {
                 this.imageElement.style.opacity = 1;
                 this.imageElement.classList.add('travel-zoom-active');
             }, 50);
         } else {
-            // Fallback if no image found (shouldn't happen with correct config)
             console.warn(`[TravelAnimation] No image found for ${to.id}`);
         }
     }
@@ -22791,6 +22874,258 @@ export class UIHangarControl {
     }
 }
 --- END OF FILE: ./js/services/ui/UIHangarControl.js ---
+
+--- START OF FILE: ./js/services/ui/StarfieldService.js ---
+/**
+ * Service responsible for managing the lifecycle, rendering, and state transitions 
+ * of the starfield background effect across different UI layers.
+ * @class StarfieldService
+ */
+class StarfieldService {
+    constructor() {
+        /** @type {HTMLElement|null} */
+        this.container = null;
+        /** @type {HTMLCanvasElement|null} */
+        this.canvas = null;
+        /** @type {CanvasRenderingContext2D|null} */
+        this.ctx = null;
+        /** @type {number|null} */
+        this.animationFrameId = null;
+        /** @type {Array<Object>} */
+        this.stars = [];
+        
+        // Configuration for the visual effect
+        this.config = {
+            starCount: 600, // Density of stars in the field
+            baseSpeed: 1.5, // Base Z-axis reduction rate
+            zIndex: 40 
+        };
+
+        // Dynamic Velocity State
+        this.currentSpeedMultiplier = 0.2;
+        this.targetSpeedMultiplier = 0.2;
+    }
+
+    /**
+     * Injects the starfield container into the DOM and initializes the canvas.
+     * Starts the render loop but keeps the layer visually hidden (opacity 0) 
+     * until an entry state is triggered.
+     * @param {HTMLElement} [parentElement=document.body] - The DOM node to append the starfield to.
+     */
+    mount(parentElement = document.body) {
+        if (this.container) return; // Prevent multiple mounts
+
+        this.container = document.createElement('div');
+        this.container.id = 'starfield-overlay';
+        this.container.style.zIndex = this.config.zIndex;
+        this.container.style.pointerEvents = 'none';
+        
+        // Failsafe deep black background injection
+        this.container.style.backgroundColor = '#000000';
+
+        this.canvas = document.createElement('canvas');
+        this.canvas.style.pointerEvents = 'none'; // Bulletproof click-through for WebKit
+        this.ctx = this.canvas.getContext('2d');
+        
+        this.container.appendChild(this.canvas);
+        parentElement.appendChild(this.container);
+
+        this._resizeCanvas();
+        window.addEventListener('resize', this._resizeCanvas.bind(this));
+
+        this._initStars();
+        this._renderLoop();
+    }
+
+    /**
+     * Velocity Control: Slow drift for idling/menus
+     */
+    setIdleWarp() {
+        this.targetSpeedMultiplier = 0.2;
+    }
+
+    /**
+     * Velocity Control: Massive acceleration for travel sequence
+     */
+    setEngageWarp() {
+        this.targetSpeedMultiplier = 12.0;
+    }
+
+    /**
+     * Velocity Control: Braking sequence for arriving at destination
+     */
+    setDecelerateWarp() {
+        this.targetSpeedMultiplier = 0.2;
+    }
+
+    /**
+     * Applies the 1-second blur-fade-in CSS class.
+     */
+    triggerEntry() {
+        if (!this.container) return;
+        this._resetClasses();
+        
+        // Force a synchronous DOM reflow so the transition executes cleanly
+        void this.container.offsetWidth;
+        
+        this.container.classList.add('starfield-entry');
+        this.setIdleWarp(); // Ensure it begins in idle state
+    }
+
+    /**
+     * Applies the 0.4-second rapid blur-fade-out CSS class for modal dismissals,
+     * followed by complete DOM removal.
+     */
+    triggerQuickExit() {
+        if (!this.container) return;
+        this._resetClasses();
+        this.container.classList.add('starfield-exit-quick');
+        
+        setTimeout(() => {
+            this.unmount();
+        }, 400);
+    }
+
+    /**
+     * Applies the 0.6-second blur-fade-out CSS class for station arrivals,
+     * followed by complete DOM removal.
+     */
+    triggerArrivalExit() {
+        if (!this.container) return;
+        this._resetClasses();
+        this.container.classList.add('starfield-exit-arrival');
+        
+        setTimeout(() => {
+            this.unmount();
+        }, 600);
+    }
+
+    /**
+     * Ceases the animation loop and entirely removes the starfield nodes from the DOM.
+     */
+    unmount() {
+        if (this.animationFrameId) {
+            cancelAnimationFrame(this.animationFrameId);
+            this.animationFrameId = null;
+        }
+        if (this.container && this.container.parentNode) {
+            this.container.parentNode.removeChild(this.container);
+        }
+        window.removeEventListener('resize', this._resizeCanvas.bind(this));
+        this.container = null;
+        this.canvas = null;
+        this.ctx = null;
+        this.stars = [];
+    }
+
+    /**
+     * Clears existing state classes to prevent transition conflicts.
+     * @private
+     */
+    _resetClasses() {
+        this.container.classList.remove('starfield-entry', 'starfield-exit-quick', 'starfield-exit-arrival');
+    }
+
+    /**
+     * Adjusts canvas dimensions to match the viewport, calculating for Retina displays.
+     * @private
+     */
+    _resizeCanvas() {
+        if (!this.canvas) return;
+        const dpr = window.devicePixelRatio || 1;
+
+        // Lock CSS size to standard viewport dimensions
+        this.canvas.style.width = `${window.innerWidth}px`;
+        this.canvas.style.height = `${window.innerHeight}px`;
+
+        // Scale the internal rendering buffer to the hardware pixel density
+        this.canvas.width = window.innerWidth * dpr;
+        this.canvas.height = window.innerHeight * dpr;
+    }
+
+    /**
+     * Populates the initial star array based on configuration.
+     * @private
+     */
+    _initStars() {
+        this.stars = [];
+        for (let i = 0; i < this.config.starCount; i++) {
+            this.stars.push(this._createStar());
+        }
+    }
+
+    /**
+     * Generates a 3D coordinate for a star, mapping to the Retina buffer size.
+     * @private
+     */
+    _createStar() {
+        const dpr = window.devicePixelRatio || 1;
+        return {
+            x: (Math.random() - 0.5) * window.innerWidth * dpr * 2,
+            y: (Math.random() - 0.5) * window.innerHeight * dpr * 2,
+            z: Math.random() * 1000,
+            pz: Math.random() * 1000 // Previous Z (used to draw the speed streak)
+        };
+    }
+
+    /**
+     * Recursive animation loop for moving and drawing stars in 3D space.
+     * @private
+     */
+    _renderLoop() {
+        if (!this.ctx || !this.canvas) return;
+
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+        const cx = this.canvas.width / 2;
+        const cy = this.canvas.height / 2;
+
+        // Smoothly interpolate current speed towards the target speed (The "Punch It" effect)
+        this.currentSpeedMultiplier += (this.targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.05;
+
+        // Pure white lines for maximum contrast against the deep black background
+        this.ctx.strokeStyle = 'rgba(255, 255, 255, 1.0)';
+        this.ctx.lineCap = 'round';
+
+        for (let star of this.stars) {
+            star.pz = star.z; 
+            star.z -= this.config.baseSpeed * this.currentSpeedMultiplier;
+
+            // Reset star to the far distance if it passes the camera plane
+            if (star.z <= 1) {
+                Object.assign(star, this._createStar());
+                star.z = 1000;
+                star.pz = 1000;
+            }
+
+            // 3D to 2D Projection mapping
+            const factor = 400 / star.z;
+            const px = cx + star.x * factor;
+            const py = cy + star.y * factor;
+            
+            const pFactor = 400 / star.pz;
+            const ppx = cx + star.x * pFactor;
+            const ppy = cy + star.y * pFactor;
+
+            // Size scales up as it gets closer to the camera (Increased minimum thickness for visibility)
+            const size = Math.max(1.2, (1 - star.z / 1000) * 4.0);
+
+            // Only draw if the projected coordinates are within the native bounds
+            if (px >= 0 && px <= this.canvas.width && py >= 0 && py <= this.canvas.height) {
+                this.ctx.lineWidth = size;
+                this.ctx.beginPath();
+                this.ctx.moveTo(ppx, ppy);
+                this.ctx.lineTo(px + (px === ppx ? 0.1 : 0), py + (py === ppy ? 0.1 : 0));
+                this.ctx.stroke();
+            }
+        }
+
+        this.animationFrameId = requestAnimationFrame(this._renderLoop.bind(this));
+    }
+}
+
+export const starfieldService = new StarfieldService();
+--- END OF FILE: ./js/services/ui/StarfieldService.js ---
 
 --- START OF FILE: ./js/services/ui/UISolStationControl.js ---
 // js/services/ui/UISolStationControl.js
@@ -39223,7 +39558,7 @@ export class MarketEventHandler {
                             // Check the newly rendered state to determine the direction of momentum
                             const isMinimized = cardContainer.classList.contains('minimized');
                             const bounceClass = isMinimized ? 'card-spring-bounce-up' : 'card-spring-bounce-down';
-                            this._triggerAnimation(cardContainer, bounceClass, 1000);
+                            this._triggerAnimation(cardContainer, bounceClass, 750);
                         }
                     }, 15); 
                 }
@@ -39485,10 +39820,19 @@ export class MarketEventHandler {
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
 
-                // --- UI JUICE: Super Slam ---
-                // Reuse the downward momentum bounce for the heavy max slam
-                this._triggerAnimation(cardContainer, 'card-spring-bounce-down', 1000);
-                this._triggerAnimation(cardContainer, 'max-super-slam', 250);
+                // --- UI JUICE: Super Slam Flash (Spammable Transition) ---
+                if (cardContainer) {
+                    cardContainer.classList.add('is-max-flared');
+
+                    if (cardContainer.dataset.maxFlareTimeout) {
+                        clearTimeout(parseInt(cardContainer.dataset.maxFlareTimeout));
+                    }
+
+                    // Release the flash slightly after to trigger the CSS opacity transition
+                    cardContainer.dataset.maxFlareTimeout = setTimeout(() => {
+                        cardContainer.classList.remove('is-max-flared');
+                    }, 50); 
+                }
                 break;
             }
             case ACTION_IDS.INCREMENT:
@@ -39499,8 +39843,19 @@ export class MarketEventHandler {
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
 
-                // --- UI JUICE: Prolonged Stepper Rattle ---
+                // --- UI JUICE: Prolonged Stepper Rattle & Arrow Glow ---
                 this._triggerProlongedPop(qtyInput);
+                
+                if (target) {
+                    target.classList.add('stepper-glow');
+                    if (target.dataset.glowTimeout) {
+                        clearTimeout(parseInt(target.dataset.glowTimeout));
+                    }
+                    target.dataset.glowTimeout = setTimeout(() => {
+                        target.classList.remove('stepper-glow');
+                    }, 300);
+                }
+                
                 break;
             }
         }
@@ -42325,6 +42680,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [36.90] - 2026-3-17
+-  updated intel writing
+-  fixed intro sequence bugs
+-  market screen polish
+-  travel animation polish
+-  added StarfieldService.js
 
 # [36.86] - 2026-3-16
 -  updated mission system
