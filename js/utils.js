@@ -176,6 +176,10 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
     let marketClass = 'neutral';
     if (marketPct > 5) marketClass = 'positive';
     if (marketPct < -5) marketClass = 'negative';
+    
+    if (marketPct >= 20) marketClass += ' extreme-positive';
+    if (marketPct <= -20) marketClass += ' extreme-negative';
+    
     const marketIcon = marketPct > 5 ? '▲' : (marketPct < -5 ? '▼' : '●');
     const marketIndicatorHtml = `<div class="indicator-pill ${marketClass}">${marketIcon} MKT: ${marketSign}${marketPct}%</div>`;
 
