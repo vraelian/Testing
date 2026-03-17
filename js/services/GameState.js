@@ -252,7 +252,7 @@ export class GameState {
             player: {
                 name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
                 introStep: 0,
-                credits: 3000, debt: 0, monthlyInterestAmount: 0,
+                credits: 6000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
                 // --- VIRTUAL WORKBENCH: CORPORATE DEBT UPDATE ---
                 loanType: 'guild', loanDueDate: null, repoNextEventDay: null, lastRepoStrikeDay: null,
@@ -343,9 +343,9 @@ export class GameState {
                 helpSlideMemory: {},
                 // --- VIRTUAL WORKBENCH: UI GUIDE LOCK ---
                 guidedNavPath: {
-                    active: false,
-                    navIds: [],
-                    screenIds: []
+                    active: true,
+                    navIds: ['data'],
+                    screenIds: ['missions']
                 }
             },
             missions: {

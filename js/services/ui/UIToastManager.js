@@ -30,9 +30,11 @@ export class UIToastManager {
     showToast(config, onComplete) {
         if (!this.container) return;
 
-        // --- TUTORIAL GUARDRAIL: Disable Toast System ---
+        // --- TUTORIAL GUARDRAIL: Disable Toast System (with DEBUG bypass) ---
+        const isDebugToast = (config.title && config.title.includes('[DEBUG]')) || (config.message && config.message.includes('[DEBUG]'));
         const state = this.uiManager.lastKnownState;
-        if (state && state.missions && state.missions.completedMissionIds) {
+        
+        if (!isDebugToast && state && state.missions && state.missions.completedMissionIds) {
             if (!state.missions.completedMissionIds.includes('mission_tutorial_09')) {
                 if (onComplete) onComplete();
                 return; // Silently discard toast to prevent routing out of bounds

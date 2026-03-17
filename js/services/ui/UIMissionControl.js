@@ -449,24 +449,24 @@ export class UIMissionControl {
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
                     indicator.innerHTML = '&#8964;';
+                    indicator.style.transition = 'opacity 0.2s ease-in-out';
                     outerWrapper.appendChild(indicator);
-                    
-                    wrapper.addEventListener('scroll', () => {
-                        if (!indicator) return;
-                        const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                        indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
-                    });
                 }
 
-                // Evaluate initial scroll state upon opening the modal
+                // Evaluate initial scroll state upon opening the modal securely binding listener
                 if (wrapper && indicator) {
+                    wrapper.onscroll = () => {
+                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                    };
+                    
                     wrapper.scrollTop = 0; // Immediate reset
                     setTimeout(() => {
                         wrapper.scrollTop = 0; // Strict layout lock reset
                         if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                             indicator.style.display = 'block';
-                            const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                            indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                            indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                         } else {
                             indicator.style.display = 'none';
                             indicator.style.opacity = '0';
@@ -730,24 +730,24 @@ export class UIMissionControl {
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
                     indicator.innerHTML = '&#8964;';
+                    indicator.style.transition = 'opacity 0.2s ease-in-out';
                     outerWrapper.appendChild(indicator);
-                    
-                    wrapper.addEventListener('scroll', () => {
-                        if (!indicator) return;
-                        const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                        indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
-                    });
                }
 
-               // Evaluate initial scroll state upon opening the modal
+               // Evaluate initial scroll state upon opening the modal securely binding listener
                if (wrapper && indicator) {
+                   wrapper.onscroll = () => {
+                       const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                       indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                   };
+                   
                    wrapper.scrollTop = 0; // Immediate reset
                    setTimeout(() => {
                        wrapper.scrollTop = 0; // Strict layout lock reset
                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                            indicator.style.display = 'block';
-                           const distanceToBottom = wrapper.scrollHeight - wrapper.scrollTop - wrapper.clientHeight;
-                           indicator.style.opacity = distanceToBottom < 10 ? '0' : '1';
+                           const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                           indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                        } else {
                            indicator.style.display = 'none';
                            indicator.style.opacity = '0';

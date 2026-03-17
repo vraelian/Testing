@@ -185,7 +185,12 @@ export class UIHangarControl {
         modalContent.classList.remove('modal-theme-amber', 'modal-theme-blue', 'modal-theme-green');
 
         if (context === 'shipyard' || context === 'intro_shipyard') {
-            const canAfford = player.credits >= shipStatic.price;
+            let displayPrice = shipStatic.price;
+            if (context === 'intro_shipyard') {
+                displayPrice = 25000;
+            }
+            
+            const canAfford = player.credits >= displayPrice;
             let isDisabled = false;
             let actionId = ACTION_IDS.BUY_SHIP;
 
@@ -246,7 +251,7 @@ export class UIHangarControl {
                             <p class="text-sm text-gray-400" ${pStyle}>Class ${shipStatic.class}</p>
                          </div>
                         <div class="text-right">
-                             <p class="text-lg font-bold text-cyan-300" ${costStyle}>${formatCredits(shipStatic.price)}</p>
+                             <p class="text-lg font-bold text-cyan-300" ${costStyle}>${formatCredits(displayPrice)}</p>
                         </div>
                     </div>
                      <p class="text-sm text-gray-400 flex-grow text-left" ${pStyle}>${textContent}</p>
