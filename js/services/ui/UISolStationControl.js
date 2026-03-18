@@ -649,7 +649,7 @@ export class UISolStationControl {
             if (existingPortrait) existingPortrait.remove();
         }
 
-        const roster = gameState.player.officerRoster || [];
+        const roster = gameState.player.unlockedOfficerIds || [];
         const slots = station.officers;
         const assignedIds = slots.map(s => s.assignedOfficerId).filter(id => id);
         const availableOfficers = roster.filter(id => !assignedIds.includes(id));

@@ -271,6 +271,7 @@ export class GameState {
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
+                unlockedOfficerIds: [], // Added for Officer Acquisition Pipeline
                 // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
                 // Added `upgrades: []` to the initial Wanderer state
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },

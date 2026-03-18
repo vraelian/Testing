@@ -1,5 +1,6 @@
 // js/services/ui/UIModalEngine.js
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { OFFICERS } from '../../data/officers.js';
 
 export class UIModalEngine {
     /**
@@ -539,6 +540,120 @@ export class UIModalEngine {
                 // Note: The global .ui-locked class remains active intentionally until Phase 4.
                 resolve();
             }, 2000);
+        });
+    }
+
+    /**
+     * Builds the DOM for the cinematic officer recruitment sequence (Phase 2).
+     * Uses fixed interaction (no outside dismissal) and pre-rendered sprite layers.
+     * @param {string} officerId
+     */
+    buildOfficerRecruitmentDOM(officerId) {
+        const officer = OFFICERS[officerId];
+        if (!officer) {
+            this.manager.logger.error('UIModalEngine', `Cannot build recruitment DOM for invalid officer ID: ${officerId}`);
+            return null;
+        }
+
+        // Ensure the container exists
+        let modalBackdrop = document.getElementById('officer-recruitment-modal');
+        if (!modalBackdrop) {
+            modalBackdrop = document.createElement('div');
+            modalBackdrop.id = 'officer-recruitment-modal';
+            modalBackdrop.className = 'modal-backdrop hidden z-[80] dismiss-disabled';
+            document.body.appendChild(modalBackdrop);
+        }
+
+        // Fetch sprite styling
+        let portraitStyle = '';
+        if (officer.portraitId && typeof window.getPortraitStyle === 'function') {
+            portraitStyle = window.getPortraitStyle(officer.portraitId);
+        }
+
+        const nameParts = officer.name.split(' ');
+        const displayName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : officer.name;
+
+        modalBackdrop.innerHTML = `
+            <div class="officer-recruitment-modal rarity-${officer.rarity || 'common'}">
+                <div class="silhouette-layer" style="${portraitStyle}; margin-top: 20px;"></div>
+                <div class="detail-layer" style="opacity: 0;">
+                    <div class="portrait-image" style="${portraitStyle}"></div>
+                    <div class="officer-text-box">
+                        <h2 class="font-orbitron font-bold text-2xl text-white uppercase mb-1" style="text-shadow: 0 0 10px var(--rarity-color);">${displayName}</h2>
+                        <div class="text-sm uppercase tracking-widest mb-3" style="color: var(--rarity-color); font-weight: bold;">${officer.role}</div>
+                        <div class="text-sm text-gray-300 italic leading-relaxed">"${officer.lore}"</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-recruit" id="btn-recruit-officer" style="display: none;">RECRUIT</button>
+            </div>
+        `;
+        return modalBackdrop;
+    }
+
+    /**
+     * Executes the cinematic sequence for officer recruitment (Phase 3).
+     * @param {HTMLElement} modalContainer - The wrapper containing the recruitment modal.
+     * @returns {Promise<void>} Resolves when the player clicks the recruit button and the modal dismisses.
+     */
+    playRecruitmentCinematic(modalContainer) {
+        return new Promise((resolve) => {
+            const silhouette = modalContainer.querySelector('.silhouette-layer');
+            const detail = modalContainer.querySelector('.detail-layer');
+            const recruitBtn = modalContainer.querySelector('#btn-recruit-officer');
+
+            // Apply global UI lock
+            document.body.classList.add('ui-locked');
+
+            // t=0s: Dim background via Starfield overlay
+            const starfield = document.getElementById('starfield-overlay');
+            if (starfield) {
+                starfield.classList.add('starfield-entry');
+                starfield.classList.remove('starfield-exit-quick', 'starfield-exit-arrival');
+            }
+
+            // Ensure initial states
+            silhouette.style.opacity = '1';
+            detail.style.opacity = '0';
+            recruitBtn.style.display = 'none';
+            recruitBtn.style.opacity = '0';
+
+            modalContainer.classList.remove('hidden');
+            modalContainer.classList.add('modal-visible');
+
+            // t=1.5s to 3.5s: Crossfade animation via Web Animations API
+            setTimeout(() => {
+                silhouette.animate([
+                    { opacity: 1 },
+                    { opacity: 0 }
+                ], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+
+                detail.animate([
+                    { opacity: 0 },
+                    { opacity: 1 }
+                ], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+            }, 1500);
+
+            // t=3.5s+: Show recruit button
+            setTimeout(() => {
+                recruitBtn.style.display = 'block';
+                recruitBtn.animate([
+                    { opacity: 0 },
+                    { opacity: 1 }
+                ], { duration: 500, fill: 'forwards', easing: 'ease-in-out' });
+
+                // Attach click listener to resolve and hide
+                recruitBtn.addEventListener('click', () => {
+                    if (starfield) {
+                        starfield.classList.remove('starfield-entry');
+                        starfield.classList.add('starfield-exit-quick');
+                    }
+                    
+                    document.body.classList.remove('ui-locked');
+                    this.hideModal(modalContainer.id);
+                    resolve();
+                }, { once: true });
+
+            }, 3500);
         });
     }
 }

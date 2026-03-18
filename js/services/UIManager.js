@@ -1100,4 +1100,17 @@ export class UIManager {
             document.body.classList.remove('ui-locked');
         }
     }
+    
+    /**
+     * Instantiates and runs the Officer Recruitment Cinematic directly via the UIModalEngine.
+     * @param {string} officerId 
+     */
+    queueOfficerRecruitmentModal(officerId) {
+        const modalContainer = this.modalEngine.buildOfficerRecruitmentDOM(officerId);
+        if (modalContainer) {
+            this.modalEngine.playRecruitmentCinematic(modalContainer).then(() => {
+                modalContainer.remove();
+            });
+        }
+    }
 }

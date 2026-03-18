@@ -707,6 +707,16 @@ ${logHistory}
                 this.gameState.setState({});
             }},
             fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
+            
+            testRecruitOfficer: { name: 'Test Recruit Officer', type: 'button', handler: () => {
+                const officerIds = Object.keys(OFFICERS);
+                if (officerIds.length > 0) {
+                    const randomId = officerIds[Math.floor(Math.random() * officerIds.length)];
+                    if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
+                        this.uiManager.queueOfficerRecruitmentModal(randomId);
+                    }
+                }
+            }},
 
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -954,6 +964,7 @@ ${logHistory}
         solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
         solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
         solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
+        solFolder.add(this.actions.testRecruitOfficer, 'handler').name(this.actions.testRecruitOfficer.name);
 
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');

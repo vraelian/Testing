@@ -500,6 +500,17 @@ export class MissionService {
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
+        
+        // --- PHASE 4: OFFICER REWARD PIPELINE ---
+        if (mission.officerReward) {
+            if (!this.gameState.player.unlockedOfficerIds.includes(mission.officerReward)) {
+                this.gameState.player.unlockedOfficerIds.push(mission.officerReward);
+            }
+            if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
+                this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
+            }
+        }
+
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
 
         // 3. Update mission state arrays
