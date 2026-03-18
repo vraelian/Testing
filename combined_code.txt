@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.86</title>
+    <title>Orbital Trading 36.92</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.86 - Game Intro Update</p>
+            <p>Version 36.92 - Officer Recruitment Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -4863,7 +4863,8 @@ card.
 
 /* 1. Make the modal backdrops completely transparent so they don't dim the starfield */
 #launch-modal.modal-backdrop,
-#travel-animation-modal.modal-backdrop {
+#travel-animation-modal.modal-backdrop,
+#officer-recruitment-modal.modal-backdrop {
     background-color: transparent !important;
 }
 
@@ -4898,6 +4899,103 @@ card.
 #starfield-overlay.starfield-exit-arrival {
     opacity: 0;
     transition: opacity 0.6s ease;
+}
+
+/* ========================================================================= */
+/* --- OFFICER RECRUITMENT CINEMATIC (PHASE 2 / REFINED) --- */
+/* ========================================================================= */
+
+.officer-recruitment-modal {
+    position: relative;
+    width: 384px;
+    height: 576px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    pointer-events: auto;
+}
+
+/* Rarity Variables */
+.officer-recruitment-modal.rarity-common { --rarity-color: #94a3b8; }
+.officer-recruitment-modal.rarity-uncommon { --rarity-color: #4ade80; }
+.officer-recruitment-modal.rarity-rare { --rarity-color: #facc15; }
+.officer-recruitment-modal.rarity-very_rare { --rarity-color: #fb923c; }
+.officer-recruitment-modal.rarity-hyper_rare { --rarity-color: #f87171; }
+
+.silhouette-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    border: 4px solid var(--rarity-color);
+    border-radius: 12px;
+    box-shadow: 0 0 40px var(--rarity-color), inset 0 0 40px var(--rarity-color);
+    z-index: 10;
+}
+
+.detail-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(to bottom, #111827 0%, rgba(17,24,39,0.9) 100%);
+    border: 2px solid var(--rarity-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    z-index: 11;
+}
+
+.detail-layer .portrait-image {
+    width: 128px;
+    height: 128px;
+    background-repeat: no-repeat;
+    background-color: #000;
+    margin-top: 30px; 
+    margin-bottom: 30px;
+    border: 3px solid var(--rarity-color);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 10px var(--rarity-color);
+    transform: scale(1.3);
+}
+
+.detail-layer .officer-text-box {
+    text-align: center;
+    width: 100%;
+    padding: 1rem;
+    flex: 1;
+}
+
+.btn-recruit {
+    position: absolute;
+    bottom: -20px;
+    width: 80%;
+    background: #111827;
+    border-radius: 8px;
+    border: 2px solid var(--rarity-color);
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 0 10px var(--rarity-color);
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-recruit:hover {
+    background: var(--rarity-color);
+    color: #000;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -10548,6 +10646,18 @@ export function renderNavigationScreen(gameState) {
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { OFFICERS } from '../../data/officers.js';
+
+function getOfficerRarityHex(rarity) {
+    switch (rarity) {
+        case 'uncommon': return '#4ade80';
+        case 'rare': return '#facc15';
+        case 'very_rare': return '#fb923c';
+        case 'hyper_rare': return '#f87171';
+        case 'common':
+        default: return '#94a3b8';
+    }
+}
 
 // --- THEME MAPPING ---
 const THEME_MAP = {
@@ -10645,14 +10755,27 @@ export function renderMissionsScreen(gameState, missionService) {
         const typeClass = getMissionTypeClass(mission.type);
         
         // Format Rewards
-        const rewardText = mission.rewards.map(r => {
-            if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-            if(r.type.toLowerCase() === 'upgrade') {
-                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                return upgName.toUpperCase();
+        const rewardTextParts = [];
+        if (mission.rewards) {
+            mission.rewards.forEach(r => {
+                if(r.type.toLowerCase() === 'credits') rewardTextParts.push(`<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`);
+                else if(r.type.toLowerCase() === 'upgrade') {
+                    const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                    rewardTextParts.push(upgName.toUpperCase());
+                }
+                else rewardTextParts.push(r.type.toUpperCase());
+            });
+        }
+        
+        if (mission.officerReward) {
+            const offDef = OFFICERS[mission.officerReward];
+            if (offDef) {
+                const color = getOfficerRarityHex(offDef.rarity);
+                rewardTextParts.push(`<span style="color: ${color}; font-weight: bold; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`);
             }
-            return r.type.toUpperCase();
-        }).join(', ');
+        }
+        
+        const rewardText = rewardTextParts.join(', ');
 
         return `
             <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
@@ -19681,6 +19804,18 @@ import { INTEL_CONTENT } from '../../data/intelContent.js';
 import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../GameAttributes.js';
+import { OFFICERS } from '../../data/officers.js';
+
+function getOfficerRarityHex(rarity) {
+    switch (rarity) {
+        case 'uncommon': return '#4ade80';
+        case 'rare': return '#facc15';
+        case 'very_rare': return '#fb923c';
+        case 'hyper_rare': return '#f87171';
+        case 'common':
+        default: return '#94a3b8';
+    }
+}
 
 export class UIMissionControl {
     /**
@@ -19966,7 +20101,7 @@ export class UIMissionControl {
                 let animDelayIdx = 0;
 
                 // Evaluate Payout to inform Inbound stretching
-                const hasPayout = mission.rewards && mission.rewards.length > 0;
+                const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
 
                 // 1. INBOUND (Granted Cargo / Intel / Credits)
                 let inboundItems = [];
@@ -20007,19 +20142,32 @@ export class UIMissionControl {
                 // 2. PAYOUT (Rewards) - Dynamically spans if inbound is empty
                 let payoutPanelHtml = '';
                 if (hasPayout) {
-                    const rewsList = mission.rewards.map(r => {
-                        const delay = animDelayIdx++ * 0.05;
-                        let content = '';
-                        if(r.type.toLowerCase() === 'credits') {
-                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        } else if(r.type.toLowerCase() === 'upgrade') {
-                            const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                        } else {
-                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+                    let rewsList = '';
+                    if (mission.rewards) {
+                        rewsList += mission.rewards.map(r => {
+                            const delay = animDelayIdx++ * 0.05;
+                            let content = '';
+                            if(r.type.toLowerCase() === 'credits') {
+                                content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                            } else if(r.type.toLowerCase() === 'upgrade') {
+                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else {
+                                content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+                            }
+                            return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
+                        }).join('');
+                    }
+
+                    if (mission.officerReward) {
+                        const offDef = OFFICERS[mission.officerReward];
+                        if (offDef) {
+                            const delay = animDelayIdx++ * 0.05;
+                            const color = getOfficerRarityHex(offDef.rarity);
+                            const content = `<span class="t-subject" style="color: ${color}; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`;
+                            rewsList += `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
                         }
-                        return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
-                    }).join('');
+                    }
                     
                     const fullWidthClass = inboundItems.length === 0 ? ' full-width' : '';
                     payoutPanelHtml = `
@@ -20352,25 +20500,38 @@ export class UIMissionControl {
                objectivesEl.style.display = 'none';
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-               if (mission.rewards && mission.rewards.length > 0) {
-                   const rewardsHtml = mission.rewards.map((r, i) => {
-                        const delay = i * 0.1;
-                        let content = '';
-                        if(r.type.toLowerCase() === 'credits') {
-                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        } else if(r.type.toLowerCase() === 'upgrade') {
-                            const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                        } else {
-                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+               const hasStandardRewards = mission.rewards && mission.rewards.length > 0;
+               const hasOfficerReward = !!mission.officerReward;
+               
+               if (hasStandardRewards || hasOfficerReward) {
+                   let rewardsHtml = '';
+                   if (hasStandardRewards) {
+                       rewardsHtml += mission.rewards.map((r, i) => {
+                            const delay = i * 0.1;
+                            let content = '';
+                            if(r.type.toLowerCase() === 'credits') {
+                                content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                            } else if(r.type.toLowerCase() === 'upgrade') {
+                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else {
+                                content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+                            }
+                            return `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
+                       }).join('');
+                   }
+                   
+                   if (hasOfficerReward) {
+                        const offDef = OFFICERS[mission.officerReward];
+                        if (offDef) {
+                            const delay = (mission.rewards?.length || 0) * 0.1;
+                            const color = getOfficerRarityHex(offDef.rarity);
+                            const content = `<span class="t-subject" style="color: ${color}; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`;
+                            rewardsHtml += `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
                         }
-                        // Replaced telemetry-item to eliminate pseudo-element bullets. Added centering and margin.
-                        return `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
-                   }).join('');
+                   }
                    
                    rewardsEl.style.display = 'block';
-                   // Retain panel-payout wrapper to preserve the visual host theme borders/glows, 
-                   // but strip out the telemetry-header and telemetry-content structural classes to clear list styles.
                    rewardsEl.innerHTML = `
                         <div class="telemetry-dashboard hero-dashboard w-full my-4">
                             <div class="telemetry-panel panel-payout full-width flex flex-col items-center">
@@ -23779,7 +23940,7 @@ export class UISolStationControl {
             if (existingPortrait) existingPortrait.remove();
         }
 
-        const roster = gameState.player.officerRoster || [];
+        const roster = gameState.player.unlockedOfficerIds || [];
         const slots = station.officers;
         const assignedIds = slots.map(s => s.assignedOfficerId).filter(id => id);
         const availableOfficers = roster.filter(id => !assignedIds.includes(id));
@@ -24549,6 +24710,8 @@ export class UISolStationControl {
 --- START OF FILE: ./js/services/ui/UIModalEngine.js ---
 // js/services/ui/UIModalEngine.js
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
+import { OFFICERS } from '../../data/officers.js';
+import { starfieldService } from './StarfieldService.js';
 
 export class UIModalEngine {
     /**
@@ -25088,6 +25251,144 @@ export class UIModalEngine {
                 // Note: The global .ui-locked class remains active intentionally until Phase 4.
                 resolve();
             }, 2000);
+        });
+    }
+
+    /**
+     * Builds the DOM for the cinematic officer recruitment sequence (Phase 2).
+     * Uses fixed interaction (no outside dismissal) and pre-rendered sprite layers.
+     * @param {string} officerId
+     */
+    buildOfficerRecruitmentDOM(officerId) {
+        const officer = OFFICERS[officerId];
+        if (!officer) {
+            this.manager.logger.error('UIModalEngine', `Cannot build recruitment DOM for invalid officer ID: ${officerId}`);
+            return null;
+        }
+
+        // Ensure the container exists
+        let modalBackdrop = document.getElementById('officer-recruitment-modal');
+        if (!modalBackdrop) {
+            modalBackdrop = document.createElement('div');
+            modalBackdrop.id = 'officer-recruitment-modal';
+            modalBackdrop.className = 'modal-backdrop hidden z-[80] dismiss-disabled';
+            document.body.appendChild(modalBackdrop);
+        }
+
+        // Fetch sprite styling
+        let portraitStyle = '';
+        if (officer.portraitId && typeof window.getPortraitStyle === 'function') {
+            portraitStyle = window.getPortraitStyle(officer.portraitId);
+        }
+
+        const nameParts = officer.name.split(' ');
+        const displayName = nameParts.length > 1 ? nameParts.slice(1).join(' ') : officer.name;
+
+        modalBackdrop.innerHTML = `
+            <div class="officer-recruitment-modal rarity-${officer.rarity || 'common'}">
+                <div class="silhouette-layer"></div>
+                <div class="detail-layer" style="opacity: 0;">
+                    <div class="w-full text-center mt-8 mb-2">
+                        <span style="font-family: 'Zorque', sans-serif; text-shadow: 0 0 12px var(--rarity-color);" class="text-[22px] text-white tracking-widest">OFFICER RECRUITED</span>
+                    </div>
+                    <div class="portrait-image" style="${portraitStyle}"></div>
+                    <div class="officer-text-box flex flex-col justify-center w-full px-4">
+                        <h2 class="font-orbitron font-bold text-[28px] text-white uppercase mb-1" style="text-shadow: 0 0 10px var(--rarity-color);">${displayName}</h2>
+                        <div class="uppercase tracking-widest mb-3 text-[18px]" style="color: var(--rarity-color); font-weight: bold;">${officer.role}</div>
+                        <div class="text-[17px] text-gray-300 italic leading-relaxed">"${officer.lore}"</div>
+                    </div>
+                </div>
+                <button type="button" class="btn-recruit" id="btn-recruit-officer" style="display: none;">RECRUIT</button>
+            </div>
+        `;
+        return modalBackdrop;
+    }
+
+    /**
+     * Executes the cinematic sequence for officer recruitment (Phase 3).
+     * @param {HTMLElement} modalContainer - The wrapper containing the recruitment modal.
+     * @returns {Promise<void>} Resolves when the player clicks the recruit button and the modal dismisses.
+     */
+    playRecruitmentCinematic(modalContainer) {
+        return new Promise((resolve) => {
+            const modalBox = modalContainer.querySelector('.officer-recruitment-modal');
+            const silhouette = modalContainer.querySelector('.silhouette-layer');
+            const detail = modalContainer.querySelector('.detail-layer');
+            const recruitBtn = modalContainer.querySelector('#btn-recruit-officer');
+
+            // Apply global UI lock
+            document.body.classList.add('ui-locked');
+
+            // Dim background via Starfield overlay
+            starfieldService.mount();
+            starfieldService.triggerEntry();
+
+            // Initial states
+            modalContainer.style.opacity = '0';
+            modalContainer.classList.remove('hidden');
+
+            silhouette.style.opacity = '1';
+            detail.style.opacity = '0';
+            recruitBtn.style.display = 'none';
+            recruitBtn.style.opacity = '0';
+
+            // Fade in modal backdrop
+            modalContainer.animate([
+                { opacity: 0 },
+                { opacity: 1 }
+            ], { duration: 1000, fill: 'forwards', easing: 'ease-out' }).onfinish = () => {
+                modalContainer.style.opacity = '1';
+            };
+
+            // Blur-fade in the modal box
+            modalBox.animate([
+                { opacity: 0, filter: 'blur(12px)', transform: 'scale(0.9)' },
+                { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' }
+            ], { duration: 1000, fill: 'forwards', easing: 'ease-out' });
+
+            // Crossfade silhouette to details
+            setTimeout(() => {
+                silhouette.animate([
+                    { opacity: 1 },
+                    { opacity: 0 }
+                ], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+
+                detail.animate([
+                    { opacity: 0 },
+                    { opacity: 1 }
+                ], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+            }, 1500);
+
+            // Show recruit button
+            setTimeout(() => {
+                recruitBtn.style.display = 'block';
+                recruitBtn.animate([
+                    { opacity: 0 },
+                    { opacity: 1 }
+                ], { duration: 500, fill: 'forwards', easing: 'ease-in-out' });
+
+                // Attach click listener to resolve and hide
+                recruitBtn.addEventListener('click', () => {
+                    starfieldService.triggerQuickExit();
+                    
+                    // Fade out container
+                    modalContainer.animate([
+                        { opacity: 1 },
+                        { opacity: 0 }
+                    ], { duration: 800, fill: 'forwards', easing: 'ease-out' });
+
+                    // Blur-fade out box
+                    modalBox.animate([
+                        { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' },
+                        { opacity: 0, filter: 'blur(12px)', transform: 'scale(1.1)' }
+                    ], { duration: 800, fill: 'forwards', easing: 'ease-out' }).onfinish = () => {
+                        document.body.classList.remove('ui-locked');
+                        modalContainer.remove();
+                        resolve();
+                    };
+                }, { once: true });
+
+            }, 3500);
         });
     }
 }
@@ -26313,6 +26614,16 @@ ${logHistory}
                 this.gameState.setState({});
             }},
             fillSolCaches: { name: 'Fill Sol Caches', type: 'button', handler: () => this.fillSolCaches() },
+            
+            testRecruitOfficer: { name: 'Test Recruit Officer', type: 'button', handler: () => {
+                const officerIds = Object.keys(OFFICERS);
+                if (officerIds.length > 0) {
+                    const randomId = officerIds[Math.floor(Math.random() * officerIds.length)];
+                    if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
+                        this.uiManager.queueOfficerRecruitmentModal(randomId);
+                    }
+                }
+            }},
 
             grantAllShips: { name: 'Grant All Ships', type: 'button', handler: () => {
                 Object.keys(DB.SHIPS).forEach(shipId => {
@@ -26560,6 +26871,7 @@ ${logHistory}
         solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
         solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
         solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
+        solFolder.add(this.actions.testRecruitOfficer, 'handler').name(this.actions.testRecruitOfficer.name);
 
         const playerFolder = this.gui.addFolder('Player');
         playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
@@ -27451,6 +27763,7 @@ export class GameState {
                 activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
+                unlockedOfficerIds: [], // Added for Officer Acquisition Pipeline
                 // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
                 // Added `upgrades: []` to the initial Wanderer state
                 shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },
@@ -29305,6 +29618,17 @@ export class MissionService {
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
+        
+        // --- PHASE 4: OFFICER REWARD PIPELINE ---
+        if (mission.officerReward) {
+            if (!this.gameState.player.unlockedOfficerIds.includes(mission.officerReward)) {
+                this.gameState.player.unlockedOfficerIds.push(mission.officerReward);
+            }
+            if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
+                this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
+            }
+        }
+
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
 
         // 3. Update mission state arrays
@@ -37135,6 +37459,19 @@ export class UIManager {
             document.body.classList.remove('ui-locked');
         }
     }
+    
+    /**
+     * Instantiates and runs the Officer Recruitment Cinematic directly via the UIModalEngine.
+     * @param {string} officerId 
+     */
+    queueOfficerRecruitmentModal(officerId) {
+        const modalContainer = this.modalEngine.buildOfficerRecruitmentDOM(officerId);
+        if (modalContainer) {
+            this.modalEngine.playRecruitmentCinematic(modalContainer).then(() => {
+                modalContainer.remove();
+            });
+        }
+    }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
 
@@ -42680,6 +43017,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [36.92] - 2026-3-17
+-  added officer recruitment modal
+-  added officer recruitment pipeline
 
 # [36.90] - 2026-3-17
 -  updated intel writing
