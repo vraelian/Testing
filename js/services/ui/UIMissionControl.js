@@ -4,6 +4,18 @@ import { INTEL_CONTENT } from '../../data/intelContent.js';
 import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../GameAttributes.js';
+import { OFFICERS } from '../../data/officers.js';
+
+function getOfficerRarityHex(rarity) {
+    switch (rarity) {
+        case 'uncommon': return '#4ade80';
+        case 'rare': return '#facc15';
+        case 'very_rare': return '#fb923c';
+        case 'hyper_rare': return '#f87171';
+        case 'common':
+        default: return '#94a3b8';
+    }
+}
 
 export class UIMissionControl {
     /**
@@ -289,7 +301,7 @@ export class UIMissionControl {
                 let animDelayIdx = 0;
 
                 // Evaluate Payout to inform Inbound stretching
-                const hasPayout = mission.rewards && mission.rewards.length > 0;
+                const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
 
                 // 1. INBOUND (Granted Cargo / Intel / Credits)
                 let inboundItems = [];
@@ -330,19 +342,32 @@ export class UIMissionControl {
                 // 2. PAYOUT (Rewards) - Dynamically spans if inbound is empty
                 let payoutPanelHtml = '';
                 if (hasPayout) {
-                    const rewsList = mission.rewards.map(r => {
-                        const delay = animDelayIdx++ * 0.05;
-                        let content = '';
-                        if(r.type.toLowerCase() === 'credits') {
-                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        } else if(r.type.toLowerCase() === 'upgrade') {
-                            const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                        } else {
-                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+                    let rewsList = '';
+                    if (mission.rewards) {
+                        rewsList += mission.rewards.map(r => {
+                            const delay = animDelayIdx++ * 0.05;
+                            let content = '';
+                            if(r.type.toLowerCase() === 'credits') {
+                                content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                            } else if(r.type.toLowerCase() === 'upgrade') {
+                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else {
+                                content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+                            }
+                            return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
+                        }).join('');
+                    }
+
+                    if (mission.officerReward) {
+                        const offDef = OFFICERS[mission.officerReward];
+                        if (offDef) {
+                            const delay = animDelayIdx++ * 0.05;
+                            const color = getOfficerRarityHex(offDef.rarity);
+                            const content = `<span class="t-subject" style="color: ${color}; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`;
+                            rewsList += `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
                         }
-                        return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
-                    }).join('');
+                    }
                     
                     const fullWidthClass = inboundItems.length === 0 ? ' full-width' : '';
                     payoutPanelHtml = `
@@ -675,25 +700,38 @@ export class UIMissionControl {
                objectivesEl.style.display = 'none';
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-               if (mission.rewards && mission.rewards.length > 0) {
-                   const rewardsHtml = mission.rewards.map((r, i) => {
-                        const delay = i * 0.1;
-                        let content = '';
-                        if(r.type.toLowerCase() === 'credits') {
-                            content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                        } else if(r.type.toLowerCase() === 'upgrade') {
-                            const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                            content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                        } else {
-                            content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+               const hasStandardRewards = mission.rewards && mission.rewards.length > 0;
+               const hasOfficerReward = !!mission.officerReward;
+               
+               if (hasStandardRewards || hasOfficerReward) {
+                   let rewardsHtml = '';
+                   if (hasStandardRewards) {
+                       rewardsHtml += mission.rewards.map((r, i) => {
+                            const delay = i * 0.1;
+                            let content = '';
+                            if(r.type.toLowerCase() === 'credits') {
+                                content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
+                            } else if(r.type.toLowerCase() === 'upgrade') {
+                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else {
+                                content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
+                            }
+                            return `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
+                       }).join('');
+                   }
+                   
+                   if (hasOfficerReward) {
+                        const offDef = OFFICERS[mission.officerReward];
+                        if (offDef) {
+                            const delay = (mission.rewards?.length || 0) * 0.1;
+                            const color = getOfficerRarityHex(offDef.rarity);
+                            const content = `<span class="t-subject" style="color: ${color}; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`;
+                            rewardsHtml += `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
                         }
-                        // Replaced telemetry-item to eliminate pseudo-element bullets. Added centering and margin.
-                        return `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
-                   }).join('');
+                   }
                    
                    rewardsEl.style.display = 'block';
-                   // Retain panel-payout wrapper to preserve the visual host theme borders/glows, 
-                   // but strip out the telemetry-header and telemetry-content structural classes to clear list styles.
                    rewardsEl.innerHTML = `
                         <div class="telemetry-dashboard hero-dashboard w-full my-4">
                             <div class="telemetry-panel panel-payout full-width flex flex-col items-center">

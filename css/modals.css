@@ -1642,3 +1642,95 @@
     opacity: 0;
     transition: opacity 0.6s ease;
 }
+
+/* ========================================================================= */
+/* --- OFFICER RECRUITMENT CINEMATIC (PHASE 2) --- */
+/* ========================================================================= */
+
+.officer-recruitment-modal {
+    position: relative;
+    width: 320px;
+    height: 480px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    pointer-events: auto;
+}
+
+/* Rarity Variables */
+.officer-recruitment-modal.rarity-common { --rarity-color: #94a3b8; }
+.officer-recruitment-modal.rarity-uncommon { --rarity-color: #4ade80; }
+.officer-recruitment-modal.rarity-rare { --rarity-color: #facc15; }
+.officer-recruitment-modal.rarity-very_rare { --rarity-color: #fb923c; }
+.officer-recruitment-modal.rarity-hyper_rare { --rarity-color: #f87171; }
+
+/* Absolute-positioned, overlapping image containers */
+.silhouette-layer, .detail-layer {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 128px;
+    height: 128px;
+    background-repeat: no-repeat;
+}
+
+.silhouette-layer {
+    filter: brightness(0) drop-shadow(0 0 10px var(--rarity-color));
+    z-index: 10;
+    /* Cinematic Scale */
+    transform: translateX(-50%) scale(1.5);
+    transform-origin: center center;
+}
+
+.detail-layer {
+    z-index: 11;
+    /* Expanding the detail-layer wrapper to hold the text below it while maintaining scale rules */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    height: 100%;
+}
+
+.detail-layer .portrait-image {
+    width: 128px;
+    height: 128px;
+    background-repeat: no-repeat;
+    transform: scale(1.5);
+    margin-top: 20px; 
+    margin-bottom: 50px;
+}
+
+.detail-layer .officer-text-box {
+    text-align: center;
+    width: 100%;
+    padding: 1rem;
+    background: linear-gradient(to top, rgba(17,24,39,1) 0%, rgba(17,24,39,0.8) 60%, transparent 100%);
+}
+
+.btn-recruit {
+    position: absolute;
+    bottom: -20px;
+    width: 80%;
+    background: rgba(0,0,0,0.8);
+    border: 1px solid var(--rarity-color);
+    color: #fff;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    font-size: 1.1rem;
+    padding: 0.75rem;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    cursor: pointer;
+    z-index: 20;
+    box-shadow: 0 0 15px rgba(0,0,0,0.8), inset 0 0 10px var(--rarity-color);
+    transition: background 0.2s, color 0.2s;
+}
+
+.btn-recruit:hover {
+    background: var(--rarity-color);
+    color: #000;
+}

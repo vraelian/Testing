@@ -7,6 +7,18 @@
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { OFFICERS } from '../../data/officers.js';
+
+function getOfficerRarityHex(rarity) {
+    switch (rarity) {
+        case 'uncommon': return '#4ade80';
+        case 'rare': return '#facc15';
+        case 'very_rare': return '#fb923c';
+        case 'hyper_rare': return '#f87171';
+        case 'common':
+        default: return '#94a3b8';
+    }
+}
 
 // --- THEME MAPPING ---
 const THEME_MAP = {
@@ -104,14 +116,27 @@ export function renderMissionsScreen(gameState, missionService) {
         const typeClass = getMissionTypeClass(mission.type);
         
         // Format Rewards
-        const rewardText = mission.rewards.map(r => {
-            if(r.type.toLowerCase() === 'credits') return `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-            if(r.type.toLowerCase() === 'upgrade') {
-                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                return upgName.toUpperCase();
+        const rewardTextParts = [];
+        if (mission.rewards) {
+            mission.rewards.forEach(r => {
+                if(r.type.toLowerCase() === 'credits') rewardTextParts.push(`<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`);
+                else if(r.type.toLowerCase() === 'upgrade') {
+                    const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                    rewardTextParts.push(upgName.toUpperCase());
+                }
+                else rewardTextParts.push(r.type.toUpperCase());
+            });
+        }
+        
+        if (mission.officerReward) {
+            const offDef = OFFICERS[mission.officerReward];
+            if (offDef) {
+                const color = getOfficerRarityHex(offDef.rarity);
+                rewardTextParts.push(`<span style="color: ${color}; font-weight: bold; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`);
             }
-            return r.type.toUpperCase();
-        }).join(', ');
+        }
+        
+        const rewardText = rewardTextParts.join(', ');
 
         return `
             <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
