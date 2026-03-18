@@ -9,6 +9,7 @@ import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
 import { formatCredits } from '../../utils.js';
+import { starfieldService } from '../ui/StarfieldService.js';
 
 export class TravelService {
     /**
@@ -57,6 +58,7 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         if (!activeShip) {
+            starfieldService.triggerQuickExit();
             this.uiManager.queueModal('event-modal', "No Active Ship", "You must have an active vessel to travel.");
             return;
         }
@@ -127,10 +129,12 @@ export class TravelService {
         // --- END VIRTUAL WORKBENCH ---
 
         if (effectiveMaxFuel < requiredFuel) {
+            starfieldService.triggerQuickExit();
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
             return;
         }
         if (state.player.shipStates[activeShip.id].fuel < requiredFuel) {
+            starfieldService.triggerQuickExit();
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(state.player.shipStates[activeShip.id].fuel)}.`);
             return;
         }
