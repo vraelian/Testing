@@ -1,6 +1,7 @@
 // js/services/ui/UIModalEngine.js
 import { SCREEN_IDS, NAV_IDS, ACTION_IDS, LOCATION_IDS } from '../../data/constants.js';
 import { OFFICERS } from '../../data/officers.js';
+import { starfieldService } from './StarfieldService.js';
 
 export class UIModalEngine {
     /**
@@ -575,13 +576,16 @@ export class UIModalEngine {
 
         modalBackdrop.innerHTML = `
             <div class="officer-recruitment-modal rarity-${officer.rarity || 'common'}">
-                <div class="silhouette-layer" style="${portraitStyle}; margin-top: 20px;"></div>
+                <div class="silhouette-layer"></div>
                 <div class="detail-layer" style="opacity: 0;">
+                    <div class="w-full text-center mt-8 mb-2">
+                        <span style="font-family: 'Zorque', sans-serif; text-shadow: 0 0 12px var(--rarity-color);" class="text-[22px] text-white tracking-widest">OFFICER RECRUITED</span>
+                    </div>
                     <div class="portrait-image" style="${portraitStyle}"></div>
-                    <div class="officer-text-box">
-                        <h2 class="font-orbitron font-bold text-2xl text-white uppercase mb-1" style="text-shadow: 0 0 10px var(--rarity-color);">${displayName}</h2>
-                        <div class="text-sm uppercase tracking-widest mb-3" style="color: var(--rarity-color); font-weight: bold;">${officer.role}</div>
-                        <div class="text-sm text-gray-300 italic leading-relaxed">"${officer.lore}"</div>
+                    <div class="officer-text-box flex flex-col justify-center w-full px-4">
+                        <h2 class="font-orbitron font-bold text-[28px] text-white uppercase mb-1" style="text-shadow: 0 0 10px var(--rarity-color);">${displayName}</h2>
+                        <div class="uppercase tracking-widest mb-3 text-[18px]" style="color: var(--rarity-color); font-weight: bold;">${officer.role}</div>
+                        <div class="text-[17px] text-gray-300 italic leading-relaxed">"${officer.lore}"</div>
                     </div>
                 </div>
                 <button type="button" class="btn-recruit" id="btn-recruit-officer" style="display: none;">RECRUIT</button>
@@ -597,6 +601,7 @@ export class UIModalEngine {
      */
     playRecruitmentCinematic(modalContainer) {
         return new Promise((resolve) => {
+            const modalBox = modalContainer.querySelector('.officer-recruitment-modal');
             const silhouette = modalContainer.querySelector('.silhouette-layer');
             const detail = modalContainer.querySelector('.detail-layer');
             const recruitBtn = modalContainer.querySelector('#btn-recruit-officer');
@@ -604,23 +609,34 @@ export class UIModalEngine {
             // Apply global UI lock
             document.body.classList.add('ui-locked');
 
-            // t=0s: Dim background via Starfield overlay
-            const starfield = document.getElementById('starfield-overlay');
-            if (starfield) {
-                starfield.classList.add('starfield-entry');
-                starfield.classList.remove('starfield-exit-quick', 'starfield-exit-arrival');
-            }
+            // Dim background via Starfield overlay
+            starfieldService.mount();
+            starfieldService.triggerEntry();
 
-            // Ensure initial states
+            // Initial states
+            modalContainer.style.opacity = '0';
+            modalContainer.classList.remove('hidden');
+
             silhouette.style.opacity = '1';
             detail.style.opacity = '0';
             recruitBtn.style.display = 'none';
             recruitBtn.style.opacity = '0';
 
-            modalContainer.classList.remove('hidden');
-            modalContainer.classList.add('modal-visible');
+            // Fade in modal backdrop
+            modalContainer.animate([
+                { opacity: 0 },
+                { opacity: 1 }
+            ], { duration: 1000, fill: 'forwards', easing: 'ease-out' }).onfinish = () => {
+                modalContainer.style.opacity = '1';
+            };
 
-            // t=1.5s to 3.5s: Crossfade animation via Web Animations API
+            // Blur-fade in the modal box
+            modalBox.animate([
+                { opacity: 0, filter: 'blur(12px)', transform: 'scale(0.9)' },
+                { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' }
+            ], { duration: 1000, fill: 'forwards', easing: 'ease-out' });
+
+            // Crossfade silhouette to details
             setTimeout(() => {
                 silhouette.animate([
                     { opacity: 1 },
@@ -633,7 +649,7 @@ export class UIModalEngine {
                 ], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
             }, 1500);
 
-            // t=3.5s+: Show recruit button
+            // Show recruit button
             setTimeout(() => {
                 recruitBtn.style.display = 'block';
                 recruitBtn.animate([
@@ -643,14 +659,23 @@ export class UIModalEngine {
 
                 // Attach click listener to resolve and hide
                 recruitBtn.addEventListener('click', () => {
-                    if (starfield) {
-                        starfield.classList.remove('starfield-entry');
-                        starfield.classList.add('starfield-exit-quick');
-                    }
+                    starfieldService.triggerQuickExit();
                     
-                    document.body.classList.remove('ui-locked');
-                    this.hideModal(modalContainer.id);
-                    resolve();
+                    // Fade out container
+                    modalContainer.animate([
+                        { opacity: 1 },
+                        { opacity: 0 }
+                    ], { duration: 800, fill: 'forwards', easing: 'ease-out' });
+
+                    // Blur-fade out box
+                    modalBox.animate([
+                        { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' },
+                        { opacity: 0, filter: 'blur(12px)', transform: 'scale(1.1)' }
+                    ], { duration: 800, fill: 'forwards', easing: 'ease-out' }).onfinish = () => {
+                        document.body.classList.remove('ui-locked');
+                        modalContainer.remove();
+                        resolve();
+                    };
                 }, { once: true });
 
             }, 3500);

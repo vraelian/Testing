@@ -1606,7 +1606,8 @@
 
 /* 1. Make the modal backdrops completely transparent so they don't dim the starfield */
 #launch-modal.modal-backdrop,
-#travel-animation-modal.modal-backdrop {
+#travel-animation-modal.modal-backdrop,
+#officer-recruitment-modal.modal-backdrop {
     background-color: transparent !important;
 }
 
@@ -1644,13 +1645,13 @@
 }
 
 /* ========================================================================= */
-/* --- OFFICER RECRUITMENT CINEMATIC (PHASE 2) --- */
+/* --- OFFICER RECRUITMENT CINEMATIC (PHASE 2 / REFINED) --- */
 /* ========================================================================= */
 
 .officer-recruitment-modal {
     position: relative;
-    width: 320px;
-    height: 480px;
+    width: 384px;
+    height: 576px;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -1666,57 +1667,62 @@
 .officer-recruitment-modal.rarity-very_rare { --rarity-color: #fb923c; }
 .officer-recruitment-modal.rarity-hyper_rare { --rarity-color: #f87171; }
 
-/* Absolute-positioned, overlapping image containers */
-.silhouette-layer, .detail-layer {
+.silhouette-layer {
     position: absolute;
     top: 0;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 128px;
-    height: 128px;
-    background-repeat: no-repeat;
-}
-
-.silhouette-layer {
-    filter: brightness(0) drop-shadow(0 0 10px var(--rarity-color));
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85);
+    border: 4px solid var(--rarity-color);
+    border-radius: 12px;
+    box-shadow: 0 0 40px var(--rarity-color), inset 0 0 40px var(--rarity-color);
     z-index: 10;
-    /* Cinematic Scale */
-    transform: translateX(-50%) scale(1.5);
-    transform-origin: center center;
 }
 
 .detail-layer {
-    z-index: 11;
-    /* Expanding the detail-layer wrapper to hold the text below it while maintaining scale rules */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100%;
-    height: 100%;
+    background: linear-gradient(to bottom, #111827 0%, rgba(17,24,39,0.9) 100%);
+    border: 2px solid var(--rarity-color);
+    border-radius: 12px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+    z-index: 11;
 }
 
 .detail-layer .portrait-image {
     width: 128px;
     height: 128px;
     background-repeat: no-repeat;
-    transform: scale(1.5);
-    margin-top: 20px; 
-    margin-bottom: 50px;
+    background-color: #000;
+    margin-top: 30px; 
+    margin-bottom: 30px;
+    border: 3px solid var(--rarity-color);
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0,0,0,0.5), inset 0 0 10px var(--rarity-color);
+    transform: scale(1.3);
 }
 
 .detail-layer .officer-text-box {
     text-align: center;
     width: 100%;
     padding: 1rem;
-    background: linear-gradient(to top, rgba(17,24,39,1) 0%, rgba(17,24,39,0.8) 60%, transparent 100%);
+    flex: 1;
 }
 
 .btn-recruit {
     position: absolute;
     bottom: -20px;
     width: 80%;
-    background: rgba(0,0,0,0.8);
-    border: 1px solid var(--rarity-color);
+    background: #111827;
+    border-radius: 8px;
+    border: 2px solid var(--rarity-color);
     color: #fff;
     font-family: 'Orbitron', sans-serif;
     font-weight: bold;
