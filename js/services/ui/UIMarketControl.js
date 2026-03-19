@@ -160,6 +160,10 @@ export class UIMarketControl {
         const state = this.manager.lastKnownState;
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = this._getFleetItem(state, goodId);
+        
+        // Fetch the living local baseline directly from the Simulation Service
+        const ms = this.manager.simulationService?.marketService;
+        const localTargetPrice = ms ? ms.getLocalTargetPrice(state.currentLocationId, goodId) : state.market.galacticAverages[goodId];
 
         if (avgCostEl) {
             avgCostEl.classList.toggle('visible', mode === 'sell');
@@ -187,7 +191,7 @@ export class UIMarketControl {
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: this.getItemPrice(state, goodId, true),
-                galacticAvg: state.market.galacticAverages[goodId],
+                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
                 playerItem: playerItem
             });
 
@@ -197,7 +201,6 @@ export class UIMarketControl {
             // Phase 3 Glut Warning Logic
             let isGlut = false;
             let currentMarketStock = 0;
-            const ms = this.manager.simulationService?.marketService;
             if (ms) {
                 currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
                 const glutThreshold = ms.getGlutThreshold(state.currentLocationId, goodId);
@@ -232,7 +235,7 @@ export class UIMarketControl {
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
-                galacticAvg: state.market.galacticAverages[goodId],
+                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
                 playerItem: playerItem
             });
         }

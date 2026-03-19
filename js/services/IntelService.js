@@ -262,9 +262,9 @@ export class IntelService {
         const newPlayerState = { ...state.player };
         newPlayerState.credits -= calculatedPrice;
 
-        // 7. Create the Active Intel Deal
-        const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
-        const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
+        // 7. Create the Active Intel Deal using the living local target price
+        const localTarget = this.marketService.getLocalTargetPrice(packet.dealLocationId, packet.commodityId);
+        const overridePrice = Math.floor(localTarget * (1 - packet.discountPercent));
 
         // Calculate dynamic duration
         const dealLocationId = packet.dealLocationId;
@@ -343,7 +343,9 @@ export class IntelService {
     grantNarrativeIntel(intelParams) {
         const state = this.gameState.getState();
         
-        const overridePrice = Math.floor(this.getGalacticAverage(intelParams.commodityId) * (1 - (intelParams.discountPercent || 0.5)));
+        // Narrative intel also hooks into the living local baseline of the destination
+        const localTarget = this.marketService.getLocalTargetPrice(intelParams.dealLocationId, intelParams.commodityId);
+        const overridePrice = Math.floor(localTarget * (1 - (intelParams.discountPercent || 0.5)));
         const expiryDay = this.timeService.getCurrentDay() + (intelParams.durationDays || 60);
 
         const newActiveDeal = {
