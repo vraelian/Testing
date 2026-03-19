@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.95</title>
+    <title>Orbital Trading 36.92</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.95 - Economy Update</p>
+            <p>Version 36.92 - Officer Recruitment Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -6915,7 +6915,7 @@ card.
     --active-primary: var(--sell-primary);
     --active-secondary-bg: var(--sell-secondary-bg);
     --active-secondary-border: var(--sell-secondary-border);
-    --active-text-light: var(--buy-text-light);
+    --active-text-light: var(--sell-text-light);
     --active-text-dark: var(--sell-text-dark);
 }
 .toggle-switch, .qty-stepper {
@@ -7227,60 +7227,6 @@ card.
 .card-spring-bounce-up {
     animation: spring-bounce-up 0.75s ease-out forwards;
 }
-
-/* --- [[START]] GDD V3 GRAPH & GLUT WARNING STYLES --- */
-.market-graph-container {
-    transition: transform 0.2s ease;
-}
-
-.market-graph-container.graph-expanded {
-    transform: scale(1.20); /* Increased by 5% as requested */
-    transform-origin: center top;
-}
-
-.text-glut-warning {
-    color: #d8b4fe !important; /* Lighter base purple for readability */
-    /* Hard 1px black stroke + intense outer purple glow */
-    text-shadow: 
-        -1px -1px 0 #000,  
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000,
-         0 0 10px rgba(176, 102, 255, 0.9), 
-         0 0 20px rgba(176, 102, 255, 0.6) !important;
-}
-
-.svg-line-sys-avg {
-    stroke: rgba(150, 150, 150, 0.4);
-    stroke-width: 1;
-    stroke-dasharray: 8, 6;
-}
-
-.svg-line-local-avg {
-    stroke: rgba(255, 255, 255, 0.4);
-    stroke-width: 1;
-    stroke-dasharray: 4, 4;
-}
-
-.svg-line-history {
-    stroke: #007bff;
-    stroke-width: 2;
-}
-
-.svg-line-project {
-    stroke: rgba(0, 255, 255, 0.6);
-    stroke-width: 2;
-    stroke-dasharray: 2, 2;
-}
-
-.svg-band-benign {
-    fill: rgba(0, 255, 0, 0.05);
-}
-
-.svg-band-malign {
-    fill: rgba(255, 0, 0, 0.25);
-}
-/* --- [[END]] GDD V3 GRAPH & GLUT WARNING STYLES --- */
 --- END OF FILE: ./css/screens/market-screen.css ---
 
 --- START OF FILE: ./css/screens/intel-screen.css ---
@@ -13620,8 +13566,7 @@ export const GAME_RULES = Object.freeze({
     FINANCE_HISTORY_LENGTH: 25,
     DAILY_PRICE_VOLATILITY: 0.25,
     MEAN_REVERSION_STRENGTH: 0.025, // Updated for Balance V2 (Stretched recovery)
-    MARKET_PRESSURE_DECAY: 0.998,   // Updated for Relativistic Economy (Multi-year memory)
-    BASE_TRANSIT_DISTANCE: 1.0,     // Denominator for Relativistic Distance Scalar
+    MARKET_PRESSURE_DECAY: 0.65,    // Updated for Balance V2 (Harder profit crash)
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
@@ -19560,7 +19505,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'NEUTRAL': {
         name: 'Stable Economy',
         archetype: 'Neutral',
-        isMalign: false,
         durationBounds: [240, 1387], // 8 months to 3.8 years
         varietals: [
             "System-wide markets are stable. Trade lanes are clear.",
@@ -19573,7 +19517,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'GUILD_EMBARGO': {
         name: 'Guild Embargo (Logistical Gridlock)',
         archetype: 'Bear Market (Restrictive)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "Guild customs frigates have established hard blockades at major transit junctions. Mandatory manifest audits are crippling bulk shipping lanes, resulting in widespread inventory stagnation.",
@@ -19590,7 +19533,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'CORONAL_MASS_EJECTION': {
         name: 'Coronal Mass Ejection (Radiation Storms)',
         archetype: 'Bear Market (Restrictive)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "Sol Station telemetry indicates a massive breach in the solar corona. High-energy plasma waves are sweeping the system, forcing ship reactors to burn excess fuel just to maintain minimum deflector integrity.",
@@ -19606,7 +19548,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'AD_ASTRA_DIVIDEND': {
         name: 'The Ad Astra Dividend (Tech Boom)',
         archetype: 'Bull Market (Expansive)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "Earth’s Sovereign Board has authorized the release of a recovered Ad Astra fabrication cache. A sudden influx of hyper-efficient, standardized replacement parts has driven maintenance costs to historic lows.",
@@ -19622,7 +19563,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SYSTEMIC_INFRASTRUCTURE_PUSH': {
         name: 'Systemic Infrastructure Push',
         archetype: 'Bull Market (Expansive)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "The immortal executives of Mars and Venus have jointly mandated a multi-trillion credit infrastructure overhaul. Demand for industrial bulk materials has completely outpaced standard system supply.",
@@ -19639,7 +19579,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'BLACK_MARKET_BLUEPRINT_LEAK': {
         name: 'Black Market Blueprint Leak',
         archetype: 'Opportunistic Market (High Volatility)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A massive data breach at a quantum research facility on Uranus has flooded the dark-net with classified ship schematics. Tuning shops are quietly offering experimental gear, for a hefty 'handling fee.'",
@@ -19655,7 +19594,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'LONG_WATCH_PHILANTHROPY': {
         name: 'The Long Watch Philanthropy',
         archetype: 'Charitable Market (Beneficial)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A Martian Sovereign is celebrating their second century of life with a systemic tax write-off. Debt interest has been temporarily frozen, and baseline survival rations are heavily subsidized.",
@@ -19672,7 +19610,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SILENT_CORRECTION': {
         name: 'Silent Correction',
         archetype: 'Charitable Market (Beneficial)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A benign ghost in the machine is rewriting the routing tables. Nav-computers are plotting impossibly safe trajectories through deep space, and automated drydocks are repairing ships without registering a billing cycle.",
@@ -19688,7 +19625,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'VENETIAN_JUBILEE': {
         name: 'The Venetian Jubilee',
         archetype: 'Charitable Market (Beneficial)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A massive cyber-attack on corporate banking sectors has resulted in an unexpected windfall. Shadow brokers are quietly funneling stolen credits into the open market, padding the payouts for every independent trader.",
@@ -19703,7 +19639,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'GEOPOLITICAL_STALEMATE': {
         name: 'Geopolitical Stalemate',
         archetype: 'Conservative Market (Stagnant)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "A bitter tariff dispute between the Terran Alliance and the Martian colonies has brought speculative trade to a standstill. Markets are shedding inventory and aggressively reverting to baseline average prices.",
@@ -19719,7 +19654,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'PLANETARY_GOLD_RUSH': {
         name: 'Planetary Gold Rush',
         archetype: 'Extreme (Single-Location Bull Market)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "[Loc] is experiencing an unprecedented economic boom! Corporate investors are pouring endless credits into the local economy, driving demand for absolutely everything through the roof.",
@@ -19737,7 +19671,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'STATION_QUARANTINE': {
         name: 'Station Quarantine',
         archetype: 'Extreme (Single-Location Bear Market)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "A severe crisis has forced the Guild to enact a total quarantine over [Loc]. The market has completely frozen, and the few mechanics still working are extorting captains for basic services.",
@@ -19755,7 +19688,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SOVEREIGNS_RETREAT': {
         name: "The Sovereign's Retreat",
         archetype: 'Extreme (Single-Location Charitable Market)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A mysterious benefactor has turned [Loc] into a temporary haven for independent captains. Local tech shops are practically giving away military-grade ship upgrades, and data brokers are handing out intel for free.",
@@ -19773,7 +19705,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SECTOR_COLLAPSE': {
         name: 'Sector Collapse',
         archetype: 'Extreme (Tri-Location Bear Market)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "A catastrophic economic contagion has swept through [Loc 1], [Loc 2], and [Loc 3]. Trade across this entire sector has collapsed. Nobody is buying, and the value of goods has hit absolute rock bottom.",
@@ -21783,24 +21714,12 @@ export class UIMarketControl {
         const state = this.manager.lastKnownState;
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = this._getFleetItem(state, goodId);
-        
-        // Fetch the living local baseline directly from the Simulation Service
-        const ms = this.manager.simulationService?.marketService;
-        const localTargetPrice = ms ? ms.getLocalTargetPrice(state.currentLocationId, goodId) : state.market.galacticAverages[goodId];
 
         if (avgCostEl) {
             avgCostEl.classList.toggle('visible', mode === 'sell');
         }
 
         if (mode === 'buy') {
-            // Restore normal availability string when switching to buy mode
-            const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
-            if (availEl) {
-                const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
-                const ownQty = playerItem ? playerItem.quantity : 0;
-                availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
-            }
-
             const displayPrice = quantity > 0 ? basePrice * quantity : basePrice;
             priceEl.textContent = formatCredits(displayPrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
@@ -21814,51 +21733,28 @@ export class UIMarketControl {
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: this.getItemPrice(state, goodId, true),
-                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
+                galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
 
         } else { // 'sell' mode
             const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
 
-            // Phase 3 Glut Warning Logic
-            let isGlut = false;
-            let currentMarketStock = 0;
-            if (ms) {
-                currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
-                const glutThreshold = ms.getGlutThreshold(state.currentLocationId, goodId);
-                const parsedQty = parseInt(quantity, 10) || 0;
-                if ((parsedQty + currentMarketStock) > glutThreshold) {
-                    isGlut = true;
-                }
-            }
-
-            // Phase 2 Feedback: Swap Avail string for stylized Glut warning
-            const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
-            if (availEl) {
-                if (isGlut) {
-                    availEl.innerHTML = `<span class="text-glut-warning font-bold" style="font-size: 0.9em; letter-spacing: 0.5px;">MKT SATURATED - 0.25% LOSS!</span>`;
-                } else {
-                    const ownQty = playerItem ? playerItem.quantity : 0;
-                    availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
-                }
-            }
-
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
-                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'} ${isGlut ? 'text-glut-warning' : ''}`;
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
                 priceEl.textContent = '⌬ +0';
-                priceEl.className = `font-roboto-mono font-bold profit-text ${isGlut ? 'text-glut-warning' : ''}`;
+                priceEl.className = 'font-roboto-mono font-bold profit-text';
                 effectivePriceEl.textContent = '';
             }
 
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
-                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
+                galacticAvg: state.market.galacticAverages[goodId],
                 playerItem: playerItem
             });
         }
@@ -21929,187 +21825,54 @@ export class UIMarketControl {
 
     /**
      * Generates the SVG string for the Price History graph.
-     * Procedurally constructs forecasting cones, baselines, and historical tracking.
      * @param {string} goodId 
      * @param {object} gameState 
      * @param {object} _playerItem - Kept for signature compatibility, unused.
      * @returns {string} SVG HTML string
      */
     renderPriceGraph(goodId, gameState, _playerItem) {
-        if (!this.manager.simulationService || !this.manager.simulationService.marketService) {
-            return `<div class="text-gray-400 text-sm p-4">Simulation Offline</div>`;
-        }
-
-        const ms = this.manager.simulationService.marketService;
-        const locId = gameState.currentLocationId;
-        const currentDay = gameState.day;
+        const history = gameState.market.priceHistory[gameState.currentLocationId]?.[goodId];
+        if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">No Data Available!</div>`;
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const staticAvg = (good.basePriceRange[0] + good.basePriceRange[1]) / 2;
+        const width = 280, height = 140, padding = 35;
+        const prices = history.map(p => p.price);
         
-        // Updated Timeline Context
-        const historyDays = 60;
-        const projectedDays = 30;
+        const fleetItem = this._getFleetItem(gameState, goodId);
+        const playerBuyPrice = fleetItem?.avgCost > 0 ? fleetItem.avgCost : null;
 
-        const curveData = ms.generateCurveData(locId, goodId, historyDays, projectedDays);
-        if (!curveData || curveData.length === 0) return `<div class="text-gray-400 text-sm p-4">No Data Available</div>`;
-
-        const galacticAvg = ms.getGalacticAverage(goodId);
-        const localAvg = ms.getLocalTargetPrice(locId, goodId);
-
-        // Expanded width and converted to asymmetric padding to stretch into right-side tooltip space
-        const width = 380, height = 255, paddingLeft = 60, paddingRight = 20, paddingTop = 30, paddingBottom = 105;
-
-        // Determine dynamic scaling
-        const allPrices = curveData.map(d => d.price).concat([galacticAvg, localAvg]);
-        const minVal = Math.max(1, Math.min(...allPrices) * 0.85); // 15% padding below
-        const maxVal = Math.max(...allPrices) * 1.15; // 15% padding above
+        let allValues = [...prices, staticAvg];
+        if (playerBuyPrice) allValues.push(playerBuyPrice);
+        const minVal = Math.min(...allValues), maxVal = Math.max(...allValues);
         const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
-        const midVal = (minVal + maxVal) / 2;
 
-        const minDay = currentDay - historyDays;
-        const maxDay = currentDay + projectedDays;
-        const dayRange = maxDay - minDay;
+        const iToX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
+        const vToY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
 
-        // X Interpolation mapped to asymmetric padding
-        const iToX = day => ((day - minDay) / dayRange) * (width - paddingLeft - paddingRight) + paddingLeft;
-        const vToY = v => height - paddingBottom - ((v - minVal) / valueRange) * (height - paddingTop - paddingBottom);
-
-        // Container configures click-to-expand logic natively
-        let svg = `<div class="market-graph-container" onclick="this.classList.toggle('graph-expanded')" style="cursor: pointer; width: 100%; height: 100%;">`;
-        svg += `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`;
-        svg += `<rect width="100%" height="100%" fill="#0c101d" />`;
-
-        // Pass 1: Background System Weather Bands
-        const sysStateObj = gameState.systemStates || gameState.systemState || {};
-        const weatherHistory = sysStateObj.historyLedger || [];
-        const activeStates = [];
-        
-        if (sysStateObj.activeId && sysStateObj.activeId !== 'NEUTRAL') {
-            activeStates.push({
-                id: sysStateObj.activeId,
-                startDay: sysStateObj.startDay || currentDay,
-                endDay: (sysStateObj.startDay || currentDay) + (sysStateObj.remainingDays || 7)
-            });
-        }
-        
-        const allBands = [...weatherHistory, ...activeStates];
-
-        allBands.forEach(band => {
-            if (typeof band === 'string') return; // Skip legacy string IDs
-            
-            const stateDef = DB.SYSTEM_STATES?.[band.id];
-            const isMalign = stateDef?.isMalign === true; 
-            const bandClass = isMalign ? 'svg-band-malign' : 'svg-band-benign';
-
-            // clamp background band rendering strictly to visible X-axis bounds mapped to asymmetric padding
-            const rawStartX = iToX(band.startDay || band.day);
-            const rawEndX = iToX(band.endDay || ((band.startDay || band.day) + 7));
-            const startX = Math.max(paddingLeft, rawStartX);
-            const endX = Math.min(width - paddingRight, rawEndX);
-
-            if (endX > startX && endX >= paddingLeft && startX <= width - paddingRight) {
-                svg += `<rect x="${startX}" y="${paddingTop}" width="${endX - startX}" height="${height - paddingTop - paddingBottom}" class="${bandClass}" />`;
-            }
-        });
-
-        // Pass 2: Base UI Grid Lines
+        let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
         svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
-        svg += `<line x1="${paddingLeft}" y1="${vToY(maxVal)}" x2="${paddingLeft}" y2="${height - paddingBottom}" />`;
-        svg += `<line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" />`;
+        svg += `<line x1="${padding}" y1="${vToY(maxVal)}" x2="${padding}" y2="${height - padding}" /><line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
         svg += `</g>`;
 
-        // Pass 3: Mathematical Baselines
-        const sysAvgY = vToY(galacticAvg);
-        const localAvgY = vToY(localAvg);
-        
-        svg += `<line x1="${paddingLeft}" y1="${sysAvgY}" x2="${width - paddingRight}" y2="${sysAvgY}" class="svg-line-sys-avg" />`;
-        svg += `<line x1="${paddingLeft}" y1="${localAvgY}" x2="${width - paddingRight}" y2="${localAvgY}" class="svg-line-local-avg" />`;
-
-        // Pass 4: Construct Procedural Curves with Jitter Overrides
-        let historyPath = '';
-        let projectPath = '';
-        let isFirstHistory = true;
-        let isFirstProject = true;
-        let currentPricePoint = { price: curveData[curveData.length - 1].price };
-
-        curveData.forEach((point) => {
-            let y = vToY(point.price);
-            
-            // Jitter: Ambient trading volume masking UI freezes during Price Lock states
-            if (point.isLocked) {
-                y += (Math.random() * 2 - 1) * 2; 
-            }
-            
-            const x = iToX(point.day);
-            
-            if (point.day <= currentDay) {
-                const cmd = isFirstHistory ? 'M' : 'L';
-                historyPath += `${cmd}${x},${y} `;
-                isFirstHistory = false;
-            }
-            if (point.day >= currentDay) {
-                const pCmd = isFirstProject ? 'M' : 'L';
-                projectPath += `${pCmd}${x},${y} `;
-                isFirstProject = false;
-            }
-
-            if (point.day === currentDay) {
-                currentPricePoint = point;
-            }
-        });
-
-        // Render Data Paths
-        svg += `<path d="${historyPath.trim()}" class="svg-line-history" fill="none" />`;
-        if (projectPath.length > 0) {
-            svg += `<path d="${projectPath.trim()}" class="svg-line-project" fill="none" />`;
+        const staticAvgY = vToY(staticAvg);
+        svg += `<line x1="${padding}" y1="${staticAvgY}" x2="${width - padding}" y2="${staticAvgY}" stroke="#facc15" stroke-width="1" stroke-dasharray="3 3" />`;
+        svg += `<text x="${width - padding + 4}" y="${staticAvgY + 3}" fill="#facc15" font-size="10" font-family="Roboto Mono" text-anchor="start">Avg: ${formatCredits(staticAvg, false)}</text>`;
+        if (playerBuyPrice) {
+            const buyPriceY = vToY(playerBuyPrice);
+            svg += `<line x1="${padding}" y1="${buyPriceY}" x2="${width - padding}" y2="${buyPriceY}" stroke="#34d399" stroke-width="1" stroke-dasharray="3 3" />`;
+            svg += `<text x="${width - padding + 4}" y="${buyPriceY + 3}" fill="#34d399" font-size="10" font-family="Roboto Mono" text-anchor="start">Paid: ${formatCredits(playerBuyPrice, false)}</text>`;
         }
 
-        // Pass 5: Timeline Context Labels & Axes
-        const graphBottomY = height - paddingBottom;
-        svg += `<text x="${paddingLeft}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="start">-60</text>`;
-        
-        // Present label and downward arrow pointing to current plot point
-        const currX = iToX(currentDay);
-        svg += `<text x="${currX}" y="${paddingTop - 12}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="middle">PRESENT</text>`;
-        svg += `<polygon points="${currX - 4},${paddingTop - 8} ${currX + 4},${paddingTop - 8} ${currX},${paddingTop - 1}" fill="#ffffff" />`;
-        
-        svg += `<text x="${width - paddingRight}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">+30</text>`;
+        const pricePoints = history.map((p, i) => `${iToX(i)},${vToY(p.price)}`).join(' ');
+        svg += `<polyline fill="none" stroke="#60a5fa" stroke-width="2" points="${pricePoints}" />`;
 
-        // X-Axis TIME Label (Centered relative to the drawn graph width)
-        const graphCenterX = paddingLeft + ((width - paddingLeft - paddingRight) / 2);
-        svg += `<text x="${graphCenterX}" y="${graphBottomY + 34}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="middle">TIME</text>`;
-
-        // Current Price Floating Label (Offset to top left)
-        const currY = vToY(currentPricePoint.price);
-        svg += `<text x="${currX - 6}" y="${currY - 6}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(currentPricePoint.price, false)}</text>`;
-
-        // Y-Axis Scale Bounds (Including Midpoint and PRICE Label)
-        svg += `<text x="${paddingLeft - 6}" y="${paddingTop - 12}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">PRICE</text>`;
-        svg += `<text x="${paddingLeft - 6}" y="${vToY(minVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
-        svg += `<text x="${paddingLeft - 6}" y="${vToY(midVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(midVal, false)}</text>`;
-        svg += `<text x="${paddingLeft - 6}" y="${vToY(maxVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
-
-        // Pass 6: Structural Legend (Key) - Realigned to new paddingLeft
-        const legendY1 = height - 35;
-        const legendY2 = height - 15;
-        
-        // Row 1
-        svg += `<line x1="${paddingLeft}" y1="${legendY1 - 4}" x2="${paddingLeft + 12}" y2="${legendY1 - 4}" class="svg-line-history" />`;
-        svg += `<text x="${paddingLeft + 18}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">History</text>`;
-        
-        svg += `<line x1="${paddingLeft + 85}" y1="${legendY1 - 4}" x2="${paddingLeft + 97}" y2="${legendY1 - 4}" class="svg-line-project" />`;
-        svg += `<text x="${paddingLeft + 103}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Project</text>`;
-        
-        svg += `<line x1="${paddingLeft + 175}" y1="${legendY1 - 4}" x2="${paddingLeft + 187}" y2="${legendY1 - 4}" class="svg-line-local-avg" />`;
-        svg += `<text x="${paddingLeft + 193}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Local Avg</text>`;
-
-        // Row 2
-        svg += `<line x1="${paddingLeft}" y1="${legendY2 - 4}" x2="${paddingLeft + 12}" y2="${legendY2 - 4}" class="svg-line-sys-avg" />`;
-        svg += `<text x="${paddingLeft + 18}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Sys Avg</text>`;
-
-        svg += `<rect x="${paddingLeft + 85}" y="${legendY2 - 10}" width="10" height="10" fill="rgba(0, 255, 0, 0.35)" />`;
-        svg += `<rect x="${paddingLeft + 95}" y="${legendY2 - 10}" width="10" height="10" fill="rgba(255, 0, 0, 0.35)" />`;
-        svg += `<text x="${paddingLeft + 110}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Economy</text>`;
-
-        svg += `</svg></div>`;
+        const firstDay = history[0].day;
+        const lastDay = history[history.length - 1].day;
+        svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
+        svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        svg += `</svg>`;
         return svg;
     }
 
@@ -22122,20 +21885,20 @@ export class UIMarketControl {
         const history = gameState.player.creditHistory || [];
         if (!history || history.length < 2) return `<div class="text-gray-400 text-sm p-4">No Financial Data Available</div>`;
 
-        const width = 300, height = 140, paddingLeft = 45, paddingRight = 20;
+        const width = 280, height = 140, padding = 35;
         const values = history.map(h => h.value);
         const minVal = Math.min(...values);
         const maxVal = Math.max(...values);
         const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
 
-        const iToX = i => (i / (history.length - 1)) * (width - paddingLeft - paddingRight) + paddingLeft;
-        const vToY = v => height - paddingLeft - ((v - minVal) / valueRange) * (height - paddingLeft * 1.5); // Maintained vertical padding ratio
+        const iToX = i => (i / (history.length - 1)) * (width - padding * 2) + padding;
+        const vToY = v => height - padding - ((v - minVal) / valueRange) * (height - padding * 2.5);
 
         let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
         
         svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
-        svg += `<line x1="${paddingLeft}" y1="${vToY(maxVal)}" x2="${paddingLeft}" y2="${height - paddingLeft}" />`;
-        svg += `<line x1="${paddingLeft}" y1="${height - paddingLeft}" x2="${width - paddingRight}" y2="${height - paddingLeft}" />`;
+        svg += `<line x1="${padding}" y1="${vToY(maxVal)}" x2="${padding}" y2="${height - padding}" />`;
+        svg += `<line x1="${padding}" y1="${height - padding}" x2="${width - padding}" y2="${height - padding}" />`;
         svg += `</g>`;
 
         const points = history.map((h, i) => `${iToX(i)},${vToY(h.value)}`).join(' ');
@@ -22143,11 +21906,11 @@ export class UIMarketControl {
 
         const firstDay = history[0].day;
         const lastDay = history[history.length - 1].day;
-        svg += `<text x="${paddingLeft}" y="${height - paddingLeft + 15}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
-        svg += `<text x="${width - paddingRight}" y="${height - paddingLeft + 15}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
+        svg += `<text x="${padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="start">Day ${firstDay}</text>`;
+        svg += `<text x="${width - padding}" y="${height - padding + 15}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">Day ${lastDay}</text>`;
         
-        svg += `<text x="${paddingLeft - 8}" y="${vToY(minVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
-        svg += `<text x="${paddingLeft - 8}" y="${vToY(maxVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(minVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
+        svg += `<text x="${padding - 8}" y="${vToY(maxVal) + 3}" fill="#9ca3af" font-size="10" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
         
         svg += `</svg>`;
         return svg;
@@ -29364,8 +29127,6 @@ import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.j
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 import { SystemStateService } from './world/SystemStateService.js';
 
-const MISSION_CARGO_LEAKAGE_RATE = 0.15;
-
 export class MissionService {
     /**
      * @param {import('./GameState.js').GameState} gameState The central game state.
@@ -29774,24 +29535,6 @@ export class MissionService {
                         progress.objectives[objKey].deposited += amountDepositedThisTime;
                         totalDepositedThisCall += amountDepositedThisTime;
                         this.logger.info.player(this.gameState.day, 'MISSION_DEPOSIT', `Deposited ${amountDepositedThisTime}x ${itemId} for mission ${missionId}.`);
-                        
-                        // --- V1 FREIGHT ECONOMY LEAKAGE ---
-                        // Verify item is a valid market commodity before injecting into simulation
-                        const isCommodity = DB.COMMODITIES && DB.COMMODITIES.some(c => c.id === itemId);
-                        if (isCommodity && this.simulationService && this.simulationService.marketService) {
-                            const leakedAmount = Math.floor(amountDepositedThisTime * MISSION_CARGO_LEAKAGE_RATE);
-                            const currentLocationId = this.gameState.currentLocationId;
-                            
-                            if (leakedAmount > 0 && currentLocationId) {
-                                const localMarket = this.gameState.market.inventory[currentLocationId];
-                                if (localMarket && localMarket[itemId]) {
-                                    // Inject physical volume back into the simulation
-                                    localMarket[itemId].quantity += leakedAmount;
-                                    // Apply localized economic footprint pressure
-                                    this.simulationService.marketService.applyMarketImpact(itemId, leakedAmount, 'sell');
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -29856,8 +29599,6 @@ export class MissionService {
                             return b.maxCapacity - a.maxCapacity;
                         });
 
-                        let totalRemovedForLeakage = 0;
-
                         for (const shipData of shipInventories) {
                             if (remainingToRemove <= 0) break;
                             const toRemove = Math.min(remainingToRemove, shipData.qty);
@@ -29866,24 +29607,6 @@ export class MissionService {
                                 invItem.quantity -= toRemove;
                                 if (invItem.quantity === 0) invItem.avgCost = 0;
                                 remainingToRemove -= toRemove;
-                                totalRemovedForLeakage += toRemove;
-                            }
-                        }
-
-                        // --- V1 FREIGHT ECONOMY LEAKAGE ---
-                        if (totalRemovedForLeakage > 0) {
-                            const isCommodity = DB.COMMODITIES && DB.COMMODITIES.some(c => c.id === itemId);
-                            if (isCommodity && this.simulationService && this.simulationService.marketService) {
-                                const leakedAmount = Math.floor(totalRemovedForLeakage * MISSION_CARGO_LEAKAGE_RATE);
-                                const currentLocationId = this.gameState.currentLocationId;
-                                
-                                if (leakedAmount > 0 && currentLocationId) {
-                                    const localMarket = this.gameState.market.inventory[currentLocationId];
-                                    if (localMarket && localMarket[itemId]) {
-                                        localMarket[itemId].quantity += leakedAmount;
-                                        this.simulationService.marketService.applyMarketImpact(itemId, leakedAmount, 'sell');
-                                    }
-                                }
                             }
                         }
                     }
@@ -30750,9 +30473,10 @@ export class AssetService {
 --- START OF FILE: ./js/services/simulation/MarketService.js ---
 // js/services/simulation/MarketService.js
 /**
- * @fileoverview Manages the economic simulation, including evolving commodity prices,
- * replenishing inventories, and calculating dynamic target baselines driven by 
- * player footprint and system states.
+ * @fileoverview This file contains the MarketService class, which handles the simulation
+ * of the in-game economy. This includes evolving commodity prices over time based on
+ * volatility and market pressure, replenishing market inventories with persistence,
+ * and managing system-wide economic states.
  */
 import { GAME_RULES, COMMODITY_IDS, LOCATION_IDS } from '../../data/constants.js'; 
 import { DB } from '../../data/database.js';
@@ -30760,6 +30484,10 @@ import { skewedRandom } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { AssetService } from '../../services/AssetService.js'; 
 
+/**
+ * @class MarketService
+ * @description Manages the economic simulation aspects of the game.
+ */
 export class MarketService {
     /**
      * @param {import('../GameState.js').GameState} gameState The central game state object.
@@ -30772,6 +30500,7 @@ export class MarketService {
 
     /**
      * Wipes all player-driven market pressure and interactions, resetting the simulation to a baseline state.
+     * Used during extreme time skips (indentured servitude).
      */
     wipePlayerInfluence() {
         DB.MARKETS.forEach(market => {
@@ -30781,67 +30510,115 @@ export class MarketService {
                     inventoryItem.marketPressure = 0;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.priceLockEndDay = 0;
-                    inventoryItem.memoryExpirationDays = 0;
                     inventoryItem.isDepleted = false;
                     inventoryItem.isSaturated = false;
-                    inventoryItem.pendingOvernightSnap = false;
                     inventoryItem.depletionDay = 0;
                     inventoryItem.depletionBonusDay = 0;
-                    inventoryItem.saturationDay = 0;
                     inventoryItem.hoverUntilDay = 0;
                     inventoryItem.rivalArbitrage = { isActive: false, endDay: 0 };
                     
+                    // Hard reset quantity to a neutral baseline
                     inventoryItem.quantity = this._calculateBaselineStock(market, c);
                 }
             });
         });
         
+        // Evolve once to immediately align prices against the new baseline
         this.evolveMarketPrices();
     }
 
+    // --- VIRTUAL WORKBENCH: UPDATED getPrice ---
+
     /**
-     * Gets the effective price for a commodity at a location, applying standard modifiers.
-     * @param {string} locationId 
-     * @param {string} commodityId 
-     * @param {boolean} [applyModifiers=false] 
-     * @returns {number} 
+     * Gets the effective price for a commodity at a location.
+     * Checks for active intel deal overrides first.
+     * Optionally applies player-specific modifiers (e.g. Signal Hacker).
+     * @param {string} locationId The ID of the location.
+     * @param {string} commodityId The ID of the commodity.
+     * @param {boolean} [applyModifiers=false] If true, applies active ship upgrade modifiers (Buy Price).
+     * @returns {number} The effective price.
      */
     getPrice(locationId, commodityId, applyModifiers = false) {
         const deal = this.gameState.getState().activeIntelDeal;
         let price = this.gameState.market.prices[locationId]?.[commodityId] || 0;
 
-        if (deal && deal.locationId === locationId && deal.commodityId === commodityId) {
+        // 1. Intel Deal Override Check
+        if (deal &&
+            deal.locationId === locationId &&
+            deal.commodityId === commodityId) {
+            
+            // If a deal is active, use the price (which is being fluctuated daily in evolveMarketPrices 
+            // around the overridePrice).
             price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
         }
 
-        if (locationId === LOCATION_IDS.EARTH && (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) price *= 1.10;
-        if (locationId === LOCATION_IDS.MARS && (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) price *= 1.10;
-        if (locationId === LOCATION_IDS.SATURN && (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) price *= 1.20;
-        if (locationId === LOCATION_IDS.PLUTO && (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) price *= 1.25;
-        if (locationId === LOCATION_IDS.MERCURY && commodityId === COMMODITY_IDS.WATER_ICE) price *= 1.40;
-        if (locationId === LOCATION_IDS.SUN && (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) price *= 1.25;
+        // --- VIRTUAL WORKBENCH: STATION QUIRKS (PRICE BOOSTS) ---
+        // Earth Quirk: +10% Sell Price for Cloned Organs & Xeno-Geologicals
+        if (locationId === LOCATION_IDS.EARTH && 
+            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
+            price = price * 1.10;
+        }
 
+        // Mars Quirk: +10% Sell Price for Water Ice & Hydroponics
+        if (locationId === LOCATION_IDS.MARS &&
+            (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
+            price = price * 1.10;
+        }
+
+        // Saturn Quirk: +20% Sell Price for Cloned Organs & Cryo-Sleep Pods
+        if (locationId === LOCATION_IDS.SATURN &&
+            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
+            price = price * 1.20;
+        }
+
+        // Pluto Quirk: +25% Sell Price for Cybernetics & Antimatter
+        if (locationId === LOCATION_IDS.PLUTO &&
+            (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
+            price = price * 1.25;
+        }
+
+        // Mercury Quirk: +40% Sell Price for Water Ice
+        if (locationId === LOCATION_IDS.MERCURY &&
+            commodityId === COMMODITY_IDS.WATER_ICE) {
+            price = price * 1.40;
+        }
+
+        // Sol Quirk: +25% Sell Price for Graphene Lattices & Plasteel
+        if (locationId === LOCATION_IDS.SUN &&
+            (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
+            price = price * 1.25;
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
+        // 2. Upgrade Modifiers (Signal Hacker)
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
+             // Safety check: Ensure we have a valid ship state to read upgrades from
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
                  const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
+                 // Fetch the 'buy' modifier (e.g., 0.97 for Signal Hacker I)
                  const mod = GameAttributes.getPriceModifier(upgrades, 'buy');
-                 price *= mod;
+                 price = price * mod;
              }
         }
 
+        // Ensure price never drops below 1
         return Math.max(1, Math.round(price));
     }
 
     /**
      * Retrieves the pre-calculated galactic average price for a commodity.
+     * @param {string} commodityId The ID of the commodity.
+     * @returns {number} The galactic average price.
      */
     getGalacticAverage(commodityId) {
         return this.gameState.market.galacticAverages[commodityId] || 0;
     }
 
+    // --- END VIRTUAL WORKBENCH ---
+
     /**
-     * Checks if the current system-wide economic state should change.
+     * Checks if the current system-wide economic state should change and applies a new one if necessary.
      */
     checkForSystemStateChange() {
         if (this.gameState.day > this._systemStateExpirationDay) {
@@ -30853,48 +30630,92 @@ export class MarketService {
     }
 
     /**
-     * Simulates market price changes during the overnight progression.
-     * Integrates structural snaps for panic states triggered during the prior day.
-     * Applies the Relativistic Distance Scalar to freeze outer rim economies.
+     * Simulates one week of market price changes for all commodities at all locations.
+     * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
+     * and player-driven market pressure.
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
-            const distanceScalar = Math.max(1, (location.distance || 1) / GAME_RULES.BASE_TRANSIT_DISTANCE);
-
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
+                // --- VIRTUAL WORKBENCH (PHASE 2 & User Request) ---
+                // Enforce Intel Price Lock
                 const activeDeal = this.gameState.activeIntelDeal;
-                if (activeDeal && activeDeal.locationId === location.id && activeDeal.commodityId === commodity.id) {
+                if (activeDeal &&
+                     activeDeal.locationId === location.id &&
+                     activeDeal.commodityId === commodity.id)
+                {
+                    // --- MODIFICATION: Apply 3% fluctuation to the locked price ---
                     const basePrice = activeDeal.overridePrice;
-                    const fluctuation = 0.03; 
+                    const fluctuation = 0.03; // 3%
                     const minPrice = basePrice * (1 - fluctuation);
                     const maxPrice = basePrice * (1 + fluctuation);
+                    
+                    // Generate a random price within the [minPrice, maxPrice] range
                     const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
+                    
+                    // Set the new price, ensuring it's at least 1
                     this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
+                    // --- END MODIFICATION ---
+
+                    // Skip all other evolution logic for this item
                     return; 
                 }
+                // --- END VIRTUAL WORKBENCH ---
 
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
-                
-                const localBaseline = this.getLocalTargetPrice(location.id, commodity.id);
+                const avg = this.gameState.market.galacticAverages[commodity.id];
 
-                let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
-                if (location.id === LOCATION_IDS.EXCHANGE) volatility *= 3.0;
+                // Determine the local baseline price based on import/export modifiers
+                const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
 
-                let activeStateMeanReversionMod = 1.0;
+                // --- SYSTEM STATES V3 HOOKS (Prices) ---
                 const systemState = this.gameState.systemState;
                 const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-                if (activeStateDef && activeStateDef.modifiers?.meanReversionMod) {
-                    activeStateMeanReversionMod = activeStateDef.modifiers.meanReversionMod;
+                const isTargetLocation = systemState && systemState.targetLocations?.includes(location.id);
+
+                let basePriceMod = 1.0;
+                let activeStateMeanReversionMod = 1.0;
+
+                if (activeStateDef && activeStateDef.modifiers) {
+                    const mods = activeStateDef.modifiers;
+                    if (mods.meanReversionMod) activeStateMeanReversionMod = mods.meanReversionMod;
+                    
+                    if (mods.affectedCommodities?.includes(commodity.id) && mods.basePriceInflate) {
+                        basePriceMod *= mods.basePriceInflate;
+                    }
+                    if (isTargetLocation) {
+                        if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
+                        if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
+                    }
                 }
+                // --- END SYSTEM STATES V3 ---
+
+                // (1.0 - modifier) inverts the logic:
+                // Exporter (mod > 1.0) results in a negative offset (lower price)
+                // Importer (mod < 1.0) results in a positive offset (higher price)
+                const targetPriceOffset = (1.0 - modifier) * avg;
+
+                // The new baseline is the galactic average, pulled towards the local target price
+                // by the strength of the modifier.
+                const localBaseline = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+
+                let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
+                
+                // --- VIRTUAL WORKBENCH: EXCHANGE QUIRK (VOLATILITY) ---
+                if (location.id === LOCATION_IDS.EXCHANGE) {
+                    volatility *= 3.0; // 3x Price Volatility at The Exchange
+                }
+                // --- END VIRTUAL WORKBENCH ---
 
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH * activeStateMeanReversionMod;
-                if (location.ecoProfile?.meanReversionMod) meanReversion *= location.ecoProfile.meanReversionMod;
-
-                // --- RELATIVISTIC MEAN REVERSION ---
-                meanReversion /= distanceScalar;
+                
+                // Apply Location EcoProfile Mean Reversion Modifier
+                if (location.ecoProfile?.meanReversionMod) {
+                    meanReversion *= location.ecoProfile.meanReversionMod;
+                }
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
@@ -30907,9 +30728,13 @@ export class MarketService {
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 
-                if (this.gameState.day < inventoryItem.priceLockEndDay && !inventoryItem.isDepleted && !inventoryItem.isSaturated) {
+                // --- NEW: Variable Reversion Delay (Point e) ---
+                // If the player has traded this item recently, a "price lock" is in effect,
+                // stopping mean reversion. The duration is set randomly on transaction.
+                if (this.gameState.day < inventoryItem.priceLockEndDay) {
                     reversionEffect = 0;
                 }
+                // --- END CHANGE ---
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
                     reversionEffect = (localBaseline - price) * 0.20;
@@ -30917,15 +30742,41 @@ export class MarketService {
                     inventoryItem.rivalArbitrage.isActive = false;
                 }
 
-                if (inventoryItem.hoverUntilDay > this.gameState.day) reversionEffect *= 0.1;
-
-                let newPrice = price + randomFluctuation + reversionEffect;
-
-                // Execute Structural Snap (Overnight Correction)
-                if (inventoryItem.pendingOvernightSnap) {
-                    newPrice = localBaseline;
-                    inventoryItem.pendingOvernightSnap = false; // Clear flag after snapping
+                if (inventoryItem.hoverUntilDay > this.gameState.day) {
+                     reversionEffect *= 0.1;
+                } else if (inventoryItem.hoverUntilDay > 0) {
+                    inventoryItem.hoverUntilDay = 0;
                 }
+
+                // [GEMINI] --- MODEL FIX: "DELAYED PRESSURE" ---
+                // This is now the primary, and only, player-driven price force.
+                // It is 0 by default and is only populated by a player trade.
+                let pressureEffect = 0;
+                const PLAYER_PRESSURE_STRENGTH = 0.50; // Tuned strength
+                
+                // Add 1-week delay before player's actions impact price
+                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    // Check if lastPlayerInteractionTimestamp is > 0 to prevent this from running on Day 7 of a new game
+                    if (inventoryItem.lastPlayerInteractionTimestamp > 0) {
+                         pressureEffect = (localBaseline * inventoryItem.marketPressure * -1) * PLAYER_PRESSURE_STRENGTH;
+                    }
+                }
+                // [GEMINI] --- END MODEL FIX ---
+
+                let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
+                
+                // --- NEW: Depletion Price Hike ---
+                if (inventoryItem.isDepleted) {
+                    let priceHikeMultiplier = location.ecoProfile?.panicMult ?? 1.5; // Defaults to 1.5, scaling up for fringe/desperate worlds
+                    newPrice *= priceHikeMultiplier;
+                }
+                // --- End Depletion Price Hike ---
+                
+                // --- NEW: Saturation Penalty ---
+                if (inventoryItem.isSaturated) {
+                    newPrice *= 0.25; // Crash the price to floor values
+                }
+                // --- End Saturation Penalty ---
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[commodity.id]?.price) {
                      newPrice *= this._currentSystemState.modifiers.commodity[commodity.id].price;
@@ -30933,39 +30784,41 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(newPrice));
 
+                // marketPressure still decays, as this is the "timer" for the pressureEffect
                 let decayMod = 1.0;
+                // e.g. Saturn Quirk: Recovers from negative market pressure (player crashes = positive pressure) faster
                 if (inventoryItem.marketPressure > 0 && location.ecoProfile?.recoveryMod) {
                     decayMod = 1.0 / location.ecoProfile.recoveryMod;
                 }
 
-                // --- RELATIVISTIC MARKET MEMORY (DECAY) ---
-                const baseDecayRate = 1 - (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
-                const scaledDecayRate = baseDecayRate / distanceScalar;
-                inventoryItem.marketPressure *= (1 - scaledDecayRate);
-                
-                if (Math.abs(inventoryItem.marketPressure) < 0.001) inventoryItem.marketPressure = 0;
+                inventoryItem.marketPressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
+                if (Math.abs(inventoryItem.marketPressure) < 0.001) {
+                    inventoryItem.marketPressure = 0;
+                }
             });
             this._recordPriceHistory(location.id);
         });
     }
     
     /**
-     * Simulates the weekly replenishment of commodity stock and evaluates multi-year memory decay.
-     * Applies the Relativistic Distance Scalar to choke automated goods flow to the outer rim.
+     * Simulates the weekly replenishment of commodity stock using a hybrid model.
+     * Stock gradually moves towards a target influenced by player actions, with a final random fluctuation.
      */
     replenishMarketInventory() {
         DB.MARKETS.forEach(market => {
-            const distanceScalar = Math.max(1, (market.distance || 1) / GAME_RULES.BASE_TRANSIT_DISTANCE);
-
             DB.COMMODITIES.forEach(c => {
                 if (c.tier > this.gameState.player.revealedTier) return;
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
+
+                // --- SYSTEM STATES V3 HOOKS (Replenishment) ---
                 const systemState = this.gameState.systemState;
                 const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
                 const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
 
                 let targetStockMod = 1.0;
+                
+                // Dynamically fetch base replenish rate from Location EcoProfile, falling back to global default (10%)
                 let replenishRate = market.ecoProfile?.commodityReplenishRates?.[c.id] ?? market.ecoProfile?.replenishRate ?? 0.10;
 
                 if (activeStateDef && activeStateDef.modifiers) {
@@ -30975,62 +30828,86 @@ export class MarketService {
 
                     if (mods.targetStockTiers?.includes(c.tier) && mods.targetStockMod) targetStockMod *= mods.targetStockMod;
                     if (mods.affectedCommodities?.includes(c.id) && mods.targetStockMod) targetStockMod *= mods.targetStockMod;
-                    if (mods.meanReversionMod && mods.targetStockMod) targetStockMod *= mods.targetStockMod; 
+                    if (mods.meanReversionMod && mods.targetStockMod) targetStockMod *= mods.targetStockMod; // Geopolitical Stalemate fallback
                     
                     if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
                 }
+                // --- END SYSTEM STATES V3 ---
 
-                // --- RELATIVISTIC REPLENISHMENT ---
-                replenishRate /= distanceScalar;
-
-                // Memory Decay Evaluation (1 to 4 years threshold check)
-                const memoryExpiration = inventoryItem.memoryExpirationDays || (inventoryItem.lastPlayerInteractionTimestamp + 365);
-                
-                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && this.gameState.day >= memoryExpiration) {
+                // Market Memory: Reset if untouched for 365 days.
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 365) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
-                    inventoryItem.memoryExpirationDays = 0;
                     inventoryItem.marketPressure = 0;
-                    inventoryItem.depletionDay = 0; 
-                    inventoryItem.priceLockEndDay = 0; 
+                    inventoryItem.depletionDay = 0; // Clear depletion day on reset
+                    inventoryItem.priceLockEndDay = 0; // <-- ADDED: Clear price lock on reset
                     inventoryItem.isDepleted = false;
-                    inventoryItem.isSaturated = false; 
-                    inventoryItem.pendingOvernightSnap = false;
+                    inventoryItem.isSaturated = false; // Clear saturation flag
                 } else {
+                    // Phase 1: Establish Dynamic Target Stock
                     const [minAvail, maxAvail] = c.canonicalAvailability;
                     const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
                     
+                    // Market adaptation: high player selling pressure reduces the target stock.
                     let pressureForAdaptation = inventoryItem.marketPressure;
+                    // If pressure is negative (player buying), delay its effect for 1 week
                     if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
-                        pressureForAdaptation = 0; 
+                        pressureForAdaptation = 0; // Ignore recouping pressure for the first week
                     }
-                    if (pressureForAdaptation > 0) pressureForAdaptation = 0;
 
-                    const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5)); 
-                    const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
+                    // Only allow negative pressure (player buying) to increase target stock.
+                    // Positive pressure (player selling) no longer decreases it.
+                    if (pressureForAdaptation > 0) {
+                        pressureForAdaptation = 0;
+                    }
+
+                    // Market adaptation factor
+                    const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); // Now only ever >= 1.0
                     
+                    // --- PHASE 2: AGE PERK (COMMODITY SUPPLY) ---
+                    // "Increased commodity supply available at all markets by 2%"
+                    const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
+                    // --- END PHASE 2 ---
+
                     const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus) * targetStockMod;
+
+                    // Phase 2: Gradual Replenishment Towards Target
                     const difference = targetStock - inventoryItem.quantity;
                     const replenishAmount = difference * replenishRate; 
                     
+                    // --- NEW: Emergency Stock Boost ---
                     let emergencyStock = 0;
-                    if (inventoryItem.isDepleted || inventoryItem.quantity <= 0) {
+                    if (inventoryItem.isDepleted) {
+                        // If item was depleted, add a small emergency boost
+                        emergencyStock = skewedRandom(1, 5);
+                    } else if (inventoryItem.quantity <= 0) {
+                        // Also boost if it just happens to be 0
                         emergencyStock = skewedRandom(1, 5);
                     }
+                    // --- End Emergency Stock Boost ---
 
                     inventoryItem.quantity += (replenishAmount + emergencyStock);
 
-                    if (inventoryItem.isDepleted && inventoryItem.quantity >= (targetStock * 0.60)) inventoryItem.isDepleted = false;
-                    if (inventoryItem.isSaturated && inventoryItem.quantity <= (targetStock * 2.0)) inventoryItem.isSaturated = false;
+                    // Threshold Check: Turn off panic if stock is restored to 60% of target
+                    if (inventoryItem.isDepleted && inventoryItem.quantity >= (targetStock * 0.60)) {
+                        inventoryItem.isDepleted = false;
+                    }
+
+                    // Threshold Check: Turn off saturation embargo if stock falls below 200% of target
+                    if (inventoryItem.isSaturated && inventoryItem.quantity <= (targetStock * 2.0)) {
+                        inventoryItem.isSaturated = false;
+                    }
                 }
 
+                // Phase 3: Apply Final Visual Fluctuation
                 if (!market.ecoProfile?.disableFluctuation) {
-                    const fluctuationPercent = (Math.random() * 0.15 + 0.15); 
+                    const fluctuationPercent = (Math.random() * 0.15 + 0.15); // Random value between 0.15 and 0.30
                     const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
                     const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
                     inventoryItem.quantity *= finalFluctuation;
                 }
                 
+                // Apply system state modifiers if any exist.
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
                     inventoryItem.quantity *= this._currentSystemState.modifiers.commodity[c.id].availability;
                 }
@@ -31041,7 +30918,10 @@ export class MarketService {
     }
 
     /**
-     * Applies dynamic volume pressure and calculates future adaptation targets.
+     * Applies a dynamic price adjustment to a commodity based on the volume of a player's transaction.
+     * @param {string} goodId - The ID of the commodity traded.
+     * @param {number} quantity - The amount traded.
+     * @param {string} transactionType - 'buy' or 'sell'.
      */
     applyMarketImpact(goodId, quantity, transactionType) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
@@ -31049,77 +30929,87 @@ export class MarketService {
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
         let pressureMod = market?.ecoProfile?.dampeners?.[goodId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
-        const pressureChange = (((Math.abs(quantity) / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
+
+        // This calculation is the core driver of the price change.
+        // It sets marketPressure, which is used by pressureEffect after 7 days.
+        const pressureChange = (((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
         
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;
-        } else {
+        } else { // 'sell'
             inventoryItem.marketPressure += pressureChange;
             
+            // --- NEW: Check for Market Saturation ---
             const [minAvail, maxAvail] = good.canonicalAvailability;
             const modifier = market.availabilityModifier?.[goodId] ?? 1.0;
             const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
             
             let pressureForAdaptation = inventoryItem.marketPressure;
-            if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
+            if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
             
-            const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
+            const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
             const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
             const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
             
             if (inventoryItem.quantity > (targetStock * 3.0)) {
                 inventoryItem.isSaturated = true;
-                inventoryItem.saturationDay = this.gameState.day;
-                inventoryItem.pendingOvernightSnap = true; // Flag for next day evolution
+                // Log for System State footprint evaluation
                 if (this.gameState.systemState && this.gameState.systemState.economyFootprints) {
                     this.gameState.systemState.economyFootprints.push({
                         day: this.gameState.day, type: 'SATURATION', locationId: this.gameState.currentLocationId, commodityId: good.id
                     });
                 }
             }
+            // --- END SATURATION CHECK ---
         }
 
+        // --- NEW: Set Variable Price Lock Duration ---
         const baseLock = 60;
         const distanceBonus = (market?.distance || 0) * 0.20;
         const targetLock = baseLock + distanceBonus;
-        const jitter = targetLock * 0.10; 
+        const jitter = targetLock * 0.10; // ±10% fluctuation
         
         const lockDuration = Math.floor(targetLock + (Math.random() * (jitter * 2) - jitter));
         inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
-        
-        // Randomize Memory Decay between 1 and 4 years (365 to 1460 days)
-        if (!inventoryItem.memoryExpirationDays || inventoryItem.memoryExpirationDays <= this.gameState.day) {
-            const memoryDuration = Math.floor(Math.random() * (1460 - 365 + 1)) + 365;
-            inventoryItem.memoryExpirationDays = this.gameState.day + memoryDuration;
-        }
-        
+        // --- END CHANGE ---
+
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
     }
 
+    // --- VIRTUAL WORKBENCH: NEW METHOD ---
     /**
-     * Checks if a purchase triggers a market depletion panic.
+     * Checks if a purchase triggers a market depletion event.
+     * This logic is called by PlayerActionService when a good's stock reaches <= 0.
+     * @param {object} good - The static commodity data (from DB).
+     * @param {object} inventoryItem - The dynamic inventory item from gameState.
+     * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
+     * @param {number} currentDay - The current game day.
      */
     checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
+        // Calculate target stock to check 8% threshold
         const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
         const [minAvail, maxAvail] = good.canonicalAvailability;
         const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
         const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
         
         let pressureForAdaptation = inventoryItem.marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
         
-        const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
+        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
         const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
         
         const depletionThreshold = targetStock * 0.08;
+        
+        // The amount purchased was the entire stock that was on hand
         const depletionBuyQuantity = stockBeforeBuy; 
 
+        // Check if buy quantity was >= 8% target and if 1 year has passed since last bonus
         if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
-            inventoryItem.isDepleted = true; 
-            inventoryItem.depletionDay = currentDay; 
-            inventoryItem.depletionBonusDay = currentDay; 
-            inventoryItem.pendingOvernightSnap = true; // Flag for next day evolution
+            inventoryItem.isDepleted = true; // Set flag for MarketService's evolveMarketPrices
+            inventoryItem.depletionDay = currentDay;
+            inventoryItem.depletionBonusDay = currentDay; // Set cooldown
 
+            // Log for System State footprint evaluation
             if (this.gameState.systemState && this.gameState.systemState.economyFootprints) {
                 this.gameState.systemState.economyFootprints.push({
                     day: currentDay, type: 'DEPLETION', locationId: this.gameState.currentLocationId, commodityId: good.id
@@ -31127,213 +31017,26 @@ export class MarketService {
             }
         }
     }
+    // --- END VIRTUAL WORKBENCH ---
 
     /**
-     * Calculates the threshold for Asymmetric Saturation (Glut).
+     * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
+     * @param {object} market - The market object from the database.
+     * @param {object} commodity - The commodity object from the database.
+     * @returns {number} The calculated baseline stock quantity.
+     * @private
      */
-    getGlutThreshold(locationId, commodityId) {
-        const good = DB.COMMODITIES.find(c => c.id === commodityId);
-        const market = DB.MARKETS.find(m => m.id === locationId);
-        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
-        
-        const [minAvail, maxAvail] = good.canonicalAvailability;
-        const modifier = market.availabilityModifier?.[commodityId] ?? 1.0;
-        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
-        
-        let pressureForAdaptation = inventoryItem.marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
-        
-        const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
-        const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
-        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
-        
-        return targetStock * 3.0;
-    }
-
-    /**
-     * Calculates the Local Target Price, fully integrating the player's supply/demand footprint 
-     * to serve as a living baseline for simulation and UI graphs.
-     */
-    getLocalTargetPrice(locationId, commodityId, simulatedQty = 0, simulatedMode = null, isProjecting = false) {
-        const avg = this.getGalacticAverage(commodityId);
-        const market = DB.MARKETS.find(m => m.id === locationId);
-        const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
-        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
-        
-        let basePriceMod = 1.0;
-        const systemState = this.gameState.systemState;
-        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-        const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
-
-        if (activeStateDef && activeStateDef.modifiers) {
-            const mods = activeStateDef.modifiers;
-            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
-                basePriceMod *= mods.basePriceInflate;
-            }
-            if (isTargetLocation) {
-                if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
-                if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
-            }
-        }
-
-        const modifier = market.availabilityModifier?.[commodityId] ?? 1.0;
-        const targetPriceOffset = (1.0 - modifier) * avg;
-        let target = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
-
-        // AVAILABILITY EFFECT (SUPPLY VS DEMAND RATIO)
-        const [minAvail, maxAvail] = commodity.canonicalAvailability;
-        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
-        
-        let pressureForAdaptation = inventoryItem.marketPressure;
-        
-        if (isProjecting && simulatedQty > 0) {
-            const pressureMod = market?.ecoProfile?.dampeners?.[commodityId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
-            const pressureChange = (((Math.abs(simulatedQty) / (maxAvail || 100)) * commodity.tier) / 10) * pressureMod;
-            if (simulatedMode === 'buy') {
-                pressureForAdaptation -= pressureChange;
-            } else {
-                pressureForAdaptation += pressureChange;
-            }
-        }
-
-        if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7 && !isProjecting) {
-            pressureForAdaptation = 0; 
-        }
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
-        
-        const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
-        const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
-        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
-
-        let currentStock = inventoryItem.quantity;
-        if (isProjecting) {
-            if (simulatedMode === 'sell') currentStock += simulatedQty;
-            if (simulatedMode === 'buy') currentStock = Math.max(0, currentStock - simulatedQty);
-        }
-
-        const availabilityRatio = currentStock / targetStock;
-        const availabilityMultiplier = Math.max(0.1, Math.min(3.0, 1 + ((1 - availabilityRatio) * 0.50)));
-        target *= availabilityMultiplier;
-
-        // STRUCTURAL PANIC MODIFIERS
-        let isSimulatedDepleted = inventoryItem.isDepleted;
-        let isSimulatedSaturated = inventoryItem.isSaturated;
-
-        if (isProjecting && simulatedQty > 0) {
-            if (simulatedMode === 'buy' && simulatedQty >= (targetStock * 0.08)) isSimulatedDepleted = true;
-            if (simulatedMode === 'sell' && currentStock > (targetStock * 3.0)) isSimulatedSaturated = true;
-        }
-
-        if (isSimulatedDepleted) {
-            let priceHikeMultiplier = market.ecoProfile?.panicMult ?? 1.5;
-            target *= priceHikeMultiplier;
-        }
-        if (isSimulatedSaturated) {
-            target *= 0.25;
-        }
-
-        return target;
-    }
-
-    /**
-     * Generates mathematical curve data for historical and projected prices.
-     * Incorporates the Relativistic Distance Scalar to ensure UI graphs accurately reflect outer-rim freeze.
-     */
-    generateCurveData(locationId, commodityId, historyDays, projectedDays, simulatedQty = 0, simulatedMode = 'sell') {
-        const currentDay = this.gameState.day;
-        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
-        const currentPrice = this.gameState.market.prices[locationId][commodityId];
-        
-        const market = DB.MARKETS.find(m => m.id === locationId);
-        const distanceScalar = Math.max(1, (market?.distance || 1) / GAME_RULES.BASE_TRANSIT_DISTANCE);
-
-        // --- RELATIVISTIC MEAN REVERSION (Dampened by distance for projections) ---
-        const meanReversion = (GAME_RULES.MEAN_REVERSION_STRENGTH || 0.025) / distanceScalar;
-
-        let priceLockEnd = inventoryItem.priceLockEndDay || 0;
-        
-        const curveData = [];
-        
-        const historicalBaseline = this.getLocalTargetPrice(locationId, commodityId, 0, null, false);
-        for (let i = historyDays; i > 0; i--) {
-            const dayOffset = -i;
-            const pastDay = currentDay + dayOffset;
-            const divergence = (currentPrice - historicalBaseline) / Math.pow(1 - meanReversion, Math.abs(dayOffset));
-            const cappedDivergence = Math.max(-historicalBaseline * 0.9, Math.min(historicalBaseline * 4, divergence));
-            const pastPrice = Math.max(1, historicalBaseline + cappedDivergence);
-            
-            curveData.push({
-                day: pastDay,
-                price: pastPrice,
-                isLocked: false
-            });
-        }
-        
-        curveData.push({
-            day: currentDay,
-            price: currentPrice,
-            isLocked: currentDay < priceLockEnd
-        });
-
-        let projectedPrice = currentPrice;
-        let projectedLockEnd = priceLockEnd;
-
-        const futureBaseline = this.getLocalTargetPrice(locationId, commodityId, simulatedQty, simulatedMode, true);
-
-        if (simulatedQty > 0) {
-            const good = DB.COMMODITIES.find(c => c.id === commodityId);
-            const currentMarketStock = inventoryItem.quantity;
-            
-            const [minAvail, maxAvail] = good.canonicalAvailability;
-            const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
-            const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
-            const targetStock = Math.max(1, baseMeanStock); 
-            
-            const glutThreshold = targetStock * 3.0;
-
-            if (simulatedMode === 'sell') {
-                const pressureMod = market?.ecoProfile?.dampeners?.[commodityId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
-                const pressureChange = (((Math.abs(simulatedQty) / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
-                projectedLockEnd = Math.max(projectedLockEnd, currentDay + Math.floor(7 * pressureChange)); 
-                
-                if ((simulatedQty + currentMarketStock) > glutThreshold) {
-                    projectedPrice = futureBaseline; 
-                    projectedLockEnd = Math.max(projectedLockEnd, currentDay + 30);
-                }
-            } else if (simulatedMode === 'buy') {
-                const depletionThreshold = targetStock * 0.08;
-                if (simulatedQty >= depletionThreshold) {
-                    projectedPrice = futureBaseline; 
-                }
-            }
-        }
-        
-        for (let i = 1; i <= projectedDays; i++) {
-            const futureDay = currentDay + i;
-            let isLocked = false;
-
-            if (futureDay <= projectedLockEnd && projectedPrice !== futureBaseline) {
-                isLocked = true;
-            } else {
-                projectedPrice += (futureBaseline - projectedPrice) * meanReversion;
-            }
-            
-            curveData.push({
-                day: futureDay,
-                price: Math.max(1, projectedPrice),
-                isLocked: isLocked
-            });
-        }
-        
-        return curveData;
-    }
-
     _calculateBaselineStock(market, commodity) {
         const [min, max] = commodity.canonicalAvailability;
         const modifier = market.availabilityModifier?.[commodity.id] ?? 1.0;
         return Math.floor(skewedRandom(min, max) * modifier);
     }
 
+    /**
+     * Records the current day's price for each commodity to its historical data log for graphing.
+     * @param {string} [marketId=null] - The ID of the market to record history for. Defaults to the current location.
+     * @private
+     */
     _recordPriceHistory(marketId = null) {
         if (!this.gameState || !this.gameState.market) return;
         const targetMarketId = marketId || this.gameState.currentLocationId;
@@ -31366,6 +31069,10 @@ export class MarketService {
         });
     }
 
+    /**
+     * Updates the shipyard stock for all unlocked locations on a weekly basis.
+     * @private
+     */
     _updateShipyardStock() {
         const { player } = this.gameState;
         player.unlockedLocationIds.forEach(locationId => {
@@ -31375,8 +31082,10 @@ export class MarketService {
             const rareShips = Object.entries(DB.SHIPS).filter(([id, ship]) => ship.isRare && ship.saleLocationId === locationId && !player.ownedShipIds.includes(id));
             const shipsForSaleIds = [...commonShips.map(entry => entry[0])];
             
+            // --- PHASE 2: AGE PERK (RARE SHIP SPAWN RATE) ---
             const spawnRateBonus = this.gameState.player.statModifiers?.shipSpawnRate || 0;
             const finalSpawnChance = GAME_RULES.RARE_SHIP_CHANCE + spawnRateBonus;
+            // --- END PHASE 2 ---
 
             rareShips.forEach(([id, ship]) => {
                 if (Math.random() < finalSpawnChance) {
@@ -31388,8 +31097,12 @@ export class MarketService {
                 shipsForSale: shipsForSaleIds
             };
 
+            // --- [[START]] PHASE 4: TRAVEL/SPAWN HYDRATION ---
+            // Whenever new stock is generated (e.g. during travel), immediately 
+            // hydrate those specific ships so they are ready when the user visits the shipyard.
             const spawnRequests = shipsForSaleIds.map(shipId => ({ type: 'ship', id: shipId, seed: player.visualSeed }));
             AssetService.hydrateAssets(spawnRequests);
+            // --- [[END]] PHASE 4: TRAVEL/SPAWN HYDRATION ---
         });
     }
 }
@@ -31509,10 +31222,7 @@ export class SystemStateService {
     _rollRngState() {
         const allStates = Object.keys(DB.SYSTEM_STATES).filter(k => k !== 'NEUTRAL');
         const ledger = this.gameState.systemState.historyLedger || [];
-        const lastEntry = ledger.length > 0 ? ledger[ledger.length - 1] : null;
-        
-        // Safely extract the ID whether it's a legacy string or a new object format
-        const lastStateId = lastEntry ? (typeof lastEntry === 'string' ? lastEntry : lastEntry.id) : null;
+        const lastStateId = ledger.length > 0 ? ledger[ledger.length - 1] : null;
         const lastArchetype = lastStateId && DB.SYSTEM_STATES[lastStateId] ? DB.SYSTEM_STATES[lastStateId].archetype : null;
 
         // Ensure the new state belongs to a different Archetype than the previous one
@@ -31538,19 +31248,14 @@ export class SystemStateService {
 
         const sysState = this.gameState.systemState;
         
-        // Archive the previous active state to the history ledger using temporal object format
+        // Archive the previous active state to the history ledger
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
             if (!sysState.historyLedger) sysState.historyLedger = [];
-            sysState.historyLedger.push({
-                id: sysState.activeId,
-                startDay: sysState.startDay || this.gameState.day,
-                endDay: this.gameState.day
-            });
+            sysState.historyLedger.push(sysState.activeId);
             if (sysState.historyLedger.length > 10) sysState.historyLedger.shift();
         }
 
         sysState.activeId = stateId;
-        sysState.startDay = this.gameState.day;
         sysState.remainingDays = Math.floor(Math.random() * (stateDef.durationBounds[1] - stateDef.durationBounds[0] + 1)) + stateDef.durationBounds[0];
 
         // Roll and save a static varietal index for narrative consistency
@@ -31577,21 +31282,14 @@ export class SystemStateService {
      */
     endCurrentState() {
         const sysState = this.gameState.systemState;
-        
-        // Archive the previous active state to the history ledger using temporal object format
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
             if (!sysState.historyLedger) sysState.historyLedger = [];
-            sysState.historyLedger.push({
-                id: sysState.activeId,
-                startDay: sysState.startDay || this.gameState.day,
-                endDay: this.gameState.day
-            });
+            sysState.historyLedger.push(sysState.activeId);
             if (sysState.historyLedger.length > 10) sysState.historyLedger.shift();
         }
 
         const neutralDef = DB.SYSTEM_STATES['NEUTRAL'];
         sysState.activeId = 'NEUTRAL';
-        sysState.startDay = this.gameState.day;
         sysState.remainingDays = 0;
         sysState.targetLocations = [];
         sysState.varietalIndex = 0;
@@ -31642,7 +31340,6 @@ import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
 import { formatCredits } from '../../utils.js';
-import { starfieldService } from '../ui/StarfieldService.js';
 
 export class TravelService {
     /**
@@ -31664,22 +31361,6 @@ export class TravelService {
 
         // [[DEBUG FLAG]]
         this.debugAlwaysTriggerEvents = false;
-    }
-
-    /**
-     * Retrieves the exact base transit time (in days) between two locations.
-     * This is a pure/stateless query method for other services (e.g., IntelService).
-     * @param {string} originId - The ID of the starting location.
-     * @param {string} destinationId - The ID of the destination location.
-     * @returns {number} The base travel time in days.
-     */
-    getTransitTime(originId, destinationId) {
-        if (originId === destinationId) return 0;
-        const state = this.gameState.getState();
-        if (state.TRAVEL_DATA && state.TRAVEL_DATA[originId] && state.TRAVEL_DATA[originId][destinationId]) {
-            return state.TRAVEL_DATA[originId][destinationId].time || 0;
-        }
-        return 7; // Fallback baseline if not found
     }
 
     /**
@@ -31707,7 +31388,6 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         if (!activeShip) {
-            starfieldService.triggerQuickExit();
             this.uiManager.queueModal('event-modal', "No Active Ship", "You must have an active vessel to travel.");
             return;
         }
@@ -31778,12 +31458,10 @@ export class TravelService {
         // --- END VIRTUAL WORKBENCH ---
 
         if (effectiveMaxFuel < requiredFuel) {
-            starfieldService.triggerQuickExit();
             this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
             return;
         }
         if (state.player.shipStates[activeShip.id].fuel < requiredFuel) {
-            starfieldService.triggerQuickExit();
             this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(state.player.shipStates[activeShip.id].fuel)}.`);
             return;
         }
@@ -39901,14 +39579,9 @@ export class IntelService {
         const maxDiscount = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.50;
         const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
 
-        // --- RELATIVISTIC INTEL CONTRACTS (Distance Scaling) ---
-        const baseDuration = 30 + Math.floor(Math.random() * 61); // 30 - 90 days baseline
-        const transitDays = state.TRAVEL_DATA[saleLocationId]?.[dealLocationId]?.time || 7;
-        const randomMultiplier = 1.8 + Math.random() * (2.4 - 1.8);
-        const finalDuration = baseDuration + Math.floor(transitDays * randomMultiplier);
-
+        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;
-        const effectiveDurationDays = finalDuration * durationMod;
+        const effectiveDurationDays = durationDays * durationMod;
         
         const valueMultiplier = 1.0 + (discountPercent * 2) + (effectiveDurationDays / 90);
         
@@ -39934,9 +39607,9 @@ export class IntelService {
             dealLocationId: dealLocationId, // (C) Where the DEAL is
             commodityId: commodityId,
             discountPercent: parseFloat(discountPercent.toFixed(2)),
-            durationDays: Math.floor(effectiveDurationDays), 
+            durationDays: durationDays, // Note: This is now just a base for pricing, not for expiration.
             valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
-            messageKey: messageKey, 
+            messageKey: messageKey, // Reverted from messageIndex
             isPurchased: false,
         };
 
@@ -40033,16 +39706,28 @@ export class IntelService {
         const newPlayerState = { ...state.player };
         newPlayerState.credits -= calculatedPrice;
 
-        // 7. Create the Active Intel Deal using the living local target price
-        const localTarget = this.marketService.getLocalTargetPrice(packet.dealLocationId, packet.commodityId);
-        const overridePrice = Math.floor(localTarget * (1 - packet.discountPercent));
+        // 7. Create the Active Intel Deal
+        const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
+        const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
 
-        // Use the newly calculated Relativistic duration as the baseline
-        let durationMultiplier = 1.0;
+        // Calculate dynamic duration
+        const dealLocationId = packet.dealLocationId;
+        let travelTime = this.gameState.TRAVEL_DATA[state.currentLocationId][dealLocationId].time;
 
+        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+            travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+        }
+        
         // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
+        let durationMultiplier = 1.9; // Base multiplier
         if (state.currentLocationId === LOCATION_IDS.VENUS) {
             durationMultiplier *= 2.0; // Double duration at Venus
+        }
+
+        // Apply Local Eco Profile Duration Modifier
+        const locationDef = this.db.MARKETS.find(m => m.id === state.currentLocationId);
+        if (locationDef?.intelProfile?.durationMod) {
+             durationMultiplier *= locationDef.intelProfile.durationMod;
         }
 
         // --- PHASE 2: AGE PERK (INTEL DURATION) ---
@@ -40051,10 +39736,10 @@ export class IntelService {
             durationMultiplier *= (1 + ageDurationBonus);
         }
 
-        const newDurationDays = Math.ceil(packet.durationDays * durationMultiplier);
+        const newDurationDays = Math.ceil(travelTime * durationMultiplier);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
-        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${packet.dealLocationId} will last ${newDurationDays} days (Multiplier: ${durationMultiplier}). Expires on Day ${expiryDay}.`);
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Multiplier: ${durationMultiplier}). Expires on Day ${expiryDay}.`);
 
         // 8. Mutate the live packet object again.
         packet.expiryDay = expiryDay; 
@@ -40102,9 +39787,7 @@ export class IntelService {
     grantNarrativeIntel(intelParams) {
         const state = this.gameState.getState();
         
-        // Narrative intel also hooks into the living local baseline of the destination
-        const localTarget = this.marketService.getLocalTargetPrice(intelParams.dealLocationId, intelParams.commodityId);
-        const overridePrice = Math.floor(localTarget * (1 - (intelParams.discountPercent || 0.5)));
+        const overridePrice = Math.floor(this.getGalacticAverage(intelParams.commodityId) * (1 - (intelParams.discountPercent || 0.5)));
         const expiryDay = this.timeService.getCurrentDay() + (intelParams.durationDays || 60);
 
         const newActiveDeal = {
@@ -43334,15 +43017,6 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.95] - 2026-3-19
--  added mission freight leakage to economy
-
-# [36.95] - 2026-3-18
--  price graph polish
--  economic calculation fixes
--  economic behavior GDD v5
--  updated meta files
-
 # [36.92] - 2026-3-17
 -  added officer recruitment modal
 -  added officer recruitment pipeline
@@ -44457,71 +44131,97 @@ All notable changes to the Orbital Trading project will be documented in this fi
 --- START OF FILE: ./meta/MATH_REGISTRY.md ---
 // meta/MATH_REGISTRY.md
 
-# Orbital Trading: Math Registry
-Last Edit: [Current Date], ver. Balance v2
+Orbital Trading: Math Registry
+Last Edit: 3/14/26, ver. Balance v2
 
-## 1. Market Simulation Formulas
-**1.1 Target Price Calculation**
+1. Market Simulation Formulas
+1.1 Target Price Calculation
 The baseline price a market "wants" to have before player influence.
-```javascript
+
+JavaScript
 TargetPrice = GalacticAverage * (1 + (ImportExportMod * 0.5))
+ImportExportMod: Defined in constants.js (e.g., +0.5 for Import, -0.5 for Export).
+
 Note: The 0.5 multiplier pulls the price 50% of the way toward the ideal extreme.
 
-1.2 Availability Ratio & Effect
-Determines scarcity and converts it into a price multiplier.
+1.2 Availability Ratio
+Determines how scarce an item is relative to the market's expectation.
 
 JavaScript
 AvailabilityRatio = CurrentStock / TargetStock
-AvailabilityEffect = 1 + ((1 - AvailabilityRatio) * AVAILABILITY_PRESSURE_STRENGTH)
-1.3 Final Price Calculation
 
+1.3 Availability Effect (The Price Driver)
+The primary formula converting scarcity into a price multiplier.
+
+JavaScript
+AvailabilityEffect = 1 + ((1 - AvailabilityRatio) * AVAILABILITY_PRESSURE_STRENGTH)
+AVAILABILITY_PRESSURE_STRENGTH: 0.50 (High impact).
+
+Result: If Ratio is 0.5 (Half stock), Price increases by 25%.
+
+1.4 Final Price Calculation
 JavaScript
 FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation * SystemStateModifier
+RandomFluctuation: ±5-10% daily noise.
 MEAN_REVERSION_STRENGTH: 0.025 (2.5% daily pull toward TargetPrice).
-
 MARKET_PRESSURE_DECAY: 0.65 (Decay rate for player-driven availability margins).
+SystemStateModifier: Procedural multiplier from active Economic Weather.
 
-1.4 Dynamic Fleet Cost Averaging
-Calculated globally across all active ships in a player's fleet when purchasing new commodities to prevent margin obfuscation.
-
-JavaScript
-NewAverageCost = ((TotalFleetQuantity * CurrentAverageCost) + (PurchasedQuantity * CurrentMarketPrice)) / (TotalFleetQuantity + PurchasedQuantity)
 1.5 Profit Projection Calculation
-Accounts for dynamic fleet overhead prior to executing a transaction.
+Determines the expected return on cargo inventory before executing a trade, accounting for dynamic fleet overhead.
 
 JavaScript
 ExpectedRevenue = CurrentMarketSellPrice * TotalFleetQuantity
 TotalCostBasis = AverageFleetCostPerUnit * TotalFleetQuantity
 EstimatedProfit = ExpectedRevenue - TotalCostBasis - ProjectedConvoyTax
+
 2. Travel, Fuel & Entropy Formulas
 2.1 Fuel Consumption (Burn)
+How much fuel is removed from the tank per trip.
 
 JavaScript
 FuelBurn = DistanceAU * BASE_FUEL_BURN * (1 + ShipBurnMod + EngineUpgradeMod)
-2.2 Travel Time & Distance-Based Hull Entropy
-Hull deterioration is mathematically decoupled from time to prevent "speed min-maxing". The static base route time is used as a proxy for physical distance.
+BASE_FUEL_BURN: Defined per ship class.
+EngineUpgradeMod: Typically positive (increases burn) for speed upgrades (e.g., +0.20).
+
+2.2 Travel Time
+How many days a trip takes.
 
 JavaScript
 TravelDays = (DistanceAU / ShipSpeed) * (1 - TravelSpeedBonus)
+TravelSpeedBonus: Accumulated from Age Perks or Upgrades.
+
+2.3 Distance-Based Hull Entropy
+Hull deterioration is decoupled from dynamic travel time and relies on the static base time of a route as a proxy for "distance". The result is flattened and ceiling-rounded to safely apply to sub-1000 HP ship pools.
+
+JavaScript
 BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
 HullDecay = Math.ceil(BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod * 0.8)
 HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
 
-2.3 Fuel-Coupled Event Delays
-When random events introduce delays, they actively drain fuel reserves based on the route's natural burn rate.
+2.4 Fuel-Coupled Event Delays
+When a random event introduces a time delay, it consumes standard travel fuel proportional to the route's base burn rate.
 
 JavaScript
 DailyFuelRate = BaseFuelCost / BaseTravelTime
 EventDelayFuelCost = DailyFuelRate * EventDelayDays * PlayerBuildModifiers
-2.4 Convoy Tax (Fleet Overhead)
-Operating multiple ships imposes a scaling fractional offset against fuel burn and hull decay during travel.
+
+2.5 Time-Cost Repairs (Drydocking)
+Repairing a ship at a station consumes both credits and time.
+
+JavaScript
+Time Cost = 1 In-Game Day per Repair Tick 
+
+2.6 Convoy Tax (Fleet Overhead)
+Operating multiple ships imposes a linear fractional offset against fuel burn and hull decay during travel.
 
 JavaScript
 ConvoyTaxRate = InactiveShipsCount * 0.02
 ConvoyFuelTax = Math.max(0, Math.ceil(TravelFuelCost * ConvoyTaxRate))
+
 3. Ship Economy & Tier-Scaled Upkeep
 3.1 Algorithmic Ship Pricing
-The base value of a ship strictly adheres to utility constraints (<=1000) scaled by an exponential class tier.
+The base price of a ship is strictly determined by its physical capacity and a tiered luxury multiplier.
 
 JavaScript
 BaseValue = (CargoCapacity * 300) + (MaxHealth * 200) + (MaxFuel * 100)
@@ -44529,10 +44229,11 @@ FinalPrice = BaseValue * ClassMultiplier
 Class Multipliers: C = 1, B = 5, A = 25, S = 250, Z = 1500, O = 2500.
 
 3.2 Dynamic Hull Repair Cost
-Repairs scale proportionally to the algorithmic value of the ship to drain late-game wealth.
+Repairs scale proportionally to the value of the ship rather than relying on a flat fee.
 
 JavaScript
 CostPerHP = Math.max(1, ShipBasePrice * 0.0001) * LocationModifier * PerkModifiers
+
 3.3 Dynamic Fuel Cost
 Fuel purchases at starports are subjected to a Fuel Grade Multiplier based on the ship's class.
 
@@ -44540,339 +44241,539 @@ JavaScript
 FinalPumpPrice = BaseLocationFuelPrice * FuelClassMultiplier
 Fuel Class Multipliers: C = 1, B = 5, A = 25, S = 150, Z/O = 500.
 
-3.4 Upgrade Hardware Cost & Resale (Hybrid Pricing)
+3.4 Upgrade Hardware Cost & Resale
+The dynamic cost formula for ship upgrades (Balance v2 Hybrid Pricing).
 
 JavaScript
 UpgradeCost = FixedBaseCost + (ShipBasePrice * TierMultiplier)
+TierMultiplier scales from 0.05 (Tier I) up to 0.30 (Tier V).
 SellValue = (BaseHullPrice + TotalUpgradeValue) * DEPRECIATION_FACTOR
 DEPRECIATION_FACTOR: 0.75 (Player loses 25% of value).
 
 4. Event System RNG & Dynamic Scaling
 4.1 Weighted Selection
+Events are chosen based on a "lottery ticket" system.
 
 JavaScript
 EventChance = (BaseWeight + (PlayerTags * TagMultiplier)) * SystemStateEventModifier
-System sums total weight, rolls 0..TotalWeight, and iterates until the sum exceeds the roll.
+The system sums the total weight of all valid events.
+A random number 0..TotalWeight is rolled.
+The selector iterates through events until the running sum exceeds the roll.
 
-4.2 Wealth-Scaled Penalties & Class-Scaled Rewards
+4.2 Outcome Resolution
+For weighted choices within an event:
 
 JavaScript
-HazardPenalty = LiquidCredits * HazardSeverityPercentage // (Hard capped at 9%)
-OpportunityReward = BaseValue * ActiveShipClassMultiplier
+OutcomeRoll = Math.random() * 100
+Outcomes are defined with weight ranges (e.g., Success: 70, Fail: 30).
+If OutcomeRoll < 70, Success triggers.
+
+4.3 Wealth-Scaled Penalties (Hazards)
+For event fines and bureaucratic hazards, penalizing the player based on liquidity.
+
+JavaScript
+Penalty = LiquidCredits * HazardSeverity%
+(Hard capped at 9% for the most catastrophic outcomes to preserve progression feasibility).
+
+4.4 Ship-Class Scaled Rewards (Opportunities)
+For positive windfalls and opportunities, dynamic resolution uses the active ship's algorithmic Class Multiplier.
+
+JavaScript
+Reward = BaseValue * ActiveShipClassMultiplier
+(Via the scaleWith: 'SHIP_CLASS_SCALAR' directive).
+
 5. Sol Station Directorate Engine
-5.1 Entropy Calculation & Resource Consumption
+5.1 Entropy Calculation
+The daily decay rate of station caches is dynamically altered by the sum of slotted officer buffs.
 
 JavaScript
 BASE_DECAY_K = 0.0000014
 CurrentEntropy = BaseEntropy * (1 + Sum(OfficerEntropyBuffs) - Sum(LevelEntropyReductions))
-EffectiveConsumptionRate = CurrentEntropy * Math.max(0, 1 - OfficerConsumptionReductions)
+
+5.2 Resource Consumption & Capacity Modifiers
+Officers dynamically alter the mathematics of how much specific commodities the station can hold and how fast they burn per tick via both additive and multiplicative modifiers.
+
+JavaScript
 EffectiveCapacity = BaseCapacity + Sum(OfficerCapacityMods) + Sum(LevelCapacityMods)
-5.2 Antimatter, Credit Yields, and Synthesis
+EffectiveConsumptionRate = CurrentEntropy * Math.max(0, 1 - OfficerConsumptionReductions)
+
+5.3 Antimatter & Credit Yields
+Output yields during 'Commerce' and 'Production' modes are directly scaled by the Directorate roster.
 
 JavaScript
 DailyCreditYield = BaseYield * (1 + Sum(OfficerCreditMults) + Sum(LevelCreditMults)) * EfficiencyCurve
+DailyAMYield = BaseAMYield * (1 + Sum(OfficerAMMults) + Sum(LevelAMMults)) * EfficiencyCurve
+
+5.4 Synthesis Pipeline Conversion
+The mathematical translation of standard commodities into Antimatter via the active processing pipeline.
+
+JavaScript
 SynthesisYield = (InputCommodityVolume * CommodityTierValueMultiplier) * StationEfficiencyCurve
 PipelineDuration = BaseSynthesisDays * Math.max(0.2, (1 - OfficerSynthesisSpeedBuffs))
+
 6. Debt & Bankruptcy Formulas
-6.1 Interest Compounding & Solvency Thresholds
+6.1 Guild vs. Syndicate Interest Rates
+Loans utilize divergent mathematical compounding rules based on the originating entity.
 
 JavaScript
 GuildInterest = Principal * 0.02 // (2% standard 30-day term)
 SyndicateInterest = Principal * 0.07 // (7% predatory 15-day term)
 
+6.2 Bankruptcy Insolvency Threshold
+The debt-to-asset ratio evaluated daily to trigger repo events or game-over states.
+
+JavaScript
 TotalLiquidity = PlayerCredits + (TotalFleetResaleValue * 0.5)
 IsInsolvent = TotalDebt > (TotalLiquidity * 1.5)
 --- END OF FILE: ./meta/MATH_REGISTRY.md ---
 
 --- START OF FILE: ./meta/UI_LIBRARY.md ---
-/ meta/UI_LIBRARY.md
+// meta/UI_LIBRARY.md
 
-# Orbital Trading: UI Component Library & Style Guide
+Orbital Trading: UI Component Library & Style Guide
 
-## 1. Design System Core
+1. Design System Core
 
-### 1.1 Typography
-* **Primary Font:** Oxanium (Variable Weight) - All UI text, data readouts.
-* **Accent Font:** Zorque (Regular) - Logos, Section Headers, Hero numbers.
+1.1 Typography
+The game uses a dual-font system to establish its "Industrial Sci-Fi" aesthetic.
+Primary Font: Oxanium (Variable Weight)
+Usage: All UI text, data readouts, body copy, and buttons.
+Weights: Light (300) for body, Medium (500) for labels, Bold (700) for headers.
+Accent Font: Zorque (Regular)
+Usage: Logos, Major Section Headers, "Hero" numbers (e.g., Credits balance).
+Characteristics: Blocky, retro-futuristic.
 
-### 1.2 Color Palette (CSS Variables)
-* `--bg-color`: App background (Deep Space Black).
-* `--panel-bg`: Component background (Semi-transparent dark grey).
-* `--color-text-primary`: Main text (White/Off-White).
-* `--color-text-secondary`: Labels and dim text (Light Grey).
-* `--color-accent`: Primary action color (Cyan/Blue).
-* `--color-success`: Positive values/Profits (Green).
-* `--color-danger`: Negative values/Costs/Alerts (Red).
-* `--color-warning`: Cautions (Yellow/Orange).
-* `--color-border`: Standard border color.
+1.2 Color Palette (CSS Variables)
+Do not hardcode hex values. Use these semantic variables defined in global.css.
+VariableRole
+--bg-colorApp background (Deep Space Black).
+--panel-bgComponent background (Semi-transparent dark grey).
+--color-text-primaryMain text (White/Off-White).
+--color-text-secondaryLabels and dim text (Light Grey).
+--color-accentPrimary action color (Cyan/Blue).
+--color-successPositive values/Profits (Green).
+--color-dangerNegative values/Costs/Alerts (Red).
+--color-warningCautions (Yellow/Orange).
+--color-borderStandard border color for cards/panels.
 
-### 1.3 Z-Index Registry
-* `0`: Base (Background, Canvas Starfield)
-* `10`: Content (Main Screen Containers)
-* `50`: Chrome (Top Bar, Bottom Nav, Sticky HUD)
-* `800`: Help Anchor ('?' Button)
-* `900`: Modal Mask
-* `1000`: Modal (Active Dialogs)
-* `2000`: Toast (Notifications)
-* `2500`: Cinematic Skip Buttons
+1.3 Z-Index Registry
+Strict layering ensures modals and overlays behave correctly.
+LayerZ-IndexComponents
+Base0Background, Canvas Starfield.
+Content10Main Screen Containers, Carousel.
+Chrome50Top Bar, Bottom Nav, Sticky HUD.
+Help Anchor800Global Contextual Help '?' Button.
+Modal Mask900The generic modal-overlay background.
+Modal1000Active Modal Dialogs, Help Modals.
+Toast2000Notifications, Floating Battle Text.
+Cinematic Skip2500Floating skip buttons during overlays.
+Cursor9999Custom hardware cursors (if applicable).
 
-## 2. Component Blueprints
+2. Component Blueprints
 
-### 2.1 Standard Card (.card)
+2.1 Standard Card (.card)
 Used for Commodities, Ships, and Missions.
-
-### 2.2 Action Button (.btn)
-Interactive elements must always use `.btn` and MUST include `type="button"`.
-
-### 2.3 Modal Dialog (.modal)
-The `UIModalEngine` dynamically mutates the header into a flexbox layout if a `portraitId` is detected, injecting `.portrait-thumbnail` mapped to the sprite sheet.
-
-### 2.4 Contextual Help Modal (.help-modal-container)
-Strictly containerized, fixed-aspect-ratio modal utilizing horizontal micro-pagination via CSS `transform: translateX()`.
-
-### 2.5 Universal Toast Notification (.toast-message)
-A strictly timed, non-blocking alert system featuring an animated visual fuse (`toast-fuse-burn`).
-
-### 2.6 Mission HUD Sticky Bar & Synthesized Objectives
-Anchored beneath the sub-navigation bar, this component tracks live mission progress and provides immediate action vectors.
-
-```html
-<div class="mission-sticky-hud">
-    <div class="hud-objective-text">DELIVER PLASTEEL: 45/100</div>
-    <div class="hud-progress-track">
-        <div class="hud-progress-fill" style="width: 45%;"></div>
+HTML
+<div class="card" data-id="{id}">
+    <div class="card-header">
+        <span class="card-title">{Title}</span>
+        <span class="badge">{Status}</span>
+    </div>
+    
+    <div class="card-content">
+        <div class="data-row">
+            <span class="label">Label:</span>
+            <span class="value">{Value}</span>
+        </div>
+    </div>
+    
+    <div class="card-actions">
+        <button class="btn btn-secondary" type="button" data-action="...">Action</button>
     </div>
 </div>
 
-<div class="mission-sticky-hud state-synthesized">
-    <div class="hud-objective-text text-warning">TRAVEL TO: MARS PORT</div>
-    <div class="hud-action-indicator animate-pulse">>></div>
+2.2 Action Button (.btn)
+Interactive elements must always use the `.btn` class and **MUST** include `type="button"` to prevent page reloads.
+
+2.3 Attribute Pill (.attribute-pill)
+Used in Hangar/Shipyard to show stats. Now explicitly a <button> for better mobile touch handling (ADR-011).
+HTML
+<button class="attribute-pill" type="button" data-type="{type}" data-tooltip="{text}">
+    <span class="label">{Label}</span>
+    <span class="value">{Value}</span>
+</button>
+
+2.4 Modal Dialog (.modal)
+Standard wrapper for popup content. The `UIModalEngine` dynamically mutates the header into a flexbox layout if a `portraitId` is detected in the triggering payload.
+
+HTML (Standard):
+<div id="modal-overlay" class="hidden">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>{Title}</h2>
+        </div>
+        <div class="modal-content">...</div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" type="button" data-action="close-modal">Close</button>
+        </div>
+    </div>
 </div>
 
-<div class="mission-sticky-hud state-ready">
-    <button class="btn btn-gold-transaction" type="button" data-action="turn-in-mission">
-        COMPLETE CONTRACT
+HTML (Dynamically Injected with Portrait):
+<div id="modal-overlay" class="hidden">
+    <div class="modal">
+        <div class="modal-header-flex">
+            <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
+            <h2 class="modal-title-group">{Title}</h2>
+        </div>
+        <div class="modal-content">...</div>
+        <div class="modal-footer">...</div>
+    </div>
+</div>
+
+Dynamic Injection Classes (Managed by UIModalEngine):
+- `.modal-header-flex`: Establishes the flex-row structure.
+- `.portrait-thumbnail`: The 128x128px fixed container utilizing the WebP sprite sheet.
+- `.modal-title-group`: Wraps the title text, forcing `text-align: right` to counterbalance the left-aligned portrait. 
+*Note: If no portrait ID is passed to the engine, it automatically unwraps these classes to gracefully restore the standard center/left alignment.*
+
+2.5 Tab Navigation (.mission-tabs-nav)
+Used in Missions/Data screens to toggle sub-views.
+HTML
+<div class="mission-tabs-nav">
+    <button class="mission-tab-btn active" type="button" data-action="switch-tab" data-target="A">TAB A</button>
+    <button class="mission-tab-btn" type="button" data-action="switch-tab" data-target="B">TAB B</button>
+</div>
+
+2.6 Objective Progress Bar (.objective-row-filled)
+Used in Mission Log cards to show continuous progress.
+HTML
+<div class="objective-row-filled">
+    <div class="objective-fill-bar" style="width: 50%"></div>
+    <div class="objective-text">
+        <span>DELIVER ICE</span>
+        <span>5/10</span>
+    </div>
+</div>
+
+2.7 Contextual Help Modal (.help-modal-container)
+Strictly containerized, fixed-aspect-ratio modal utilizing horizontal micro-pagination. Requires `touch-action: pan-x` on the track to restrict mobile gesture bleed.
+HTML
+<div class="help-modal-container" style="aspect-ratio: 1/1;">
+    <div class="help-header">
+        <button class="btn btn-close" type="button" data-action="close-help">-</button>
+    </div>
+    <div class="help-slide-track" style="transform: translateX(0%); touch-action: pan-x;">
+        <div class="help-slide">
+            <h3>Mechanics</h3>
+            <p>Slide 1 context content.</p>
+        </div>
+        <div class="help-slide">
+            <h3>Strategy</h3>
+            <p>Slide 2 context content.</p>
+        </div>
+    </div>
+    <div class="help-footer">
+        <div class="pagination-dots">
+            <span class="dot active"></span>
+            <span class="dot"></span>
+        </div>
+    </div>
+</div>
+
+2.8 Universal Toast Notification (.toast-message)
+A strictly timed, non-blocking alert system. Uses an animated visual fuse that acts as a countdown. Requires localized event interception on the dismiss button to prevent routing bubbles.
+HTML
+<div class="toast-message toast-{type}" data-action="route-toast" data-target="{actionTarget}">
+    <div class="toast-fuse" style="animation: toast-fuse-burn 4s linear forwards;"></div>
+    <div class="toast-content-wrapper">
+        <div class="toast-title">{Title}</div>
+        <div class="toast-body">{Message}</div>
+    </div>
+    <button type="button" class="toast-dismiss-btn" data-action="dismiss-toast">-</button>
+</div>
+
+2.9 Cinematic Overlays (.intro-starfield-bg)
+Used for bespoke sequences (like the Starter Ship Selection) that bypass the main UIManager render cycle to execute asynchronous crossfades via the native Web Animations API. Rendered outside the core `#game-container`.
+HTML
+<div id="starter-ship-selection-overlay" class="intro-starfield-bg">
+    <div class="starter-selection-container">
+        </div>
+</div>
+
+2.10 Officer Roster Grid (.officer-grid)
+Used within the Sol Station Sub-view to display recruitable/active officers in a dense CSS grid utilizing the global sprite sheet.
+HTML
+<div class="officer-grid">
+    <button class="officer-cell" type="button" data-action="select-officer" data-id="Audita_1">
+        <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
+        <div class="officer-nameplate">AUDITA</div>
     </button>
 </div>
-2.7 Mission UI Button Hierarchy
-Progression: btn btn-pulse-green (Safe, forward-moving).
 
-Destructive: bg-red-800/80 border-red-500 (Static red, no pulse).
+2.11 Options & Save Management Modal (.options-modal)
+A specialized modal layout for the systems menu incorporating destructive action warnings and file I/O triggers.
+HTML
+<div class="modal options-modal">
+    <div class="modal-header"><h2>SYSTEM OPTIONS</h2></div>
+    <div class="modal-content flex-col">
+        <button class="btn btn-secondary" type="button" data-action="export-save">EXPORT SAVE</button>
+        <button class="btn btn-secondary" type="button" data-action="trigger-import">IMPORT SAVE</button>
+        <div class="spacer"></div>
+        <button class="btn btn-danger" type="button" data-action="delete-save">WIPE DATA</button>
+    </div>
+</div>
 
-Transaction (Deposit Freight): Unique Gold style bg-amber-600/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold (Distinct, non-pulsing transaction indicator).
+2.12 Cinematic Skip Interface (.cinematic-skip-container)
+A floating action button overlaid on top of blocking animations (Intros, Ship Upgrades) allowing the player to safely bypass the visual sequence while ensuring the underlying state promises resolve correctly.
+HTML
+<div class="cinematic-skip-container">
+    <button class="btn btn-skip" type="button" data-action="skip-cinematic">SKIP >></button>
+</div>
 
+3. CSS Utilities
+.hidden: display: none !important. Used for toggling visibility.
+.text-center: text-align: center.
+.text-highlight: Applies the accent color to text.
+.flex-row: display: flex; flex-direction: row;
+.flex-col: display: flex; flex-direction: column;
+.spacer: flex-grow: 1. Pushes flex items apart.
+.scroll-y: overflow-y: auto. Enables vertical scrolling within a container.
+.silent-exit: Forces a modal to close instantly without an exit animation. Used for cinematic transitions.
 
-```json
-// meta/lexicon.json (Updated Segments)
+### Mission UI Button Hierarchy
 
-{
-  "key_concepts": {
-    "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures (e.g., when the user closes a UI view), preventing DOM layout thrashing.",
-    "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on a deferred state buffer rather than immediate global state flushes.",
-    "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands and calculated average cost basis.",
-    "Convoy_Tax": "A linear percentage offset applied to fuel burn and hull decay during travel to naturally balance the economic advantages of multi-ship fleets.",
-    "Tier-Scaled_Upkeep": "The core endgame wealth tax mechanism where service costs (fuel, repair) and upgrade hardware prices scale exponentially based on a vessel's algorithmically determined base price and class multiplier.",
-    "Freight_Depositing": "The mechanic allowing piecemeal fulfillment of massive cargo requirements at a destination by surgically iterating through fleet holds to drain specific commodities without monopolizing total fleet capacity.",
-    "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not currently at the required turn-in destination."
-  },
-  "service_summaries": {
-    "AutomatedPlayerService": {
-      "description": "An internal 'Headless Player' bot designed for client-side economic simulation and validation. Uses Goal-Oriented Action Planning (GOAP) to bypass the UI input layer and execute trades directly against the simulation to test inflation and exploit margins.",
-      "dependencies": [
-        "GameState",
-        "SimulationService",
-        "Logger"
-      ],
-      "key_functions": {
-        "startBotLoop": "Initiates the high-speed autonomous execution loop.",
-        "determineStrategy": "Analyzes market data to flip between 'Crash Market', 'Deplete Stock', or 'Maintenance' modes.",
-        "executeDirectAction": "Fires commands directly into PlayerActionService or TravelService."
-      },
-      "mutates_state": [
-        "GameState (Global)"
-      ]
-    },
-    "MissionTriggerEvaluator": {
-      "description": "Stateless logic engine for evaluating whether a mission's prerequisites have been met, gating visibility on the Terminal screen.",
-      "dependencies": [
-        "GameState"
-      ],
-      "key_functions": {
-        "evaluate": "Returns true if all trigger conditions in the mission definition pass."
-      },
-      "mutates_state": []
-    },
-    "MissionObjectiveEvaluator": {
-      "description": "Stateless logic engine for tracking active mission progress. Dynamically aggregates active fleet cargo holdings alongside deposited freight values.",
-      "dependencies": [
-        "GameState"
-      ],
-      "key_functions": {
-        "evaluateProgress": "Calculates the current completion percentage and triggers the 'Synthesized Objective' UI state if applicable."
-      },
-      "mutates_state": []
-    }
-  }
-}
+The mission system modals require a distinct visual hierarchy to guide the player's choices safely and clearly, separating destructive actions from progression steps.
+
+* **Progression (Navigate):** Uses the standard "Proceed" style.
+    * *Classes:* `btn btn-pulse-green`
+    * *Behavior:* Animated green pulse to indicate a safe, forward-moving action (travel).
+* **Destructive (Abandon):** Uses the standard "Danger" style.
+    * *Classes:* `bg-red-800/80 hover:bg-red-700/80 border-red-500`
+    * *Behavior:* Static red background, no pulse, to prevent accidental clicks.
+* **Transaction (Deposit Freight):** Uses a unique, high-contrast "Gold" style.
+    * *Classes:* `bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold`
+    * *Behavior:* A solid, bright amber background with a static gold drop-shadow. No pulse animation. This creates a distinct "Transaction/Turn-in" aesthetic that stands out without distracting the eye via animation.
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---
 // meta/CODING_STANDARDS.md
 
-# Orbital Trading: Coding Standards & Protocols
+Orbital Trading: Coding Standards & Protocols
 
-## 1. AI Implementation Protocols
-These rules govern how the AI Assistant must interact with the codebase.
+1. AI Implementation Protocols
+These rules govern how the AI Assistant (Gemini) must interact with the codebase.
 
-**1.1 The "Append/Merge" Strategy**
-* **Constraint:** Never provide truncated files.
-* **Rule:** When updating a file, provide the Full, Complete, Executable file content.
-* **Reasoning:** Partial updates lead to context loss and copy-paste errors.
+1.1 The "Append/Merge" Strategy
+Constraint: Never provide truncated files.
+Rule: When updating a file, provide the Full, Complete, Executable file content.
+Reasoning: Partial updates (e.g., "// ... existing code ...") lead to context loss and copy-paste errors by the user.
 
-**1.2 The "Virtual Workbench"**
-* **Methodology:** Before generating code, mentally identify the specific "blocks" of logic affected.
-* **Process:** Parse the existing file -> Apply changes internally -> Verify closing braces/parentheses -> Output final result.
+1.2 The "Virtual Workbench"
+Methodology: Before generating code, mentally identify the specific "blocks" of logic affected.
+Process:
+Parse the existing file from the provided context.
+Apply the changes internally.
+Verify the integrity of the closing braces } and parentheses ).
+Output the final result.
 
-**1.3 Strict "Zero-Inference"**
-* **Rule:** Do not guess at game design changes.
-* **Protocol:** If a request is ambiguous, ask clarifying questions before writing code.
+1.3 Strict "Zero-Inference"
+Rule: Do not guess at user intent regarding game design changes.
+Protocol: If a request is ambiguous, ask clarifying questions before writing code.
+Logic: Code changes must be "Surgical" and "Intentional."
 
-## 2. JavaScript Architecture
-**2.1 Service-Oriented Pattern**
-* **Services are Singletons:** Logic services are instantiated once by SimulationService.
-* **State Separation:** Services contain Logic, GameState contains Data.
-* **Facade Access:** SimulationService is the entry point for Game Logic. UIManager is the entry point for Rendering.
+2. JavaScript Architecture
+2.1 Service-Oriented Pattern
+Services are Singletons: Logic services (e.g., MarketService) are instantiated once by SimulationService.
+State Separation: Services contain Logic, GameState contains Data. Services should not hold state properties unless they are ephemeral (e.g., lastFrameTime).
+Facade Access:
+SimulationService is the entry point for Game Logic.
+UIManager is the entry point for Rendering.
 
-**2.2 Naming Conventions**
-* **Classes:** PascalCase (e.g., `PlayerActionService`).
-* **Methods:** camelCase (e.g., `calculateFuelCost`).
-* **Private Methods:** Prefix with underscore `_` (e.g., `_updateInternalState`).
-* **Constants:** UPPER_SNAKE_CASE (e.g., `MAX_INVENTORY_SLOTS`).
+2.2 Naming Conventions
+Classes: PascalCase (e.g., PlayerActionService).
+Methods: camelCase (e.g., calculateFuelCost).
+Private Methods: Prefix with underscore _ (e.g., _updateInternalState).
+Constants: UPPER_SNAKE_CASE (e.g., MAX_INVENTORY_SLOTS).
+DOM Elements: Variables holding DOM refs should ideally be cached in this.cache or named clearly (e.g., submitBtn).
 
-**2.3 JSDoc Requirements**
-All public methods must include JSDoc blocks detailing purpose, parameters, and returns.
+2.3 JSDoc Requirements
+All public methods must include JSDoc blocks.
 
-**2.4 Logging**
-* **Prohibited:** `console.log`, `console.warn`, `console.error`.
-* **Required:** Use the `LoggingService` (injected as `this.logger`).
+JavaScript
+/**
+ * Short description of what the function does.
+ * @param {Type} paramName - Description of the parameter.
+ * @returns {Type} Description of the return value.
+ */
 
-## 3. High-Performance Mobile Constraints (iOS Native Target)
-**3.1 Deferred State & JIT Commits (ADR-029)**
-* **Mandate:** High-frequency simulation loops (like the Sol Station endgame engine) MUST NOT directly mutate the global `GameState` or force UI re-renders on every tick.
-* **Protocol:** Utilize a `deferredState` buffer within the service to accumulate math logic. Expose interpolated View-Model data to the UI layer. Only execute a "Just-In-Time (JIT) Commit" to the global `GameState` when the user physically leaves the screen or triggers a hard transaction.
+2.4 Logging
+Prohibited: console.log, console.warn, console.error.
+Required: Use the LoggingService (injected as logger).
+this.logger.info(...)
+this.logger.warn(...)
+this.logger.error(...)
 
-**3.2 WebP Sprite Sheet Mandate (ADR-035)**
-* **Mandate:** The game must never load individual image files for UI portraits, icons, or badges.
-* **Protocol:** All static 2D UI art must be compiled into a master `.webp` sprite sheet. Render elements dynamically utilizing CSS `background-image` and precise `background-position` coordinates mapped via the global `PortraitRegistry`.
+3. Forbidden Patterns
+3.1 No innerHTML for User Input
+Security: Never use .innerHTML to insert strings that could contain user-generated content (e.g., Ship Names). Use .textContent or explicitly construct DOM nodes.
 
-## 4. Forbidden Patterns
-**4.1 No innerHTML for User Input**
-Never use `.innerHTML` to insert strings that could contain user-generated content. Use `.textContent`.
+3.2 No Direct GameState Mutation from UI
+Flow Violation: The UI Layer (UIManager and Controllers) must READ from GameState but NEVER WRITE to it.
+Correction: UI interactions must call a Service method (via ActionClickHandler or SimulationService) to request a change.
 
-**4.2 No Direct GameState Mutation from UI**
-The UI Layer (UIManager and Controllers) must READ from GameState but NEVER WRITE to it. UI interactions must call a Service method.
+3.3 No Magic Numbers
+Maintenance: Avoid hardcoded numbers in logic files (e.g., if (price > 1000)).
+Correction: Define these as constants in js/data/constants.js and import them.
 
-**4.3 No Magic Numbers**
-Avoid hardcoded numbers in logic files. Define them in `js/data/constants.js`.
+3.4 Implicit Button Types
+**Stability:** Never define a `<button>` without a `type` attribute.
+**Risk:** Browsers default to `type="submit"`, causing page reloads that dump game state (The "Mars Revert" Bug).
+**Correction:** Always write `<button type="button" ...>`.
 
-**4.4 Implicit Button Types (The "Mars Revert" Bug)**
-* **Stability:** Never define a `<button>` without a `type` attribute. Browsers default to `type="submit"`, causing SPA reloads.
-* **Correction:** Always write `<button type="button" ...>`.
+3.5 Unhandled Default Events
+**Stability:** When handling a click for a game action, always assume the browser might have a default behavior attached.
+**Correction:** Explicitly call `event.preventDefault()` at the start of the handler case.
 
-**4.5 Unhandled Default Events**
-Always explicitly call `event.preventDefault()` at the start of delegated click handlers.
-
-**4.6 Cinematic Transitions and Web Animations API**
-* **Stability:** Do not use CSS `.hidden` class toggling for full-screen cinematic fades.
-* **Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. 
-* **Strict Cleanup Mandate:** You MUST explicitly strip inline styles injected by the API within the `.onfinish` callback.
+3.6 Cinematic Transitions and Web Animations API
+**Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence) or localized inline component sequences (like the Ship Upgrade Animation) must not rely on standard CSS `.hidden` class toggling to handle complex fades, as this creates race conditions and visible flashing when the `UIManager` executes aggressive DOM wiping and state re-renders.
+**Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. The actual `GameState` mutations and `UIManager.render()` calls should be executed *during* the blackout/hold phase of the animation. 
+**Strict Cleanup Mandate:** You MUST explicitly ensure all inline styling injected by the API (e.g., `opacity`, `filter`, `transform`) is fully stripped or reset to its baseline state within the `.onfinish` callback. Failure to clean up injected Web Animations API styles will permanently break subsequent UI rendering behavior for those elements.
 --- END OF FILE: ./meta/CODING_STANDARDS.md ---
 
 --- START OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 // meta/ECONOMIC_BEHAVIOR.md
 
-# CURRENT ECONOMIC BEHAVIOR
+CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: [Current Date], ver. Balance v2
+Last Edit: 3/14/26, ver. Balance v2
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
-## I. Core Price Mechanics Explained
+I. Core Price Mechanics Explained
 These are the foundational rules that establish the baseline price of a commodity before any player actions are taken.
-* **Galactic Average:** This is the foundational, system-wide average price for a commodity. Think of it as the "default" price before any local factors.
-* **Local Price Target:** This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
-    * An **Exporter** (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
-    * An **Importer** (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
-* **Mean Reversion:** This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize.
+Galactic Average: This is the foundational, system-wide average price for a commodity. Think of it as the "default" price before any local factors.
+Local Price Target: This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
+An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
+An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
+Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize.
 
-## II. Local Price Influences by Location
+II. Local Price Influences by Location
 This is the full list of price influences for every market.
-* **Sol Station** | Exports: Antimatter | Imports: Graphene Lattices, Plasteel
-* **Mercury** | Exports: Plasteel | Imports: Water Ice (Strong Import)
-* **Venus** | Exports: Cloned Organs, Neural Processors | Imports: Sentient AI Cores, Atmo Processors
-* **Earth** | Exports: Hydroponics, Cybernetics | Imports: Cloned Organs, Xeno-Geologicals
-* **The Moon** | Exports: Plasteel, Graphene Lattices | Imports: Water Ice, Hydroponics
-* **Mars** | Exports: Plasteel, Xeno-Geologicals | Imports: Hydroponics, Water Ice
-* **The Belt** | Exports: Water Ice, Xeno-Geologicals | Imports: Hydroponics, Cybernetics
-* **The Exchange** | Exports: Sentient AI Cores, Cloned Organs | Imports: Antimatter, Xeno-Geologicals
-* **Jupiter** | Exports: Refined Propellant | Imports: Plasteel, Atmo Processors
-* **Saturn** | Exports: Cybernetics | Imports: Cryo-Sleep Pods, Cloned Organs
-* **Uranus** | Exports: Neural Processors | Imports: Sentient AI Cores, Atmo Processors
-* **Neptune** | Exports: Cryo-Sleep Pods, Graphene Lattices | Imports: Plasteel, Refined Propellant
-* **Kepler's Eye** | Exports: Antimatter | Imports: Folded-Space Drives, Neural Processors
-* **Pluto** | Exports: Graphene Lattices, Xeno-Geologicals | Imports: Antimatter, Cybernetics
+Sol Station
+Exports (Price Reverts Toward a Lower Baseline): Antimatter
+Imports (Price Reverts Toward a Higher Baseline): Graphene Lattices, Plasteel
 
-## III. System States (Economic Weather)
+Mercury
+Exports (Price Reverts Toward a Lower Baseline): Plasteel
+Imports (Price Reverts Toward a Higher Baseline): Water Ice (Strong Import)
+
+Venus
+Exports (Price Reverts Toward a Lower Baseline): Cloned Organs, Neural Processors
+Imports (Price Reverts Toward a Higher Baseline): Sentient AI Cores, Atmo Processors
+
+Earth
+Exports (Price Reverts Toward a Lower Baseline): Hydroponics, Cybernetics
+Imports (Price Reverts Toward a Higher Baseline): Cloned Organs, Xeno-Geologicals
+
+The Moon
+Exports (Price Reverts Toward a Lower Baseline): Plasteel, Graphene Lattices
+Imports (Price Reverts Toward a Higher Baseline): Water Ice, Hydroponics
+
+Mars
+Exports (Price Reverts Toward a Lower Baseline): Plasteel, Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline): Hydroponics, Water Ice
+
+The Belt
+Exports (Price Reverts Toward a Lower Baseline): Water Ice, Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline): Hydroponics, Cybernetics
+
+The Exchange
+Exports (Price Reverts Toward a Lower Baseline): Sentient AI Cores, Cloned Organs
+Imports (Price Reverts Toward a Higher Baseline): Antimatter, Xeno-Geologicals
+
+Jupiter
+Exports (Price Reverts Toward a Lower Baseline): Refined Propellant
+Imports (Price Reverts Toward a Higher Baseline): Plasteel, Atmo Processors
+
+Saturn
+Exports (Price Reverts Toward a Lower Baseline): Cybernetics
+Imports (Price Reverts Toward a Higher Baseline): Cryo-Sleep Pods, Cloned Organs
+
+Uranus
+Exports (Price Reverts Toward a Lower Baseline): Neural Processors
+Imports (Price Reverts Toward a Higher Baseline): Sentient AI Cores, Atmo Processors
+
+Neptune
+Exports (Price Reverts Toward a Lower Baseline): Cryo-Sleep Pods, Graphene Lattices
+Imports (Price Reverts Toward a Higher Baseline): Plasteel, Refined Propellant
+
+Kepler's Eye
+Exports (Price Reverts Toward a Lower Baseline): Antimatter
+Imports (Price Reverts Toward a Higher Baseline): Folded-Space Drives, Neural Processors
+
+Pluto
+Exports (Price Reverts Toward a Lower Baseline): Graphene Lattices, Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline): Antimatter, Cybernetics
+
+III. System States (Economic Weather)
 A macro-economic layer that applies procedural, system-wide modifiers dynamically to augment or disrupt the baseline market math over set durations.
-* **Mechanic:** The `SystemStateService` evaluates condition cycles weekly. Active "weather" (e.g., 'Solar Flare', 'Guild Strike', 'Economic Boom') overrides global parameters.
-* **Impact:** Weather forces can universally inflate commodity prices (e.g., +15% to all goods), suppress shipyard inventories, severely limit fuel supplies causing station pump prices to skyrocket, or dynamically inject weighted parameters into the `RandomEventService` to guarantee specific event types (e.g., Pirate activity surges during 'Lawless' states).
+Mechanic: The SystemStateService evaluates condition cycles weekly. Active "weather" (e.g., 'Solar Flare', 'Guild Strike', 'Economic Boom') overrides global parameters.
+Impact: Weather forces can universally inflate commodity prices (e.g., +15% to all goods), suppress shipyard inventories, severely limit fuel supplies causing station pump prices to skyrocket, or dynamically inject weighted parameters into the RandomEventService to guarantee specific event types (e.g., Pirate activity surges during 'Lawless' states).
 
-## IV. Player-Driven Market Dynamics & Simulation
+IV. Player-Driven Market Dynamics & Simulation
 Beyond the baseline mechanics, the market is governed by a set of interconnected, player-driven systems.
 
-1.  **Force: Availability Pressure (The Delayed Market Shock)**
-    This is the primary driver of all player-initiated price changes.
-    * **Mechanic:** When a player buys or sells, they immediately change the item's quantity at that market. This change in stock drives the price change via the `availabilityRatio`.
-    * **The 7-Day Delay (Anti-Abuse):** This effect is delayed. The game checks if 7 days have passed since the last interaction. The `availabilityEffect` is only calculated after this 7-day window, preventing same-visit exploitation.
-    * **The Strength:** Controlled by `AVAILABILITY_PRESSURE_STRENGTH` (0.50), making market manipulation feel powerful.
-2.  **Force: Price Lock (The Core Loop)**
-    * **Mechanic:** When a player makes a trade, the market's natural "Mean Reversion" is disabled for a long duration based on distance.
-    * **Technical Detail:** The `priceLockEndDay` is set using: Base Lock (60 days) + (Location Distance * 0.20) ± 10% Jitter. This allows fringe outer-rim markets to lock prices for significantly longer (e.g., Pluto for ~276 days) than inner-system hubs (e.g., Earth for ~96 days).
-3.  **Force: Depletion Bonus (The Panic)**
-    * **Trigger:** Purchasing reduces quantity to `<= 0` and the amount purchased was `>= 8%` of targetStock.
-    * **Effect:** Applies a 1.5x `priceHikeMultiplier` continuously until the market naturally replenishes to at least 60% of capacity.
-4.  **Force: Asymmetric Saturation (The Glut)**
-    * **Trigger:** A player's sale pushes a market's inventory above 300% (3.0x) of its `targetStock`.
-    * **Effect:** Applies a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion. Recovery only happens when the inventory sheds below 200%.
-5.  **Force: Inventory Replenishment (The Bottleneck)**
-    * The market slowly restocks (or sheds) its inventory to move back toward its `targetStock` by 10% each week. `MARKET_PRESSURE_DECAY` aggressively decays artificial margins by the 4th consecutive trip.
+1. Force: Availability Pressure (The Delayed Market Shock)
+This is the primary driver of all player-initiated price changes.
+Mechanic: When a player buys or sells, they immediately change the item's quantity at that market. This change in stock drives the price change via the availabilityRatio.
+The 7-Day Delay (Anti-Abuse): This effect is delayed. The game checks if 7 days have passed since the last interaction. The availabilityEffect is only calculated after this 7-day window, preventing same-visit exploitation.
+The Strength: Controlled by AVAILABILITY_PRESSURE_STRENGTH (0.50), making market manipulation feel powerful.
 
-## V. Volume Constraints & Fleet Logistics
-To prevent the "late-game singularity", the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing and Fleet integration.
-* **Tier Stratification:** Prices scale geometrically (e.g., Tier 1 Water Ice at ~50cr, Tier 6 Sentient AI at ~20,000,000cr). 
-* **Inverted Availability:** Expensive goods have their canonical availability artificially choked (e.g., Sentient AI capped at 10-24 units system-wide). Cheap goods have massive availability.
-* **The Cargo Constraint (Sub-1000 Limit):** Ship cargo capacities are strictly hard-capped below 1,000 slots. Players must use lower-tier goods (Water Ice, Plasteel) as bulk "packing peanuts" to maximize the efficiency of their massive cargo bays alongside highly profitable top-tier goods. Legacy "Volumetric Sinks" (massive HP/Cargo numbers) have been permanently abolished to maintain UI readability and strict mechanical tension.
-* **Fleet Cost Averaging:** When operating a multi-ship fleet, players can distribute massive cargo hauls across numerous vessels. To prevent inventory tracking exploits, the game calculates a single, dynamic `Average Cost Basis` for each commodity across the entire active fleet inventory. This mathematically prevents players from artificially manipulating profit margins by shuffling goods between ships.
+2. Force: Price Lock (The Core Loop)
+Mechanic: When a player makes a trade, the market's natural "Mean Reversion" is disabled for a long duration based on distance.
+Technical Detail: The priceLockEndDay is set using: Base Lock (60 days) + (Location Distance * 0.20) ± 10% Jitter. This allows fringe outer-rim markets to lock prices for significantly longer (e.g., Pluto for ~276 days) than inner-system hubs (e.g., Earth for ~96 days).
 
-## VI. Ship Economy & Tier-Scaled Upkeep
+3. Force: Depletion Bonus (The Panic)
+A special, one-time bonus for buying out a significant portion of a market's stock.
+Trigger: Purchasing reduces quantity to <= 0 and the amount purchased was >= 8% of targetStock.
+Effect: Applies a 1.5x priceHikeMultiplier continuously until the market naturally replenishes to at least 60% of capacity.
+
+4. Force: Asymmetric Saturation (The Glut)
+A punitive mechanic preventing players from dumping massive fleet-sized inventories onto a single market.
+Trigger: A player's sale pushes a market's inventory above 300% (3.0x) of its targetStock.
+Effect: Applies a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion. Recovery only happens when the inventory sheds below 200%.
+
+5. Force: Inventory Replenishment (The Bottleneck)
+The market slowly restocks (or sheds) its inventory to move back toward its targetStock by 10% each week. MARKET_PRESSURE_DECAY aggressively decays artificial margins by the 4th consecutive trip.
+
+V. The "Packing Peanut" Volume Constraints (Geometric Pricing)
+To prevent the "late-game singularity", the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing.
+Tier Stratification: Prices scale geometrically (e.g., Tier 1 Water Ice at ~50cr, Tier 6 Sentient AI at ~20,000,000cr). 
+Inverted Availability: Expensive goods have their canonical availability artificially choked (e.g., Sentient AI capped at 10-24 units system-wide). Cheap goods have massive availability.
+The Cargo Constraint: Because ship cargo capacities are strictly hard-capped below 1,000 slots, players must use lower-tier goods (Water Ice, Plasteel) as bulk "packing peanuts" to maximize the efficiency of their massive cargo bays alongside highly profitable top-tier goods.
+
+VI. Ship Economy & Tier-Scaled Upkeep
 The game relies on Tier-Scaled Upkeep to drain late-game wealth, keeping absolute stat numbers readable while enforcing exponential costs.
-* **Algorithmic Ship Pricing:** Ship base prices are derived from utility: Cargo (300cr), Hull (200cr), and Fuel (100cr) multiplied by an exponential Class Multiplier (up to 2,500x).
-* **Tier-Scaled Service Costs (Upkeep):** Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0001`). This acts as the primary endgame wealth tax.
-* **Upgrade Economy (Hybrid Pricing):** Upgrades cost a Fixed Base + a percentage of the host ship's value, ensuring upgrades remain a significant investment even on low-tier chassis.
+Algorithmic Ship Pricing: Ship base prices are derived from utility: Cargo (300cr), Hull (200cr), and Fuel (100cr) multiplied by an exponential Class Multiplier (up to 2,500x).
+Tier-Scaled Service Costs (Upkeep): Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0001`).
+Upgrade Economy (Hybrid Pricing): Upgrades cost a Fixed Base + a percentage of the host ship's value.
 
-## VII. Debt & Bankruptcy Dynamics
+VII. Debt & Bankruptcy Dynamics
 The financial system imposes severe, game-altering consequences for over-leveraging capital.
-1.  **Bifurcated Debt Structures:**
-    * **Guild Debt:** Highly regulated, offering lower interest (2%) but implementing strict 30-day garnishments that automatically deduct from player liquidity.
-    * **Syndicate Debt:** High-risk, high-interest (7%) and lacks automatic garnishment, relying instead on punitive "Repo Strikes" if payments are ignored.
-2.  **Solvency & The Repo Loop:** The `BankruptcyService` continually evaluates the player's debt-to-liquidity ratio. If a player holding Syndicate Debt enters insolvency (debt exceeds 150% of liquid assets plus fleet value), a Repo Strike is issued.
-3.  **Asset Forfeiture:** Maxing out Repo Strikes forces a Syndicate Repo Event: the service identifies the highest value asset (a fleet ship or an installed Tier IV/V upgrade), forces a hostile liquidation, and seizes the credits to instantly clear the balance, destroying player progression.
+1. Bifurcated Debt Structures
+Guild Debt is highly regulated, offering lower interest (2%) but implementing strict 30-day garnishments that automatically deduct from player liquidity.
+Syndicate Debt is high-risk, high-interest (7%) and lacks automatic garnishment, relying instead on punitive "Repo Strikes" if payments are ignored.
+2. Solvency & The Repo Loop
+The BankruptcyService continually evaluates the player's debt-to-liquidity ratio. If a player holding Syndicate Debt enters insolvency (debt exceeds 150% of liquid assets plus fleet value), a Repo Strike is issued.
+3. Asset Forfeiture
+Maxing out Repo Strikes forces a Syndicate Repo Event: the service identifies the highest value asset (a fleet ship or an installed Tier IV/V upgrade), forces a hostile liquidation, and seizes the credits to instantly clear the balance, destroying player progression.
 
-## VIII. Sol Station Directorate (Macro-Economic Impact)
+VIII. Sol Station Directorate (Macro-Economic Impact)
 The officers slotted into the Sol Station Engineering Interface act as dynamic macro-economic levers that shape the player's arbitrage strategy system-wide.
-1.  **Systemic Supply Bottlenecks:** Officers with severe negative `consumptionMods` will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system, driving up localized prices globally.
-2.  **Capacity Buffers:** Officers with high `capacityMods` drastically increase the "runway" a station has before reaching critical entropy, expanding the viable geographic radius of arbitrage loops.
-3.  **Volumetric Scaling:** The station's endgame requirements are volumetrically scaled down (maxing at ~4,000 units for Level 50) to perfectly align with Capital ship constraints, ensuring progression requires multiple focused supply runs.
+1. Systemic Supply Bottlenecks: Officers with severe negative consumptionMods will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system, driving up localized prices globally.
+2. Capacity Buffers: Officers with high capacityMods drastically increase the "runway" a station has before reaching critical entropy, expanding the viable geographic radius of arbitrage loops.
+3. Volumetric Scaling: The station's endgame requirements are volumetrically scaled down (maxing at ~4,000 units for Level 50) to perfectly align with Capital ship constraints, ensuring progression requires multiple focused supply runs.
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
@@ -46172,153 +46073,139 @@ DEFERRED
 --- START OF FILE: ./meta/SERVICES.md ---
 // meta/SERVICES.md
 
-# Service Responsibility & Dependency Matrix
-
-## Core Architecture
+Service Responsibility & Dependency Matrix
+Core Architecture
 SimulationService acts as the central Facade. It is the only service that the EventManager talks to directly for complex game actions. It coordinates the specialized services below and acts as the bridge for the Event System 2.0, handling Debug Event injection and high-level resolution orchestration.
 
-## 1. State Management
-**GameState (F009)**
+1. State Management
+GameState (F009)
 Responsibility: Single source of truth. Holds all mutable data (player, market, day, ships).
 Key Behavior: Emits notifications to subscribers (UIManager) whenever setState is called.
 Dependencies: None (Leaf node).
 
-## 2. Game Logic Services
-**SimulationService (F011) [FACADE]**
+2. Game Logic Services
+SimulationService (F011) [FACADE]
 Responsibility: The core game engine Facade. Instantiates and coordinates all specialized services.
 Key Behavior: Receives calls from the EventManager and delegates them to the appropriate domain service. Orchestrates multi-step flows like ship purchasing.
 Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService, BankruptcyService, SystemStateService.
 
-**IntroService (F033)**
+IntroService (F033)
 Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
 Dependencies: GameState, UIManager, Logger, SimulationService.
 
-**PlayerActionService (F034)**
+PlayerActionService (F034)
 Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
 Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
 Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
 
-**GameAttributes (F069)**
+GameAttributes (F069)
 Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
 Dependencies: None.
 
-**TravelService (F036)**
+TravelService (F036)
 Responsibility: Manages the travel loop. Calculates fuel/time costs, applies Convoy Taxes, and triggers random events.
 Dependencies: GameState, TimeService, RandomEventService.
 
-**MarketService (F010)**
+MarketService (F010)
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
 Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Applies System State weather modifiers and Station Quirks dynamically.
 Dependencies: GameState, IntelService, AssetService, SystemStateService.
 
-**IntelService (F057)**
+IntelService (F057)
 Responsibility: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
 Dependencies: GameState.
 
-**TimeService (F035)**
+TimeService (F035)
 Responsibility: Advances the calendar and manages long-term progression.
 Key Behavior: Triggers daily/weekly simulation ticks (Market, News, Weather). Manages the "3-Era Age Engine".
 Dependencies: GameState, MarketService, BankruptcyService, SystemStateService, SolStationService.
 
-**MissionService (F018)**
-Responsibility: Coordinates the Mission System 2.0 lifecycle. Delegates logic to evaluators. Handles freight depositing logic.
+MissionService (F018)
+Responsibility: Coordinators the Mission System 2.0 lifecycle. Delegates logic to evaluators.
 Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator.
 
-**MissionTriggerEvaluator**
-Responsibility: Stateless logic delegate that evaluates "Can I see this mission?" based on prerequisite logic.
-Dependencies: GameState.
-
-**MissionObjectiveEvaluator**
-Responsibility: Stateless logic delegate that evaluates "Is this objective met?" dynamically calculating fleet holds and deposited freight.
-Dependencies: GameState.
-
-**SolStationService (F098)**
+SolStationService (F098)
 Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
 Key Behavior: Manages progression from Level 1-50. Implements deferred universe calculations and view-model interpolation. Executes Just-In-Time (JIT) commits. Manages the Synthesis Pipeline for Antimatter conversion.
 Dependencies: GameState, Logger.
 
-**ToastService (F106)**
+ToastService (F106)
 Responsibility: Manages the volatile notification queue and evaluates thresholds upon location arrival.
 Dependencies: GameState, UIManager, SimulationService.
 
-**BankruptcyService (F107)**
+BankruptcyService (F107)
 Responsibility: Evaluates financial health, manages distinct debt pools (Guild vs Syndicate), and executes punitive actions.
 Key Behavior: Triggers Repo Events forcibly liquidating player assets to cover outstanding Syndicate Debt.
 Dependencies: GameState, PlayerActionService, SimulationService, Logger.
 
-**SystemStateService (F108)**
+SystemStateService (F108)
 Responsibility: Manages procedural Economic Weather and systemic states across the solar system.
 Key Behavior: Rolls conditions weekly that apply temporary, global modifiers to baseline market math and event generation.
 Dependencies: GameState, TimeService, Logger.
 
-**AutomatedPlayerService (F061)**
-Responsibility: Internal "Headless Player" bot for client-side economic simulation and validation.
-Key Behavior: Utilizes Goal-Oriented Action Planning (GOAP) to bypass the input layer and execute trades/travel directly against the SimulationService to test long-term inflation or exploitation.
-Dependencies: GameState, SimulationService, Logger.
-
-## 3. Event System Services (Event 2.0)
-**RandomEventService**
+3. Event System Services (Event 2.0)
+RandomEventService
 Responsibility: The high-level coordinator for the random event system. Determines if an event occurs and which event is selected based on contextual weight and active System States.
 Dependencies: GameState, ConditionEvaluator.
 
-**ConditionEvaluator**
+ConditionEvaluator
 Responsibility: A stateless utility service that validates requirements.
 Dependencies: GameState (Read-only).
 
-**OutcomeResolver**
+OutcomeResolver
 Responsibility: Handles the logic of the player's choice.
 Dependencies: GameState, eventEffectResolver.
 
-**DynamicValueResolver**
+DynamicValueResolver
 Responsibility: Calculates dynamic integer values for event effects based on game state context.
 Dependencies: GameState (Read-only), DB.
 
-**eventEffectResolver**
+eventEffectResolver
 Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome.
 Dependencies: GameState, SimulationService, DynamicValueResolver.
 
-## 4. UI & Presentation Services
-**UIManager (F017) [FACADE]**
+4. UI & Presentation Services
+UIManager (F017) [FACADE]
 Responsibility: The master "Switchboard". Instantiates and coordinates the Domain Controllers. Handles the main render loop.
 Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
 
-**Controllers (Delegates):**
+Controllers (Delegates):
 * UIModalEngine: Manages the modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads to restructure modal headers and inject CSS sprite portraits via the global `PortraitRegistry`.
 * UIHelpManager: Manages the Contextual Help Modal system, micro-pagination tracks, and swipe threshold logic.
 * UIToastManager: Manages Universal Toast notifications, DOM injection, and animation timing.
 * UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
-* UIMissionControl: Manages Mission data screens, sticky bar HUD, Synthesized Objectives, and Intel interactions.
+* UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel interactions.
 * UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-* UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA).
+* UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA, Launch Modals).
 * UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
 
-**IntelMarketRenderer (F058)**
+IntelMarketRenderer (F058)
 Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content.
 Dependencies: IntelService.
 
-**NewsTickerService (F053)**
+NewsTickerService (F053)
 Responsibility: Manages the scrolling text bar content.
 Dependencies: GameState.
 
-**AssetService (F065)**
+AssetService (F065)
 Responsibility: Centralized path resolution and "Hydration" for visual assets.
 Dependencies: AssetStorageService, assets_config.js.
 
-**TravelAnimationService (F044)**
+TravelAnimationService (F044)
 Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
 Dependencies: DB (Travel Visuals).
 
-**AnimationService (F060)**
+AnimationService (F060)
 Responsibility: Provides a generic, promise-based utility (`playBlockingAnimation`) to run CSS animations and block further execution until completion.
 Dependencies: None.
 
-## 5. Persistence Services
-**SaveStorageService (F101)**
+5. Persistence Services
+SaveStorageService (F101)
 Responsibility: Manages game saves using a dual-write architecture and local file I/O operations.
 Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation.
 Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
-**AssetStorageService (F070)**
+AssetStorageService (F070)
 Responsibility: Low-level IndexedDB wrapper.
 Dependencies: Native IndexedDB API.
 --- END OF FILE: ./meta/SERVICES.md ---
@@ -47017,8 +46904,8 @@ graph TD
         H & J --> K[PlayerActionService.executeInstallUpgrade];
         K --> L((Update Ship State));
     end
-2.6 Animated Transaction Flow (Fleet Management Integration)
-Handling asynchronous visual blocking during state transitions, integrating Fleet aggregations.
+2.6 Animated Transaction Flow
+Handling asynchronous visual blocking during state transitions.
 
 Code snippet
 graph TD
@@ -47039,7 +46926,7 @@ graph TD
 
     subgraph Finalization
         G --> H[PlayerActionService.executeBuyShip];
-        H --> I((Mutate GameState Fleet Arrays));
+        H --> I((Mutate GameState));
         I --> J[UIManager.render];
     end
 2.7 Automated Testing Bot
@@ -47141,7 +47028,7 @@ graph TD
         L -- Yes --> M[Update CSS transform: translateX];
         L -- No --> N[Snap back to current slide];
     end
-2.11 Mission System Architecture (Including Synthesized Objectives)
+2.11 Mission System Architecture
 Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
 Code snippet
@@ -47164,12 +47051,11 @@ graph TD
         I --> J[Init missionProgress];
     end
 
-    subgraph Progress Evaluation & Sticky Bar
+    subgraph Progress Evaluation
         J --> K[MissionObjectiveEvaluator];
         K -->|Evaluate Frame| L{Is Met?};
         L -- Partial --> M[Update Progress Bar];
-        L -- All Met, Wrong Location --> S[Inject Synthesized Travel Objective into UI];
-        L -- All Met, Correct Location --> N[Mark isCompletable=true];
+        L -- All Met --> N[Mark isCompletable=true];
     end
 
     subgraph Completion
@@ -47177,7 +47063,34 @@ graph TD
         O --> P[MissionService.completeMission];
         P --> Q[Grant Rewards & Archive];
     end
-2.12 Sol Station Deferred Simulation (JIT Commits)
+2.12 Consumable Item Usage (Folded Space)
+Flow for using an item to bypass standard travel costs.
+
+Code snippet
+graph TD
+    subgraph UI Interaction
+        A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};
+        B -- Yes --> C[Render 'Fold Space' Checkbox];
+        C -- Checked --> D[Update Button Dataset (useFoldedDrive=true)];
+    end
+
+    subgraph Initiation
+        D -- Click Launch --> E[ActionClickHandler];
+        E --> F[SimulationService.travelTo(locId, true)];
+    end
+
+    subgraph Execution
+        F --> G[TravelService.initiateTravel];
+        G --> H{useFoldedDrive == True?};
+        H -- Yes --> I[Set Time=0, Fuel=0];
+        I --> J[Consume Item from Inventory];
+        H -- No --> K[Standard Calculation];
+    end
+    
+    subgraph Resolution
+        J & K --> L[Execute Travel (Anim + State)];
+    end
+2.13 Sol Station Deferred Simulation (JIT Commits)
 Flow for managing high-frequency logic calculations securely and smoothly.
 
 Code snippet
@@ -47198,7 +47111,7 @@ graph TD
         G --> H[Flush Deferred Data into GameState];
         H --> I[Perform standard render cycle];
     end
-2.13 Fleet Management Flow
+2.14 Fleet Management Flow
 Process for handling multi-ship arrays during arbitrage and travel.
 
 Code snippet
@@ -47217,6 +47130,151 @@ graph TD
         E --> F[Player Clicks Launch];
         F --> G[TravelService counts active Ships in Fleet];
         G --> H[Assess Scaling Convoy Tax against resources];
+    end
+2.15 Game State Persistence & Dual-Write Storage
+Flow for saving and loading game data, utilizing an iOS native bridge, IDB, and manual File I/O for Imports/Exports.
+
+Code snippet
+graph TD
+    subgraph Save Operation
+        A1[User Saves Game] --> B1[SaveStorageService.saveGame];
+        B1 --> C1[Write to IndexedDB];
+        C1 --> D1{Is iOS WebKit Bridge Active?};
+        D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
+        D1 -- No --> F1[End Save];
+        E1 --> F1;
+    end
+
+    subgraph Load Operation
+        A2[User Loads Game / Boot] --> B2[SaveStorageService.loadGame];
+        B2 --> C2{Is window.__IOS_SAVES present?};
+        C2 -- Yes --> D2[Parse Native Save Data];
+        D2 --> E2[Background: Heal IndexedDB];
+        C2 -- No --> F2[Read from IndexedDB];
+        E2 & F2 --> G2[Hydrate GameState];
+    end
+
+    subgraph Import / Export
+        H1[User Exports Save] --> I1[SaveStorageService.exportSave];
+        I1 --> J1[Serialize & Trigger File Download];
+        H2[User Imports File] --> I2[SaveStorageService.importSave];
+        I2 --> J2[Parse JSON & Overwrite IDB];
+        J2 --> G2;
+    end
+2.16 Universal Toast System Queue
+Flow for evaluating, capping, and rendering non-blocking notifications upon location arrival.
+
+Code snippet
+graph TD
+    subgraph Trigger Post-Travel
+        A[Travel Animation Completes] --> B[ToastService.evaluateArrivalTriggers];
+    end
+
+    subgraph Logic & Culling
+        B --> C[Evaluate: Ship Systems, Finance, Intel, Missions];
+        C --> D[Sort Valid Triggers by Priority];
+        D --> E[Cull Queue to Max 2 Toasts];
+    end
+
+    subgraph Presentation Lifecycle
+        E --> F[1.0s Initial Delay];
+        F --> G[UIToastManager.showToast];
+        G --> H[Animate DOM Injection];
+        H -- 4.5s Duration --> I[UIToastManager.hideToast];
+        I --> J[Animate DOM Removal];
+        J -- 1.0s Interval Delay --> K{More in Queue?};
+        K -- Yes --> G;
+    end
+    
+    subgraph Interruption
+        L[Player Initiates New Travel] --> M[ToastService.clearQueueAndHide];
+        M --> N[Purge Queue & Timers];
+        N --> O[UIToastManager.forceClear];
+    end
+2.17 Dynamic UI Portrait Injection
+Flow for parsing portrait requests and dynamically mutating modal DOM structures via CSS sprite sheets.
+
+Code snippet
+graph TD
+    subgraph Payload Request
+        A[Service/Event requests Modal] --> B{Contains options.portraitId?};
+    end
+
+    subgraph Resolution
+        B -- Yes --> C[UIModalEngine intercepts before render];
+        C --> D[Call window.getPortraitStyle];
+        D --> E[Lookup coords in PortraitRegistry / characters.js];
+    end
+
+    subgraph DOM Mutation
+        E --> F[Inject .portrait-thumbnail node];
+        F --> G[Apply inline CSS background-position];
+        G --> H[Wrap and align Header text via .modal-header-flex];
+    end
+
+    subgraph Fallback
+        B -- No --> I[Render Standard Center/Left Modal];
+    end
+2.18 Bankruptcy Evaluation & Repo Event Loop
+Evaluation of deep financial insolvency leading to dynamic player asset forfeiture.
+
+Code snippet
+graph TD
+    subgraph Solvency Check
+        A[Daily Tick / Large Purchase] --> B[BankruptcyService.evaluateSolvency];
+        B --> C{Syndicate Debt > Threshold?};
+    end
+    
+    subgraph Repo Trigger
+        C -- Yes --> D[Flag Repo Strike];
+        D --> E{Strike Count == Max?};
+        E -- Yes --> F[Trigger Repo Event];
+    end
+    
+    subgraph Asset Forfeiture
+        F --> G[Identify Highest Value Ship/Upgrade];
+        G --> H[Force Liquidation into Credits];
+        H --> I[Apply to Syndicate Debt];
+        I --> J[Render Punitive Repo Modal to Player];
+    end
+2.19 System State / Economic Weather Propagation
+Procedural macro-economic variables influencing trade conditions.
+
+Code snippet
+graph TD
+    subgraph Weather Generation
+        A[Weekly Simulation Tick] --> B[SystemStateService.rollWeather];
+        B --> C[Select weather ID from Registry];
+        C --> D[Apply globally to GameState.systemStates];
+    end
+
+    subgraph Propagation
+        D --> E[MarketService Pricing Engine];
+        E --> F[Adjust Target Price baselines system-wide];
+        D --> G[RandomEventService Context Weights];
+        G --> H[Increase/Decrease encounter probabilities];
+    end
+2.20 Mission Freight Depositing Flow
+Flow for piecemeal fulfillment of massive cargo requirements.
+
+Code snippet
+graph TD
+    subgraph User Input
+        A[Click 'Deposit Freight'] --> B[UIMissionControl captures coordinates];
+    end
+
+    subgraph Logic Execution
+        B --> C[MissionService.depositMissionCargo];
+        C --> D[Iterate Fleet Inventories];
+        D --> E{Relevant Cargo > 0?};
+        E -- Yes --> F[Deduct from Fleet, Increment 'deposited'];
+    end
+
+    subgraph State Mutation & UI
+        F --> G((Force GameState.setState));
+        G --> H[Return deposited amount to UI];
+        H --> I[UIManager.createFloatingText at Coordinates];
+        I --> J[UIManager.render updates Navigation Bar and Modal];
     end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
@@ -47256,7 +47314,7 @@ This object buffers data during the async travel/event loop.
 * `travelTimeAddPercent`: Percentage modifier for trip duration.
 * `eventHullDamagePercent`: Accumulated hull damage from event outcomes.
 * `setTravelTime`: Hard override for travel duration (if > 0).
-* `convoyTaxDeduction`: Amount of resources/credits deducted due to fleet size scaling during travel.
+* `convoyTaxDeduction`: Amount of resources/credits deducted due to fleet size during travel.
 * `blockadeActive`: Boolean flag indicating an active blockade event affecting the travel route or destination access.
 
 ---
@@ -47388,7 +47446,7 @@ Manages the Endgame Engine mechanics.
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
 | `synthesisPipeline` | Object | Pipeline metrics for conversion, including `{ active, inputCommodities, targetAntimatter, completionDay }`. |
-| `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed logic before JIT commits. Contains `unprocessedDecay` and `bufferedYields` properties mapped by commodity/resource type. |
+| `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed entropy and yields before JIT commits. |
 
 ---
 

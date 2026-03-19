@@ -135,14 +135,9 @@ export class IntelService {
         const maxDiscount = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.50;
         const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
 
-        // --- RELATIVISTIC INTEL CONTRACTS (Distance Scaling) ---
-        const baseDuration = 30 + Math.floor(Math.random() * 61); // 30 - 90 days baseline
-        const transitDays = state.TRAVEL_DATA[saleLocationId]?.[dealLocationId]?.time || 7;
-        const randomMultiplier = 1.8 + Math.random() * (2.4 - 1.8);
-        const finalDuration = baseDuration + Math.floor(transitDays * randomMultiplier);
-
+        const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;
-        const effectiveDurationDays = finalDuration * durationMod;
+        const effectiveDurationDays = durationDays * durationMod;
         
         const valueMultiplier = 1.0 + (discountPercent * 2) + (effectiveDurationDays / 90);
         
@@ -168,9 +163,9 @@ export class IntelService {
             dealLocationId: dealLocationId, // (C) Where the DEAL is
             commodityId: commodityId,
             discountPercent: parseFloat(discountPercent.toFixed(2)),
-            durationDays: Math.floor(effectiveDurationDays), 
+            durationDays: durationDays, // Note: This is now just a base for pricing, not for expiration.
             valueMultiplier: parseFloat(valueMultiplier.toFixed(2)),
-            messageKey: messageKey, 
+            messageKey: messageKey, // Reverted from messageIndex
             isPurchased: false,
         };
 
@@ -267,16 +262,28 @@ export class IntelService {
         const newPlayerState = { ...state.player };
         newPlayerState.credits -= calculatedPrice;
 
-        // 7. Create the Active Intel Deal using the living local target price
-        const localTarget = this.marketService.getLocalTargetPrice(packet.dealLocationId, packet.commodityId);
-        const overridePrice = Math.floor(localTarget * (1 - packet.discountPercent));
+        // 7. Create the Active Intel Deal
+        const galacticAverage = this.marketService.getGalacticAverage(packet.commodityId);
+        const overridePrice = Math.floor(galacticAverage * (1 - packet.discountPercent));
 
-        // Use the newly calculated Relativistic duration as the baseline
-        let durationMultiplier = 1.0;
+        // Calculate dynamic duration
+        const dealLocationId = packet.dealLocationId;
+        let travelTime = this.gameState.TRAVEL_DATA[state.currentLocationId][dealLocationId].time;
 
+        if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
+            travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
+        }
+        
         // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
+        let durationMultiplier = 1.9; // Base multiplier
         if (state.currentLocationId === LOCATION_IDS.VENUS) {
             durationMultiplier *= 2.0; // Double duration at Venus
+        }
+
+        // Apply Local Eco Profile Duration Modifier
+        const locationDef = this.db.MARKETS.find(m => m.id === state.currentLocationId);
+        if (locationDef?.intelProfile?.durationMod) {
+             durationMultiplier *= locationDef.intelProfile.durationMod;
         }
 
         // --- PHASE 2: AGE PERK (INTEL DURATION) ---
@@ -285,10 +292,10 @@ export class IntelService {
             durationMultiplier *= (1 + ageDurationBonus);
         }
 
-        const newDurationDays = Math.ceil(packet.durationDays * durationMultiplier);
+        const newDurationDays = Math.ceil(travelTime * durationMultiplier);
         const expiryDay = this.timeService.getCurrentDay() + newDurationDays;
         
-        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${packet.dealLocationId} will last ${newDurationDays} days (Multiplier: ${durationMultiplier}). Expires on Day ${expiryDay}.`);
+        this.logger.info.system('IntelService', state.day, 'INTEL_DURATION', `Intel deal for ${packet.commodityId} at ${dealLocationId} will last ${newDurationDays} days (Multiplier: ${durationMultiplier}). Expires on Day ${expiryDay}.`);
 
         // 8. Mutate the live packet object again.
         packet.expiryDay = expiryDay; 
@@ -336,9 +343,7 @@ export class IntelService {
     grantNarrativeIntel(intelParams) {
         const state = this.gameState.getState();
         
-        // Narrative intel also hooks into the living local baseline of the destination
-        const localTarget = this.marketService.getLocalTargetPrice(intelParams.dealLocationId, intelParams.commodityId);
-        const overridePrice = Math.floor(localTarget * (1 - (intelParams.discountPercent || 0.5)));
+        const overridePrice = Math.floor(this.getGalacticAverage(intelParams.commodityId) * (1 - (intelParams.discountPercent || 0.5)));
         const expiryDay = this.timeService.getCurrentDay() + (intelParams.durationDays || 60);
 
         const newActiveDeal = {

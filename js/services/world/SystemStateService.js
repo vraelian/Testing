@@ -111,10 +111,7 @@ export class SystemStateService {
     _rollRngState() {
         const allStates = Object.keys(DB.SYSTEM_STATES).filter(k => k !== 'NEUTRAL');
         const ledger = this.gameState.systemState.historyLedger || [];
-        const lastEntry = ledger.length > 0 ? ledger[ledger.length - 1] : null;
-        
-        // Safely extract the ID whether it's a legacy string or a new object format
-        const lastStateId = lastEntry ? (typeof lastEntry === 'string' ? lastEntry : lastEntry.id) : null;
+        const lastStateId = ledger.length > 0 ? ledger[ledger.length - 1] : null;
         const lastArchetype = lastStateId && DB.SYSTEM_STATES[lastStateId] ? DB.SYSTEM_STATES[lastStateId].archetype : null;
 
         // Ensure the new state belongs to a different Archetype than the previous one
@@ -140,19 +137,14 @@ export class SystemStateService {
 
         const sysState = this.gameState.systemState;
         
-        // Archive the previous active state to the history ledger using temporal object format
+        // Archive the previous active state to the history ledger
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
             if (!sysState.historyLedger) sysState.historyLedger = [];
-            sysState.historyLedger.push({
-                id: sysState.activeId,
-                startDay: sysState.startDay || this.gameState.day,
-                endDay: this.gameState.day
-            });
+            sysState.historyLedger.push(sysState.activeId);
             if (sysState.historyLedger.length > 10) sysState.historyLedger.shift();
         }
 
         sysState.activeId = stateId;
-        sysState.startDay = this.gameState.day;
         sysState.remainingDays = Math.floor(Math.random() * (stateDef.durationBounds[1] - stateDef.durationBounds[0] + 1)) + stateDef.durationBounds[0];
 
         // Roll and save a static varietal index for narrative consistency
@@ -179,21 +171,14 @@ export class SystemStateService {
      */
     endCurrentState() {
         const sysState = this.gameState.systemState;
-        
-        // Archive the previous active state to the history ledger using temporal object format
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
             if (!sysState.historyLedger) sysState.historyLedger = [];
-            sysState.historyLedger.push({
-                id: sysState.activeId,
-                startDay: sysState.startDay || this.gameState.day,
-                endDay: this.gameState.day
-            });
+            sysState.historyLedger.push(sysState.activeId);
             if (sysState.historyLedger.length > 10) sysState.historyLedger.shift();
         }
 
         const neutralDef = DB.SYSTEM_STATES['NEUTRAL'];
         sysState.activeId = 'NEUTRAL';
-        sysState.startDay = this.gameState.day;
         sysState.remainingDays = 0;
         sysState.targetLocations = [];
         sysState.varietalIndex = 0;
