@@ -64,12 +64,13 @@ export class UIMarketControl {
     
         this._saveMarketTransactionState();
         
-        // Render Component
+        // Render Component (Phase 5: Added getXRayData binder)
         this.manager.cache.marketScreen.innerHTML = renderMarketScreen(
             gameState, 
             this.manager.isMobile, 
             this.getItemPrice.bind(this), 
-            this.marketTransactionState
+            this.marketTransactionState,
+            this.getXRayData.bind(this)
         );
         
         this._restoreMarketTransactionState();
@@ -93,6 +94,53 @@ export class UIMarketControl {
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
         return this.manager.simulationService.marketService.getPrice(gameState.currentLocationId, goodId, true);
+    }
+
+    /**
+     * Fetch hidden variables for Phase 5 Diagnostic Rendering
+     */
+    getXRayData(gameState, goodId, simulatedQty = 0, simulatedMode = 'buy') {
+        if (!this.manager.simulationService || !this.manager.simulationService.marketService) return null;
+        const ms = this.manager.simulationService.marketService;
+        const locId = gameState.currentLocationId;
+        const item = gameState.market.inventory[locId]?.[goodId];
+        if (!item) return null;
+        
+        const targetPrice = ms.getLocalTargetPrice(locId, goodId, simulatedQty, simulatedMode, simulatedQty > 0);
+        
+        const good = DB.COMMODITIES.find(c => c.id === goodId);
+        const market = DB.MARKETS.find(m => m.id === locId);
+        const [min, max] = good.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[goodId] ?? 1.0;
+        const baseMean = ((min+max)/2) * modifier;
+        
+        let pressure = item.marketPressure;
+        if (simulatedQty > 0) {
+             const pMod = market.ecoProfile?.dampeners?.[goodId] ?? market.ecoProfile?.pressureMod ?? 1.0;
+             const pChange = (((Math.abs(simulatedQty) / (max || 100)) * good.tier) / 10) * pMod;
+             if (simulatedMode === 'buy') pressure -= pChange;
+             else pressure += pChange;
+        } else if (gameState.day < item.lastPlayerInteractionTimestamp + 7) {
+             pressure = 0;
+        }
+
+        const adapt = 1 - Math.max(-2.0, Math.min(0.5, pressure * 0.5));
+        const targetStock = Math.max(1, baseMean * adapt * (1 + (gameState.player.statModifiers?.commoditySupply || 0)));
+        
+        let currentQty = item.quantity;
+        if (simulatedQty > 0) {
+            if (simulatedMode === 'sell') currentQty += simulatedQty;
+            if (simulatedMode === 'buy') currentQty = Math.max(0, currentQty - simulatedQty);
+        }
+        
+        const ratio = currentQty / targetStock;
+        
+        return {
+            pressure: pressure.toFixed(3),
+            targetPrice: Math.round(targetPrice),
+            ratio: ratio.toFixed(2),
+            targetStock: Math.round(targetStock)
+        };
     }
 
     _saveMarketTransactionState() {
@@ -161,7 +209,6 @@ export class UIMarketControl {
         const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = this._getFleetItem(state, goodId);
         
-        // Fetch the living local baseline directly from the Simulation Service
         const ms = this.manager.simulationService?.marketService;
         const localTargetPrice = ms ? ms.getLocalTargetPrice(state.currentLocationId, goodId) : state.market.galacticAverages[goodId];
 
@@ -170,7 +217,6 @@ export class UIMarketControl {
         }
 
         if (mode === 'buy') {
-            // Restore normal availability string when switching to buy mode
             const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
             if (availEl) {
                 const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
@@ -191,14 +237,13 @@ export class UIMarketControl {
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: this.getItemPrice(state, goodId, true),
-                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
+                galacticAvg: localTargetPrice, 
                 playerItem: playerItem
             });
 
         } else { // 'sell' mode
             const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
 
-            // Phase 3 Glut Warning Logic
             let isGlut = false;
             let currentMarketStock = 0;
             if (ms) {
@@ -210,7 +255,6 @@ export class UIMarketControl {
                 }
             }
 
-            // Phase 2 Feedback: Swap Avail string for stylized Glut warning
             const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
             if (availEl) {
                 if (isGlut) {
@@ -235,10 +279,27 @@ export class UIMarketControl {
             indicatorEl.innerHTML = renderIndicatorPills({
                 price: basePrice,
                 sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
-                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
+                galacticAvg: localTargetPrice, 
                 playerItem: playerItem
             });
         }
+
+        // --- PHASE 5: LIVE X-RAY UPDATE OVERLAY ---
+        if (state.uiState?.xrayEnabled) {
+            const xrayEl = this.manager.cache.marketScreen.querySelector(`#xray-${goodId}`);
+            if (xrayEl) {
+                const parsedQty = parseInt(quantity, 10) || 0;
+                const xrayData = this.getXRayData(state, goodId, parsedQty, mode);
+                if (xrayData) {
+                     xrayEl.innerHTML = `
+                         <div class="text-[10px] text-cyan-400 font-mono mt-2 p-1 border border-cyan-800 bg-cyan-950/30 rounded" style="line-height: 1.2;">
+                             [X-RAY] Target: ⌬${xrayData.targetPrice} | P: ${xrayData.pressure}<br>
+                             Ratio: ${xrayData.ratio} (T.Stock: ${xrayData.targetStock})
+                         </div>
+                     `;
+                }
+            }
+       }
     }
 
     _calculateSaleDetails(goodId, quantity) {
@@ -248,9 +309,6 @@ export class UIMarketControl {
         const basePrice = this.getItemPrice(state, goodId, true);
         const effectivePrice = basePrice; 
 
-        // --- FLEET OVERFLOW SYSTEM: EXACT COST BASIS SIMULATION ---
-        // Instead of using the blended average, simulate the exact drain order
-        // (Active Ship first, then by max capacity descending) to project real profit.
         const activeShipId = state.player.activeShipId;
         const shipInventories = [];
         
@@ -259,7 +317,6 @@ export class UIMarketControl {
         for (const shipId of state.player.ownedShipIds) {
             const qty = state.player.inventories[shipId]?.[goodId]?.quantity || 0;
             totalOwnedQty += qty;
-            // Safely fetch max capacity, falling back to static DB if simulation service isn't ready
             const maxCapacity = this.manager.simulationService ? 
                 this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
                 DB.SHIPS[shipId].maxCapacity;
@@ -267,7 +324,6 @@ export class UIMarketControl {
             shipInventories.push({ shipId, qty, maxCapacity });
         }
 
-        // Clamp the evaluable quantity to the actual total inventory owned to prevent false projections
         const evaluableQty = Math.min(quantity, totalOwnedQty);
         const totalPrice = Math.floor(effectivePrice * evaluableQty);
 
@@ -289,7 +345,6 @@ export class UIMarketControl {
                 remainingToSell -= toRemove;
             }
         }
-        // --- END SIMULATION ---
 
         let netProfit = totalPrice - exactCostBasis;
         if (netProfit > 0) {
@@ -306,11 +361,6 @@ export class UIMarketControl {
 
     /**
      * Generates the SVG string for the Price History graph.
-     * Procedurally constructs forecasting cones, baselines, and historical tracking.
-     * @param {string} goodId 
-     * @param {object} gameState 
-     * @param {object} _playerItem - Kept for signature compatibility, unused.
-     * @returns {string} SVG HTML string
      */
     renderPriceGraph(goodId, gameState, _playerItem) {
         if (!this.manager.simulationService || !this.manager.simulationService.marketService) {
@@ -321,7 +371,6 @@ export class UIMarketControl {
         const locId = gameState.currentLocationId;
         const currentDay = gameState.day;
         
-        // Updated Timeline Context
         const historyDays = 90;
         const projectedDays = 45;
 
@@ -331,13 +380,11 @@ export class UIMarketControl {
         const galacticAvg = ms.getGalacticAverage(goodId);
         const localAvg = ms.getLocalTargetPrice(locId, goodId);
 
-        // Expanded width and converted to asymmetric padding to stretch into right-side tooltip space
         const width = 380, height = 255, paddingLeft = 60, paddingRight = 20, paddingTop = 30, paddingBottom = 105;
 
-        // Determine dynamic scaling
         const allPrices = curveData.map(d => d.price).concat([galacticAvg, localAvg]);
-        const minVal = Math.max(1, Math.min(...allPrices) * 0.85); // 15% padding below
-        const maxVal = Math.max(...allPrices) * 1.15; // 15% padding above
+        const minVal = Math.max(1, Math.min(...allPrices) * 0.85); 
+        const maxVal = Math.max(...allPrices) * 1.15; 
         const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
         const midVal = (minVal + maxVal) / 2;
 
@@ -345,16 +392,13 @@ export class UIMarketControl {
         const maxDay = currentDay + projectedDays;
         const dayRange = maxDay - minDay;
 
-        // X Interpolation mapped to asymmetric padding
         const iToX = day => ((day - minDay) / dayRange) * (width - paddingLeft - paddingRight) + paddingLeft;
         const vToY = v => height - paddingBottom - ((v - minVal) / valueRange) * (height - paddingTop - paddingBottom);
 
-        // Container configures click-to-expand logic natively
         let svg = `<div class="market-graph-container" onclick="this.classList.toggle('graph-expanded')" style="cursor: pointer; width: 100%; height: 100%;">`;
         svg += `<svg width="100%" height="100%" viewBox="0 0 ${width} ${height}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">`;
         svg += `<rect width="100%" height="100%" fill="#0c101d" />`;
 
-        // Pass 1: Background System Weather Bands
         const sysStateObj = gameState.systemStates || gameState.systemState || {};
         const weatherHistory = sysStateObj.historyLedger || [];
         const activeStates = [];
@@ -370,13 +414,12 @@ export class UIMarketControl {
         const allBands = [...weatherHistory, ...activeStates];
 
         allBands.forEach(band => {
-            if (typeof band === 'string') return; // Skip legacy string IDs
+            if (typeof band === 'string') return; 
             
             const stateDef = DB.SYSTEM_STATES?.[band.id];
             const isMalign = stateDef?.isMalign === true; 
             const bandClass = isMalign ? 'svg-band-malign' : 'svg-band-benign';
 
-            // clamp background band rendering strictly to visible X-axis bounds mapped to asymmetric padding
             const rawStartX = iToX(band.startDay || band.day);
             const rawEndX = iToX(band.endDay || ((band.startDay || band.day) + 7));
             const startX = Math.max(paddingLeft, rawStartX);
@@ -387,12 +430,10 @@ export class UIMarketControl {
             }
         });
 
-        // Pass 2: Base UI Grid Lines
         svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
         svg += `<line x1="${paddingLeft}" y1="${vToY(maxVal)}" x2="${paddingLeft}" y2="${height - paddingBottom}" />`;
         svg += `<line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" />`;
         
-        // Add faint weekly ticks on the X-axis line
         for (let d = minDay; d <= maxDay; d += 7) {
             const tx = iToX(d);
             if (tx >= paddingLeft && tx <= width - paddingRight) {
@@ -401,15 +442,12 @@ export class UIMarketControl {
         }
         svg += `</g>`;
 
-        // Pass 3: Mathematical Baselines
         const sysAvgY = vToY(galacticAvg);
         const localAvgY = vToY(localAvg);
         
-        // Escalate priority with inline styles to override CSS class restrictions
         svg += `<line x1="${paddingLeft}" y1="${sysAvgY}" x2="${width - paddingRight}" y2="${sysAvgY}" class="svg-line-sys-avg" style="stroke: #ffffff !important;" />`;
         svg += `<line x1="${paddingLeft}" y1="${localAvgY}" x2="${width - paddingRight}" y2="${localAvgY}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" />`;
 
-        // Pass 4: Construct Procedural Curves with Jitter Overrides
         let historyPath = '';
         let projectPath = '';
         let isFirstHistory = true;
@@ -419,7 +457,6 @@ export class UIMarketControl {
         curveData.forEach((point) => {
             let y = vToY(point.price);
             
-            // Jitter: Ambient trading volume masking UI freezes during Price Lock states
             if (point.isLocked) {
                 y += (Math.random() * 2 - 1) * 2; 
             }
@@ -442,53 +479,43 @@ export class UIMarketControl {
             }
         });
 
-        // Render Data Paths
         svg += `<path d="${historyPath.trim()}" class="svg-line-history" fill="none" />`;
         if (projectPath.length > 0) {
             svg += `<path d="${projectPath.trim()}" class="svg-line-project" fill="none" />`;
         }
 
-        // Pass 5: Timeline Context Labels & Axes
         const graphBottomY = height - paddingBottom;
         svg += `<text x="${paddingLeft}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="start">-90</text>`;
         
-        // Present label and downward arrow pointing to current plot point
         const currX = iToX(currentDay);
         svg += `<text x="${currX}" y="${paddingTop - 12}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="middle">PRESENT</text>`;
         svg += `<polygon points="${currX - 4},${paddingTop - 8} ${currX + 4},${paddingTop - 8} ${currX},${paddingTop - 1}" fill="#ffffff" />`;
         
         svg += `<text x="${width - paddingRight}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">+45</text>`;
 
-        // X-Axis TIME Label (Centered relative to the drawn graph width)
         const graphCenterX = paddingLeft + ((width - paddingLeft - paddingRight) / 2);
         svg += `<text x="${graphCenterX}" y="${graphBottomY + 34}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="middle">TIME</text>`;
 
-        // Current Price Floating Label (Offset to top left)
         const currY = vToY(currentPricePoint.price);
         svg += `<text x="${currX - 6}" y="${currY - 6}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(currentPricePoint.price, false)}</text>`;
 
-        // Y-Axis Scale Bounds (Including Midpoint and PRICE Label)
         svg += `<text x="${paddingLeft - 6}" y="${paddingTop - 12}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">PRICE</text>`;
         svg += `<text x="${paddingLeft - 6}" y="${vToY(minVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(minVal, false)}</text>`;
         svg += `<text x="${paddingLeft - 6}" y="${vToY(midVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(midVal, false)}</text>`;
         svg += `<text x="${paddingLeft - 6}" y="${vToY(maxVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
 
-        // Pass 6: Structural Legend (Key) - Realigned to new paddingLeft
         const legendY1 = height - 35;
         const legendY2 = height - 15;
         
-        // Row 1
         svg += `<line x1="${paddingLeft}" y1="${legendY1 - 4}" x2="${paddingLeft + 12}" y2="${legendY1 - 4}" class="svg-line-history" />`;
         svg += `<text x="${paddingLeft + 18}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">History</text>`;
         
         svg += `<line x1="${paddingLeft + 85}" y1="${legendY1 - 4}" x2="${paddingLeft + 97}" y2="${legendY1 - 4}" class="svg-line-project" />`;
         svg += `<text x="${paddingLeft + 103}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Project</text>`;
         
-        // Escalate priority with inline styles to override CSS class restrictions
         svg += `<line x1="${paddingLeft + 175}" y1="${legendY1 - 4}" x2="${paddingLeft + 187}" y2="${legendY1 - 4}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" />`;
         svg += `<text x="${paddingLeft + 193}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Local MKT</text>`;
 
-        // Row 2
         svg += `<line x1="${paddingLeft}" y1="${legendY2 - 4}" x2="${paddingLeft + 12}" y2="${legendY2 - 4}" class="svg-line-sys-avg" style="stroke: #ffffff !important;" stroke-dasharray="4,4" />`;
         svg += `<text x="${paddingLeft + 18}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Sys Avg</text>`;
 
@@ -502,8 +529,6 @@ export class UIMarketControl {
 
     /**
      * Generates the SVG string for the Finance/Credits graph.
-     * @param {object} gameState 
-     * @returns {string} SVG HTML string
      */
     renderFinanceGraph(gameState) {
         const history = gameState.player.creditHistory || [];
@@ -516,7 +541,7 @@ export class UIMarketControl {
         const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
 
         const iToX = i => (i / (history.length - 1)) * (width - paddingLeft - paddingRight) + paddingLeft;
-        const vToY = v => height - paddingLeft - ((v - minVal) / valueRange) * (height - paddingLeft * 1.5); // Maintained vertical padding ratio
+        const vToY = v => height - paddingLeft - ((v - minVal) / valueRange) * (height - paddingLeft * 1.5); 
 
         let svg = `<svg width="${width}" height="${height}" xmlns="http://www.w3.org/2000/svg"><rect width="100%" height="100%" fill="#0c101d" />`;
         

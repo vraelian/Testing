@@ -34,22 +34,6 @@ export class TravelService {
     }
 
     /**
-     * Retrieves the exact base transit time (in days) between two locations.
-     * This is a pure/stateless query method for other services (e.g., IntelService).
-     * @param {string} originId - The ID of the starting location.
-     * @param {string} destinationId - The ID of the destination location.
-     * @returns {number} The base travel time in days.
-     */
-    getTransitTime(originId, destinationId) {
-        if (originId === destinationId) return 0;
-        const state = this.gameState.getState();
-        if (state.TRAVEL_DATA && state.TRAVEL_DATA[originId] && state.TRAVEL_DATA[originId][destinationId]) {
-            return state.TRAVEL_DATA[originId][destinationId].time || 0;
-        }
-        return 7; // Fallback baseline if not found
-    }
-
-    /**
      * Initiates travel to a new location after validating fuel and other conditions.
      * @param {string} locationId - The ID of the destination market.
      * @param {boolean} [useFoldedDrive=false] - Whether to consume a Folded Drive for instant travel.

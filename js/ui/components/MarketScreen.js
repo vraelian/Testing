@@ -15,12 +15,13 @@ import { ACTION_IDS, COMMODITY_IDS } from '../../data/constants.js';
  * @param {boolean} isMobile - A flag indicating if the mobile layout should be used.
  * @param {function} getItemPrice - A reference to the UIManager's getItemPrice function.
  * @param {object} marketTransactionState - The saved state of the transaction modules.
+ * @param {function} getXRayData - [Phase 5] Reference to fetch hidden diagnostic values.
  * @returns {string} The HTML content for the Market screen.
  */
-export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTransactionState) {
+export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTransactionState, getXRayData) {
     const availableCommodities = DB.COMMODITIES.filter(c => c.tier <= gameState.player.revealedTier);
     const marketHtml = availableCommodities.map(good => {
-        return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState);
+        return _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState, getXRayData);
     }).join('');
 
     return `<div class="market-scroll-panel">
@@ -34,10 +35,11 @@ export function renderMarketScreen(gameState, isMobile, getItemPrice, marketTran
  * @param {object} gameState - The current game state.
  * @param {function} getItemPrice - A function to calculate the item's current price.
  * @param {object} marketTransactionState - The saved state of the transaction modules.
+ * @param {function} getXRayData - [Phase 5] Reference to fetch hidden diagnostic values.
  * @returns {string} The HTML string for the commodity card.
  * @private
  */
-function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState) {
+function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionState, getXRayData) {
     const { player, market, currentLocationId, uiState } = gameState;
     
     // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY ---
@@ -67,7 +69,7 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
 
     const nameTooltip = `data-tooltip="${good.lore}"`;
     const playerInvDisplay = fleetItem ? fleetItem.quantity : '0';
-    const isMinimized = uiState.marketCardMinimized[good.id];
+    const isMinimized = uiState.marketCardMinimized && uiState.marketCardMinimized[good.id];
 
     // --- ASSET SERVICE INTEGRATION ---
     const bgImage = AssetService.getCommodityImage(good.name, player.visualSeed);
@@ -120,6 +122,23 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                 </div>
             </div>`;
 
+        // --- PHASE 5: X-RAY OVERLAY INJECTION ---
+        let xrayHtml = '';
+        if (gameState.uiState?.xrayEnabled && getXRayData) {
+            const parsedInitialQty = parseInt(marketTransactionState[good.id]?.quantity || 0, 10);
+            const xrayData = getXRayData(gameState, good.id, parsedInitialQty, initialMode);
+            if (xrayData) {
+                xrayHtml = `
+                    <div id="xray-${good.id}" class="xray-container">
+                        <div class="text-[10px] text-cyan-400 font-mono mt-2 p-1 border border-cyan-800 bg-cyan-950/30 rounded" style="line-height: 1.2;">
+                            [X-RAY] Target: ⌬${xrayData.targetPrice} | P: ${xrayData.pressure}<br>
+                            Ratio: ${xrayData.ratio} (T.Stock: ${xrayData.targetStock})
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
         const ownedQtyText = fleetItem ? ` (${fleetItem.quantity})` : '';
 
         buttonHtml = `<button class="card-toggle-btn" data-action="${ACTION_IDS.TOGGLE_MARKET_CARD_VIEW}" data-good-id="${good.id}">${isMinimized ? '+' : '−'}</button>`;
@@ -138,6 +157,8 @@ function _getMarketItemHtml(good, gameState, getItemPrice, marketTransactionStat
                 ${avgCostHtml}
 
                 ${transactionControlsHtml}
+                
+                ${xrayHtml}
             </div>
 
             <div class="min-view-content">

@@ -9,8 +9,6 @@ import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.j
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 import { SystemStateService } from './world/SystemStateService.js';
 
-const MISSION_CARGO_LEAKAGE_RATE = 0.15;
-
 export class MissionService {
     /**
      * @param {import('./GameState.js').GameState} gameState The central game state.
@@ -419,24 +417,6 @@ export class MissionService {
                         progress.objectives[objKey].deposited += amountDepositedThisTime;
                         totalDepositedThisCall += amountDepositedThisTime;
                         this.logger.info.player(this.gameState.day, 'MISSION_DEPOSIT', `Deposited ${amountDepositedThisTime}x ${itemId} for mission ${missionId}.`);
-                        
-                        // --- V1 FREIGHT ECONOMY LEAKAGE ---
-                        // Verify item is a valid market commodity before injecting into simulation
-                        const isCommodity = DB.COMMODITIES && DB.COMMODITIES.some(c => c.id === itemId);
-                        if (isCommodity && this.simulationService && this.simulationService.marketService) {
-                            const leakedAmount = Math.floor(amountDepositedThisTime * MISSION_CARGO_LEAKAGE_RATE);
-                            const currentLocationId = this.gameState.currentLocationId;
-                            
-                            if (leakedAmount > 0 && currentLocationId) {
-                                const localMarket = this.gameState.market.inventory[currentLocationId];
-                                if (localMarket && localMarket[itemId]) {
-                                    // Inject physical volume back into the simulation
-                                    localMarket[itemId].quantity += leakedAmount;
-                                    // Apply localized economic footprint pressure
-                                    this.simulationService.marketService.applyMarketImpact(itemId, leakedAmount, 'sell');
-                                }
-                            }
-                        }
                     }
                 }
             }
@@ -501,8 +481,6 @@ export class MissionService {
                             return b.maxCapacity - a.maxCapacity;
                         });
 
-                        let totalRemovedForLeakage = 0;
-
                         for (const shipData of shipInventories) {
                             if (remainingToRemove <= 0) break;
                             const toRemove = Math.min(remainingToRemove, shipData.qty);
@@ -511,24 +489,6 @@ export class MissionService {
                                 invItem.quantity -= toRemove;
                                 if (invItem.quantity === 0) invItem.avgCost = 0;
                                 remainingToRemove -= toRemove;
-                                totalRemovedForLeakage += toRemove;
-                            }
-                        }
-
-                        // --- V1 FREIGHT ECONOMY LEAKAGE ---
-                        if (totalRemovedForLeakage > 0) {
-                            const isCommodity = DB.COMMODITIES && DB.COMMODITIES.some(c => c.id === itemId);
-                            if (isCommodity && this.simulationService && this.simulationService.marketService) {
-                                const leakedAmount = Math.floor(totalRemovedForLeakage * MISSION_CARGO_LEAKAGE_RATE);
-                                const currentLocationId = this.gameState.currentLocationId;
-                                
-                                if (leakedAmount > 0 && currentLocationId) {
-                                    const localMarket = this.gameState.market.inventory[currentLocationId];
-                                    if (localMarket && localMarket[itemId]) {
-                                        localMarket[itemId].quantity += leakedAmount;
-                                        this.simulationService.marketService.applyMarketImpact(itemId, leakedAmount, 'sell');
-                                    }
-                                }
                             }
                         }
                     }

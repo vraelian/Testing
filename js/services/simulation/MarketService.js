@@ -10,6 +10,15 @@ import { skewedRandom } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { AssetService } from '../../services/AssetService.js'; 
 
+// Initialize Global Telemetry Buffer
+if (typeof window !== 'undefined' && !window.__ECON_TELEMETRY__) {
+    window.__ECON_TELEMETRY__ = {
+        dailyState: [],
+        tradeShocks: [],
+        botProgression: []
+    };
+}
+
 export class MarketService {
     /**
      * @param {import('../GameState.js').GameState} gameState The central game state object.
@@ -194,6 +203,31 @@ export class MarketService {
                 inventoryItem.marketPressure *= (1 - scaledDecayRate);
                 
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) inventoryItem.marketPressure = 0;
+
+                // --- PHASE 1 TELEMETRY LOGGING (Passive State) ---
+                if (typeof window !== 'undefined' && window.__ECON_TELEMETRY__) {
+                    const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
+                    const [minAvail, maxAvail] = commodity.canonicalAvailability;
+                    const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+                    const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, inventoryItem.marketPressure * 0.5));
+                    const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
+                    const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
+
+                    window.__ECON_TELEMETRY__.dailyState.push({
+                        day: this.gameState.day,
+                        locationId: location.id,
+                        commodityId: commodity.id,
+                        currentPrice: Math.max(1, Math.round(newPrice)),
+                        localTargetPrice: localBaseline,
+                        quantity: inventoryItem.quantity,
+                        targetStock: targetStock,
+                        marketPressure: inventoryItem.marketPressure,
+                        isDepleted: inventoryItem.isDepleted,
+                        isSaturated: inventoryItem.isSaturated,
+                        priceLockEndDay: inventoryItem.priceLockEndDay || 0,
+                        systemState: this._currentSystemState?.id || 'NONE'
+                    });
+                }
             });
             this._recordPriceHistory(location.id);
         });
@@ -298,9 +332,14 @@ export class MarketService {
         const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
+        const preTradePressure = inventoryItem.marketPressure; // Phase 2: Elasticity Logging
+        
         let pressureMod = market?.ecoProfile?.dampeners?.[goodId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
         const pressureChange = (((Math.abs(quantity) / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
         
+        let isSatBreached = false;
+        let glutThresholdValue = 0;
+
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;
         } else {
@@ -316,7 +355,10 @@ export class MarketService {
             const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
             const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
             
-            if (inventoryItem.quantity > (targetStock * 3.0)) {
+            glutThresholdValue = targetStock * 3.0;
+
+            if (inventoryItem.quantity > glutThresholdValue) {
+                if (!inventoryItem.isSaturated) isSatBreached = true;
                 inventoryItem.isSaturated = true;
                 inventoryItem.saturationDay = this.gameState.day;
                 inventoryItem.pendingOvernightSnap = true; // Flag for next day evolution
@@ -343,6 +385,27 @@ export class MarketService {
         }
         
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
+
+        // --- PHASE 2 TELEMETRY LOGGING (Saturation/Pressure Shocks) ---
+        if (typeof window !== 'undefined' && window.__ECON_TELEMETRY__) {
+            const immediateFutureTarget = this.getLocalTargetPrice(this.gameState.currentLocationId, goodId);
+            
+            window.__ECON_TELEMETRY__.tradeShocks.push({
+                day: this.gameState.day,
+                locationId: this.gameState.currentLocationId,
+                commodityId: goodId,
+                transactionType: transactionType,
+                volumeTransacted: Math.abs(quantity),
+                preTradePressure: preTradePressure,
+                postTradePressure: inventoryItem.marketPressure,
+                pressureDelta: pressureChange,
+                projectedTargetPriceOffset: immediateFutureTarget,
+                thresholdValue: transactionType === 'sell' ? glutThresholdValue : null,
+                thresholdBreached: isSatBreached,
+                multiplierEngaged: isSatBreached ? 0.25 : 1.0,
+                priceLockEndDay: inventoryItem.priceLockEndDay
+            });
+        }
     }
 
     /**
@@ -362,7 +425,11 @@ export class MarketService {
         const depletionThreshold = targetStock * 0.08;
         const depletionBuyQuantity = stockBeforeBuy; 
 
+        let isDepBreached = false;
+        let panicMult = market.ecoProfile?.panicMult ?? 1.5;
+
         if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
+            if (!inventoryItem.isDepleted) isDepBreached = true;
             inventoryItem.isDepleted = true; 
             inventoryItem.depletionDay = currentDay; 
             inventoryItem.depletionBonusDay = currentDay; 
@@ -373,6 +440,25 @@ export class MarketService {
                     day: currentDay, type: 'DEPLETION', locationId: this.gameState.currentLocationId, commodityId: good.id
                 });
             }
+        }
+
+        // --- PHASE 2 TELEMETRY LOGGING (Depletion Shocks) ---
+        if (typeof window !== 'undefined' && window.__ECON_TELEMETRY__) {
+            window.__ECON_TELEMETRY__.tradeShocks.push({
+                day: currentDay,
+                locationId: this.gameState.currentLocationId,
+                commodityId: good.id,
+                transactionType: 'buy_depletion_check',
+                volumeTransacted: stockBeforeBuy,
+                preTradePressure: null,
+                postTradePressure: null,
+                pressureDelta: null,
+                projectedTargetPriceOffset: null,
+                thresholdValue: depletionThreshold,
+                thresholdBreached: isDepBreached,
+                multiplierEngaged: isDepBreached ? panicMult : 1.0,
+                priceLockEndDay: null
+            });
         }
     }
 

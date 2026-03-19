@@ -593,7 +593,7 @@
     --active-primary: var(--sell-primary);
     --active-secondary-bg: var(--sell-secondary-bg);
     --active-secondary-border: var(--sell-secondary-border);
-    --active-text-light: var(--buy-text-light);
+    --active-text-light: var(--sell-text-light);
     --active-text-dark: var(--sell-text-dark);
 }
 .toggle-switch, .qty-stepper {
@@ -905,57 +905,3 @@
 .card-spring-bounce-up {
     animation: spring-bounce-up 0.75s ease-out forwards;
 }
-
-/* --- [[START]] GDD V3 GRAPH & GLUT WARNING STYLES --- */
-.market-graph-container {
-    transition: transform 0.2s ease;
-}
-
-.market-graph-container.graph-expanded {
-    transform: scale(1.20); /* Increased by 5% as requested */
-    transform-origin: center top;
-}
-
-.text-glut-warning {
-    color: #d8b4fe !important; /* Lighter base purple for readability */
-    /* Hard 1px black stroke + intense outer purple glow */
-    text-shadow: 
-        -1px -1px 0 #000,  
-         1px -1px 0 #000,
-        -1px  1px 0 #000,
-         1px  1px 0 #000,
-         0 0 10px rgba(176, 102, 255, 0.9), 
-         0 0 20px rgba(176, 102, 255, 0.6) !important;
-}
-
-.svg-line-sys-avg {
-    stroke: rgba(150, 150, 150, 0.4);
-    stroke-width: 1;
-    stroke-dasharray: 8, 6;
-}
-
-.svg-line-local-avg {
-    stroke: rgba(255, 255, 255, 0.4);
-    stroke-width: 1;
-    stroke-dasharray: 4, 4;
-}
-
-.svg-line-history {
-    stroke: #007bff;
-    stroke-width: 2;
-}
-
-.svg-line-project {
-    stroke: rgba(0, 255, 255, 0.6);
-    stroke-width: 2;
-    stroke-dasharray: 2, 2;
-}
-
-.svg-band-benign {
-    fill: rgba(0, 255, 0, 0.05);
-}
-
-.svg-band-malign {
-    fill: rgba(255, 0, 0, 0.25);
-}
-/* --- [[END]] GDD V3 GRAPH & GLUT WARNING STYLES --- */

@@ -5,7 +5,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'NEUTRAL': {
         name: 'Stable Economy',
         archetype: 'Neutral',
-        isMalign: false,
         durationBounds: [240, 1387], // 8 months to 3.8 years
         varietals: [
             "System-wide markets are stable. Trade lanes are clear.",
@@ -18,7 +17,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'GUILD_EMBARGO': {
         name: 'Guild Embargo (Logistical Gridlock)',
         archetype: 'Bear Market (Restrictive)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "Guild customs frigates have established hard blockades at major transit junctions. Mandatory manifest audits are crippling bulk shipping lanes, resulting in widespread inventory stagnation.",
@@ -35,7 +33,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'CORONAL_MASS_EJECTION': {
         name: 'Coronal Mass Ejection (Radiation Storms)',
         archetype: 'Bear Market (Restrictive)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "Sol Station telemetry indicates a massive breach in the solar corona. High-energy plasma waves are sweeping the system, forcing ship reactors to burn excess fuel just to maintain minimum deflector integrity.",
@@ -51,7 +48,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'AD_ASTRA_DIVIDEND': {
         name: 'The Ad Astra Dividend (Tech Boom)',
         archetype: 'Bull Market (Expansive)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "Earth’s Sovereign Board has authorized the release of a recovered Ad Astra fabrication cache. A sudden influx of hyper-efficient, standardized replacement parts has driven maintenance costs to historic lows.",
@@ -67,7 +63,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SYSTEMIC_INFRASTRUCTURE_PUSH': {
         name: 'Systemic Infrastructure Push',
         archetype: 'Bull Market (Expansive)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "The immortal executives of Mars and Venus have jointly mandated a multi-trillion credit infrastructure overhaul. Demand for industrial bulk materials has completely outpaced standard system supply.",
@@ -84,7 +79,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'BLACK_MARKET_BLUEPRINT_LEAK': {
         name: 'Black Market Blueprint Leak',
         archetype: 'Opportunistic Market (High Volatility)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A massive data breach at a quantum research facility on Uranus has flooded the dark-net with classified ship schematics. Tuning shops are quietly offering experimental gear, for a hefty 'handling fee.'",
@@ -100,7 +94,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'LONG_WATCH_PHILANTHROPY': {
         name: 'The Long Watch Philanthropy',
         archetype: 'Charitable Market (Beneficial)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A Martian Sovereign is celebrating their second century of life with a systemic tax write-off. Debt interest has been temporarily frozen, and baseline survival rations are heavily subsidized.",
@@ -117,7 +110,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SILENT_CORRECTION': {
         name: 'Silent Correction',
         archetype: 'Charitable Market (Beneficial)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A benign ghost in the machine is rewriting the routing tables. Nav-computers are plotting impossibly safe trajectories through deep space, and automated drydocks are repairing ships without registering a billing cycle.",
@@ -133,7 +125,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'VENETIAN_JUBILEE': {
         name: 'The Venetian Jubilee',
         archetype: 'Charitable Market (Beneficial)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A massive cyber-attack on corporate banking sectors has resulted in an unexpected windfall. Shadow brokers are quietly funneling stolen credits into the open market, padding the payouts for every independent trader.",
@@ -148,7 +139,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'GEOPOLITICAL_STALEMATE': {
         name: 'Geopolitical Stalemate',
         archetype: 'Conservative Market (Stagnant)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "A bitter tariff dispute between the Terran Alliance and the Martian colonies has brought speculative trade to a standstill. Markets are shedding inventory and aggressively reverting to baseline average prices.",
@@ -164,7 +154,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'PLANETARY_GOLD_RUSH': {
         name: 'Planetary Gold Rush',
         archetype: 'Extreme (Single-Location Bull Market)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "[Loc] is experiencing an unprecedented economic boom! Corporate investors are pouring endless credits into the local economy, driving demand for absolutely everything through the roof.",
@@ -182,7 +171,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'STATION_QUARANTINE': {
         name: 'Station Quarantine',
         archetype: 'Extreme (Single-Location Bear Market)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "A severe crisis has forced the Guild to enact a total quarantine over [Loc]. The market has completely frozen, and the few mechanics still working are extorting captains for basic services.",
@@ -200,7 +188,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SOVEREIGNS_RETREAT': {
         name: "The Sovereign's Retreat",
         archetype: 'Extreme (Single-Location Charitable Market)',
-        isMalign: false,
         durationBounds: [240, 1387],
         varietals: [
             "A mysterious benefactor has turned [Loc] into a temporary haven for independent captains. Local tech shops are practically giving away military-grade ship upgrades, and data brokers are handing out intel for free.",
@@ -218,7 +205,6 @@ export const SYSTEM_STATE_REGISTRY = {
     'SECTOR_COLLAPSE': {
         name: 'Sector Collapse',
         archetype: 'Extreme (Tri-Location Bear Market)',
-        isMalign: true,
         durationBounds: [240, 1387],
         varietals: [
             "A catastrophic economic contagion has swept through [Loc 1], [Loc 2], and [Loc 3]. Trade across this entire sector has collapsed. Nobody is buying, and the value of goods has hit absolute rock bottom.",

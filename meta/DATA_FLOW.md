@@ -145,8 +145,8 @@ graph TD
         H & J --> K[PlayerActionService.executeInstallUpgrade];
         K --> L((Update Ship State));
     end
-2.6 Animated Transaction Flow (Fleet Management Integration)
-Handling asynchronous visual blocking during state transitions, integrating Fleet aggregations.
+2.6 Animated Transaction Flow
+Handling asynchronous visual blocking during state transitions.
 
 Code snippet
 graph TD
@@ -167,7 +167,7 @@ graph TD
 
     subgraph Finalization
         G --> H[PlayerActionService.executeBuyShip];
-        H --> I((Mutate GameState Fleet Arrays));
+        H --> I((Mutate GameState));
         I --> J[UIManager.render];
     end
 2.7 Automated Testing Bot
@@ -269,7 +269,7 @@ graph TD
         L -- Yes --> M[Update CSS transform: translateX];
         L -- No --> N[Snap back to current slide];
     end
-2.11 Mission System Architecture (Including Synthesized Objectives)
+2.11 Mission System Architecture
 Flow from static Registry definition to dynamic player state via Logic Evaluators.
 
 Code snippet
@@ -292,12 +292,11 @@ graph TD
         I --> J[Init missionProgress];
     end
 
-    subgraph Progress Evaluation & Sticky Bar
+    subgraph Progress Evaluation
         J --> K[MissionObjectiveEvaluator];
         K -->|Evaluate Frame| L{Is Met?};
         L -- Partial --> M[Update Progress Bar];
-        L -- All Met, Wrong Location --> S[Inject Synthesized Travel Objective into UI];
-        L -- All Met, Correct Location --> N[Mark isCompletable=true];
+        L -- All Met --> N[Mark isCompletable=true];
     end
 
     subgraph Completion
@@ -305,7 +304,34 @@ graph TD
         O --> P[MissionService.completeMission];
         P --> Q[Grant Rewards & Archive];
     end
-2.12 Sol Station Deferred Simulation (JIT Commits)
+2.12 Consumable Item Usage (Folded Space)
+Flow for using an item to bypass standard travel costs.
+
+Code snippet
+graph TD
+    subgraph UI Interaction
+        A[UIEventControl.showLaunchModal] --> B{Check: Tier 7 & Has Item?};
+        B -- Yes --> C[Render 'Fold Space' Checkbox];
+        C -- Checked --> D[Update Button Dataset (useFoldedDrive=true)];
+    end
+
+    subgraph Initiation
+        D -- Click Launch --> E[ActionClickHandler];
+        E --> F[SimulationService.travelTo(locId, true)];
+    end
+
+    subgraph Execution
+        F --> G[TravelService.initiateTravel];
+        G --> H{useFoldedDrive == True?};
+        H -- Yes --> I[Set Time=0, Fuel=0];
+        I --> J[Consume Item from Inventory];
+        H -- No --> K[Standard Calculation];
+    end
+    
+    subgraph Resolution
+        J & K --> L[Execute Travel (Anim + State)];
+    end
+2.13 Sol Station Deferred Simulation (JIT Commits)
 Flow for managing high-frequency logic calculations securely and smoothly.
 
 Code snippet
@@ -326,7 +352,7 @@ graph TD
         G --> H[Flush Deferred Data into GameState];
         H --> I[Perform standard render cycle];
     end
-2.13 Fleet Management Flow
+2.14 Fleet Management Flow
 Process for handling multi-ship arrays during arbitrage and travel.
 
 Code snippet
@@ -345,4 +371,149 @@ graph TD
         E --> F[Player Clicks Launch];
         F --> G[TravelService counts active Ships in Fleet];
         G --> H[Assess Scaling Convoy Tax against resources];
+    end
+2.15 Game State Persistence & Dual-Write Storage
+Flow for saving and loading game data, utilizing an iOS native bridge, IDB, and manual File I/O for Imports/Exports.
+
+Code snippet
+graph TD
+    subgraph Save Operation
+        A1[User Saves Game] --> B1[SaveStorageService.saveGame];
+        B1 --> C1[Write to IndexedDB];
+        C1 --> D1{Is iOS WebKit Bridge Active?};
+        D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
+        D1 -- No --> F1[End Save];
+        E1 --> F1;
+    end
+
+    subgraph Load Operation
+        A2[User Loads Game / Boot] --> B2[SaveStorageService.loadGame];
+        B2 --> C2{Is window.__IOS_SAVES present?};
+        C2 -- Yes --> D2[Parse Native Save Data];
+        D2 --> E2[Background: Heal IndexedDB];
+        C2 -- No --> F2[Read from IndexedDB];
+        E2 & F2 --> G2[Hydrate GameState];
+    end
+
+    subgraph Import / Export
+        H1[User Exports Save] --> I1[SaveStorageService.exportSave];
+        I1 --> J1[Serialize & Trigger File Download];
+        H2[User Imports File] --> I2[SaveStorageService.importSave];
+        I2 --> J2[Parse JSON & Overwrite IDB];
+        J2 --> G2;
+    end
+2.16 Universal Toast System Queue
+Flow for evaluating, capping, and rendering non-blocking notifications upon location arrival.
+
+Code snippet
+graph TD
+    subgraph Trigger Post-Travel
+        A[Travel Animation Completes] --> B[ToastService.evaluateArrivalTriggers];
+    end
+
+    subgraph Logic & Culling
+        B --> C[Evaluate: Ship Systems, Finance, Intel, Missions];
+        C --> D[Sort Valid Triggers by Priority];
+        D --> E[Cull Queue to Max 2 Toasts];
+    end
+
+    subgraph Presentation Lifecycle
+        E --> F[1.0s Initial Delay];
+        F --> G[UIToastManager.showToast];
+        G --> H[Animate DOM Injection];
+        H -- 4.5s Duration --> I[UIToastManager.hideToast];
+        I --> J[Animate DOM Removal];
+        J -- 1.0s Interval Delay --> K{More in Queue?};
+        K -- Yes --> G;
+    end
+    
+    subgraph Interruption
+        L[Player Initiates New Travel] --> M[ToastService.clearQueueAndHide];
+        M --> N[Purge Queue & Timers];
+        N --> O[UIToastManager.forceClear];
+    end
+2.17 Dynamic UI Portrait Injection
+Flow for parsing portrait requests and dynamically mutating modal DOM structures via CSS sprite sheets.
+
+Code snippet
+graph TD
+    subgraph Payload Request
+        A[Service/Event requests Modal] --> B{Contains options.portraitId?};
+    end
+
+    subgraph Resolution
+        B -- Yes --> C[UIModalEngine intercepts before render];
+        C --> D[Call window.getPortraitStyle];
+        D --> E[Lookup coords in PortraitRegistry / characters.js];
+    end
+
+    subgraph DOM Mutation
+        E --> F[Inject .portrait-thumbnail node];
+        F --> G[Apply inline CSS background-position];
+        G --> H[Wrap and align Header text via .modal-header-flex];
+    end
+
+    subgraph Fallback
+        B -- No --> I[Render Standard Center/Left Modal];
+    end
+2.18 Bankruptcy Evaluation & Repo Event Loop
+Evaluation of deep financial insolvency leading to dynamic player asset forfeiture.
+
+Code snippet
+graph TD
+    subgraph Solvency Check
+        A[Daily Tick / Large Purchase] --> B[BankruptcyService.evaluateSolvency];
+        B --> C{Syndicate Debt > Threshold?};
+    end
+    
+    subgraph Repo Trigger
+        C -- Yes --> D[Flag Repo Strike];
+        D --> E{Strike Count == Max?};
+        E -- Yes --> F[Trigger Repo Event];
+    end
+    
+    subgraph Asset Forfeiture
+        F --> G[Identify Highest Value Ship/Upgrade];
+        G --> H[Force Liquidation into Credits];
+        H --> I[Apply to Syndicate Debt];
+        I --> J[Render Punitive Repo Modal to Player];
+    end
+2.19 System State / Economic Weather Propagation
+Procedural macro-economic variables influencing trade conditions.
+
+Code snippet
+graph TD
+    subgraph Weather Generation
+        A[Weekly Simulation Tick] --> B[SystemStateService.rollWeather];
+        B --> C[Select weather ID from Registry];
+        C --> D[Apply globally to GameState.systemStates];
+    end
+
+    subgraph Propagation
+        D --> E[MarketService Pricing Engine];
+        E --> F[Adjust Target Price baselines system-wide];
+        D --> G[RandomEventService Context Weights];
+        G --> H[Increase/Decrease encounter probabilities];
+    end
+2.20 Mission Freight Depositing Flow
+Flow for piecemeal fulfillment of massive cargo requirements.
+
+Code snippet
+graph TD
+    subgraph User Input
+        A[Click 'Deposit Freight'] --> B[UIMissionControl captures coordinates];
+    end
+
+    subgraph Logic Execution
+        B --> C[MissionService.depositMissionCargo];
+        C --> D[Iterate Fleet Inventories];
+        D --> E{Relevant Cargo > 0?};
+        E -- Yes --> F[Deduct from Fleet, Increment 'deposited'];
+    end
+
+    subgraph State Mutation & UI
+        F --> G((Force GameState.setState));
+        G --> H[Return deposited amount to UI];
+        H --> I[UIManager.createFloatingText at Coordinates];
+        I --> J[UIManager.render updates Navigation Bar and Modal];
     end
