@@ -105,9 +105,12 @@ export class MarketService {
     /**
      * Simulates market price changes during the overnight progression.
      * Integrates structural snaps for panic states triggered during the prior day.
+     * Applies the Relativistic Distance Scalar to freeze outer rim economies.
      */
     evolveMarketPrices() {
         DB.MARKETS.forEach(location => {
+            const distanceScalar = Math.max(1, (location.distance || 1) / GAME_RULES.BASE_TRANSIT_DISTANCE);
+
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
@@ -139,6 +142,9 @@ export class MarketService {
 
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH * activeStateMeanReversionMod;
                 if (location.ecoProfile?.meanReversionMod) meanReversion *= location.ecoProfile.meanReversionMod;
+
+                // --- RELATIVISTIC MEAN REVERSION ---
+                meanReversion /= distanceScalar;
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
@@ -182,7 +188,11 @@ export class MarketService {
                     decayMod = 1.0 / location.ecoProfile.recoveryMod;
                 }
 
-                inventoryItem.marketPressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
+                // --- RELATIVISTIC MARKET MEMORY (DECAY) ---
+                const baseDecayRate = 1 - (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
+                const scaledDecayRate = baseDecayRate / distanceScalar;
+                inventoryItem.marketPressure *= (1 - scaledDecayRate);
+                
                 if (Math.abs(inventoryItem.marketPressure) < 0.001) inventoryItem.marketPressure = 0;
             });
             this._recordPriceHistory(location.id);
@@ -191,9 +201,12 @@ export class MarketService {
     
     /**
      * Simulates the weekly replenishment of commodity stock and evaluates multi-year memory decay.
+     * Applies the Relativistic Distance Scalar to choke automated goods flow to the outer rim.
      */
     replenishMarketInventory() {
         DB.MARKETS.forEach(market => {
+            const distanceScalar = Math.max(1, (market.distance || 1) / GAME_RULES.BASE_TRANSIT_DISTANCE);
+
             DB.COMMODITIES.forEach(c => {
                 if (c.tier > this.gameState.player.revealedTier) return;
 
@@ -216,6 +229,9 @@ export class MarketService {
                     
                     if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
                 }
+
+                // --- RELATIVISTIC REPLENISHMENT ---
+                replenishRate /= distanceScalar;
 
                 // Memory Decay Evaluation (1 to 4 years threshold check)
                 const memoryExpiration = inventoryItem.memoryExpirationDays || (inventoryItem.lastPlayerInteractionTimestamp + 365);
@@ -471,13 +487,19 @@ export class MarketService {
 
     /**
      * Generates mathematical curve data for historical and projected prices.
+     * Incorporates the Relativistic Distance Scalar to ensure UI graphs accurately reflect outer-rim freeze.
      */
     generateCurveData(locationId, commodityId, historyDays, projectedDays, simulatedQty = 0, simulatedMode = 'sell') {
         const currentDay = this.gameState.day;
         const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
         const currentPrice = this.gameState.market.prices[locationId][commodityId];
         
-        const meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH || 0.025;
+        const market = DB.MARKETS.find(m => m.id === locationId);
+        const distanceScalar = Math.max(1, (market?.distance || 1) / GAME_RULES.BASE_TRANSIT_DISTANCE);
+
+        // --- RELATIVISTIC MEAN REVERSION (Dampened by distance for projections) ---
+        const meanReversion = (GAME_RULES.MEAN_REVERSION_STRENGTH || 0.025) / distanceScalar;
+
         let priceLockEnd = inventoryItem.priceLockEndDay || 0;
         
         const curveData = [];
@@ -510,7 +532,6 @@ export class MarketService {
 
         if (simulatedQty > 0) {
             const good = DB.COMMODITIES.find(c => c.id === commodityId);
-            const market = DB.MARKETS.find(m => m.id === locationId);
             const currentMarketStock = inventoryItem.quantity;
             
             const [minAvail, maxAvail] = good.canonicalAvailability;

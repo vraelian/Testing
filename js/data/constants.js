@@ -301,7 +301,8 @@ export const GAME_RULES = Object.freeze({
     FINANCE_HISTORY_LENGTH: 25,
     DAILY_PRICE_VOLATILITY: 0.25,
     MEAN_REVERSION_STRENGTH: 0.025, // Updated for Balance V2 (Stretched recovery)
-    MARKET_PRESSURE_DECAY: 0.65,    // Updated for Balance V2 (Harder profit crash)
+    MARKET_PRESSURE_DECAY: 0.998,   // Updated for Relativistic Economy (Multi-year memory)
+    BASE_TRANSIT_DISTANCE: 1.0,     // Denominator for Relativistic Distance Scalar
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
