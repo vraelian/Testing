@@ -322,8 +322,8 @@ export class UIMarketControl {
         const currentDay = gameState.day;
         
         // Updated Timeline Context
-        const historyDays = 60;
-        const projectedDays = 30;
+        const historyDays = 90;
+        const projectedDays = 45;
 
         const curveData = ms.generateCurveData(locId, goodId, historyDays, projectedDays);
         if (!curveData || curveData.length === 0) return `<div class="text-gray-400 text-sm p-4">No Data Available</div>`;
@@ -391,14 +391,23 @@ export class UIMarketControl {
         svg += `<g class="grid-lines" stroke="#1f2937" stroke-width="1">`;
         svg += `<line x1="${paddingLeft}" y1="${vToY(maxVal)}" x2="${paddingLeft}" y2="${height - paddingBottom}" />`;
         svg += `<line x1="${paddingLeft}" y1="${height - paddingBottom}" x2="${width - paddingRight}" y2="${height - paddingBottom}" />`;
+        
+        // Add faint weekly ticks on the X-axis line
+        for (let d = minDay; d <= maxDay; d += 7) {
+            const tx = iToX(d);
+            if (tx >= paddingLeft && tx <= width - paddingRight) {
+                svg += `<line x1="${tx}" y1="${height - paddingBottom}" x2="${tx}" y2="${height - paddingBottom + 5}" stroke="rgba(255, 255, 255, 0.25)" stroke-width="1" />`;
+            }
+        }
         svg += `</g>`;
 
         // Pass 3: Mathematical Baselines
         const sysAvgY = vToY(galacticAvg);
         const localAvgY = vToY(localAvg);
         
-        svg += `<line x1="${paddingLeft}" y1="${sysAvgY}" x2="${width - paddingRight}" y2="${sysAvgY}" class="svg-line-sys-avg" />`;
-        svg += `<line x1="${paddingLeft}" y1="${localAvgY}" x2="${width - paddingRight}" y2="${localAvgY}" class="svg-line-local-avg" />`;
+        // Escalate priority with inline styles to override CSS class restrictions
+        svg += `<line x1="${paddingLeft}" y1="${sysAvgY}" x2="${width - paddingRight}" y2="${sysAvgY}" class="svg-line-sys-avg" style="stroke: #ffffff !important;" />`;
+        svg += `<line x1="${paddingLeft}" y1="${localAvgY}" x2="${width - paddingRight}" y2="${localAvgY}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" />`;
 
         // Pass 4: Construct Procedural Curves with Jitter Overrides
         let historyPath = '';
@@ -441,14 +450,14 @@ export class UIMarketControl {
 
         // Pass 5: Timeline Context Labels & Axes
         const graphBottomY = height - paddingBottom;
-        svg += `<text x="${paddingLeft}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="start">-60</text>`;
+        svg += `<text x="${paddingLeft}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="start">-90</text>`;
         
         // Present label and downward arrow pointing to current plot point
         const currX = iToX(currentDay);
         svg += `<text x="${currX}" y="${paddingTop - 12}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="middle">PRESENT</text>`;
         svg += `<polygon points="${currX - 4},${paddingTop - 8} ${currX + 4},${paddingTop - 8} ${currX},${paddingTop - 1}" fill="#ffffff" />`;
         
-        svg += `<text x="${width - paddingRight}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">+30</text>`;
+        svg += `<text x="${width - paddingRight}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">+45</text>`;
 
         // X-Axis TIME Label (Centered relative to the drawn graph width)
         const graphCenterX = paddingLeft + ((width - paddingLeft - paddingRight) / 2);
@@ -475,11 +484,12 @@ export class UIMarketControl {
         svg += `<line x1="${paddingLeft + 85}" y1="${legendY1 - 4}" x2="${paddingLeft + 97}" y2="${legendY1 - 4}" class="svg-line-project" />`;
         svg += `<text x="${paddingLeft + 103}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Project</text>`;
         
-        svg += `<line x1="${paddingLeft + 175}" y1="${legendY1 - 4}" x2="${paddingLeft + 187}" y2="${legendY1 - 4}" class="svg-line-local-avg" />`;
-        svg += `<text x="${paddingLeft + 193}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Local Avg</text>`;
+        // Escalate priority with inline styles to override CSS class restrictions
+        svg += `<line x1="${paddingLeft + 175}" y1="${legendY1 - 4}" x2="${paddingLeft + 187}" y2="${legendY1 - 4}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" />`;
+        svg += `<text x="${paddingLeft + 193}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Local MKT</text>`;
 
         // Row 2
-        svg += `<line x1="${paddingLeft}" y1="${legendY2 - 4}" x2="${paddingLeft + 12}" y2="${legendY2 - 4}" class="svg-line-sys-avg" />`;
+        svg += `<line x1="${paddingLeft}" y1="${legendY2 - 4}" x2="${paddingLeft + 12}" y2="${legendY2 - 4}" class="svg-line-sys-avg" style="stroke: #ffffff !important;" stroke-dasharray="4,4" />`;
         svg += `<text x="${paddingLeft + 18}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Sys Avg</text>`;
 
         svg += `<rect x="${paddingLeft + 85}" y="${legendY2 - 10}" width="10" height="10" fill="rgba(0, 255, 0, 0.35)" />`;

@@ -61,7 +61,7 @@ export class MarketService {
         let price = this.gameState.market.prices[locationId]?.[commodityId] || 0;
 
         if (deal && deal.locationId === locationId && deal.commodityId === commodityId) {
-            price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+            price = deal.overridePrice;
         }
 
         if (locationId === LOCATION_IDS.EARTH && (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) price *= 1.10;
@@ -251,10 +251,10 @@ export class MarketService {
                     const baseMeanStock = (minAvail + maxAvail) / 2 * (market.availabilityModifier?.[c.id] ?? 1.0);
                     
                     let pressureForAdaptation = inventoryItem.marketPressure;
-                    if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                    
+                    if (this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7) {
                         pressureForAdaptation = 0; 
                     }
-                    if (pressureForAdaptation > 0) pressureForAdaptation = 0;
 
                     const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5)); 
                     const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
@@ -311,7 +311,6 @@ export class MarketService {
             const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
             
             let pressureForAdaptation = inventoryItem.marketPressure;
-            if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
             
             const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
             const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
@@ -356,7 +355,6 @@ export class MarketService {
         const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
         
         let pressureForAdaptation = inventoryItem.marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
         
         const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
         const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
@@ -391,7 +389,6 @@ export class MarketService {
         const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
         
         let pressureForAdaptation = inventoryItem.marketPressure;
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
         
         const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
         const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
@@ -446,10 +443,9 @@ export class MarketService {
             }
         }
 
-        if (pressureForAdaptation < 0 && this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7 && !isProjecting) {
+        if (this.gameState.day < inventoryItem.lastPlayerInteractionTimestamp + 7 && !isProjecting) {
             pressureForAdaptation = 0; 
         }
-        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
         
         const marketAdaptationFactor = 1 - Math.max(-2.0, Math.min(0.5, pressureForAdaptation * 0.5));
         const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
