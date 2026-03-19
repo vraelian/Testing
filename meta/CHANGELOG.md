@@ -2,9 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [36.92] - 2026-3-18
+# [36.95] - 2026-3-18
 -  price graph polish
 -  economic calculation fixes
+-  economic behavior GDD v5
 
 # [36.92] - 2026-3-17
 -  added officer recruitment modal
