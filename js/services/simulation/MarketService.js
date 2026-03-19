@@ -547,6 +547,153 @@ export class MarketService {
     // --- END VIRTUAL WORKBENCH ---
 
     /**
+     * Calculates the threshold for Asymmetric Saturation (Glut).
+     * @param {string} locationId 
+     * @param {string} commodityId 
+     * @returns {number} The threshold quantity representing 300% of target stock.
+     */
+    getGlutThreshold(locationId, commodityId) {
+        const good = DB.COMMODITIES.find(c => c.id === commodityId);
+        const market = DB.MARKETS.find(m => m.id === locationId);
+        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
+        
+        const [minAvail, maxAvail] = good.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[commodityId] ?? 1.0;
+        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+        
+        let pressureForAdaptation = inventoryItem.marketPressure;
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; // Only recouping (buy) pressure affects target
+        
+        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+        const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
+        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
+        
+        return targetStock * 3.0;
+    }
+
+    /**
+     * Calculates the Local Target Price (the Invisible Hand mean-reversion target).
+     * @param {string} locationId 
+     * @param {string} commodityId 
+     * @returns {number} The local target price.
+     */
+    getLocalTargetPrice(locationId, commodityId) {
+        const avg = this.getGalacticAverage(commodityId);
+        const market = DB.MARKETS.find(m => m.id === locationId);
+        const modifier = market.availabilityModifier?.[commodityId] ?? 1.0;
+        const targetPriceOffset = (1.0 - modifier) * avg;
+        return avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+    }
+
+    /**
+     * Generates mathematical curve data for historical and projected prices.
+     * Integrates dynamic simulated parameters to warp future projections based on UI slider states.
+     * @param {string} locationId 
+     * @param {string} commodityId 
+     * @param {number} historyDays 
+     * @param {number} projectedDays 
+     * @param {number} simulatedQty - The pending transaction volume from the UI slider
+     * @param {string} simulatedMode - 'sell' or 'buy'
+     * @returns {Array<{day: number, price: number, isLocked: boolean}>}
+     */
+    generateCurveData(locationId, commodityId, historyDays, projectedDays, simulatedQty = 0, simulatedMode = 'sell') {
+        const currentDay = this.gameState.day;
+        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
+        const currentPrice = this.gameState.market.prices[locationId][commodityId];
+        let localTargetPrice = this.getLocalTargetPrice(locationId, commodityId);
+        
+        const meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH || 0.025;
+        const priceLockEnd = inventoryItem.priceLockEndDay || 0;
+        
+        const curveData = [];
+        
+        // Backward projection (History)
+        for (let i = historyDays; i > 0; i--) {
+            const dayOffset = -i;
+            const pastDay = currentDay + dayOffset;
+            const divergence = (currentPrice - localTargetPrice) / Math.pow(1 - meanReversion, Math.abs(dayOffset));
+            const cappedDivergence = Math.max(-localTargetPrice * 0.9, Math.min(localTargetPrice * 4, divergence));
+            const pastPrice = Math.max(1, localTargetPrice + cappedDivergence);
+            
+            curveData.push({
+                day: pastDay,
+                price: pastPrice,
+                isLocked: false
+            });
+        }
+        
+        // Current Day (History anchors here at the exact present price)
+        curveData.push({
+            day: currentDay,
+            price: currentPrice,
+            isLocked: currentDay < priceLockEnd
+        });
+
+        // Apply Simulation Impact for Forward Projection
+        let simulatedPrice = currentPrice;
+        let projectedLockEnd = priceLockEnd;
+
+        if (simulatedQty > 0) {
+            const good = DB.COMMODITIES.find(c => c.id === commodityId);
+            const currentMarketStock = inventoryItem.quantity;
+            const glutThreshold = this.getGlutThreshold(locationId, commodityId);
+            const market = DB.MARKETS.find(m => m.id === locationId);
+            const pressureMod = market?.ecoProfile?.dampeners?.[commodityId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
+            const pressureChange = (((simulatedQty / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
+            
+            if (simulatedMode === 'sell') {
+                // Warp the local target price downwards based on intense supply pressure
+                localTargetPrice *= Math.max(0.1, (1 - Math.min(0.5, pressureChange * 0.5)));
+                
+                if ((simulatedQty + currentMarketStock) <= glutThreshold) {
+                    // Artificial lock extension to show frozen market from heavy trading
+                    projectedLockEnd = Math.max(projectedLockEnd, currentDay + Math.floor(7 * pressureChange)); 
+                }
+            } else {
+                // Buying warps the target price upwards due to scarcity pressure
+                localTargetPrice *= (1 + pressureChange * 0.5);
+            }
+        }
+        
+        // Forward projection
+        for (let i = 1; i <= projectedDays; i++) {
+            const futureDay = currentDay + i;
+            let isLocked = false;
+
+            // Immediate crash on Day 1 if the pending trade triggers Glut Asymmetric Saturation
+            if (i === 1 && simulatedQty > 0 && simulatedMode === 'sell') {
+                const currentMarketStock = inventoryItem.quantity;
+                const glutThreshold = this.getGlutThreshold(locationId, commodityId);
+                if ((simulatedQty + currentMarketStock) > glutThreshold) {
+                    simulatedPrice *= 0.25;
+                    projectedLockEnd = Math.max(projectedLockEnd, currentDay + 30); // Glut strictly locks the crashed price
+                }
+            }
+
+            // Visually simulate the delayed pressure mechanic hitting on Day 7
+            if (i === 7 && simulatedQty > 0 && simulatedMode === 'sell' && simulatedPrice > localTargetPrice) {
+                 simulatedPrice -= (simulatedPrice - localTargetPrice) * 0.3; // 30% visual jump towards new collapsed target
+            } else if (i === 7 && simulatedQty > 0 && simulatedMode === 'buy' && simulatedPrice < localTargetPrice) {
+                 simulatedPrice += (localTargetPrice - simulatedPrice) * 0.3;
+            }
+
+            if (futureDay <= projectedLockEnd) {
+                isLocked = true;
+            } else {
+                simulatedPrice += (localTargetPrice - simulatedPrice) * meanReversion;
+            }
+            
+            curveData.push({
+                day: futureDay,
+                price: Math.max(1, simulatedPrice),
+                isLocked: isLocked
+            });
+        }
+        
+        return curveData;
+    }
+
+    /**
      * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
      * @param {object} market - The market object from the database.
      * @param {object} commodity - The commodity object from the database.
