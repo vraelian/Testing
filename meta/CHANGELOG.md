@@ -6,6 +6,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  price graph polish
 -  economic calculation fixes
 -  economic behavior GDD v5
+-  updated meta files
 
 # [36.92] - 2026-3-17
 -  added officer recruitment modal

@@ -33,7 +33,7 @@ This object buffers data during the async travel/event loop.
 * `travelTimeAddPercent`: Percentage modifier for trip duration.
 * `eventHullDamagePercent`: Accumulated hull damage from event outcomes.
 * `setTravelTime`: Hard override for travel duration (if > 0).
-* `convoyTaxDeduction`: Amount of resources/credits deducted due to fleet size during travel.
+* `convoyTaxDeduction`: Amount of resources/credits deducted due to fleet size scaling during travel.
 * `blockadeActive`: Boolean flag indicating an active blockade event affecting the travel route or destination access.
 
 ---
@@ -165,7 +165,7 @@ Manages the Endgame Engine mechanics.
 | `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
 | `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
 | `synthesisPipeline` | Object | Pipeline metrics for conversion, including `{ active, inputCommodities, targetAntimatter, completionDay }`. |
-| `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed entropy and yields before JIT commits. |
+| `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed logic before JIT commits. Contains `unprocessedDecay` and `bufferedYields` properties mapped by commodity/resource type. |
 
 ---
 
