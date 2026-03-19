@@ -1,6 +1,6 @@
 // js/services/DebugService.js
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS, GAME_RULES } from '../data/constants.js';
+import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
@@ -119,7 +119,6 @@ export class DebugService {
             selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
             quantityToAdd: 10,
             alwaysTriggerEvents: false,
-            xrayEnabled: false, // Phase 5 Toggle State
 
             // --- UI GUIDES STATE (Arrays/Booleans) ---
             navLockMain: Object.values(NAV_IDS).reduce((acc, id) => ({ ...acc, [id]: false }), {}),
@@ -187,6 +186,11 @@ ${logHistory}
             });
     }
 
+    /**
+     * Automatically populates the player's seen tutorials array with all available help contexts 
+     * to prevent modal auto-triggering during debug sessions.
+     * @private
+     */
     _markAllTutorialsSeen() {
         if (!this.gameState.tutorials) {
             this.gameState.tutorials = { seenHelpContexts: [] };
@@ -282,6 +286,7 @@ ${logHistory}
     skipToStarterSelection() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO STARTER SHIP SELECTION.');
         
+        // Setup initial intro parameters
         this.gameState.introSequenceActive = true;
         
         if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
@@ -301,9 +306,11 @@ ${logHistory}
 
         this.uiManager.showGameContainer();
         
+        // Execute Ship Selection
         if (this.simulationService && this.simulationService.introService) {
             this.simulationService.introService._showStarterShipSelection();
         } else {
+            // Dynamic fallback if IntroService is not strictly bound to SimulationService
             import('./game/IntroService.js').then(({IntroService}) => {
                 const intro = new IntroService(this.gameState, this.uiManager, this.logger, this.simulationService);
                 intro._showStarterShipSelection();
@@ -550,6 +557,7 @@ ${logHistory}
     triggerToast(type) {
         if (!this.simulationService.toastService) return;
         
+        // Interrupt to clear anything currently displaying
         this.simulationService.toastService.clearQueueAndHide();
         
         let config;
@@ -572,11 +580,16 @@ ${logHistory}
         }
         
         if (config) {
+            // Push manually into queue and start the lifecycle
             this.simulationService.toastService.toastQueue.push(config);
             this.simulationService.toastService.playNextInQueue();
         }
     }
 
+    /**
+     * Helper logic to instantly wipe player assets to prepare state for bankruptcy testing.
+     * @private
+     */
     _clearAssetsForBankruptcy() {
         const player = this.gameState.player;
         player.ownedShipIds = [SHIP_IDS.WANDERER];
@@ -584,59 +597,6 @@ ${logHistory}
         player.inventories = { [SHIP_IDS.WANDERER]: {} };
         if (this.gameState.missions) {
             this.gameState.missions.activeMissionIds = [];
-        }
-    }
-
-    _exportToCsv(filename, dataArray) {
-        if (!dataArray || dataArray.length === 0) {
-            this.logger.warn('DebugService', `No data to export for ${filename}`);
-            this.uiManager.createFloatingText('No Data to Export', window.innerWidth/2, window.innerHeight/2, '#ef4444');
-            return;
-        }
-
-        const keys = Object.keys(dataArray[0]);
-        let csvContent = keys.join(',') + '\n';
-
-        dataArray.forEach(row => {
-            const values = keys.map(k => {
-                let val = row[k];
-                if (val === null || val === undefined) val = '';
-                return `"${val}"`;
-            });
-            csvContent += values.join(',') + '\n';
-        });
-
-        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.setAttribute('href', url);
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-        
-        this.uiManager.createFloatingText(`${filename} Exported`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
-    }
-
-    exportDailyState() {
-        if (window.__ECON_TELEMETRY__) this._exportToCsv('Econ_Daily_State.csv', window.__ECON_TELEMETRY__.dailyState);
-    }
-
-    exportTradeShocks() {
-        if (window.__ECON_TELEMETRY__) this._exportToCsv('Econ_Trade_Shocks.csv', window.__ECON_TELEMETRY__.tradeShocks);
-    }
-
-    exportBotProgression() {
-        if (window.__ECON_TELEMETRY__) this._exportToCsv('Bot_Progression.csv', window.__ECON_TELEMETRY__.botProgression);
-    }
-    
-    clearTelemetry() {
-        if (window.__ECON_TELEMETRY__) {
-            window.__ECON_TELEMETRY__.dailyState = [];
-            window.__ECON_TELEMETRY__.tradeShocks = [];
-            window.__ECON_TELEMETRY__.botProgression = [];
-            this.uiManager.createFloatingText('Telemetry Cleared', window.innerWidth/2, window.innerHeight/2, '#facc15');
         }
     }
 
@@ -876,8 +836,10 @@ ${logHistory}
                 }
             }},
             clearNavLock: { name: 'Clear Nav Lock', type: 'button', handler: () => {
+                // Reset toggles in UI
                 Object.keys(this.debugState.navLockMain).forEach(k => this.debugState.navLockMain[k] = false);
                 Object.keys(this.debugState.navLockSub).forEach(k => this.debugState.navLockSub[k] = false);
+                // Update GUI controllers
                 if (this.gui) {
                     this.gui.controllersRecursive().forEach(c => {
                         if (c.parent && (c.parent._title === 'Allowed Main Navs' || c.parent._title === 'Allowed Sub Navs')) {
@@ -983,6 +945,7 @@ ${logHistory}
         bankFolder.add(this.actions.forceDestituteBankruptcy, 'handler').name(this.actions.forceDestituteBankruptcy.name);
         bankFolder.add(this.actions.clearLoanLockoutTimer, 'handler').name(this.actions.clearLoanLockoutTimer.name);
 
+        // --- NEW: UI Guides Folder ---
         const uiFolder = this.gui.addFolder('UI Guides');
         
         const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
@@ -993,6 +956,7 @@ ${logHistory}
         
         uiFolder.add(this.actions.applyNavLock, 'handler').name(this.actions.applyNavLock.name);
         uiFolder.add(this.actions.clearNavLock, 'handler').name(this.actions.clearNavLock.name);
+        // ------------------------------
 
         const solFolder = this.gui.addFolder('Sol Station');
         solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
@@ -1106,31 +1070,6 @@ ${logHistory}
         triggerFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
         triggerFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
         triggerFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
-
-        const telemetryFolder = this.gui.addFolder('Econ Telemetry (Export)');
-        
-        // --- PHASE 5: X-RAY TOGGLE ---
-        telemetryFolder.add(this.debugState, 'xrayEnabled').name('Enable X-Ray Mode').onChange(val => {
-            if (!this.gameState.uiState) this.gameState.uiState = {};
-            this.gameState.uiState.xrayEnabled = val;
-            this.gameState.setState({}); // Re-render to show/hide overlay immediately
-        });
-
-        telemetryFolder.add(this, 'exportDailyState').name('Export Daily State (CSV)');
-        telemetryFolder.add(this, 'exportTradeShocks').name('Export Trade Shocks (CSV)');
-        telemetryFolder.add(this, 'exportBotProgression').name('Export Bot Progress (CSV)');
-        telemetryFolder.add(this, 'clearTelemetry').name('Clear Telemetry Buffer');
-
-        const abMatrixFolder = this.gui.addFolder('A/B Sim Matrix');
-        if (GAME_RULES.AVAILABILITY_PRESSURE_STRENGTH !== undefined) {
-            abMatrixFolder.add(GAME_RULES, 'AVAILABILITY_PRESSURE_STRENGTH', 0.01, 2.0, 0.01).name('Availability Pressure');
-        }
-        if (GAME_RULES.MEAN_REVERSION_STRENGTH !== undefined) {
-            abMatrixFolder.add(GAME_RULES, 'MEAN_REVERSION_STRENGTH', 0.001, 0.5, 0.001).name('Mean Reversion');
-        }
-        if (GAME_RULES.LOCAL_PRICE_MOD_STRENGTH !== undefined) {
-            abMatrixFolder.add(GAME_RULES, 'LOCAL_PRICE_MOD_STRENGTH', 0.0, 1.0, 0.05).name('Local Target Mod');
-        }
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
