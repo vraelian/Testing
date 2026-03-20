@@ -119,6 +119,7 @@ export class DebugService {
             selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
             quantityToAdd: 10,
             alwaysTriggerEvents: false,
+            verboseTickLogging: true,
 
             // --- UI GUIDES STATE (Arrays/Booleans) ---
             navLockMain: Object.values(NAV_IDS).reduce((acc, id) => ({ ...acc, [id]: false }), {}),
@@ -137,6 +138,11 @@ export class DebugService {
         this._cacheDiagElements();
         this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
         this.gui.domElement.id = 'debug-panel';
+        
+        // Ensure UI state matches debug state for the tick toggle
+        if (!this.gameState.uiState) this.gameState.uiState = {};
+        this.gameState.uiState.verboseTickLogging = this.debugState.verboseTickLogging;
+
         this._registerDebugActions();
         this.buildGui();
         this._startDiagLoop();
@@ -184,6 +190,63 @@ ${logHistory}
             .catch(err => {
                 if(this.logger && this.logger.error) this.logger.error('DebugService', 'Failed to copy bug report.', err);
             });
+    }
+
+    exportTelemetry(type) {
+        const telemetry = this.gameState.telemetry?.[type];
+        if (!telemetry || telemetry.length === 0) {
+            this.uiManager.createFloatingText(`No ${type.toUpperCase()} Data`, window.innerWidth/2, window.innerHeight/2, '#ef4444');
+            if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Attempted to export ${type}, but no data exists.`);
+            return;
+        }
+
+        let headers = [];
+        if (type === 'ticks') {
+            headers = ['day', 'type', 'locationId', 'commodityId', 'oldPrice', 'newPrice', 'localBaseline', 'reversionEffect', 'pressureEffect', 'currentStock', 'marketPressure', 'isDepleted', 'isSaturated'];
+        } else if (type === 'trades') {
+            headers = ['day', 'type', 'action', 'locationId', 'commodityId', 'quantity', 'baseUnitCost', 'executionUnitCost', 'baseUnitValue', 'executionUnitValue', 'totalTransactionValue', 'modifier_pct'];
+        } else if (type === 'impacts') {
+            headers = ['day', 'type', 'action', 'locationId', 'commodityId', 'quantityTraded', 'pressureChange', 'resultingPressure', 'lockDuration', 'isSaturated'];
+        }
+
+        const csvRows = [];
+        csvRows.push(headers.join(','));
+
+        telemetry.forEach(entry => {
+            const values = headers.map(header => {
+                let val = entry[header];
+                
+                // Inject calculated field: profit/loss modifier percentage dynamically
+                if (type === 'trades' && header === 'modifier_pct') {
+                    if (entry.action === 'BUY' && entry.baseUnitCost) {
+                        val = (((entry.executionUnitCost - entry.baseUnitCost) / entry.baseUnitCost) * 100).toFixed(2) + '%';
+                    } else if (entry.action === 'SELL' && entry.baseUnitValue) {
+                        val = (((entry.executionUnitValue - entry.baseUnitValue) / entry.baseUnitValue) * 100).toFixed(2) + '%';
+                    } else {
+                        val = '0.00%';
+                    }
+                }
+
+                if (val === undefined || val === null) val = '';
+                return `"${val}"`;
+            });
+            csvRows.push(values.join(','));
+        });
+
+        const csvString = csvRows.join('\n');
+        const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', `orbital_telemetry_${type}_day${this.gameState.day}.csv`);
+        link.style.display = 'none';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+
+        this.uiManager.createFloatingText(`${type.toUpperCase()} Exported`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
+        if(this.logger && this.logger.info) this.logger.info.system('DebugService', `Exported ${telemetry.length} rows of ${type} telemetry.`);
     }
 
     /**
@@ -792,6 +855,10 @@ ${logHistory}
                 this.uiManager.showEconWeatherModal(this.gameState.getState());
             }},
 
+            exportTicks: { name: 'Export Tick Data (CSV)', type: 'button', handler: () => this.exportTelemetry('ticks') },
+            exportTrades: { name: 'Export Trade Data (CSV)', type: 'button', handler: () => this.exportTelemetry('trades') },
+            exportImpacts: { name: 'Export Impact Data (CSV)', type: 'button', handler: () => this.exportTelemetry('impacts') },
+
             startBot: { name: 'Start AUTOTRADER-01', type: 'button', handler: () => {
                 const progressController = this.gui.controllers.find(c => c.property === 'botProgress');
                 
@@ -1076,6 +1143,17 @@ ${logHistory}
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => { if(this.logger && this.logger.setLevel) this.logger.setLevel(v) });
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
         
+        automationFolder.add(this.debugState, 'verboseTickLogging')
+            .name('Verbose Tick Logging')
+            .onChange(val => {
+                if (!this.gameState.uiState) this.gameState.uiState = {};
+                this.gameState.uiState.verboseTickLogging = val;
+            });
+
+        automationFolder.add(this.actions.exportTicks, 'handler').name(this.actions.exportTicks.name);
+        automationFolder.add(this.actions.exportTrades, 'handler').name(this.actions.exportTrades.name);
+        automationFolder.add(this.actions.exportImpacts, 'handler').name(this.actions.exportImpacts.name);
+
         automationFolder.add(this.debugState, 'botStrategy', ['MIXED', 'HONEST_TRADER', 'MANIPULATOR', 'DEPLETE_ONLY', 'PROSPECTOR']).name('Bot Strategy');
         
         automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
