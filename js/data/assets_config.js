@@ -18,7 +18,7 @@ export const SHIP_VARIANT_COUNTS = {
     // 'Mule.Ship': 7, (<-- EXAMPLE)
     'Wanderer.Ship': 6,
     'Stalwart.Ship': 4,
-    'Rooster.Ship': 5,
+    'Rooster.Ship': 4,
     'Mule.Ship': 8,
     'Nomad.Ship': 6,
     'Mesa.Ship': 8,
@@ -84,7 +84,7 @@ export const COMMODITY_VARIANT_COUNTS = {
 export const LOCATION_VARIANT_COUNTS = {
     'Neptune': 12,
     'Mercury': 15,
-    'Venus': 12,
+    'Venus': 11,
     'Earth': 19,
     'Luna': 11,
     'Mars': 10,

@@ -135,7 +135,8 @@ export class GameState {
             shipyardActiveIndex: 0,
             activeIntelTab: 'intel-codex-content',
             servicesTab: 'supply',
-            activeMissionTab: 'terminal'
+            activeMissionTab: 'terminal',
+            enableEconomicTelemetry: false // Prevent telemetry from staying active accidentally across sessions
         };
 
         return stateCopy;
@@ -373,7 +374,8 @@ export class GameState {
                 activeIntelTab: 'intel-codex-content', // Matches DOM ID
                 servicesTab: 'supply', // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
                 // --- MISSION SYSTEM 2.0 (Phase 3) ---
-                activeMissionTab: 'terminal' // 'terminal' | 'log'
+                activeMissionTab: 'terminal', // 'terminal' | 'log'
+                enableEconomicTelemetry: false // Telemetry execution gate
                 // --- END VIRTUAL WORKBENCH ---
             },
             telemetry: {

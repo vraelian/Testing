@@ -120,6 +120,7 @@ export class DebugService {
             quantityToAdd: 10,
             alwaysTriggerEvents: false,
             verboseTickLogging: true,
+            enableEconomicTelemetry: false,
 
             // --- UI GUIDES STATE (Arrays/Booleans) ---
             navLockMain: Object.values(NAV_IDS).reduce((acc, id) => ({ ...acc, [id]: false }), {}),
@@ -139,9 +140,10 @@ export class DebugService {
         this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
         this.gui.domElement.id = 'debug-panel';
         
-        // Ensure UI state matches debug state for the tick toggle
+        // Ensure UI state matches debug state for the tick toggles
         if (!this.gameState.uiState) this.gameState.uiState = {};
         this.gameState.uiState.verboseTickLogging = this.debugState.verboseTickLogging;
+        this.gameState.uiState.enableEconomicTelemetry = this.debugState.enableEconomicTelemetry;
 
         this._registerDebugActions();
         this.buildGui();
@@ -1143,6 +1145,13 @@ ${logHistory}
         automationFolder.add(this.debugState, 'logLevel', ['DEBUG', 'INFO', 'WARN', 'ERROR', 'NONE']).name('Log Level').onChange(v => { if(this.logger && this.logger.setLevel) this.logger.setLevel(v) });
         automationFolder.add(this, 'generateBugReport').name('Generate Bug Report');
         
+        automationFolder.add(this.debugState, 'enableEconomicTelemetry')
+            .name('Enable Econ Telemetry')
+            .onChange(val => {
+                if (!this.gameState.uiState) this.gameState.uiState = {};
+                this.gameState.uiState.enableEconomicTelemetry = val;
+            });
+            
         automationFolder.add(this.debugState, 'verboseTickLogging')
             .name('Verbose Tick Logging')
             .onChange(val => {
