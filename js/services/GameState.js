@@ -120,6 +120,9 @@ export class GameState {
             stateCopy.tutorials.guidedNavPath = { active: false, navIds: [], screenIds: [] };
         }
 
+        // Strip telemetry to prevent massive save file bloat
+        delete stateCopy.telemetry;
+
         // Force loaded games to start on the missions screen
         stateCopy.activeNav = NAV_IDS.DATA;
         stateCopy.activeScreen = SCREEN_IDS.MISSIONS;
@@ -372,6 +375,11 @@ export class GameState {
                 // --- MISSION SYSTEM 2.0 (Phase 3) ---
                 activeMissionTab: 'terminal' // 'terminal' | 'log'
                 // --- END VIRTUAL WORKBENCH ---
+            },
+            telemetry: {
+                ticks: [],
+                trades: [],
+                impacts: []
             }
         };
 

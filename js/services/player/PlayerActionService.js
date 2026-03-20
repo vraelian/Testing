@@ -168,6 +168,24 @@ export class PlayerActionService {
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
 
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
+
+        // TELEMETRY: Capture Player Buy Action in separated queue
+        if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
+        
+        this.gameState.telemetry.trades.push({
+            day: state.day,
+            type: 'PLAYER_TRADE',
+            action: 'BUY',
+            locationId: state.currentLocationId,
+            commodityId: goodId,
+            quantity: finalQuantity,
+            baseUnitCost: basePrice,
+            executionUnitCost: Number((totalCost / finalQuantity).toFixed(2)),
+            totalTransactionValue: -totalCost
+        });
+        
+        if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
+
         this.gameState.setState({});
         return true;
     }
@@ -286,6 +304,24 @@ export class PlayerActionService {
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
 
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
+
+        // TELEMETRY: Capture Player Sell Action in separated queue
+        if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
+        
+        this.gameState.telemetry.trades.push({
+            day: state.day,
+            type: 'PLAYER_TRADE',
+            action: 'SELL',
+            locationId: state.currentLocationId,
+            commodityId: goodId,
+            quantity: quantity,
+            baseUnitValue: Number((totalPrice / quantity).toFixed(2)),
+            executionUnitValue: Number((totalSaleValue / quantity).toFixed(2)),
+            totalTransactionValue: totalSaleValue
+        });
+
+        if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
+
         this.gameState.setState({});
 
         return totalSaleValue;
