@@ -182,11 +182,6 @@ export class MarketService {
      * and player-driven market pressure.
      */
     evolveMarketPrices() {
-        // TELEMETRY: Ensure queues exist
-        if (!this.gameState.telemetry) {
-            this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
-        }
-
         DB.MARKETS.forEach(location => {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
@@ -295,29 +290,33 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = finalRoundedPrice;
 
-                // TELEMETRY: Segmented Ticks logic with granularity control
-                const priceShiftPct = Math.abs(finalRoundedPrice - price) / price;
-                const isSignificant = priceShiftPct > 0.05 || inventoryItem.isDepleted || inventoryItem.isSaturated;
-                const isVerbose = this.gameState.uiState?.verboseTickLogging !== false; // Default to true if unset
+                // TELEMETRY: Gated execution
+                if (this.gameState.uiState?.enableEconomicTelemetry) {
+                    const priceShiftPct = Math.abs(finalRoundedPrice - price) / price;
+                    const isSignificant = priceShiftPct > 0.05 || inventoryItem.isDepleted || inventoryItem.isSaturated;
+                    const isVerbose = this.gameState.uiState?.verboseTickLogging !== false; // Default to true if unset
 
-                if (isVerbose || isSignificant) {
-                    this.gameState.telemetry.ticks.push({
-                        day: this.gameState.day,
-                        type: 'EVOLVE_TICK',
-                        locationId: location.id,
-                        commodityId: commodity.id,
-                        oldPrice: price,
-                        newPrice: finalRoundedPrice,
-                        localBaseline: Number(localBaseline.toFixed(2)),
-                        reversionEffect: Number(reversionEffect.toFixed(2)),
-                        pressureEffect: Number(pressureEffect.toFixed(2)),
-                        currentStock: inventoryItem.quantity,
-                        marketPressure: Number(inventoryItem.marketPressure.toFixed(4)),
-                        isDepleted: inventoryItem.isDepleted || false,
-                        isSaturated: inventoryItem.isSaturated || false
-                    });
+                    if (isVerbose || isSignificant) {
+                        if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
+                        
+                        this.gameState.telemetry.ticks.push({
+                            day: this.gameState.day,
+                            type: 'EVOLVE_TICK',
+                            locationId: location.id,
+                            commodityId: commodity.id,
+                            oldPrice: price,
+                            newPrice: finalRoundedPrice,
+                            localBaseline: Number(localBaseline.toFixed(2)),
+                            reversionEffect: Number(reversionEffect.toFixed(2)),
+                            pressureEffect: Number(pressureEffect.toFixed(2)),
+                            currentStock: inventoryItem.quantity,
+                            marketPressure: Number(inventoryItem.marketPressure.toFixed(4)),
+                            isDepleted: inventoryItem.isDepleted || false,
+                            isSaturated: inventoryItem.isSaturated || false
+                        });
 
-                    if (this.gameState.telemetry.ticks.length > 2000) this.gameState.telemetry.ticks.shift();
+                        if (this.gameState.telemetry.ticks.length > 2000) this.gameState.telemetry.ticks.shift();
+                    }
                 }
 
                 let decayMod = 1.0;
@@ -481,23 +480,25 @@ export class MarketService {
 
         inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
-        // TELEMETRY: Capture Market Impact in separated queue
-        if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
-        
-        this.gameState.telemetry.impacts.push({
-            day: this.gameState.day,
-            type: 'MARKET_IMPACT',
-            locationId: market.id,
-            commodityId: goodId,
-            action: transactionType,
-            quantityTraded: quantity,
-            pressureChange: Number(pressureChange.toFixed(4)),
-            resultingPressure: Number(inventoryItem.marketPressure.toFixed(4)),
-            lockDuration: lockDuration,
-            isSaturated: inventoryItem.isSaturated || false
-        });
+        // TELEMETRY: Gated execution
+        if (this.gameState.uiState?.enableEconomicTelemetry) {
+            if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
+            
+            this.gameState.telemetry.impacts.push({
+                day: this.gameState.day,
+                type: 'MARKET_IMPACT',
+                locationId: market.id,
+                commodityId: goodId,
+                action: transactionType,
+                quantityTraded: quantity,
+                pressureChange: Number(pressureChange.toFixed(4)),
+                resultingPressure: Number(inventoryItem.marketPressure.toFixed(4)),
+                lockDuration: lockDuration,
+                isSaturated: inventoryItem.isSaturated || false
+            });
 
-        if (this.gameState.telemetry.impacts.length > 1000) this.gameState.telemetry.impacts.shift();
+            if (this.gameState.telemetry.impacts.length > 1000) this.gameState.telemetry.impacts.shift();
+        }
     }
 
     /**
