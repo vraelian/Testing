@@ -163,9 +163,22 @@ export function renderServicesScreen(gameState, simulationService) {
     // --- COST CALCULATION: FUEL (Dynamic 5% / 1% Logic) ---
     // =========================================================================
     
+    // Determine fuel class modifier
+    let fuelClassMod = 1;
+    if (shipStatic) {
+        switch(shipStatic.class) {
+            case 'B': fuelClassMod = 5; break;
+            case 'A': fuelClassMod = 25; break;
+            case 'S': fuelClassMod = 150; break;
+            case 'O':
+            case 'Z': fuelClassMod = 500; break;
+        }
+    }
+
     // 1. Calculate Base Unit Cost (Cost for 1 Fuel Unit)
     // Standard rate is Fuel Price / 2 for 5 units. So 1 unit = Price / 10.
-    let fuelUnitCost = DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 10;
+    // Applying the 50% base reduction and geometric scaling.
+    let fuelUnitCost = ((DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 10) * 0.50) * fuelClassMod;
     
     // 2. Apply Modifiers to Unit Cost
     // --- VIRTUAL WORKBENCH: STATION QUIRKS ---
@@ -311,12 +324,13 @@ export function renderServicesScreen(gameState, simulationService) {
                             <div id="fuel-bar" class="progress-bar-fill h-full rounded-md" style="width: ${fuelPct}%; background-color: #08d9d6; --glow-color: #08d9d6; background-image: linear-gradient(45deg, rgba(255,255,255,0.1) 25%, transparent 25%, transparent 50%, rgba(255,255,255,0.1) 50%, rgba(255,255,255,0.1) 75%, transparent 75%, transparent); background-size: 40px 40px;"></div>
                           </div>
                         </div>
-                        <div class="control-deck flex justify-center items-center gap-4">
-                          <div class="price-display-module w-32 h-12 flex justify-between items-center px-4">
+                        <div class="control-deck flex justify-center items-center gap-4 relative">
+                          <div class="price-display-module w-32 h-12 flex justify-between items-center px-4 relative">
                             <span class="price-label text-sm engraved-text">COST</span>
                             <span class="price-digits text-sm whitespace-nowrap ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(fuelCostPerTick, true)}
                             </span>
+                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest" style="color: #08d9d6; opacity: 0.9;">${shipStatic ? shipStatic.class : 'C'} - CLASS FUEL</div>
                           </div>
                           <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
                             <span class="engraved-text">${isFuelFull ? 'MAX' : 'REFUEL'}</span>
