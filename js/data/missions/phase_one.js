@@ -1,7 +1,7 @@
 // js/data/missions/phase_one.js
 /**
  * @fileoverview
- * Defines the Phase 1: Act 1 (The Cog) missions 10-15, focusing on early game logistics,
+ * Defines the Phase 1: Act 1 (The Cog) missions 10-16, focusing on early game logistics,
  * debt, the introduction of higher-level Guild contracts, and the contrast of the transhuman economy.
  */
 export const PHASE_ONE_MISSIONS = {
@@ -162,6 +162,32 @@ export const PHASE_ONE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 14000 }
+        ]
+    },
+    'mission_16': {
+        id: "mission_16",
+        name: "Survivor's Guilt",
+        type: "PROCUREMENT",
+        host: "STATION",
+        portraitId: "Dockworker_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Hey... [playerName]. Glad to see you're still around. Listen, things are bad here. When you left the Belt, the Guild didn't adjust our quotas. They just squeezed the rest of us harder. We're running critical on life support reserves and structural patching for the habitation modules.<br><br>I know you're busy playing merchant now, but we need a shipment of Water Ice and Plasteel here at the Belt. I can pay you from the habitation stipend the guild affords us Belters on duty.",
+        triggers: [
+            { "type": "mission_completed", "missionId": "mission_15" }
+        ],
+        objectives: [
+            { "id": "deliver_ice_belt", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "water_ice", "quantity": 90 },
+            { "id": "deliver_plasteel_belt", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "plasteel", "quantity": 20 }
+        ],
+        completion: {
+            locationId: "loc_belt",
+            title: "Delivery Complete",
+            text: "Once you've unloaded all the cargo I can transfer the credits your way. <br><br>Oh and [playerName], don't forget where you came from. Stay safe out there.",
+            buttonText: "Unload the Freight"
+        },
+        rewards: [
+            { "type": "credits", "amount": 18000 }
         ]
     }
 };

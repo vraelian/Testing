@@ -2,6 +2,12 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [37.00] - 2026-3-20
+-  updated bot
+-  added economic tracking tooling
+-  added Hot Intel V1
+-  added tutorial skip
+
 # [36.96] - 2026-3-19
 -  added mission freight leakage to economy
 

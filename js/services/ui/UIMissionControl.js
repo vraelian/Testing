@@ -543,6 +543,16 @@ export class UIMissionControl {
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
+                     
+                     // INJECT SKIP TUTORIAL BUTTON HERE
+                     if (mission.id === 'mission_tutorial_01') {
+                         const skipBtn = document.createElement('button');
+                         skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
+                         skipBtn.style.cssText = btnStyles;
+                         skipBtn.textContent = 'Skip Tutorial';
+                         skipBtn.dataset.action = 'skip-tutorial';
+                         buttonsEl.appendChild(skipBtn);
+                     }
                 }
 
                 const navBtn = modal.querySelector('#mission-navigate-btn');
@@ -924,6 +934,16 @@ export class UIMissionControl {
                    }, 1500); // Trigger after the 1.5s fade finishes
                };
                buttonsEl.appendChild(completeBtn);
+               
+               // Inject Skip Tutorial button for mission_tutorial_01
+               if (mission.id === 'mission_tutorial_01') {
+                   const skipBtn = document.createElement('button');
+                   skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
+                   skipBtn.style.cssText = btnStyles;
+                   skipBtn.textContent = 'Skip Tutorial';
+                   skipBtn.dataset.action = 'skip-tutorial';
+                   buttonsEl.appendChild(skipBtn);
+               }
            }
         };
        this.manager.queueModal('mission-modal', parsedTitle, parsedText, null, options);

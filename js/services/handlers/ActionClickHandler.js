@@ -25,11 +25,17 @@ export class ActionClickHandler {
         document.addEventListener('click', (e) => {
             const primedBtns = document.querySelectorAll('.primed');
             if (primedBtns.length > 0) {
-                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"]');
+                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"], [data-action="skip-tutorial"]');
                 primedBtns.forEach(btn => {
                     if (btn !== closestTarget) {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
+                        
+                        if (btn.dataset.action === 'skip-tutorial') {
+                            btn.textContent = 'Skip Tutorial';
+                            btn.classList.remove('bg-red-600', 'text-white', 'border-red-800');
+                            btn.classList.add('bg-white', 'text-black');
+                        }
                     }
                 });
             }
@@ -456,6 +462,36 @@ export class ActionClickHandler {
                     if (this.uiManager.toastManager) {
                         this.uiManager.toastManager.hideToast();
                     }
+                }
+                break;
+            }
+            
+            case 'skip-tutorial': {
+                if (!actionTarget.dataset.primed) {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('.primed').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                        
+                        if (btn.dataset.action === 'skip-tutorial') {
+                            btn.textContent = 'Skip Tutorial';
+                            btn.classList.remove('bg-red-600', 'text-white', 'border-red-800');
+                            btn.classList.add('bg-white', 'text-black');
+                        }
+                    });
+
+                    // Prime this button
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed', 'bg-red-600', 'text-white', 'border-red-800');
+                    actionTarget.classList.remove('bg-white', 'text-black');
+                    actionTarget.textContent = 'Confirm Skip?';
+                    e.stopPropagation();
+                    return; // Prevent immediate execution
+                }
+
+                // Second click: execute the skip
+                if (this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.skipTutorial();
                 }
                 break;
             }
