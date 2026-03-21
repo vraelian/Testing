@@ -333,6 +333,22 @@ export class UIModalEngine {
             if (callback) callback();
         };
 
+        // --- VIRTUAL WORKBENCH: GDD BACKDROP DISMISSAL ---
+        const backdropDismissHandler = (e) => {
+            if (modal.dataset.dismissOutside === 'true' && e.target === modal) {
+                modal.removeEventListener('click', backdropDismissHandler);
+                closeHandler();
+            }
+        };
+        
+        // Clean up previous listeners to prevent memory leaks or duplicate triggers on reused modals
+        if (modal._backdropDismissHandler) {
+            modal.removeEventListener('click', modal._backdropDismissHandler);
+        }
+        modal._backdropDismissHandler = backdropDismissHandler;
+        modal.addEventListener('click', backdropDismissHandler);
+        // --- END VIRTUAL WORKBENCH ---
+
         if (options.customSetup) {
             options.customSetup(modal, closeHandler);
         } else {

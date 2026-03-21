@@ -892,6 +892,17 @@ ${logHistory}
             sootheEconomy: { name: 'Bullish Economy (Soothe)', type: 'button', handler: () => this.sootheEconomy() },
             riotEconomy: { name: 'Bearish Economy (Riot)', type: 'button', handler: () => this.riotEconomy() },
             injectStock: { name: '+100 Item Avail', type: 'button', handler: () => this.injectStock() },
+            
+            triggerHotIntel: { name: 'Trigger Hot Intel', type: 'button', handler: () => {
+                if (this.simulationService && this.simulationService.intelService) {
+                    this.simulationService.intelService.generateHotIntel();
+                    const state = this.gameState.getState();
+                    if (state.activeHotIntel && this.uiManager && this.uiManager.eventControl) {
+                        this.uiManager.eventControl.showHotIntelModal(state.activeHotIntel);
+                        this.uiManager.createFloatingText('Hot Intel Triggered', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                    }
+                }
+            }},
 
             // --- UI GUIDES LOGIC ---
             applyNavLock: { name: 'Apply Nav Lock', type: 'button', handler: () => {
@@ -1105,6 +1116,7 @@ ${logHistory}
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
+        triggerFolder.add(this.actions.triggerHotIntel, 'handler').name(this.actions.triggerHotIntel.name);
 
         triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
             .name('Always Trigger (100%)')

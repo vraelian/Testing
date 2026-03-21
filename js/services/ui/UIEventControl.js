@@ -16,6 +16,28 @@ export class UIEventControl {
         this.manager = manager;
     }
 
+    /**
+     * Constructs and queues the Hot Intel modal announcement.
+     * @param {object} intelData - The active Hot Intel object containing location, commodity, and discount properties.
+     */
+    showHotIntelModal(intelData) {
+        const commodity = DB.COMMODITIES.find(c => c.id === intelData.commodityId);
+        const commodityName = commodity ? commodity.name : intelData.commodityId;
+        const discountPct = Math.round((1 - intelData.discountMultiplier) * 100);
+
+        const htmlPayload = `
+            <div class="text-lg text-gray-200 text-center">
+                Data from the local exchange confirms an unexpected influx of <span class="text-result-cargo font-bold">${commodityName}</span> units. To maintain market stability, vendors have authorized an immediate <span class="text-req-yellow font-bold">${discountPct}% discount</span> on all current inventory.
+            </div>
+        `;
+
+        this.manager.queueModal('event-modal', 'Intel Acquired', htmlPayload, null, {
+            dismissOutside: true,
+            buttonText: 'Understood',
+            theme: 'intel'
+        });
+    }
+
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
          const description = event.template?.description || event.scenario || 'No description available.';

@@ -32,6 +32,16 @@ export class IntelService {
         this.newsTickerService = newsTickerService;
         this.logger = logger;
         this.db = DB; 
+        this.uiManager = null; // Injected later by dependency container/facade
+    }
+
+    /**
+     * Injects the UIManager instance to handle callbacks for modal sequences.
+     * @param {object} uiManager 
+     * @JSDoc
+     */
+    setUIManager(uiManager) {
+        this.uiManager = uiManager;
     }
 
     /**
@@ -412,5 +422,73 @@ export class IntelService {
      */
     getCurrentDay() {
         return this.timeService.getCurrentDay();
+    }
+
+    /**
+     * Generates a spontaneous Hot Intel deal for the current location.
+     * Filters for unlocked commodities and assigns a steep 30-60% discount.
+     * @JSDoc
+     */
+    generateHotIntel() {
+        const state = this.gameState.getState();
+        const locationId = state.currentLocationId;
+        const inventory = state.market.inventory[locationId];
+        const revealedTier = state.player.revealedTier;
+
+        // Fetch unlocked commodities
+        const unlockedCommodities = this.db.COMMODITIES.filter(c => c.tier <= revealedTier);
+        
+        // Filter for items that actually have supply in the current location
+        const availableUnlockedIds = unlockedCommodities
+            .map(c => c.id)
+            .filter(id => inventory[id] && inventory[id].quantity > 0);
+
+        if (availableUnlockedIds.length === 0) {
+            this.logger.warn('IntelService', 'Cannot generate Hot Intel: No unlocked commodities currently in stock.');
+            return;
+        }
+
+        // Select a random valid commodity and generate multiplier (0.40 to 0.70 means a 60% to 30% discount)
+        const commodityId = availableUnlockedIds[Math.floor(Math.random() * availableUnlockedIds.length)];
+        const discountMultiplier = parseFloat((0.40 + Math.random() * 0.30).toFixed(2));
+
+        this.logger.info.system('IntelService', state.day, 'HOT_INTEL', `Generated Hot Intel for ${commodityId} at ${locationId} with multiplier ${discountMultiplier}`);
+
+        this.gameState.setState({
+            activeHotIntel: { 
+                locationId: locationId, 
+                commodityId: commodityId, 
+                discountMultiplier: discountMultiplier 
+            }
+        });
+    }
+
+    /**
+     * Evaluates trigger conditions (10% chance, 365-day cooldown) upon arrival.
+     * Fires the generation logic and sequences the delayed UI modal.
+     * @JSDoc
+     */
+    evaluateHotIntelTrigger() {
+        const state = this.gameState.getState();
+        
+        if (Math.random() <= 0.10 && (state.day - state.lastHotIntelDay >= 365)) {
+            // Update cooldown and mutate state
+            this.gameState.setState({ lastHotIntelDay: state.day });
+            this.generateHotIntel();
+            
+            // Initiate the 3-second delay sequence for the UI rendering
+            setTimeout(() => {
+                const currentState = this.gameState.getState();
+                
+                // Route through the injected UIManager if available, or fallback to global reference
+                if (this.uiManager && currentState.activeHotIntel) {
+                    this.uiManager.showHotIntelModal(currentState.activeHotIntel);
+                } else if (window.game && window.game.uiManager && currentState.activeHotIntel) {
+                    window.game.uiManager.showHotIntelModal(currentState.activeHotIntel);
+                } else {
+                    this.logger.error('IntelService', 'Failed to show Hot Intel Modal: UI Manager not found.');
+                }
+            }, 3000);
+        }
     }
 }

@@ -66,7 +66,8 @@ export class MarketService {
      * @returns {number} The effective price.
      */
     getPrice(locationId, commodityId, applyModifiers = false) {
-        const deal = this.gameState.getState().activeIntelDeal;
+        const state = this.gameState.getState();
+        const deal = state.activeIntelDeal;
         let basePrice = this.gameState.market.prices[locationId]?.[commodityId] || 0;
 
         // --- VIRTUAL WORKBENCH: DYNAMIC MARKET CONDITIONS ---
@@ -149,6 +150,14 @@ export class MarketService {
                  const mod = GameAttributes.getPriceModifier(upgrades, 'buy');
                  price = price * mod;
              }
+        }
+
+        // --- PHASE 2: HOT INTEL INTEGRATION ---
+        const activeHotIntel = state.activeHotIntel;
+        if (activeHotIntel && 
+            activeHotIntel.locationId === locationId && 
+            activeHotIntel.commodityId === commodityId) {
+            price = price * activeHotIntel.discountMultiplier;
         }
 
         // Ensure price never drops below 1

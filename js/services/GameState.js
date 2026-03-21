@@ -308,10 +308,10 @@ export class GameState {
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
             
             // --- VIRTUAL WORKBENCH ---
-            // Removed obsolete `intel` property
-            // Added new GDD properties
             intelMarket: {},
             activeIntelDeal: null,
+            activeHotIntel: null,
+            lastHotIntelDay: -365,
             // --- END VIRTUAL WORKBENCH ---
 
             // --- VIRTUAL WORKBENCH: PHASE 1 SOL STATION PROGRESSION ---
