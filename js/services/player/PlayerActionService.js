@@ -895,7 +895,8 @@ export class PlayerActionService {
             }
         }
 
-        let unitCost = (DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10) * fuelClassMod;
+        // Apply 50% base reduction (0.50 multiplier) before class scaling
+        let unitCost = ((DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10) * 0.50) * fuelClassMod;
         
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
