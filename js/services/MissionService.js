@@ -252,6 +252,71 @@ export class MissionService {
     }
 
     /**
+     * Skips the entire 9-part tutorial sequence.
+     */
+    skipTutorial() {
+        const tutorialIds = [
+            'mission_tutorial_01', 'mission_tutorial_02', 'mission_tutorial_03',
+            'mission_tutorial_04', 'mission_tutorial_05', 'mission_tutorial_06',
+            'mission_tutorial_07', 'mission_tutorial_08', 'mission_tutorial_09'
+        ];
+
+        let subsidyGranted = false;
+
+        tutorialIds.forEach(id => {
+            // Remove from active missions if present
+            if (this.gameState.missions.activeMissionIds.includes(id)) {
+                this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(activeId => activeId !== id);
+            }
+            
+            // Add to completed missions if not already there
+            if (!this.gameState.missions.completedMissionIds.includes(id)) {
+                this.gameState.missions.completedMissionIds.push(id);
+                
+                // If we are artificially completing mission 9, give the player the 7k subsidy they would have normally received
+                if (id === 'mission_tutorial_09' && !subsidyGranted) {
+                    this.gameState.player.credits += 7000;
+                    subsidyGranted = true;
+                    this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ⌬ 7,000 subsidy upon skipping tutorial.`);
+                }
+            }
+
+            // Clean up progress maps
+            if (this.gameState.missions.missionProgress[id]) {
+                delete this.gameState.missions.missionProgress[id];
+            }
+            
+            // Clear tracking if a tutorial was tracked
+            if (this.gameState.missions.trackedMissionId === id) {
+                this.gameState.missions.trackedMissionId = null;
+            }
+        });
+
+        // Release any navigation locks placed by the tutorial
+        if (this.simulationService) {
+            this.simulationService.clearNavigationLock();
+        }
+
+        // Hide the active mission modal
+        if (this.uiManager) {
+            this.uiManager.hideModal('mission-modal');
+        }
+
+        this.logger.info.player(this.gameState.day, 'TUTORIAL_SKIPPED', `Player skipped the tutorial sequence.`);
+
+        // Force UI to terminal view if the active log is now empty
+        if (this.gameState.missions.activeMissionIds.length === 0) {
+            this.gameState.uiState.activeMissionTab = 'terminal';
+        }
+
+        // Push global state update
+        this.gameState.setState({});
+        if (this.uiManager && typeof this.uiManager.render === 'function') {
+            this.uiManager.render(this.gameState.getState());
+        }
+    }
+
+    /**
      * Abandons a specific active mission.
      * @param {string} missionId - The ID of the mission to abandon.
      */

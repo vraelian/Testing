@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 36.92</title>
+    <title>Orbital Trading 37.00</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 36.92 - Officer Recruitment Update</p>
+            <p>Version 37.00 - Hot Intel Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -13677,7 +13677,7 @@ import { SYSTEM_STATE_REGISTRY } from './systemStateRegistry.js';
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
-    START_YEAR: 2140,
+    START_YEAR: 2220,
     START_DAY_OF_WEEK: 1, // 0 = Sunday, 1 = Monday, etc.
     DAYS_IN_MONTH: [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31],
     MONTH_NAMES: ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
@@ -14726,7 +14726,7 @@ export const MISSION_REGISTRY = {
 // js/data/missions/phase_one.js
 /**
  * @fileoverview
- * Defines the Phase 1: Act 1 (The Cog) missions 10-15, focusing on early game logistics,
+ * Defines the Phase 1: Act 1 (The Cog) missions 10-16, focusing on early game logistics,
  * debt, the introduction of higher-level Guild contracts, and the contrast of the transhuman economy.
  */
 export const PHASE_ONE_MISSIONS = {
@@ -14887,6 +14887,32 @@ export const PHASE_ONE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 14000 }
+        ]
+    },
+    'mission_16': {
+        id: "mission_16",
+        name: "Survivor's Guilt",
+        type: "PROCUREMENT",
+        host: "STATION",
+        portraitId: "Dockworker_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Hey... [playerName]. Glad to see you're still around. Listen, things are bad here. When you left the Belt, the Guild didn't adjust our quotas. They just squeezed the rest of us harder. We're running critical on life support reserves and structural patching for the habitation modules.<br><br>I know you're busy playing merchant now, but we need a shipment of Water Ice and Plasteel here at the Belt. I can pay you from the habitation stipend the guild affords us Belters on duty.",
+        triggers: [
+            { "type": "mission_completed", "missionId": "mission_15" }
+        ],
+        objectives: [
+            { "id": "deliver_ice_belt", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "water_ice", "quantity": 90 },
+            { "id": "deliver_plasteel_belt", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "plasteel", "quantity": 20 }
+        ],
+        completion: {
+            locationId: "loc_belt",
+            title: "Delivery Complete",
+            text: "Once you've unloaded all the cargo I can transfer the credits your way. <br><br>Oh and [playerName], don't forget where you came from. Stay safe out there.",
+            buttonText: "Unload the Freight"
+        },
+        rewards: [
+            { "type": "credits", "amount": 18000 }
         ]
     }
 };
@@ -20343,6 +20369,16 @@ export class UIMissionControl {
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
+                     
+                     // INJECT SKIP TUTORIAL BUTTON HERE
+                     if (mission.id === 'mission_tutorial_01') {
+                         const skipBtn = document.createElement('button');
+                         skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
+                         skipBtn.style.cssText = btnStyles;
+                         skipBtn.textContent = 'Skip Tutorial';
+                         skipBtn.dataset.action = 'skip-tutorial';
+                         buttonsEl.appendChild(skipBtn);
+                     }
                 }
 
                 const navBtn = modal.querySelector('#mission-navigate-btn');
@@ -20724,6 +20760,16 @@ export class UIMissionControl {
                    }, 1500); // Trigger after the 1.5s fade finishes
                };
                buttonsEl.appendChild(completeBtn);
+               
+               // Inject Skip Tutorial button for mission_tutorial_01
+               if (mission.id === 'mission_tutorial_01') {
+                   const skipBtn = document.createElement('button');
+                   skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
+                   skipBtn.style.cssText = btnStyles;
+                   skipBtn.textContent = 'Skip Tutorial';
+                   skipBtn.dataset.action = 'skip-tutorial';
+                   buttonsEl.appendChild(skipBtn);
+               }
            }
         };
        this.manager.queueModal('mission-modal', parsedTitle, parsedText, null, options);
@@ -29514,6 +29560,71 @@ export class MissionService {
             this.gameState.missions.missionProgress[missionId].isCompletable = true;
         }
         this.uiManager.render(this.gameState.getState());
+    }
+
+    /**
+     * Skips the entire 9-part tutorial sequence.
+     */
+    skipTutorial() {
+        const tutorialIds = [
+            'mission_tutorial_01', 'mission_tutorial_02', 'mission_tutorial_03',
+            'mission_tutorial_04', 'mission_tutorial_05', 'mission_tutorial_06',
+            'mission_tutorial_07', 'mission_tutorial_08', 'mission_tutorial_09'
+        ];
+
+        let subsidyGranted = false;
+
+        tutorialIds.forEach(id => {
+            // Remove from active missions if present
+            if (this.gameState.missions.activeMissionIds.includes(id)) {
+                this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(activeId => activeId !== id);
+            }
+            
+            // Add to completed missions if not already there
+            if (!this.gameState.missions.completedMissionIds.includes(id)) {
+                this.gameState.missions.completedMissionIds.push(id);
+                
+                // If we are artificially completing mission 9, give the player the 7k subsidy they would have normally received
+                if (id === 'mission_tutorial_09' && !subsidyGranted) {
+                    this.gameState.player.credits += 7000;
+                    subsidyGranted = true;
+                    this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ⌬ 7,000 subsidy upon skipping tutorial.`);
+                }
+            }
+
+            // Clean up progress maps
+            if (this.gameState.missions.missionProgress[id]) {
+                delete this.gameState.missions.missionProgress[id];
+            }
+            
+            // Clear tracking if a tutorial was tracked
+            if (this.gameState.missions.trackedMissionId === id) {
+                this.gameState.missions.trackedMissionId = null;
+            }
+        });
+
+        // Release any navigation locks placed by the tutorial
+        if (this.simulationService) {
+            this.simulationService.clearNavigationLock();
+        }
+
+        // Hide the active mission modal
+        if (this.uiManager) {
+            this.uiManager.hideModal('mission-modal');
+        }
+
+        this.logger.info.player(this.gameState.day, 'TUTORIAL_SKIPPED', `Player skipped the tutorial sequence.`);
+
+        // Force UI to terminal view if the active log is now empty
+        if (this.gameState.missions.activeMissionIds.length === 0) {
+            this.gameState.uiState.activeMissionTab = 'terminal';
+        }
+
+        // Push global state update
+        this.gameState.setState({});
+        if (this.uiManager && typeof this.uiManager.render === 'function') {
+            this.uiManager.render(this.gameState.getState());
+        }
     }
 
     /**
@@ -40721,11 +40832,17 @@ export class ActionClickHandler {
         document.addEventListener('click', (e) => {
             const primedBtns = document.querySelectorAll('.primed');
             if (primedBtns.length > 0) {
-                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"]');
+                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"], [data-action="skip-tutorial"]');
                 primedBtns.forEach(btn => {
                     if (btn !== closestTarget) {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
+                        
+                        if (btn.dataset.action === 'skip-tutorial') {
+                            btn.textContent = 'Skip Tutorial';
+                            btn.classList.remove('bg-red-600', 'text-white', 'border-red-800');
+                            btn.classList.add('bg-white', 'text-black');
+                        }
                     }
                 });
             }
@@ -41152,6 +41269,36 @@ export class ActionClickHandler {
                     if (this.uiManager.toastManager) {
                         this.uiManager.toastManager.hideToast();
                     }
+                }
+                break;
+            }
+            
+            case 'skip-tutorial': {
+                if (!actionTarget.dataset.primed) {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('.primed').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                        
+                        if (btn.dataset.action === 'skip-tutorial') {
+                            btn.textContent = 'Skip Tutorial';
+                            btn.classList.remove('bg-red-600', 'text-white', 'border-red-800');
+                            btn.classList.add('bg-white', 'text-black');
+                        }
+                    });
+
+                    // Prime this button
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed', 'bg-red-600', 'text-white', 'border-red-800');
+                    actionTarget.classList.remove('bg-white', 'text-black');
+                    actionTarget.textContent = 'Confirm Skip?';
+                    e.stopPropagation();
+                    return; // Prevent immediate execution
+                }
+
+                // Second click: execute the skip
+                if (this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.skipTutorial();
                 }
                 break;
             }
@@ -42867,6 +43014,12 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [37.00] - 2026-3-20
+-  updated bot
+-  added economic tracking tooling
+-  added Hot Intel V1
+-  added tutorial skip
 
 # [36.96] - 2026-3-19
 -  added mission freight leakage to economy
