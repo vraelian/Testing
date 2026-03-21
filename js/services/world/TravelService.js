@@ -153,6 +153,10 @@ export class TravelService {
      * Executes the core travel logic: applies fuel costs and hull damage, advances time, and shows the animation.
      */
     initiateTravel(locationId, eventMods = {}) {
+        // --- PHASE 2: HOT INTEL EXPIRATION ---
+        // Forcefully wipe the activeHotIntel state the moment the player commits to departing.
+        this.gameState.setState({ activeHotIntel: null });
+
         // --- HARD INTERRUPT: Clear Universal Toast Queue ---
         if (this.simulationService.toastService) {
             this.simulationService.toastService.clearQueueAndHide();
@@ -491,6 +495,12 @@ export class TravelService {
             // [[FIXED]] Force Mission Trigger Check on Arrival
             if (this.simulationService.missionService) {
                 this.simulationService.missionService.checkTriggers();
+            }
+
+            // --- PHASE 2: HOT INTEL TRIGGER EVALUATION ---
+            // Evaluated silently upon arrival, before the UI renders the new destination
+            if (this.simulationService.intelService) {
+                this.simulationService.intelService.evaluateHotIntelTrigger();
             }
 
             // --- UNIVERSAL TOAST SYSTEM (Post-Arrival Notification Queue) ---
