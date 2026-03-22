@@ -135,14 +135,18 @@ export class TravelService {
             starfieldService.triggerQuickExit();
             
             const shipDef = DB.SHIPS[activeShip.id];
-            let shipClassColor = 'text-gray-300'; // Default fallback
+            let shipClassColor = 'text-white'; // Default fallback
             
             if (shipDef && shipDef.class) {
-                const sc = shipDef.class.toLowerCase();
-                if (sc.includes('explorer')) shipClassColor = 'text-sky-400';
-                else if (sc.includes('balanced')) shipClassColor = 'text-emerald-400';
-                else if (sc.includes('hauler')) shipClassColor = 'text-amber-400';
-                else shipClassColor = 'text-purple-400'; // fallback for z-class/other specific vessels
+                switch(shipDef.class.toUpperCase()) {
+                    case 'C': shipClassColor = 'text-white'; break;
+                    case 'B': shipClassColor = 'text-emerald-400'; break;
+                    case 'A': shipClassColor = 'text-sky-400'; break;
+                    case 'S': shipClassColor = 'text-glow-gold'; break;
+                    case 'O': shipClassColor = 'text-glow-orange'; break;
+                    case 'Z': shipClassColor = 'text-glow-red'; break;
+                    default: shipClassColor = 'text-white';
+                }
             }
             
             const shipNameHtml = `<span class="${shipClassColor} font-bold">${shipDef ? shipDef.name : 'Vessel'}</span>`;
@@ -504,7 +508,7 @@ export class TravelService {
             }
         }
         
-        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
+        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null, isTraveling: true });
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
@@ -523,6 +527,8 @@ export class TravelService {
         });
 
         const finalCallback = () => {
+            this.gameState.isTraveling = false;
+            
             // [[FIXED]] Force Mission Trigger Check on Arrival
             if (this.simulationService.missionService) {
                 this.simulationService.missionService.checkTriggers();
