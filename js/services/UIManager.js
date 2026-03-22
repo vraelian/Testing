@@ -412,7 +412,7 @@ export class UIManager {
             this.solStationControl.resetScrollMemory();
         }
 
-        const currentSystemStateId = gameState.systemState?.activeId;
+        const currentSystemStateId = gameState.systemStates?.activeId;
         if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
             this.lastSeenSystemStateId = currentSystemStateId;
             // Phase 3: Gate Economic Weather Modal Behind Travel Session
@@ -641,9 +641,9 @@ export class UIManager {
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
     showEconWeatherModal(gameState = this.lastKnownState) {
-        if (!gameState || !gameState.systemState) return;
+        if (!gameState || !gameState.systemStates) return;
         
-        const sysStateId = gameState.systemState.activeId;
+        const sysStateId = gameState.systemStates.activeId;
         
         if (!sysStateId || sysStateId === 'NEUTRAL') {
             this.queueModal('econ-weather-modal', '<span style="font-size: calc(100% - 1pt);">Stable Economy</span>', '<p class="text-center text-gray-400 mt-4">The solar system economy is neutral and stable.</p>', null, { 
@@ -662,21 +662,21 @@ export class UIManager {
         const stateDef = DB.SYSTEM_STATES[sysStateId];
         if (!stateDef) return;
 
-        const varietalIndex = gameState.systemState.varietalIndex !== undefined 
-            ? gameState.systemState.varietalIndex 
+        const varietalIndex = gameState.systemStates.varietalIndex !== undefined 
+            ? gameState.systemStates.varietalIndex 
             : Math.floor(Math.random() * stateDef.varietals.length);
 
         let narrativeText = stateDef.varietals[varietalIndex];
         let quantitativeText = stateDef.quantitativeDisplay;
 
-        if (gameState.systemState.targetLocations && gameState.systemState.targetLocations.length > 0) {
-            if (gameState.systemState.targetLocations.length === 1) {
-                const locName = DB.MARKETS.find(m => m.id === gameState.systemState.targetLocations[0])?.name || 'Unknown';
+        if (gameState.systemStates.targetLocations && gameState.systemStates.targetLocations.length > 0) {
+            if (gameState.systemStates.targetLocations.length === 1) {
+                const locName = DB.MARKETS.find(m => m.id === gameState.systemStates.targetLocations[0])?.name || 'Unknown';
                 const locSpan = `<span class="hl-blue">${locName}</span>`;
                 narrativeText = narrativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
                 quantitativeText = quantitativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
             } else {
-                gameState.systemState.targetLocations.forEach((locId, idx) => {
+                gameState.systemStates.targetLocations.forEach((locId, idx) => {
                     const locName = DB.MARKETS.find(m => m.id === locId)?.name || 'Unknown';
                     const locSpan = `<span class="hl-blue">${locName}</span>`;
                     const regex = new RegExp(`\\[Loc ${idx + 1}\\]`, 'g');
