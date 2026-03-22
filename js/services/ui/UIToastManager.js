@@ -12,12 +12,10 @@ export class UIToastManager {
     }
 
     _injectDOM() {
-        const gameContainer = document.getElementById('game-container');
-        if (!gameContainer) return;
-
+        // Inject directly into document.body to break out of #game-container's stacking context
         if (!document.getElementById('toast-container')) {
             const containerHTML = `<div id="toast-container"></div>`;
-            gameContainer.insertAdjacentHTML('beforeend', containerHTML);
+            document.body.insertAdjacentHTML('beforeend', containerHTML);
         }
         this.container = document.getElementById('toast-container');
     }
