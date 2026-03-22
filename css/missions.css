@@ -781,9 +781,11 @@
     100% { opacity: 1; transform: translateX(0); }
 }
 
+/* --- TELEMETRY QUANTITIES (HIGHLIGHTS) --- */
 .t-qty {
     font-weight: 700;
-    color: var(--host-color, var(--theme-color-glow, #38bdf8));
+    color: #fbbf24; /* Gold-400 */
+    text-shadow: -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000, 1px 1px 0 #000, 0 2px 4px rgba(0,0,0,0.8); /* Hard black outline + drop shadow */
     font-feature-settings: "tnum";
     margin-right: 0.15rem;
 }

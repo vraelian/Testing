@@ -188,11 +188,11 @@ export class UIEventControl {
         if (!travelInfo) return;
 
         // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Check ---
-        const playerTier = state.player.revealedTier || 1;
         const inventory = state.player.inventories[state.player.activeShipId] || {};
         const foldedDriveQty = inventory[COMMODITY_IDS.FOLDED_DRIVES]?.quantity || 0;
         
-        const canFoldSpace = playerTier >= 7 && foldedDriveQty > 0;
+        // REMOVED `playerTier >= 7` constraint. Possession is the only requirement.
+        const canFoldSpace = foldedDriveQty > 0;
         
         let foldSpaceHtml = '';
         if (canFoldSpace) {

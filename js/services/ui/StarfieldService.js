@@ -1,3 +1,4 @@
+// js/services/ui/StarfieldService.js
 /**
  * Service responsible for managing the lifecycle, rendering, and state transitions 
  * of the starfield background effect across different UI layers.
@@ -23,9 +24,10 @@ class StarfieldService {
             zIndex: 40 
         };
 
-        // Dynamic Velocity State
+        // Dynamic State
         this.currentSpeedMultiplier = 0.2;
         this.targetSpeedMultiplier = 0.2;
+        this.starColor = 'rgba(255, 255, 255, 1.0)';
     }
 
     /**
@@ -64,13 +66,23 @@ class StarfieldService {
      */
     setIdleWarp() {
         this.targetSpeedMultiplier = 0.2;
+        this.starColor = 'rgba(255, 255, 255, 1.0)';
     }
 
     /**
-     * Velocity Control: Massive acceleration for travel sequence
+     * Velocity Control: Massive acceleration for standard travel sequence
      */
     setEngageWarp() {
         this.targetSpeedMultiplier = 12.0;
+        this.starColor = 'rgba(255, 255, 255, 1.0)';
+    }
+
+    /**
+     * Velocity Control: Extreme acceleration and golden colors for Folded Space travel
+     */
+    setFoldedSpaceWarp() {
+        this.targetSpeedMultiplier = 24.0;
+        this.starColor = 'rgba(251, 191, 36, 1.0)'; // Tailwind Amber-400
     }
 
     /**
@@ -78,6 +90,7 @@ class StarfieldService {
      */
     setDecelerateWarp() {
         this.targetSpeedMultiplier = 0.2;
+        // Note: Do not reset color here to prevent jarring snap-backs during braking
     }
 
     /**
@@ -205,8 +218,8 @@ class StarfieldService {
         // Smoothly interpolate current speed towards the target speed (The "Punch It" effect)
         this.currentSpeedMultiplier += (this.targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.05;
 
-        // Pure white lines for maximum contrast against the deep black background
-        this.ctx.strokeStyle = 'rgba(255, 255, 255, 1.0)';
+        // Use the dynamically set star color
+        this.ctx.strokeStyle = this.starColor;
         this.ctx.lineCap = 'round';
 
         for (let star of this.stars) {
