@@ -6,12 +6,14 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [37.02] - 2026-3-21
 -  reduced base fuel coss by 50%
 -  services screen polish
+-  fixed toast positioning bugx
 
 # [37.00] - 2026-3-20
 -  updated bot
 -  added economic tracking tooling
 -  added Hot Intel V1
 -  added tutorial skip
+-  added mission #16
 
 # [36.96] - 2026-3-19
 -  added mission freight leakage to economy

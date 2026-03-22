@@ -169,7 +169,7 @@ export const PHASE_ONE_MISSIONS = {
         name: "Survivor's Guilt",
         type: "PROCUREMENT",
         host: "STATION",
-        portraitId: "Dockworker_1",
+        portraitId: "Dockworker_4",
         isRepeatable: false,
         isAbandonable: false,
         description: "Hey... [playerName]. Glad to see you're still around. Listen, things are bad here. When you left the Belt, the Guild didn't adjust our quotas. They just squeezed the rest of us harder. We're running critical on life support reserves and structural patching for the habitation modules.<br><br>I know you're busy playing merchant now, but we need a shipment of Water Ice and Plasteel here at the Belt. I can pay you from the habitation stipend the guild affords us Belters on duty.",
