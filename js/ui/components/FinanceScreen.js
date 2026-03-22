@@ -190,13 +190,16 @@ export function renderFinanceScreen(gameState) {
                             <span class="credits-text-pulsing text-[21px]">${formatCredits(guildAmount, true)}</span>
                             <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center">
                                 <div class="detail-block text-center flex-1">
-                                    <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
-                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-guildFee)}</div>
+                                    <div class="text-xs text-slate-400 font-bold mb-1 tracking-wide">FEE</div>
+                                    <div class="text-red-400 font-bold text-sm">${formatCredits(-guildFee)}</div>
                                 </div>
                                 <div class="detail-block text-center flex-1">
-                                    <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
-                                    <div class="text-red-700 font-bold text-sm">${formatCredits(-guildInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                                    <div class="text-xs text-slate-400 font-bold mb-1 tracking-wide">INTEREST</div>
+                                    <div class="text-red-400 font-bold text-sm">${formatCredits(-guildInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
                                 </div>
+                            </div>
+                            <div class="loan-cta-button w-full mt-4 py-2 rounded text-sm tracking-widest font-bold uppercase transition-all shadow-md">
+                                Take Loan
                             </div>
                         </div>
                         <div class="loan-confirm-content">
@@ -226,13 +229,16 @@ export function renderFinanceScreen(gameState) {
                                 <span class="text-red-500 font-bold text-[21px]" style="text-shadow: 0 0 8px rgba(239,68,68,0.5);">${formatCredits(syndAmount, true)}</span>
                                 <div class="loan-details mt-3 text-sm flex gap-3 w-full justify-center text-red-300">
                                     <div class="detail-block text-center flex-1">
-                                        <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">FEE</div>
-                                        <div class="text-slate-800 font-bold text-sm">$0</div>
+                                        <div class="text-xs text-slate-400 font-bold mb-1 tracking-wide">FEE</div>
+                                        <div class="text-slate-300 font-bold text-sm">$0</div>
                                     </div>
                                     <div class="detail-block text-center flex-1">
-                                        <div class="text-xs text-slate-500 font-bold mb-1 tracking-wide">INTEREST</div>
-                                        <div class="text-red-700 font-bold text-sm">${formatCredits(-syndInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
+                                        <div class="text-xs text-slate-400 font-bold mb-1 tracking-wide">INTEREST</div>
+                                        <div class="text-red-400 font-bold text-sm">${formatCredits(-syndInterest)}<span class="text-xs font-normal text-slate-500 ml-1">/mo</span></div>
                                     </div>
+                                </div>
+                                <div class="loan-cta-button syndicate-cta w-full mt-4 py-2 rounded text-sm tracking-widest font-bold uppercase transition-all shadow-md">
+                                    Take Loan
                                 </div>
                             </div>
                             <div class="loan-confirm-content">
