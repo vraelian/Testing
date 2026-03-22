@@ -69,8 +69,14 @@ export class TravelAnimationService {
         this._setupInitialState(to, travelInfo);
         this._startCinematicSequence(to);
 
-        // Initiate the "Punch It" high-speed warp effect
-        starfieldService.setEngageWarp();
+        const isFoldedSpace = travelInfo.time === 0;
+
+        // Initiate the high-speed warp effect
+        if (isFoldedSpace) {
+            starfieldService.setFoldedSpaceWarp();
+        } else {
+            starfieldService.setEngageWarp();
+        }
 
         let startTime = null;
         const duration = 2500; // Duration of travel sequence
@@ -200,11 +206,22 @@ export class TravelAnimationService {
             
         this.arrivalLore.innerHTML = flavorText;
         
-        this.infoText.innerHTML = `
-            <div class="text-center">
-                <div>Journey Time: ${travelInfo.time} Days</div>
-                <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
-            </div>`;
+        const isFoldedSpace = travelInfo.time === 0;
+
+        if (isFoldedSpace) {
+            this.infoText.innerHTML = `
+                <div class="text-center">
+                    <div class="font-bold" style="color: #facc15;">Journey Time: INSTANT (Warp)</div>
+                    <div><span class="font-bold text-sky-300">Fuel Expended: 0 (Folded Space)</span></div>
+                </div>`;
+        } else {
+            this.infoText.innerHTML = `
+                <div class="text-center">
+                    <div>Journey Time: ${travelInfo.time} Days</div>
+                    <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
+                </div>`;
+        }
+
         this.hullDamageText.className = 'text-sm font-roboto-mono mt-1 font-bold text-red-400';
         if (totalHullDamagePercent > 0.01) {
             this.hullDamageText.innerHTML = `Hull Integrity -${totalHullDamagePercent.toFixed(2)}%`;

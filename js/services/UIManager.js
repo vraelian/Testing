@@ -628,6 +628,7 @@ export class UIManager {
     showUpgradeInstallationModal(...args) { this.hangarControl.showUpgradeInstallationModal(...args); }
     runShipTransactionAnimation(...args) { this.hangarControl.runShipTransactionAnimation(...args); }
 
+    showHotIntelModal(...args) { this.eventControl.showHotIntelModal(...args); }
     showRandomEventModal(...args) { this.eventControl.showRandomEventModal(...args); }
     showAgeEventModal(...args) { this.eventControl.showAgeEventModal(...args); }
     showLoreModal(...args) { this.eventControl.showLoreModal(...args); }
