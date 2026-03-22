@@ -2494,6 +2494,21 @@ BUTTON GLOW --- */
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
+/* --- VIRTUAL WORKBENCH: ADDED ORANGE GLOW CLASS --- */
+@keyframes pulse-orange-glow {
+    0%, 100% {
+        text-shadow: 0 0 4px #ea580c, 0 0 8px #ea580c;
+    }
+    50% {
+        text-shadow: 0 0 10px #f97316, 0 0 16px #f97316;
+    }
+}
+.text-glow-orange {
+    color: #fdba74;
+    animation: pulse-orange-glow 2.5s infinite ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 @keyframes float-up {
     from {
@@ -11280,13 +11295,16 @@ export function renderFinanceScreen(gameState) {
 
     // Render the transaction log.
     const logEntries = [...player.financeLog].reverse().map(entry => {
-        const amountColor = entry.amount > 0 ? 'credits-text-pulsing' : 'text-glow-red';
-        const sign = entry.amount > 0 ? '+' : '';
+        const isInterest = entry.description.toLowerCase().includes('interest');
+        const effectiveAmount = isInterest ? -Math.abs(entry.amount) : entry.amount;
+        const amountColor = effectiveAmount > 0 ? 'credits-text-pulsing' : 'text-glow-red';
+        const sign = effectiveAmount > 0 ? '+' : '';
+        
         return `
             <div class="log-entry">
                 <span class="text-gray-400 text-center">${entry.day}</span>
                 <span>${entry.description}</span>
-                <span class="${amountColor} text-right font-roboto-mono">${sign}${formatCredits(entry.amount, false)}</span>
+                <span class="${amountColor} text-right font-roboto-mono">${sign}${formatCredits(effectiveAmount, false)}</span>
             </div>
         `;
        }).join('');
@@ -14817,7 +14835,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You are making adequate progress, but the interest on your loan continues to accrue. Your objective is to clear this debt promptly to avoid additional interest or worse, automatic credit garnishment.<br><br>The sooner you can be free of your debt exposure, the faster you can begin to keep your wealth and get your trading career underway. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.",
+        description: "You are making adequate progress, but the interest on your loan continues to accrue. Your objective is to clear this debt promptly to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
@@ -19950,6 +19968,12 @@ export class UIMissionControl {
         const contentEl = stickyBarEl.querySelector('.sticky-content');
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
+
+        // NEW: Hide if traveling or on hangar screen
+        if (gameState.isTraveling || gameState.activeScreen === SCREEN_IDS.HANGAR) {
+            this._hideStickyBarWithFade(stickyBarEl);
+            return;
+        }
 
         const activeMissionId = gameState.missions.trackedMissionId || gameState.missions.activeMissionIds[0];
 
@@ -30505,7 +30529,27 @@ export class NewsTickerService {
             
             const cargoMax = shipData.cargoCapacity;
 
-            return `${shipData.name}: FUEL: ${fuel}% | CARGO: ${cargoUsed}/${cargoMax} | HULL: ${hull}%`;
+            // Z-Class and Standard Class Color Mapping (Static Colors, No Glow)
+            let shipClassColor = 'text-white'; // Default fallback
+            if (shipData.class) {
+                switch(shipData.class.toUpperCase()) {
+                    case 'C': shipClassColor = 'text-white'; break;
+                    case 'B': shipClassColor = 'text-emerald-400'; break;
+                    case 'A': shipClassColor = 'text-sky-400'; break;
+                    case 'S': shipClassColor = 'text-yellow-400'; break;
+                    case 'O': shipClassColor = 'text-orange-400'; break;
+                    case 'Z': shipClassColor = 'text-red-400'; break;
+                    default: shipClassColor = 'text-white';
+                }
+            }
+            
+            const shipNameHtml = `<span class="${shipClassColor} font-bold">${shipData.name}</span>`;
+            const fuelHtml = `<span class="text-blue-400">FUEL: ${fuel}%</span>`;
+            const cargoHtml = `<span class="text-amber-400">CARGO: ${cargoUsed}/${cargoMax}</span>`;
+            const hullHtml = `<span class="text-green-400">HULL: ${hull}%</span>`;
+            
+            return `${shipNameHtml}: ${fuelHtml} | ${cargoHtml} | ${hullHtml}`;
+            
         } catch (e) {
             console.error("NewsTickerService Error generating status:", e);
             return "STATUS: ERROR"; // Safeguard
@@ -31954,14 +31998,49 @@ export class TravelService {
         }
         // --- END VIRTUAL WORKBENCH ---
 
-        if (effectiveMaxFuel < requiredFuel) {
+        // --- FUEL VALIDATION BLOCK ---
+        const currentFuel = Math.floor(state.player.shipStates[activeShip.id].fuel);
+        
+        if (currentFuel < requiredFuel || effectiveMaxFuel < requiredFuel) {
             starfieldService.triggerQuickExit();
-            this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
-            return;
-        }
-        if (state.player.shipStates[activeShip.id].fuel < requiredFuel) {
-            starfieldService.triggerQuickExit();
-            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(state.player.shipStates[activeShip.id].fuel)}.`);
+            
+            const shipDef = DB.SHIPS[activeShip.id];
+            let shipClassColor = 'text-white'; // Default fallback
+            
+            if (shipDef && shipDef.class) {
+                switch(shipDef.class.toUpperCase()) {
+                    case 'C': shipClassColor = 'text-white'; break;
+                    case 'B': shipClassColor = 'text-emerald-400'; break;
+                    case 'A': shipClassColor = 'text-sky-400'; break;
+                    case 'S': shipClassColor = 'text-glow-gold'; break;
+                    case 'O': shipClassColor = 'text-glow-orange'; break;
+                    case 'Z': shipClassColor = 'text-glow-red'; break;
+                    default: shipClassColor = 'text-white';
+                }
+            }
+            
+            const shipNameHtml = `<span class="${shipClassColor} font-bold">${shipDef ? shipDef.name : 'Vessel'}</span>`;
+            const fuelHtml = `<span class="text-blue-400 font-bold">fuel</span>`;
+            const destName = DB.MARKETS.find(m => m.id === locationId)?.name || 'destination';
+
+            let message = `You need ${requiredFuel} ${fuelHtml} but your ${shipNameHtml} has ${currentFuel}.`;
+            
+            if (effectiveMaxFuel < requiredFuel) {
+                message += `<br><br>A direct flight to ${destName} requires more ${fuelHtml} than your ship can hold.`;
+            }
+
+            this.uiManager.queueModal(
+                'event-modal', 
+                "Insufficient Fuel", 
+                message, 
+                () => {
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.SERVICES);
+                }, 
+                { 
+                    buttonText: "Return to Starport",
+                    dismissOutside: true
+                } 
+            );
             return;
         }
 
@@ -32299,7 +32378,7 @@ export class TravelService {
             }
         }
         
-        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null });
+        this.gameState.setState({ currentLocationId: locationId, pendingTravel: null, isTraveling: true });
 
         const fromLocation = DB.MARKETS.find(m => m.id === fromId);
         const destination = DB.MARKETS.find(m => m.id === locationId);
@@ -32318,6 +32397,8 @@ export class TravelService {
         });
 
         const finalCallback = () => {
+            this.gameState.isTraveling = false;
+            
             // [[FIXED]] Force Mission Trigger Check on Arrival
             if (this.simulationService.missionService) {
                 this.simulationService.missionService.checkTriggers();
@@ -37280,7 +37361,7 @@ export class UIManager {
             this.solStationControl.resetScrollMemory();
         }
 
-        const currentSystemStateId = gameState.systemState?.activeId;
+        const currentSystemStateId = gameState.systemStates?.activeId;
         if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
             this.lastSeenSystemStateId = currentSystemStateId;
             // Phase 3: Gate Economic Weather Modal Behind Travel Session
@@ -37509,9 +37590,9 @@ export class UIManager {
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
     showEconWeatherModal(gameState = this.lastKnownState) {
-        if (!gameState || !gameState.systemState) return;
+        if (!gameState || !gameState.systemStates) return;
         
-        const sysStateId = gameState.systemState.activeId;
+        const sysStateId = gameState.systemStates.activeId;
         
         if (!sysStateId || sysStateId === 'NEUTRAL') {
             this.queueModal('econ-weather-modal', '<span style="font-size: calc(100% - 1pt);">Stable Economy</span>', '<p class="text-center text-gray-400 mt-4">The solar system economy is neutral and stable.</p>', null, { 
@@ -37530,21 +37611,21 @@ export class UIManager {
         const stateDef = DB.SYSTEM_STATES[sysStateId];
         if (!stateDef) return;
 
-        const varietalIndex = gameState.systemState.varietalIndex !== undefined 
-            ? gameState.systemState.varietalIndex 
+        const varietalIndex = gameState.systemStates.varietalIndex !== undefined 
+            ? gameState.systemStates.varietalIndex 
             : Math.floor(Math.random() * stateDef.varietals.length);
 
         let narrativeText = stateDef.varietals[varietalIndex];
         let quantitativeText = stateDef.quantitativeDisplay;
 
-        if (gameState.systemState.targetLocations && gameState.systemState.targetLocations.length > 0) {
-            if (gameState.systemState.targetLocations.length === 1) {
-                const locName = DB.MARKETS.find(m => m.id === gameState.systemState.targetLocations[0])?.name || 'Unknown';
+        if (gameState.systemStates.targetLocations && gameState.systemStates.targetLocations.length > 0) {
+            if (gameState.systemStates.targetLocations.length === 1) {
+                const locName = DB.MARKETS.find(m => m.id === gameState.systemStates.targetLocations[0])?.name || 'Unknown';
                 const locSpan = `<span class="hl-blue">${locName}</span>`;
                 narrativeText = narrativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
                 quantitativeText = quantitativeText.replace(/\[Target Location\]|\[Loc\]/g, locSpan);
             } else {
-                gameState.systemState.targetLocations.forEach((locId, idx) => {
+                gameState.systemStates.targetLocations.forEach((locId, idx) => {
                     const locName = DB.MARKETS.find(m => m.id === locId)?.name || 'Unknown';
                     const locSpan = `<span class="hl-blue">${locName}</span>`;
                     const regex = new RegExp(`\\[Loc ${idx + 1}\\]`, 'g');
@@ -41544,6 +41625,12 @@ export class ActionClickHandler {
             case 'close-map-modal':
                 this.uiManager.hideMapDetailModal();
                 break;
+            case 'show-system-states':
+                // Trigger the Economic Weather modal
+                if (this.uiManager.showEconWeatherModal) {
+                    this.uiManager.showEconWeatherModal(state);
+                }
+                break;
             
             case 'show_eula_modal':
                 e.preventDefault();
@@ -43356,8 +43443,10 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [37.06] - 2026-3-22
+# [37.08] - 2026-3-22
 -  fixed saving bugs
+-  news ticker polish
+-  mission sticky bar polish
 
 # [37.05] - 2026-3-21
 -  reduced base fuel coss by 50%
