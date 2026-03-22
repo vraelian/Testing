@@ -72,6 +72,12 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
+        // NEW: Hide if traveling or on hangar screen
+        if (gameState.isTraveling || gameState.activeScreen === SCREEN_IDS.HANGAR) {
+            this._hideStickyBarWithFade(stickyBarEl);
+            return;
+        }
+
         const activeMissionId = gameState.missions.trackedMissionId || gameState.missions.activeMissionIds[0];
 
         if (activeMissionId && gameState.missions.activeMissionIds.includes(activeMissionId)) {

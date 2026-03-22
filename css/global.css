@@ -462,6 +462,21 @@ BUTTON GLOW --- */
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
+/* --- VIRTUAL WORKBENCH: ADDED ORANGE GLOW CLASS --- */
+@keyframes pulse-orange-glow {
+    0%, 100% {
+        text-shadow: 0 0 4px #ea580c, 0 0 8px #ea580c;
+    }
+    50% {
+        text-shadow: 0 0 10px #f97316, 0 0 16px #f97316;
+    }
+}
+.text-glow-orange {
+    color: #fdba74;
+    animation: pulse-orange-glow 2.5s infinite ease-in-out;
+}
+/* --- END VIRTUAL WORKBENCH --- */
+
 
 @keyframes float-up {
     from {
