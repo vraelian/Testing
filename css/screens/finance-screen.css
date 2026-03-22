@@ -129,15 +129,31 @@
 }
 
 .btn-module-credit .loan-details .detail-block {
-    /* Use the theme gradient but whitewash it by 90% for a light, location-themed pastel tint */
-    background: linear-gradient(rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.9)), var(--theme-gradient, linear-gradient(135deg, #f8fafc, #f8fafc));
+    /* VIRTUAL WORKBENCH: Re-themed to be dark and blend with the location theme */
+    background: linear-gradient(rgba(15, 23, 42, 0.8), rgba(15, 23, 42, 0.8)), var(--theme-gradient, linear-gradient(135deg, #1e293b, #0f172a));
     padding: 6px 8px; /* Increased padding */
     border-radius: 6px; 
-    border: 2px solid var(--theme-border-color, #64748b); /* Distinct themed border */
-    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1); /* Inner shadow for depth */
-    color: #0f172a; /* Dark slate text */
+    border: 1px solid var(--theme-border-color, #4a6a8a); /* Thinner themed border */
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.4); /* Darker inner shadow for depth */
+    color: #e2e8f0; /* Light slate text */
     font-family: 'Roboto Mono', monospace;
 }
+
+/* --- VIRTUAL WORKBENCH: Call to Action (CTA) Button inside the credit module --- */
+.loan-cta-button {
+    border: 1px solid rgba(251, 191, 36, 0.6); /* amber-400/60 */
+    color: #fbbf24; /* amber-400 */
+    background: rgba(245, 158, 11, 0.1); /* amber-500/10 */
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.2), inset 0 0 5px rgba(245, 158, 11, 0.1);
+}
+
+.loan-cta-button.syndicate-cta {
+    border: 1px solid rgba(239, 68, 68, 0.6); /* red-500/60 */
+    color: #ef4444; /* red-500 */
+    background: rgba(220, 38, 38, 0.1); /* red-600/10 */
+    box-shadow: 0 0 10px rgba(220, 38, 38, 0.2), inset 0 0 5px rgba(220, 38, 38, 0.1);
+}
+/* --- END VIRTUAL WORKBENCH --- */
 
 /* --- VIRTUAL WORKBENCH: Primed State for Loan Confirmation --- */
 .btn-module-credit.primed {

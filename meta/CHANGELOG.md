@@ -6,7 +6,9 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [37.02] - 2026-3-21
 -  reduced base fuel coss by 50%
 -  services screen polish
--  fixed toast positioning bugx
+-  fixed toast positioning bug
+-  hot intel bug fix
+-  folded space gold starfield travel
 
 # [37.00] - 2026-3-20
 -  updated bot
