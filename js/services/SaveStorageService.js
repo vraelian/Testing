@@ -39,38 +39,68 @@ class SaveStorageService {
 
     /**
      * Saves the game payload to the specified slot in both IndexedDB and iOS Native Storage.
+     * Implements an ACK protocol to guarantee the iOS bridge completes before resolving.
      */
     async saveGame(slotId, payload) {
         await this.initPromise;
-        return new Promise((resolve, reject) => {
+        const dataToSave = { ...payload, slotId };
+        
+        // 1. Save to IndexedDB (Primary Web Storage)
+        await new Promise((resolve, reject) => {
             const transaction = this.db.transaction([this.storeName], 'readwrite');
             const store = transaction.objectStore(this.storeName);
-            const dataToSave = { ...payload, slotId };
-            
             const request = store.put(dataToSave);
-
-            request.onsuccess = () => {
-                // --- PHASE 1: iOS NATIVE BRIDGE (DUAL-WRITE) ---
-                if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosSaveBackup) {
-                    try {
-                        window.webkit.messageHandlers.iosSaveBackup.postMessage({
-                            slotId: slotId,
-                            payload: JSON.stringify(dataToSave)
-                        });
-                        console.log(`[iOS Bridge] Slot ${slotId} backed up to native UserDefaults.`);
-                    } catch(e) {
-                        console.warn("[iOS Bridge] Failed to send backup to native layer", e);
-                    }
-                }
-                
-                // Keep local fallback synced
-                if (!window.__IOS_SAVES) window.__IOS_SAVES = {};
-                window.__IOS_SAVES[slotId] = dataToSave;
-                
-                resolve();
-            };
+            request.onsuccess = () => resolve();
             request.onerror = (e) => reject(e.target.error);
         });
+
+        // 2. Keep local memory fallback synced
+        if (!window.__IOS_SAVES) window.__IOS_SAVES = {};
+        window.__IOS_SAVES[slotId] = dataToSave;
+
+        // 3. iOS Native Bridge (Dual-Write with ACK Protocol)
+        if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosSaveBackup) {
+            try {
+                // Yield to the main thread briefly to allow UI rendering/animations
+                // to proceed smoothly before blocking the thread with a heavy JSON.stringify
+                await new Promise(r => setTimeout(r, 10)); 
+                const stringifiedPayload = JSON.stringify(dataToSave);
+                
+                const ackId = 'ack_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
+
+                // Promise 1: Resolves when Swift executes the dynamically generated callback
+                const nativePromise = new Promise((nativeResolve) => {
+                    window[ackId] = () => {
+                        delete window[ackId]; // Cleanup memory
+                        console.log(`[iOS Bridge] Slot ${slotId} backed up to native UserDefaults (ACK received).`);
+                        nativeResolve();
+                    };
+                    
+                    window.webkit.messageHandlers.iosSaveBackup.postMessage({
+                        slotId: slotId,
+                        payload: stringifiedPayload,
+                        ackId: ackId
+                    });
+                });
+
+                // Promise 2: A 2000ms safety timeout to prevent soft-locking the game 
+                // if the native layer fails to respond or crashes.
+                const timeoutPromise = new Promise((timeoutResolve) => {
+                    setTimeout(() => {
+                        if (window[ackId]) {
+                            console.warn(`[iOS Bridge] Timeout waiting for ACK on ${ackId}.`);
+                            delete window[ackId]; // Cleanup memory
+                            timeoutResolve(); 
+                        }
+                    }, 2000);
+                });
+
+                // Wait for either the ACK or the Timeout before officially concluding the save process
+                await Promise.race([nativePromise, timeoutPromise]);
+            } catch(e) {
+                console.warn("[iOS Bridge] Failed to send backup to native layer", e);
+            }
+        }
     }
 
     /**
