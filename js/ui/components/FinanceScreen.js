@@ -256,13 +256,16 @@ export function renderFinanceScreen(gameState) {
 
     // Render the transaction log.
     const logEntries = [...player.financeLog].reverse().map(entry => {
-        const amountColor = entry.amount > 0 ? 'credits-text-pulsing' : 'text-glow-red';
-        const sign = entry.amount > 0 ? '+' : '';
+        const isInterest = entry.description.toLowerCase().includes('interest');
+        const effectiveAmount = isInterest ? -Math.abs(entry.amount) : entry.amount;
+        const amountColor = effectiveAmount > 0 ? 'credits-text-pulsing' : 'text-glow-red';
+        const sign = effectiveAmount > 0 ? '+' : '';
+        
         return `
             <div class="log-entry">
                 <span class="text-gray-400 text-center">${entry.day}</span>
                 <span>${entry.description}</span>
-                <span class="${amountColor} text-right font-roboto-mono">${sign}${formatCredits(entry.amount, false)}</span>
+                <span class="${amountColor} text-right font-roboto-mono">${sign}${formatCredits(effectiveAmount, false)}</span>
             </div>
         `;
        }).join('');

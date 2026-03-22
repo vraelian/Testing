@@ -128,14 +128,45 @@ export class TravelService {
         }
         // --- END VIRTUAL WORKBENCH ---
 
-        if (effectiveMaxFuel < requiredFuel) {
+        // --- FUEL VALIDATION BLOCK ---
+        const currentFuel = Math.floor(state.player.shipStates[activeShip.id].fuel);
+        
+        if (currentFuel < requiredFuel || effectiveMaxFuel < requiredFuel) {
             starfieldService.triggerQuickExit();
-            this.uiManager.queueModal('event-modal', "Fuel Capacity Insufficient", `Your ship's fuel tank is too small. This trip requires ${requiredFuel} fuel, but you can only hold ${effectiveMaxFuel}.`);
-            return;
-        }
-        if (state.player.shipStates[activeShip.id].fuel < requiredFuel) {
-            starfieldService.triggerQuickExit();
-            this.uiManager.queueModal('event-modal', "Insufficient Fuel", `You need ${requiredFuel} fuel but only have ${Math.floor(state.player.shipStates[activeShip.id].fuel)}.`);
+            
+            const shipDef = DB.SHIPS[activeShip.id];
+            let shipClassColor = 'text-gray-300'; // Default fallback
+            
+            if (shipDef && shipDef.class) {
+                const sc = shipDef.class.toLowerCase();
+                if (sc.includes('explorer')) shipClassColor = 'text-sky-400';
+                else if (sc.includes('balanced')) shipClassColor = 'text-emerald-400';
+                else if (sc.includes('hauler')) shipClassColor = 'text-amber-400';
+                else shipClassColor = 'text-purple-400'; // fallback for z-class/other specific vessels
+            }
+            
+            const shipNameHtml = `<span class="${shipClassColor} font-bold">${shipDef ? shipDef.name : 'Vessel'}</span>`;
+            const fuelHtml = `<span class="text-blue-400 font-bold">fuel</span>`;
+            const destName = DB.MARKETS.find(m => m.id === locationId)?.name || 'destination';
+
+            let message = `You need ${requiredFuel} ${fuelHtml} but your ${shipNameHtml} has ${currentFuel}.`;
+            
+            if (effectiveMaxFuel < requiredFuel) {
+                message += `<br><br>A direct flight to ${destName} requires more ${fuelHtml} than your ship can hold.`;
+            }
+
+            this.uiManager.queueModal(
+                'event-modal', 
+                "Insufficient Fuel", 
+                message, 
+                () => {
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.SERVICES);
+                }, 
+                { 
+                    buttonText: "Return to Starport",
+                    dismissOutside: true
+                } 
+            );
             return;
         }
 

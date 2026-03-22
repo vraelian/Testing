@@ -334,7 +334,23 @@ export class NewsTickerService {
             
             const cargoMax = shipData.cargoCapacity;
 
-            return `${shipData.name}: FUEL: ${fuel}% | CARGO: ${cargoUsed}/${cargoMax} | HULL: ${hull}%`;
+            // Z-Class and Standard Class Color Mapping
+            let shipClassColor = 'text-gray-300'; // Default fallback
+            if (shipData.class) {
+                const sc = shipData.class.toLowerCase();
+                if (sc.includes('explorer')) shipClassColor = 'text-sky-400';
+                else if (sc.includes('balanced')) shipClassColor = 'text-emerald-400';
+                else if (sc.includes('hauler')) shipClassColor = 'text-amber-400';
+                else shipClassColor = 'text-purple-400'; // Assume specialty/Z-Class
+            }
+            
+            const shipNameHtml = `<span class="${shipClassColor} font-bold">${shipData.name}</span>`;
+            const fuelHtml = `<span class="text-blue-400">FUEL: ${fuel}%</span>`;
+            const cargoHtml = `<span class="text-amber-400">CARGO: ${cargoUsed}/${cargoMax}</span>`;
+            const hullHtml = `<span class="text-green-400">HULL: ${hull}%</span>`;
+            
+            return `${shipNameHtml}: ${fuelHtml} | ${cargoHtml} | ${hullHtml}`;
+            
         } catch (e) {
             console.error("NewsTickerService Error generating status:", e);
             return "STATUS: ERROR"; // Safeguard

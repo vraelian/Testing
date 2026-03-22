@@ -398,6 +398,14 @@ export class ActionClickHandler {
             case 'close-map-modal':
                 this.uiManager.hideMapDetailModal();
                 break;
+            case 'show-system-states':
+                // Intercept logic for the Economic Weather modal trigger
+                if (this.uiManager.showSystemStateModal) {
+                    this.uiManager.showSystemStateModal(state);
+                } else if (this.uiManager.eventControl && this.uiManager.eventControl.showSystemStateModal) {
+                    this.uiManager.eventControl.showSystemStateModal(state);
+                }
+                break;
             
             case 'show_eula_modal':
                 e.preventDefault();
