@@ -289,6 +289,7 @@ ${logHistory}
     godMode() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'GOD MODE ACTIVATED.');
         this.gameState.introSequenceActive = false;
+        this.gameState.isDebugStart = true;
         
         this._markAllTutorialsSeen();
 
@@ -322,6 +323,7 @@ ${logHistory}
     simpleStart() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SIMPLE START ACTIVATED.');
         this.gameState.introSequenceActive = false;
+        this.gameState.isDebugStart = true;
         
         this._markAllTutorialsSeen();
 
@@ -353,6 +355,7 @@ ${logHistory}
         
         // Setup initial intro parameters
         this.gameState.introSequenceActive = true;
+        this.gameState.isDebugStart = true;
         
         if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
         if (!this.gameState.missions.completedMissionIds) this.gameState.missions.completedMissionIds = [];
