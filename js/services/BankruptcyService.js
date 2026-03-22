@@ -33,43 +33,64 @@ export class BankruptcyService {
     /**
      * Evaluates if the player is in a terminal economic softlock.
      * Calculates if Total Potential Liquidity is fundamentally exhausted.
-     * Triggers only if liquid credits <= 0, cargo is empty across the fleet, fleet size is 1,
-     * credit lines are exhausted/locked, and no zero-cost missions exist.
+     * Triggers only if liquid credits + cargo value cannot cover the cheapest fuel cost to leave,
+     * fleet size is 1, credit lines are exhausted/locked, and no zero-cost missions exist.
      * @param {object} state - The current GameState.state object.
      * @returns {boolean} True if the player is fundamentally bankrupt.
      */
     isPlayerBankrupt(state) {
         const player = state.player;
+        const locId = state.currentLocationId;
+        const activeShipId = player.activeShipId;
+        const shipState = player.shipStates[activeShipId];
 
-        // 1. Liquidity check
-        if (player.credits > 0) return false;
+        // 1. Calculate the Minimum Cost to Escape
+        const travelRoutes = state.TRAVEL_DATA[locId];
+        let minFuelNeeded = 10; // Failsafe
+        if (travelRoutes) {
+            minFuelNeeded = Math.min(...Object.values(travelRoutes).map(route => route.fuelCost));
+        }
 
-        // 2. Fleet size check (player could sell a backup ship)
-        if (player.ownedShipIds.length > 1) return false;
+        // If they already have enough fuel in the tank, they are not softlocked.
+        if (shipState && shipState.fuel >= minFuelNeeded) return false;
 
-        // 3. Cargo check (iterate all owned ships to ensure no cargo is hidden)
-        let hasCargo = false;
+        // Calculate credit cost to buy the missing fuel
+        const localMarket = this.marketService ? this.marketService.getMarketState(locId) : null;
+        // Fallback to static DB price if dynamic market state isn't available
+        const localFuelPrice = localMarket ? localMarket.fuelPrice : (DB.MARKETS ? DB.MARKETS.find(m => m.id === locId)?.fuelPrice : 5);
+        
+        const fuelDeficit = minFuelNeeded - (shipState ? shipState.fuel : 0);
+        const costToEscape = fuelDeficit * localFuelPrice;
+
+        // 2. Calculate Net Liquidation Value (NLV)
+        let totalLiquidCapital = player.credits;
+
+        // Add the local sell value of ALL cargo across the fleet
         for (const shipId of player.ownedShipIds) {
             const inventory = player.inventories[shipId] || {};
             for (const commodityId in inventory) {
-                if (inventory[commodityId].quantity > 0) {
-                    hasCargo = true;
-                    break;
+                const qty = inventory[commodityId].quantity;
+                if (qty > 0) {
+                    // Get the exact price the local market will pay for it
+                    const sellPrice = this.uiManager ? this.uiManager.getItemPrice(state, commodityId, true) : 0;
+                    totalLiquidCapital += (qty * sellPrice);
                 }
             }
-            if (hasCargo) break;
         }
-        if (hasCargo) return false;
 
-        // 4. Active debt / Credit Lockout check
-        // If debt is 0 and the player is not under a lockout penalty, they can legally take a Guild loan.
+        // 3. Evaluate Capital vs Escape Cost
+        if (totalLiquidCapital >= costToEscape) return false;
+
+        // 4. Fleet size check (player could sell a backup ship)
+        if (player.ownedShipIds.length > 1) return false;
+
+        // 5. Active debt / Credit Lockout check
         const isCreditLocked = player.creditLockoutExpiryDate && state.day < player.creditLockoutExpiryDate;
         if (player.debt === 0 && !isCreditLocked) {
             return false;
         }
 
-        // 5. Active zero-cost missions check
-        // If the player has active missions, they might still earn a payout to recover.
+        // 6. Active zero-cost missions check
         if (state.missions && state.missions.activeMissionIds && state.missions.activeMissionIds.length > 0) {
             return false;
         }
