@@ -3,10 +3,11 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [37.08] - 2026-3-22
+# [37.09] - 2026-3-22
 -  fixed saving bugs
 -  news ticker polish
 -  mission sticky bar polish
+-  improved bankruptcy thresholds
 
 # [37.05] - 2026-3-21
 -  reduced base fuel coss by 50%
