@@ -15,7 +15,7 @@ import { GameAttributes } from '../../services/GameAttributes.js';
  * @returns {string} The HTML content for the Finance screen.
  */
 export function renderFinanceScreen(gameState) {
-    const { player, day, currentLocationId } = gameState;
+    const { player, day, currentLocationId, missions } = gameState;
     const location = DB.MARKETS.find(l => l.id === currentLocationId);
     const theme = location?.navTheme || { gradient: 'linear-gradient(135deg, #4a5568, #2d3748)', textColor: '#f0f0f0', borderColor: '#7a9ac0' };
     
@@ -100,27 +100,42 @@ export function renderFinanceScreen(gameState) {
         // ----------------------------------------
 
         // --- VIRTUAL WORKBENCH: Interactive Payment Slider ---
-        const maxPayment = Math.min(player.credits, player.debt);
-        const sliderHtml = player.credits > 0 ? `
-            <div class="w-full mt-6 flex flex-col items-center px-4">
-                <label class="text-xs text-gray-400 tracking-widest mb-3 uppercase">Payment Amount</label>
-                <input type="range" id="debt-slider" class="w-full" min="1" max="${maxPayment}" value="${maxPayment}">
-                <button data-action="${ACTION_IDS.PAY_DEBT}" data-input-id="debt-slider" class="btn-module btn-module-destructive relative overflow-hidden w-full font-roboto-mono mt-4">
-                    <div class="loan-normal-content flex items-center justify-center w-full">
-                        <span class="text-lg">Pay <span id="debt-payment-display" class="text-glow-red">${formatCredits(-maxPayment, true)}</span></span>
-                    </div>
-                    <div class="loan-confirm-content">
-                        CONFIRM PAYMENT?
-                    </div>
-                </button>
-            </div>
-        ` : `
-            <div class="w-full mt-6 flex flex-col items-center px-4">
-                <button disabled class="btn-module btn-module-destructive w-full font-roboto-mono opacity-50 cursor-not-allowed">
-                    <span class="text-base">Insufficient Funds</span>
-                </button>
-            </div>
-        `;
+        const completedMissionIds = missions?.completedMissionIds || [];
+        const isDebtLocked = !completedMissionIds.includes('mission_10');
+        let sliderHtml = '';
+
+        if (isDebtLocked) {
+            sliderHtml = `
+                <div class="w-full mt-6 flex flex-col items-center px-4">
+                    <button disabled class="btn-module btn-module-destructive w-full font-roboto-mono opacity-50 cursor-not-allowed flex flex-col items-center py-3">
+                        <span class="text-sm tracking-widest text-red-300">GUILD PAYMENTS LOCKED</span>
+                        <span class="text-xs mt-1 text-red-400/70">(Complete Tutorial)</span>
+                    </button>
+                </div>
+            `;
+        } else {
+            const maxPayment = Math.min(player.credits, player.debt);
+            sliderHtml = player.credits > 0 ? `
+                <div class="w-full mt-6 flex flex-col items-center px-4">
+                    <label class="text-xs text-gray-400 tracking-widest mb-3 uppercase">Payment Amount</label>
+                    <input type="range" id="debt-slider" class="w-full" min="1" max="${maxPayment}" value="${maxPayment}">
+                    <button data-action="${ACTION_IDS.PAY_DEBT}" data-input-id="debt-slider" class="btn-module btn-module-destructive relative overflow-hidden w-full font-roboto-mono mt-4">
+                        <div class="loan-normal-content flex items-center justify-center w-full">
+                            <span class="text-lg">Pay <span id="debt-payment-display" class="text-glow-red">${formatCredits(-maxPayment, true)}</span></span>
+                        </div>
+                        <div class="loan-confirm-content">
+                            CONFIRM PAYMENT?
+                        </div>
+                    </button>
+                </div>
+            ` : `
+                <div class="w-full mt-6 flex flex-col items-center px-4">
+                    <button disabled class="btn-module btn-module-destructive w-full font-roboto-mono opacity-50 cursor-not-allowed">
+                        <span class="text-base">Insufficient Funds</span>
+                    </button>
+                </div>
+            `;
+        }
         // --- END VIRTUAL WORKBENCH ---
 
         loanHtml = `

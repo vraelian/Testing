@@ -84,7 +84,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Water Ice"
         },
         rewards: [
-            { "type": "credits", "amount": 3500 }
+            { "type": "credits", "amount": 5500 }
         ]
     },
     'mission_13': {
