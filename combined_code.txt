@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 37.05</title>
+    <title>Orbital Trading 37.06</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 37.05 - Polish Update</p>
+            <p>Version 37.06 - Polish Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -39548,6 +39548,66 @@ class SaveStorageService {
     }
 
     /**
+     * Serializes a save slot for external download via the browser.
+     * @param {string} slotId 
+     * @returns {boolean} Success status
+     */
+    async exportSave(slotId) {
+        try {
+            const saveData = await this.loadGame(slotId);
+            if (!saveData) {
+                console.warn(`[SaveStorageService] No data found in ${slotId} to export.`);
+                return false;
+            }
+
+            // Encode the payload for browser download
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(saveData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            // Format: orbital_trading_slot_1_1700000000.json
+            downloadAnchorNode.setAttribute("download", `orbital_trading_${slotId}_${Date.now()}.json`);
+            
+            document.body.appendChild(downloadAnchorNode); // Required for Firefox compatibility
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            
+            return true;
+        } catch (e) {
+            console.error("[SaveStorageService] Export failed:", e);
+            return false;
+        }
+    }
+
+    /**
+     * Parses an uploaded JSON save file and writes it to the specified slot,
+     * triggering both IDB and iOS Native Bridge backups.
+     * @param {string} slotId 
+     * @param {string|object} jsonData 
+     * @returns {boolean} Success status
+     */
+    async importSave(slotId, jsonData) {
+        try {
+            const payload = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+            
+            // Basic Schema Validation to prevent bricking the game
+            if (!payload || !payload.state || !payload.metadata) {
+                throw new Error("Invalid save file schema. Missing state or metadata roots.");
+            }
+
+            // Override the payload's internal slot ID to match the target destination
+            payload.slotId = slotId;
+
+            // Route through the standard saveGame flow to ensure Dual-Write (Web + iOS) triggers
+            await this.saveGame(slotId, payload);
+            return true;
+        } catch (e) {
+            console.error("[SaveStorageService] Import failed:", e);
+            throw e; // Bubble error to UI for Toast notification
+        }
+    }
+
+    /**
      * Helper to push a native save back into IDB if IDB was cleared by the OS.
      * @private
      */
@@ -43296,7 +43356,7 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [37.05] - 2026-3-22
+# [37.06] - 2026-3-22
 -  fixed saving bugs
 
 # [37.05] - 2026-3-21

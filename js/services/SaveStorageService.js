@@ -194,6 +194,66 @@ class SaveStorageService {
     }
 
     /**
+     * Serializes a save slot for external download via the browser.
+     * @param {string} slotId 
+     * @returns {boolean} Success status
+     */
+    async exportSave(slotId) {
+        try {
+            const saveData = await this.loadGame(slotId);
+            if (!saveData) {
+                console.warn(`[SaveStorageService] No data found in ${slotId} to export.`);
+                return false;
+            }
+
+            // Encode the payload for browser download
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(saveData));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            
+            // Format: orbital_trading_slot_1_1700000000.json
+            downloadAnchorNode.setAttribute("download", `orbital_trading_${slotId}_${Date.now()}.json`);
+            
+            document.body.appendChild(downloadAnchorNode); // Required for Firefox compatibility
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+            
+            return true;
+        } catch (e) {
+            console.error("[SaveStorageService] Export failed:", e);
+            return false;
+        }
+    }
+
+    /**
+     * Parses an uploaded JSON save file and writes it to the specified slot,
+     * triggering both IDB and iOS Native Bridge backups.
+     * @param {string} slotId 
+     * @param {string|object} jsonData 
+     * @returns {boolean} Success status
+     */
+    async importSave(slotId, jsonData) {
+        try {
+            const payload = typeof jsonData === 'string' ? JSON.parse(jsonData) : jsonData;
+            
+            // Basic Schema Validation to prevent bricking the game
+            if (!payload || !payload.state || !payload.metadata) {
+                throw new Error("Invalid save file schema. Missing state or metadata roots.");
+            }
+
+            // Override the payload's internal slot ID to match the target destination
+            payload.slotId = slotId;
+
+            // Route through the standard saveGame flow to ensure Dual-Write (Web + iOS) triggers
+            await this.saveGame(slotId, payload);
+            return true;
+        } catch (e) {
+            console.error("[SaveStorageService] Import failed:", e);
+            throw e; // Bubble error to UI for Toast notification
+        }
+    }
+
+    /**
      * Helper to push a native save back into IDB if IDB was cleared by the OS.
      * @private
      */
