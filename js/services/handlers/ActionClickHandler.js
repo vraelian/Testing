@@ -399,11 +399,9 @@ export class ActionClickHandler {
                 this.uiManager.hideMapDetailModal();
                 break;
             case 'show-system-states':
-                // Intercept logic for the Economic Weather modal trigger
-                if (this.uiManager.showSystemStateModal) {
-                    this.uiManager.showSystemStateModal(state);
-                } else if (this.uiManager.eventControl && this.uiManager.eventControl.showSystemStateModal) {
-                    this.uiManager.eventControl.showSystemStateModal(state);
+                // Trigger the Economic Weather modal
+                if (this.uiManager.showEconWeatherModal) {
+                    this.uiManager.showEconWeatherModal(state);
                 }
                 break;
             
