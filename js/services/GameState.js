@@ -111,6 +111,28 @@ export class GameState {
     exportState() {
         const stateCopy = this.getState();
         
+        // --- PHASE 3: STRANDING PROTECTION ---
+        // If the player closes the app mid-travel, pendingTravel exists and they are reset to the origin.
+        // We must refund the fuel that was deducted at launch to prevent stranding.
+        if (stateCopy.pendingTravel && stateCopy.pendingTravel.destinationId) {
+            try {
+                const originId = stateCopy.currentLocationId;
+                const destId = stateCopy.pendingTravel.destinationId;
+                const activeShipId = stateCopy.player.activeShipId;
+                
+                if (this.TRAVEL_DATA[originId] && this.TRAVEL_DATA[originId][destId]) {
+                    const baseFuelCost = this.TRAVEL_DATA[originId][destId].fuelCost || 0;
+                    const convoyTax = stateCopy.pendingTravel.convoyTaxDeduction || 0;
+                    
+                    if (stateCopy.player.shipStates[activeShipId]) {
+                        stateCopy.player.shipStates[activeShipId].fuel += (baseFuelCost + convoyTax);
+                    }
+                }
+            } catch (e) {
+                console.warn("Could not process fuel refund for mid-travel save.", e);
+            }
+        }
+
         // Strip ephemeral properties
         stateCopy.pendingTravel = null;
         stateCopy.introSequenceActive = false;
@@ -122,6 +144,32 @@ export class GameState {
 
         // Strip telemetry to prevent massive save file bloat
         delete stateCopy.telemetry;
+
+        // --- PHASE 1: PAYLOAD OPTIMIZATION (INFINITE BLOAT PROTECTION) ---
+        // Truncate continuous history arrays to a maximum of 60 trailing entries
+        if (stateCopy.player && stateCopy.player.financeLog) {
+            stateCopy.player.financeLog = stateCopy.player.financeLog.slice(-60);
+        }
+
+        if (stateCopy.market && stateCopy.market.priceHistory) {
+            for (const locId in stateCopy.market.priceHistory) {
+                for (const commId in stateCopy.market.priceHistory[locId]) {
+                    if (Array.isArray(stateCopy.market.priceHistory[locId][commId])) {
+                        stateCopy.market.priceHistory[locId][commId] = stateCopy.market.priceHistory[locId][commId].slice(-60);
+                    }
+                }
+            }
+        }
+
+        // Truncate Macroeconomic Arrays
+        if (stateCopy.systemStates) {
+            if (Array.isArray(stateCopy.systemStates.historyLedger)) {
+                stateCopy.systemStates.historyLedger = stateCopy.systemStates.historyLedger.slice(-30);
+            }
+            if (Array.isArray(stateCopy.systemStates.economyFootprints)) {
+                stateCopy.systemStates.economyFootprints = stateCopy.systemStates.economyFootprints.slice(-100);
+            }
+        }
 
         // Force loaded games to start on the missions screen
         stateCopy.activeNav = NAV_IDS.DATA;
@@ -164,6 +212,13 @@ export class GameState {
         // Cache the live event subscribers so they aren't destroyed during the merge operation.
         const activeSubscribers = this.subscribers;
 
+        // --- PHASE 2: HYDRATION HARDENING (ARRAY MUTATION RISK) ---
+        // Preemptively clear baseline dynamic arrays before the deep merge. 
+        // This prevents "ghost" data from the starter state from merging into the player's saved arrays.
+        this.player.ownedShipIds = [];
+        this.player.inventories = {};
+        this.solStation.officers = [];
+
         // 2. Deep merge the saved data over the fresh baseline
         const mergedState = deepMerge(this.getState(), savedPayload.state);
         
@@ -174,11 +229,120 @@ export class GameState {
         // Restore the live subscribers
         this.subscribers = activeSubscribers;
 
+        // --- PHASE 4: SCHEMA NORMALIZATION & PRUNING ---
+        this._normalizeShipData();
+        this._pruneObsoleteData();
+
         // 4. Regenerate derived arrays to guarantee map accuracy across patches
         this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
 
         this._notify();
         return true;
+    }
+
+    /**
+     * Ensures all ships in the player's fleet conform to the latest database schema.
+     * Resolves the "Wanderer Bias" vulnerability during hydration.
+     * @private
+     */
+    _normalizeShipData() {
+        if (!this.player || !this.player.ownedShipIds) return;
+        
+        this.player.ownedShipIds.forEach(shipId => {
+            const dbShip = DB.SHIPS[shipId];
+            if (!dbShip) return; // Caught by prune pass if invalid
+
+            // 1. Normalize Ship States
+            if (!this.player.shipStates[shipId]) {
+                this.player.shipStates[shipId] = this._getInitialShipState(shipId);
+            } else {
+                // Patch missing arrays/objects on existing ships
+                if (!this.player.shipStates[shipId].upgrades) this.player.shipStates[shipId].upgrades = [];
+                if (!this.player.shipStates[shipId].hullAlerts) this.player.shipStates[shipId].hullAlerts = { one: false, two: false };
+            }
+
+            // 2. Normalize Inventories
+            if (!this.player.inventories[shipId]) {
+                this.player.inventories[shipId] = {};
+            }
+            
+            // Ensure all valid commodities exist in this ship's inventory
+            DB.COMMODITIES.forEach(c => {
+                if (!this.player.inventories[shipId][c.id]) {
+                    this.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 };
+                }
+            });
+        });
+    }
+
+    /**
+     * Scrubs the hydrated state to remove any zombie data (locations, commodities, ships)
+     * that have been deleted from the master database in recent patches.
+     * @private
+     */
+    _pruneObsoleteData() {
+        // 1. Prune obsolete commodities from player inventories
+        const validCommodityIds = new Set(DB.COMMODITIES.map(c => c.id));
+        if (this.player && this.player.inventories) {
+            for (const shipId in this.player.inventories) {
+                for (const commId in this.player.inventories[shipId]) {
+                    if (!validCommodityIds.has(commId)) {
+                        delete this.player.inventories[shipId][commId];
+                    }
+                }
+            }
+        }
+
+        // 2. Prune obsolete locations/commodities from market data
+        const validLocationIds = new Set(DB.MARKETS.map(m => m.id));
+        if (this.market) {
+            // Prune Market Prices
+            for (const locId in this.market.prices) {
+                if (!validLocationIds.has(locId)) {
+                    delete this.market.prices[locId];
+                    continue;
+                }
+                for (const commId in this.market.prices[locId]) {
+                    if (!validCommodityIds.has(commId)) delete this.market.prices[locId][commId];
+                }
+            }
+            
+            // Prune Market Inventory
+            for (const locId in this.market.inventory) {
+                if (!validLocationIds.has(locId)) {
+                    delete this.market.inventory[locId];
+                    continue;
+                }
+                for (const commId in this.market.inventory[locId]) {
+                    if (!validCommodityIds.has(commId)) delete this.market.inventory[locId][commId];
+                }
+            }
+
+            // Prune Price History
+            for (const locId in this.market.priceHistory) {
+                if (!validLocationIds.has(locId)) {
+                    delete this.market.priceHistory[locId];
+                    continue;
+                }
+                for (const commId in this.market.priceHistory[locId]) {
+                    if (!validCommodityIds.has(commId)) delete this.market.priceHistory[locId][commId];
+                }
+            }
+        }
+
+        // 3. Prune obsolete ships from player ownership
+        const validShipIds = new Set(Object.keys(DB.SHIPS));
+        if (this.player && this.player.ownedShipIds) {
+            this.player.ownedShipIds = this.player.ownedShipIds.filter(id => validShipIds.has(id));
+            
+            // If active ship was deleted, fallback to Wanderer
+            if (!validShipIds.has(this.player.activeShipId)) {
+                this.player.activeShipId = SHIP_IDS.WANDERER;
+                if (!this.player.ownedShipIds.includes(SHIP_IDS.WANDERER)) {
+                    this.player.ownedShipIds.push(SHIP_IDS.WANDERER);
+                }
+            }
+        }
     }
 
     /**
@@ -243,7 +407,7 @@ export class GameState {
             pendingTravel: null,
             
             // --- SYSTEM STATES V3 ---
-            systemState: {
+            systemStates: { // Schema Alignment
                 activeId: null, // Will evaluate to NEUTRAL or another active state upon first tick
                 remainingDays: 0,
                 neutralPauseDays: 0, 
