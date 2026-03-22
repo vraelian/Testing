@@ -339,7 +339,8 @@ export class UIEventControl {
 
         // --- TUTORIAL GUARDRAIL CHECK ---
         const isMapNavLocked = state?.missions?.activeMissionIds?.some(id => ['mission_tutorial_04', 'mission_tutorial_05', 'mission_tutorial_06', 'mission_tutorial_07'].includes(id));
-        const navigateBtnHtml = isMapNavLocked ? '' : `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
+        const isCurrentLocation = state?.currentLocationId === locationId;
+        const navigateBtnHtml = (isMapNavLocked || isCurrentLocation) ? '' : `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
 
         const contentHtml = `
             <div class="text-center">

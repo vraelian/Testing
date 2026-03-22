@@ -64,7 +64,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Dockworker_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hey there. A Guild rep. passed your transponder code my way. We've got a sudden market shift—a micro-meteoroid storm is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for Water Ice.<br><br>If you can get it to the Belt promptly, then the delivery fee is yours.",
+        description: "Hey there. A Guild rep. passed your transponder code my way. We've got a sudden market shift—a coronal mass ejection is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for Water Ice.<br><br>If you can make it out to the Belt amidst the storm, I'll put in a good word for you.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
