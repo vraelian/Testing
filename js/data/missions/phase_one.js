@@ -39,7 +39,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You are making adequate progress, but the interest on your loan continues to accrue. Your objective is to clear this debt promptly to avoid additional interest or worse, automatic credit garnishment.<br><br>The sooner you can be free of your debt exposure, the faster you can begin to keep your wealth and get your trading career underway. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.",
+        description: "You are making adequate progress, but the interest on your loan continues to accrue. Your objective is to clear this debt promptly to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
