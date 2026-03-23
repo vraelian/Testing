@@ -117,6 +117,53 @@ export class MarketEventHandler {
     }
 
     /**
+     * Refactored helper to execute post-trade visual and state updates cleanly,
+     * allowing for deferred execution after intercept modals.
+     * @private
+     */
+    _processTradeResult(result, mode, goodId, quantity, state, e, cardContainer, animClass) {
+        if (result !== false && result !== undefined) {
+            let delta = result;
+            if (mode === 'sell' && typeof result !== 'number') {
+                delta = this.uiManager.getItemPrice(state, goodId) * quantity;
+            }
+            const value = (mode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : delta;
+            
+            const text = mode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
+            const color = mode === 'buy' ? '#f87171' : '#34d399';
+            this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
+
+            if (mode === 'sell') {
+                const actionData = { type: 'ACTION', action: 'sell-item', goodId };
+                this.simulationService.tutorialService?.checkState?.(actionData);
+            }
+
+            // --- UI JUICE: Massive Inventory Popping (Delayed for UI Render) ---
+            setTimeout(() => {
+                const availNode = document.getElementById(`m-stock-${goodId}`);
+                const ownNode = document.getElementById(`p-inv-${goodId}`);
+                
+                if (mode === 'buy' && ownNode) {
+                    this._triggerAnimation(ownNode, 'inventory-pop', 1300);
+                } else if (mode === 'sell' && availNode) {
+                    this._triggerAnimation(availNode, 'inventory-pop', 1300);
+                }
+            }, 50);
+
+        } else {
+            // Instantly clean up the downstroke if an error/warning modal is thrown
+            if (cardContainer) cardContainer.classList.remove(animClass);
+        }
+
+        // Final safety net cleanup in case the element gets orphaned
+        setTimeout(() => {
+            if (cardContainer && cardContainer.parentNode) {
+                cardContainer.classList.remove(animClass);
+            }
+        }, 100);
+    }
+
+    /**
      * Executes a specific market action based on the clicked element.
      * @param {HTMLElement} target - The element that was clicked.
      * @param {string} action - The specific action to perform.
@@ -223,50 +270,60 @@ export class MarketEventHandler {
                     await new Promise(resolve => setTimeout(resolve, 15));
                 }
 
+                // --- THIRD-PARTY CARGO INFRACTION CHECK FOR SELLS ---
+                if (mode === 'sell') {
+                    let fleetOwnedQty = 0;
+                    state.player.ownedShipIds.forEach(shipId => {
+                        fleetOwnedQty += state.player.inventories[shipId]?.[goodId]?.quantity || 0;
+                    });
+                    
+                    const projectedInventory = fleetOwnedQty - quantity;
+                    
+                    if (this.simulationService.missionService) {
+                        const protection = this.simulationService.missionService.getProtectedBaseline(goodId);
+                        
+                        if (projectedInventory < protection.baseline) {
+                            // Clean up downstroke safely before showing modal
+                            if (cardContainer) cardContainer.classList.remove(animClass);
+                            
+                            this.uiManager.queueModal('event-modal', 'Warning: Third-Party Cargo', 
+                                'You are attempting to sell third-party cargo. The associated mission(s) will be abandoned and the value of the cargo will be added to your debt if you proceed!', 
+                                null, 
+                                {
+                                    dismissInside: false,
+                                    dismissOutside: false,
+                                    customSetup: (modal, closeHandler) => {
+                                        const btnContainer = modal.querySelector('#event-button-container');
+                                        btnContainer.innerHTML = `
+                                            <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                            <button id="cancel-infraction" class="btn">CANCEL</button>
+                                        `;
+                                        modal.querySelector('#proceed-infraction').onclick = () => {
+                                            // 1. Penalize missions
+                                            protection.missions.forEach(mId => this.simulationService.missionService.penalizeThirdPartyInfraction(mId));
+                                            
+                                            // 2. Execute sale
+                                            const result = this.simulationService.sellItem(goodId, quantity);
+                                            this._processTradeResult(result, mode, goodId, quantity, state, e, cardContainer, animClass);
+                                            
+                                            // 3. Render changes globally
+                                            this.uiManager.render(this.gameState.getState());
+                                            closeHandler();
+                                        };
+                                        modal.querySelector('#cancel-infraction').onclick = closeHandler;
+                                    }
+                                });
+                            return; // Halt immediate execution pending user selection
+                        }
+                    }
+                }
+
+                // Normal execution
                 const result = (mode === 'buy')
                     ? this.simulationService.buyItem(goodId, quantity)
                     : this.simulationService.sellItem(goodId, quantity);
 
-                if (result !== false && result !== undefined) {
-                    let delta = result;
-                    if (mode === 'sell' && typeof result !== 'number') {
-                        delta = this.uiManager.getItemPrice(state, goodId) * quantity;
-                    }
-                    const value = (mode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : delta;
-                    
-                    const text = mode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
-                    const color = mode === 'buy' ? '#f87171' : '#34d399';
-                    this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
-
-                    if (mode === 'sell') {
-                        const actionData = { type: 'ACTION', action: 'sell-item', goodId };
-                        this.simulationService.tutorialService?.checkState?.(actionData);
-                    }
-
-                    // --- UI JUICE: Massive Inventory Popping (Delayed for UI Render) ---
-                    setTimeout(() => {
-                        const availNode = document.getElementById(`m-stock-${goodId}`);
-                        const ownNode = document.getElementById(`p-inv-${goodId}`);
-                        
-                        if (mode === 'buy' && ownNode) {
-                            this._triggerAnimation(ownNode, 'inventory-pop', 1300);
-                        } else if (mode === 'sell' && availNode) {
-                            this._triggerAnimation(availNode, 'inventory-pop', 1300);
-                        }
-                    }, 50);
-
-                } else {
-                    // Instantly clean up the downstroke if an error/warning modal is thrown
-                    if (cardContainer) cardContainer.classList.remove(animClass);
-                }
-
-                // Final safety net cleanup in case the element gets orphaned
-                setTimeout(() => {
-                    if (cardContainer && cardContainer.parentNode) {
-                        cardContainer.classList.remove(animClass);
-                    }
-                }, 100);
-                
+                this._processTradeResult(result, mode, goodId, quantity, state, e, cardContainer, animClass);
                 break;
             }
             case 'set-max-trade': {
