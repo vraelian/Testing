@@ -82,21 +82,40 @@ export class UIMissionControl {
 
         if (activeMissionId && gameState.missions.activeMissionIds.includes(activeMissionId)) {
             const mission = DB.MISSIONS[activeMissionId];
+            const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
             
-            // Immediately initiate fade out if the mission has no objectives
-            if (!mission.objectives || mission.objectives.length === 0) {
+            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+            
+            // Immediately initiate fade out if the mission has no objectives (and isn't in pickup phase)
+            if (!isLogisticsPickupPhase && (!mission.objectives || mission.objectives.length === 0)) {
                 this._hideStickyBarWithFade(stickyBarEl);
                 return;
             }
             
-            const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
-
             let objKey;
             let current = 0;
             let target = 1;
             let firstObj = null;
+            let customObjectiveLabel = null;
             
-            if (mission.objectives) {
+            // --- NEW: Logistics Phase Intercept ---
+            if (isLogisticsPickupPhase) {
+                const pickupLocName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'Unknown';
+                let totalCargo = 0;
+                mission.deferredCargo.forEach(c => totalCargo += c.quantity);
+
+                if (gameState.currentLocationId === mission.pickupLocationId) {
+                    firstObj = { type: 'LOGISTICS_LOAD' };
+                    customObjectiveLabel = `Load up cargo for delivery`;
+                    current = 0;
+                    target = totalCargo;
+                } else {
+                    firstObj = { type: 'TRAVEL_TO', target: mission.pickupLocationId };
+                    customObjectiveLabel = `Travel to ${pickupLocName}`;
+                    current = 0;
+                    target = 1;
+                }
+            } else if (mission.objectives) {
                 // Find first uncompleted objective
                 firstObj = mission.objectives.find(obj => {
                     const localKey = obj.id || obj.goodId || obj.target;
@@ -139,13 +158,16 @@ export class UIMissionControl {
                 }
             }
 
-            const objectiveLabel = this._getObjectiveLabel(firstObj);
+            const objectiveLabel = customObjectiveLabel || this._getObjectiveLabel(firstObj);
             
             let displayStr = `[${current}/${target}]`;
             let percent = 0;
             
             if (firstObj) {
-                if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
+                if (firstObj.type === 'LOGISTICS_LOAD') {
+                    percent = 0;
+                }
+                else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
                     displayStr = `[${current}/${target}]`;
                     percent = Math.min(100, (current / (target || 100)) * 100);
                 }
@@ -178,7 +200,7 @@ export class UIMissionControl {
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
             const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
-            const isReady = progress.isCompletable && isAtCorrectLocation;
+            const isReady = progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase;
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             

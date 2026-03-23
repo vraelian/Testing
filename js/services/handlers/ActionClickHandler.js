@@ -526,6 +526,14 @@ export class ActionClickHandler {
                 }
                 break;
             }
+            case 'load-mission-cargo': {
+                e.stopPropagation();
+                const missionId = dataset.missionId;
+                if (missionId && this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.loadDeferredCargo(missionId);
+                }
+                break;
+            }
             case 'abandon-mission':
                 this.simulationService.missionService.abandonMission(dataset.missionId);
                 this.uiManager.hideModal('mission-modal');

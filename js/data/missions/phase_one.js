@@ -189,5 +189,39 @@ export const PHASE_ONE_MISSIONS = {
         rewards: [
             { "type": "credits", "amount": 18000 }
         ]
+    },
+    'mission_17': {
+        id: "mission_17",
+        name: "Diplomatic Vector",
+        type: "LOGISTICS",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Greetings, Captain [playerName]. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, joint repair initiative for the orbital stations at Uranus. However, statistical probability of sabotage from either of the two factions is 89.4%. Therefore, as an unaligned contractor, you represent the optimal deniable asset.<br><br><b>Travel to Venus to load 150 units of Plasteel, and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
+        triggers: [
+            { "type": "mission_completed", "missionId": "mission_16" }
+        ],
+        // --- NEW LOGISTICS MECHANICS ---
+        pickupLocationId: "loc_venus",
+        deferredCargo: [
+            { goodId: "plasteel", quantity: 25 }
+        ],
+        // -------------------------------
+        objectives: [
+            // The TRAVEL_TO objective is removed because the Logistics UI Phase natively handles the transit and pickup instructions.
+            // This array now only contains Phase 2 (Delivery) objectives.
+            { "id": "deliver_plasteel_uranus", "type": "DELIVER_ITEM", "target": "loc_uranus", "goodId": "plasteel", "quantity": 150 }
+        ],
+        completion: {
+            locationId: "loc_uranus",
+            title: "Delivery Complete",
+            text: "Uranus Dock Authority have approved your access to the Starport depot for delivery. The dockmasters are ready to offload the Plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.",
+            buttonText: "Unload Freight"
+        },
+        rewards: [
+            { "type": "license", "licenseId": "t2_license" },
+            { "type": "credits", "amount": 25000 }
+        ]
     }
 };

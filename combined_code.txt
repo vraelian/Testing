@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 37.06</title>
+    <title>Orbital Trading 37.11</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 37.06 - Polish Update</p>
+            <p>Version 37.11 - Phase One Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -10844,13 +10844,24 @@ export function renderMissionsScreen(gameState, missionService) {
         // Allow null location (Anywhere)
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
 
-        if (progress.isCompletable && isAtCorrectLocation) {
+        // --- NEW LOGISTICS PICKUP PHASE LOGIC ---
+        const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+        const isAtPickupLocation = isLogisticsPickupPhase && currentLocationId === mission.pickupLocationId;
+
+        if (progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase) {
             statusClass += ' mission-turn-in';
         }
 
-        // --- NEW STATUS BANNER LOGIC ---
+        // --- STATUS BANNER LOGIC ---
         let statusBannerHtml = '';
-        if (progress.isCompletable) {
+        if (isLogisticsPickupPhase) {
+            if (isAtPickupLocation) {
+                statusBannerHtml = `<div class="mission-status-banner" style="color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.2);">CARGO READY TO LOAD</div>`;
+            } else {
+                const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
+                statusBannerHtml = `<div class="mission-status-banner banner-text-return" style="color: #94a3b8; border-color: #475569;">ROUTE TO ${locName.toUpperCase()}</div>`;
+            }
+        } else if (progress.isCompletable) {
              let bannerText = 'READY TO COMPLETE';
              let bannerTextClass = 'banner-text-ready';
              if (mission.completion.locationId && mission.completion.locationId !== 'any' && !isAtCorrectLocation) {
@@ -10860,13 +10871,47 @@ export function renderMissionsScreen(gameState, missionService) {
              } else if (mission.objectives && mission.objectives.some(o => ['HAVE_DEBT', 'have_debt'].includes(o.type))) {
                  bannerText = 'CLEAR ALL DEBT'; 
              }
-             // Prominent pulsing banner
              statusBannerHtml = `<div class="mission-status-banner ${bannerTextClass}">${bannerText}</div>`;
         }
 
-        // Render Objectives with Continuous Flow Bars
+        // --- OBJECTIVES LOGIC ---
         let objectivesHtml = '';
-        if (mission.objectives && mission.objectives.length > 0) {
+        let actionButtonHtml = '';
+
+        if (isLogisticsPickupPhase) {
+            objectivesHtml = '<div class="mission-objectives-list">';
+            const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
+            
+            if (isAtPickupLocation) {
+                objectivesHtml += `
+                    <div class="objective-row-filled objective-row-tall">
+                        <div class="objective-fill-bar" style="width: 100%; background: rgba(245, 158, 11, 0.2);"></div>
+                        <div class="objective-text" style="color: #f59e0b;">
+                            <span>LOAD FREIGHT</span>
+                            <span>AWAITING</span>
+                        </div>
+                    </div>
+                `;
+                actionButtonHtml = `
+                    <div class="mt-3 px-2 pb-2">
+                        <button class="btn w-full" style="border: 1px solid #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1); box-shadow: 0 0 10px rgba(245,158,11,0.3);" data-action="load-mission-cargo" data-mission-id="${mission.id}">
+                            LOAD CARGO
+                        </button>
+                    </div>
+                `;
+            } else {
+                objectivesHtml += `
+                    <div class="objective-row-filled objective-row-tall">
+                        <div class="objective-fill-bar" style="width: 0%"></div>
+                        <div class="objective-text">
+                            <span>TRAVEL TO ${locName.toUpperCase()}</span>
+                            <span>EN ROUTE</span>
+                        </div>
+                    </div>
+                `;
+            }
+            objectivesHtml += '</div>';
+        } else if (mission.objectives && mission.objectives.length > 0) {
             objectivesHtml = '<div class="mission-objectives-list">';
             mission.objectives.forEach(obj => {
                 const objKey = obj.id || obj.goodId;
@@ -10958,7 +11003,7 @@ export function renderMissionsScreen(gameState, missionService) {
         const starIcon = '';
         
         let headerIcons = '';
-        if (mission.objectives && mission.objectives.length > 0) {
+        if (mission.objectives && mission.objectives.length > 0 || isLogisticsPickupPhase) {
             headerIcons = `
             <button class="mission-track-star ${starClass}" data-action="track-mission" data-mission-id="${mission.id}" title="Track on HUD">
                 <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
@@ -10981,6 +11026,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 
                 ${statusBannerHtml}
                 ${objectivesHtml}
+                ${actionButtonHtml}
             </div>
         `;
     };
@@ -14992,6 +15038,40 @@ export const PHASE_ONE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 18000 }
+        ]
+    },
+    'mission_17': {
+        id: "mission_17",
+        name: "Diplomatic Vector",
+        type: "LOGISTICS",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Greetings, Captain [playerName]. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, joint repair initiative for the orbital stations at Uranus. However, statistical probability of sabotage from either of the two factions is 89.4%. Therefore, as an unaligned contractor, you represent the optimal deniable asset.<br><br><b>Travel to Venus to load 150 units of Plasteel, and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
+        triggers: [
+            { "type": "mission_completed", "missionId": "mission_16" }
+        ],
+        // --- NEW LOGISTICS MECHANICS ---
+        pickupLocationId: "loc_venus",
+        deferredCargo: [
+            { goodId: "plasteel", quantity: 25 }
+        ],
+        // -------------------------------
+        objectives: [
+            // The TRAVEL_TO objective is removed because the Logistics UI Phase natively handles the transit and pickup instructions.
+            // This array now only contains Phase 2 (Delivery) objectives.
+            { "id": "deliver_plasteel_uranus", "type": "DELIVER_ITEM", "target": "loc_uranus", "goodId": "plasteel", "quantity": 150 }
+        ],
+        completion: {
+            locationId: "loc_uranus",
+            title: "Delivery Complete",
+            text: "Uranus Dock Authority have approved your access to the Starport depot for delivery. The dockmasters are ready to offload the Plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.",
+            buttonText: "Unload Freight"
+        },
+        rewards: [
+            { "type": "license", "licenseId": "t2_license" },
+            { "type": "credits", "amount": 25000 }
         ]
     }
 };
@@ -19987,21 +20067,40 @@ export class UIMissionControl {
 
         if (activeMissionId && gameState.missions.activeMissionIds.includes(activeMissionId)) {
             const mission = DB.MISSIONS[activeMissionId];
+            const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
             
-            // Immediately initiate fade out if the mission has no objectives
-            if (!mission.objectives || mission.objectives.length === 0) {
+            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+            
+            // Immediately initiate fade out if the mission has no objectives (and isn't in pickup phase)
+            if (!isLogisticsPickupPhase && (!mission.objectives || mission.objectives.length === 0)) {
                 this._hideStickyBarWithFade(stickyBarEl);
                 return;
             }
             
-            const progress = gameState.missions.missionProgress[mission.id] || { objectives: {} };
-
             let objKey;
             let current = 0;
             let target = 1;
             let firstObj = null;
+            let customObjectiveLabel = null;
             
-            if (mission.objectives) {
+            // --- NEW: Logistics Phase Intercept ---
+            if (isLogisticsPickupPhase) {
+                const pickupLocName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'Unknown';
+                let totalCargo = 0;
+                mission.deferredCargo.forEach(c => totalCargo += c.quantity);
+
+                if (gameState.currentLocationId === mission.pickupLocationId) {
+                    firstObj = { type: 'LOGISTICS_LOAD' };
+                    customObjectiveLabel = `Load up cargo for delivery`;
+                    current = 0;
+                    target = totalCargo;
+                } else {
+                    firstObj = { type: 'TRAVEL_TO', target: mission.pickupLocationId };
+                    customObjectiveLabel = `Travel to ${pickupLocName}`;
+                    current = 0;
+                    target = 1;
+                }
+            } else if (mission.objectives) {
                 // Find first uncompleted objective
                 firstObj = mission.objectives.find(obj => {
                     const localKey = obj.id || obj.goodId || obj.target;
@@ -20044,13 +20143,16 @@ export class UIMissionControl {
                 }
             }
 
-            const objectiveLabel = this._getObjectiveLabel(firstObj);
+            const objectiveLabel = customObjectiveLabel || this._getObjectiveLabel(firstObj);
             
             let displayStr = `[${current}/${target}]`;
             let percent = 0;
             
             if (firstObj) {
-                if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
+                if (firstObj.type === 'LOGISTICS_LOAD') {
+                    percent = 0;
+                }
+                else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
                     displayStr = `[${current}/${target}]`;
                     percent = Math.min(100, (current / (target || 100)) * 100);
                 }
@@ -20083,7 +20185,7 @@ export class UIMissionControl {
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
             
             const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
-            const isReady = progress.isCompletable && isAtCorrectLocation;
+            const isReady = progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase;
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
             
@@ -29778,6 +29880,11 @@ export class MissionService {
             isCompletable: false
         };
 
+        // Initialize deferred cargo state for Logistics missions
+        if (mission.deferredCargo && mission.deferredCargo.length > 0) {
+            this.gameState.missions.missionProgress[missionId].cargoLoaded = false;
+        }
+
         // Auto-track logic: If no mission is being tracked, track this one.
         if (!this.gameState.missions.trackedMissionId) {
             this.gameState.missions.trackedMissionId = missionId;
@@ -29862,6 +29969,205 @@ export class MissionService {
             this.gameState.missions.missionProgress[missionId].isCompletable = true;
         }
         this.uiManager.render(this.gameState.getState());
+    }
+
+    /**
+     * Calculates the baseline amount of a commodity currently protected by active missions.
+     * Prevents the player from selling third-party cargo or depositing it for alternative missions.
+     * @param {string} goodId 
+     * @param {string|null} excludedMissionId Mission ID to omit from protection sum (e.g. when depositing for itself).
+     * @returns {{baseline: number, missions: Array<string>}}
+     */
+    getProtectedBaseline(goodId, excludedMissionId = null) {
+        let baseline = 0;
+        let protectedMissions = [];
+        
+        this.gameState.missions.activeMissionIds.forEach(missionId => {
+            if (missionId === excludedMissionId) return;
+            
+            const mission = DB.MISSIONS[missionId];
+            const progress = this.gameState.missions.missionProgress[missionId];
+            
+            let missionRequiresThisGood = false;
+            let protectedQuantity = 0;
+
+            if (mission && progress) {
+                // Check deferred cargo (only protected if it has been loaded)
+                if (mission.deferredCargo && progress.cargoLoaded) {
+                    const cDef = mission.deferredCargo.find(c => c.goodId === goodId);
+                    if (cDef) {
+                        missionRequiresThisGood = true;
+                        protectedQuantity += cDef.quantity;
+                    }
+                }
+                
+                // Check granted cargo (protected immediately)
+                if (mission.grantedCargo) {
+                    const cDef = mission.grantedCargo.find(c => c.goodId === goodId);
+                    if (cDef) {
+                        missionRequiresThisGood = true;
+                        protectedQuantity += cDef.quantity;
+                    }
+                }
+
+                if (missionRequiresThisGood) {
+                    // Reduce protection by what has already been deposited for this mission
+                    let deposited = 0;
+                    if (mission.objectives) {
+                        mission.objectives.forEach(obj => {
+                            if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item') && (obj.goodId === goodId || obj.target === goodId)) {
+                                const objKey = obj.id || obj.goodId || obj.target;
+                                deposited += (progress.objectives[objKey]?.deposited || 0);
+                            }
+                        });
+                    }
+                    
+                    const remainingProtected = Math.max(0, protectedQuantity - deposited);
+                    if (remainingProtected > 0) {
+                        baseline += remainingProtected;
+                        if (!protectedMissions.includes(missionId)) {
+                            protectedMissions.push(missionId);
+                        }
+                    }
+                }
+            }
+        });
+        
+        return { baseline, missions: protectedMissions };
+    }
+
+    /**
+     * Executes the punitive consequences for violating the Third-Party Cargo protocol.
+     * Abandons the mission and converts cargo value to player debt.
+     * @param {string} missionId 
+     */
+    penalizeThirdPartyInfraction(missionId) {
+        const mission = DB.MISSIONS[missionId];
+        if (!mission) return;
+        
+        let penaltyValue = 0;
+        const cargoArrays = [];
+        if (mission.deferredCargo) cargoArrays.push(...mission.deferredCargo);
+        if (mission.grantedCargo) cargoArrays.push(...mission.grantedCargo);
+        
+        cargoArrays.forEach(c => {
+            const basePrice = DB.COMMODITIES.find(comm => comm.id === c.goodId)?.basePrice || 0;
+            penaltyValue += (basePrice * c.quantity);
+        });
+
+        if (penaltyValue > 0) {
+            this.gameState.player.debt += penaltyValue;
+            this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
+        }
+
+        // Force Abandonment Sequence
+        this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
+        if (this.gameState.missions.missionProgress[missionId]) {
+            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
+        if (this.gameState.missions.trackedMissionId === missionId) {
+            const nextMission = this.gameState.missions.activeMissionIds[0];
+            this.gameState.missions.trackedMissionId = nextMission || null;
+        }
+        if (mission.navLock && this.simulationService) {
+            this.simulationService.clearNavigationLock();
+        }
+        
+        this.gameState.setState({});
+    }
+
+    /**
+     * Attempts to load deferred cargo for a Logistics mission.
+     * Evaluates fleet-wide capacity and distributes the cargo dynamically.
+     * @param {string} missionId 
+     */
+    loadDeferredCargo(missionId) {
+        if (!this.gameState.missions.activeMissionIds.includes(missionId)) return;
+        
+        const mission = DB.MISSIONS[missionId];
+        if (!mission || !mission.deferredCargo || mission.deferredCargo.length === 0) return;
+
+        const progress = this.gameState.missions.missionProgress[missionId];
+        if (!progress || progress.cargoLoaded) return; 
+
+        // 1. Calculate Total Required Space
+        let totalRequiredSpace = 0;
+        mission.deferredCargo.forEach(cargo => totalRequiredSpace += cargo.quantity);
+
+        // 2. Calculate Fleet-Wide Available Space
+        let fleetAvailableSpace = 0;
+        const shipCapacities = []; 
+
+        for (const shipId of this.gameState.player.ownedShipIds) {
+            let usedSpace = 0;
+            if (this.gameState.player.inventories[shipId]) {
+                Object.values(this.gameState.player.inventories[shipId]).forEach(item => {
+                    usedSpace += item.quantity;
+                });
+            }
+            
+            const maxCap = this.simulationService ? 
+                this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                (DB.SHIPS[shipId]?.cargoCapacity || 100);
+            
+            const availableSpace = Math.max(0, maxCap - usedSpace);
+            fleetAvailableSpace += availableSpace;
+            
+            shipCapacities.push({ shipId, availableSpace });
+        }
+
+        // 3. Evaluate Capacity Threshold
+        if (fleetAvailableSpace < totalRequiredSpace) {
+            const errorMsg = `Cannot accept freight: Insufficient cargo space. You need space in your cargo hold for ${totalRequiredSpace} units.`;
+            if (this.uiManager) {
+                this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
+            }
+            return;
+        }
+
+        // 4. Distribute Cargo Across Fleet (Prioritize Active Ship)
+        const activeShipId = this.gameState.player.activeShipId;
+        shipCapacities.sort((a, b) => {
+            if (a.shipId === activeShipId) return -1;
+            if (b.shipId === activeShipId) return 1;
+            return b.availableSpace - a.availableSpace;
+        });
+
+        mission.deferredCargo.forEach(cargo => {
+            let remainingToDistribute = cargo.quantity;
+
+            for (const shipData of shipCapacities) {
+                if (remainingToDistribute <= 0) break;
+
+                const spaceHere = shipData.availableSpace;
+                if (spaceHere > 0) {
+                    const amountToPut = Math.min(remainingToDistribute, spaceHere);
+                    
+                    if (!this.gameState.player.inventories[shipData.shipId]) {
+                        this.gameState.player.inventories[shipData.shipId] = {};
+                    }
+                    if (!this.gameState.player.inventories[shipData.shipId][cargo.goodId]) {
+                        this.gameState.player.inventories[shipData.shipId][cargo.goodId] = { quantity: 0, avgCost: 0 };
+                    }
+                    
+                    this.gameState.player.inventories[shipData.shipId][cargo.goodId].quantity += amountToPut;
+                    
+                    shipData.availableSpace -= amountToPut;
+                    remainingToDistribute -= amountToPut;
+                }
+            }
+        });
+
+        // 5. Update State
+        progress.cargoLoaded = true;
+        this.logger.info.player(this.gameState.day, 'MISSION_CARGO_LOADED', `Loaded ${totalRequiredSpace} units of deferred cargo for mission ${missionId}.`);
+
+        // 6. Trigger re-evaluation and flush state
+        this.checkTriggers();
+        this.gameState.setState({});
+        if (this.uiManager && typeof this.uiManager.render === 'function') {
+            this.uiManager.render(this.gameState.getState());
+        }
     }
 
     /**
@@ -30031,9 +30337,10 @@ export class MissionService {
      * Attempts to deposit cargo from the player's fleet into the specified mission.
      * Assumes the player is currently at the correct location.
      * @param {string} missionId 
+     * @param {boolean} forceInfraction Bypasses the Third-Party Cargo protection check.
      * @returns {number} The total amount of freight deposited.
      */
-    depositMissionCargo(missionId) {
+    depositMissionCargo(missionId, forceInfraction = false) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.objectives) return 0;
@@ -30041,6 +30348,78 @@ export class MissionService {
         const progress = this.gameState.missions.missionProgress[missionId];
         if (!progress) return 0;
 
+        // --- PRE-CHECK: Build Drain Plan ---
+        const drainPlan = {};
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                const itemId = obj.goodId || obj.target;
+                const targetQty = obj.quantity || obj.value || 1;
+                const objKey = obj.id || obj.goodId || obj.target;
+                const depositedSoFar = progress.objectives?.[objKey]?.deposited || 0;
+                
+                const remainingNeeded = Math.max(0, targetQty - depositedSoFar);
+                if (remainingNeeded > 0) {
+                    let fleetOwned = 0;
+                    this.gameState.player.ownedShipIds.forEach(shipId => {
+                        fleetOwned += (this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0);
+                    });
+                    
+                    const canDrain = Math.min(remainingNeeded, fleetOwned);
+                    if (canDrain > 0) {
+                        drainPlan[itemId] = (drainPlan[itemId] || 0) + canDrain;
+                    }
+                }
+            }
+        });
+
+        // --- THIRD PARTY CARGO INFRACTION CHECK ---
+        if (!forceInfraction) {
+            let infractionDetected = false;
+            let violatedMissions = new Set();
+
+            for (const [goodId, drainAmount] of Object.entries(drainPlan)) {
+                let fleetOwned = 0;
+                this.gameState.player.ownedShipIds.forEach(shipId => {
+                    fleetOwned += (this.gameState.player.inventories[shipId]?.[goodId]?.quantity || 0);
+                });
+
+                const projected = fleetOwned - drainAmount;
+                const protection = this.getProtectedBaseline(goodId, missionId);
+                
+                if (projected < protection.baseline) {
+                    infractionDetected = true;
+                    protection.missions.forEach(m => violatedMissions.add(m));
+                }
+            }
+
+            if (infractionDetected) {
+                if (this.uiManager) {
+                    this.uiManager.queueModal('event-modal', 'Warning: Third-Party Cargo', 
+                        'You are attempting to deliver third-party cargo to an alternative contract. The associated mission(s) will be abandoned and the value of the cargo will be added to your debt if you proceed!', 
+                        null, 
+                        {
+                            dismissInside: false,
+                            dismissOutside: false,
+                            customSetup: (modal, closeHandler) => {
+                                const btnContainer = modal.querySelector('#event-button-container');
+                                btnContainer.innerHTML = `
+                                    <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                    <button id="cancel-infraction" class="btn">CANCEL</button>
+                                `;
+                                modal.querySelector('#proceed-infraction').onclick = () => {
+                                    violatedMissions.forEach(mId => this.penalizeThirdPartyInfraction(mId));
+                                    this.depositMissionCargo(missionId, true); // Force execution
+                                    closeHandler();
+                                };
+                                modal.querySelector('#cancel-infraction').onclick = closeHandler;
+                            }
+                        });
+                }
+                return 0; // Abort this run pending user choice
+            }
+        }
+
+        // --- EXECUTE DRAIN ---
         let totalDepositedThisCall = 0;
 
         mission.objectives.forEach(obj => {
@@ -40352,6 +40731,53 @@ export class MarketEventHandler {
     }
 
     /**
+     * Refactored helper to execute post-trade visual and state updates cleanly,
+     * allowing for deferred execution after intercept modals.
+     * @private
+     */
+    _processTradeResult(result, mode, goodId, quantity, state, e, cardContainer, animClass) {
+        if (result !== false && result !== undefined) {
+            let delta = result;
+            if (mode === 'sell' && typeof result !== 'number') {
+                delta = this.uiManager.getItemPrice(state, goodId) * quantity;
+            }
+            const value = (mode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : delta;
+            
+            const text = mode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
+            const color = mode === 'buy' ? '#f87171' : '#34d399';
+            this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
+
+            if (mode === 'sell') {
+                const actionData = { type: 'ACTION', action: 'sell-item', goodId };
+                this.simulationService.tutorialService?.checkState?.(actionData);
+            }
+
+            // --- UI JUICE: Massive Inventory Popping (Delayed for UI Render) ---
+            setTimeout(() => {
+                const availNode = document.getElementById(`m-stock-${goodId}`);
+                const ownNode = document.getElementById(`p-inv-${goodId}`);
+                
+                if (mode === 'buy' && ownNode) {
+                    this._triggerAnimation(ownNode, 'inventory-pop', 1300);
+                } else if (mode === 'sell' && availNode) {
+                    this._triggerAnimation(availNode, 'inventory-pop', 1300);
+                }
+            }, 50);
+
+        } else {
+            // Instantly clean up the downstroke if an error/warning modal is thrown
+            if (cardContainer) cardContainer.classList.remove(animClass);
+        }
+
+        // Final safety net cleanup in case the element gets orphaned
+        setTimeout(() => {
+            if (cardContainer && cardContainer.parentNode) {
+                cardContainer.classList.remove(animClass);
+            }
+        }, 100);
+    }
+
+    /**
      * Executes a specific market action based on the clicked element.
      * @param {HTMLElement} target - The element that was clicked.
      * @param {string} action - The specific action to perform.
@@ -40458,50 +40884,60 @@ export class MarketEventHandler {
                     await new Promise(resolve => setTimeout(resolve, 15));
                 }
 
+                // --- THIRD-PARTY CARGO INFRACTION CHECK FOR SELLS ---
+                if (mode === 'sell') {
+                    let fleetOwnedQty = 0;
+                    state.player.ownedShipIds.forEach(shipId => {
+                        fleetOwnedQty += state.player.inventories[shipId]?.[goodId]?.quantity || 0;
+                    });
+                    
+                    const projectedInventory = fleetOwnedQty - quantity;
+                    
+                    if (this.simulationService.missionService) {
+                        const protection = this.simulationService.missionService.getProtectedBaseline(goodId);
+                        
+                        if (projectedInventory < protection.baseline) {
+                            // Clean up downstroke safely before showing modal
+                            if (cardContainer) cardContainer.classList.remove(animClass);
+                            
+                            this.uiManager.queueModal('event-modal', 'Warning: Third-Party Cargo', 
+                                'You are attempting to sell third-party cargo. The associated mission(s) will be abandoned and the value of the cargo will be added to your debt if you proceed!', 
+                                null, 
+                                {
+                                    dismissInside: false,
+                                    dismissOutside: false,
+                                    customSetup: (modal, closeHandler) => {
+                                        const btnContainer = modal.querySelector('#event-button-container');
+                                        btnContainer.innerHTML = `
+                                            <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                            <button id="cancel-infraction" class="btn">CANCEL</button>
+                                        `;
+                                        modal.querySelector('#proceed-infraction').onclick = () => {
+                                            // 1. Penalize missions
+                                            protection.missions.forEach(mId => this.simulationService.missionService.penalizeThirdPartyInfraction(mId));
+                                            
+                                            // 2. Execute sale
+                                            const result = this.simulationService.sellItem(goodId, quantity);
+                                            this._processTradeResult(result, mode, goodId, quantity, state, e, cardContainer, animClass);
+                                            
+                                            // 3. Render changes globally
+                                            this.uiManager.render(this.gameState.getState());
+                                            closeHandler();
+                                        };
+                                        modal.querySelector('#cancel-infraction').onclick = closeHandler;
+                                    }
+                                });
+                            return; // Halt immediate execution pending user selection
+                        }
+                    }
+                }
+
+                // Normal execution
                 const result = (mode === 'buy')
                     ? this.simulationService.buyItem(goodId, quantity)
                     : this.simulationService.sellItem(goodId, quantity);
 
-                if (result !== false && result !== undefined) {
-                    let delta = result;
-                    if (mode === 'sell' && typeof result !== 'number') {
-                        delta = this.uiManager.getItemPrice(state, goodId) * quantity;
-                    }
-                    const value = (mode === 'buy') ? this.uiManager.getItemPrice(state, goodId) * quantity : delta;
-                    
-                    const text = mode === 'buy' ? `-${formatCredits(value, false)}` : `+${formatCredits(value, false)}`;
-                    const color = mode === 'buy' ? '#f87171' : '#34d399';
-                    this.uiManager.createFloatingText(text, e.clientX, e.clientY, color);
-
-                    if (mode === 'sell') {
-                        const actionData = { type: 'ACTION', action: 'sell-item', goodId };
-                        this.simulationService.tutorialService?.checkState?.(actionData);
-                    }
-
-                    // --- UI JUICE: Massive Inventory Popping (Delayed for UI Render) ---
-                    setTimeout(() => {
-                        const availNode = document.getElementById(`m-stock-${goodId}`);
-                        const ownNode = document.getElementById(`p-inv-${goodId}`);
-                        
-                        if (mode === 'buy' && ownNode) {
-                            this._triggerAnimation(ownNode, 'inventory-pop', 1300);
-                        } else if (mode === 'sell' && availNode) {
-                            this._triggerAnimation(availNode, 'inventory-pop', 1300);
-                        }
-                    }, 50);
-
-                } else {
-                    // Instantly clean up the downstroke if an error/warning modal is thrown
-                    if (cardContainer) cardContainer.classList.remove(animClass);
-                }
-
-                // Final safety net cleanup in case the element gets orphaned
-                setTimeout(() => {
-                    if (cardContainer && cardContainer.parentNode) {
-                        cardContainer.classList.remove(animClass);
-                    }
-                }, 100);
-                
+                this._processTradeResult(result, mode, goodId, quantity, state, e, cardContainer, animClass);
                 break;
             }
             case 'set-max-trade': {
@@ -41780,6 +42216,14 @@ export class ActionClickHandler {
                             activeMissionTab: 'log'
                         }
                     });
+                }
+                break;
+            }
+            case 'load-mission-cargo': {
+                e.stopPropagation();
+                const missionId = dataset.missionId;
+                if (missionId && this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.loadDeferredCargo(missionId);
                 }
                 break;
             }
@@ -43472,6 +43916,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.11] - 2026-3-23
+-  added mission #17, ending phase 1
+-  added two-step mission type
 
 # [37.09] - 2026-3-22
 -  fixed saving bugs

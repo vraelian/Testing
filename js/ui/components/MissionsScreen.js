@@ -164,13 +164,24 @@ export function renderMissionsScreen(gameState, missionService) {
         // Allow null location (Anywhere)
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
 
-        if (progress.isCompletable && isAtCorrectLocation) {
+        // --- NEW LOGISTICS PICKUP PHASE LOGIC ---
+        const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+        const isAtPickupLocation = isLogisticsPickupPhase && currentLocationId === mission.pickupLocationId;
+
+        if (progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase) {
             statusClass += ' mission-turn-in';
         }
 
-        // --- NEW STATUS BANNER LOGIC ---
+        // --- STATUS BANNER LOGIC ---
         let statusBannerHtml = '';
-        if (progress.isCompletable) {
+        if (isLogisticsPickupPhase) {
+            if (isAtPickupLocation) {
+                statusBannerHtml = `<div class="mission-status-banner" style="color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.2);">CARGO READY TO LOAD</div>`;
+            } else {
+                const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
+                statusBannerHtml = `<div class="mission-status-banner banner-text-return" style="color: #94a3b8; border-color: #475569;">ROUTE TO ${locName.toUpperCase()}</div>`;
+            }
+        } else if (progress.isCompletable) {
              let bannerText = 'READY TO COMPLETE';
              let bannerTextClass = 'banner-text-ready';
              if (mission.completion.locationId && mission.completion.locationId !== 'any' && !isAtCorrectLocation) {
@@ -180,13 +191,47 @@ export function renderMissionsScreen(gameState, missionService) {
              } else if (mission.objectives && mission.objectives.some(o => ['HAVE_DEBT', 'have_debt'].includes(o.type))) {
                  bannerText = 'CLEAR ALL DEBT'; 
              }
-             // Prominent pulsing banner
              statusBannerHtml = `<div class="mission-status-banner ${bannerTextClass}">${bannerText}</div>`;
         }
 
-        // Render Objectives with Continuous Flow Bars
+        // --- OBJECTIVES LOGIC ---
         let objectivesHtml = '';
-        if (mission.objectives && mission.objectives.length > 0) {
+        let actionButtonHtml = '';
+
+        if (isLogisticsPickupPhase) {
+            objectivesHtml = '<div class="mission-objectives-list">';
+            const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
+            
+            if (isAtPickupLocation) {
+                objectivesHtml += `
+                    <div class="objective-row-filled objective-row-tall">
+                        <div class="objective-fill-bar" style="width: 100%; background: rgba(245, 158, 11, 0.2);"></div>
+                        <div class="objective-text" style="color: #f59e0b;">
+                            <span>LOAD FREIGHT</span>
+                            <span>AWAITING</span>
+                        </div>
+                    </div>
+                `;
+                actionButtonHtml = `
+                    <div class="mt-3 px-2 pb-2">
+                        <button class="btn w-full" style="border: 1px solid #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1); box-shadow: 0 0 10px rgba(245,158,11,0.3);" data-action="load-mission-cargo" data-mission-id="${mission.id}">
+                            LOAD CARGO
+                        </button>
+                    </div>
+                `;
+            } else {
+                objectivesHtml += `
+                    <div class="objective-row-filled objective-row-tall">
+                        <div class="objective-fill-bar" style="width: 0%"></div>
+                        <div class="objective-text">
+                            <span>TRAVEL TO ${locName.toUpperCase()}</span>
+                            <span>EN ROUTE</span>
+                        </div>
+                    </div>
+                `;
+            }
+            objectivesHtml += '</div>';
+        } else if (mission.objectives && mission.objectives.length > 0) {
             objectivesHtml = '<div class="mission-objectives-list">';
             mission.objectives.forEach(obj => {
                 const objKey = obj.id || obj.goodId;
@@ -278,7 +323,7 @@ export function renderMissionsScreen(gameState, missionService) {
         const starIcon = '';
         
         let headerIcons = '';
-        if (mission.objectives && mission.objectives.length > 0) {
+        if (mission.objectives && mission.objectives.length > 0 || isLogisticsPickupPhase) {
             headerIcons = `
             <button class="mission-track-star ${starClass}" data-action="track-mission" data-mission-id="${mission.id}" title="Track on HUD">
                 <svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2">
@@ -301,6 +346,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 
                 ${statusBannerHtml}
                 ${objectivesHtml}
+                ${actionButtonHtml}
             </div>
         `;
     };

@@ -165,6 +165,11 @@ export class MissionService {
             isCompletable: false
         };
 
+        // Initialize deferred cargo state for Logistics missions
+        if (mission.deferredCargo && mission.deferredCargo.length > 0) {
+            this.gameState.missions.missionProgress[missionId].cargoLoaded = false;
+        }
+
         // Auto-track logic: If no mission is being tracked, track this one.
         if (!this.gameState.missions.trackedMissionId) {
             this.gameState.missions.trackedMissionId = missionId;
@@ -249,6 +254,205 @@ export class MissionService {
             this.gameState.missions.missionProgress[missionId].isCompletable = true;
         }
         this.uiManager.render(this.gameState.getState());
+    }
+
+    /**
+     * Calculates the baseline amount of a commodity currently protected by active missions.
+     * Prevents the player from selling third-party cargo or depositing it for alternative missions.
+     * @param {string} goodId 
+     * @param {string|null} excludedMissionId Mission ID to omit from protection sum (e.g. when depositing for itself).
+     * @returns {{baseline: number, missions: Array<string>}}
+     */
+    getProtectedBaseline(goodId, excludedMissionId = null) {
+        let baseline = 0;
+        let protectedMissions = [];
+        
+        this.gameState.missions.activeMissionIds.forEach(missionId => {
+            if (missionId === excludedMissionId) return;
+            
+            const mission = DB.MISSIONS[missionId];
+            const progress = this.gameState.missions.missionProgress[missionId];
+            
+            let missionRequiresThisGood = false;
+            let protectedQuantity = 0;
+
+            if (mission && progress) {
+                // Check deferred cargo (only protected if it has been loaded)
+                if (mission.deferredCargo && progress.cargoLoaded) {
+                    const cDef = mission.deferredCargo.find(c => c.goodId === goodId);
+                    if (cDef) {
+                        missionRequiresThisGood = true;
+                        protectedQuantity += cDef.quantity;
+                    }
+                }
+                
+                // Check granted cargo (protected immediately)
+                if (mission.grantedCargo) {
+                    const cDef = mission.grantedCargo.find(c => c.goodId === goodId);
+                    if (cDef) {
+                        missionRequiresThisGood = true;
+                        protectedQuantity += cDef.quantity;
+                    }
+                }
+
+                if (missionRequiresThisGood) {
+                    // Reduce protection by what has already been deposited for this mission
+                    let deposited = 0;
+                    if (mission.objectives) {
+                        mission.objectives.forEach(obj => {
+                            if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item') && (obj.goodId === goodId || obj.target === goodId)) {
+                                const objKey = obj.id || obj.goodId || obj.target;
+                                deposited += (progress.objectives[objKey]?.deposited || 0);
+                            }
+                        });
+                    }
+                    
+                    const remainingProtected = Math.max(0, protectedQuantity - deposited);
+                    if (remainingProtected > 0) {
+                        baseline += remainingProtected;
+                        if (!protectedMissions.includes(missionId)) {
+                            protectedMissions.push(missionId);
+                        }
+                    }
+                }
+            }
+        });
+        
+        return { baseline, missions: protectedMissions };
+    }
+
+    /**
+     * Executes the punitive consequences for violating the Third-Party Cargo protocol.
+     * Abandons the mission and converts cargo value to player debt.
+     * @param {string} missionId 
+     */
+    penalizeThirdPartyInfraction(missionId) {
+        const mission = DB.MISSIONS[missionId];
+        if (!mission) return;
+        
+        let penaltyValue = 0;
+        const cargoArrays = [];
+        if (mission.deferredCargo) cargoArrays.push(...mission.deferredCargo);
+        if (mission.grantedCargo) cargoArrays.push(...mission.grantedCargo);
+        
+        cargoArrays.forEach(c => {
+            const basePrice = DB.COMMODITIES.find(comm => comm.id === c.goodId)?.basePrice || 0;
+            penaltyValue += (basePrice * c.quantity);
+        });
+
+        if (penaltyValue > 0) {
+            this.gameState.player.debt += penaltyValue;
+            this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
+        }
+
+        // Force Abandonment Sequence
+        this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
+        if (this.gameState.missions.missionProgress[missionId]) {
+            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+        }
+        if (this.gameState.missions.trackedMissionId === missionId) {
+            const nextMission = this.gameState.missions.activeMissionIds[0];
+            this.gameState.missions.trackedMissionId = nextMission || null;
+        }
+        if (mission.navLock && this.simulationService) {
+            this.simulationService.clearNavigationLock();
+        }
+        
+        this.gameState.setState({});
+    }
+
+    /**
+     * Attempts to load deferred cargo for a Logistics mission.
+     * Evaluates fleet-wide capacity and distributes the cargo dynamically.
+     * @param {string} missionId 
+     */
+    loadDeferredCargo(missionId) {
+        if (!this.gameState.missions.activeMissionIds.includes(missionId)) return;
+        
+        const mission = DB.MISSIONS[missionId];
+        if (!mission || !mission.deferredCargo || mission.deferredCargo.length === 0) return;
+
+        const progress = this.gameState.missions.missionProgress[missionId];
+        if (!progress || progress.cargoLoaded) return; 
+
+        // 1. Calculate Total Required Space
+        let totalRequiredSpace = 0;
+        mission.deferredCargo.forEach(cargo => totalRequiredSpace += cargo.quantity);
+
+        // 2. Calculate Fleet-Wide Available Space
+        let fleetAvailableSpace = 0;
+        const shipCapacities = []; 
+
+        for (const shipId of this.gameState.player.ownedShipIds) {
+            let usedSpace = 0;
+            if (this.gameState.player.inventories[shipId]) {
+                Object.values(this.gameState.player.inventories[shipId]).forEach(item => {
+                    usedSpace += item.quantity;
+                });
+            }
+            
+            const maxCap = this.simulationService ? 
+                this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                (DB.SHIPS[shipId]?.cargoCapacity || 100);
+            
+            const availableSpace = Math.max(0, maxCap - usedSpace);
+            fleetAvailableSpace += availableSpace;
+            
+            shipCapacities.push({ shipId, availableSpace });
+        }
+
+        // 3. Evaluate Capacity Threshold
+        if (fleetAvailableSpace < totalRequiredSpace) {
+            const errorMsg = `Cannot accept freight: Insufficient cargo space. You need space in your cargo hold for ${totalRequiredSpace} units.`;
+            if (this.uiManager) {
+                this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
+            }
+            return;
+        }
+
+        // 4. Distribute Cargo Across Fleet (Prioritize Active Ship)
+        const activeShipId = this.gameState.player.activeShipId;
+        shipCapacities.sort((a, b) => {
+            if (a.shipId === activeShipId) return -1;
+            if (b.shipId === activeShipId) return 1;
+            return b.availableSpace - a.availableSpace;
+        });
+
+        mission.deferredCargo.forEach(cargo => {
+            let remainingToDistribute = cargo.quantity;
+
+            for (const shipData of shipCapacities) {
+                if (remainingToDistribute <= 0) break;
+
+                const spaceHere = shipData.availableSpace;
+                if (spaceHere > 0) {
+                    const amountToPut = Math.min(remainingToDistribute, spaceHere);
+                    
+                    if (!this.gameState.player.inventories[shipData.shipId]) {
+                        this.gameState.player.inventories[shipData.shipId] = {};
+                    }
+                    if (!this.gameState.player.inventories[shipData.shipId][cargo.goodId]) {
+                        this.gameState.player.inventories[shipData.shipId][cargo.goodId] = { quantity: 0, avgCost: 0 };
+                    }
+                    
+                    this.gameState.player.inventories[shipData.shipId][cargo.goodId].quantity += amountToPut;
+                    
+                    shipData.availableSpace -= amountToPut;
+                    remainingToDistribute -= amountToPut;
+                }
+            }
+        });
+
+        // 5. Update State
+        progress.cargoLoaded = true;
+        this.logger.info.player(this.gameState.day, 'MISSION_CARGO_LOADED', `Loaded ${totalRequiredSpace} units of deferred cargo for mission ${missionId}.`);
+
+        // 6. Trigger re-evaluation and flush state
+        this.checkTriggers();
+        this.gameState.setState({});
+        if (this.uiManager && typeof this.uiManager.render === 'function') {
+            this.uiManager.render(this.gameState.getState());
+        }
     }
 
     /**
@@ -418,9 +622,10 @@ export class MissionService {
      * Attempts to deposit cargo from the player's fleet into the specified mission.
      * Assumes the player is currently at the correct location.
      * @param {string} missionId 
+     * @param {boolean} forceInfraction Bypasses the Third-Party Cargo protection check.
      * @returns {number} The total amount of freight deposited.
      */
-    depositMissionCargo(missionId) {
+    depositMissionCargo(missionId, forceInfraction = false) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
         const mission = DB.MISSIONS[missionId];
         if (!mission || !mission.objectives) return 0;
@@ -428,6 +633,78 @@ export class MissionService {
         const progress = this.gameState.missions.missionProgress[missionId];
         if (!progress) return 0;
 
+        // --- PRE-CHECK: Build Drain Plan ---
+        const drainPlan = {};
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                const itemId = obj.goodId || obj.target;
+                const targetQty = obj.quantity || obj.value || 1;
+                const objKey = obj.id || obj.goodId || obj.target;
+                const depositedSoFar = progress.objectives?.[objKey]?.deposited || 0;
+                
+                const remainingNeeded = Math.max(0, targetQty - depositedSoFar);
+                if (remainingNeeded > 0) {
+                    let fleetOwned = 0;
+                    this.gameState.player.ownedShipIds.forEach(shipId => {
+                        fleetOwned += (this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0);
+                    });
+                    
+                    const canDrain = Math.min(remainingNeeded, fleetOwned);
+                    if (canDrain > 0) {
+                        drainPlan[itemId] = (drainPlan[itemId] || 0) + canDrain;
+                    }
+                }
+            }
+        });
+
+        // --- THIRD PARTY CARGO INFRACTION CHECK ---
+        if (!forceInfraction) {
+            let infractionDetected = false;
+            let violatedMissions = new Set();
+
+            for (const [goodId, drainAmount] of Object.entries(drainPlan)) {
+                let fleetOwned = 0;
+                this.gameState.player.ownedShipIds.forEach(shipId => {
+                    fleetOwned += (this.gameState.player.inventories[shipId]?.[goodId]?.quantity || 0);
+                });
+
+                const projected = fleetOwned - drainAmount;
+                const protection = this.getProtectedBaseline(goodId, missionId);
+                
+                if (projected < protection.baseline) {
+                    infractionDetected = true;
+                    protection.missions.forEach(m => violatedMissions.add(m));
+                }
+            }
+
+            if (infractionDetected) {
+                if (this.uiManager) {
+                    this.uiManager.queueModal('event-modal', 'Warning: Third-Party Cargo', 
+                        'You are attempting to deliver third-party cargo to an alternative contract. The associated mission(s) will be abandoned and the value of the cargo will be added to your debt if you proceed!', 
+                        null, 
+                        {
+                            dismissInside: false,
+                            dismissOutside: false,
+                            customSetup: (modal, closeHandler) => {
+                                const btnContainer = modal.querySelector('#event-button-container');
+                                btnContainer.innerHTML = `
+                                    <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                    <button id="cancel-infraction" class="btn">CANCEL</button>
+                                `;
+                                modal.querySelector('#proceed-infraction').onclick = () => {
+                                    violatedMissions.forEach(mId => this.penalizeThirdPartyInfraction(mId));
+                                    this.depositMissionCargo(missionId, true); // Force execution
+                                    closeHandler();
+                                };
+                                modal.querySelector('#cancel-infraction').onclick = closeHandler;
+                            }
+                        });
+                }
+                return 0; // Abort this run pending user choice
+            }
+        }
+
+        // --- EXECUTE DRAIN ---
         let totalDepositedThisCall = 0;
 
         mission.objectives.forEach(obj => {
