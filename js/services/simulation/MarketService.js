@@ -621,4 +621,153 @@ export class MarketService {
             AssetService.hydrateAssets(spawnRequests);
         });
     }
+
+    // --- GRAPH UI DATA GENERATION METHODS ---
+
+    /**
+     * Calculates the baseline target price for a commodity at a location without daily fluctuations.
+     * Required for rendering procedural baselines on the UI graph.
+     * @param {string} locationId 
+     * @param {string} commodityId 
+     * @returns {number}
+     */
+    getLocalTargetPrice(locationId, commodityId) {
+        const location = DB.MARKETS.find(m => m.id === locationId);
+        if (!location) return 0;
+        
+        const avg = this.gameState.market.galacticAverages[commodityId] || 0;
+        const modifier = location.availabilityModifier?.[commodityId] ?? 1.0;
+        
+        // Evaluate System States
+        const systemState = this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
+
+        let basePriceMod = 1.0;
+        if (activeStateDef && activeStateDef.modifiers) {
+            const mods = activeStateDef.modifiers;
+            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
+                basePriceMod *= mods.basePriceInflate;
+            }
+            if (isTargetLocation) {
+                if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
+                if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
+            }
+        }
+
+        const targetPriceOffset = (1.0 - modifier) * avg;
+        return (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+    }
+
+    /**
+     * Evaluates when a market achieves Glut (oversaturation) for UI warnings.
+     * @param {string} locationId 
+     * @param {string} commodityId 
+     * @returns {number} The quantity threshold for market glut.
+     */
+    getGlutThreshold(locationId, commodityId) {
+        const location = DB.MARKETS.find(m => m.id === locationId);
+        const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+        if (!location || !commodity) return Infinity;
+
+        const [minAvail, maxAvail] = commodity.canonicalAvailability;
+        const modifier = location.availabilityModifier?.[commodityId] ?? 1.0;
+        const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+        
+        const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
+        let pressureForAdaptation = inventoryItem ? inventoryItem.marketPressure : 0;
+        
+        // Match the logic in applyMarketImpact
+        if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
+        
+        const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
+        const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
+        
+        const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
+        
+        // 3.0x multiplier aligns with the saturation trigger in applyMarketImpact
+        return targetStock * 3.0; 
+    }
+
+    /**
+     * Extrapolates forward market trajectory and combines it with recent historical data.
+     * Required by UIMarketControl to render the market forecast graph.
+     * @param {string} locationId 
+     * @param {string} commodityId 
+     * @param {number} historyDays 
+     * @param {number} projectedDays 
+     * @returns {Array} Array of point objects: { day, price, isLocked }
+     */
+    generateCurveData(locationId, commodityId, historyDays, projectedDays) {
+        const currentDay = this.gameState.day;
+        const history = this.gameState.market.priceHistory[locationId]?.[commodityId] || [];
+        
+        const startDay = Math.max(1, currentDay - historyDays);
+        const historicalData = history.filter(entry => entry.day >= startDay).map(entry => ({
+            day: entry.day,
+            price: entry.price,
+            isLocked: false // History assumes standard fluctuation unless manually logged
+        }));
+
+        let lastPrice = historicalData.length > 0 
+            ? historicalData[historicalData.length - 1].price 
+            : (this.gameState.market.prices[locationId]?.[commodityId] || 0);
+            
+        // Ensure at least one point exists to anchor the projection
+        if (historicalData.length === 0) {
+            historicalData.push({ day: currentDay, price: lastPrice, isLocked: false });
+        }
+        
+        const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
+        const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
+        const lockEndDay = inventoryItem ? inventoryItem.priceLockEndDay : 0;
+        
+        let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
+        const location = DB.MARKETS.find(m => m.id === locationId);
+        if (location?.ecoProfile?.meanReversionMod) {
+            meanReversion *= location.ecoProfile.meanReversionMod;
+        }
+
+        const projection = [];
+        let currentProjPrice = lastPrice;
+        
+        let activePressure = inventoryItem ? inventoryItem.marketPressure : 0;
+        const PLAYER_PRESSURE_STRENGTH = 0.50; 
+        let daysSinceInteraction = inventoryItem ? (currentDay - inventoryItem.lastPlayerInteractionTimestamp) : 999;
+        
+        // Procedurally generate future points using current decay/reversion math
+        for (let i = 1; i <= projectedDays; i++) {
+            const projDay = currentDay + i;
+            let isLocked = projDay < lockEndDay;
+            
+            if (!isLocked) {
+                // Determine reversion pull towards local baseline
+                let reversionEffect = (localBaseline - currentProjPrice) * meanReversion;
+                
+                // Determine delayed supply pressure impact
+                let pressureEffect = 0;
+                daysSinceInteraction++;
+                if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
+                     pressureEffect = (localBaseline * activePressure * -1) * PLAYER_PRESSURE_STRENGTH;
+                }
+                
+                currentProjPrice += (reversionEffect + pressureEffect);
+            }
+            
+            projection.push({
+                day: projDay,
+                price: Math.max(1, Math.round(currentProjPrice)),
+                isLocked: isLocked
+            });
+            
+            // Age out pressure bounds slightly to curve the line properly
+            let decayMod = 1.0;
+            if (activePressure > 0 && location?.ecoProfile?.recoveryMod) {
+                decayMod = 1.0 / location.ecoProfile.recoveryMod;
+            }
+            activePressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
+        }
+
+        return [...historicalData, ...projection];
+    }
 }
