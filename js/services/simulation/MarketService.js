@@ -313,14 +313,20 @@ export class MarketService {
                     }
                 }
 
-                let decayMod = 1.0;
-                if (inventoryItem.marketPressure > 0 && location.ecoProfile?.recoveryMod) {
-                    decayMod = 1.0 / location.ecoProfile.recoveryMod;
-                }
+                /**
+                 * @description Pressure is hermetically preserved during the 7-day interaction cooldown 
+                 * to ensure the delayed economic shock strikes the baseline price with its intended accumulated volume.
+                 */
+                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7 || inventoryItem.lastPlayerInteractionTimestamp === 0) {
+                    let decayMod = 1.0;
+                    if (inventoryItem.marketPressure > 0 && location.ecoProfile?.recoveryMod) {
+                        decayMod = 1.0 / location.ecoProfile.recoveryMod;
+                    }
 
-                inventoryItem.marketPressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
-                if (Math.abs(inventoryItem.marketPressure) < 0.001) {
-                    inventoryItem.marketPressure = 0;
+                    inventoryItem.marketPressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
+                    if (Math.abs(inventoryItem.marketPressure) < 0.001) {
+                        inventoryItem.marketPressure = 0;
+                    }
                 }
             });
             this._recordPriceHistory(location.id);
@@ -386,16 +392,32 @@ export class MarketService {
                     const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus) * targetStockMod;
 
                     const difference = targetStock - inventoryItem.quantity;
-                    const replenishAmount = difference * replenishRate; 
+
+                    /** * @description Converts weekly replenish rate to daily fractional execution for a multi-week crawl.
+                     */
+                    const dailyReplenishAmount = difference * (replenishRate / 7); 
                     
+                    /**
+                     * @description Tier-scaled, decaying emergency restock to prevent strict zero-stock lockouts 
+                     * without disrupting the macro-economic scarcity curve.
+                     */
                     let emergencyStock = 0;
-                    if (inventoryItem.isDepleted) {
-                        emergencyStock = skewedRandom(1, 5);
-                    } else if (inventoryItem.quantity <= 0) {
-                        emergencyStock = skewedRandom(1, 5);
+                    if (inventoryItem.quantity <= 0 || inventoryItem.isDepleted) {
+                        let daysSinceEvent = 1;
+                        if (inventoryItem.isDepleted && inventoryItem.depletionDay > 0) {
+                            daysSinceEvent = Math.max(1, this.gameState.day - inventoryItem.depletionDay);
+                        }
+                        
+                        const tierFactor = Math.max(0.5, 7 - c.tier); 
+                        const decayFactor = 1 / daysSinceEvent; 
+                        
+                        emergencyStock = Math.max(0, (skewedRandom(1, 5) * tierFactor * decayFactor));
+                        
+                        const maxAllowedEmergency = Math.max(0, (targetStock * 0.59) - (inventoryItem.quantity + dailyReplenishAmount));
+                        emergencyStock = Math.min(emergencyStock, maxAllowedEmergency);
                     }
 
-                    inventoryItem.quantity += (replenishAmount + emergencyStock);
+                    inventoryItem.quantity += (dailyReplenishAmount + emergencyStock);
 
                     if (inventoryItem.isDepleted && inventoryItem.quantity >= (targetStock * 0.60)) {
                         inventoryItem.isDepleted = false;
@@ -406,11 +428,21 @@ export class MarketService {
                     }
                 }
 
+                /**
+                 * @description Market fluctuation noise is decoupled from the current absolute inventory volume
+                 * and instead scales off the natural baseline capacity. This prevents geometric explosions 
+                 * or evaporations of stock when a player dumps anomalous cargo volumes (saturation).
+                 */
                 if (!market.ecoProfile?.disableFluctuation) {
+                    const [minAvail, maxAvail] = c.canonicalAvailability;
+                    const modifier = market.availabilityModifier?.[c.id] ?? 1.0;
+                    const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
+
                     const fluctuationPercent = (Math.random() * 0.15 + 0.15); 
                     const fluctuationDirection = Math.random() < 0.5 ? -1 : 1;
-                    const finalFluctuation = 1 + (fluctuationPercent * fluctuationDirection);
-                    inventoryItem.quantity *= finalFluctuation;
+                    
+                    const noiseAmount = baseMeanStock * fluctuationPercent * fluctuationDirection;
+                    inventoryItem.quantity += noiseAmount;
                 }
                 
                 if (this._currentSystemState?.modifiers?.commodity?.[c.id]?.availability) {
@@ -458,6 +490,10 @@ export class MarketService {
         
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;
+            /**
+             * @description Synchronous depletion evaluation linked to the purchase volume.
+             */
+            this.checkDepletion(good, inventoryItem, quantity, this.gameState.day);
         } else { 
             inventoryItem.marketPressure += pressureChange;
             
@@ -519,10 +555,10 @@ export class MarketService {
      * Checks if a purchase triggers a market depletion event.
      * @param {object} good - The static commodity data (from DB).
      * @param {object} inventoryItem - The dynamic inventory item from gameState.
-     * @param {number} stockBeforeBuy - The quantity of the item *before* the player's purchase.
+     * @param {number} purchaseQuantity - The volume of the player's purchase.
      * @param {number} currentDay - The current game day.
      */
-    checkDepletion(good, inventoryItem, stockBeforeBuy, currentDay) {
+    checkDepletion(good, inventoryItem, purchaseQuantity, currentDay) {
         const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
         const [minAvail, maxAvail] = good.canonicalAvailability;
         const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
@@ -535,9 +571,13 @@ export class MarketService {
         const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor);
         
         const depletionThreshold = targetStock * 0.08;
-        const depletionBuyQuantity = stockBeforeBuy; 
+        const depletionBuyQuantity = purchaseQuantity; 
 
-        if (depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
+        /**
+         * @description A market cannot trigger panic pricing unless the player actually 
+         * bought the final unit on the shelf, ensuring the scarcity curve behaves realistically.
+         */
+        if (inventoryItem.quantity <= 0 && depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
             inventoryItem.isDepleted = true; 
             inventoryItem.depletionDay = currentDay;
             inventoryItem.depletionBonusDay = currentDay; 
