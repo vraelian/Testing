@@ -442,10 +442,10 @@ export class UIMarketControl {
             }
         });
 
-        // Render Data Paths
-        svg += `<path d="${historyPath.trim()}" class="svg-line-history" fill="none" />`;
+        // Render Data Paths (INJECTED INLINE STROKES HERE)
+        svg += `<path d="${historyPath.trim()}" class="svg-line-history" fill="none" stroke="#60a5fa" stroke-width="2" />`;
         if (projectPath.length > 0) {
-            svg += `<path d="${projectPath.trim()}" class="svg-line-project" fill="none" />`;
+            svg += `<path d="${projectPath.trim()}" class="svg-line-project" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4,4" />`;
         }
 
         // Pass 5: Timeline Context Labels & Axes
@@ -477,11 +477,11 @@ export class UIMarketControl {
         const legendY1 = height - 35;
         const legendY2 = height - 15;
         
-        // Row 1
-        svg += `<line x1="${paddingLeft}" y1="${legendY1 - 4}" x2="${paddingLeft + 12}" y2="${legendY1 - 4}" class="svg-line-history" />`;
+        // Row 1 (INJECTED INLINE STROKES HERE)
+        svg += `<line x1="${paddingLeft}" y1="${legendY1 - 4}" x2="${paddingLeft + 12}" y2="${legendY1 - 4}" class="svg-line-history" stroke="#60a5fa" stroke-width="2" />`;
         svg += `<text x="${paddingLeft + 18}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">History</text>`;
         
-        svg += `<line x1="${paddingLeft + 85}" y1="${legendY1 - 4}" x2="${paddingLeft + 97}" y2="${legendY1 - 4}" class="svg-line-project" />`;
+        svg += `<line x1="${paddingLeft + 85}" y1="${legendY1 - 4}" x2="${paddingLeft + 97}" y2="${legendY1 - 4}" class="svg-line-project" stroke="#a78bfa" stroke-width="2" stroke-dasharray="3,3" />`;
         svg += `<text x="${paddingLeft + 103}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Project</text>`;
         
         // Escalate priority with inline styles to override CSS class restrictions
