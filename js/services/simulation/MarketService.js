@@ -54,8 +54,6 @@ export class MarketService {
         this.evolveMarketPrices();
     }
 
-    // --- VIRTUAL WORKBENCH: UPDATED getPrice ---
-
     /**
      * Gets the effective price for a commodity at a location.
      * Checks for active intel deal overrides first.
@@ -70,7 +68,6 @@ export class MarketService {
         const deal = state.activeIntelDeal;
         let basePrice = this.gameState.market.prices[locationId]?.[commodityId] || 0;
 
-        // --- VIRTUAL WORKBENCH: DYNAMIC MARKET CONDITIONS ---
         // Apply temporary massive multipliers dynamically here, NOT in state evolution
         const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
         if (inventoryItem) {
@@ -88,7 +85,6 @@ export class MarketService {
         if (this._currentSystemState?.modifiers?.commodity?.[commodityId]?.price) {
             basePrice *= this._currentSystemState.modifiers.commodity[commodityId].price;
         }
-        // --- END DYNAMIC MARKET CONDITIONS ---
 
         let price = basePrice;
 
@@ -102,57 +98,48 @@ export class MarketService {
             price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
         }
 
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (PRICE BOOSTS) ---
-        // Earth Quirk: +10% Sell Price for Cloned Organs & Xeno-Geologicals
+        // Station Quirks (Price Boosts)
         if (locationId === LOCATION_IDS.EARTH && 
             (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
             price = price * 1.10;
         }
 
-        // Mars Quirk: +10% Sell Price for Water Ice & Hydroponics
         if (locationId === LOCATION_IDS.MARS &&
             (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
             price = price * 1.10;
         }
 
-        // Saturn Quirk: +20% Sell Price for Cloned Organs & Cryo-Sleep Pods
         if (locationId === LOCATION_IDS.SATURN &&
             (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
             price = price * 1.20;
         }
 
-        // Pluto Quirk: +25% Sell Price for Cybernetics & Antimatter
         if (locationId === LOCATION_IDS.PLUTO &&
             (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
             price = price * 1.25;
         }
 
-        // Mercury Quirk: +40% Sell Price for Water Ice
         if (locationId === LOCATION_IDS.MERCURY &&
             commodityId === COMMODITY_IDS.WATER_ICE) {
             price = price * 1.40;
         }
 
-        // Sol Quirk: +25% Sell Price for Graphene Lattices & Plasteel
         if (locationId === LOCATION_IDS.SUN &&
             (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
             price = price * 1.25;
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         // 2. Upgrade Modifiers (Signal Hacker)
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
-             // Safety check: Ensure we have a valid ship state to read upgrades from
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
                  const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
-                 // Fetch the 'buy' modifier (e.g., 0.97 for Signal Hacker I)
                  const mod = GameAttributes.getPriceModifier(upgrades, 'buy');
                  price = price * mod;
              }
         }
 
-        // --- PHASE 2: HOT INTEL INTEGRATION ---
+        // PHASE 2: HOT INTEL INTEGRATION
         const activeHotIntel = state.activeHotIntel;
         if (activeHotIntel && 
             activeHotIntel.locationId === locationId && 
@@ -160,7 +147,6 @@ export class MarketService {
             price = price * activeHotIntel.discountMultiplier;
         }
 
-        // Ensure price never drops below 1
         return Math.max(1, Math.round(price));
     }
 
@@ -218,8 +204,8 @@ export class MarketService {
 
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
 
-                // --- SYSTEM STATES V3 HOOKS (Prices) ---
-                const systemState = this.gameState.systemState;
+                // SYSTEM STATES V3 HOOKS (Prices)
+                const systemState = this.gameState.systemStates || this.gameState.systemState;
                 const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
                 const isTargetLocation = systemState && systemState.targetLocations?.includes(location.id);
 
@@ -238,7 +224,6 @@ export class MarketService {
                         if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
                     }
                 }
-                // --- END SYSTEM STATES V3 ---
 
                 const targetPriceOffset = (1.0 - modifier) * avg;
                 const localBaseline = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
@@ -293,7 +278,7 @@ export class MarketService {
                     }
                 }
 
-                // Calculate the true simulation baseline price (Modifiers removed from here)
+                // Calculate the true simulation baseline price
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 const finalRoundedPrice = Math.max(1, Math.round(newPrice));
                 
@@ -303,7 +288,7 @@ export class MarketService {
                 if (this.gameState.uiState?.enableEconomicTelemetry) {
                     const priceShiftPct = Math.abs(finalRoundedPrice - price) / price;
                     const isSignificant = priceShiftPct > 0.05 || inventoryItem.isDepleted || inventoryItem.isSaturated;
-                    const isVerbose = this.gameState.uiState?.verboseTickLogging !== false; // Default to true if unset
+                    const isVerbose = this.gameState.uiState?.verboseTickLogging !== false; 
 
                     if (isVerbose || isSignificant) {
                         if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
@@ -352,8 +337,8 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
 
-                // --- SYSTEM STATES V3 HOOKS (Replenishment) ---
-                const systemState = this.gameState.systemState;
+                // SYSTEM STATES V3 HOOKS (Replenishment)
+                const systemState = this.gameState.systemStates || this.gameState.systemState;
                 const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
                 const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
 
@@ -372,7 +357,6 @@ export class MarketService {
                     
                     if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
                 }
-                // --- END SYSTEM STATES V3 ---
 
                 if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 365) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
@@ -453,6 +437,25 @@ export class MarketService {
 
         const pressureChange = (((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
         
+        // --- FOOTPRINT LOGGING FIX: Threshold and property routing ---
+        const SIGNIFICANT_IMPACT_THRESHOLD = 0.05; 
+        
+        if (pressureChange >= SIGNIFICANT_IMPACT_THRESHOLD) {
+            const sysState = this.gameState.systemStates || this.gameState.systemState;
+            if (sysState) {
+                if (!sysState.economyFootprints) {
+                    sysState.economyFootprints = [];
+                }
+                
+                sysState.economyFootprints.push({
+                    day: this.gameState.day, 
+                    type: transactionType === 'buy' ? 'DEPLETION' : 'SATURATION', 
+                    locationId: this.gameState.currentLocationId, 
+                    commodityId: good.id
+                });
+            }
+        }
+        
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;
         } else { 
@@ -471,8 +474,10 @@ export class MarketService {
             
             if (inventoryItem.quantity > (targetStock * 3.0)) {
                 inventoryItem.isSaturated = true;
-                if (this.gameState.systemState && this.gameState.systemState.economyFootprints) {
-                    this.gameState.systemState.economyFootprints.push({
+                const sysState = this.gameState.systemStates || this.gameState.systemState;
+                if (sysState) {
+                    if (!sysState.economyFootprints) sysState.economyFootprints = [];
+                    sysState.economyFootprints.push({
                         day: this.gameState.day, type: 'SATURATION', locationId: this.gameState.currentLocationId, commodityId: good.id
                     });
                 }
@@ -537,8 +542,10 @@ export class MarketService {
             inventoryItem.depletionDay = currentDay;
             inventoryItem.depletionBonusDay = currentDay; 
 
-            if (this.gameState.systemState && this.gameState.systemState.economyFootprints) {
-                this.gameState.systemState.economyFootprints.push({
+            const sysState = this.gameState.systemStates || this.gameState.systemState;
+            if (sysState) {
+                if (!sysState.economyFootprints) sysState.economyFootprints = [];
+                sysState.economyFootprints.push({
                     day: currentDay, type: 'DEPLETION', locationId: this.gameState.currentLocationId, commodityId: good.id
                 });
             }
@@ -622,8 +629,6 @@ export class MarketService {
         });
     }
 
-    // --- GRAPH UI DATA GENERATION METHODS ---
-
     /**
      * Calculates the baseline target price for a commodity at a location without daily fluctuations.
      * Required for rendering procedural baselines on the UI graph.
@@ -639,7 +644,7 @@ export class MarketService {
         const modifier = location.availabilityModifier?.[commodityId] ?? 1.0;
         
         // Evaluate System States
-        const systemState = this.gameState.systemState;
+        const systemState = this.gameState.systemStates || this.gameState.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
         const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
 
@@ -692,11 +697,12 @@ export class MarketService {
     /**
      * Extrapolates forward market trajectory and combines it with recent historical data.
      * Required by UIMarketControl to render the market forecast graph.
+     * Now includes economy footprint data for UI rendering.
      * @param {string} locationId 
      * @param {string} commodityId 
      * @param {number} historyDays 
      * @param {number} projectedDays 
-     * @returns {Array} Array of point objects: { day, price, isLocked }
+     * @returns {Object} { points: Array, footprints: Array }
      */
     generateCurveData(locationId, commodityId, historyDays, projectedDays) {
         const currentDay = this.gameState.day;
@@ -713,9 +719,10 @@ export class MarketService {
             ? historicalData[historicalData.length - 1].price 
             : (this.gameState.market.prices[locationId]?.[commodityId] || 0);
             
-        // Ensure at least one point exists to anchor the projection
-        if (historicalData.length === 0) {
-            historicalData.push({ day: currentDay, price: lastPrice, isLocked: false });
+        // --- RENDERING GAP FIX: Push current day if absent to anchor footprints instantly ---
+        if (historicalData.length === 0 || historicalData[historicalData.length - 1].day < currentDay) {
+            const livePrice = this.gameState.market.prices[locationId]?.[commodityId] || lastPrice;
+            historicalData.push({ day: currentDay, price: livePrice, isLocked: false });
         }
         
         const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
@@ -768,6 +775,24 @@ export class MarketService {
             activePressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
         }
 
-        return [...historicalData, ...projection];
+        const curveData = [...historicalData, ...projection];
+
+        // Extrapolate Footprints for UI marker rendering
+        let footprints = [];
+        const sysState = this.gameState.systemStates || this.gameState.systemState;
+        
+        if (sysState && sysState.economyFootprints) {
+            footprints = sysState.economyFootprints
+                .filter(fp => fp.locationId === locationId && fp.commodityId === commodityId)
+                .map(fp => ({
+                    day: fp.day,
+                    type: fp.type
+                }));
+        }
+
+        return {
+            points: curveData,
+            footprints: footprints
+        };
     }
 }

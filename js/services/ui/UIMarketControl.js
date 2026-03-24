@@ -249,8 +249,6 @@ export class UIMarketControl {
         const effectivePrice = basePrice; 
 
         // --- FLEET OVERFLOW SYSTEM: EXACT COST BASIS SIMULATION ---
-        // Instead of using the blended average, simulate the exact drain order
-        // (Active Ship first, then by max capacity descending) to project real profit.
         const activeShipId = state.player.activeShipId;
         const shipInventories = [];
         
@@ -259,7 +257,6 @@ export class UIMarketControl {
         for (const shipId of state.player.ownedShipIds) {
             const qty = state.player.inventories[shipId]?.[goodId]?.quantity || 0;
             totalOwnedQty += qty;
-            // Safely fetch max capacity, falling back to static DB if simulation service isn't ready
             const maxCapacity = this.manager.simulationService ? 
                 this.manager.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
                 DB.SHIPS[shipId].maxCapacity;
@@ -267,7 +264,6 @@ export class UIMarketControl {
             shipInventories.push({ shipId, qty, maxCapacity });
         }
 
-        // Clamp the evaluable quantity to the actual total inventory owned to prevent false projections
         const evaluableQty = Math.min(quantity, totalOwnedQty);
         const totalPrice = Math.floor(effectivePrice * evaluableQty);
 
@@ -289,7 +285,6 @@ export class UIMarketControl {
                 remainingToSell -= toRemove;
             }
         }
-        // --- END SIMULATION ---
 
         let netProfit = totalPrice - exactCostBasis;
         if (netProfit > 0) {
@@ -302,6 +297,66 @@ export class UIMarketControl {
             effectivePricePerUnit: effectivePrice, 
             netProfit
         };
+    }
+
+    /**
+     * Douglas-Peucker algorithm implementation for point reduction.
+     * @private
+     */
+    _douglasPeucker(points, epsilon) {
+        if (points.length <= 2) return points;
+        
+        let dmax = 0;
+        let index = 0;
+        const end = points.length - 1;
+        const p1 = points[0];
+        const p2 = points[end];
+        
+        for (let i = 1; i < end; i++) {
+            const d = this._perpendicularDistance(points[i], p1, p2);
+            if (d > dmax) {
+                index = i;
+                dmax = d;
+            }
+        }
+        
+        if (dmax > epsilon) {
+            const recResults1 = this._douglasPeucker(points.slice(0, index + 1), epsilon);
+            const recResults2 = this._douglasPeucker(points.slice(index), epsilon);
+            return recResults1.slice(0, recResults1.length - 1).concat(recResults2);
+        } else {
+            return [points[0], points[end]];
+        }
+    }
+
+    /**
+     * Calculates perpendicular distance for the DP algorithm.
+     * @private
+     */
+    _perpendicularDistance(pt, lineStart, lineEnd) {
+        const dx = lineEnd.day - lineStart.day;
+        const dy = lineEnd.price - lineStart.price;
+        const num = Math.abs(dy * pt.day - dx * pt.price + lineEnd.day * lineStart.price - lineEnd.price * lineStart.day);
+        const den = Math.sqrt(dy * dy + dx * dx);
+        return den === 0 ? 0 : num / den;
+    }
+
+    /**
+     * Simplifies the path data utilizing age weighting (older data is simplified, newer preserved).
+     * @private
+     */
+    _simplifyPathWeighted(data, currentDay) {
+        const tolerance = 1.5; 
+        const splitDay = currentDay - 45;
+        const oldData = data.filter(p => p.day < splitDay);
+        const newData = data.filter(p => p.day >= splitDay);
+        
+        if (oldData.length < 3) return data;
+        
+        const simplifiedOld = this._douglasPeucker(oldData, tolerance);
+        
+        // Stitch avoiding duplicate middle point if they overlap exactly
+        return [...simplifiedOld, ...newData];
     }
 
     /**
@@ -321,12 +376,14 @@ export class UIMarketControl {
         const locId = gameState.currentLocationId;
         const currentDay = gameState.day;
         
-        // Updated Timeline Context
         const historyDays = 90;
         const projectedDays = 45;
 
-        const curveData = ms.generateCurveData(locId, goodId, historyDays, projectedDays);
-        if (!curveData || curveData.length === 0) return `<div class="text-gray-400 text-sm p-4">No Data Available</div>`;
+        const payload = ms.generateCurveData(locId, goodId, historyDays, projectedDays);
+        if (!payload || !payload.points || payload.points.length === 0) return `<div class="text-gray-400 text-sm p-4">No Data Available</div>`;
+
+        const curveData = payload.points;
+        const footprints = payload.footprints || [];
 
         const galacticAvg = ms.getGalacticAverage(goodId);
         const localAvg = ms.getLocalTargetPrice(locId, goodId);
@@ -409,38 +466,43 @@ export class UIMarketControl {
         svg += `<line x1="${paddingLeft}" y1="${sysAvgY}" x2="${width - paddingRight}" y2="${sysAvgY}" class="svg-line-sys-avg" style="stroke: #ffffff !important;" stroke-dasharray="4,4" />`;
         svg += `<line x1="${paddingLeft}" y1="${localAvgY}" x2="${width - paddingRight}" y2="${localAvgY}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" />`;
 
-        // Pass 4: Construct Procedural Curves with Jitter Overrides
+        // Pass 4: Construct Paths with Smoothing
+        const rawHistory = curveData.filter(p => p.day <= currentDay);
+        const projection = curveData.filter(p => p.day > currentDay);
+        
+        const optimizedHistory = this._simplifyPathWeighted(rawHistory, currentDay);
+
         let historyPath = '';
         let projectPath = '';
         let isFirstHistory = true;
         let isFirstProject = true;
         let currentPricePoint = { price: curveData[curveData.length - 1].price };
 
-        curveData.forEach((point) => {
+        optimizedHistory.forEach((point) => {
             let y = vToY(point.price);
-            
             // Jitter: Ambient trading volume masking UI freezes during Price Lock states
             if (point.isLocked) {
                 y += (Math.random() * 2 - 1) * 2; 
             }
-            
             const x = iToX(point.day);
-            
-            if (point.day <= currentDay) {
-                const cmd = isFirstHistory ? 'M' : 'L';
-                historyPath += `${cmd}${x},${y} `;
-                isFirstHistory = false;
-            }
-            if (point.day >= currentDay) {
-                const pCmd = isFirstProject ? 'M' : 'L';
-                projectPath += `${pCmd}${x},${y} `;
-                isFirstProject = false;
-            }
-
-            if (point.day === currentDay) {
-                currentPricePoint = point;
-            }
+            historyPath += `${isFirstHistory ? 'M' : 'L'}${x},${y} `;
+            isFirstHistory = false;
         });
+
+        projection.forEach((point) => {
+            let y = vToY(point.price);
+            if (point.isLocked) {
+                y += (Math.random() * 2 - 1) * 2; 
+            }
+            const x = iToX(point.day);
+            projectPath += `${isFirstProject ? 'M' : 'L'}${x},${y} `;
+            isFirstProject = false;
+        });
+
+        const exactCurrentPoint = rawHistory.find(p => p.day === currentDay) || curveData[curveData.length - 1];
+        if (exactCurrentPoint) {
+            currentPricePoint = { price: exactCurrentPoint.price };
+        }
 
         // Render Data Paths (INJECTED INLINE STROKES HERE)
         svg += `<path d="${historyPath.trim()}" class="svg-line-history" fill="none" stroke="#60a5fa" stroke-width="2" />`;
@@ -448,16 +510,32 @@ export class UIMarketControl {
             svg += `<path d="${projectPath.trim()}" class="svg-line-project" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4,4" />`;
         }
 
+        // Render Player Footprints
+        if (footprints && footprints.length > 0) {
+            footprints.forEach(fp => {
+                 const x = iToX(fp.day);
+                 const hPt = rawHistory.find(h => h.day === fp.day);
+                 if (hPt) {
+                     const y = vToY(hPt.price);
+                     if (fp.type === 'SATURATION') {
+                         svg += `<polygon points="${x-4},${y-15} ${x+4},${y-15} ${x},${y-5}" fill="#ec4899" />`;
+                     } else if (fp.type === 'DEPLETION') {
+                         svg += `<polygon points="${x-4},${y+15} ${x+4},${y+15} ${x},${y+5}" fill="#ec4899" />`;
+                     }
+                 }
+            });
+        }
+
         // Pass 5: Timeline Context Labels & Axes
         const graphBottomY = height - paddingBottom;
-        svg += `<text x="${paddingLeft}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="start">-90</text>`;
+        svg += `<text x="${paddingLeft}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="start">-${historyDays}</text>`;
         
         // Present label and downward arrow pointing to current plot point
         const currX = iToX(currentDay);
         svg += `<text x="${currX}" y="${paddingTop - 12}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="middle">PRESENT</text>`;
         svg += `<polygon points="${currX - 4},${paddingTop - 8} ${currX + 4},${paddingTop - 8} ${currX},${paddingTop - 1}" fill="#ffffff" />`;
         
-        svg += `<text x="${width - paddingRight}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">+45</text>`;
+        svg += `<text x="${width - paddingRight}" y="${graphBottomY + 16}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">+${projectedDays}</text>`;
 
         // X-Axis TIME Label (Centered relative to the drawn graph width)
         const graphCenterX = paddingLeft + ((width - paddingLeft - paddingRight) / 2);
@@ -495,6 +573,10 @@ export class UIMarketControl {
         svg += `<rect x="${paddingLeft + 85}" y="${legendY2 - 10}" width="10" height="10" fill="rgba(0, 255, 0, 0.35)" />`;
         svg += `<rect x="${paddingLeft + 95}" y="${legendY2 - 10}" width="10" height="10" fill="rgba(255, 0, 0, 0.35)" />`;
         svg += `<text x="${paddingLeft + 110}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Economy</text>`;
+
+        // Footprint Legend item
+        svg += `<polygon points="${paddingLeft + 175},${legendY2 - 4} ${paddingLeft + 183},${legendY2 - 4} ${paddingLeft + 179},${legendY2 - 10}" fill="#ec4899" />`;
+        svg += `<text x="${paddingLeft + 193}" y="${legendY2}" fill="#ec4899" font-size="12" font-family="Roboto Mono">You</text>`;
 
         svg += `</svg></div>`;
         return svg;
