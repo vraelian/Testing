@@ -39,7 +39,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You are making adequate progress, but the interest on your loan continues to accrue. Your objective is to clear this debt promptly to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.",
+        description: "Captain [playerName], you are making adequate progress as a new trader, however, the interest on your loan continues to grow. Your objective is to clear your debt on the Finance screen to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
@@ -120,7 +120,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Merchants_Guild_3",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets. I see you've cleared your Guild loan and successfully executed that Earth hardware procurement. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Let’s see if your heavy logistics are as good as your accounting. The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] likely cannot hold that all at once, so get comfortable with the transit routes. You will likely need to source the freight from multiple stations. Time is money.",
+        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets. I see you've cleared your Guild loan.. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Let’s see if your heavy logistics are as good as your accounting. The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] cannot hold all of the freight at once, so get comfortable with the transit routes. You will likely need to source the Plasteel from multiple stations. Time is money.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
