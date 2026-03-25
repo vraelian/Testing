@@ -985,7 +985,7 @@ export class PlayerActionService {
             return 0; 
         }
 
-        let unitCost = shipDef ? Math.max(1, shipDef.price * 0.0001) : 75;
+        let unitCost = shipDef ? Math.max(1, shipDef.price * 0.0029) : 215;
 
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.LUNA) {

@@ -78,6 +78,21 @@ export class MarketEventHandler {
     }
 
     /**
+     * Toggles a CSS class to reduce font size when quantity is 4 digits or more.
+     * @param {HTMLElement} inputEl The input element to adjust.
+     * @param {number} quantity The current quantity value.
+     * @private
+     */
+    _updateQtyFontSize(inputEl, quantity) {
+        if (!inputEl) return;
+        if (quantity > 999) {
+            inputEl.classList.add('qty-high');
+        } else {
+            inputEl.classList.remove('qty-high');
+        }
+    }
+
+    /**
      * Handles real-time input events from the market quantity field.
      * @param {Event} e The input event.
      */
@@ -90,6 +105,7 @@ export class MarketEventHandler {
             this.uiManager.updateMarketCardDisplay(goodId, quantity, mode);
 
             this._updateMaxButtonState(controls, quantity, mode, goodId);
+            this._updateQtyFontSize(qtyInput, quantity);
 
             // --- UI JUICE: Prolonged Stepper Rattle on Input ---
             this._triggerProlongedPop(qtyInput);
@@ -192,6 +208,7 @@ export class MarketEventHandler {
                 this.uiManager.updateMarketCardDisplay(goodId, currentQty, newMode);
 
                 this._updateMaxButtonState(controls, currentQty, newMode, goodId);
+                this._updateQtyFontSize(qtyInput, currentQty);
 
                 // --- UI JUICE: Toggle Aura & Scan-line ---
                 const toggleSwitch = target.closest('.toggle-switch');
@@ -350,6 +367,7 @@ export class MarketEventHandler {
                 const newQuantity = parseInt(qtyInput.value) || 0;
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
+                this._updateQtyFontSize(qtyInput, newQuantity);
 
                 // --- UI JUICE: Super Slam Flash (Spammable Transition) ---
                 if (cardContainer) {
@@ -373,6 +391,7 @@ export class MarketEventHandler {
                 qtyInput.value = newQuantity;
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
+                this._updateQtyFontSize(qtyInput, newQuantity);
 
                 // --- UI JUICE: Prolonged Stepper Rattle & Arrow Glow ---
                 this._triggerProlongedPop(qtyInput);

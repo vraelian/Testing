@@ -7,6 +7,7 @@
  * * UPDATED: Fleet Quick-Swap UI.
  * * UPDATED: Added ID hooks for Level Up Animation.
  * * FIX: Added type="button" to comply with ADR-026.
+ * * FIX: Synchronized repair cost algorithm with backend ActionService.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -221,7 +222,8 @@ export function renderServicesScreen(gameState, simulationService) {
     // =========================================================================
 
     // 1. Calculate Base Unit Cost (Cost for 1 HP)
-    let repairUnitCost = GAME_RULES.REPAIR_COST_PER_HP;
+    // Synchronized with PlayerActionService: Algorithmic pricing based on ship class/base price
+    let repairUnitCost = shipStatic ? Math.max(1, shipStatic.price * 0.0029) : 215;
     
     // 2. Apply Modifiers to Unit Cost
     // --- VIRTUAL WORKBENCH: STATION QUIRKS ---
