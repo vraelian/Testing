@@ -140,7 +140,7 @@ export const ACTION_IDS = Object.freeze({
     TRAVEL: 'travel',
     BUY_SHIP: 'buy-ship',
     INTRO_BUY_SHIP: 'intro-buy-ship',
-    SELL_SHIP: 'sell-ship',
+    SELL_SHIP: 'select-ship',
     SELECT_SHIP: 'select-ship',
     PAY_DEBT: 'pay-debt',
     TAKE_LOAN: 'take-loan',
@@ -301,7 +301,7 @@ export const GAME_RULES = Object.freeze({
     FINANCE_HISTORY_LENGTH: 25,
     DAILY_PRICE_VOLATILITY: 0.25,
     MEAN_REVERSION_STRENGTH: 0.025, // Updated for Balance V2 (Stretched recovery)
-    MARKET_PRESSURE_DECAY: 0.65,    // Updated for Balance V2 (Harder profit crash)
+    MARKET_PRESSURE_DECAY: 0.985,   // Updated for Balance V3 (Supply-tethered slow-burn fallback)
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,

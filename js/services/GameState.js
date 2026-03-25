@@ -611,14 +611,19 @@ export class GameState {
 
     /**
      * Seeds the initial market prices for all commodities at all locations.
-     * Prices are based on the galactic average with randomness applied.
+     * Prices are based on the target Local Baseline with randomness applied to prevent universal inflation.
      * @private
      */
     _seedInitialMarketPrices() {
         DB.MARKETS.forEach(location => {
             this.market.prices[location.id] = {};
             DB.COMMODITIES.forEach(good => {
-                let price = this.market.galacticAverages[good.id] * (1 + (Math.random() - 0.5) * 0.15); // +/- 7.5% variance
+                const avg = this.market.galacticAverages[good.id] || 0;
+                const modifier = location.availabilityModifier?.[good.id] ?? 1.0;
+                const targetPriceOffset = (1.0 - modifier) * avg;
+                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+                
+                let price = localBaseline * (1 + (Math.random() - 0.5) * 0.15); // +/- 7.5% variance around true baseline
                 this.market.prices[location.id][good.id] = Math.max(1, Math.round(price));
             });
         });
