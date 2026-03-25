@@ -26,6 +26,31 @@ export class MarketService {
     }
 
     /**
+     * Simple string hashing for deterministic pseudo-random generation.
+     * @private
+     */
+    _hashString(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            const char = str.charCodeAt(i);
+            hash = ((hash << 5) - hash) + char;
+            hash = hash & hash; // Convert to 32bit integer
+        }
+        return hash;
+    }
+
+    /**
+     * Mulberry32 Seeded random number generator [0, 1)
+     * @private
+     */
+    _seededRandom(seed) {
+        let t = seed + 0x6D2B79F5;
+        t = Math.imul(t ^ t >>> 15, t | 1);
+        t ^= t + Math.imul(t ^ t >>> 7, t | 61);
+        return ((t ^ t >>> 14) >>> 0) / 4294967296;
+    }
+
+    /**
      * Wipes all player-driven market pressure and interactions, resetting the simulation to a baseline state.
      * Used during extreme time skips (indentured servitude).
      */
@@ -469,23 +494,19 @@ export class MarketService {
 
         const pressureChange = (((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
         
-        // --- FOOTPRINT LOGGING FIX: Threshold and property routing ---
-        const SIGNIFICANT_IMPACT_THRESHOLD = 0.05; 
-        
-        if (pressureChange >= SIGNIFICANT_IMPACT_THRESHOLD) {
-            const sysState = this.gameState.systemStates || this.gameState.systemState;
-            if (sysState) {
-                if (!sysState.economyFootprints) {
-                    sysState.economyFootprints = [];
-                }
-                
-                sysState.economyFootprints.push({
-                    day: this.gameState.day, 
-                    type: transactionType === 'buy' ? 'DEPLETION' : 'SATURATION', 
-                    locationId: this.gameState.currentLocationId, 
-                    commodityId: good.id
-                });
+        // --- FOOTPRINT LOGGING FIX: Universal Trade Tracking ---
+        const sysState = this.gameState.systemStates || this.gameState.systemState;
+        if (sysState) {
+            if (!sysState.economyFootprints) {
+                sysState.economyFootprints = [];
             }
+            
+            sysState.economyFootprints.push({
+                day: this.gameState.day, 
+                type: transactionType === 'buy' ? 'BUY' : 'SELL', 
+                locationId: this.gameState.currentLocationId, 
+                commodityId: good.id
+            });
         }
         
         if (transactionType === 'buy') {
@@ -510,7 +531,6 @@ export class MarketService {
             
             if (inventoryItem.quantity > (targetStock * 3.0)) {
                 inventoryItem.isSaturated = true;
-                const sysState = this.gameState.systemStates || this.gameState.systemState;
                 if (sysState) {
                     if (!sysState.economyFootprints) sysState.economyFootprints = [];
                     sysState.economyFootprints.push({
@@ -737,7 +757,7 @@ export class MarketService {
     /**
      * Extrapolates forward market trajectory and combines it with recent historical data.
      * Required by UIMarketControl to render the market forecast graph.
-     * Now includes economy footprint data for UI rendering.
+     * Now includes deterministic noise to ensure visual stability across UI renders.
      * @param {string} locationId 
      * @param {string} commodityId 
      * @param {number} historyDays 
@@ -782,24 +802,40 @@ export class MarketService {
         const PLAYER_PRESSURE_STRENGTH = 0.50; 
         let daysSinceInteraction = inventoryItem ? (currentDay - inventoryItem.lastPlayerInteractionTimestamp) : 999;
         
+        const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+        const priceRange = commodity ? (commodity.basePriceRange[1] - commodity.basePriceRange[0]) : localBaseline * 0.5;
+        
+        // DAMPENING: Halve the volatility scalar for the projection so the visual signal isn't completely lost to noise.
+        const volatility = GAME_RULES.DAILY_PRICE_VOLATILITY * 0.5;
+        
         // Procedurally generate future points using current decay/reversion math
         for (let i = 1; i <= projectedDays; i++) {
             const projDay = currentDay + i;
             let isLocked = projDay < lockEndDay;
             
-            if (!isLocked) {
-                // Determine reversion pull towards local baseline
-                let reversionEffect = (localBaseline - currentProjPrice) * meanReversion;
-                
-                // Determine delayed supply pressure impact
-                let pressureEffect = 0;
-                daysSinceInteraction++;
-                if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
-                     pressureEffect = (localBaseline * activePressure * -1) * PLAYER_PRESSURE_STRENGTH;
-                }
-                
-                currentProjPrice += (reversionEffect + pressureEffect);
+            // Determine reversion pull towards local baseline (paused if locked)
+            let reversionEffect = (localBaseline - currentProjPrice) * meanReversion;
+            if (isLocked) {
+                reversionEffect = 0;
             }
+            
+            // Determine delayed supply pressure impact
+            let pressureEffect = 0;
+            daysSinceInteraction++;
+            if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
+                 pressureEffect = (localBaseline * activePressure * -1) * PLAYER_PRESSURE_STRENGTH;
+            }
+            
+            // --- DETERMINISTIC NOISE INJECTION ---
+            // Create a unique hash seeded against exact coordinates in time/space to ensure visual 
+            // stability across UI re-renders, preventing the graph from radically reshaping.
+            const seedStr = `${locationId}-${commodityId}-${projDay}`;
+            const seedHash = this._hashString(seedStr);
+            const pseudoRandom = this._seededRandom(seedHash);
+            
+            const randomFluctuation = (pseudoRandom - 0.5) * priceRange * volatility;
+
+            currentProjPrice += (reversionEffect + pressureEffect + randomFluctuation);
             
             projection.push({
                 day: projDay,
