@@ -747,25 +747,151 @@ export class TravelService {
     }
 
     /**
-     * Handles the destruction of a player ship and the potential game over condition.
+     * Handles the destruction of a player ship by routing to the appropriate outcome based on chance.
      * @param {string} shipId
      * @private
      */
     _handleShipDestruction(shipId) {
+        // Roll 33% chance for the ship to be disabled and towed instead of completely destroyed
+        if (Math.random() <= 0.33) {
+            this._handleShipDisabledAndTowed(shipId);
+        } else {
+            this._executeShipDestruction(shipId);
+        }
+    }
+
+    /**
+     * Outcome where the ship is not fully destroyed, but severely damaged and towed back.
+     * @param {string} shipId
+     * @private
+     */
+    _handleShipDisabledAndTowed(shipId) {
+        const state = this.gameState.getState();
+        const shipState = this.gameState.player.shipStates[shipId];
+        const originName = DB.MARKETS.find(m => m.id === state.currentLocationId)?.name || "Origin";
+        const lostDays = 21;
+
+        // Apply severe survival consequences
+        shipState.health = 1;
+        shipState.fuel = 0;
+
+        // Fix starfield lock from travel animation overlay
+        starfieldService.triggerQuickExit();
+        const travelModal = document.getElementById('travel-animation-modal');
+        if (travelModal) travelModal.classList.add('hidden');
+
+        // Advance time and clear travel status
+        this.timeService.advanceDays(lostDays);
+        this.gameState.setState({ pendingTravel: null });
+
+        this.logger.info.player(this.gameState.day, 'TRAVEL_TOWED', `Ship disabled and towed back to ${originName}. Lost ${lostDays} days.`);
+
+        // Route to the Services screen so the player can immediately repair
+        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.SERVICES);
+
+        // Show narrative explanation
+        this.uiManager.showEventResultModal(
+            "Critical Failure: Systems Dead",
+            `Your ship suffered catastrophic system failure during transit. Drifting in the void for weeks on failing life support, you were eventually found by a passing deep-space freighter and towed back to <b>${originName}</b>.<br><br>Your ship survived, but just barely.`,
+            [
+                { type: 'EFF_HULL', value: -1 }, // Visual only indicator of loss
+                { type: 'EFF_FUEL', value: 0 },
+                { type: 'EFF_TRAVEL_TIME', value: lostDays }
+            ]
+        );
+    }
+
+    /**
+     * Executes the absolute destruction sequence of a ship, playing the cinematic overlay and resolving backups.
+     * @param {string} shipId
+     * @private
+     */
+    _executeShipDestruction(shipId) {
         const shipName = DB.SHIPS[shipId].name;
         this.logger.error('TravelService', `Ship ${shipName} was destroyed.`);
-        this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
-        delete this.gameState.player.shipStates[shipId];
-        delete this.gameState.player.inventories[shipId];
+        
+        const isGameOver = this.gameState.player.ownedShipIds.length <= 1;
 
-        if (this.gameState.player.ownedShipIds.length === 0) {
-            this.simulationService._gameOver(`Your last ship, the ${shipName}, was destroyed. Your trading career ends here.`);
+        // Phase 3 Bug Fix (B/C): Free the Starfield Lock or maintain background for Game Over
+        if (!isGameOver) {
+            starfieldService.triggerQuickExit();
         } else {
-            this.gameState.player.activeShipId = this.gameState.player.ownedShipIds[0];
-            const newShipName = DB.SHIPS[this.gameState.player.activeShipId].name;
-            const message = `The ${shipName} suffered a catastrophic hull breach and was destroyed. All cargo was lost.<br><br>You now command your backup vessel, the ${newShipName}.`;
-            this.uiManager.queueModal('event-modal', 'Vessel Lost', message);
+            if (starfieldService.setDecelerateWarp) {
+                starfieldService.setDecelerateWarp();
+            }
         }
-        this.gameState.setState({});
+        
+        const travelModal = document.getElementById('travel-animation-modal');
+        if (travelModal) {
+            travelModal.classList.add('hidden');
+            travelModal.classList.remove('modal-hiding', 'dismiss-disabled');
+        }
+
+        const gameContainer = document.getElementById('game-container');
+        if (isGameOver && gameContainer) {
+            gameContainer.style.opacity = '0';
+            gameContainer.style.pointerEvents = 'none';
+        }
+
+        // Phase 3 Animation (A): Cinematic Overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.backgroundColor = 'transparent';
+        overlay.style.zIndex = '9999'; // Intercepts above game, below modals
+        overlay.style.pointerEvents = 'none';
+        document.body.appendChild(overlay);
+
+        // Web Animations API: Transparent -> Red -> Pitch Black
+        const animation = overlay.animate([
+            { backgroundColor: 'transparent', offset: 0 },
+            { backgroundColor: '#991b1b', offset: 0.6 }, // 3 seconds: Solid Red
+            { backgroundColor: '#000000', offset: 1 }    // 5 seconds: Pitch Black
+        ], {
+            duration: 5000,
+            fill: 'forwards',
+            easing: 'ease-in-out'
+        });
+
+        animation.onfinish = () => {
+            // Execute core destruction state logic
+            this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
+            delete this.gameState.player.shipStates[shipId];
+            delete this.gameState.player.inventories[shipId];
+            this.gameState.pendingTravel = null; // Clear travel state
+
+            this.gameState.setState({});
+
+            if (isGameOver) {
+                const fadeOut = overlay.animate([
+                    { opacity: 1 },
+                    { opacity: 0 }
+                ], { duration: 1000, fill: 'forwards' });
+                
+                fadeOut.onfinish = () => {
+                    overlay.remove();
+                    this.simulationService._gameOver(`Your last ship, the ${shipName}, was destroyed. Your trading career ends here.`);
+                };
+            } else {
+                this.gameState.player.activeShipId = this.gameState.player.ownedShipIds[0];
+                const newShipName = DB.SHIPS[this.gameState.player.activeShipId].name;
+                const message = `The ${shipName} suffered a catastrophic hull breach and was destroyed. All cargo was lost.<br><br>You now command your backup vessel, the ${newShipName}.`;
+                
+                this.uiManager.queueModal('event-modal', 'Vessel Lost', message, () => {
+                    this.simulationService.setHangarShipyardMode('hangar');
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                }, { dismissOutside: false });
+
+                const fadeOut = overlay.animate([
+                    { opacity: 1 },
+                    { opacity: 0 }
+                ], { duration: 1000, fill: 'forwards' });
+                
+                fadeOut.onfinish = () => overlay.remove();
+            }
+        };
     }
 }
