@@ -2,7 +2,7 @@
 /**
  * @fileoverview Defines all static flavor text messages for the news ticker,
  * organized by location.
- * Exports a single constant, FLAVOR_ADS.
+ * Exports a single constant, FLAVOR_ADS, and CRITICAL_HULL_WARNINGS.
  */
 
 export const FLAVOR_ADS = {
@@ -259,3 +259,23 @@ export const FLAVOR_ADS = {
         "System jurisdiction ends here, but your stay doesn't have to."
     ]
 };
+
+export const CRITICAL_HULL_WARNINGS = [
+    "Multiple micro-fractures have severely compromised the ship's superstructure. You must seek repair services immediately before the damage cascades. A transit in this state is highly likely to end in permanent vessel destruction and cargo vaporization.",
+    "Telemetry reports critical stress on all load-bearing bulkheads. Emergency structural maintenance is required at the nearest port. Forcing the drive engines now severely risks catastrophic hull failure, threatening to obliterate the ship and its payload.",
+    "The external armor plating has degraded past critical safety tolerances. Immediate shipyard intervention is necessary to prevent a total breach. Another transit carries immense risk of structural collapse, condemning the ship and all freight to the void.",
+    "Internal pressure containment is fluctuating wildly due to severe hull damage. Immediate patching and reinforcement are required. Launching under these conditions invites a high probability of explosive disassembly and total asset forfeiture.",
+    "The vessel's primary skeleton is groaning under critical fatigue. Docking for urgent structural overhaul is strongly advised. Exposing the ship to transit stresses now risks total fragmentation, ensuring the loss of the hull and your cargo.",
+    "Automated diagnostics flag the hull as critically unstable. Station-side maintenance is urgently required to avert disaster. Proceeding with launch sequences carries an unacceptable risk of permanent destruction and total cargo loss.",
+    "Hull telemetry has flatlined in several critical zones. Emergency yard repairs are paramount for continued survival. A transit attempt right now invites severe risk of structural disintegration and the vaporization of all holds.",
+    "The hull is severely degraded and operating well below minimum safety standards. Secure immediate shipyard repairs before the plating completely gives way. Risking another flight highly elevates the chance of explosive decompression, wiping out the ship and your investment.",
+    "The main load-bearing struts are fractured and buckling. Ground the vessel and seek emergency repairs at once. Subjecting the ship to transit velocity risks snapping the frame, which threatens to instantly destroy the ship and void its cargo.",
+    "Vessel integrity is critically compromised. Urgent repairs are required to stabilize the airframe. Launching now poses an extreme threat of structural annihilation, risking the permanent loss of the ship and all stored commodities.",
+    "CRITICAL: Hull armor is failing to maintain basic atmospheric pressure. Seek mechanical services immediately to avoid a total breach. A transit attempt carries a severe risk of tearing the ship apart, resulting in the permanent loss of the hull and payload.",
+    "Unnatural vibrations suggest the primary chassis is in critical disrepair. Immediate shipyard intervention is required. Firing the engines risks a catastrophic resonance cascade, highly likely to shatter the vessel and disperse its cargo into the void.",
+    "System Log: Catastrophic hull fatigue detected across multiple decks. Emergency drydock servicing is mandatory. Proceeding with the launch sequence severely risks structural disintegration, threatening the permanent destruction of the vessel and cargo.",
+    "The ship's plating is shearing off from the core superstructure. You must procure repair services before attempting any maneuvers. Leaving orbit in this condition risks a catastrophic tear, condemning the ship and its cargo to the vacuum.",
+    "Structural analysis shows the vessel is operating at a critical physical deficit. Immediate restorative repairs are highly recommended. A launch subjects the weakened hull to immense g-forces, risking explosive failure and the permanent loss of all freight.",
+    "The vessel is actively hemorrhaging structural stability. Immediate mechanical attention is required to salvage the hull. Initiating a jump risks pushing the ship past its breaking point, threatening permanent destruction and total cargo loss.",
+    "The hull is audibly groaning under its own weight due to severe damage. Emergency repairs must be initiated immediately. Firing the thrusters now introduces a massive risk of the ship snapping in half, annihilating the vessel and cargo."
+];

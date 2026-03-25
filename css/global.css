@@ -477,6 +477,18 @@ BUTTON GLOW --- */
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
+/* --- HULL HEALTH WARNING ANIMATION --- */
+@keyframes critical-hull-pulse {
+    0% { background-color: rgba(255, 0, 0, 0.1); }
+    50% { background-color: rgba(255, 0, 0, 0.6); }
+    100% { background-color: rgba(255, 0, 0, 0.1); }
+}
+
+.bg-critical-pulse {
+    animation: critical-hull-pulse 2s infinite ease-in-out !important;
+}
+/* --- END HULL HEALTH WARNING ANIMATION --- */
+
 
 @keyframes float-up {
     from {
