@@ -6876,7 +6876,7 @@ card.
     animation: stepper-border-pulse 1s infinite;
 }
 .qty-stepper input {
-    width: 30%;
+    width: 38%;
     background: none;
     border: none;
     text-align: center;
@@ -6884,6 +6884,10 @@ card.
     font-size: 1.2em;
     font-family: 'Roboto Mono', monospace;
     -moz-appearance: textfield;
+    transition: font-size 0.2s ease;
+}
+.qty-stepper input.qty-high {
+    font-size: 1.05em;
 }
 .qty-stepper input::-webkit-inner-spin-button {
     -webkit-appearance: none;
@@ -11400,6 +11404,7 @@ export function renderFinanceScreen(gameState) {
  * * UPDATED: Fleet Quick-Swap UI.
  * * UPDATED: Added ID hooks for Level Up Animation.
  * * FIX: Added type="button" to comply with ADR-026.
+ * * FIX: Synchronized repair cost algorithm with backend ActionService.
  */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
@@ -11614,7 +11619,8 @@ export function renderServicesScreen(gameState, simulationService) {
     // =========================================================================
 
     // 1. Calculate Base Unit Cost (Cost for 1 HP)
-    let repairUnitCost = GAME_RULES.REPAIR_COST_PER_HP;
+    // Synchronized with PlayerActionService: Algorithmic pricing based on ship class/base price
+    let repairUnitCost = shipStatic ? Math.max(1, shipStatic.price * 0.0029) : 215;
     
     // 2. Apply Modifiers to Unit Cost
     // --- VIRTUAL WORKBENCH: STATION QUIRKS ---
@@ -13684,7 +13690,7 @@ export const GAME_RULES = Object.freeze({
     FUEL_SCALAR: 2.5, 
     INTEREST_INTERVAL: 30,
     PASSIVE_REPAIR_RATE: 0.02,
-    HULL_DECAY_PER_TRAVEL_DAY: (1 / 7) * 1.01,
+    HULL_DECAY_PER_TRAVEL_DAY: (1 / 7) * 1.0605, // Increased base decay rate by 5%
     SHIP_SELL_MODIFIER: 0.75,
     RARE_SHIP_CHANCE: 0.3,
     PRICE_HISTORY_LENGTH: 65,
@@ -21931,7 +21937,14 @@ export class UIMarketControl {
                 if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
-                    this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
+                    const parsedQty = parseInt(state.quantity, 10) || 0;
+                    this.updateMarketCardDisplay(goodId, parsedQty, state.mode);
+                    
+                    if (parsedQty > 999) {
+                        qtyInput.classList.add('qty-high');
+                    } else {
+                        qtyInput.classList.remove('qty-high');
+                    }
                 }
             }
         }
@@ -41245,6 +41258,21 @@ export class MarketEventHandler {
     }
 
     /**
+     * Toggles a CSS class to reduce font size when quantity is 4 digits or more.
+     * @param {HTMLElement} inputEl The input element to adjust.
+     * @param {number} quantity The current quantity value.
+     * @private
+     */
+    _updateQtyFontSize(inputEl, quantity) {
+        if (!inputEl) return;
+        if (quantity > 999) {
+            inputEl.classList.add('qty-high');
+        } else {
+            inputEl.classList.remove('qty-high');
+        }
+    }
+
+    /**
      * Handles real-time input events from the market quantity field.
      * @param {Event} e The input event.
      */
@@ -41257,6 +41285,7 @@ export class MarketEventHandler {
             this.uiManager.updateMarketCardDisplay(goodId, quantity, mode);
 
             this._updateMaxButtonState(controls, quantity, mode, goodId);
+            this._updateQtyFontSize(qtyInput, quantity);
 
             // --- UI JUICE: Prolonged Stepper Rattle on Input ---
             this._triggerProlongedPop(qtyInput);
@@ -41359,6 +41388,7 @@ export class MarketEventHandler {
                 this.uiManager.updateMarketCardDisplay(goodId, currentQty, newMode);
 
                 this._updateMaxButtonState(controls, currentQty, newMode, goodId);
+                this._updateQtyFontSize(qtyInput, currentQty);
 
                 // --- UI JUICE: Toggle Aura & Scan-line ---
                 const toggleSwitch = target.closest('.toggle-switch');
@@ -41517,6 +41547,7 @@ export class MarketEventHandler {
                 const newQuantity = parseInt(qtyInput.value) || 0;
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
+                this._updateQtyFontSize(qtyInput, newQuantity);
 
                 // --- UI JUICE: Super Slam Flash (Spammable Transition) ---
                 if (cardContainer) {
@@ -41540,6 +41571,7 @@ export class MarketEventHandler {
                 qtyInput.value = newQuantity;
                 this.uiManager.updateMarketCardDisplay(goodId, newQuantity, mode);
                 this._updateMaxButtonState(controls, newQuantity, mode, goodId);
+                this._updateQtyFontSize(qtyInput, newQuantity);
 
                 // --- UI JUICE: Prolonged Stepper Rattle & Arrow Glow ---
                 this._triggerProlongedPop(qtyInput);
@@ -44343,7 +44375,7 @@ export class PlayerActionService {
             return 0; 
         }
 
-        let unitCost = shipDef ? Math.max(1, shipDef.price * 0.0001) : 75;
+        let unitCost = shipDef ? Math.max(1, shipDef.price * 0.0029) : 215;
 
         // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.LUNA) {
@@ -44469,6 +44501,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.17] - 2026-3-24
+-  added number resizing for qty input on market screen
+-  increased repair costs by 31.8%
+-  increast hull deterioration rate by 5%
 
 # [37.14] - 2026-3-24
 -  market behavior bug fixes, balance, and polish

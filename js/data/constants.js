@@ -294,7 +294,7 @@ export const GAME_RULES = Object.freeze({
     FUEL_SCALAR: 2.5, 
     INTEREST_INTERVAL: 30,
     PASSIVE_REPAIR_RATE: 0.02,
-    HULL_DECAY_PER_TRAVEL_DAY: (1 / 7) * 1.01,
+    HULL_DECAY_PER_TRAVEL_DAY: (1 / 7) * 1.0605, // Increased base decay rate by 5%
     SHIP_SELL_MODIFIER: 0.75,
     RARE_SHIP_CHANCE: 0.3,
     PRICE_HISTORY_LENGTH: 65,

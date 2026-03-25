@@ -121,7 +121,14 @@ export class UIMarketControl {
                 if (qtyInput) {
                     qtyInput.value = state.quantity;
                     control.setAttribute('data-mode', state.mode);
-                    this.updateMarketCardDisplay(goodId, parseInt(state.quantity, 10) || 0, state.mode);
+                    const parsedQty = parseInt(state.quantity, 10) || 0;
+                    this.updateMarketCardDisplay(goodId, parsedQty, state.mode);
+                    
+                    if (parsedQty > 999) {
+                        qtyInput.classList.add('qty-high');
+                    } else {
+                        qtyInput.classList.remove('qty-high');
+                    }
                 }
             }
         }
