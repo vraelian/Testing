@@ -376,8 +376,8 @@ export class UIMarketControl {
         const locId = gameState.currentLocationId;
         const currentDay = gameState.day;
         
-        const historyDays = 90;
-        const projectedDays = 45;
+        const historyDays = 60;
+        const projectedDays = 20;
 
         const payload = ms.generateCurveData(locId, goodId, historyDays, projectedDays);
         if (!payload || !payload.points || payload.points.length === 0) return `<div class="text-gray-400 text-sm p-4">No Data Available</div>`;
@@ -512,15 +512,29 @@ export class UIMarketControl {
 
         // Render Player Footprints
         if (footprints && footprints.length > 0) {
+            const uniqueFootprints = {};
             footprints.forEach(fp => {
+                // Prioritize extreme events over standard buy/sell for display
+                if (!uniqueFootprints[fp.day] || fp.type === 'SATURATION' || fp.type === 'DEPLETION') {
+                    uniqueFootprints[fp.day] = fp;
+                }
+            });
+
+            Object.values(uniqueFootprints).forEach(fp => {
                  const x = iToX(fp.day);
+                 if (x < paddingLeft || x > width - paddingRight) return; 
+                 
                  const hPt = rawHistory.find(h => h.day === fp.day);
                  if (hPt) {
                      const y = vToY(hPt.price);
                      if (fp.type === 'SATURATION') {
-                         svg += `<polygon points="${x-4},${y-15} ${x+4},${y-15} ${x},${y-5}" fill="#ec4899" />`;
+                         svg += `<polygon points="${x-4},${y-30} ${x+4},${y-30} ${x},${y-20}" fill="#ec4899" />`;
                      } else if (fp.type === 'DEPLETION') {
-                         svg += `<polygon points="${x-4},${y+15} ${x+4},${y+15} ${x},${y+5}" fill="#ec4899" />`;
+                         svg += `<polygon points="${x-4},${y+30} ${x+4},${y+30} ${x},${y+20}" fill="#ec4899" />`;
+                     } else if (fp.type === 'SELL') {
+                         svg += `<polygon points="${x-3},${y-24} ${x+3},${y-24} ${x},${y-16}" fill="#f59e0b" />`;
+                     } else if (fp.type === 'BUY') {
+                         svg += `<polygon points="${x-3},${y+24} ${x+3},${y+24} ${x},${y+16}" fill="#3b82f6" />`;
                      }
                  }
             });
@@ -575,8 +589,9 @@ export class UIMarketControl {
         svg += `<text x="${paddingLeft + 110}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Economy</text>`;
 
         // Footprint Legend item
-        svg += `<polygon points="${paddingLeft + 175},${legendY2 - 4} ${paddingLeft + 183},${legendY2 - 4} ${paddingLeft + 179},${legendY2 - 10}" fill="#ec4899" />`;
-        svg += `<text x="${paddingLeft + 193}" y="${legendY2}" fill="#ec4899" font-size="12" font-family="Roboto Mono">You</text>`;
+        svg += `<polygon points="${paddingLeft + 175},${legendY2 - 2} ${paddingLeft + 181},${legendY2 - 2} ${paddingLeft + 178},${legendY2 - 8}" fill="#3b82f6" />`;
+        svg += `<polygon points="${paddingLeft + 185},${legendY2 - 8} ${paddingLeft + 191},${legendY2 - 8} ${paddingLeft + 188},${legendY2 - 2}" fill="#f59e0b" />`;
+        svg += `<text x="${paddingLeft + 195}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Trades</text>`;
 
         svg += `</svg></div>`;
         return svg;
