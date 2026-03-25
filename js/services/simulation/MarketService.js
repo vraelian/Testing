@@ -272,13 +272,15 @@ export class MarketService {
                 }
 
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
-                const randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
+                let randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 
                 // Variable Reversion Delay (Price Lock)
-                if (this.gameState.day < inventoryItem.priceLockEndDay) {
+                let isLocked = this.gameState.day < inventoryItem.priceLockEndDay;
+                if (isLocked) {
                     reversionEffect = 0;
+                    randomFluctuation = 0; // Strict enforcement of Price Lock prevents unconstrained jitter
                 }
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
@@ -293,7 +295,7 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                // Delayed Player Pressure
+                // Delayed Player Pressure (The Snap)
                 let pressureEffect = 0;
                 const PLAYER_PRESSURE_STRENGTH = 0.50; 
                 
@@ -339,18 +341,32 @@ export class MarketService {
                 }
 
                 /**
-                 * @description Pressure is hermetically preserved during the 7-day interaction cooldown 
-                 * to ensure the delayed economic shock strikes the baseline price with its intended accumulated volume.
+                 * @description The Hermetic Seal & Supply-Tethered Slow Burn.
+                 * Pressure is sealed at 100% for 7 days. Once the delay ends, the market shock "snaps" into effect.
+                 * The decay of this pressure is no longer an arbitrary daily drop; it is dynamically tethered to 
+                 * the market's physical daily restocking rate (supply and demand).
                  */
-                if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7 || inventoryItem.lastPlayerInteractionTimestamp === 0) {
-                    let decayMod = 1.0;
-                    if (inventoryItem.marketPressure > 0 && location.ecoProfile?.recoveryMod) {
-                        decayMod = 1.0 / location.ecoProfile.recoveryMod;
-                    }
+                if (inventoryItem.marketPressure !== 0) {
+                    if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
+                        let decayMod = 1.0;
+                        if (inventoryItem.marketPressure > 0 && location.ecoProfile?.recoveryMod) {
+                            decayMod = 1.0 / location.ecoProfile.recoveryMod;
+                        }
 
-                    inventoryItem.marketPressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
-                    if (Math.abs(inventoryItem.marketPressure) < 0.001) {
-                        inventoryItem.marketPressure = 0;
+                        // Fetch the location's specific physical restock speed for this good
+                        let replenishRate = location.ecoProfile?.commodityReplenishRates?.[commodity.id] ?? location.ecoProfile?.replenishRate ?? 0.10;
+                        
+                        // Convert weekly physical restock to daily percentage (e.g., 10% weekly = ~1.4% daily)
+                        let dailyRestockPercent = replenishRate / 7;
+                        
+                        // Price pressure eases exactly as fast as new supply physically arrives
+                        let dynamicDecayMultiplier = 1.0 - (dailyRestockPercent * decayMod);
+
+                        inventoryItem.marketPressure *= dynamicDecayMultiplier;
+                        
+                        if (Math.abs(inventoryItem.marketPressure) < 0.001) {
+                            inventoryItem.marketPressure = 0;
+                        }
                     }
                 }
             });
@@ -815,8 +831,17 @@ export class MarketService {
             
             // Determine reversion pull towards local baseline (paused if locked)
             let reversionEffect = (localBaseline - currentProjPrice) * meanReversion;
+            
+            // --- DETERMINISTIC NOISE INJECTION ---
+            const seedStr = `${locationId}-${commodityId}-${projDay}`;
+            const seedHash = this._hashString(seedStr);
+            const pseudoRandom = this._seededRandom(seedHash);
+            
+            let randomFluctuation = (pseudoRandom - 0.5) * priceRange * volatility;
+
             if (isLocked) {
                 reversionEffect = 0;
+                randomFluctuation = 0; // Curve must match strict lock enforcement
             }
             
             // Determine delayed supply pressure impact
@@ -825,15 +850,6 @@ export class MarketService {
             if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
                  pressureEffect = (localBaseline * activePressure * -1) * PLAYER_PRESSURE_STRENGTH;
             }
-            
-            // --- DETERMINISTIC NOISE INJECTION ---
-            // Create a unique hash seeded against exact coordinates in time/space to ensure visual 
-            // stability across UI re-renders, preventing the graph from radically reshaping.
-            const seedStr = `${locationId}-${commodityId}-${projDay}`;
-            const seedHash = this._hashString(seedStr);
-            const pseudoRandom = this._seededRandom(seedHash);
-            
-            const randomFluctuation = (pseudoRandom - 0.5) * priceRange * volatility;
 
             currentProjPrice += (reversionEffect + pressureEffect + randomFluctuation);
             
@@ -843,12 +859,19 @@ export class MarketService {
                 isLocked: isLocked
             });
             
-            // Age out pressure bounds slightly to curve the line properly
-            let decayMod = 1.0;
-            if (activePressure > 0 && location?.ecoProfile?.recoveryMod) {
-                decayMod = 1.0 / location.ecoProfile.recoveryMod;
+            // Apply dynamic visual decay extrapolation for the graph curve
+            if (activePressure !== 0 && daysSinceInteraction >= 7) {
+                let decayMod = 1.0;
+                if (activePressure > 0 && location?.ecoProfile?.recoveryMod) {
+                    decayMod = 1.0 / location.ecoProfile.recoveryMod;
+                }
+                
+                let replenishRate = location?.ecoProfile?.commodityReplenishRates?.[commodityId] ?? location?.ecoProfile?.replenishRate ?? 0.10;
+                let dailyRestockPercent = replenishRate / 7;
+                let dynamicDecayMultiplier = 1.0 - (dailyRestockPercent * decayMod);
+                
+                activePressure *= dynamicDecayMultiplier;
             }
-            activePressure *= (GAME_RULES.MARKET_PRESSURE_DECAY * decayMod);
         }
 
         const curveData = [...historicalData, ...projection];
