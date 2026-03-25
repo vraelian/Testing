@@ -268,6 +268,7 @@ export function renderServicesScreen(gameState, simulationService) {
     // --- Calculate Percentages ---
     const fuelPct = (shipState.fuel / effectiveMaxFuel) * 100;
     const healthPct = (shipState.health / effectiveMaxHealth) * 100;
+    const healthPulseClass = healthPct < 30 ? ' bg-critical-pulse' : '';
 
     const isFuelFull = shipState.fuel >= effectiveMaxFuel;
     const isHealthFull = shipState.health >= effectiveMaxHealth;
@@ -342,7 +343,7 @@ export function renderServicesScreen(gameState, simulationService) {
 
                       <div class="service-module w-full max-w-sm" style="--resource-color-rgb: 22, 163, 74; --resource-color: #16a34a; --ot-green-accent: #16a34a; --ot-green-text-light: #22c55e;">
                         <div class="bar-housing">
-                          <div class="progress-bar-container w-full h-14 rounded-lg border border-gray-800 overflow-hidden relative">
+                          <div class="progress-bar-container${healthPulseClass} w-full h-14 rounded-lg border border-gray-800 overflow-hidden relative">
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                                <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">

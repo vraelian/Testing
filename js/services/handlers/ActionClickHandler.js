@@ -308,12 +308,36 @@ export class ActionClickHandler {
                 }
                 break;
             }
+            
+            // --- VIRTUAL WORKBENCH: PHASE 4 - HULL WARNING INTERCEPT ---
             case ACTION_IDS.TRAVEL: {
-                this.uiManager.hideModal('launch-modal');
+                e.preventDefault(); // Complying with ADR-026 Mars Revert Protocol
                 const useFoldedDrive = dataset.useFoldedDrive === 'true';
-                this.simulationService.travelTo(dataset.locationId, useFoldedDrive);
+                const locationId = dataset.locationId;
+
+                const activeShipId = state.player.activeShipId;
+                const shipState = state.player.shipStates[activeShipId];
+                
+                let maxHealth = DB.SHIPS[activeShipId].maxHealth;
+                if (this.simulationService.getEffectiveShipStats) {
+                    const effStats = this.simulationService.getEffectiveShipStats(activeShipId);
+                    if (effStats) maxHealth = effStats.maxHealth;
+                }
+                
+                const hullRatio = shipState.health / maxHealth;
+
+                this.uiManager.hideModal('launch-modal');
+
+                // The Intercept
+                if (hullRatio < 0.15) {
+                    this.uiManager.eventControl.showCriticalHullWarningModal(locationId, useFoldedDrive);
+                    return; // Halt travel sequence
+                }
+
+                this.simulationService.travelTo(locationId, useFoldedDrive);
                 break;
             }
+            // --- END VIRTUAL WORKBENCH ---
 
             case 'navigate-to-poi': {
                 const { locationId } = dataset;

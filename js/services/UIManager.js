@@ -294,15 +294,18 @@ export class UIManager {
         let statusPodHtml = '';
         if (activeShipStatic && activeShipState && inventory) {
             const cargoUsed = calculateInventoryUsed(inventory);
-            const hullPct = (activeShipState.health / activeShipStatic.maxHealth) * 100;
+            const hullRatio = activeShipState.health / activeShipStatic.maxHealth;
+            const hullPct = hullRatio * 100;
             const fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
             const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
+            
+            const hullPulseClass = hullRatio < 0.30 ? ' bg-critical-pulse' : '';
 
             statusPodHtml = `
                  <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">H</span>
-                        <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
+                        <div class="status-bar${hullPulseClass}"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                          <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
                     <div class="status-bar-group fuel-group" data-action="toggle-tooltip">

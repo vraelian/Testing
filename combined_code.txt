@@ -2509,6 +2509,18 @@ BUTTON GLOW --- */
 }
 /* --- END VIRTUAL WORKBENCH --- */
 
+/* --- HULL HEALTH WARNING ANIMATION --- */
+@keyframes critical-hull-pulse {
+    0% { background-color: rgba(255, 0, 0, 0.1); }
+    50% { background-color: rgba(255, 0, 0, 0.6); }
+    100% { background-color: rgba(255, 0, 0, 0.1); }
+}
+
+.bg-critical-pulse {
+    animation: critical-hull-pulse 2s infinite ease-in-out !important;
+}
+/* --- END HULL HEALTH WARNING ANIMATION --- */
+
 
 @keyframes float-up {
     from {
@@ -11665,6 +11677,7 @@ export function renderServicesScreen(gameState, simulationService) {
     // --- Calculate Percentages ---
     const fuelPct = (shipState.fuel / effectiveMaxFuel) * 100;
     const healthPct = (shipState.health / effectiveMaxHealth) * 100;
+    const healthPulseClass = healthPct < 30 ? ' bg-critical-pulse' : '';
 
     const isFuelFull = shipState.fuel >= effectiveMaxFuel;
     const isHealthFull = shipState.health >= effectiveMaxHealth;
@@ -11739,7 +11752,7 @@ export function renderServicesScreen(gameState, simulationService) {
 
                       <div class="service-module w-full max-w-sm" style="--resource-color-rgb: 22, 163, 74; --resource-color: #16a34a; --ot-green-accent: #16a34a; --ot-green-text-light: #22c55e;">
                         <div class="bar-housing">
-                          <div class="progress-bar-container w-full h-14 rounded-lg border border-gray-800 overflow-hidden relative">
+                          <div class="progress-bar-container${healthPulseClass} w-full h-14 rounded-lg border border-gray-800 overflow-hidden relative">
                             <div class="absolute inset-0 z-10 flex justify-between items-center p-1.5 px-4 text-sm pointer-events-none">
                                <span class="font-electrolize font-bold tracking-wider uppercase text-outline" style="color: var(--ot-green-text-light); --glow-color: var(--ot-green-text-light);">HULL INTEGRITY</span>
                               <span class="font-mono font-bold text-white text-outline" style="--glow-color: var(--resource-color);">
@@ -16784,7 +16797,7 @@ Now, after decades of service, the Alliance is auctioning off this lone giant fr
 /**
  * @fileoverview Defines all static flavor text messages for the news ticker,
  * organized by location.
- * Exports a single constant, FLAVOR_ADS.
+ * Exports a single constant, FLAVOR_ADS, and CRITICAL_HULL_WARNINGS.
  */
 
 export const FLAVOR_ADS = {
@@ -17041,6 +17054,26 @@ export const FLAVOR_ADS = {
         "System jurisdiction ends here, but your stay doesn't have to."
     ]
 };
+
+export const CRITICAL_HULL_WARNINGS = [
+    "Multiple micro-fractures have severely compromised the ship's superstructure. You must seek repair services immediately before the damage cascades. A transit in this state is highly likely to end in permanent vessel destruction and cargo vaporization.",
+    "Telemetry reports critical stress on all load-bearing bulkheads. Emergency structural maintenance is required at the nearest port. Forcing the drive engines now severely risks catastrophic hull failure, threatening to obliterate the ship and its payload.",
+    "The external armor plating has degraded past critical safety tolerances. Immediate shipyard intervention is necessary to prevent a total breach. Another transit carries immense risk of structural collapse, condemning the ship and all freight to the void.",
+    "Internal pressure containment is fluctuating wildly due to severe hull damage. Immediate patching and reinforcement are required. Launching under these conditions invites a high probability of explosive disassembly and total asset forfeiture.",
+    "The vessel's primary skeleton is groaning under critical fatigue. Docking for urgent structural overhaul is strongly advised. Exposing the ship to transit stresses now risks total fragmentation, ensuring the loss of the hull and your cargo.",
+    "Automated diagnostics flag the hull as critically unstable. Station-side maintenance is urgently required to avert disaster. Proceeding with launch sequences carries an unacceptable risk of permanent destruction and total cargo loss.",
+    "Hull telemetry has flatlined in several critical zones. Emergency yard repairs are paramount for continued survival. A transit attempt right now invites severe risk of structural disintegration and the vaporization of all holds.",
+    "The hull is severely degraded and operating well below minimum safety standards. Secure immediate shipyard repairs before the plating completely gives way. Risking another flight highly elevates the chance of explosive decompression, wiping out the ship and your investment.",
+    "The main load-bearing struts are fractured and buckling. Ground the vessel and seek emergency repairs at once. Subjecting the ship to transit velocity risks snapping the frame, which threatens to instantly destroy the ship and void its cargo.",
+    "Vessel integrity is critically compromised. Urgent repairs are required to stabilize the airframe. Launching now poses an extreme threat of structural annihilation, risking the permanent loss of the ship and all stored commodities.",
+    "CRITICAL: Hull armor is failing to maintain basic atmospheric pressure. Seek mechanical services immediately to avoid a total breach. A transit attempt carries a severe risk of tearing the ship apart, resulting in the permanent loss of the hull and payload.",
+    "Unnatural vibrations suggest the primary chassis is in critical disrepair. Immediate shipyard intervention is required. Firing the engines risks a catastrophic resonance cascade, highly likely to shatter the vessel and disperse its cargo into the void.",
+    "System Log: Catastrophic hull fatigue detected across multiple decks. Emergency drydock servicing is mandatory. Proceeding with the launch sequence severely risks structural disintegration, threatening the permanent destruction of the vessel and cargo.",
+    "The ship's plating is shearing off from the core superstructure. You must procure repair services before attempting any maneuvers. Leaving orbit in this condition risks a catastrophic tear, condemning the ship and its cargo to the vacuum.",
+    "Structural analysis shows the vessel is operating at a critical physical deficit. Immediate restorative repairs are highly recommended. A launch subjects the weakened hull to immense g-forces, risking explosive failure and the permanent loss of all freight.",
+    "The vessel is actively hemorrhaging structural stability. Immediate mechanical attention is required to salvage the hull. Initiating a jump risks pushing the ship past its breaking point, threatening permanent destruction and total cargo loss.",
+    "The hull is audibly groaning under its own weight due to severe damage. Emergency repairs must be initiated immediately. Firing the thrusters now introduces a massive risk of the ship snapping in half, annihilating the vessel and cargo."
+];
 --- END OF FILE: ./js/data/flavorAds.js ---
 
 --- START OF FILE: ./js/data/characters.js ---
@@ -21226,6 +21259,7 @@ import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
 import { starfieldService } from './StarfieldService.js';
+import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 
 export class UIEventControl {
     /**
@@ -21256,6 +21290,84 @@ export class UIEventControl {
             theme: 'intel'
         });
     }
+
+    // --- PHASE 3/4: CRITICAL HULL WARNING MODAL ---
+    /**
+     * Displays a high-priority warning modal preventing immediate launch when hull is < 15%.
+     * @param {string} locationId - The intended destination ID.
+     * @param {boolean} useFoldedDrive - Whether the player was attempting to use a folded drive.
+     */
+    showCriticalHullWarningModal(locationId, useFoldedDrive) {
+        const state = this.manager.lastKnownState;
+        const day = state?.day || 0;
+        const shipId = state?.player?.activeShipId || 'unknown_ship';
+        const currentLoc = state?.currentLocationId || 'unknown_loc';
+
+        // Deterministic Hash: Locks the flavor text to the specific day, location, and ship.
+        const seedString = `${day}_${currentLoc}_${shipId}`;
+        let hash = 0;
+        for (let i = 0; i < seedString.length; i++) {
+            hash = (hash << 5) - hash + seedString.charCodeAt(i);
+            hash |= 0; // Convert to 32bit integer
+        }
+        
+        const randomIndex = Math.abs(hash) % CRITICAL_HULL_WARNINGS.length;
+        const flavorWarning = CRITICAL_HULL_WARNINGS[randomIndex];
+
+        const htmlPayload = `
+            <div class="text-center text-gray-300 mb-6 font-exo leading-relaxed">
+                <p class="mb-4">${flavorWarning}</p>
+                <p class="text-sm font-bold text-red-500 uppercase tracking-widest animate-pulse">Warning: Extreme Risk of Catastrophic Failure</p>
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button type="button" id="btn-critical-cancel" class="btn border border-gray-600 hover:bg-gray-800 text-gray-300 flex-1 py-3 font-orbitron tracking-widest">CANCEL</button>
+                <button type="button" id="btn-critical-launch" class="btn border border-red-900 bg-red-950/30 hover:bg-red-900/50 text-red-400 flex-1 py-3 font-orbitron tracking-widest transition-all duration-200 ease-in-out">LAUNCH ANYWAY</button>
+            </div>
+        `;
+
+        let isProceeding = false;
+
+        this.manager.queueModal('event-modal', '<span class="text-red-500">CRITICAL HULL DAMAGE</span>', htmlPayload, () => {
+            // Callback fires if dismissed via outside click or Cancel button
+            if (!isProceeding) {
+                starfieldService.triggerQuickExit();
+            }
+        }, {
+            dismissOutside: true,
+            footer: null,
+            theme: 'danger',
+            customSetup: (modal, closeHandler) => {
+                const cancelBtn = modal.querySelector('#btn-critical-cancel');
+                const launchBtn = modal.querySelector('#btn-critical-launch');
+
+                if (cancelBtn) {
+                    cancelBtn.onclick = (e) => {
+                        e.preventDefault();
+                        closeHandler(); // Triggers modal closure and the onCloseCallback
+                    };
+                }
+
+                if (launchBtn) {
+                    launchBtn.onclick = (e) => {
+                        e.preventDefault();
+                        if (launchBtn.dataset.primed !== 'true') {
+                            // Step 1: Prime the confirmation
+                            launchBtn.dataset.primed = 'true';
+                            launchBtn.classList.remove('bg-red-950/30', 'text-red-400', 'border-red-900', 'hover:bg-red-900/50');
+                            launchBtn.classList.add('bg-red-700', 'text-white', 'border-red-500', 'hover:bg-red-600', 'shadow-[0_0_15px_rgba(239,68,68,0.8)]');
+                            launchBtn.innerText = 'CONFIRM?';
+                        } else {
+                            // Step 2: Execute the travel sequence
+                            isProceeding = true; // Prevent starfield teardown
+                            closeHandler(); // Visually dismiss modal
+                            this.manager.simulationService.travelTo(locationId, useFoldedDrive);
+                        }
+                    };
+                }
+            }
+        });
+    }
+    // --- END PHASE 3/4 ---
 
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
@@ -38218,15 +38330,18 @@ export class UIManager {
         let statusPodHtml = '';
         if (activeShipStatic && activeShipState && inventory) {
             const cargoUsed = calculateInventoryUsed(inventory);
-            const hullPct = (activeShipState.health / activeShipStatic.maxHealth) * 100;
+            const hullRatio = activeShipState.health / activeShipStatic.maxHealth;
+            const hullPct = hullRatio * 100;
             const fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
             const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
+            
+            const hullPulseClass = hullRatio < 0.30 ? ' bg-critical-pulse' : '';
 
             statusPodHtml = `
                  <div class="status-pod">
                     <div class="status-bar-group hull-group" data-action="toggle-tooltip">
                         <span class="status-bar-label">H</span>
-                        <div class="status-bar"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
+                        <div class="status-bar${hullPulseClass}"><div class="fill hull-fill" style="width: ${hullPct}%;"></div></div>
                          <div class="status-tooltip">${Math.floor(activeShipState.health)}/${activeShipStatic.maxHealth} Hull</div>
                     </div>
                     <div class="status-bar-group fuel-group" data-action="toggle-tooltip">
@@ -42586,12 +42701,36 @@ export class ActionClickHandler {
                 }
                 break;
             }
+            
+            // --- VIRTUAL WORKBENCH: PHASE 4 - HULL WARNING INTERCEPT ---
             case ACTION_IDS.TRAVEL: {
-                this.uiManager.hideModal('launch-modal');
+                e.preventDefault(); // Complying with ADR-026 Mars Revert Protocol
                 const useFoldedDrive = dataset.useFoldedDrive === 'true';
-                this.simulationService.travelTo(dataset.locationId, useFoldedDrive);
+                const locationId = dataset.locationId;
+
+                const activeShipId = state.player.activeShipId;
+                const shipState = state.player.shipStates[activeShipId];
+                
+                let maxHealth = DB.SHIPS[activeShipId].maxHealth;
+                if (this.simulationService.getEffectiveShipStats) {
+                    const effStats = this.simulationService.getEffectiveShipStats(activeShipId);
+                    if (effStats) maxHealth = effStats.maxHealth;
+                }
+                
+                const hullRatio = shipState.health / maxHealth;
+
+                this.uiManager.hideModal('launch-modal');
+
+                // The Intercept
+                if (hullRatio < 0.15) {
+                    this.uiManager.eventControl.showCriticalHullWarningModal(locationId, useFoldedDrive);
+                    return; // Halt travel sequence
+                }
+
+                this.simulationService.travelTo(locationId, useFoldedDrive);
                 break;
             }
+            // --- END VIRTUAL WORKBENCH ---
 
             case 'navigate-to-poi': {
                 const { locationId } = dataset;

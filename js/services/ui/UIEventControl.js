@@ -7,6 +7,7 @@ import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
 import { COMMODITY_IDS } from '../../data/constants.js';
 import { starfieldService } from './StarfieldService.js';
+import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 
 export class UIEventControl {
     /**
@@ -37,6 +38,84 @@ export class UIEventControl {
             theme: 'intel'
         });
     }
+
+    // --- PHASE 3/4: CRITICAL HULL WARNING MODAL ---
+    /**
+     * Displays a high-priority warning modal preventing immediate launch when hull is < 15%.
+     * @param {string} locationId - The intended destination ID.
+     * @param {boolean} useFoldedDrive - Whether the player was attempting to use a folded drive.
+     */
+    showCriticalHullWarningModal(locationId, useFoldedDrive) {
+        const state = this.manager.lastKnownState;
+        const day = state?.day || 0;
+        const shipId = state?.player?.activeShipId || 'unknown_ship';
+        const currentLoc = state?.currentLocationId || 'unknown_loc';
+
+        // Deterministic Hash: Locks the flavor text to the specific day, location, and ship.
+        const seedString = `${day}_${currentLoc}_${shipId}`;
+        let hash = 0;
+        for (let i = 0; i < seedString.length; i++) {
+            hash = (hash << 5) - hash + seedString.charCodeAt(i);
+            hash |= 0; // Convert to 32bit integer
+        }
+        
+        const randomIndex = Math.abs(hash) % CRITICAL_HULL_WARNINGS.length;
+        const flavorWarning = CRITICAL_HULL_WARNINGS[randomIndex];
+
+        const htmlPayload = `
+            <div class="text-center text-gray-300 mb-6 font-exo leading-relaxed">
+                <p class="mb-4">${flavorWarning}</p>
+                <p class="text-sm font-bold text-red-500 uppercase tracking-widest animate-pulse">Warning: Extreme Risk of Catastrophic Failure</p>
+            </div>
+            <div class="flex justify-center gap-4 mt-6">
+                <button type="button" id="btn-critical-cancel" class="btn border border-gray-600 hover:bg-gray-800 text-gray-300 flex-1 py-3 font-orbitron tracking-widest">CANCEL</button>
+                <button type="button" id="btn-critical-launch" class="btn border border-red-900 bg-red-950/30 hover:bg-red-900/50 text-red-400 flex-1 py-3 font-orbitron tracking-widest transition-all duration-200 ease-in-out">LAUNCH ANYWAY</button>
+            </div>
+        `;
+
+        let isProceeding = false;
+
+        this.manager.queueModal('event-modal', '<span class="text-red-500">CRITICAL HULL DAMAGE</span>', htmlPayload, () => {
+            // Callback fires if dismissed via outside click or Cancel button
+            if (!isProceeding) {
+                starfieldService.triggerQuickExit();
+            }
+        }, {
+            dismissOutside: true,
+            footer: null,
+            theme: 'danger',
+            customSetup: (modal, closeHandler) => {
+                const cancelBtn = modal.querySelector('#btn-critical-cancel');
+                const launchBtn = modal.querySelector('#btn-critical-launch');
+
+                if (cancelBtn) {
+                    cancelBtn.onclick = (e) => {
+                        e.preventDefault();
+                        closeHandler(); // Triggers modal closure and the onCloseCallback
+                    };
+                }
+
+                if (launchBtn) {
+                    launchBtn.onclick = (e) => {
+                        e.preventDefault();
+                        if (launchBtn.dataset.primed !== 'true') {
+                            // Step 1: Prime the confirmation
+                            launchBtn.dataset.primed = 'true';
+                            launchBtn.classList.remove('bg-red-950/30', 'text-red-400', 'border-red-900', 'hover:bg-red-900/50');
+                            launchBtn.classList.add('bg-red-700', 'text-white', 'border-red-500', 'hover:bg-red-600', 'shadow-[0_0_15px_rgba(239,68,68,0.8)]');
+                            launchBtn.innerText = 'CONFIRM?';
+                        } else {
+                            // Step 2: Execute the travel sequence
+                            isProceeding = true; // Prevent starfield teardown
+                            closeHandler(); // Visually dismiss modal
+                            this.manager.simulationService.travelTo(locationId, useFoldedDrive);
+                        }
+                    };
+                }
+            }
+        });
+    }
+    // --- END PHASE 3/4 ---
 
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
