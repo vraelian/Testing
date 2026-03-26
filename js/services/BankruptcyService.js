@@ -44,6 +44,14 @@ export class BankruptcyService {
         const activeShipId = player.activeShipId;
         const shipState = player.shipStates[activeShipId];
 
+        // --- VIRTUAL WORKBENCH: IMMEDIATE BANKRUPTCY CHECK ---
+        if (player.credits <= 0 && player.ownedShipIds.length === 1) {
+            if (!state.missions || !state.missions.activeMissionIds || state.missions.activeMissionIds.length === 0) {
+                return true; // Immediate bankruptcy trigger
+            }
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         // 1. Calculate the Minimum Cost to Escape
         const travelRoutes = state.TRAVEL_DATA[locId];
         let minFuelNeeded = 10; // Failsafe

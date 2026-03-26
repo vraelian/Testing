@@ -444,7 +444,7 @@ export class ActionClickHandler {
                             <p class="mb-2">What play style will you choose?</p>
                             <ul class="list-disc pl-5 space-y-2">
                                 <li>Will you opt for the <span class="text-sky-400 font-bold">Explorer</span>, prioritizing its larger fuel tank for fewer refueling stops and more continuous travel?</li>
-                                <li>Perhaps the <span class="text-emerald-400 font-bold">Balanced</span> Vessel is your choice, appreciated for its overall competence across all attributes.</li>
+                                <li>Perhaps the <span class="text-emerald-400 font-bold">Balanced</span> Vessel is your choice, offering a heavily armored hull to survive the dangers of the void.</li>
                                 <li>Or do you select the <span class="text-amber-400 font-bold">Hauler</span>, increasing its profitability per run thanks to its expanded storage capacity?</li>
                             </ul>
                         </div>
@@ -534,6 +534,12 @@ export class ActionClickHandler {
                             if (e) {
                                 this.uiManager.createFloatingText(`+${formatCredits(action.amount, false)}`, e.clientX, e.clientY, '#4ade80');
                             }
+                        } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
+                            // --- VIRTUAL WORKBENCH: NARRATIVE SYSTEM STATE HOOK ---
+                            if (this.simulationService && this.simulationService.systemStateService) {
+                                this.simulationService.systemStateService.applySpecificState(action.stateId);
+                            }
+                            // --- END VIRTUAL WORKBENCH ---
                         }
                     });
                 }

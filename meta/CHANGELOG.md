@@ -3,6 +3,13 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [37.22] - 2026-3-25
+-  improved ship destruction sequence
+-  ship destruction writing polish
+-  updated intro sequence starter ships
+-  fortified name input check
+-  various bug fixes and balance changes
+
 # [37.17] - 2026-3-24
 -  added number resizing for qty input on market screen
 -  increased repair costs by 31.8%

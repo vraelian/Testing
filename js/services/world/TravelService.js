@@ -51,10 +51,14 @@ export class TravelService {
 
         const state = this.gameState.getState();
         if (state.isGameOver || state.pendingTravel) return;
+        
+        // --- VIRTUAL WORKBENCH: UI SAFEGUARD ---
         if (state.currentLocationId === locationId) {
+            starfieldService.triggerQuickExit();
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
+        // --- END VIRTUAL WORKBENCH ---
 
         const activeShip = this.simulationService._getActiveShip();
         if (!activeShip) {
