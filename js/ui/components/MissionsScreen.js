@@ -176,7 +176,7 @@ export function renderMissionsScreen(gameState, missionService) {
         let statusBannerHtml = '';
         if (isLogisticsPickupPhase) {
             if (isAtPickupLocation) {
-                statusBannerHtml = `<div class="mission-status-banner" style="color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.2);">CARGO READY TO LOAD</div>`;
+                statusBannerHtml = `<div class="mission-status-banner" style="color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.2); animation: none !important;">CARGO READY TO LOAD</div>`;
             } else {
                 const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
                 statusBannerHtml = `<div class="mission-status-banner banner-text-return" style="color: #94a3b8; border-color: #475569;">ROUTE TO ${locName.toUpperCase()}</div>`;
@@ -214,7 +214,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 `;
                 actionButtonHtml = `
                     <div class="mt-3 px-2 pb-2">
-                        <button class="btn w-full" style="border: 1px solid #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1); box-shadow: 0 0 10px rgba(245,158,11,0.3);" data-action="load-mission-cargo" data-mission-id="${mission.id}">
+                        <button class="btn w-full bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" data-action="load-mission-cargo" data-mission-id="${mission.id}">
                             LOAD CARGO
                         </button>
                     </div>
