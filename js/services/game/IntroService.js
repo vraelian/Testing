@@ -73,18 +73,25 @@ export class IntroService {
         if (!button) return;
         
         if (button.id === 'intro-submit-btn') {
+            // --- VIRTUAL WORKBENCH: IMMEDIATE UI LOCK ---
+            this._transitioning = true;
+            button.disabled = true;
+            // --- END VIRTUAL WORKBENCH ---
+
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
-            const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '');
+            
+            // --- VIRTUAL WORKBENCH: STRICT SANITIZATION ---
+            const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
     
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
+                // Clear the DOM to prevent stacking, then queue the rejection
+                this.uiManager.hideModal('signature-modal');
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
-                    this._showNextModal();
+                    this._transitioning = false; // Safely release lock
+                    this._showNextModal();       // Re-present the form cleanly
                 });
             } else {
-                this._transitioning = true;
-                button.disabled = true;
-
                 this.gameState.player.name = sanitizedPlayerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
@@ -97,6 +104,7 @@ export class IntroService {
 
                 this._startProcessingSequence();
             }
+            // --- END VIRTUAL WORKBENCH ---
         }
     }
 
@@ -315,7 +323,7 @@ export class IntroService {
                 borderClass: 'border-pulse-explorer'
             },
             {
-                id: 'Nomad.Ship',
+                id: 'Stalwart.Ship',
                 roleClass: 'text-emerald-400',
                 borderClass: 'border-pulse-balanced'
             },
@@ -339,7 +347,7 @@ export class IntroService {
             let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
             if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
             if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
-            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
+            if (shipInfo.id === 'Stalwart.Ship') imgSrc = 'assets/images/ships/Stalwart/Stalwart_A.webp';
             
             btn.innerHTML = `
                 <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">

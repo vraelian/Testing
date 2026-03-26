@@ -140,10 +140,15 @@ export class IntelService {
 
         const commodityId = unlockedCommodityIds[Math.floor(Math.random() * unlockedCommodityIds.length)];
         
-        // Calculate Discount using Intel Profile parameters (falling back to baseline 15-50%)
-        const minDiscount = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.15;
-        const maxDiscount = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.50;
+        // --- VIRTUAL WORKBENCH: HIGH-VALUE INTEL BASELINE ---
+        // Calculate Discount using Intel Profile parameters (clamped to baseline 40-60%)
+        const profileMin = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.40;
+        const profileMax = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.60;
+        
+        const minDiscount = Math.max(0.40, profileMin);
+        const maxDiscount = Math.max(0.60, profileMax);
         const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
+        // --- END VIRTUAL WORKBENCH ---
 
         const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;

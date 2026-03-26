@@ -21278,11 +21278,13 @@ export class UIEventControl {
         const commodityName = commodity ? commodity.name : intelData.commodityId;
         const discountPct = Math.round((1 - intelData.discountMultiplier) * 100);
 
+        // --- VIRTUAL WORKBENCH: Removed word "units" ---
         const htmlPayload = `
             <div class="text-lg text-gray-200 text-center">
-                Data from the local exchange confirms an unexpected influx of <span class="text-result-cargo font-bold">${commodityName}</span> units. To maintain market stability, vendors have authorized an immediate <span class="text-req-yellow font-bold">${discountPct}% discount</span> on all current inventory.
+                Data from the local exchange confirms an unexpected influx of <span class="text-result-cargo font-bold">${commodityName}</span>. To maintain market stability, vendors have authorized an immediate <span class="text-req-yellow font-bold">${discountPct}% discount</span> on all current inventory.
             </div>
         `;
+        // --- END VIRTUAL WORKBENCH ---
 
         this.manager.queueModal('event-modal', 'Intel Acquired', htmlPayload, null, {
             dismissOutside: true,
@@ -28988,6 +28990,14 @@ export class BankruptcyService {
         const activeShipId = player.activeShipId;
         const shipState = player.shipStates[activeShipId];
 
+        // --- VIRTUAL WORKBENCH: IMMEDIATE BANKRUPTCY CHECK ---
+        if (player.credits <= 0 && player.ownedShipIds.length === 1) {
+            if (!state.missions || !state.missions.activeMissionIds || state.missions.activeMissionIds.length === 0) {
+                return true; // Immediate bankruptcy trigger
+            }
+        }
+        // --- END VIRTUAL WORKBENCH ---
+
         // 1. Calculate the Minimum Cost to Escape
         const travelRoutes = state.TRAVEL_DATA[locId];
         let minFuelNeeded = 10; // Failsafe
@@ -33008,10 +33018,14 @@ export class TravelService {
 
         const state = this.gameState.getState();
         if (state.isGameOver || state.pendingTravel) return;
+        
+        // --- VIRTUAL WORKBENCH: UI SAFEGUARD ---
         if (state.currentLocationId === locationId) {
+            starfieldService.triggerQuickExit();
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
+        // --- END VIRTUAL WORKBENCH ---
 
         const activeShip = this.simulationService._getActiveShip();
         if (!activeShip) {
@@ -33704,26 +33718,152 @@ export class TravelService {
     }
 
     /**
-     * Handles the destruction of a player ship and the potential game over condition.
+     * Handles the destruction of a player ship by routing to the appropriate outcome based on chance.
      * @param {string} shipId
      * @private
      */
     _handleShipDestruction(shipId) {
+        // Roll 33% chance for the ship to be disabled and towed instead of completely destroyed
+        if (Math.random() <= 0.33) {
+            this._handleShipDisabledAndTowed(shipId);
+        } else {
+            this._executeShipDestruction(shipId);
+        }
+    }
+
+    /**
+     * Outcome where the ship is not fully destroyed, but severely damaged and towed back.
+     * @param {string} shipId
+     * @private
+     */
+    _handleShipDisabledAndTowed(shipId) {
+        const state = this.gameState.getState();
+        const shipState = this.gameState.player.shipStates[shipId];
+        const originName = DB.MARKETS.find(m => m.id === state.currentLocationId)?.name || "Origin";
+        const lostDays = 21;
+
+        // Apply severe survival consequences
+        shipState.health = 1;
+        shipState.fuel = 0;
+
+        // Fix starfield lock from travel animation overlay
+        starfieldService.triggerQuickExit();
+        const travelModal = document.getElementById('travel-animation-modal');
+        if (travelModal) travelModal.classList.add('hidden');
+
+        // Advance time and clear travel status
+        this.timeService.advanceDays(lostDays);
+        this.gameState.setState({ pendingTravel: null });
+
+        this.logger.info.player(this.gameState.day, 'TRAVEL_TOWED', `Ship disabled and towed back to ${originName}. Lost ${lostDays} days.`);
+
+        // Route to the Services screen so the player can immediately repair
+        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.SERVICES);
+
+        // Show narrative explanation
+        this.uiManager.showEventResultModal(
+            "Critical Failure: Systems Dead",
+            `Your ship suffered catastrophic system failure during transit. Drifting in the void for weeks on failing life support, you were eventually found by a passing deep-space freighter and towed back to <b>${originName}</b>.<br><br>Your ship survived, but just barely.`,
+            [
+                { type: 'EFF_HULL', value: -1 }, // Visual only indicator of loss
+                { type: 'EFF_FUEL', value: 0 },
+                { type: 'EFF_TRAVEL_TIME', value: lostDays }
+            ]
+        );
+    }
+
+    /**
+     * Executes the absolute destruction sequence of a ship, playing the cinematic overlay and resolving backups.
+     * @param {string} shipId
+     * @private
+     */
+    _executeShipDestruction(shipId) {
         const shipName = DB.SHIPS[shipId].name;
         this.logger.error('TravelService', `Ship ${shipName} was destroyed.`);
-        this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
-        delete this.gameState.player.shipStates[shipId];
-        delete this.gameState.player.inventories[shipId];
+        
+        const isGameOver = this.gameState.player.ownedShipIds.length <= 1;
 
-        if (this.gameState.player.ownedShipIds.length === 0) {
-            this.simulationService._gameOver(`Your last ship, the ${shipName}, was destroyed. Your trading career ends here.`);
+        // Phase 3 Bug Fix (B/C): Free the Starfield Lock or maintain background for Game Over
+        if (!isGameOver) {
+            starfieldService.triggerQuickExit();
         } else {
-            this.gameState.player.activeShipId = this.gameState.player.ownedShipIds[0];
-            const newShipName = DB.SHIPS[this.gameState.player.activeShipId].name;
-            const message = `The ${shipName} suffered a catastrophic hull breach and was destroyed. All cargo was lost.<br><br>You now command your backup vessel, the ${newShipName}.`;
-            this.uiManager.queueModal('event-modal', 'Vessel Lost', message);
+            if (starfieldService.setDecelerateWarp) {
+                starfieldService.setDecelerateWarp();
+            }
         }
-        this.gameState.setState({});
+        
+        const travelModal = document.getElementById('travel-animation-modal');
+        if (travelModal) {
+            travelModal.classList.add('hidden');
+            travelModal.classList.remove('modal-hiding', 'dismiss-disabled');
+        }
+
+        const gameContainer = document.getElementById('game-container');
+        if (isGameOver && gameContainer) {
+            gameContainer.style.opacity = '0';
+            gameContainer.style.pointerEvents = 'none';
+        }
+
+        // Phase 3 Animation (A): Cinematic Overlay
+        const overlay = document.createElement('div');
+        overlay.style.position = 'fixed';
+        overlay.style.top = '0';
+        overlay.style.left = '0';
+        overlay.style.width = '100vw';
+        overlay.style.height = '100vh';
+        overlay.style.backgroundColor = 'transparent';
+        overlay.style.zIndex = '9999'; // Intercepts above game, below modals
+        overlay.style.pointerEvents = 'none';
+        document.body.appendChild(overlay);
+
+        // Web Animations API: Transparent -> Red -> Pitch Black
+        const animation = overlay.animate([
+            { backgroundColor: 'transparent', offset: 0 },
+            { backgroundColor: '#991b1b', offset: 0.6 }, // 3 seconds: Solid Red
+            { backgroundColor: '#000000', offset: 1 }    // 5 seconds: Pitch Black
+        ], {
+            duration: 5000,
+            fill: 'forwards',
+            easing: 'ease-in-out'
+        });
+
+        animation.onfinish = () => {
+            // Execute core destruction state logic
+            this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
+            delete this.gameState.player.shipStates[shipId];
+            delete this.gameState.player.inventories[shipId];
+            this.gameState.pendingTravel = null; // Clear travel state
+
+            this.gameState.setState({});
+
+            if (isGameOver) {
+                const fadeOut = overlay.animate([
+                    { opacity: 1 },
+                    { opacity: 0 }
+                ], { duration: 1000, fill: 'forwards' });
+                
+                fadeOut.onfinish = () => {
+                    overlay.remove();
+                    this.simulationService._gameOver(`Your last ship, the ${shipName}, was destroyed. Your trading career ends here.`);
+                };
+            } else {
+                this.gameState.player.activeShipId = this.gameState.player.ownedShipIds[0];
+                const newShipName = DB.SHIPS[this.gameState.player.activeShipId].name;
+                const message = `The ${shipName} suffered a catastrophic hull breach and was destroyed. All cargo was lost.<br><br>You now command your backup vessel, the ${newShipName}.`;
+                
+                this.uiManager.queueModal('event-modal', 'Vessel Lost', message, () => {
+                    this.simulationService.setHangarShipyardMode('hangar');
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                }, { dismissOutside: false });
+
+                const fadeOut = overlay.animate([
+                    { opacity: 1 },
+                    { opacity: 0 }
+                ], { duration: 1000, fill: 'forwards' });
+                
+                fadeOut.onfinish = () => overlay.remove();
+            }
+        };
     }
 }
 --- END OF FILE: ./js/services/world/TravelService.js ---
@@ -34266,18 +34406,25 @@ export class IntroService {
         if (!button) return;
         
         if (button.id === 'intro-submit-btn') {
+            // --- VIRTUAL WORKBENCH: IMMEDIATE UI LOCK ---
+            this._transitioning = true;
+            button.disabled = true;
+            // --- END VIRTUAL WORKBENCH ---
+
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
-            const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '');
+            
+            // --- VIRTUAL WORKBENCH: STRICT SANITIZATION ---
+            const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
     
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
+                // Clear the DOM to prevent stacking, then queue the rejection
+                this.uiManager.hideModal('signature-modal');
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
-                    this._showNextModal();
+                    this._transitioning = false; // Safely release lock
+                    this._showNextModal();       // Re-present the form cleanly
                 });
             } else {
-                this._transitioning = true;
-                button.disabled = true;
-
                 this.gameState.player.name = sanitizedPlayerName;
                 this.gameState.player.debt = 25000;
                 this.gameState.player.loanStartDate = this.gameState.day;
@@ -34290,6 +34437,7 @@ export class IntroService {
 
                 this._startProcessingSequence();
             }
+            // --- END VIRTUAL WORKBENCH ---
         }
     }
 
@@ -34508,7 +34656,7 @@ export class IntroService {
                 borderClass: 'border-pulse-explorer'
             },
             {
-                id: 'Nomad.Ship',
+                id: 'Stalwart.Ship',
                 roleClass: 'text-emerald-400',
                 borderClass: 'border-pulse-balanced'
             },
@@ -34532,7 +34680,7 @@ export class IntroService {
             let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
             if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
             if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
-            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
+            if (shipInfo.id === 'Stalwart.Ship') imgSrc = 'assets/images/ships/Stalwart/Stalwart_A.webp';
             
             btn.innerHTML = `
                 <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
@@ -40938,10 +41086,15 @@ export class IntelService {
 
         const commodityId = unlockedCommodityIds[Math.floor(Math.random() * unlockedCommodityIds.length)];
         
-        // Calculate Discount using Intel Profile parameters (falling back to baseline 15-50%)
-        const minDiscount = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.15;
-        const maxDiscount = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.50;
+        // --- VIRTUAL WORKBENCH: HIGH-VALUE INTEL BASELINE ---
+        // Calculate Discount using Intel Profile parameters (clamped to baseline 40-60%)
+        const profileMin = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.40;
+        const profileMax = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.60;
+        
+        const minDiscount = Math.max(0.40, profileMin);
+        const maxDiscount = Math.max(0.60, profileMax);
         const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
+        // --- END VIRTUAL WORKBENCH ---
 
         const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;
@@ -42837,7 +42990,7 @@ export class ActionClickHandler {
                             <p class="mb-2">What play style will you choose?</p>
                             <ul class="list-disc pl-5 space-y-2">
                                 <li>Will you opt for the <span class="text-sky-400 font-bold">Explorer</span>, prioritizing its larger fuel tank for fewer refueling stops and more continuous travel?</li>
-                                <li>Perhaps the <span class="text-emerald-400 font-bold">Balanced</span> Vessel is your choice, appreciated for its overall competence across all attributes.</li>
+                                <li>Perhaps the <span class="text-emerald-400 font-bold">Balanced</span> Vessel is your choice, offering a heavily armored hull to survive the dangers of the void.</li>
                                 <li>Or do you select the <span class="text-amber-400 font-bold">Hauler</span>, increasing its profitability per run thanks to its expanded storage capacity?</li>
                             </ul>
                         </div>
@@ -42927,6 +43080,12 @@ export class ActionClickHandler {
                             if (e) {
                                 this.uiManager.createFloatingText(`+${formatCredits(action.amount, false)}`, e.clientX, e.clientY, '#4ade80');
                             }
+                        } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
+                            // --- VIRTUAL WORKBENCH: NARRATIVE SYSTEM STATE HOOK ---
+                            if (this.simulationService && this.simulationService.systemStateService) {
+                                this.simulationService.systemStateService.applySpecificState(action.stateId);
+                            }
+                            // --- END VIRTUAL WORKBENCH ---
                         }
                     });
                 }
@@ -44640,6 +44799,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.22] - 2026-3-25
+-  improved ship destruction sequence
+-  ship destruction writing polish
+-  updated intro sequence starter ships
+-  fortified name input check
+-  various bug fixes and balance changes
 
 # [37.17] - 2026-3-24
 -  added number resizing for qty input on market screen

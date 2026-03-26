@@ -26,11 +26,13 @@ export class UIEventControl {
         const commodityName = commodity ? commodity.name : intelData.commodityId;
         const discountPct = Math.round((1 - intelData.discountMultiplier) * 100);
 
+        // --- VIRTUAL WORKBENCH: Removed word "units" ---
         const htmlPayload = `
             <div class="text-lg text-gray-200 text-center">
-                Data from the local exchange confirms an unexpected influx of <span class="text-result-cargo font-bold">${commodityName}</span> units. To maintain market stability, vendors have authorized an immediate <span class="text-req-yellow font-bold">${discountPct}% discount</span> on all current inventory.
+                Data from the local exchange confirms an unexpected influx of <span class="text-result-cargo font-bold">${commodityName}</span>. To maintain market stability, vendors have authorized an immediate <span class="text-req-yellow font-bold">${discountPct}% discount</span> on all current inventory.
             </div>
         `;
+        // --- END VIRTUAL WORKBENCH ---
 
         this.manager.queueModal('event-modal', 'Intel Acquired', htmlPayload, null, {
             dismissOutside: true,
