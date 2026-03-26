@@ -209,8 +209,15 @@ export class MissionService {
         if (mission.onAccept) {
             mission.onAccept.forEach(action => {
                 if (action.type === 'TRIGGER_SYSTEM_STATE') {
-                    const sysStateService = new SystemStateService(this.gameState, this.logger);
-                    sysStateService.triggerState(action.stateId);
+                    // Refactored to use the injected SimulationService -> SystemStateService connection
+                    if (this.simulationService && this.simulationService.systemStateService) {
+                        this.simulationService.systemStateService.triggerState(action.stateId);
+                    } else {
+                        // Fallback in the rare event injection failed
+                        this.logger.warn('MissionService', 'SimulationService.systemStateService unavailable. Initializing temporary instance.');
+                        const sysStateService = new SystemStateService(this.gameState, this.logger);
+                        sysStateService.triggerState(action.stateId);
+                    }
                     
                     // Force a re-render so the state is recognized before the modal tries to display it
                     this.gameState.setState({});
@@ -341,7 +348,15 @@ export class MissionService {
         });
 
         if (penaltyValue > 0) {
-            this.gameState.player.debt += penaltyValue;
+            // Debt Integration (Phase 4): Format infraction as formal Guild Loan
+            if (this.gameState.player.debt === 0) {
+                this.gameState.player.debt = penaltyValue;
+                this.gameState.player.loanType = 'guild';
+                this.gameState.player.loanStartDate = this.gameState.day;
+                this.gameState.player.loanDueDate = this.gameState.day + 365;
+            } else {
+                this.gameState.player.debt += penaltyValue;
+            }
             this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
         }
 

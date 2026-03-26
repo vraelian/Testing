@@ -819,7 +819,7 @@
 }
 
 .hero-header {
-    font-size: calc(0.75rem + 1pt);
+    font-size: calc(0.75rem - 0.5pt); /* Reduced 1.5pt from +1pt */
     color: var(--host-color, #fcd34d);
     justify-content: center;
     margin-bottom: 1rem;
@@ -839,7 +839,7 @@
 }
 
 .hero-payout-item {
-    font-size: calc(1.25rem + 1pt);
+    font-size: calc(1.25rem - 0.5pt); /* Reduced 1.5pt from +1pt */
     font-weight: 700;
     color: #fef08a;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
@@ -852,7 +852,7 @@
 }
 
 .hero-payout-item .credits-text-pulsing {
-    font-size: calc(1.5rem + 1pt);
+    font-size: calc(1.5rem - 0.5pt); /* Reduced 1.5pt from +1pt */
 }
 
 /* Responsive adjustments for narrow screens */

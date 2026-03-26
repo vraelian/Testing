@@ -72,7 +72,7 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // NEW: Hide if traveling or on hangar screen
+        // Hide if traveling or on hangar screen
         if (gameState.isTraveling || gameState.activeScreen === SCREEN_IDS.HANGAR) {
             this._hideStickyBarWithFade(stickyBarEl);
             return;
@@ -98,7 +98,7 @@ export class UIMissionControl {
             let firstObj = null;
             let customObjectiveLabel = null;
             
-            // --- NEW: Logistics Phase Intercept ---
+            // Logistics Phase Intercept
             if (isLogisticsPickupPhase) {
                 const pickupLocName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'Unknown';
                 let totalCargo = 0;
@@ -283,8 +283,12 @@ export class UIMissionControl {
         const { missions, tutorials, currentLocationId } = gameState;
         const isActive = missions.activeMissionIds.includes(mission.id);
         
-        const progress = missions.missionProgress[mission.id];
+        const progress = missions.missionProgress[mission.id] || { objectives: {} };
         const isCompletable = progress ? progress.isCompletable : false;
+        
+        const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+        const isAtPickupLocation = isLogisticsPickupPhase && mission.pickupLocationId === currentLocationId;
+        
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         
         let shouldBeDisabled = false;
@@ -317,21 +321,20 @@ export class UIMissionControl {
                 if (typeEl) {
                     typeEl.textContent = mission.type;
                     typeEl.style.display = 'block';
-                    typeEl.style.fontSize = '0.65rem'; // Shrink type by 1pt
+                    typeEl.style.fontSize = '0.65rem';
                 }
 
                 // --- TELEMETRY DASHBOARD (CSS GRID) ---
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
-                if (rewardsEl) rewardsEl.style.display = 'none'; // Hide native rewards block
+                if (rewardsEl) rewardsEl.style.display = 'none';
 
                 let flexColumns = [];
                 let animDelayIdx = 0;
 
-                // Evaluate Payout to inform Inbound stretching
                 const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
 
-                // 1. INBOUND (Granted Cargo / Intel / Credits)
+                // 1. INBOUND
                 let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
                     mission.grantedCargo.forEach(cargo => {
@@ -367,7 +370,7 @@ export class UIMissionControl {
                     `);
                 }
 
-                // 2. PAYOUT (Rewards) - Dynamically spans if inbound is empty
+                // 2. PAYOUT
                 let payoutPanelHtml = '';
                 if (hasPayout) {
                     let rewsList = '';
@@ -380,6 +383,9 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'upgrade') {
                                 const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
                                 content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license') {
+                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
+                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -406,10 +412,9 @@ export class UIMissionControl {
                     `;
                 }
                 
-                // Add Payout here to ensure CSS Grid layout orders correctly
                 if (payoutPanelHtml) flexColumns.push(payoutPanelHtml);
 
-                // Analyze Locations for Aggregate Destination block
+                // Analyze Locations
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
@@ -420,16 +425,14 @@ export class UIMissionControl {
                 }
                 const hasSingleDestination = uniqueDestinations.size === 1;
 
-                // 3. DIRECTIVE (Objectives)
+                // 3. DIRECTIVE
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
                         let text = this._getObjectiveDescription(obj, hasSingleDestination).toUpperCase();
                         
-                        // Wrap preceding numbers and "x" in t-qty FIRST to avoid breaking HTML classes below
                         text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
                         
-                        // Append deposited info visually AFTER regex, with line break
                         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
                             const objKey = obj.id || obj.goodId || obj.target;
                             const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
@@ -450,7 +453,7 @@ export class UIMissionControl {
                     `);
                 }
 
-                // 4. DESTINATION (Extracted if unified)
+                // 4. DESTINATION
                 if (hasSingleDestination) {
                     const destId = Array.from(uniqueDestinations)[0];
                     const destName = DB.MARKETS.find(m => m.id === destId)?.name || 'UNKNOWN';
@@ -479,20 +482,19 @@ export class UIMissionControl {
                     objectivesEl.style.display = 'none';
                 }
 
-                // --- APPLY SCROLLABILITY WRAPPER ---
+                // --- SCROLLABILITY WRAPPER ---
                 const descEl = modal.querySelector('#mission-modal-description');
                 let outerWrapper = modal.querySelector('.mission-scroll-outer');
                 let wrapper = modal.querySelector('.mission-scroll-wrapper');
                 let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                // Generate structural wrappers if they don't already exist
                 if (!wrapper && descEl && objectivesEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
+                    wrapper.style.maxHeight = '304px'; 
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -506,16 +508,15 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                 }
 
-                // Evaluate initial scroll state upon opening the modal securely binding listener
                 if (wrapper && indicator) {
                     wrapper.onscroll = () => {
                         const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                         indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                     };
                     
-                    wrapper.scrollTop = 0; // Immediate reset
+                    wrapper.scrollTop = 0; 
                     setTimeout(() => {
-                        wrapper.scrollTop = 0; // Strict layout lock reset
+                        wrapper.scrollTop = 0; 
                         if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                             indicator.style.display = 'block';
                             const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
@@ -524,7 +525,7 @@ export class UIMissionControl {
                             indicator.style.display = 'none';
                             indicator.style.opacity = '0';
                         }
-                    }, 150); // 150ms delay ensures DOM is fully painted and sized
+                    }, 150); 
                 }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -535,8 +536,11 @@ export class UIMissionControl {
                     let navButtonHtml = '';
                     let depositButtonHtml = '';
                     
-                    if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any') {
-                        navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
+                    if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any' && !isLogisticsPickupPhase) {
+                        navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.completion.locationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
+                    }
+                    else if (isLogisticsPickupPhase && !isAtPickupLocation) {
+                        navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.pickupLocationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     
                     if (isAtCorrectLocation) {
@@ -561,10 +565,13 @@ export class UIMissionControl {
                             });
                         }
                         
-                        // Solid amber styling with static glow, no pulse animation
                         if (canDeposit) {
                             depositButtonHtml = `<button id="mission-deposit-btn" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">DEPOSIT FREIGHT</button>`;
                         }
+                    }
+                    
+                    if (isLogisticsPickupPhase && isAtPickupLocation) {
+                        depositButtonHtml = `<button id="mission-load-cargo-btn" data-mission-id="${mission.id}" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">LOAD CARGO</button>`;
                     }
                     
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${navButtonHtml}`;
@@ -572,7 +579,6 @@ export class UIMissionControl {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                      
-                     // INJECT SKIP TUTORIAL BUTTON HERE
                      if (mission.id === 'mission_tutorial_01') {
                          const skipBtn = document.createElement('button');
                          skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
@@ -589,8 +595,9 @@ export class UIMissionControl {
                         if (this.manager.simulationService) {
                             this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
                         }
+                        const targetLoc = navBtn.dataset.targetLoc;
                         setTimeout(() => {
-                            this.manager.showLaunchModal(mission.completion.locationId);
+                            this.manager.showLaunchModal(targetLoc);
                         }, 100);
                         closeHandler();
                     });
@@ -603,7 +610,6 @@ export class UIMissionControl {
                             const depositedAmt = this.manager.simulationService.missionService.depositMissionCargo(mission.id);
                             
                             if (depositedAmt > 0) {
-                                // Extract bounding rect to ensure coordinates on mobile touch where clientX/Y might be missing
                                 const rect = depositBtn.getBoundingClientRect();
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
@@ -611,8 +617,17 @@ export class UIMissionControl {
                                 this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff');
                             }
 
-                            // The modal now stays closed, seamlessly returning gameplay to the user without a forced refresh.
                             closeHandler();
+                        }
+                    });
+                }
+                
+                const loadCargoBtn = modal.querySelector('#mission-load-cargo-btn');
+                if (loadCargoBtn) {
+                    loadCargoBtn.addEventListener('click', (e) => {
+                        if (this.manager.simulationService && this.manager.simulationService.missionService) {
+                            this.manager.simulationService.missionService.loadDeferredCargo(mission.id);
+                            closeHandler(); 
                         }
                     });
                 }
@@ -666,6 +681,7 @@ export class UIMissionControl {
         
         let rewardVolume = 0;
         const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade');
+        const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license') : null;
 
         if (mission.rewards) {
             mission.rewards.forEach(r => {
@@ -752,6 +768,9 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'upgrade') {
                                 const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
                                 content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license') {
+                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
+                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -783,7 +802,7 @@ export class UIMissionControl {
                    rewardsEl.style.display = 'none';
                }
 
-               // --- APPLY SCROLLABILITY WRAPPER ---
+               // --- SCROLLABILITY WRAPPER ---
                const descEl = modal.querySelector('#mission-modal-description');
                let outerWrapper = modal.querySelector('.mission-scroll-outer');
                let wrapper = modal.querySelector('.mission-scroll-wrapper');
@@ -795,7 +814,7 @@ export class UIMissionControl {
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
+                    wrapper.style.maxHeight = '304px'; 
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -810,16 +829,15 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                }
 
-               // Evaluate initial scroll state upon opening the modal securely binding listener
                if (wrapper && indicator) {
                    wrapper.onscroll = () => {
                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                    };
                    
-                   wrapper.scrollTop = 0; // Immediate reset
+                   wrapper.scrollTop = 0; 
                    setTimeout(() => {
-                       wrapper.scrollTop = 0; // Strict layout lock reset
+                       wrapper.scrollTop = 0; 
                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                            indicator.style.display = 'block';
                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
@@ -828,7 +846,7 @@ export class UIMissionControl {
                            indicator.style.display = 'none';
                            indicator.style.opacity = '0';
                        }
-                   }, 150); // 150ms delay ensures DOM is fully painted and sized
+                   }, 150); 
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -880,15 +898,10 @@ export class UIMissionControl {
                            this.manager.modalEngine.processModalQueue();
                        }
 
-                       if (stickyBarEl) {
-                           stickyBarEl.style.transition = 'none';
-                           stickyBarEl.style.filter = 'none';
-                           stickyBarEl.style.webkitFilter = 'none';
-                       }
-
                        const uiManager = this.manager;
                        const originalRender = uiManager.render;
                        
+                       // Temporarily hijack render to intercept sticky bar and tracking star updates quietly
                        uiManager.render = function(...args) {
                            const newState = args[0] || uiManager.lastKnownState;
                            uiManager.lastKnownState = newState;
@@ -912,10 +925,67 @@ export class UIMissionControl {
                        }
                        
                        uiManager.render = originalRender;
-                       closeHandler();
+                       closeHandler(); // close current completion modal
 
-                       if (hasUpgradeReward && this.manager.simulationService) {
-                           // Navigate to Hangar Screen to watch the sequence play out
+                       // License Sequence Intercept
+                       if (licenseReward) {
+                           const licenseDef = DB.LICENSES ? DB.LICENSES[licenseReward.licenseId] : null;
+                           const licenseName = licenseDef ? licenseDef.name : 'Class B Commercial License';
+                           const licenseDesc = licenseDef ? licenseDef.description : 'You are now authorized to trade Tier 2 commodities across the solar system.';
+                           
+                           const textHtml = `
+                               <div class="text-center mt-2">
+                                   <div class="text-emerald-400 font-bold text-lg mb-4">${licenseName.toUpperCase()}</div>
+                                   <div class="text-gray-300 text-sm">${licenseDesc}</div>
+                               </div>
+                           `;
+
+                           uiManager.queueModal('event-modal', 'LICENSE ACQUIRED', textHtml, null, {
+                               dismissInside: false,
+                               dismissOutside: false,
+                               customSetup: (licModal, licCloseHandler) => {
+                                   const btnContainer = licModal.querySelector('#event-button-container');
+                                   btnContainer.innerHTML = `<button id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
+                                   
+                                   licModal.querySelector('#accept-license-btn').onclick = () => {
+                                       // Execute state mutation
+                                       if (uiManager.lastKnownState && uiManager.lastKnownState.player) {
+                                            if (licenseReward.licenseId === 't2_license') {
+                                                uiManager.lastKnownState.player.revealedTier = Math.max(uiManager.lastKnownState.player.revealedTier || 1, 2);
+                                            }
+                                            uiManager.lastKnownState.setState({}); // Persist and broadcast state change
+                                       }
+                                       
+                                       // Unblur background now
+                                       if (stickyBarEl) {
+                                           stickyBarEl.style.transition = 'none';
+                                           stickyBarEl.style.filter = 'none';
+                                           stickyBarEl.style.webkitFilter = 'none';
+                                       }
+                                       
+                                       // Force render standard view
+                                       if (uiManager.lastKnownState) {
+                                           uiManager.render(uiManager.lastKnownState);
+                                       }
+                                       
+                                       licCloseHandler();
+                                   };
+                               }
+                           });
+                           
+                           // Force process the queue immediately to show license overlay
+                           if (uiManager.modalEngine) {
+                               uiManager.modalEngine.processModalQueue();
+                           }
+                           
+                       } else if (hasUpgradeReward && this.manager.simulationService) {
+                           // Standard upgrade sequence transition
+                           if (stickyBarEl) {
+                               stickyBarEl.style.transition = 'none';
+                               stickyBarEl.style.filter = 'none';
+                               stickyBarEl.style.webkitFilter = 'none';
+                           }
+                           
                            this.manager.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                            
                            const activeShipId = uiManager.lastKnownState.player.activeShipId;
@@ -926,9 +996,12 @@ export class UIMissionControl {
                            
                            await uiManager.orchestrateUpgradeSequence(activeShipId);
                        } else {
-                           // --- FORCE RENDER ---
-                           // Ensure the screen formally updates now that it is un-hijacked so 
-                           // we can catch empty logs and the automatic Terminal switch
+                           // Standard unblur and render loop
+                           if (stickyBarEl) {
+                               stickyBarEl.style.transition = 'none';
+                               stickyBarEl.style.filter = 'none';
+                               stickyBarEl.style.webkitFilter = 'none';
+                           }
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
                            }
@@ -959,11 +1032,10 @@ export class UIMissionControl {
                                card.remove(); 
                            };
                        }
-                   }, 1500); // Trigger after the 1.5s fade finishes
+                   }, 1500); 
                };
                buttonsEl.appendChild(completeBtn);
                
-               // Inject Skip Tutorial button for mission_tutorial_01
                if (mission.id === 'mission_tutorial_01') {
                    const skipBtn = document.createElement('button');
                    skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
@@ -1204,7 +1276,6 @@ export class UIMissionControl {
          return result;
     }
 
-    // --- NEW HELPER: Dynamic Text Replacement ---
     _parseMissionText(text, gameState) {
         if (!text) return '';
         let parsedText = text;

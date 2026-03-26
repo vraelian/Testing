@@ -17,10 +17,16 @@ export class SystemStateService {
      * Evaluates daily state conditions: countdowns, footprint pruning, and RNG rolls.
      */
     evaluateTick() {
-        const sysState = this.gameState.systemState;
-        if (!sysState) return;
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        
+        // Initialize default state for new games or legacy save conversions safely
+        if (!sysState) {
+            sysState = { activeId: null, remainingDays: 0, targetLocations: [], neutralPauseDays: 0 };
+            this.gameState.systemState = sysState;
+            this.endCurrentState();
+            return;
+        }
 
-        // Initialize default state for new games or legacy save conversions
         if (!sysState.activeId) {
             this.endCurrentState();
             return;
@@ -64,11 +70,17 @@ export class SystemStateService {
      * @param {string} commodityId - The commodity ID
      */
     logPlayerFootprint(type, locationId, commodityId) {
-        if (!this.gameState.systemState.economyFootprints) {
-            this.gameState.systemState.economyFootprints = [];
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        if (!sysState) {
+            sysState = {};
+            this.gameState.systemState = sysState;
+        }
+
+        if (!sysState.economyFootprints) {
+            sysState.economyFootprints = [];
         }
         
-        this.gameState.systemState.economyFootprints.push({
+        sysState.economyFootprints.push({
             day: this.gameState.day,
             type,
             locationId,
@@ -82,7 +94,8 @@ export class SystemStateService {
      * @private
      */
     _evaluateFootprints() {
-        const fps = this.gameState.systemState.economyFootprints || [];
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        const fps = sysState?.economyFootprints || [];
         const depletions = fps.filter(f => f.type === 'DEPLETION');
         
         // Threshold: Depleting the same commodity at 3 disparate stations
@@ -95,7 +108,7 @@ export class SystemStateService {
         for (const [commodityId, locSet] of Object.entries(byCommodity)) {
             if (locSet.size >= 3) {
                 // Clear the triggering footprints to prevent immediate re-trigger
-                this.gameState.systemState.economyFootprints = fps.filter(f => f.type !== 'DEPLETION' || f.commodityId !== commodityId);
+                sysState.economyFootprints = fps.filter(f => f.type !== 'DEPLETION' || f.commodityId !== commodityId);
                 
                 // Behavior-driven associative response (e.g., Guild panics over bulk buyout)
                 return { id: 'GUILD_EMBARGO', targets: null }; 
@@ -110,7 +123,9 @@ export class SystemStateService {
      */
     _rollRngState() {
         const allStates = Object.keys(DB.SYSTEM_STATES).filter(k => k !== 'NEUTRAL');
-        const ledger = this.gameState.systemState.historyLedger || [];
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        
+        const ledger = sysState?.historyLedger || [];
         const lastStateId = ledger.length > 0 ? ledger[ledger.length - 1] : null;
         const lastArchetype = lastStateId && DB.SYSTEM_STATES[lastStateId] ? DB.SYSTEM_STATES[lastStateId].archetype : null;
 
@@ -135,7 +150,13 @@ export class SystemStateService {
         const stateDef = DB.SYSTEM_STATES[stateId];
         if (!stateDef) return;
 
-        const sysState = this.gameState.systemState;
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        
+        // Safely initialize if somehow undefined at point of trigger
+        if (!sysState) {
+            sysState = {};
+            this.gameState.systemState = sysState;
+        }
         
         // Archive the previous active state to the history ledger
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
@@ -170,7 +191,12 @@ export class SystemStateService {
      * Forces the end of an active state, returning the system to the 'NEUTRAL' pause phase.
      */
     endCurrentState() {
-        const sysState = this.gameState.systemState;
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        if (!sysState) {
+            sysState = {};
+            this.gameState.systemState = sysState;
+        }
+
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
             if (!sysState.historyLedger) sysState.historyLedger = [];
             sysState.historyLedger.push(sysState.activeId);
@@ -182,7 +208,12 @@ export class SystemStateService {
         sysState.remainingDays = 0;
         sysState.targetLocations = [];
         sysState.varietalIndex = 0;
-        sysState.neutralPauseDays = Math.floor(Math.random() * (neutralDef.durationBounds[1] - neutralDef.durationBounds[0] + 1)) + neutralDef.durationBounds[0];
+        
+        if (neutralDef) {
+            sysState.neutralPauseDays = Math.floor(Math.random() * (neutralDef.durationBounds[1] - neutralDef.durationBounds[0] + 1)) + neutralDef.durationBounds[0];
+        } else {
+            sysState.neutralPauseDays = 7; // Fallback
+        }
 
         this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);
     }
