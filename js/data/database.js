@@ -328,7 +328,7 @@ export const DB = {
             ], 
             specialty: "• +10% Sell Price: Water & Hydroponics<br>• Slow agricultural restock<br>• Standard Market Intel", 
             availabilityModifier: { 
-                [COMMODITY_IDS.PLASTEEL]: 2.0, 
+                [COMMODITY_IDS.PLASTEEL]: 0.3, 
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 2.0, 
                 [COMMODITY_IDS.WATER_ICE]: 0.5, 
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
