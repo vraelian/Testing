@@ -19,11 +19,13 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `systemStates` | Object | **(See Section 10)** System-wide macroeconomic conditions (Economic Weather). |
 | `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
 | `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
+| **`activeHotIntel`** | **Object** | **(See Section 5)** Ephemeral intelligence that expires immediately upon departing a system. |
 | **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
 | `tutorials` | Object | **(See Section 6)** State regarding the Contextual Help Modal system. |
 | `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
 | `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
+| `telemetry` | Object | Debug/Analytics data tracking macro-economic trends and bot logs. |
 
 **Pending Travel Structure (`state.pendingTravel`)**
 This object buffers data during the async travel/event loop.
@@ -118,12 +120,13 @@ Ephemeral data used to persist UI context across re-renders.
 | `activeIntelTab` | String | ID of the active Intel tab ('intel-codex-content' vs 'market'). |
 | `servicesTab` | String | ID of the active Services sub-tab ('supply' vs 'tuning'). |
 | `activeMissionTab` | String | ID of the active Mission tab ('terminal' vs 'log'). |
+| `enableEconomicTelemetry` | Boolean | Toggles data aggregation for deep transaction logging. |
 
 ---
 
 ## 5. Intel State
 
-New data structures for the "Local Data Broker" system.
+Data structures for the "Local Data Broker" system and volatile alerts.
 
 **`state.intelMarket`**
 
@@ -134,7 +137,12 @@ New data structures for the "Local Data Broker" system.
 
 * Represents the currently active market advantage.
 * **Structure**: `{ locationId, commodityId, overridePrice, expiryDay, sourcePacketId }`.
-* *Note: Only one deal can be active at a time.*
+* *Note: Only one long-term deal can be active at a time.*
+
+**`state.activeHotIntel`**
+
+* Represents volatile intelligence that vanishes instantly if the player initiates travel.
+* **Structure**: `{ targetMarketId, commodityId, type, startDay, endDay }`.
 
 ---
 

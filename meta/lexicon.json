@@ -31,6 +31,7 @@
     "Blockade_Events": "A specific class of dynamic events that restrict access to locations or severely penalize travel routes, altering standard arbitrage pathways.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
     "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
+    "Hot_Intel": "Highly volatile market intelligence packets that generate transient, extreme price overrides. They expire immediately upon the player initiating travel to any new location.",
     "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice.",
     "Ship_Upgrade": "A modular enhancement (e.g., 'Hyper-Combustor') that can be installed into a ship's slot. Unlike the deprecated 'Attributes', upgrades have a credit value that increases the ship's resale price.",
     "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
@@ -52,7 +53,6 @@
     "Universal_Toast_System": "A scalable, non-blocking notification queue that triggers strictly upon location arrival, conveying critical system, financial, intel, and mission data. Capped at a maximum of two toasts per arrival.",
     "Geometric_Pricing": "The economic strategy of applying extreme, exponential price stratification between commodity tiers to enforce packing peanut volume constraints.",
     "Tier-Scaled_Upkeep": "The operational philosophy where service costs (fuel, repair) scale exponentially based on a vessel's base price and class, acting as the primary endgame wealth tax.",
-    "Volumetric_Sink": "[OBSOLETE] A legacy balance mechanic that relied on massively inflated physical stats (>35,000 HP/Fuel) to drain wealth. Replaced by Tier-Scaled Upkeep to preserve UI legibility and stat consequence.",
     "Bankruptcy": "A financial failure state triggered when debt overwhelmingly exceeds liquid assets and projected income, leading to severe penalties, restricted actions, or repo events.",
     "Syndicate_Debt": "High-risk loans acquired from black market or syndicate sources, often carrying steep immediate consequences for default, such as Repo Events.",
     "Guild_Debt": "Standard, regulated loans acquired from the merchant guild. Features strict long-term garnishment rules but standard interest.",
@@ -61,6 +61,10 @@
     "Synthesis_Pipeline": "An advanced operational pipeline at the Sol Station that mathematically converts standard commodities into high-value Antimatter.",
     "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs.",
     "Freight_Depositing": "The mechanic allowing piecemeal fulfillment of massive cargo requirements at a destination without monopolizing the fleet's entire hold.",
+    "Mission_Freight_Leakage": "A macroeconomic link where depositing freight for a delivery mission injects that volume directly into the destination market's actual inventory, driving down local prices and opening new arbitrage pathways.",
+    "Two-Step_Mission": "A mission architecture requiring the player to fulfill an initial objective (like gathering specific cargo) before a secondary objective or location is revealed and required for completion.",
+    "Ship_Destruction": "The critical consequence of allowing a ship's hull health to reach zero during transit or via random events. Results in a split probability of either being towed (loss of time/fuel) or absolute destruction (loss of asset, cargo, and potential game over).",
+    "Player_Footprint_Indicator": "A UI element on the market price graph that overlays the player's historical buy/sell interactions with a specific commodity, providing contextual visualization of their impact on the local economy.",
     "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not at the turn-in destination."
   },
   "service_summaries": {
@@ -101,8 +105,10 @@
         "uiState",
         "intelMarket",
         "activeIntelDeal",
+        "activeHotIntel",
         "solStation",
-        "systemStates"
+        "systemStates",
+        "telemetry"
       ]
     },
     "SimulationService": {
@@ -218,12 +224,14 @@
       "key_functions": {
         "travelTo": "Validates and begins travel to a new location.",
         "initiateTravel": "Executes the core travel logic, assessing Convoy Taxes, consuming fuel, and applying events.",
-        "resumeTravel": "Continues a pending travel action after an event."
+        "resumeTravel": "Continues a pending travel action after an event.",
+        "_handleShipDestruction": "Routes hull failure states to either Towing or Absolute Destruction workflows."
       },
       "mutates_state": [
         "pendingTravel",
         "player.shipStates.health",
-        "player.shipStates.fuel"
+        "player.shipStates.fuel",
+        "activeHotIntel"
       ]
     },
     "TimeService": {
@@ -435,7 +443,7 @@
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "updateMarketScreen": "Renders the market list.",
-        "renderPriceGraph": "Generates SVG for price history.",
+        "renderPriceGraph": "Generates SVG for price history and player footprint indicators.",
         "_saveMarketTransactionState": "Preserves input values during re-renders."
       }
     },
@@ -625,14 +633,34 @@
         "depositMissionCargo": "Drains the necessary cargo from fleet inventories and increments the objective's deposited value."
       },
       "mutates_state": [
-        "missions.activeMissionId",
+        "missions.activeMissionIds",
         "missions.completedMissionIds",
         "missions.missionProgress",
-        "missions.activeMissionObjectivesMet"
+        "missions.trackedMissionId"
       ]
     },
     "MissionObjectiveEvaluator": {
       "description": "Stateless logic engine for evaluating mission objectives. Evaluates full progress objects, dynamically aggregating fleet cargo and deposited freight to determine current value."
+    },
+    "AutomatedPlayerService": {
+      "description": "A developer bot designed to simulate long-term economic interactions by directly parsing game state and bypassing UI layers. Utilizes Goal-Oriented Action Planning (GOAP) to optimize trade routes.",
+      "dependencies": [
+        "GameState",
+        "SimulationService",
+        "PlayerActionService",
+        "TravelService"
+      ],
+      "key_functions": {
+        "tick": "Executes the core bot loop logic, evaluating resources and triggering actions.",
+        "_buyMostProfitableRoute": "Determines the highest yield route globally and executes the requisite buy actions.",
+        "_sellAllCargo": "Validates inventory limits and liquidates the fleet hold entirely."
+      },
+      "mutates_state": [
+        "player.credits",
+        "player.inventories",
+        "player.shipStates",
+        "telemetry"
+      ]
     },
     "DebugService": {
       "description": "Manages the debug panel (`lil-gui`), synchronizing its UI controls with the `GameState` and providing cheat/test functionalities. Now includes asset manipulation tools.",

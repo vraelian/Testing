@@ -2,7 +2,7 @@
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 3/14/26, ver. Balance v2
+Last Edit: 3/27/26, ver. [37.29]
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
@@ -37,8 +37,8 @@ Exports (Price Reverts Toward a Lower Baseline): Plasteel, Graphene Lattices
 Imports (Price Reverts Toward a Higher Baseline): Water Ice, Hydroponics
 
 Mars
-Exports (Price Reverts Toward a Lower Baseline): Plasteel, Xeno-Geologicals
-Imports (Price Reverts Toward a Higher Baseline): Hydroponics, Water Ice
+Exports (Price Reverts Toward a Lower Baseline): Xeno-Geologicals
+Imports (Price Reverts Toward a Higher Baseline): Hydroponics, Water Ice, Plasteel
 
 The Belt
 Exports (Price Reverts Toward a Lower Baseline): Water Ice, Xeno-Geologicals
@@ -103,6 +103,11 @@ Effect: Applies a massive 0.25x multiplier to the commodity's price (a 75% crash
 5. Force: Inventory Replenishment (The Bottleneck)
 The market slowly restocks (or sheds) its inventory to move back toward its targetStock by 10% each week. MARKET_PRESSURE_DECAY aggressively decays artificial margins by the 4th consecutive trip.
 
+6. Force: Mission Freight Leakage
+A macroeconomic link between the contract system and standard arbitrage.
+Trigger: A player deposits and completes a cargo delivery objective for a mission.
+Effect: The delivered freight "leaks" directly into the destination market's physical inventory (`currentStock`). This organic injection inflates the local `availabilityRatio`, driving local commodity prices down and dynamically creating new export arbitrage opportunities for players post-mission.
+
 V. The "Packing Peanut" Volume Constraints (Geometric Pricing)
 To prevent the "late-game singularity", the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing.
 Tier Stratification: Prices scale geometrically (e.g., Tier 1 Water Ice at ~50cr, Tier 6 Sentient AI at ~20,000,000cr). 
@@ -112,7 +117,7 @@ The Cargo Constraint: Because ship cargo capacities are strictly hard-capped bel
 VI. Ship Economy & Tier-Scaled Upkeep
 The game relies on Tier-Scaled Upkeep to drain late-game wealth, keeping absolute stat numbers readable while enforcing exponential costs.
 Algorithmic Ship Pricing: Ship base prices are derived from utility: Cargo (300cr), Hull (200cr), and Fuel (100cr) multiplied by an exponential Class Multiplier (up to 2,500x).
-Tier-Scaled Service Costs (Upkeep): Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0001`).
+Tier-Scaled Service Costs (Upkeep): Fuel costs apply exponential class multipliers (up to 500x for Capital ships). Repair costs scale algorithmically off the ship's base price (`ShipPrice * 0.0029`).
 Upgrade Economy (Hybrid Pricing): Upgrades cost a Fixed Base + a percentage of the host ship's value.
 
 VII. Debt & Bankruptcy Dynamics
