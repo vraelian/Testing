@@ -945,27 +945,29 @@ export class UIMissionControl {
                                dismissOutside: false,
                                customSetup: (licModal, licCloseHandler) => {
                                    const btnContainer = licModal.querySelector('#event-button-container');
-                                   btnContainer.innerHTML = `<button id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
+                                   btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
                                    
                                    licModal.querySelector('#accept-license-btn').onclick = () => {
-                                       // Execute state mutation
-                                       if (uiManager.lastKnownState && uiManager.lastKnownState.player) {
-                                            if (licenseReward.licenseId === 't2_license') {
-                                                uiManager.lastKnownState.player.revealedTier = Math.max(uiManager.lastKnownState.player.revealedTier || 1, 2);
-                                            }
-                                            uiManager.lastKnownState.setState({}); // Persist and broadcast state change
-                                       }
-                                       
-                                       // Unblur background now
-                                       if (stickyBarEl) {
-                                           stickyBarEl.style.transition = 'none';
-                                           stickyBarEl.style.filter = 'none';
-                                           stickyBarEl.style.webkitFilter = 'none';
-                                       }
-                                       
-                                       // Force render standard view
-                                       if (uiManager.lastKnownState) {
-                                           uiManager.render(uiManager.lastKnownState);
+                                       // Execute state mutation via the properly injected, fully mutable GameState reference
+                                       if (uiManager.simulationService && uiManager.simulationService.gameState) {
+                                           const coreState = uiManager.simulationService.gameState;
+                                           if (licenseReward.licenseId === 't2_license') {
+                                               coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
+                                           }
+                                           if (!coreState.player.unlockedLicenseIds.includes(licenseReward.licenseId)) {
+                                               coreState.player.unlockedLicenseIds.push(licenseReward.licenseId);
+                                           }
+                                           coreState.setState({}); // Persist and broadcast
+                                           
+                                           // Unblur background now
+                                           if (stickyBarEl) {
+                                               stickyBarEl.style.transition = 'none';
+                                               stickyBarEl.style.filter = 'none';
+                                               stickyBarEl.style.webkitFilter = 'none';
+                                           }
+                                           
+                                           // Force render standard view with NEW state
+                                           uiManager.render(coreState.getState());
                                        }
                                        
                                        licCloseHandler();
@@ -973,7 +975,7 @@ export class UIMissionControl {
                                }
                            });
                            
-                           // Force process the queue immediately to show license overlay
+                           // Force process the queue immediately to show license overlay over the unblurred UI
                            if (uiManager.modalEngine) {
                                uiManager.modalEngine.processModalQueue();
                            }

@@ -690,6 +690,9 @@ export class PlayerActionService {
         if (this.gameState.isGameOver) return;
         const { player, currentLocationId } = this.gameState;
         
+        // Heal any lingering fractional debt from floating-point errors
+        player.debt = Math.round(player.debt);
+        
         // --- BACKWARD COMPATIBILITY SAFEGUARD ---
         // Until Phase 3 updates ActionClickHandler, `amount` might be the MouseEvent
         let paymentAmount = amount;
@@ -700,7 +703,7 @@ export class PlayerActionService {
         }
         // ----------------------------------------
 
-        let paymentRequired = paymentAmount !== null && paymentAmount !== undefined ? paymentAmount : player.debt;
+        let paymentRequired = paymentAmount !== null && paymentAmount !== undefined ? Math.round(paymentAmount) : player.debt;
         if (paymentRequired > player.debt) paymentRequired = player.debt;
         if (paymentRequired <= 0) return;
         

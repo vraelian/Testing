@@ -343,19 +343,30 @@ export class MissionService {
         if (mission.grantedCargo) cargoArrays.push(...mission.grantedCargo);
         
         cargoArrays.forEach(c => {
-            const basePrice = DB.COMMODITIES.find(comm => comm.id === c.goodId)?.basePrice || 0;
-            penaltyValue += (basePrice * c.quantity);
+            const commodity = DB.COMMODITIES.find(comm => comm.id === c.goodId);
+            let basePrice = this.gameState.market.galacticAverages[c.goodId];
+            if (!basePrice && commodity && commodity.basePriceRange) {
+                basePrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
+            }
+            penaltyValue += ((basePrice || 0) * c.quantity);
         });
 
+        // FORCE INTEGER TO PREVENT FRACTIONAL DEBT BUGS AND GHOST LOANS
+        penaltyValue = Math.round(penaltyValue);
+
         if (penaltyValue > 0) {
+            const interestAmount = Math.ceil(penaltyValue * 0.02); // 2% interest for guild loans
+
             // Debt Integration (Phase 4): Format infraction as formal Guild Loan
             if (this.gameState.player.debt === 0) {
                 this.gameState.player.debt = penaltyValue;
+                this.gameState.player.monthlyInterestAmount = interestAmount;
                 this.gameState.player.loanType = 'guild';
                 this.gameState.player.loanStartDate = this.gameState.day;
                 this.gameState.player.loanDueDate = this.gameState.day + 365;
             } else {
                 this.gameState.player.debt += penaltyValue;
+                this.gameState.player.monthlyInterestAmount = (this.gameState.player.monthlyInterestAmount || 0) + interestAmount;
             }
             this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
         }
@@ -703,8 +714,8 @@ export class MissionService {
                             customSetup: (modal, closeHandler) => {
                                 const btnContainer = modal.querySelector('#event-button-container');
                                 btnContainer.innerHTML = `
-                                    <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
-                                    <button id="cancel-infraction" class="btn">CANCEL</button>
+                                    <button type="button" id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                    <button type="button" id="cancel-infraction" class="btn">CANCEL</button>
                                 `;
                                 modal.querySelector('#proceed-infraction').onclick = () => {
                                     violatedMissions.forEach(mId => this.penalizeThirdPartyInfraction(mId));
