@@ -299,7 +299,8 @@ export class MarketEventHandler {
                     if (this.simulationService.missionService) {
                         const protection = this.simulationService.missionService.getProtectedBaseline(goodId);
                         
-                        if (projectedInventory < protection.baseline) {
+                        // Strict baseline validation guarantees modal only triggers on actually protected mission inventory
+                        if (protection.baseline > 0 && projectedInventory < protection.baseline) {
                             // Clean up downstroke safely before showing modal
                             if (cardContainer) cardContainer.classList.remove(animClass);
                             
@@ -312,8 +313,8 @@ export class MarketEventHandler {
                                     customSetup: (modal, closeHandler) => {
                                         const btnContainer = modal.querySelector('#event-button-container');
                                         btnContainer.innerHTML = `
-                                            <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
-                                            <button id="cancel-infraction" class="btn">CANCEL</button>
+                                            <button type="button" id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                            <button type="button" id="cancel-infraction" class="btn">CANCEL</button>
                                         `;
                                         modal.querySelector('#proceed-infraction').onclick = () => {
                                             // 1. Penalize missions
