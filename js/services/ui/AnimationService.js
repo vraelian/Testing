@@ -171,4 +171,60 @@ export async function playBankruptcyBlackout(callback) {
     // 7. Cleanup
     overlay.remove();
 }
+
+/**
+ * Initiates the License Grant cinematic sequence (Phase 1).
+ * Injects a full-screen overlay behind the modal layer and fades it to gold.
+ * @returns {Promise<void>} Resolves when the 2-second fade-in completes.
+ */
+export async function startLicenseAnimation() {
+    let overlay = document.getElementById('license-cinematic-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'license-cinematic-overlay';
+        // z-[65] places it above standard UI elements but below modals which use z-[70]+
+        overlay.className = 'fixed inset-0 z-[65] pointer-events-none opacity-0';
+        overlay.style.backgroundColor = '#d97706'; // Gold
+        document.body.appendChild(overlay);
+    }
+
+    const fadeIn = overlay.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 2000, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    
+    await fadeIn.finished;
+}
+
+/**
+ * Concludes the License Grant cinematic sequence (Phase 2).
+ * Elevates the overlay to cover the UI, flashes white, and fades out.
+ * @returns {Promise<void>} Resolves when the sequence completes and the overlay is removed.
+ */
+export async function endLicenseAnimation() {
+    const overlay = document.getElementById('license-cinematic-overlay');
+    if (!overlay) return;
+
+    // Elevate z-index to cover the dismissing modal
+    overlay.style.zIndex = '9999';
+    
+    // Flash to white over 1 second
+    const flashWhite = overlay.animate(
+        [{ backgroundColor: '#d97706' }, { backgroundColor: '#ffffff' }],
+        { duration: 1000, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    await flashWhite.finished;
+
+    // Fade out to transparent over 1 second
+    const fadeOut = overlay.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 1000, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    await fadeOut.finished;
+
+    // Cleanup
+    if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+    }
+}
 // --- [[END]] VIRTUAL WORKBENCH ---

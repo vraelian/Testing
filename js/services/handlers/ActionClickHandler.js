@@ -9,6 +9,7 @@ import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
+import { startLicenseAnimation, endLicenseAnimation } from '../ui/AnimationService.js';
 
 export class ActionClickHandler {
     /**
@@ -752,17 +753,50 @@ export class ActionClickHandler {
                         <button id="confirm-license-purchase" class="btn btn-pulse-green">Confirm</button>
                         <button id="cancel-license-purchase" class="btn">Cancel</button>
                     `;
-                    modal.querySelector('#confirm-license-purchase').onclick = () => {
-                        const result = this.simulationService.purchaseLicense(licenseId);
-
-                        if (result.success) {
-                            if (e) {
-                                this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
-                            }
-                        } else if (result.error === 'INSUFFICIENT_FUNDS') {
+                    modal.querySelector('#confirm-license-purchase').onclick = async () => {
+                        const playerCredits = this.gameState.player.credits;
+                        if (playerCredits < license.cost) {
+                            closeHandler();
                             this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
+                            return;
                         }
+
                         closeHandler();
+                        await startLicenseAnimation();
+                        
+                        const textHtml = `
+                            <div class="text-center mt-2">
+                                <div class="text-emerald-400 font-bold text-lg mb-4">${license.name.toUpperCase()}</div>
+                                <div class="text-gray-300 text-sm">${license.description}</div>
+                            </div>
+                        `;
+
+                        this.uiManager.queueModal('event-modal', 'LICENSE ACQUIRED', textHtml, null, {
+                            dismissInside: false,
+                            dismissOutside: false,
+                            customSetup: (licModal, licCloseHandler) => {
+                                const licBtnContainer = licModal.querySelector('#event-button-container');
+                                licBtnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
+                                
+                                licModal.querySelector('#accept-license-btn').onclick = async () => {
+                                    licCloseHandler();
+                                    await endLicenseAnimation();
+
+                                    const result = this.simulationService.purchaseLicense(licenseId);
+                                    if (result.success) {
+                                        if (e) {
+                                            this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
+                                        }
+                                    }
+                                    this.uiManager.render(this.gameState.getState());
+                                };
+                            }
+                        });
+                        
+                        // Force process the queue immediately to show license overlay over the golden background
+                        if (this.uiManager.modalEngine) {
+                            this.uiManager.modalEngine.processModalQueue();
+                        }
                     };
                     modal.querySelector('#cancel-license-purchase').onclick = closeHandler;
                 }
