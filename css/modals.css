@@ -1283,7 +1283,7 @@
 
 /* --- MISSION COMPLETE ANIMATION --- */
 .modal-blur-fade-out {
-    animation: modalBlurFadeOut 2s ease-out forwards !important;
+    animation: modalBlurFadeOut 1s ease-out forwards !important;
     pointer-events: none;
 }
 
@@ -1747,4 +1747,108 @@
 .btn-recruit:hover {
     background: var(--rarity-color);
     color: #000;
+}
+
+/* ========================================================================= */
+/* --- LICENSE ACQUISITION CINEMATIC SYSTEM --- */
+/* ========================================================================= */
+
+@keyframes licenseModalBlurIn {
+    0% { opacity: 0; filter: blur(10px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+.license-modal-blur-in {
+    /* FIXED: Added !important so it absolutely overrides .modal-visible standard fadeIn */
+    animation: licenseModalBlurIn 1.5s ease-out forwards !important;
+}
+
+.license-modal-blur-out {
+    animation: modalBlurFadeOut 0.8s ease-out forwards !important;
+    pointer-events: none;
+}
+
+/* Background Gradients for the Overlays */
+.license-overlay-t2 { background: linear-gradient(135deg, #22c55e, #ffffff) !important; }
+.license-overlay-t3 { background: linear-gradient(135deg, #8b5cf6, #06b6d4) !important; }
+.license-overlay-t4 { background: linear-gradient(135deg, #6b7280, #14b8a6) !important; }
+.license-overlay-t5 { background: linear-gradient(135deg, #eab308, #ec4899) !important; }
+.license-overlay-t6 { background: linear-gradient(135deg, #d8b4fe, #ef4444) !important; }
+.license-overlay-t7 { background: linear-gradient(135deg, #581c87, #f97316) !important; }
+
+/* Modal Themes */
+.modal-theme-license-t2 { background: linear-gradient(145deg, rgba(34, 197, 94, 0.95), rgba(255, 255, 255, 0.85)) !important; border: 2px solid #22c55e !important; }
+.modal-theme-license-t3 { background: linear-gradient(145deg, rgba(139, 92, 246, 0.95), rgba(6, 182, 212, 0.85)) !important; border: 2px solid #8b5cf6 !important; }
+.modal-theme-license-t4 { background: linear-gradient(145deg, rgba(107, 114, 128, 0.95), rgba(20, 184, 166, 0.85)) !important; border: 2px solid #6b7280 !important; }
+.modal-theme-license-t5 { background: linear-gradient(145deg, rgba(234, 179, 8, 0.95), rgba(236, 72, 153, 0.85)) !important; border: 2px solid #eab308 !important; }
+.modal-theme-license-t6 { background: linear-gradient(145deg, rgba(216, 180, 254, 0.95), rgba(239, 68, 68, 0.85)) !important; border: 2px solid #d8b4fe !important; }
+.modal-theme-license-t7 { background: linear-gradient(145deg, rgba(88, 28, 135, 0.95), rgba(249, 115, 22, 0.85)) !important; border: 2px solid #581c87 !important; }
+
+/* Header Colors */
+.license-header-t2 { color: #22c55e !important; }
+.license-header-t3 { color: #8b5cf6 !important; }
+.license-header-t4 { color: #9ca3af !important; }
+.license-header-t5 { color: #eab308 !important; }
+.license-header-t6 { color: #d8b4fe !important; }
+.license-header-t7 { color: #c084fc !important; } 
+
+/* Sub-header Glow Colors */
+.license-text-t2 { color: #22c55e !important; text-shadow: 0 0 10px rgba(34, 197, 94, 0.8) !important; }
+.license-text-t3 { color: #8b5cf6 !important; text-shadow: 0 0 10px rgba(139, 92, 246, 0.8) !important; }
+.license-text-t4 { color: #d1d5db !important; text-shadow: 0 0 10px rgba(209, 213, 219, 0.8) !important; }
+.license-text-t5 { color: #eab308 !important; text-shadow: 0 0 10px rgba(234, 179, 8, 0.8) !important; }
+.license-text-t6 { color: #d8b4fe !important; text-shadow: 0 0 10px rgba(216, 180, 254, 0.8) !important; }
+.license-text-t7 { color: #c084fc !important; text-shadow: 0 0 10px rgba(192, 132, 252, 0.8) !important; }
+
+/* Button Background Themes */
+.license-btn-t2 { background: linear-gradient(135deg, #22c55e, #ffffff) !important; color: #000 !important; }
+.license-btn-t3 { background: linear-gradient(135deg, #8b5cf6, #06b6d4) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t4 { background: linear-gradient(135deg, #6b7280, #14b8a6) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t5 { background: linear-gradient(135deg, #eab308, #ec4899) !important; color: #000 !important; }
+.license-btn-t6 { background: linear-gradient(135deg, #d8b4fe, #ef4444) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t7 { background: linear-gradient(135deg, #581c87, #f97316) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+
+/* Typography & Layout Rules */
+.license-header-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.75rem; 
+    font-weight: 900;
+    letter-spacing: 2px;
+    -webkit-text-stroke: 1.5px #000;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.9);
+    margin-bottom: 0.5rem;
+}
+
+.license-subheader-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem; 
+    font-weight: bold;
+    animation: pulse-glow-text 2s infinite alternate;
+    -webkit-text-stroke: 0.5px #000;
+}
+
+.license-body-text {
+    font-size: 1.1rem; 
+    color: #ffffff !important;
+    text-shadow: 1px 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8);
+    margin-top: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+@keyframes pulse-glow-text {
+    0% { opacity: 0.8; filter: brightness(1); }
+    100% { opacity: 1; filter: brightness(1.3); }
+}
+
+@keyframes pulse-white-border {
+    0% { box-shadow: 0 0 5px rgba(255,255,255,0.5), inset 0 0 2px rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.5); }
+    100% { box-shadow: 0 0 15px rgba(255,255,255,1), inset 0 0 8px rgba(255,255,255,0.8); border-color: #ffffff; }
+}
+
+.license-btn {
+    border: 2px solid #fff;
+    animation: pulse-white-border 1.5s infinite alternate;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
 }

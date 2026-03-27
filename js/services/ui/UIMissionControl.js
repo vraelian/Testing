@@ -930,51 +930,74 @@ export class UIMissionControl {
 
                        // License Sequence Intercept
                        if (licenseReward) {
-                           await startLicenseAnimation();
+                           const licenseId = licenseReward.licenseId;
+                           const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
+                           const tierMatch = licenseId.match(/t(\d)_license/);
+                           const tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
                            
-                           const licenseDef = DB.LICENSES ? DB.LICENSES[licenseReward.licenseId] : null;
-                           const licenseName = licenseDef ? licenseDef.name : 'Class B Commercial License';
-                           const licenseDesc = licenseDef ? licenseDef.description : 'You are now authorized to trade Tier 2 commodities across the solar system.';
+                           const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
+                           const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
+
+                           await startLicenseAnimation(tierNum);
                            
                            const textHtml = `
-                               <div class="text-center mt-2">
-                                   <div class="text-emerald-400 font-bold text-lg mb-4">${licenseName.toUpperCase()}</div>
-                                   <div class="text-gray-300 text-sm">${licenseDesc}</div>
+                               <div class="text-center w-full flex flex-col items-center justify-center p-2">
+                                   <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
+                                   <br>
+                                   <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : 'TRADE LICENSE'}</div>
+                                   <div class="license-body-text">${bodyText}</div>
                                </div>
                            `;
 
-                           uiManager.queueModal('event-modal', 'LICENSE ACQUIRED', textHtml, null, {
+                           uiManager.queueModal('event-modal', '', textHtml, null, {
                                dismissInside: false,
                                dismissOutside: false,
+                               theme: `license-t${tierNum}`,
                                customSetup: (licModal, licCloseHandler) => {
+                                   const licModalContent = licModal.querySelector('.modal-content');
+                                   // FIX: Remove sticky exit class from previous singleton usages
+                                   licModalContent.classList.remove('license-modal-blur-out');
+                                   licModalContent.classList.add('license-modal-blur-in');
+
+                                   // Hide standard title
+                                   const titleEl = licModal.querySelector('.modal-title');
+                                   if (titleEl) titleEl.style.display = 'none';
+
                                    const btnContainer = licModal.querySelector('#event-button-container');
-                                   btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
+                                   btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn w-full license-btn license-btn-t${tierNum}" style="padding-top: 0.5rem; padding-bottom: 0.5rem; min-height: 32px;">ACCEPT LICENSE</button>`;
                                    
                                    licModal.querySelector('#accept-license-btn').onclick = async () => {
-                                       licCloseHandler();
-                                       await endLicenseAnimation();
+                                       licModalContent.classList.remove('license-modal-blur-in');
+                                       licModalContent.classList.add('license-modal-blur-out');
                                        
-                                       // Execute state mutation via the properly injected, fully mutable GameState reference
-                                       if (uiManager.simulationService && uiManager.simulationService.gameState) {
-                                           const coreState = uiManager.simulationService.gameState;
-                                           if (licenseReward.licenseId === 't2_license') {
-                                               coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
-                                           }
-                                           if (!coreState.player.unlockedLicenseIds.includes(licenseReward.licenseId)) {
-                                               coreState.player.unlockedLicenseIds.push(licenseReward.licenseId);
-                                           }
-                                           coreState.setState({}); // Persist and broadcast
+                                       setTimeout(async () => {
+                                           // FIX: Purge the class so it's clean for the next modal
+                                           licModalContent.classList.remove('license-modal-blur-out');
+                                           licCloseHandler();
+                                           await endLicenseAnimation(tierNum);
                                            
-                                           // Unblur background now
-                                           if (stickyBarEl) {
-                                               stickyBarEl.style.transition = 'none';
-                                               stickyBarEl.style.filter = 'none';
-                                               stickyBarEl.style.webkitFilter = 'none';
+                                           // Execute state mutation via the properly injected, fully mutable GameState reference
+                                           if (uiManager.simulationService && uiManager.simulationService.gameState) {
+                                               const coreState = uiManager.simulationService.gameState;
+                                               if (licenseReward.licenseId === 't2_license') {
+                                                   coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
+                                               }
+                                               if (!coreState.player.unlockedLicenseIds.includes(licenseReward.licenseId)) {
+                                                   coreState.player.unlockedLicenseIds.push(licenseReward.licenseId);
+                                               }
+                                               coreState.setState({}); // Persist and broadcast
+                                               
+                                               // Unblur background now
+                                               if (stickyBarEl) {
+                                                   stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.filter = 'none';
+                                                   stickyBarEl.style.webkitFilter = 'none';
+                                               }
+                                               
+                                               // Force render standard view with NEW state
+                                               uiManager.render(coreState.getState());
                                            }
-                                           
-                                           // Force render standard view with NEW state
-                                           uiManager.render(coreState.getState());
-                                       }
+                                       }, 800); // Allow time for blur fade out
                                    };
                                }
                            });
