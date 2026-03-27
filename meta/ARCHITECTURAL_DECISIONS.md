@@ -503,7 +503,7 @@ Status: Accepted (2026-03-10)
 
 Context: Balance v1 used "Volumetric Sinks" (Capital ships >35,000 HP). Inflating physical stats broke UI legibility and trivialized small mechanics.
 
-Decision: Reverted all physical ship stats strictly below 1,000 capacity. Replaced the "Volumetric Sink" with a "Tier-Scaled Upkeep" economic model:
+Decision: Reverted all physical stats strictly below 1,000 capacity. Replaced the "Volumetric Sink" with a "Tier-Scaled Upkeep" economic model:
 * **Algorithmic Pricing:** Ship base prices use weights (`Cargo*300 + HP*200 + Fuel*100`) multiplied by an exponential Class Multiplier. 
 * **Dynamic Service Costs:** Fuel and Repair costs scale algorithmically off the ship's class and base price.
 
@@ -541,3 +541,31 @@ Consequences:
 * Pro: Enables massive-scale logistics missions without soft-locking fleet capacity.
 * Pro: Creates a satisfying, incremental progression loop for the player.
 * Con: Adds complexity to the state tracking and requires a forced state broadcast to synchronize the global navigation bar's cargo indicator.
+
+ADR-040: Cinematic Ship Destruction & Asset Forfeiture
+Status: Accepted (2026-03-25)
+
+Context: Ship destruction lacked a systemic consequence but also needed a visual cinematic sequence to appropriately penalize the player while managing the edge case of losing the final fleet vessel (triggering a hard Game Over).
+
+Decision: Implemented a split-probability destruction engine (33% Disable/Tow vs 66% Absolute Destruction) within `TravelService.js`.
+* Cinematic Overlay: Uses the Web Animations API to execute a blocking, un-skippable red-to-black color transition overlay on the DOM, isolating the visual feedback from internal component states.
+* State Synchronization: `GameState` asset wipes (removing the ship from `ownedShipIds`, clearing `inventories` and `shipStates`) execute silently behind the black screen before rendering the backup vessel or Game Over screen.
+
+Consequences:
+* Pro: High stakes gameplay reinforcement via permanent asset forfeiture.
+* Pro: Dramatically enhances the visual gravity of a hull breach.
+* Con: Forces the `TravelService` to manually orchestrate DOM overlays outside of `UIManager`.
+
+ADR-041: Economic Telemetry Engine
+Status: Accepted (2026-03-20)
+
+Context: Validating the "Delayed Supply" economic model and the newly introduced macroeconomic "System States" required precise, aggregated logs of long-term trading behavior (player unit execution vs baseline generation) to prevent soft exploit loops.
+
+Decision: Implemented an opt-in telemetry array mapped directly into the root `GameState`.
+* Structure: Tracks `trades`, storing origin day, location, item, quantity, base cost, and execution value.
+* Gated Execution: Logging is restricted behind `enableEconomicTelemetry` flags to prevent production memory bloat.
+* Bot Integration: Synchronizes with the `AutomatedPlayerService` GOAP architecture to enable deep-time simulation validation logs.
+
+Consequences:
+* Pro: Allows rapid tuning of systemic economic behavior based on objective longitudinal data.
+* Pro: Identifies compounding inflation/deflation errors.

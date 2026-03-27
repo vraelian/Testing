@@ -6,6 +6,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [37.29] - 2026-3-27
 -  overhauled license acquisition sequence
 -  license acquisition polish
+-  updated meta files
 
 # [37.27] - 2026-3-26
 -  updated writing for 'The Story So Far...'

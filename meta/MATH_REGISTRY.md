@@ -1,7 +1,7 @@
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
-Last Edit: 3/14/26, ver. Balance v2
+Last Edit: 3/27/26, ver. [37.29]
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -50,7 +50,7 @@ How much fuel is removed from the tank per trip.
 
 JavaScript
 FuelBurn = DistanceAU * BASE_FUEL_BURN * (1 + ShipBurnMod + EngineUpgradeMod)
-BASE_FUEL_BURN: Defined per ship class.
+BASE_FUEL_BURN: Defined per ship class (recently reduced by 50% system-wide for travel baseline cost adjustments).
 EngineUpgradeMod: Typically positive (increases burn) for speed upgrades (e.g., +0.20).
 
 2.2 Travel Time
@@ -67,6 +67,7 @@ JavaScript
 BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
 HullDecay = Math.ceil(BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod * 0.8)
 HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
+HULL_DECAY_PER_TRAVEL_DAY: Increased by 5% to (1 / 7) * 1.0605 to force more frequent maintenance.
 
 2.4 Fuel-Coupled Event Delays
 When a random event introduces a time delay, it consumes standard travel fuel proportional to the route's base burn rate.
@@ -101,13 +102,14 @@ Class Multipliers: C = 1, B = 5, A = 25, S = 250, Z = 1500, O = 2500.
 Repairs scale proportionally to the value of the ship rather than relying on a flat fee.
 
 JavaScript
-CostPerHP = Math.max(1, ShipBasePrice * 0.0001) * LocationModifier * PerkModifiers
+CostPerHP = Math.max(1, ShipBasePrice * 0.0029) * LocationModifier * PerkModifiers
+(Note: Base multiplier increased by 31.8% to 0.0029 to enforce late-game wealth sinking).
 
 3.3 Dynamic Fuel Cost
-Fuel purchases at starports are subjected to a Fuel Grade Multiplier based on the ship's class.
+Fuel purchases at starports are subjected to a Fuel Grade Multiplier based on the ship's class, alongside a 50% base pump reduction.
 
 JavaScript
-FinalPumpPrice = BaseLocationFuelPrice * FuelClassMultiplier
+FinalPumpPrice = ((BaseLocationFuelPrice / 10) * 0.50) * FuelClassMultiplier
 Fuel Class Multipliers: C = 1, B = 5, A = 25, S = 150, Z/O = 500.
 
 3.4 Upgrade Hardware Cost & Resale
@@ -189,8 +191,16 @@ GuildInterest = Principal * 0.02 // (2% standard 30-day term)
 SyndicateInterest = Principal * 0.07 // (7% predatory 15-day term)
 
 6.2 Bankruptcy Insolvency Threshold
-The debt-to-asset ratio evaluated daily to trigger repo events or game-over states.
+The debt-to-asset ratio evaluated daily to trigger repo events.
 
 JavaScript
 TotalLiquidity = PlayerCredits + (TotalFleetResaleValue * 0.5)
 IsInsolvent = TotalDebt > (TotalLiquidity * 1.5)
+
+6.3 Terminal Economic Softlock (Vagrancy/Indentured Servitude)
+Evaluated to determine if the player is mathematically trapped without any options to generate capital, triggering a forced recovery state (Indentured Servitude).
+
+JavaScript
+MinEscapeCost = MissingFuelAmount * LocalFuelPrice
+TotalLiquidCapital = PlayerCredits + (TotalFleetCargoValue)
+IsSoftlocked = (TotalLiquidCapital < MinEscapeCost) && (FleetSize === 1) && (ActiveZeroCostMissions === 0)
