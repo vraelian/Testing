@@ -135,7 +135,8 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 20000 }
+            { "type": "credits", "amount": 20000 },
+            { "type": "unlock_tier", "value": 2 }
         ]
     },
     'mission_15': {

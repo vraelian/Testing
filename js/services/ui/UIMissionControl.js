@@ -5,6 +5,7 @@ import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
+import { startLicenseAnimation, endLicenseAnimation } from './AnimationService.js';
 
 function getOfficerRarityHex(rarity) {
     switch (rarity) {
@@ -929,6 +930,8 @@ export class UIMissionControl {
 
                        // License Sequence Intercept
                        if (licenseReward) {
+                           await startLicenseAnimation();
+                           
                            const licenseDef = DB.LICENSES ? DB.LICENSES[licenseReward.licenseId] : null;
                            const licenseName = licenseDef ? licenseDef.name : 'Class B Commercial License';
                            const licenseDesc = licenseDef ? licenseDef.description : 'You are now authorized to trade Tier 2 commodities across the solar system.';
@@ -947,7 +950,10 @@ export class UIMissionControl {
                                    const btnContainer = licModal.querySelector('#event-button-container');
                                    btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
                                    
-                                   licModal.querySelector('#accept-license-btn').onclick = () => {
+                                   licModal.querySelector('#accept-license-btn').onclick = async () => {
+                                       licCloseHandler();
+                                       await endLicenseAnimation();
+                                       
                                        // Execute state mutation via the properly injected, fully mutable GameState reference
                                        if (uiManager.simulationService && uiManager.simulationService.gameState) {
                                            const coreState = uiManager.simulationService.gameState;
@@ -969,8 +975,6 @@ export class UIMissionControl {
                                            // Force render standard view with NEW state
                                            uiManager.render(coreState.getState());
                                        }
-                                       
-                                       licCloseHandler();
                                    };
                                }
                            });

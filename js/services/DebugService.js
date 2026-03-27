@@ -694,6 +694,53 @@ ${logHistory}
 
                 this.gameState.setState({});
             }},
+            grantLicenseCinematic: { name: 'Test License Cinematic', type: 'button', handler: async () => {
+                const { startLicenseAnimation, endLicenseAnimation } = await import('./ui/AnimationService.js');
+                await startLicenseAnimation();
+                
+                const licenseId = 't2_license';
+                const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
+                const licenseName = licenseDef ? licenseDef.name : 'Tier 2 Trade License';
+                const licenseDesc = licenseDef ? licenseDef.description : 'You are now authorized to trade Tier 2 commodities across the solar system.';
+                
+                const textHtml = `
+                    <div class="text-center mt-2">
+                        <div class="text-emerald-400 font-bold text-lg mb-4">${licenseName.toUpperCase()}</div>
+                        <div class="text-gray-300 text-sm">${licenseDesc}</div>
+                    </div>
+                `;
+
+                this.uiManager.queueModal('event-modal', 'LICENSE ACQUIRED', textHtml, null, {
+                    dismissInside: false,
+                    dismissOutside: false,
+                    customSetup: (licModal, licCloseHandler) => {
+                        const btnContainer = licModal.querySelector('#event-button-container');
+                        btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
+                        
+                        licModal.querySelector('#accept-license-btn').onclick = async () => {
+                            licCloseHandler();
+                            await endLicenseAnimation();
+
+                            if (this.gameState) {
+                                const coreState = this.gameState;
+                                coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
+                                if (!coreState.player.unlockedLicenseIds.includes(licenseId)) {
+                                    coreState.player.unlockedLicenseIds.push(licenseId);
+                                }
+                                coreState.setState({}); 
+                                
+                                if (this.uiManager) {
+                                    this.uiManager.render(coreState.getState());
+                                }
+                            }
+                        };
+                    }
+                });
+                
+                if (this.uiManager.modalEngine) {
+                    this.uiManager.modalEngine.processModalQueue();
+                }
+            }},
              payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
                 if (this.debugState.selectedLocation) {
@@ -1057,6 +1104,7 @@ ${logHistory}
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
         playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
         playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
+        playerFolder.add(this.actions.grantLicenseCinematic, 'handler').name(this.actions.grantLicenseCinematic.name);
 
         const shipFolder = this.gui.addFolder('Ship');
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
