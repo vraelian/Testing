@@ -174,17 +174,17 @@ export async function playBankruptcyBlackout(callback) {
 
 /**
  * Initiates the License Grant cinematic sequence (Phase 1).
- * Injects a full-screen overlay behind the modal layer and fades it to gold.
+ * Injects a full-screen dynamic overlay based on the tier.
+ * @param {number} tierNum - The license tier (2 through 7) to determine the styling.
  * @returns {Promise<void>} Resolves when the 2-second fade-in completes.
  */
-export async function startLicenseAnimation() {
+export async function startLicenseAnimation(tierNum = 2) {
     let overlay = document.getElementById('license-cinematic-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
         overlay.id = 'license-cinematic-overlay';
-        // z-[65] places it above standard UI elements but below modals which use z-[70]+
-        overlay.className = 'fixed inset-0 z-[65] pointer-events-none opacity-0';
-        overlay.style.backgroundColor = '#d97706'; // Gold
+        // z-[45] places it above standard UI elements but below standard modals which use z-50
+        overlay.className = `fixed inset-0 z-[45] pointer-events-none opacity-0 license-overlay-t${tierNum}`;
         document.body.appendChild(overlay);
     }
 
@@ -199,32 +199,46 @@ export async function startLicenseAnimation() {
 /**
  * Concludes the License Grant cinematic sequence (Phase 2).
  * Elevates the overlay to cover the UI, flashes white, and fades out.
+ * @param {number} tierNum - The license tier (used for logging or minor adjustments if needed later).
  * @returns {Promise<void>} Resolves when the sequence completes and the overlay is removed.
  */
-export async function endLicenseAnimation() {
+export async function endLicenseAnimation(tierNum = 2) {
     const overlay = document.getElementById('license-cinematic-overlay');
     if (!overlay) return;
 
     // Elevate z-index to cover the dismissing modal
     overlay.style.zIndex = '9999';
     
-    // Flash to white over 1 second
-    const flashWhite = overlay.animate(
-        [{ backgroundColor: '#d97706' }, { backgroundColor: '#ffffff' }],
-        { duration: 1000, fill: 'forwards', easing: 'ease-in-out' }
+    // Instead of trying to animate a CSS gradient background (which is finicky in Web Animations), 
+    // we simply overlay a pristine white flash to transition back.
+    const whiteFlash = document.createElement('div');
+    whiteFlash.className = 'fixed inset-0 pointer-events-none opacity-0';
+    whiteFlash.style.backgroundColor = '#ffffff';
+    whiteFlash.style.zIndex = '10000';
+    document.body.appendChild(whiteFlash);
+
+    // Flash to white over 800ms
+    const flashWhite = whiteFlash.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 800, fill: 'forwards', easing: 'ease-in-out' }
     );
     await flashWhite.finished;
 
-    // Fade out to transparent over 1 second
-    const fadeOut = overlay.animate(
+    // Clean out the old color overlay seamlessly under the white flash
+    if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+    }
+
+    // Fade out the white flash to transparent over 1 second
+    const fadeOut = whiteFlash.animate(
         [{ opacity: 1 }, { opacity: 0 }],
         { duration: 1000, fill: 'forwards', easing: 'ease-in-out' }
     );
     await fadeOut.finished;
 
     // Cleanup
-    if (overlay.parentNode) {
-        overlay.parentNode.removeChild(overlay);
+    if (whiteFlash.parentNode) {
+        whiteFlash.parentNode.removeChild(whiteFlash);
     }
 }
 // --- [[END]] VIRTUAL WORKBENCH ---

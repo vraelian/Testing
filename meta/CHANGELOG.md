@@ -3,6 +3,10 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [37.29] - 2026-3-27
+-  overhauled license acquisition sequence
+-  license acquisition polish
+
 # [37.27] - 2026-3-26
 -  updated writing for 'The Story So Far...'
 -  fixed cargo grant debt bug

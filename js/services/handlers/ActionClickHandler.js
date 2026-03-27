@@ -762,38 +762,62 @@ export class ActionClickHandler {
                         }
 
                         closeHandler();
-                        await startLicenseAnimation();
+                        
+                        // Begin specific tier cinematic grant
+                        const tierMatch = licenseId.match(/t(\d)_license/);
+                        const tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
+                        const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
+                        const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
+
+                        await startLicenseAnimation(tierNum);
                         
                         const textHtml = `
-                            <div class="text-center mt-2">
-                                <div class="text-emerald-400 font-bold text-lg mb-4">${license.name.toUpperCase()}</div>
-                                <div class="text-gray-300 text-sm">${license.description}</div>
+                            <div class="text-center w-full flex flex-col items-center justify-center p-2">
+                                <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
+                                <br>
+                                <div class="license-subheader-text license-text-t${tierNum} mb-2">${license.name.toUpperCase()}</div>
+                                <div class="license-body-text">${bodyText}</div>
                             </div>
                         `;
 
-                        this.uiManager.queueModal('event-modal', 'LICENSE ACQUIRED', textHtml, null, {
+                        this.uiManager.queueModal('event-modal', '', textHtml, null, {
                             dismissInside: false,
                             dismissOutside: false,
+                            theme: `license-t${tierNum}`,
                             customSetup: (licModal, licCloseHandler) => {
+                                const licModalContent = licModal.querySelector('.modal-content');
+                                // FIX: Remove sticky exit class from previous singleton usages
+                                licModalContent.classList.remove('license-modal-blur-out');
+                                licModalContent.classList.add('license-modal-blur-in');
+
+                                const titleEl = licModal.querySelector('.modal-title');
+                                if (titleEl) titleEl.style.display = 'none';
+
                                 const licBtnContainer = licModal.querySelector('#event-button-container');
-                                licBtnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
+                                licBtnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn w-full license-btn license-btn-t${tierNum}" style="padding-top: 0.5rem; padding-bottom: 0.5rem; min-height: 32px;">ACCEPT LICENSE</button>`;
                                 
                                 licModal.querySelector('#accept-license-btn').onclick = async () => {
-                                    licCloseHandler();
-                                    await endLicenseAnimation();
+                                    licModalContent.classList.remove('license-modal-blur-in');
+                                    licModalContent.classList.add('license-modal-blur-out');
+                                    
+                                    setTimeout(async () => {
+                                        // FIX: Purge the class so it's clean for the next modal
+                                        licModalContent.classList.remove('license-modal-blur-out');
+                                        licCloseHandler();
+                                        await endLicenseAnimation(tierNum);
 
-                                    const result = this.simulationService.purchaseLicense(licenseId);
-                                    if (result.success) {
-                                        if (e) {
-                                            this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
+                                        const result = this.simulationService.purchaseLicense(licenseId);
+                                        if (result.success) {
+                                            if (e) {
+                                                this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
+                                            }
                                         }
-                                    }
-                                    this.uiManager.render(this.gameState.getState());
+                                        this.uiManager.render(this.gameState.getState());
+                                    }, 800); // 800ms to allow blur fade out
                                 };
                             }
                         });
                         
-                        // Force process the queue immediately to show license overlay over the golden background
                         if (this.uiManager.modalEngine) {
                             this.uiManager.modalEngine.processModalQueue();
                         }

@@ -1385,7 +1385,7 @@
 }
 
 .hero-header {
-    font-size: calc(0.75rem + 1pt);
+    font-size: calc(0.75rem - 0.5pt); /* Reduced 1.5pt from +1pt */
     color: var(--host-color, #fcd34d);
     justify-content: center;
     margin-bottom: 1rem;
@@ -1405,7 +1405,7 @@
 }
 
 .hero-payout-item {
-    font-size: calc(1.25rem + 1pt);
+    font-size: calc(1.25rem - 0.5pt); /* Reduced 1.5pt from +1pt */
     font-weight: 700;
     color: #fef08a;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
@@ -1418,7 +1418,7 @@
 }
 
 .hero-payout-item .credits-text-pulsing {
-    font-size: calc(1.5rem + 1pt);
+    font-size: calc(1.5rem - 0.5pt); /* Reduced 1.5pt from +1pt */
 }
 
 /* Responsive adjustments for narrow screens */
@@ -4569,7 +4569,7 @@ card.
 
 /* --- MISSION COMPLETE ANIMATION --- */
 .modal-blur-fade-out {
-    animation: modalBlurFadeOut 2s ease-out forwards !important;
+    animation: modalBlurFadeOut 1s ease-out forwards !important;
     pointer-events: none;
 }
 
@@ -5033,6 +5033,110 @@ card.
 .btn-recruit:hover {
     background: var(--rarity-color);
     color: #000;
+}
+
+/* ========================================================================= */
+/* --- LICENSE ACQUISITION CINEMATIC SYSTEM --- */
+/* ========================================================================= */
+
+@keyframes licenseModalBlurIn {
+    0% { opacity: 0; filter: blur(10px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+.license-modal-blur-in {
+    /* FIXED: Added !important so it absolutely overrides .modal-visible standard fadeIn */
+    animation: licenseModalBlurIn 1.5s ease-out forwards !important;
+}
+
+.license-modal-blur-out {
+    animation: modalBlurFadeOut 0.8s ease-out forwards !important;
+    pointer-events: none;
+}
+
+/* Background Gradients for the Overlays */
+.license-overlay-t2 { background: linear-gradient(135deg, #22c55e, #ffffff) !important; }
+.license-overlay-t3 { background: linear-gradient(135deg, #8b5cf6, #06b6d4) !important; }
+.license-overlay-t4 { background: linear-gradient(135deg, #6b7280, #14b8a6) !important; }
+.license-overlay-t5 { background: linear-gradient(135deg, #eab308, #ec4899) !important; }
+.license-overlay-t6 { background: linear-gradient(135deg, #d8b4fe, #ef4444) !important; }
+.license-overlay-t7 { background: linear-gradient(135deg, #581c87, #f97316) !important; }
+
+/* Modal Themes */
+.modal-theme-license-t2 { background: linear-gradient(145deg, rgba(34, 197, 94, 0.95), rgba(255, 255, 255, 0.85)) !important; border: 2px solid #22c55e !important; }
+.modal-theme-license-t3 { background: linear-gradient(145deg, rgba(139, 92, 246, 0.95), rgba(6, 182, 212, 0.85)) !important; border: 2px solid #8b5cf6 !important; }
+.modal-theme-license-t4 { background: linear-gradient(145deg, rgba(107, 114, 128, 0.95), rgba(20, 184, 166, 0.85)) !important; border: 2px solid #6b7280 !important; }
+.modal-theme-license-t5 { background: linear-gradient(145deg, rgba(234, 179, 8, 0.95), rgba(236, 72, 153, 0.85)) !important; border: 2px solid #eab308 !important; }
+.modal-theme-license-t6 { background: linear-gradient(145deg, rgba(216, 180, 254, 0.95), rgba(239, 68, 68, 0.85)) !important; border: 2px solid #d8b4fe !important; }
+.modal-theme-license-t7 { background: linear-gradient(145deg, rgba(88, 28, 135, 0.95), rgba(249, 115, 22, 0.85)) !important; border: 2px solid #581c87 !important; }
+
+/* Header Colors */
+.license-header-t2 { color: #22c55e !important; }
+.license-header-t3 { color: #8b5cf6 !important; }
+.license-header-t4 { color: #9ca3af !important; }
+.license-header-t5 { color: #eab308 !important; }
+.license-header-t6 { color: #d8b4fe !important; }
+.license-header-t7 { color: #c084fc !important; } 
+
+/* Sub-header Glow Colors */
+.license-text-t2 { color: #22c55e !important; text-shadow: 0 0 10px rgba(34, 197, 94, 0.8) !important; }
+.license-text-t3 { color: #8b5cf6 !important; text-shadow: 0 0 10px rgba(139, 92, 246, 0.8) !important; }
+.license-text-t4 { color: #d1d5db !important; text-shadow: 0 0 10px rgba(209, 213, 219, 0.8) !important; }
+.license-text-t5 { color: #eab308 !important; text-shadow: 0 0 10px rgba(234, 179, 8, 0.8) !important; }
+.license-text-t6 { color: #d8b4fe !important; text-shadow: 0 0 10px rgba(216, 180, 254, 0.8) !important; }
+.license-text-t7 { color: #c084fc !important; text-shadow: 0 0 10px rgba(192, 132, 252, 0.8) !important; }
+
+/* Button Background Themes */
+.license-btn-t2 { background: linear-gradient(135deg, #22c55e, #ffffff) !important; color: #000 !important; }
+.license-btn-t3 { background: linear-gradient(135deg, #8b5cf6, #06b6d4) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t4 { background: linear-gradient(135deg, #6b7280, #14b8a6) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t5 { background: linear-gradient(135deg, #eab308, #ec4899) !important; color: #000 !important; }
+.license-btn-t6 { background: linear-gradient(135deg, #d8b4fe, #ef4444) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t7 { background: linear-gradient(135deg, #581c87, #f97316) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+
+/* Typography & Layout Rules */
+.license-header-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.75rem; 
+    font-weight: 900;
+    letter-spacing: 2px;
+    -webkit-text-stroke: 1.5px #000;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.9);
+    margin-bottom: 0.5rem;
+}
+
+.license-subheader-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem; 
+    font-weight: bold;
+    animation: pulse-glow-text 2s infinite alternate;
+    -webkit-text-stroke: 0.5px #000;
+}
+
+.license-body-text {
+    font-size: 1.1rem; 
+    color: #ffffff !important;
+    text-shadow: 1px 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8);
+    margin-top: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+@keyframes pulse-glow-text {
+    0% { opacity: 0.8; filter: brightness(1); }
+    100% { opacity: 1; filter: brightness(1.3); }
+}
+
+@keyframes pulse-white-border {
+    0% { box-shadow: 0 0 5px rgba(255,255,255,0.5), inset 0 0 2px rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.5); }
+    100% { box-shadow: 0 0 15px rgba(255,255,255,1), inset 0 0 8px rgba(255,255,255,0.8); border-color: #ffffff; }
+}
+
+.license-btn {
+    border: 2px solid #fff;
+    animation: pulse-white-border 1.5s infinite alternate;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -10872,7 +10976,7 @@ export function renderMissionsScreen(gameState, missionService) {
         let statusBannerHtml = '';
         if (isLogisticsPickupPhase) {
             if (isAtPickupLocation) {
-                statusBannerHtml = `<div class="mission-status-banner" style="color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.2);">CARGO READY TO LOAD</div>`;
+                statusBannerHtml = `<div class="mission-status-banner" style="color: #f59e0b; border-color: #f59e0b; background: rgba(245, 158, 11, 0.1); box-shadow: inset 0 0 8px rgba(245, 158, 11, 0.2); animation: none !important;">CARGO READY TO LOAD</div>`;
             } else {
                 const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
                 statusBannerHtml = `<div class="mission-status-banner banner-text-return" style="color: #94a3b8; border-color: #475569;">ROUTE TO ${locName.toUpperCase()}</div>`;
@@ -10910,7 +11014,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 `;
                 actionButtonHtml = `
                     <div class="mt-3 px-2 pb-2">
-                        <button class="btn w-full" style="border: 1px solid #f59e0b; color: #f59e0b; background: rgba(245,158,11,0.1); box-shadow: 0 0 10px rgba(245,158,11,0.3);" data-action="load-mission-cargo" data-mission-id="${mission.id}">
+                        <button class="btn w-full bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" data-action="load-mission-cargo" data-mission-id="${mission.id}">
                             LOAD CARGO
                         </button>
                     </div>
@@ -13975,7 +14079,7 @@ export const DB = {
 
     // --- Trading Licenses ---
     LICENSES: {
-        't2_license': { type: 'purchase', name: 'Tier 2 Trade License', description: 'Grants access to trade Tier 2 commodities like Hydroponics and Cybernetics.', cost: 500000 },
+        't2_license': { type: 'mission', name: 'Tier 2 Trade License', description: 'Grants access to trade Tier 2 commodities like Hydroponics and Cybernetics.', missionId: 'mission_17', guidanceText: 'Trading higher value commodities requires a <b>Tier 2 License</b>.<br><br>Perhaps a contact in your network may be able to help.' },
         't3_license': { type: 'mission', name: 'Tier 3 Trade License', description: 'Grants access to trade Tier 3 commodities.', missionId: 'mission_license_t3', guidanceText: 'Access to this tier is granted by the Merchant\'s Guild upon completion of a key contract.' },
         't4_license': { type: 'purchase', name: 'Tier 4 Trade License', description: 'Grants access to trade Tier 4 commodities.', cost: 35000000 },
         't5_license': { type: 'mission', name: 'Tier 5 Trade License', description: 'Grants access to trade Tier 5 commodities.', missionId: 'mission_license_t5', guidanceText: 'Prove your industrial might by completing a grand contract for a planetary governor.' },
@@ -15004,7 +15108,8 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 20000 }
+            { "type": "credits", "amount": 20000 },
+            { "type": "unlock_tier", "value": 2 }
         ]
     },
     'mission_15': {
@@ -15067,7 +15172,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings, Captain [playerName]. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, joint repair initiative for the orbital stations at Uranus. However, statistical probability of sabotage from either of the two factions is 89.4%. Therefore, as an unaligned contractor, you represent the optimal deniable asset.<br><br><b>Travel to Venus to load 150 units of Plasteel, and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
+        description: "Greetings, Captain [playerName]. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, joint repair initiative for the orbital stations at Uranus. However, statistical probability of sabotage from either of the two factions is 89.4%. Therefore, as an unaligned contractor, you represent the optimal deniable asset.<br><br><b>Travel to Venus to loadup with Plasteel and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_16" }
         ],
@@ -15080,7 +15185,7 @@ export const PHASE_ONE_MISSIONS = {
         objectives: [
             // The TRAVEL_TO objective is removed because the Logistics UI Phase natively handles the transit and pickup instructions.
             // This array now only contains Phase 2 (Delivery) objectives.
-            { "id": "deliver_plasteel_uranus", "type": "DELIVER_ITEM", "target": "loc_uranus", "goodId": "plasteel", "quantity": 150 }
+            { "id": "deliver_plasteel_uranus", "type": "DELIVER_ITEM", "target": "loc_uranus", "goodId": "plasteel", "quantity": 25 }
         ],
         completion: {
             locationId: "loc_uranus",
@@ -20031,6 +20136,7 @@ import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
+import { startLicenseAnimation, endLicenseAnimation } from './AnimationService.js';
 
 function getOfficerRarityHex(rarity) {
     switch (rarity) {
@@ -20098,7 +20204,7 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // NEW: Hide if traveling or on hangar screen
+        // Hide if traveling or on hangar screen
         if (gameState.isTraveling || gameState.activeScreen === SCREEN_IDS.HANGAR) {
             this._hideStickyBarWithFade(stickyBarEl);
             return;
@@ -20124,7 +20230,7 @@ export class UIMissionControl {
             let firstObj = null;
             let customObjectiveLabel = null;
             
-            // --- NEW: Logistics Phase Intercept ---
+            // Logistics Phase Intercept
             if (isLogisticsPickupPhase) {
                 const pickupLocName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'Unknown';
                 let totalCargo = 0;
@@ -20309,8 +20415,12 @@ export class UIMissionControl {
         const { missions, tutorials, currentLocationId } = gameState;
         const isActive = missions.activeMissionIds.includes(mission.id);
         
-        const progress = missions.missionProgress[mission.id];
+        const progress = missions.missionProgress[mission.id] || { objectives: {} };
         const isCompletable = progress ? progress.isCompletable : false;
+        
+        const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+        const isAtPickupLocation = isLogisticsPickupPhase && mission.pickupLocationId === currentLocationId;
+        
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         
         let shouldBeDisabled = false;
@@ -20343,21 +20453,20 @@ export class UIMissionControl {
                 if (typeEl) {
                     typeEl.textContent = mission.type;
                     typeEl.style.display = 'block';
-                    typeEl.style.fontSize = '0.65rem'; // Shrink type by 1pt
+                    typeEl.style.fontSize = '0.65rem';
                 }
 
                 // --- TELEMETRY DASHBOARD (CSS GRID) ---
                 const objectivesEl = modal.querySelector('#mission-modal-objectives');
                 const rewardsEl = modal.querySelector('#mission-modal-rewards');
-                if (rewardsEl) rewardsEl.style.display = 'none'; // Hide native rewards block
+                if (rewardsEl) rewardsEl.style.display = 'none';
 
                 let flexColumns = [];
                 let animDelayIdx = 0;
 
-                // Evaluate Payout to inform Inbound stretching
                 const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
 
-                // 1. INBOUND (Granted Cargo / Intel / Credits)
+                // 1. INBOUND
                 let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
                     mission.grantedCargo.forEach(cargo => {
@@ -20393,7 +20502,7 @@ export class UIMissionControl {
                     `);
                 }
 
-                // 2. PAYOUT (Rewards) - Dynamically spans if inbound is empty
+                // 2. PAYOUT
                 let payoutPanelHtml = '';
                 if (hasPayout) {
                     let rewsList = '';
@@ -20406,6 +20515,9 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'upgrade') {
                                 const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
                                 content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license') {
+                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
+                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -20432,10 +20544,9 @@ export class UIMissionControl {
                     `;
                 }
                 
-                // Add Payout here to ensure CSS Grid layout orders correctly
                 if (payoutPanelHtml) flexColumns.push(payoutPanelHtml);
 
-                // Analyze Locations for Aggregate Destination block
+                // Analyze Locations
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
@@ -20446,16 +20557,14 @@ export class UIMissionControl {
                 }
                 const hasSingleDestination = uniqueDestinations.size === 1;
 
-                // 3. DIRECTIVE (Objectives)
+                // 3. DIRECTIVE
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
                         let text = this._getObjectiveDescription(obj, hasSingleDestination).toUpperCase();
                         
-                        // Wrap preceding numbers and "x" in t-qty FIRST to avoid breaking HTML classes below
                         text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
                         
-                        // Append deposited info visually AFTER regex, with line break
                         if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
                             const objKey = obj.id || obj.goodId || obj.target;
                             const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
@@ -20476,7 +20585,7 @@ export class UIMissionControl {
                     `);
                 }
 
-                // 4. DESTINATION (Extracted if unified)
+                // 4. DESTINATION
                 if (hasSingleDestination) {
                     const destId = Array.from(uniqueDestinations)[0];
                     const destName = DB.MARKETS.find(m => m.id === destId)?.name || 'UNKNOWN';
@@ -20505,20 +20614,19 @@ export class UIMissionControl {
                     objectivesEl.style.display = 'none';
                 }
 
-                // --- APPLY SCROLLABILITY WRAPPER ---
+                // --- SCROLLABILITY WRAPPER ---
                 const descEl = modal.querySelector('#mission-modal-description');
                 let outerWrapper = modal.querySelector('.mission-scroll-outer');
                 let wrapper = modal.querySelector('.mission-scroll-wrapper');
                 let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                // Generate structural wrappers if they don't already exist
                 if (!wrapper && descEl && objectivesEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
+                    wrapper.style.maxHeight = '304px'; 
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -20532,16 +20640,15 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                 }
 
-                // Evaluate initial scroll state upon opening the modal securely binding listener
                 if (wrapper && indicator) {
                     wrapper.onscroll = () => {
                         const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                         indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                     };
                     
-                    wrapper.scrollTop = 0; // Immediate reset
+                    wrapper.scrollTop = 0; 
                     setTimeout(() => {
-                        wrapper.scrollTop = 0; // Strict layout lock reset
+                        wrapper.scrollTop = 0; 
                         if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                             indicator.style.display = 'block';
                             const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
@@ -20550,7 +20657,7 @@ export class UIMissionControl {
                             indicator.style.display = 'none';
                             indicator.style.opacity = '0';
                         }
-                    }, 150); // 150ms delay ensures DOM is fully painted and sized
+                    }, 150); 
                 }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -20561,8 +20668,11 @@ export class UIMissionControl {
                     let navButtonHtml = '';
                     let depositButtonHtml = '';
                     
-                    if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any') {
-                        navButtonHtml = `<button id="mission-navigate-btn" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
+                    if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any' && !isLogisticsPickupPhase) {
+                        navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.completion.locationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
+                    }
+                    else if (isLogisticsPickupPhase && !isAtPickupLocation) {
+                        navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.pickupLocationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     
                     if (isAtCorrectLocation) {
@@ -20587,10 +20697,13 @@ export class UIMissionControl {
                             });
                         }
                         
-                        // Solid amber styling with static glow, no pulse animation
                         if (canDeposit) {
                             depositButtonHtml = `<button id="mission-deposit-btn" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">DEPOSIT FREIGHT</button>`;
                         }
+                    }
+                    
+                    if (isLogisticsPickupPhase && isAtPickupLocation) {
+                        depositButtonHtml = `<button id="mission-load-cargo-btn" data-mission-id="${mission.id}" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">LOAD CARGO</button>`;
                     }
                     
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${navButtonHtml}`;
@@ -20598,7 +20711,6 @@ export class UIMissionControl {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                      
-                     // INJECT SKIP TUTORIAL BUTTON HERE
                      if (mission.id === 'mission_tutorial_01') {
                          const skipBtn = document.createElement('button');
                          skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
@@ -20615,8 +20727,9 @@ export class UIMissionControl {
                         if (this.manager.simulationService) {
                             this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
                         }
+                        const targetLoc = navBtn.dataset.targetLoc;
                         setTimeout(() => {
-                            this.manager.showLaunchModal(mission.completion.locationId);
+                            this.manager.showLaunchModal(targetLoc);
                         }, 100);
                         closeHandler();
                     });
@@ -20629,7 +20742,6 @@ export class UIMissionControl {
                             const depositedAmt = this.manager.simulationService.missionService.depositMissionCargo(mission.id);
                             
                             if (depositedAmt > 0) {
-                                // Extract bounding rect to ensure coordinates on mobile touch where clientX/Y might be missing
                                 const rect = depositBtn.getBoundingClientRect();
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
@@ -20637,8 +20749,17 @@ export class UIMissionControl {
                                 this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff');
                             }
 
-                            // The modal now stays closed, seamlessly returning gameplay to the user without a forced refresh.
                             closeHandler();
+                        }
+                    });
+                }
+                
+                const loadCargoBtn = modal.querySelector('#mission-load-cargo-btn');
+                if (loadCargoBtn) {
+                    loadCargoBtn.addEventListener('click', (e) => {
+                        if (this.manager.simulationService && this.manager.simulationService.missionService) {
+                            this.manager.simulationService.missionService.loadDeferredCargo(mission.id);
+                            closeHandler(); 
                         }
                     });
                 }
@@ -20692,6 +20813,7 @@ export class UIMissionControl {
         
         let rewardVolume = 0;
         const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade');
+        const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license') : null;
 
         if (mission.rewards) {
             mission.rewards.forEach(r => {
@@ -20778,6 +20900,9 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'upgrade') {
                                 const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
                                 content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license') {
+                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
+                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -20809,7 +20934,7 @@ export class UIMissionControl {
                    rewardsEl.style.display = 'none';
                }
 
-               // --- APPLY SCROLLABILITY WRAPPER ---
+               // --- SCROLLABILITY WRAPPER ---
                const descEl = modal.querySelector('#mission-modal-description');
                let outerWrapper = modal.querySelector('.mission-scroll-outer');
                let wrapper = modal.querySelector('.mission-scroll-wrapper');
@@ -20821,7 +20946,7 @@ export class UIMissionControl {
                     
                     wrapper = document.createElement('div');
                     wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2';
-                    wrapper.style.maxHeight = '304px'; // 15% taller max-height
+                    wrapper.style.maxHeight = '304px'; 
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
@@ -20836,16 +20961,15 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                }
 
-               // Evaluate initial scroll state upon opening the modal securely binding listener
                if (wrapper && indicator) {
                    wrapper.onscroll = () => {
                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
                    };
                    
-                   wrapper.scrollTop = 0; // Immediate reset
+                   wrapper.scrollTop = 0; 
                    setTimeout(() => {
-                       wrapper.scrollTop = 0; // Strict layout lock reset
+                       wrapper.scrollTop = 0; 
                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
                            indicator.style.display = 'block';
                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
@@ -20854,7 +20978,7 @@ export class UIMissionControl {
                            indicator.style.display = 'none';
                            indicator.style.opacity = '0';
                        }
-                   }, 150); // 150ms delay ensures DOM is fully painted and sized
+                   }, 150); 
                }
 
                const buttonsEl = modal.querySelector('#mission-modal-buttons');
@@ -20906,15 +21030,10 @@ export class UIMissionControl {
                            this.manager.modalEngine.processModalQueue();
                        }
 
-                       if (stickyBarEl) {
-                           stickyBarEl.style.transition = 'none';
-                           stickyBarEl.style.filter = 'none';
-                           stickyBarEl.style.webkitFilter = 'none';
-                       }
-
                        const uiManager = this.manager;
                        const originalRender = uiManager.render;
                        
+                       // Temporarily hijack render to intercept sticky bar and tracking star updates quietly
                        uiManager.render = function(...args) {
                            const newState = args[0] || uiManager.lastKnownState;
                            uiManager.lastKnownState = newState;
@@ -20938,10 +21057,95 @@ export class UIMissionControl {
                        }
                        
                        uiManager.render = originalRender;
-                       closeHandler();
+                       closeHandler(); // close current completion modal
 
-                       if (hasUpgradeReward && this.manager.simulationService) {
-                           // Navigate to Hangar Screen to watch the sequence play out
+                       // License Sequence Intercept
+                       if (licenseReward) {
+                           const licenseId = licenseReward.licenseId;
+                           const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
+                           const tierMatch = licenseId.match(/t(\d)_license/);
+                           const tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
+                           
+                           const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
+                           const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
+
+                           await startLicenseAnimation(tierNum);
+                           
+                           const textHtml = `
+                               <div class="text-center w-full flex flex-col items-center justify-center p-2">
+                                   <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
+                                   <br>
+                                   <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : 'TRADE LICENSE'}</div>
+                                   <div class="license-body-text">${bodyText}</div>
+                               </div>
+                           `;
+
+                           uiManager.queueModal('event-modal', '', textHtml, null, {
+                               dismissInside: false,
+                               dismissOutside: false,
+                               theme: `license-t${tierNum}`,
+                               customSetup: (licModal, licCloseHandler) => {
+                                   const licModalContent = licModal.querySelector('.modal-content');
+                                   // FIX: Remove sticky exit class from previous singleton usages
+                                   licModalContent.classList.remove('license-modal-blur-out');
+                                   licModalContent.classList.add('license-modal-blur-in');
+
+                                   // Hide standard title
+                                   const titleEl = licModal.querySelector('.modal-title');
+                                   if (titleEl) titleEl.style.display = 'none';
+
+                                   const btnContainer = licModal.querySelector('#event-button-container');
+                                   btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn w-full license-btn license-btn-t${tierNum}" style="padding-top: 0.5rem; padding-bottom: 0.5rem; min-height: 32px;">ACCEPT LICENSE</button>`;
+                                   
+                                   licModal.querySelector('#accept-license-btn').onclick = async () => {
+                                       licModalContent.classList.remove('license-modal-blur-in');
+                                       licModalContent.classList.add('license-modal-blur-out');
+                                       
+                                       setTimeout(async () => {
+                                           // FIX: Purge the class so it's clean for the next modal
+                                           licModalContent.classList.remove('license-modal-blur-out');
+                                           licCloseHandler();
+                                           await endLicenseAnimation(tierNum);
+                                           
+                                           // Execute state mutation via the properly injected, fully mutable GameState reference
+                                           if (uiManager.simulationService && uiManager.simulationService.gameState) {
+                                               const coreState = uiManager.simulationService.gameState;
+                                               if (licenseReward.licenseId === 't2_license') {
+                                                   coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
+                                               }
+                                               if (!coreState.player.unlockedLicenseIds.includes(licenseReward.licenseId)) {
+                                                   coreState.player.unlockedLicenseIds.push(licenseReward.licenseId);
+                                               }
+                                               coreState.setState({}); // Persist and broadcast
+                                               
+                                               // Unblur background now
+                                               if (stickyBarEl) {
+                                                   stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.filter = 'none';
+                                                   stickyBarEl.style.webkitFilter = 'none';
+                                               }
+                                               
+                                               // Force render standard view with NEW state
+                                               uiManager.render(coreState.getState());
+                                           }
+                                       }, 800); // Allow time for blur fade out
+                                   };
+                               }
+                           });
+                           
+                           // Force process the queue immediately to show license overlay over the unblurred UI
+                           if (uiManager.modalEngine) {
+                               uiManager.modalEngine.processModalQueue();
+                           }
+                           
+                       } else if (hasUpgradeReward && this.manager.simulationService) {
+                           // Standard upgrade sequence transition
+                           if (stickyBarEl) {
+                               stickyBarEl.style.transition = 'none';
+                               stickyBarEl.style.filter = 'none';
+                               stickyBarEl.style.webkitFilter = 'none';
+                           }
+                           
                            this.manager.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
                            
                            const activeShipId = uiManager.lastKnownState.player.activeShipId;
@@ -20952,9 +21156,12 @@ export class UIMissionControl {
                            
                            await uiManager.orchestrateUpgradeSequence(activeShipId);
                        } else {
-                           // --- FORCE RENDER ---
-                           // Ensure the screen formally updates now that it is un-hijacked so 
-                           // we can catch empty logs and the automatic Terminal switch
+                           // Standard unblur and render loop
+                           if (stickyBarEl) {
+                               stickyBarEl.style.transition = 'none';
+                               stickyBarEl.style.filter = 'none';
+                               stickyBarEl.style.webkitFilter = 'none';
+                           }
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
                            }
@@ -20985,11 +21192,10 @@ export class UIMissionControl {
                                card.remove(); 
                            };
                        }
-                   }, 1500); // Trigger after the 1.5s fade finishes
+                   }, 1500); 
                };
                buttonsEl.appendChild(completeBtn);
                
-               // Inject Skip Tutorial button for mission_tutorial_01
                if (mission.id === 'mission_tutorial_01') {
                    const skipBtn = document.createElement('button');
                    skipBtn.className = 'btn w-full bg-white text-black font-bold mt-2 hover:bg-gray-200';
@@ -21230,7 +21436,6 @@ export class UIMissionControl {
          return result;
     }
 
-    // --- NEW HELPER: Dynamic Text Replacement ---
     _parseMissionText(text, gameState) {
         if (!text) return '';
         let parsedText = text;
@@ -26274,6 +26479,76 @@ export async function playBankruptcyBlackout(callback) {
     // 7. Cleanup
     overlay.remove();
 }
+
+/**
+ * Initiates the License Grant cinematic sequence (Phase 1).
+ * Injects a full-screen dynamic overlay based on the tier.
+ * @param {number} tierNum - The license tier (2 through 7) to determine the styling.
+ * @returns {Promise<void>} Resolves when the 2-second fade-in completes.
+ */
+export async function startLicenseAnimation(tierNum = 2) {
+    let overlay = document.getElementById('license-cinematic-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'license-cinematic-overlay';
+        // z-[45] places it above standard UI elements but below standard modals which use z-50
+        overlay.className = `fixed inset-0 z-[45] pointer-events-none opacity-0 license-overlay-t${tierNum}`;
+        document.body.appendChild(overlay);
+    }
+
+    const fadeIn = overlay.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 2000, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    
+    await fadeIn.finished;
+}
+
+/**
+ * Concludes the License Grant cinematic sequence (Phase 2).
+ * Elevates the overlay to cover the UI, flashes white, and fades out.
+ * @param {number} tierNum - The license tier (used for logging or minor adjustments if needed later).
+ * @returns {Promise<void>} Resolves when the sequence completes and the overlay is removed.
+ */
+export async function endLicenseAnimation(tierNum = 2) {
+    const overlay = document.getElementById('license-cinematic-overlay');
+    if (!overlay) return;
+
+    // Elevate z-index to cover the dismissing modal
+    overlay.style.zIndex = '9999';
+    
+    // Instead of trying to animate a CSS gradient background (which is finicky in Web Animations), 
+    // we simply overlay a pristine white flash to transition back.
+    const whiteFlash = document.createElement('div');
+    whiteFlash.className = 'fixed inset-0 pointer-events-none opacity-0';
+    whiteFlash.style.backgroundColor = '#ffffff';
+    whiteFlash.style.zIndex = '10000';
+    document.body.appendChild(whiteFlash);
+
+    // Flash to white over 800ms
+    const flashWhite = whiteFlash.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 800, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    await flashWhite.finished;
+
+    // Clean out the old color overlay seamlessly under the white flash
+    if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+    }
+
+    // Fade out the white flash to transparent over 1 second
+    const fadeOut = whiteFlash.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 1000, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    await fadeOut.finished;
+
+    // Cleanup
+    if (whiteFlash.parentNode) {
+        whiteFlash.parentNode.removeChild(whiteFlash);
+    }
+}
 // --- [[END]] VIRTUAL WORKBENCH ---
 --- END OF FILE: ./js/services/ui/AnimationService.js ---
 
@@ -27279,12 +27554,84 @@ ${logHistory}
         }
     }
 
+    /**
+     * Helper to execute cinematic grant sequences
+     * @private
+     */
+    _triggerCinematicDebugGrant(tierNum) {
+        const licenseId = `t${tierNum}_license`;
+        const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
+        
+        const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
+        const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
+
+        import('./ui/AnimationService.js').then(async ({ startLicenseAnimation, endLicenseAnimation }) => {
+            await startLicenseAnimation(tierNum);
+
+            const textHtml = `
+                <div class="text-center w-full flex flex-col items-center justify-center p-2">
+                    <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
+                    <br>
+                    <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : `TIER ${tierNum} TRADE LICENSE`}</div>
+                    <div class="license-body-text">${bodyText}</div>
+                </div>
+            `;
+
+            this.uiManager.queueModal('event-modal', '', textHtml, null, {
+                dismissInside: false,
+                dismissOutside: false,
+                theme: `license-t${tierNum}`,
+                customSetup: (licModal, licCloseHandler) => {
+                    const modalContent = licModal.querySelector('.modal-content');
+                    // FIX: Remove sticky exit class from previous singleton usages
+                    modalContent.classList.remove('license-modal-blur-out');
+                    modalContent.classList.add('license-modal-blur-in');
+
+                    const titleEl = licModal.querySelector('.modal-title');
+                    if(titleEl) titleEl.style.display = 'none';
+
+                    const btnContainer = licModal.querySelector('#event-button-container');
+                    btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn w-full license-btn license-btn-t${tierNum}" style="padding-top: 0.5rem; padding-bottom: 0.5rem; min-height: 32px;">ACCEPT LICENSE</button>`;
+                    
+                    licModal.querySelector('#accept-license-btn').onclick = async () => {
+                        modalContent.classList.remove('license-modal-blur-in');
+                        modalContent.classList.add('license-modal-blur-out');
+                        
+                        setTimeout(async () => {
+                            // FIX: Purge the class so it's clean for the next modal
+                            modalContent.classList.remove('license-modal-blur-out');
+                            licCloseHandler();
+                            await endLicenseAnimation(tierNum);
+
+                            if (this.gameState) {
+                                const coreState = this.gameState;
+                                coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, tierNum);
+                                if (!coreState.player.unlockedLicenseIds.includes(licenseId)) {
+                                    coreState.player.unlockedLicenseIds.push(licenseId);
+                                }
+                                coreState.setState({}); 
+                                
+                                if (this.uiManager) {
+                                    this.uiManager.render(coreState.getState());
+                                }
+                            }
+                        }, 800);
+                    };
+                }
+            });
+            
+            if (this.uiManager.modalEngine) {
+                this.uiManager.modalEngine.processModalQueue();
+            }
+        });
+    }
+
     _registerDebugActions() {
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
             skipToStarterSelection: { name: 'Skip to Ship Select (Intro)', type: 'button', handler: () => this.skipToStarterSelection() },
-             skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
+            skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
                 this.simulationService.timeService._checkMilestones();
@@ -27305,7 +27652,13 @@ ${logHistory}
 
                 this.gameState.setState({});
             }},
-             payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
+            grantLicenseT2: { name: 'Grant Tier 2 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(2) },
+            grantLicenseT3: { name: 'Grant Tier 3 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(3) },
+            grantLicenseT4: { name: 'Grant Tier 4 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(4) },
+            grantLicenseT5: { name: 'Grant Tier 5 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(5) },
+            grantLicenseT6: { name: 'Grant Tier 6 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(6) },
+            grantLicenseT7: { name: 'Grant Tier 7 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(7) },
+            payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
                 if (this.debugState.selectedLocation) {
                     this.gameState.currentLocationId = this.debugState.selectedLocation;
@@ -27668,6 +28021,14 @@ ${logHistory}
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
         playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
         playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
+        
+        const licensesFolder = this.gui.addFolder('Grant Licenses');
+        licensesFolder.add(this.actions.grantLicenseT2, 'handler').name(this.actions.grantLicenseT2.name);
+        licensesFolder.add(this.actions.grantLicenseT3, 'handler').name(this.actions.grantLicenseT3.name);
+        licensesFolder.add(this.actions.grantLicenseT4, 'handler').name(this.actions.grantLicenseT4.name);
+        licensesFolder.add(this.actions.grantLicenseT5, 'handler').name(this.actions.grantLicenseT5.name);
+        licensesFolder.add(this.actions.grantLicenseT6, 'handler').name(this.actions.grantLicenseT6.name);
+        licensesFolder.add(this.actions.grantLicenseT7, 'handler').name(this.actions.grantLicenseT7.name);
 
         const shipFolder = this.gui.addFolder('Ship');
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
@@ -30341,8 +30702,15 @@ export class MissionService {
         if (mission.onAccept) {
             mission.onAccept.forEach(action => {
                 if (action.type === 'TRIGGER_SYSTEM_STATE') {
-                    const sysStateService = new SystemStateService(this.gameState, this.logger);
-                    sysStateService.triggerState(action.stateId);
+                    // Refactored to use the injected SimulationService -> SystemStateService connection
+                    if (this.simulationService && this.simulationService.systemStateService) {
+                        this.simulationService.systemStateService.triggerState(action.stateId);
+                    } else {
+                        // Fallback in the rare event injection failed
+                        this.logger.warn('MissionService', 'SimulationService.systemStateService unavailable. Initializing temporary instance.');
+                        const sysStateService = new SystemStateService(this.gameState, this.logger);
+                        sysStateService.triggerState(action.stateId);
+                    }
                     
                     // Force a re-render so the state is recognized before the modal tries to display it
                     this.gameState.setState({});
@@ -30468,12 +30836,31 @@ export class MissionService {
         if (mission.grantedCargo) cargoArrays.push(...mission.grantedCargo);
         
         cargoArrays.forEach(c => {
-            const basePrice = DB.COMMODITIES.find(comm => comm.id === c.goodId)?.basePrice || 0;
-            penaltyValue += (basePrice * c.quantity);
+            const commodity = DB.COMMODITIES.find(comm => comm.id === c.goodId);
+            let basePrice = this.gameState.market.galacticAverages[c.goodId];
+            if (!basePrice && commodity && commodity.basePriceRange) {
+                basePrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
+            }
+            penaltyValue += ((basePrice || 0) * c.quantity);
         });
 
+        // FORCE INTEGER TO PREVENT FRACTIONAL DEBT BUGS AND GHOST LOANS
+        penaltyValue = Math.round(penaltyValue);
+
         if (penaltyValue > 0) {
-            this.gameState.player.debt += penaltyValue;
+            const interestAmount = Math.ceil(penaltyValue * 0.02); // 2% interest for guild loans
+
+            // Debt Integration (Phase 4): Format infraction as formal Guild Loan
+            if (this.gameState.player.debt === 0) {
+                this.gameState.player.debt = penaltyValue;
+                this.gameState.player.monthlyInterestAmount = interestAmount;
+                this.gameState.player.loanType = 'guild';
+                this.gameState.player.loanStartDate = this.gameState.day;
+                this.gameState.player.loanDueDate = this.gameState.day + 365;
+            } else {
+                this.gameState.player.debt += penaltyValue;
+                this.gameState.player.monthlyInterestAmount = (this.gameState.player.monthlyInterestAmount || 0) + interestAmount;
+            }
             this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
         }
 
@@ -30820,8 +31207,8 @@ export class MissionService {
                             customSetup: (modal, closeHandler) => {
                                 const btnContainer = modal.querySelector('#event-button-container');
                                 btnContainer.innerHTML = `
-                                    <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
-                                    <button id="cancel-infraction" class="btn">CANCEL</button>
+                                    <button type="button" id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                    <button type="button" id="cancel-infraction" class="btn">CANCEL</button>
                                 `;
                                 modal.querySelector('#proceed-infraction').onclick = () => {
                                     violatedMissions.forEach(mId => this.penalizeThirdPartyInfraction(mId));
@@ -32766,10 +33153,16 @@ export class SystemStateService {
      * Evaluates daily state conditions: countdowns, footprint pruning, and RNG rolls.
      */
     evaluateTick() {
-        const sysState = this.gameState.systemState;
-        if (!sysState) return;
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        
+        // Initialize default state for new games or legacy save conversions safely
+        if (!sysState) {
+            sysState = { activeId: null, remainingDays: 0, targetLocations: [], neutralPauseDays: 0 };
+            this.gameState.systemState = sysState;
+            this.endCurrentState();
+            return;
+        }
 
-        // Initialize default state for new games or legacy save conversions
         if (!sysState.activeId) {
             this.endCurrentState();
             return;
@@ -32813,11 +33206,17 @@ export class SystemStateService {
      * @param {string} commodityId - The commodity ID
      */
     logPlayerFootprint(type, locationId, commodityId) {
-        if (!this.gameState.systemState.economyFootprints) {
-            this.gameState.systemState.economyFootprints = [];
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        if (!sysState) {
+            sysState = {};
+            this.gameState.systemState = sysState;
+        }
+
+        if (!sysState.economyFootprints) {
+            sysState.economyFootprints = [];
         }
         
-        this.gameState.systemState.economyFootprints.push({
+        sysState.economyFootprints.push({
             day: this.gameState.day,
             type,
             locationId,
@@ -32831,7 +33230,8 @@ export class SystemStateService {
      * @private
      */
     _evaluateFootprints() {
-        const fps = this.gameState.systemState.economyFootprints || [];
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        const fps = sysState?.economyFootprints || [];
         const depletions = fps.filter(f => f.type === 'DEPLETION');
         
         // Threshold: Depleting the same commodity at 3 disparate stations
@@ -32844,7 +33244,7 @@ export class SystemStateService {
         for (const [commodityId, locSet] of Object.entries(byCommodity)) {
             if (locSet.size >= 3) {
                 // Clear the triggering footprints to prevent immediate re-trigger
-                this.gameState.systemState.economyFootprints = fps.filter(f => f.type !== 'DEPLETION' || f.commodityId !== commodityId);
+                sysState.economyFootprints = fps.filter(f => f.type !== 'DEPLETION' || f.commodityId !== commodityId);
                 
                 // Behavior-driven associative response (e.g., Guild panics over bulk buyout)
                 return { id: 'GUILD_EMBARGO', targets: null }; 
@@ -32859,7 +33259,9 @@ export class SystemStateService {
      */
     _rollRngState() {
         const allStates = Object.keys(DB.SYSTEM_STATES).filter(k => k !== 'NEUTRAL');
-        const ledger = this.gameState.systemState.historyLedger || [];
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        
+        const ledger = sysState?.historyLedger || [];
         const lastStateId = ledger.length > 0 ? ledger[ledger.length - 1] : null;
         const lastArchetype = lastStateId && DB.SYSTEM_STATES[lastStateId] ? DB.SYSTEM_STATES[lastStateId].archetype : null;
 
@@ -32884,7 +33286,13 @@ export class SystemStateService {
         const stateDef = DB.SYSTEM_STATES[stateId];
         if (!stateDef) return;
 
-        const sysState = this.gameState.systemState;
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        
+        // Safely initialize if somehow undefined at point of trigger
+        if (!sysState) {
+            sysState = {};
+            this.gameState.systemState = sysState;
+        }
         
         // Archive the previous active state to the history ledger
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
@@ -32919,7 +33327,12 @@ export class SystemStateService {
      * Forces the end of an active state, returning the system to the 'NEUTRAL' pause phase.
      */
     endCurrentState() {
-        const sysState = this.gameState.systemState;
+        let sysState = this.gameState.systemStates || this.gameState.systemState;
+        if (!sysState) {
+            sysState = {};
+            this.gameState.systemState = sysState;
+        }
+
         if (sysState.activeId && sysState.activeId !== 'NEUTRAL') {
             if (!sysState.historyLedger) sysState.historyLedger = [];
             sysState.historyLedger.push(sysState.activeId);
@@ -32931,7 +33344,12 @@ export class SystemStateService {
         sysState.remainingDays = 0;
         sysState.targetLocations = [];
         sysState.varietalIndex = 0;
-        sysState.neutralPauseDays = Math.floor(Math.random() * (neutralDef.durationBounds[1] - neutralDef.durationBounds[0] + 1)) + neutralDef.durationBounds[0];
+        
+        if (neutralDef) {
+            sysState.neutralPauseDays = Math.floor(Math.random() * (neutralDef.durationBounds[1] - neutralDef.durationBounds[0] + 1)) + neutralDef.durationBounds[0];
+        } else {
+            sysState.neutralPauseDays = 7; // Fallback
+        }
 
         this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);
     }
@@ -35462,7 +35880,6 @@ export class SimulationService {
     setScreen(navId, screenId) {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
         
-        // --- PHASE 3 FIX: Atomic execution ---
         // 1. Mutate raw state instantly
         this.gameState.activeNav = navId;
         this.gameState.activeScreen = screenId;
@@ -35769,7 +36186,6 @@ export class SimulationService {
                     if (!this.gameState.player.unlockedLicenseIds.includes(reward.licenseId)) {
                         this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                         const license = DB.LICENSES[reward.licenseId];
-                        this.uiManager.triggerEffect('systemSurge', { theme: 'tan' });
                         this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license ? license.name : reward.licenseId}.`);
                     }
                     break;
@@ -41749,7 +42165,8 @@ export class MarketEventHandler {
                     if (this.simulationService.missionService) {
                         const protection = this.simulationService.missionService.getProtectedBaseline(goodId);
                         
-                        if (projectedInventory < protection.baseline) {
+                        // Strict baseline validation guarantees modal only triggers on actually protected mission inventory
+                        if (protection.baseline > 0 && projectedInventory < protection.baseline) {
                             // Clean up downstroke safely before showing modal
                             if (cardContainer) cardContainer.classList.remove(animClass);
                             
@@ -41762,8 +42179,8 @@ export class MarketEventHandler {
                                     customSetup: (modal, closeHandler) => {
                                         const btnContainer = modal.querySelector('#event-button-container');
                                         btnContainer.innerHTML = `
-                                            <button id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
-                                            <button id="cancel-infraction" class="btn">CANCEL</button>
+                                            <button type="button" id="proceed-infraction" class="btn" style="border: 1px solid #ef4444; color: #ef4444; background: rgba(239, 68, 68, 0.1);">PROCEED</button>
+                                            <button type="button" id="cancel-infraction" class="btn">CANCEL</button>
                                         `;
                                         modal.querySelector('#proceed-infraction').onclick = () => {
                                             // 1. Penalize missions
@@ -42557,6 +42974,7 @@ import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
+import { startLicenseAnimation, endLicenseAnimation } from '../ui/AnimationService.js';
 
 export class ActionClickHandler {
     /**
@@ -43300,17 +43718,74 @@ export class ActionClickHandler {
                         <button id="confirm-license-purchase" class="btn btn-pulse-green">Confirm</button>
                         <button id="cancel-license-purchase" class="btn">Cancel</button>
                     `;
-                    modal.querySelector('#confirm-license-purchase').onclick = () => {
-                        const result = this.simulationService.purchaseLicense(licenseId);
-
-                        if (result.success) {
-                            if (e) {
-                                this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
-                            }
-                        } else if (result.error === 'INSUFFICIENT_FUNDS') {
+                    modal.querySelector('#confirm-license-purchase').onclick = async () => {
+                        const playerCredits = this.gameState.player.credits;
+                        if (playerCredits < license.cost) {
+                            closeHandler();
                             this.uiManager.queueModal('event-modal', 'Purchase Failed', `You cannot afford the ${formatCredits(license.cost)} fee for this license.`);
+                            return;
                         }
+
                         closeHandler();
+                        
+                        // Begin specific tier cinematic grant
+                        const tierMatch = licenseId.match(/t(\d)_license/);
+                        const tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
+                        const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
+                        const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
+
+                        await startLicenseAnimation(tierNum);
+                        
+                        const textHtml = `
+                            <div class="text-center w-full flex flex-col items-center justify-center p-2">
+                                <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
+                                <br>
+                                <div class="license-subheader-text license-text-t${tierNum} mb-2">${license.name.toUpperCase()}</div>
+                                <div class="license-body-text">${bodyText}</div>
+                            </div>
+                        `;
+
+                        this.uiManager.queueModal('event-modal', '', textHtml, null, {
+                            dismissInside: false,
+                            dismissOutside: false,
+                            theme: `license-t${tierNum}`,
+                            customSetup: (licModal, licCloseHandler) => {
+                                const licModalContent = licModal.querySelector('.modal-content');
+                                // FIX: Remove sticky exit class from previous singleton usages
+                                licModalContent.classList.remove('license-modal-blur-out');
+                                licModalContent.classList.add('license-modal-blur-in');
+
+                                const titleEl = licModal.querySelector('.modal-title');
+                                if (titleEl) titleEl.style.display = 'none';
+
+                                const licBtnContainer = licModal.querySelector('#event-button-container');
+                                licBtnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn w-full license-btn license-btn-t${tierNum}" style="padding-top: 0.5rem; padding-bottom: 0.5rem; min-height: 32px;">ACCEPT LICENSE</button>`;
+                                
+                                licModal.querySelector('#accept-license-btn').onclick = async () => {
+                                    licModalContent.classList.remove('license-modal-blur-in');
+                                    licModalContent.classList.add('license-modal-blur-out');
+                                    
+                                    setTimeout(async () => {
+                                        // FIX: Purge the class so it's clean for the next modal
+                                        licModalContent.classList.remove('license-modal-blur-out');
+                                        licCloseHandler();
+                                        await endLicenseAnimation(tierNum);
+
+                                        const result = this.simulationService.purchaseLicense(licenseId);
+                                        if (result.success) {
+                                            if (e) {
+                                                this.uiManager.createFloatingText(`-${formatCredits(license.cost, false)}`, e.clientX, e.clientY, '#f87171');
+                                            }
+                                        }
+                                        this.uiManager.render(this.gameState.getState());
+                                    }, 800); // 800ms to allow blur fade out
+                                };
+                            }
+                        });
+                        
+                        if (this.uiManager.modalEngine) {
+                            this.uiManager.modalEngine.processModalQueue();
+                        }
                     };
                     modal.querySelector('#cancel-license-purchase').onclick = closeHandler;
                 }
@@ -44380,6 +44855,9 @@ export class PlayerActionService {
         if (this.gameState.isGameOver) return;
         const { player, currentLocationId } = this.gameState;
         
+        // Heal any lingering fractional debt from floating-point errors
+        player.debt = Math.round(player.debt);
+        
         // --- BACKWARD COMPATIBILITY SAFEGUARD ---
         // Until Phase 3 updates ActionClickHandler, `amount` might be the MouseEvent
         let paymentAmount = amount;
@@ -44390,7 +44868,7 @@ export class PlayerActionService {
         }
         // ----------------------------------------
 
-        let paymentRequired = paymentAmount !== null && paymentAmount !== undefined ? paymentAmount : player.debt;
+        let paymentRequired = paymentAmount !== null && paymentAmount !== undefined ? Math.round(paymentAmount) : player.debt;
         if (paymentRequired > player.debt) paymentRequired = player.debt;
         if (paymentRequired <= 0) return;
         
@@ -44802,8 +45280,14 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [37.24] - 2026-3-26
+# [37.29] - 2026-3-27
+-  overhauled license acquisition sequence
+-  license acquisition polish
+
+# [37.27] - 2026-3-26
 -  updated writing for 'The Story So Far...'
+-  fixed cargo grant debt bug
+-  fixed tier 2 licence grant bug
 
 # [37.24] - 2026-3-25
 -  improved ship destruction sequence

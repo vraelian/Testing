@@ -668,12 +668,84 @@ ${logHistory}
         }
     }
 
+    /**
+     * Helper to execute cinematic grant sequences
+     * @private
+     */
+    _triggerCinematicDebugGrant(tierNum) {
+        const licenseId = `t${tierNum}_license`;
+        const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
+        
+        const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
+        const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
+
+        import('./ui/AnimationService.js').then(async ({ startLicenseAnimation, endLicenseAnimation }) => {
+            await startLicenseAnimation(tierNum);
+
+            const textHtml = `
+                <div class="text-center w-full flex flex-col items-center justify-center p-2">
+                    <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
+                    <br>
+                    <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : `TIER ${tierNum} TRADE LICENSE`}</div>
+                    <div class="license-body-text">${bodyText}</div>
+                </div>
+            `;
+
+            this.uiManager.queueModal('event-modal', '', textHtml, null, {
+                dismissInside: false,
+                dismissOutside: false,
+                theme: `license-t${tierNum}`,
+                customSetup: (licModal, licCloseHandler) => {
+                    const modalContent = licModal.querySelector('.modal-content');
+                    // FIX: Remove sticky exit class from previous singleton usages
+                    modalContent.classList.remove('license-modal-blur-out');
+                    modalContent.classList.add('license-modal-blur-in');
+
+                    const titleEl = licModal.querySelector('.modal-title');
+                    if(titleEl) titleEl.style.display = 'none';
+
+                    const btnContainer = licModal.querySelector('#event-button-container');
+                    btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn w-full license-btn license-btn-t${tierNum}" style="padding-top: 0.5rem; padding-bottom: 0.5rem; min-height: 32px;">ACCEPT LICENSE</button>`;
+                    
+                    licModal.querySelector('#accept-license-btn').onclick = async () => {
+                        modalContent.classList.remove('license-modal-blur-in');
+                        modalContent.classList.add('license-modal-blur-out');
+                        
+                        setTimeout(async () => {
+                            // FIX: Purge the class so it's clean for the next modal
+                            modalContent.classList.remove('license-modal-blur-out');
+                            licCloseHandler();
+                            await endLicenseAnimation(tierNum);
+
+                            if (this.gameState) {
+                                const coreState = this.gameState;
+                                coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, tierNum);
+                                if (!coreState.player.unlockedLicenseIds.includes(licenseId)) {
+                                    coreState.player.unlockedLicenseIds.push(licenseId);
+                                }
+                                coreState.setState({}); 
+                                
+                                if (this.uiManager) {
+                                    this.uiManager.render(coreState.getState());
+                                }
+                            }
+                        }, 800);
+                    };
+                }
+            });
+            
+            if (this.uiManager.modalEngine) {
+                this.uiManager.modalEngine.processModalQueue();
+            }
+        });
+    }
+
     _registerDebugActions() {
         this.actions = {
             godMode: { name: 'God Mode', type: 'button', handler: () => this.godMode() },
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
             skipToStarterSelection: { name: 'Skip to Ship Select (Intro)', type: 'button', handler: () => this.skipToStarterSelection() },
-             skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
+            skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
                 this.simulationService.timeService._checkMilestones();
@@ -694,54 +766,13 @@ ${logHistory}
 
                 this.gameState.setState({});
             }},
-            grantLicenseCinematic: { name: 'Test License Cinematic', type: 'button', handler: async () => {
-                const { startLicenseAnimation, endLicenseAnimation } = await import('./ui/AnimationService.js');
-                await startLicenseAnimation();
-                
-                const licenseId = 't2_license';
-                const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
-                const licenseName = licenseDef ? licenseDef.name : 'Tier 2 Trade License';
-                const licenseDesc = licenseDef ? licenseDef.description : 'You are now authorized to trade Tier 2 commodities across the solar system.';
-                
-                const textHtml = `
-                    <div class="text-center mt-2">
-                        <div class="text-emerald-400 font-bold text-lg mb-4">${licenseName.toUpperCase()}</div>
-                        <div class="text-gray-300 text-sm">${licenseDesc}</div>
-                    </div>
-                `;
-
-                this.uiManager.queueModal('event-modal', 'LICENSE ACQUIRED', textHtml, null, {
-                    dismissInside: false,
-                    dismissOutside: false,
-                    customSetup: (licModal, licCloseHandler) => {
-                        const btnContainer = licModal.querySelector('#event-button-container');
-                        btnContainer.innerHTML = `<button type="button" id="accept-license-btn" class="btn btn-pulse-green w-full" style="padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;">ACCEPT LICENSE</button>`;
-                        
-                        licModal.querySelector('#accept-license-btn').onclick = async () => {
-                            licCloseHandler();
-                            await endLicenseAnimation();
-
-                            if (this.gameState) {
-                                const coreState = this.gameState;
-                                coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
-                                if (!coreState.player.unlockedLicenseIds.includes(licenseId)) {
-                                    coreState.player.unlockedLicenseIds.push(licenseId);
-                                }
-                                coreState.setState({}); 
-                                
-                                if (this.uiManager) {
-                                    this.uiManager.render(coreState.getState());
-                                }
-                            }
-                        };
-                    }
-                });
-                
-                if (this.uiManager.modalEngine) {
-                    this.uiManager.modalEngine.processModalQueue();
-                }
-            }},
-             payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
+            grantLicenseT2: { name: 'Grant Tier 2 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(2) },
+            grantLicenseT3: { name: 'Grant Tier 3 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(3) },
+            grantLicenseT4: { name: 'Grant Tier 4 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(4) },
+            grantLicenseT5: { name: 'Grant Tier 5 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(5) },
+            grantLicenseT6: { name: 'Grant Tier 6 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(6) },
+            grantLicenseT7: { name: 'Grant Tier 7 License', type: 'button', handler: () => this._triggerCinematicDebugGrant(7) },
+            payDebt: { name: 'Pay Off Debt', type: 'button', handler: () => this.simulationService.playerActionService.payOffDebt() },
             teleport: { name: 'Teleport', type: 'button', handler: () => {
                 if (this.debugState.selectedLocation) {
                     this.gameState.currentLocationId = this.debugState.selectedLocation;
@@ -1104,7 +1135,14 @@ ${logHistory}
         playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
         playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
         playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
-        playerFolder.add(this.actions.grantLicenseCinematic, 'handler').name(this.actions.grantLicenseCinematic.name);
+        
+        const licensesFolder = this.gui.addFolder('Grant Licenses');
+        licensesFolder.add(this.actions.grantLicenseT2, 'handler').name(this.actions.grantLicenseT2.name);
+        licensesFolder.add(this.actions.grantLicenseT3, 'handler').name(this.actions.grantLicenseT3.name);
+        licensesFolder.add(this.actions.grantLicenseT4, 'handler').name(this.actions.grantLicenseT4.name);
+        licensesFolder.add(this.actions.grantLicenseT5, 'handler').name(this.actions.grantLicenseT5.name);
+        licensesFolder.add(this.actions.grantLicenseT6, 'handler').name(this.actions.grantLicenseT6.name);
+        licensesFolder.add(this.actions.grantLicenseT7, 'handler').name(this.actions.grantLicenseT7.name);
 
         const shipFolder = this.gui.addFolder('Ship');
         shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
