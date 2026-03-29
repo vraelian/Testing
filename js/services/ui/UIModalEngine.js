@@ -393,6 +393,70 @@ export class UIModalEngine {
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
         modal.classList.add('modal-visible');
+
+        // Bind the dynamic scroll indicator arrow for scrollable modal content
+        this._bindScrollIndicator(modal);
+    }
+
+    /**
+     * Binds a scroll listener to manage the visibility of the scroll indicator arrow.
+     * Evaluates dynamic height bounds to hide/show the arrow intuitively.
+     * @private
+     */
+    _bindScrollIndicator(modal) {
+        requestAnimationFrame(() => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (!modalContent) return;
+
+            let arrow = modal.querySelector('.scroll-indicator-arrow');
+            
+            // Standard scrollable containers targeted across our modal templates
+            const scrollContainers = modal.querySelectorAll('#lore-modal-content, #eula-modal-content, #event-description, .roster-list, .cache-grid, #tutorial-log-list, .scrollable');
+            
+            let targetScrollContainer = null;
+            for (const container of scrollContainers) {
+                const style = window.getComputedStyle(container);
+                if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && container.scrollHeight > container.clientHeight) {
+                    targetScrollContainer = container;
+                    break;
+                }
+            }
+
+            if (!targetScrollContainer) {
+                if (arrow) arrow.style.opacity = '0';
+                return;
+            }
+
+            if (!arrow) {
+                arrow = document.createElement('div');
+                arrow.className = 'scroll-indicator-arrow';
+                arrow.innerHTML = '▾'; 
+                modalContent.appendChild(arrow);
+            }
+
+            const checkScroll = () => {
+                // 5px threshold to account for fractional pixel scrolling math across display scales
+                const isAtBottom = targetScrollContainer.scrollHeight - targetScrollContainer.scrollTop <= targetScrollContainer.clientHeight + 5;
+                arrow.style.opacity = isAtBottom ? '0' : '1';
+            };
+
+            // Clean up old listener if reusing modal nodes
+            if (targetScrollContainer._scrollListener) {
+                targetScrollContainer.removeEventListener('scroll', targetScrollContainer._scrollListener);
+            }
+
+            targetScrollContainer._scrollListener = checkScroll;
+            targetScrollContainer.addEventListener('scroll', checkScroll);
+
+            // Force initial state evaluation
+            checkScroll();
+            
+            // Re-evaluate if content mutates dynamically
+            if (!targetScrollContainer._resizeObserver) {
+                targetScrollContainer._resizeObserver = new ResizeObserver(() => checkScroll());
+                targetScrollContainer._resizeObserver.observe(targetScrollContainer);
+            }
+        });
     }
 
     /**

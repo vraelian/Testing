@@ -157,6 +157,36 @@ export class UIManager {
         }
 
         const previousState = this.lastKnownState;
+        
+        // --- PHASE 3: LIVE STATS TRACKING ---
+        // Instantly force news ticker to re-render its internal payload if ship stats mutated
+        if (previousState && previousState.player.activeShipId === gameState.player.activeShipId) {
+            const shipId = gameState.player.activeShipId;
+            if (shipId) {
+                const prevShipState = previousState.player.shipStates[shipId];
+                const currShipState = gameState.player.shipStates[shipId];
+                const prevInv = previousState.player.inventories[shipId];
+                const currInv = gameState.player.inventories[shipId];
+
+                let changed = false;
+                if (prevShipState && currShipState) {
+                    if (prevShipState.fuel !== currShipState.fuel || prevShipState.health !== currShipState.health) {
+                        changed = true;
+                    }
+                }
+                if (!changed && prevInv && currInv) {
+                    const prevCargo = calculateInventoryUsed(prevInv);
+                    const currCargo = calculateInventoryUsed(currInv);
+                    if (prevCargo !== currCargo) {
+                        changed = true;
+                    }
+                }
+                if (changed && this.newsTickerService) {
+                    this.newsTickerService.isDirty = true;
+                }
+            }
+        }
+
         this.lastKnownState = gameState;
 
         if (gameState.introSequenceActive) {
@@ -229,14 +259,37 @@ export class UIManager {
             return;
         }
 
+        // --- PHASE 3: SEAMLESS UPDATE ---
+        // Fetch the existing content container to avoid nuking the running CSS animation
+        const existingContent = this.cache.newsTickerBar.querySelector('.news-ticker-content');
+        if (existingContent) {
+            const blocks = existingContent.querySelectorAll('.ticker-block');
+            if (blocks.length === 2) {
+                // Update the internal spans without touching the wrapper or its transform matrix
+                blocks[0].innerHTML = singleContentHtml;
+                blocks[1].innerHTML = singleContentHtml;
+                
+                // Recalculate duration in case text length changed drastically (e.g. wide story prompt)
+                const rect = blocks[0].getBoundingClientRect();
+                const blockWidth = rect.width;
+                const PIXELS_PER_SECOND = 50;
+                const duration = Math.max(20, blockWidth / PIXELS_PER_SECOND); 
+                existingContent.style.animationDuration = `${duration}s`;
+                
+                this.newsTickerService.isDirty = false;
+                return;
+            }
+        }
+
+        // --- FALLBACK: INITIAL RENDER ---
         const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
-        this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}</div>`;
+        this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}${wrappedContent}</div>`;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
         
         if (contentElement) {
-            const rect = contentElement.getBoundingClientRect();
+            const blockElement = contentElement.querySelector('.ticker-block');
+            const rect = blockElement.getBoundingClientRect();
             const blockWidth = rect.width;
-            contentElement.innerHTML = wrappedContent + wrappedContent;
             const PIXELS_PER_SECOND = 50;
             const duration = Math.max(20, blockWidth / PIXELS_PER_SECOND); 
             contentElement.style.animationDuration = `${duration}s`;
