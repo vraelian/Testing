@@ -75,8 +75,7 @@
     gap: 8px;
     transform: translateX(-5%); /* Nudged status bars left */
     position: relative; /* Added for z-index */
-    /* z-index: 3 sits above the context-bar (2) and active tab (3), but *below* the border (4) */
-    z-index: 3; 
+    z-index: 50; /* Massively boosted to ensure it stacks high over the Data tab */
 }
 
 .status-bar-group {
@@ -85,6 +84,7 @@
     align-items: center;
     gap: 4px;
     cursor: pointer;
+    z-index: 51; /* Local stacking context for tooltips */
 }
 
 .status-bar-label {
@@ -122,7 +122,7 @@
     border-radius: 3px;
     font-size: 0.75rem;
     white-space: nowrap;
-    z-index: 20;
+    z-index: 100; /* Boosted z-index to break out of UI bounds natively */
     border: 1px solid #555;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     opacity: 0;

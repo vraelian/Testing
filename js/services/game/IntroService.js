@@ -343,11 +343,8 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // Corrected Fallbacks to WebP per Asset Update
-            let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
-            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
-            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
-            if (shipInfo.id === 'Stalwart.Ship') imgSrc = 'assets/images/ships/Stalwart/Stalwart_A.webp';
+            // Resolve Fallbacks dynamically via AssetService to prevent hardcoded missing variants
+            let imgSrc = AssetService.getFallbackImage(shipInfo.id) || AssetService.getShipImage(shipInfo.id, 0);
             
             btn.innerHTML = `
                 <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
