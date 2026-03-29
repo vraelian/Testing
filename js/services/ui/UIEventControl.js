@@ -209,7 +209,24 @@ export class UIEventControl {
             this.manager.logger.error('UIEventControl', `No lore content found for ID: ${loreId}`);
             contentEl.innerHTML = '<p>Error: Lore content not found.</p>';
         } else {
-            contentEl.innerHTML = loreEntry.content;
+            // --- VIRTUAL WORKBENCH: Name Replacement & Viewed State ---
+            const state = this.manager.lastKnownState;
+            const playerName = state?.player?.name || 'Captain';
+            
+            // Mark as viewed if not already tracking
+            if (this.manager.simulationService && this.manager.simulationService.gameState) {
+                const liveState = this.manager.simulationService.gameState;
+                if (!liveState.intelMarket.viewedLore) {
+                    liveState.intelMarket.viewedLore = [];
+                }
+                if (!liveState.intelMarket.viewedLore.includes(loreId)) {
+                    liveState.intelMarket.viewedLore.push(loreId);
+                    liveState.setState({}); // Force UI refresh to remove glow
+                }
+            }
+            
+            contentEl.innerHTML = loreEntry.content.replace(/\[playerName\]/g, playerName);
+            // --- END VIRTUAL WORKBENCH ---
         }
         
         contentEl.scrollTop = 0;
@@ -666,10 +683,20 @@ export class UIEventControl {
         const loreContainer = screenContainer.querySelector('#lore-button-container');
         if (!loreContainer) return;
         
+        // --- VIRTUAL WORKBENCH: Name Replacement & Unread Glow Logic ---
+        const state = this.manager.lastKnownState;
+        const playerName = state?.player?.name || 'Captain';
+        const viewedLore = state?.intelMarket?.viewedLore || [];
+        
         loreContainer.innerHTML = Object.entries(LORE_REGISTRY).map(([id, data]) => {
-            return `<button class="btn btn-header" data-action="show_lore" data-lore-id="${id}">
-                        ${data.title}
+            const title = data.title.replace(/\[playerName\]/g, playerName);
+            const isUnread = !viewedLore.includes(id);
+            const glowClass = isUnread ? 'unread-lore-glow' : '';
+            
+            return `<button class="btn btn-header ${glowClass}" data-action="show_lore" data-lore-id="${id}">
+                        ${title}
                     </button>`;
         }).join('');
+        // --- END VIRTUAL WORKBENCH ---
     }
 }
