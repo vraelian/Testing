@@ -472,7 +472,10 @@ export class GameState {
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
             
             // --- VIRTUAL WORKBENCH ---
-            intelMarket: {},
+            // Initialize new intelMarket property with viewedLore array
+            intelMarket: {
+                viewedLore: []
+            },
             activeIntelDeal: null,
             activeHotIntel: null,
             lastHotIntelDay: -365,
@@ -551,11 +554,6 @@ export class GameState {
 
         initialState.player.inventories[SHIP_IDS.WANDERER] = {};
         DB.COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
-
-        // --- VIRTUAL WORKBENCH ---
-        // Initialize new intelMarket property
-        initialState.intelMarket = {};
-        // --- END VIRTUAL WORKBENCH ---
 
         DB.MARKETS.forEach(m => {
             initialState.market.priceHistory[m.id] = {};
