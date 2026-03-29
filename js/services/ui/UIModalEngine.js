@@ -400,7 +400,8 @@ export class UIModalEngine {
 
     /**
      * Binds a scroll listener to manage the visibility of the scroll indicator arrow.
-     * Evaluates dynamic height bounds to hide/show the arrow intuitively.
+     * Uses visibility toggling to neutralize CSS opacity animation conflicts, and
+     * dynamically maps the DOM natively for active scroll containers.
      * @private
      */
     _bindScrollIndicator(modal) {
@@ -408,97 +409,111 @@ export class UIModalEngine {
             const modalContent = modal.querySelector('.modal-content');
             if (!modalContent) return;
 
-            let arrow = modal.querySelector('.scroll-indicator-arrow');
+            // 1. Hard cleanup of any existing arrows and intervals
+            const existingArrows = modalContent.querySelectorAll('.scroll-indicator-arrow');
+            existingArrows.forEach(a => a.remove());
             
-            // Standard scrollable containers targeted across our modal templates
-            const scrollContainers = modal.querySelectorAll('#lore-modal-content, #eula-modal-content, #event-description, .roster-list, .cache-grid, #tutorial-log-list, .scrollable');
-            
-            let targetScrollContainer = null;
-            for (const container of scrollContainers) {
-                const style = window.getComputedStyle(container);
-                if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
-                    // Lock onto the first container intentionally styled for scrolling
-                    targetScrollContainer = container;
-                    break;
-                }
+            if (modalContent._pollInterval) {
+                clearInterval(modalContent._pollInterval);
             }
 
-            if (!targetScrollContainer) {
-                if (arrow) arrow.style.opacity = '0';
-                return;
-            }
+            // 2. Inject fresh arrow initialized via VISIBILITY
+            const arrow = document.createElement('div');
+            arrow.className = 'scroll-indicator-arrow';
+            arrow.innerHTML = '▾'; 
+            arrow.style.visibility = 'hidden'; // Core Fix: Layout-level visual suppression
+            modalContent.appendChild(arrow);
 
-            if (!arrow) {
-                arrow = document.createElement('div');
-                arrow.className = 'scroll-indicator-arrow';
-                arrow.innerHTML = '▾'; 
-                modalContent.appendChild(arrow);
-            }
+            // Keep track of dynamically bound containers
+            const activeScrollContainers = new Set();
 
-            const checkScroll = () => {
-                const sHeight = targetScrollContainer.scrollHeight;
-                const cHeight = targetScrollContainer.clientHeight;
-                const sTop = targetScrollContainer.scrollTop;
-
-                // If content doesn't actually overflow after rendering, keep arrow hidden
-                if (sHeight <= cHeight + 2) {
-                    arrow.style.opacity = '0';
-                    return;
-                }
-
-                // Determine the distance remaining to scroll from the bottom viewport edge
-                const distanceToBottom = sHeight - (sTop + cHeight);
+            const scrollHandler = () => {
+                let needsArrow = false;
                 
-                // Hide arrow when within the bottom 10% of the scrollable content bounds
-                const threshold = sHeight * 0.10;
+                for (const node of activeScrollContainers) {
+                    // Safety check: remove listener reference if node was destroyed
+                    if (!document.contains(node)) {
+                        activeScrollContainers.delete(node);
+                        continue;
+                    }
+
+                    const cHeight = node.clientHeight;
+                    const sHeight = node.scrollHeight;
+                    
+                    // Must have actual height and overflow by at least 5px
+                    if (cHeight === 0 || sHeight <= cHeight + 5) continue;
+
+                    const sTop = node.scrollTop;
+                    const distanceToBottom = sHeight - (sTop + cHeight);
+                    const threshold = Math.max(sHeight * 0.10, 10); // Bottom 10%
+                    
+                    if (distanceToBottom > threshold) {
+                        needsArrow = true;
+                        break; 
+                    }
+                }
                 
-                // Set a sensible minimum pixel threshold so tiny texts don't falsely evaluate
-                const isNearBottom = distanceToBottom <= Math.max(threshold, 10);
-                arrow.style.opacity = isNearBottom ? '0' : '1';
+                arrow.style.visibility = needsArrow ? 'visible' : 'hidden';
             };
 
-            // Clean up old listeners/observers if reusing modal nodes
-            if (targetScrollContainer._scrollListener) {
-                targetScrollContainer.removeEventListener('scroll', targetScrollContainer._scrollListener);
-            }
-            if (targetScrollContainer._resizeObserver) {
-                targetScrollContainer._resizeObserver.disconnect();
-            }
-            if (targetScrollContainer._mutationObserver) {
-                targetScrollContainer._mutationObserver.disconnect();
-            }
-            if (targetScrollContainer._pollInterval) {
-                clearInterval(targetScrollContainer._pollInterval);
-            }
+            const scanForContainersAndCheckScroll = () => {
+                // Dynamically scan for ANY element inside the modal configured to scroll
+                const allNodes = [modalContent, ...modalContent.querySelectorAll('*')];
+                
+                for (const node of allNodes) {
+                    const cHeight = node.clientHeight;
+                    const sHeight = node.scrollHeight;
 
-            targetScrollContainer._scrollListener = checkScroll;
-            targetScrollContainer.addEventListener('scroll', checkScroll);
+                    // Must have physical dimensions
+                    if (cHeight === 0 || sHeight <= cHeight + 5) continue;
+
+                    const style = window.getComputedStyle(node);
+                    if (style.overflowY !== 'auto' && style.overflowY !== 'scroll') continue;
+
+                    // If a valid container was found, ensure it is actively tracked
+                    if (!activeScrollContainers.has(node)) {
+                        node.addEventListener('scroll', scrollHandler, { passive: true });
+                        activeScrollContainers.add(node);
+                    }
+                }
+                
+                // Immediately check scroll state after a scan completes
+                scrollHandler();
+            };
+
+            // Clean up old observers
+            if (modalContent._resizeObserver) {
+                modalContent._resizeObserver.disconnect();
+            }
+            if (modalContent._mutationObserver) {
+                modalContent._mutationObserver.disconnect();
+            }
 
             // Observe modal resizes
-            targetScrollContainer._resizeObserver = new ResizeObserver(() => checkScroll());
-            targetScrollContainer._resizeObserver.observe(targetScrollContainer);
+            modalContent._resizeObserver = new ResizeObserver(() => scanForContainersAndCheckScroll());
+            modalContent._resizeObserver.observe(modalContent);
 
-            // Observe DOM mutations within the scroll container (text/images added)
-            targetScrollContainer._mutationObserver = new MutationObserver(() => checkScroll());
-            targetScrollContainer._mutationObserver.observe(targetScrollContainer, {
+            // Observe DOM mutations within the modal content (text/images added)
+            modalContent._mutationObserver = new MutationObserver(() => scanForContainersAndCheckScroll());
+            modalContent._mutationObserver.observe(modalContent, {
                 childList: true,
                 subtree: true,
                 characterData: true,
                 attributes: true 
             });
 
-            // Poll for the first 1000ms to catch late-painting or image load reflows
+            // Poll for the first 1.5s to catch late-painting image reflows and fonts
             let pollCount = 0;
-            targetScrollContainer._pollInterval = setInterval(() => {
-                checkScroll();
+            modalContent._pollInterval = setInterval(() => {
+                scanForContainersAndCheckScroll();
                 pollCount++;
-                if (pollCount >= 10) {
-                    clearInterval(targetScrollContainer._pollInterval);
+                if (pollCount >= 15) {
+                    clearInterval(modalContent._pollInterval);
                 }
             }, 100);
 
-            // Initial synchronous check
-            checkScroll();
+            // Run initial check
+            scanForContainersAndCheckScroll();
         });
     }
 
