@@ -214,12 +214,13 @@ export class UIHangarControl {
                 modalContent.classList.remove('intro-modal-width');
             }
 
-            // WebP Image Paths Fix
-            let imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
+            // --- VIRTUAL WORKBENCH: UNIFIED FALLBACK LOGIC ---
+            // Removed legacy hardcodes. Defers to AssetService standard variants or strict fallbacks cleanly
+            let imageSrc;
             if (context === 'intro_shipyard') {
-                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
-                if (shipId === 'Mule.Ship') imageSrc = 'assets/images/ships/Mule/Mule_H.webp';
-                if (shipId === 'Nomad.Ship') imageSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
+                imageSrc = AssetService.getFallbackImage(shipId) || AssetService.getShipImage(shipId, 0);
+            } else {
+                imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
             }
 
             // Negative margins (-mx-4) to expand the image visually into the modal padding

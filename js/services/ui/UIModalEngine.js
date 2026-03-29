@@ -416,7 +416,8 @@ export class UIModalEngine {
             let targetScrollContainer = null;
             for (const container of scrollContainers) {
                 const style = window.getComputedStyle(container);
-                if ((style.overflowY === 'auto' || style.overflowY === 'scroll') && container.scrollHeight > container.clientHeight) {
+                if (style.overflowY === 'auto' || style.overflowY === 'scroll') {
+                    // Lock onto the first container intentionally styled for scrolling
                     targetScrollContainer = container;
                     break;
                 }
@@ -435,27 +436,69 @@ export class UIModalEngine {
             }
 
             const checkScroll = () => {
-                // 5px threshold to account for fractional pixel scrolling math across display scales
-                const isAtBottom = targetScrollContainer.scrollHeight - targetScrollContainer.scrollTop <= targetScrollContainer.clientHeight + 5;
-                arrow.style.opacity = isAtBottom ? '0' : '1';
+                const sHeight = targetScrollContainer.scrollHeight;
+                const cHeight = targetScrollContainer.clientHeight;
+                const sTop = targetScrollContainer.scrollTop;
+
+                // If content doesn't actually overflow after rendering, keep arrow hidden
+                if (sHeight <= cHeight + 2) {
+                    arrow.style.opacity = '0';
+                    return;
+                }
+
+                // Determine the distance remaining to scroll from the bottom viewport edge
+                const distanceToBottom = sHeight - (sTop + cHeight);
+                
+                // Hide arrow when within the bottom 10% of the scrollable content bounds
+                const threshold = sHeight * 0.10;
+                
+                // Set a sensible minimum pixel threshold so tiny texts don't falsely evaluate
+                const isNearBottom = distanceToBottom <= Math.max(threshold, 10);
+                arrow.style.opacity = isNearBottom ? '0' : '1';
             };
 
-            // Clean up old listener if reusing modal nodes
+            // Clean up old listeners/observers if reusing modal nodes
             if (targetScrollContainer._scrollListener) {
                 targetScrollContainer.removeEventListener('scroll', targetScrollContainer._scrollListener);
+            }
+            if (targetScrollContainer._resizeObserver) {
+                targetScrollContainer._resizeObserver.disconnect();
+            }
+            if (targetScrollContainer._mutationObserver) {
+                targetScrollContainer._mutationObserver.disconnect();
+            }
+            if (targetScrollContainer._pollInterval) {
+                clearInterval(targetScrollContainer._pollInterval);
             }
 
             targetScrollContainer._scrollListener = checkScroll;
             targetScrollContainer.addEventListener('scroll', checkScroll);
 
-            // Force initial state evaluation
+            // Observe modal resizes
+            targetScrollContainer._resizeObserver = new ResizeObserver(() => checkScroll());
+            targetScrollContainer._resizeObserver.observe(targetScrollContainer);
+
+            // Observe DOM mutations within the scroll container (text/images added)
+            targetScrollContainer._mutationObserver = new MutationObserver(() => checkScroll());
+            targetScrollContainer._mutationObserver.observe(targetScrollContainer, {
+                childList: true,
+                subtree: true,
+                characterData: true,
+                attributes: true 
+            });
+
+            // Poll for the first 1000ms to catch late-painting or image load reflows
+            let pollCount = 0;
+            targetScrollContainer._pollInterval = setInterval(() => {
+                checkScroll();
+                pollCount++;
+                if (pollCount >= 10) {
+                    clearInterval(targetScrollContainer._pollInterval);
+                }
+            }, 100);
+
+            // Initial synchronous check
             checkScroll();
-            
-            // Re-evaluate if content mutates dynamically
-            if (!targetScrollContainer._resizeObserver) {
-                targetScrollContainer._resizeObserver = new ResizeObserver(() => checkScroll());
-                targetScrollContainer._resizeObserver.observe(targetScrollContainer);
-            }
         });
     }
 

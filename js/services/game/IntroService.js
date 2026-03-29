@@ -343,8 +343,13 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // Resolve Fallbacks dynamically via AssetService to prevent hardcoded missing variants
-            let imgSrc = AssetService.getFallbackImage(shipInfo.id) || AssetService.getShipImage(shipInfo.id, 0);
+            // Use the player's exact visual seed to guarantee a 1:1 match with the detail modal
+            const seedToUse = this.gameState.player.visualSeed !== undefined ? this.gameState.player.visualSeed : 0;
+            let imgSrc = AssetService.getShipImage(shipInfo.id, seedToUse);
+            
+            if (!imgSrc) {
+                imgSrc = AssetService.getFallbackImage(shipInfo.id);
+            }
             
             btn.innerHTML = `
                 <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
