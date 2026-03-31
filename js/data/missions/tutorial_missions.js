@@ -22,7 +22,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Mission Log",
-            text: "The mission log is where you will review and complete missions. Most missions have specific requirements, such as delivering commodities to a designated location.<br><br>To track the progress of a specific mission, select the star icon on its mission card.",
+            text: "When you accept a mission from the <b>Mission Terminal</b>, it moves to the <b>Mission Log</b> - this is where you will review and complete missions.<br><br>Most missions have specific requirements, such as delivering commodities to a designated location.<br><br>To track the progress of a specific mission, select the star icon on its mission card.",
             buttonText: "Understood"
         },
         rewards: []
@@ -35,7 +35,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You may review your transaction history and manage your loan on the finance screen, which is accessible in the <b>Data</b> tab on the navigation bar at the top.<br><br><b>You have three years before your guild debt is due</b>, after which your credits will be garnished to recover the loan amount.<br><br>Take a look at the finance screen, then return here.",
+        description: "You may review your transaction history and manage your loan on the finance screen, which is accessible in the <b>Data</b> tab on the navigation bar at the top.<br><br><b>You have three years before your Guild debt is due</b>, after which your credits will be garnished to recover the amount you borrowed.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
         ],
@@ -49,7 +49,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Debt",
-            text: "While you possess debt interest will accrue monthly.<br><br>Pay off your debt as soon as possible to minimize the cost of borrowing credits!",
+            text: "As long as you have debt interest will accrue monthly.<br><br>Pay off your debt <i>as soon as possible</i> to minimize the cost of borrowing credits!",
             buttonText: "Understood"
         },
         rewards: []

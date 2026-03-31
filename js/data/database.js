@@ -42,21 +42,21 @@ export const DB = {
         {
           id: 'lore_1',
           title: 'Year 2220',
-          description: "Humanity has expanded throughout the Solar System.<br><br> <span class=\"hl\">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.",
+          description: "<div class=\"w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500\">Image Data Missing</div>Humanity has expanded throughout the Solar System.<br><br> <span class=\"hl\">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.",
           buttonText: 'Begin',
           contentClass: 'text-center'
         },
         {
           id: 'lore_2',
           title: "The Price of Freedom",
-          description: "A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.",
+          description: "<div class=\"w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500\">Image Data Missing</div>A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.",
           buttonText: 'Apply for Loan',
           contentClass: 'text-center',
           buttonClass: 'btn-pulse-green'
         },
         {
           id: 'charter',
-          title: "<span class=\"hl\">MERCHANT'S GUILD LOAN AGREEMENT</span>",
+          title: "<span class=\"hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]\">MERCHANT'S GUILD<br>LOAN AGREEMENT</span>",
           description: `
             <div class="font-roboto-mono text-left text-sm space-y-2">
                 <p><span class="text-gray-400">CHARTER ID:</span> G7-K491-38B</p>
