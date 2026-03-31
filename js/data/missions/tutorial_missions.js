@@ -249,8 +249,6 @@ export const TUTORIAL_MISSIONS = {
             buttonText: "Complete Tutorial",
             clearNavLock: true // Unlocks navigation after finishing the whole tutorial block
         },
-        rewards: [
-            { type: "UNLOCK_LORE", loreId: "origin_story" }
-        ]
+        rewards: []
     }
 };

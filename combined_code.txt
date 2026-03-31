@@ -1715,7 +1715,8 @@
     gap: 8px;
     transform: translateX(-5%); /* Nudged status bars left */
     position: relative; /* Added for z-index */
-    z-index: 50; /* Massively boosted to ensure it stacks high over the Data tab */
+    /* z-index: 3 sits above the context-bar (2) and active tab (3), but *below* the border (4) */
+    z-index: 3; 
 }
 
 .status-bar-group {
@@ -1724,7 +1725,6 @@
     align-items: center;
     gap: 4px;
     cursor: pointer;
-    z-index: 51; /* Local stacking context for tooltips */
 }
 
 .status-bar-label {
@@ -1762,7 +1762,7 @@
     border-radius: 3px;
     font-size: 0.75rem;
     white-space: nowrap;
-    z-index: 100; /* Boosted z-index to break out of UI bounds natively */
+    z-index: 20;
     border: 1px solid #555;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
     opacity: 0;
@@ -7377,14 +7377,15 @@ card.
 --- START OF FILE: ./css/screens/intel-screen.css ---
 /* css/screens/intel-screen.css */
 .intel-scroll-panel {
+    /* height: 75vh; */ /* REMOVED */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
     padding: 0; /* Padding is now on the content divs */
     touch-action: pan-y; /* Allow vertical scrolling */
     flex-grow: 1; /* Ensure it fills space */
+    /* VIRTUAL WORKBENCH: Removed display:flex to fix scrolling/layout */
 }
-
 .intel-scroll-panel::-webkit-scrollbar {
     display: none; /* For Chrome, Safari, and Opera */
 }
@@ -7399,7 +7400,8 @@ card.
     margin-bottom: 1rem;
 }
 
-/* Themed scrollbar for lore content */
+/* Themed scrollbar 
+for lore content */
 #lore-modal-content::-webkit-scrollbar {
     width: 8px;
 }
@@ -7420,14 +7422,14 @@ card.
     background-color: var(--theme-border-color, #6b8fb8);
 }
 
-/* --- INTEL STYLES --- */
+/* --- VIRTUAL WORKBENCH: ADD NEW INTEL STYLES --- */
 
 /* Tab Content Styling */
 .intel-tab-content {
     display: none; /* Hidden by default */
     width: 100%;
+    /* flex-grow: 1; */ /* No longer needed, parent isn't flex */
 }
-
 .intel-tab-content.active {
     display: block; /* Shown when active */
 }
@@ -7455,7 +7457,7 @@ card.
 /* Intel "Buy" Button in Modal */
 .btn-intel-buy {
     font-family: 'Orbitron', sans-serif;
-    letter-spacing: 1px;
+letter-spacing: 1px;
     background-color: var(--ot-green-accent, #4ade80);
     border: 1px solid #86efac; /* green-300 */
     color: #064e3b; /* green-900 */
@@ -7480,7 +7482,8 @@ card.
     opacity: 0.6;
 }
 
-/* Themed Purchased Button */
+/* --- VIRTUAL WORKBENCH: THEMED PURCHASED BUTTON (REQUEST A) --- */
+/* New style for purchased, themed intel buttons */
 .btn-intel-purchased {
     /* Apply theme variables provided by the renderer */
     background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
@@ -7490,10 +7493,12 @@ card.
     /* Use the border color for the glow animation */
     --theme-glow-color: var(--theme-border-color, #7a9ac0);
     
+    /* Re-use the existing themed-glow-animation from global.css */
     animation: themed-glow-animation 3s infinite;
 }
 
 .btn-intel-purchased:hover:not(:disabled) {
+    /* On hover, revert to a standard non-animated style for consistency */
     background: #334155; /* slate-700 */
     border-color: #475569; /* slate-600 */
     color: #f1f5f9; /* slate-100 */
@@ -7501,76 +7506,10 @@ card.
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
     animation: none; /* Stop glowing on hover */
 }
+/* --- END VIRTUAL WORKBENCH --- */
 
 
-/* --- CODEX LORE BUTTONS & UNREAD GLOW --- */
-#lore-button-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center; 
-    gap: 1.25rem; 
-    padding: 1rem 0;
-}
-
-#lore-button-container .btn-header {
-    width: 65%; 
-    /* Deepened grey gradient for heavier contrast and depth */
-    background: linear-gradient(180deg, #f3f4f6 0%, #6b7280 100%);
-    color: #111827; 
-    border: 1px solid #4b5563;
-    /* Reduced general scale by 10% */
-    font-size: 1.08rem;
-    padding: 0.55rem 0.9rem;
-    font-weight: 700;
-    box-shadow: 
-        0 8px 15px rgba(0, 0, 0, 0.5), 
-        inset 0 2px 2px rgba(255, 255, 255, 0.8), 
-        inset 0 -2px 4px rgba(0, 0, 0, 0.3); 
-    border-radius: 6px;
-    text-shadow: 0 1px 1px rgba(255, 255, 255, 0.6); 
-    transition: all 0.2s ease-in-out;
-}
-
-#lore-button-container .btn-header:hover {
-    /* Adjusted hover gradient to match the deeper resting state */
-    background: linear-gradient(180deg, #ffffff 0%, #9ca3af 100%);
-    box-shadow: 
-        0 12px 20px rgba(0, 0, 0, 0.6), 
-        inset 0 2px 2px rgba(255, 255, 255, 0.9), 
-        inset 0 -2px 4px rgba(0, 0, 0, 0.3);
-    transform: translateY(-2px); 
-}
-
-#lore-button-container .btn-header:active {
-    transform: translateY(2px); 
-    box-shadow: 
-        0 2px 5px rgba(0, 0, 0, 0.6), 
-        inset 0 3px 6px rgba(0, 0, 0, 0.5); 
-}
-
-#lore-button-container .btn-header.unread-lore-glow {
-    /* Slowed pulse speed to 3 seconds */
-    animation: unread-lore-pulse-light 3s infinite ease-in-out;
-}
-
-@keyframes unread-lore-pulse-light {
-    0% {
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(250, 204, 21, 0.5);
-        border-color: rgba(250, 204, 21, 0.7);
-    }
-    50% {
-        /* Intensified glow spread and opacity */
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5), 0 0 25px rgba(250, 204, 21, 1);
-        border-color: rgba(250, 204, 21, 1);
-    }
-    100% {
-        box-shadow: 0 8px 15px rgba(0, 0, 0, 0.5), 0 0 10px rgba(250, 204, 21, 0.5);
-        border-color: rgba(250, 204, 21, 0.7);
-    }
-}
-
-
-/* --- REFINED INTEL TAB STYLES --- */
+/* --- VIRTUAL WORKBENCH: REFINED INTEL TAB STYLES (SLIDING, THEMED, RESIZED) --- */
 
 #intel-screen .sub-nav-bar {
     position: relative; /* For the sliding pseudo-element */
@@ -7580,20 +7519,25 @@ card.
     align-items: stretch; /* Make buttons fill height */
     
     /* Recessed panel look */
-    background-color: #0D1117; 
+    background-color: #0D1117; /* bg-[#0D1117] */
     border-bottom: 1px solid var(--theme-border-color, #334155);
-    border-radius: 0.375rem; 
-    padding: 0.125rem; 
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4); 
+    border-radius: 0.375rem; /* rounded-md */
+    padding: 0.125rem; /* p-0.5, reduced by ~30% */
+    box-shadow: inset 0 1px 3px 
+rgba(0,0,0,0.4); /* shadow-inner */
     
     gap: 0; /* Buttons are joined */
     width: 100%;
     flex-shrink: 0; /* Prevent shrinking */
     
+    /* Reduced skew */
     --intel-skew: 8px; 
 }
 
-/* Gliding highlight pseudo-element */
+/*
+  This is the "gliding highlight" pseudo-element.
+  It lives on the bar and moves behind the buttons.
+*/
 #intel-screen .sub-nav-bar::after {
     content: '';
     position: absolute;
@@ -7601,7 +7545,8 @@ card.
     bottom: 0.125rem;
     left: 0.125rem;
     width: calc(50% - 0.125rem); /* Half width, minus padding */
-    z-index: 5; /* Sits behind text, above bar bg */
+    z-index: 5; /* Sits behind text, above 
+bar bg */
     
     /* THEME: Use location gradient and shadow */
     background: var(--theme-gradient, linear-gradient(135deg, #4a5568, #2d3748));
@@ -7614,49 +7559,62 @@ card.
     transition: transform 0.3s ease-in-out, clip-path 0.3s ease-in-out;
 }
 
+/*
+  This class is added by UIManager.js to slide the highlight.
+*/
 #intel-screen .sub-nav-bar.market-active::after {
     /* Move slider to the right */
-    transform: translateX(100%);
+    
+transform: translateX(100%);
+    
     /* New clip-path for "Intel Market" (right side) */
     clip-path: polygon(var(--intel-skew) 0%, 100% 0%, 100% 100%, 0% 100%);
 }
 
-/* Base button styles */
+
+/*
+  Base button styles.
+  The button itself is transparent; only the text is visible.
+*/
 #intel-screen .sub-nav-button {
     position: relative; 
     z-index: 10; /* Text is on top of the slider */
-    flex: 1 1 0; 
+    flex: 1 1 0; /* flex-1 */
 
     font-family: 'Orbitron', sans-serif;
-    font-size: 0.75rem; 
+    font-size: 0.75rem; /* text-xs, reduced */
     
     /* THEME: Use dim color for inactive text */
-    color: #94a3b8; 
-    background: transparent; 
+    color: 
+#94a3b8; /* text-slate-400 */
+    background: transparent; /* Button is see-through */
     border: none;
     
-    padding: 0.375rem 1rem; 
+    /* RESIZE: Reduced vertical padding */
+    padding: 0.375rem 1rem; /* py-1.5, reduced by ~30% */
     
     cursor: pointer;
     transition: color 0.3s ease-in-out;
     text-transform: uppercase;
-    letter-spacing: 0.05em; 
+    letter-spacing: 0.05em; /* tracking-wider */
     font-weight: 500;
 }
 
 /* Apply angled clip-path and padding compensation */
 #intel-screen .sub-nav-button[data-target="intel-codex-content"] {
     clip-path: polygon(0% 0%, 100% 0%, calc(100% - var(--intel-skew)) 100%, 0% 100%);
-    padding-right: var(--intel-skew); 
+    padding-right: var(--intel-skew); /* Compensate for clip */
     text-align: center;
 }
 
-#intel-screen .sub-nav-button[data-target="intel-market-content"] {
+#intel-screen 
+.sub-nav-button[data-target="intel-market-content"] {
     clip-path: polygon(var(--intel-skew) 0%, 100% 0%, 100% 100%, 0% 100%);
-    margin-left: calc(-1 * var(--intel-skew)); 
-    padding-left: var(--intel-skew); 
+    margin-left: calc(-1 * var(--intel-skew)); /* Overlap buttons */
+    padding-left: var(--intel-skew); /* Compensate for clip */
     text-align: center;
 }
+
 
 /* Hover state for *inactive* buttons */
 #intel-screen .sub-nav-button:not(.active):hover {
@@ -7671,6 +7629,10 @@ card.
     color: var(--theme-text-color, #f0f0f0);
     font-weight: 700;
 }
+
+
+/* --- END VIRTUAL 
+WORKBENCH --- */
 --- END OF FILE: ./css/screens/intel-screen.css ---
 
 --- START OF FILE: ./css/screens/cargo-screen.css ---
@@ -14965,9 +14927,7 @@ export const TUTORIAL_MISSIONS = {
             buttonText: "Complete Tutorial",
             clearNavLock: true // Unlocks navigation after finishing the whole tutorial block
         },
-        rewards: [
-            { type: "UNLOCK_LORE", loreId: "origin_story" }
-        ]
+        rewards: []
     }
 };
 --- END OF FILE: ./js/data/missions/tutorial_missions.js ---
@@ -15026,7 +14986,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when you factor in the distances between planetary stations. Do not wait to repay your debt to the Merchant’s Guild! To further assist you, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and leverage the opportunity to your benefit. Your success will reflect well on me with the guild.",
+        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when you factor in the distances between planetary stations. Do not waste time repaying your debt to the Merchant’s Guild. To further assist you, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and leverage the opportunity to your benefit. Your success will reflect well on me with the guild.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_09" }
         ],
@@ -15695,17 +15655,6 @@ export const LORE_BROADSTROKES = {
             <p>This brittle equilibrium is further calcified by "The Long Watch". The economy has ossified because the ruling elite utilize extreme life-extension technologies to live for centuries, hoarding wealth and stifling innovation. Capital pools in the hands of these biological immortals, leaving the "Short-Lifers"—the unaugmented poor—to fight for scraps in the margins, bound by multi-generational debt contracts.</p>
             
             <p>In this reality, you are not a hero. You are a former logistics laborer from the Asteroid Belt who has made a desperate gamble: quitting your job to take on a massive loan and purchase a starship. In a world where citizenship is synonymous with employment and wealth is time, owning a hull is the only path to true sovereignty. Every credit earned is a bet on your own skill to escape the crushing gravity of the working class.</p>
-        `
-    },
-    origin_story: {
-        // --- VIRTUAL WORKBENCH: Updated to reflect dynamic name token ---
-        title: "[playerName]'s Origin",
-        content: `
-            <p>[playerName]’s professional origins began deep within the hollowed-out rocks of the Asteroid Belt. For years, they categorized manifests for mining conglomerates while employed within a claustrophobic logistics hub buried at the core of a city-sized asteroid. After accumulating the necessary social credit to qualify for a Guild loan, [playerName] finally pulled the trigger, gambling on a risky but autonomous future.</p>
-            <p>Applying for the infamous Guild loan was an act of rebellion against a lifetime of breathing recycled air to make other spacers rich. Upon approval, [playerName] resigned from the logistics corps, liquidating their life savings to secure transport to a Martian starport. There, they purchased an aging vessel with their loan and began their flight training.</p>
-            <p>Months later, [playerName] secured their pilot's license and sole proprietorship credentials. With the paperwork stamped, they emerged from the shipyards as a newly minted captain. They were no longer a corporate employee but a sovereign entity—albeit one entirely owned by the bank and surviving on rapidly dwindling capital.</p>
-            <p>Sitting in the pilot's seat, [playerName] finalized the pre-flight checklist. Just as the engines cycled up for their first real launch into the orbital arbitrage market, the comms console flared to life and a secure channel opened.</p>
-            <p>The Merchant's Guild was on the line. Audita, an AI, formally introduced itself to outline the immediate repayment schedule and the unforgiving operational metrics required for the captain's survival and success.</p>
         `
     }
 };
@@ -21719,24 +21668,7 @@ export class UIEventControl {
             this.manager.logger.error('UIEventControl', `No lore content found for ID: ${loreId}`);
             contentEl.innerHTML = '<p>Error: Lore content not found.</p>';
         } else {
-            // --- VIRTUAL WORKBENCH: Name Replacement & Viewed State ---
-            const state = this.manager.lastKnownState;
-            const playerName = state?.player?.name || 'Captain';
-            
-            // Mark as viewed if not already tracking
-            if (this.manager.simulationService && this.manager.simulationService.gameState) {
-                const liveState = this.manager.simulationService.gameState;
-                if (!liveState.intelMarket.viewedLore) {
-                    liveState.intelMarket.viewedLore = [];
-                }
-                if (!liveState.intelMarket.viewedLore.includes(loreId)) {
-                    liveState.intelMarket.viewedLore.push(loreId);
-                    liveState.setState({}); // Force UI refresh to remove glow
-                }
-            }
-            
-            contentEl.innerHTML = loreEntry.content.replace(/\[playerName\]/g, playerName);
-            // --- END VIRTUAL WORKBENCH ---
+            contentEl.innerHTML = loreEntry.content;
         }
         
         contentEl.scrollTop = 0;
@@ -22193,21 +22125,11 @@ export class UIEventControl {
         const loreContainer = screenContainer.querySelector('#lore-button-container');
         if (!loreContainer) return;
         
-        // --- VIRTUAL WORKBENCH: Name Replacement & Unread Glow Logic ---
-        const state = this.manager.lastKnownState;
-        const playerName = state?.player?.name || 'Captain';
-        const viewedLore = state?.intelMarket?.viewedLore || [];
-        
         loreContainer.innerHTML = Object.entries(LORE_REGISTRY).map(([id, data]) => {
-            const title = data.title.replace(/\[playerName\]/g, playerName);
-            const isUnread = !viewedLore.includes(id);
-            const glowClass = isUnread ? 'unread-lore-glow' : '';
-            
-            return `<button class="btn btn-header ${glowClass}" data-action="show_lore" data-lore-id="${id}">
-                        ${title}
+            return `<button class="btn btn-header" data-action="show_lore" data-lore-id="${id}">
+                        ${data.title}
                     </button>`;
         }).join('');
-        // --- END VIRTUAL WORKBENCH ---
     }
 }
 --- END OF FILE: ./js/services/ui/UIEventControl.js ---
@@ -23587,13 +23509,12 @@ export class UIHangarControl {
                 modalContent.classList.remove('intro-modal-width');
             }
 
-            // --- VIRTUAL WORKBENCH: UNIFIED FALLBACK LOGIC ---
-            // Removed legacy hardcodes. Defers to AssetService standard variants or strict fallbacks cleanly
-            let imageSrc;
+            // WebP Image Paths Fix
+            let imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
             if (context === 'intro_shipyard') {
-                imageSrc = AssetService.getFallbackImage(shipId) || AssetService.getShipImage(shipId, 0);
-            } else {
-                imageSrc = AssetService.getShipImage(shipId, player.visualSeed);
+                if (shipId === 'Wanderer.Ship') imageSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+                if (shipId === 'Mule.Ship') imageSrc = 'assets/images/ships/Mule/Mule_H.webp';
+                if (shipId === 'Nomad.Ship') imageSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
             }
 
             // Negative margins (-mx-4) to expand the image visually into the modal padding
@@ -26077,128 +25998,6 @@ export class UIModalEngine {
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
         modal.classList.add('modal-visible');
-
-        // Bind the dynamic scroll indicator arrow for scrollable modal content
-        this._bindScrollIndicator(modal);
-    }
-
-    /**
-     * Binds a scroll listener to manage the visibility of the scroll indicator arrow.
-     * Uses visibility toggling to neutralize CSS opacity animation conflicts, and
-     * dynamically maps the DOM natively for active scroll containers.
-     * @private
-     */
-    _bindScrollIndicator(modal) {
-        requestAnimationFrame(() => {
-            const modalContent = modal.querySelector('.modal-content');
-            if (!modalContent) return;
-
-            // 1. Hard cleanup of any existing arrows and intervals
-            const existingArrows = modalContent.querySelectorAll('.scroll-indicator-arrow');
-            existingArrows.forEach(a => a.remove());
-            
-            if (modalContent._pollInterval) {
-                clearInterval(modalContent._pollInterval);
-            }
-
-            // 2. Inject fresh arrow initialized via VISIBILITY
-            const arrow = document.createElement('div');
-            arrow.className = 'scroll-indicator-arrow';
-            arrow.innerHTML = '▾'; 
-            arrow.style.visibility = 'hidden'; // Core Fix: Layout-level visual suppression
-            modalContent.appendChild(arrow);
-
-            // Keep track of dynamically bound containers
-            const activeScrollContainers = new Set();
-
-            const scrollHandler = () => {
-                let needsArrow = false;
-                
-                for (const node of activeScrollContainers) {
-                    // Safety check: remove listener reference if node was destroyed
-                    if (!document.contains(node)) {
-                        activeScrollContainers.delete(node);
-                        continue;
-                    }
-
-                    const cHeight = node.clientHeight;
-                    const sHeight = node.scrollHeight;
-                    
-                    // Must have actual height and overflow by at least 5px
-                    if (cHeight === 0 || sHeight <= cHeight + 5) continue;
-
-                    const sTop = node.scrollTop;
-                    const distanceToBottom = sHeight - (sTop + cHeight);
-                    const threshold = Math.max(sHeight * 0.10, 10); // Bottom 10%
-                    
-                    if (distanceToBottom > threshold) {
-                        needsArrow = true;
-                        break; 
-                    }
-                }
-                
-                arrow.style.visibility = needsArrow ? 'visible' : 'hidden';
-            };
-
-            const scanForContainersAndCheckScroll = () => {
-                // Dynamically scan for ANY element inside the modal configured to scroll
-                const allNodes = [modalContent, ...modalContent.querySelectorAll('*')];
-                
-                for (const node of allNodes) {
-                    const cHeight = node.clientHeight;
-                    const sHeight = node.scrollHeight;
-
-                    // Must have physical dimensions
-                    if (cHeight === 0 || sHeight <= cHeight + 5) continue;
-
-                    const style = window.getComputedStyle(node);
-                    if (style.overflowY !== 'auto' && style.overflowY !== 'scroll') continue;
-
-                    // If a valid container was found, ensure it is actively tracked
-                    if (!activeScrollContainers.has(node)) {
-                        node.addEventListener('scroll', scrollHandler, { passive: true });
-                        activeScrollContainers.add(node);
-                    }
-                }
-                
-                // Immediately check scroll state after a scan completes
-                scrollHandler();
-            };
-
-            // Clean up old observers
-            if (modalContent._resizeObserver) {
-                modalContent._resizeObserver.disconnect();
-            }
-            if (modalContent._mutationObserver) {
-                modalContent._mutationObserver.disconnect();
-            }
-
-            // Observe modal resizes
-            modalContent._resizeObserver = new ResizeObserver(() => scanForContainersAndCheckScroll());
-            modalContent._resizeObserver.observe(modalContent);
-
-            // Observe DOM mutations within the modal content (text/images added)
-            modalContent._mutationObserver = new MutationObserver(() => scanForContainersAndCheckScroll());
-            modalContent._mutationObserver.observe(modalContent, {
-                childList: true,
-                subtree: true,
-                characterData: true,
-                attributes: true 
-            });
-
-            // Poll for the first 1.5s to catch late-painting image reflows and fonts
-            let pollCount = 0;
-            modalContent._pollInterval = setInterval(() => {
-                scanForContainersAndCheckScroll();
-                pollCount++;
-                if (pollCount >= 15) {
-                    clearInterval(modalContent._pollInterval);
-                }
-            }, 100);
-
-            // Run initial check
-            scanForContainersAndCheckScroll();
-        });
     }
 
     /**
@@ -29332,10 +29131,7 @@ export class GameState {
             market: { prices: {}, inventory: {}, galacticAverages: {}, priceHistory: {}, shipyardStock: {} },
             
             // --- VIRTUAL WORKBENCH ---
-            // Initialize new intelMarket property with viewedLore array
-            intelMarket: {
-                viewedLore: []
-            },
+            intelMarket: {},
             activeIntelDeal: null,
             activeHotIntel: null,
             lastHotIntelDay: -365,
@@ -29414,6 +29210,11 @@ export class GameState {
 
         initialState.player.inventories[SHIP_IDS.WANDERER] = {};
         DB.COMMODITIES.forEach(c => { initialState.player.inventories[SHIP_IDS.WANDERER][c.id] = { quantity: 0, avgCost: 0 }; });
+
+        // --- VIRTUAL WORKBENCH ---
+        // Initialize new intelMarket property
+        initialState.intelMarket = {};
+        // --- END VIRTUAL WORKBENCH ---
 
         DB.MARKETS.forEach(m => {
             initialState.market.priceHistory[m.id] = {};
@@ -35295,13 +35096,11 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // Use the player's exact visual seed to guarantee a 1:1 match with the detail modal
-            const seedToUse = this.gameState.player.visualSeed !== undefined ? this.gameState.player.visualSeed : 0;
-            let imgSrc = AssetService.getShipImage(shipInfo.id, seedToUse);
-            
-            if (!imgSrc) {
-                imgSrc = AssetService.getFallbackImage(shipInfo.id);
-            }
+            // Corrected Fallbacks to WebP per Asset Update
+            let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
+            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
+            if (shipInfo.id === 'Stalwart.Ship') imgSrc = 'assets/images/ships/Stalwart/Stalwart_A.webp';
             
             btn.innerHTML = `
                 <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
@@ -38960,36 +38759,6 @@ export class UIManager {
         }
 
         const previousState = this.lastKnownState;
-        
-        // --- PHASE 3: LIVE STATS TRACKING ---
-        // Instantly force news ticker to re-render its internal payload if ship stats mutated
-        if (previousState && previousState.player.activeShipId === gameState.player.activeShipId) {
-            const shipId = gameState.player.activeShipId;
-            if (shipId) {
-                const prevShipState = previousState.player.shipStates[shipId];
-                const currShipState = gameState.player.shipStates[shipId];
-                const prevInv = previousState.player.inventories[shipId];
-                const currInv = gameState.player.inventories[shipId];
-
-                let changed = false;
-                if (prevShipState && currShipState) {
-                    if (prevShipState.fuel !== currShipState.fuel || prevShipState.health !== currShipState.health) {
-                        changed = true;
-                    }
-                }
-                if (!changed && prevInv && currInv) {
-                    const prevCargo = calculateInventoryUsed(prevInv);
-                    const currCargo = calculateInventoryUsed(currInv);
-                    if (prevCargo !== currCargo) {
-                        changed = true;
-                    }
-                }
-                if (changed && this.newsTickerService) {
-                    this.newsTickerService.isDirty = true;
-                }
-            }
-        }
-
         this.lastKnownState = gameState;
 
         if (gameState.introSequenceActive) {
@@ -39062,37 +38831,14 @@ export class UIManager {
             return;
         }
 
-        // --- PHASE 3: SEAMLESS UPDATE ---
-        // Fetch the existing content container to avoid nuking the running CSS animation
-        const existingContent = this.cache.newsTickerBar.querySelector('.news-ticker-content');
-        if (existingContent) {
-            const blocks = existingContent.querySelectorAll('.ticker-block');
-            if (blocks.length === 2) {
-                // Update the internal spans without touching the wrapper or its transform matrix
-                blocks[0].innerHTML = singleContentHtml;
-                blocks[1].innerHTML = singleContentHtml;
-                
-                // Recalculate duration in case text length changed drastically (e.g. wide story prompt)
-                const rect = blocks[0].getBoundingClientRect();
-                const blockWidth = rect.width;
-                const PIXELS_PER_SECOND = 50;
-                const duration = Math.max(20, blockWidth / PIXELS_PER_SECOND); 
-                existingContent.style.animationDuration = `${duration}s`;
-                
-                this.newsTickerService.isDirty = false;
-                return;
-            }
-        }
-
-        // --- FALLBACK: INITIAL RENDER ---
         const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
-        this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}${wrappedContent}</div>`;
+        this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}</div>`;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
         
         if (contentElement) {
-            const blockElement = contentElement.querySelector('.ticker-block');
-            const rect = blockElement.getBoundingClientRect();
+            const rect = contentElement.getBoundingClientRect();
             const blockWidth = rect.width;
+            contentElement.innerHTML = wrappedContent + wrappedContent;
             const PIXELS_PER_SECOND = 50;
             const duration = Math.max(20, blockWidth / PIXELS_PER_SECOND); 
             contentElement.style.animationDuration = `${duration}s`;
