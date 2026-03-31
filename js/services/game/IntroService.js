@@ -7,6 +7,7 @@ import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { AssetService } from '../AssetService.js';
+import { starfieldService } from '../ui/StarfieldService.js';
 
 export class IntroService {
     /**
@@ -243,9 +244,8 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
-                // Route through the meta help modals instead of immediately ending
                 setTimeout(() => {
-                    this._showMetaHelpModals();
+                    this._showResignationModal();
                 }, 2000);
             };
 
@@ -277,12 +277,120 @@ export class IntroService {
     }
 
     /**
+     * Executes the interactive resignation sequence ("Severance Terminal").
+     * @private
+     */
+    _showResignationModal() {
+        this._transitioning = false;
+        
+        const descriptionHTML = `
+            <div class="mb-4 text-center text-gray-400">Ongoing Contract: #345J | ${this.gameState.player.name}</div>
+            <div class="mb-6 text-gray-300 text-left w-full max-w-sm mx-auto border border-gray-600 bg-gray-900 p-4 rounded shadow-inner">
+                <p class="mb-3 font-bold text-gray-400 border-b border-gray-700 pb-1">Employment Statistics:</p>
+                <p class="text-yellow-500">> Packages Routed: 1,932,320</p>
+                <p class="text-cyan-500">> Cycles Logged: 2,849</p>
+            </div>
+            <div id="resignation-warning-container" class="min-h-[28px] mb-4"></div>
+        `;
+        
+        this.uiManager.queueModal('event-modal', '<span class="text-[23px]">Asteroid Belt Mining Conglomerate Delta Co.</span>', descriptionHTML, null, {
+            contentClass: 'modal-theme-drab-gray text-center font-roboto-mono',
+            customSetup: (modal, closeHandler) => {
+                const btnContainer = modal.querySelector('#event-button-container');
+                if (btnContainer) {
+                    btnContainer.innerHTML = '';
+                    const button = document.createElement('button');
+                    button.className = 'btn px-6 py-2 bg-orange-700 hover:bg-orange-600 text-white border-orange-500';
+                    button.innerHTML = 'TERMINATE CONTRACT';
+                    
+                    let isConfirming = false;
+
+                    button.onclick = (e) => {
+                        if (this._transitioning) return;
+                        
+                        if (!isConfirming) {
+                            isConfirming = true;
+                            button.innerHTML = 'CONFIRM TERMINATION';
+                            button.classList.remove('bg-orange-700', 'hover:bg-orange-600', 'border-orange-500');
+                            button.classList.add('bg-red-900', 'hover:bg-red-800', 'border-red-600', 'text-white');
+                            
+                            const warningContainer = modal.querySelector('#resignation-warning-container');
+                            if (warningContainer) {
+                                warningContainer.innerHTML = "<span class='text-orange-500 font-bold text-lg drop-shadow-[0_0_5px_rgba(249,115,22,0.8)]'>CONFIRM FORFEITURE OF PENSION: ⌬ 14 ?</span>";
+                            }
+                        } else {
+                            this._transitioning = true;
+                            button.disabled = true;
+                            
+                            // Fade to black over 2 seconds
+                            const fader = document.createElement('div');
+                            fader.className = 'fixed inset-0 bg-black z-[150]'; // Physical click shield
+                            fader.style.opacity = '0';
+                            document.body.appendChild(fader);
+                            
+                            fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
+                                closeHandler();
+                                this._triggerMarsTravelSequence(fader);
+                            };
+                        }
+                    };
+                    
+                    btnContainer.appendChild(button);
+                }
+            }
+        });
+    }
+
+    /**
+     * Executes the Mars Travel Starfield visual sequence over exactly 6000ms.
+     * Integrates fades and high-speed warp.
+     * @private
+     * @param {HTMLElement} fader - The black overlay div shielding the transition
+     */
+    _triggerMarsTravelSequence(fader) {
+        // Unhide the game container so the injected elements have the proper backdrop
+        this.uiManager.showGameContainer();
+        
+        starfieldService.mount();
+        starfieldService.triggerEntry();
+        // Force fast travel speed immediately after the entry tries to idle it
+        setTimeout(() => starfieldService.setEngageWarp(), 50);
+        
+        const overlay = document.createElement('div');
+        overlay.id = 'mars-travel-overlay';
+        overlay.className = 'fixed inset-0 z-[100] flex items-center justify-center pointer-events-none';
+        overlay.innerHTML = `<span class='text-white font-orbitron text-2xl tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] text-center px-4'>Traveling to the Martian Shipyards...</span>`;
+        document.body.appendChild(overlay);
+
+        // 1. Fade IN from black over 2s
+        fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
+            
+            // 2. Hold for 2s
+            setTimeout(() => {
+                
+                // 3. Fade OUT to black over 2s
+                fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
+                    overlay.remove();
+                    starfieldService.triggerQuickExit();
+                    
+                    // 4. Fade back out of black to reveal meta tutorials
+                    fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000, fill: 'forwards' }).onfinish = () => {
+                        fader.remove();
+                    };
+                    
+                    this._transitioning = false;
+                    this._showMetaHelpModals();
+                };
+
+            }, 2000); 
+        };
+    }
+
+    /**
      * Executes the sequential meta help modals before allowing the UI to render.
      * @private
      */
     _showMetaHelpModals() {
-        // Unhide the game container so the injected Help Modals become visible.
-        // Because introSequenceActive is still true, the game UI will not render yet, keeping the background blank.
         this.uiManager.showGameContainer();
 
         this.uiManager.showHelpModal('meta-tutorial', 0, () => {
@@ -377,7 +485,7 @@ export class IntroService {
 
     /**
      * Handles the intercepted purchase action from the starter ship selection modal.
-     * Triggers the 6-second cinematic transition, mutates state, and finalizes the intro.
+     * Orchestrates the final Flight School cinematic block and state initialization.
      * @param {string} shipId 
      */
     async handleStarterPurchase(shipId) {
@@ -385,28 +493,34 @@ export class IntroService {
         this._transitioning = true;
 
         const overlay = document.getElementById('starter-ship-selection-overlay');
-        const starterContainer = overlay ? overlay.querySelector('.starter-selection-container') : null;
-        const narrativeBox = overlay ? overlay.querySelector('.starter-narrative-box') : null;
-
-        // [Phase 1: 0-2s]
-        // Immediately dismiss the detail modal so it doesn't flash or complicate the blur stack
+        
+        // Hide the detail modal immediately
         this.uiManager.hideModal('ship-detail-modal');
 
-        // Blur-fade out the underlying UI elements
-        if (starterContainer) starterContainer.classList.add('blur-fade-out');
-        if (narrativeBox) narrativeBox.classList.add('blur-fade-out');
-        
-        // Wait 2 seconds for UI to visually dissolve into the background starfield
-        await new Promise(res => setTimeout(res, 2000));
-        
-        // [Phase 2: 2-4s] Starfield Hold 
-        // Mechanically hide elements while holding the view on just the starfield
-        if (starterContainer) starterContainer.style.display = 'none';
-        if (narrativeBox) narrativeBox.style.display = 'none';
+        // Create the blackout shield for transitions
+        const fader = document.createElement('div');
+        fader.className = 'fixed inset-0 bg-black z-[150]'; // Acts as a physical click shield
+        fader.style.opacity = '0';
+        document.body.appendChild(fader);
 
-        // Mutate State during the blackout window
+        // 1. Fade OUT the Ship Selection UI to pure black over 2s
+        await fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).finished;
+
+        if (overlay) overlay.style.display = 'none';
+
+        // 2. Setup Subtle Starfield & Cinematic Text
+        starfieldService.mount();
+        starfieldService.triggerEntry(); 
+        // Note: triggerEntry automatically sets idleWarp (subtle movement)
+
+        const textOverlay = document.createElement('div');
+        textOverlay.className = 'fixed inset-0 z-[100] flex items-center justify-center pointer-events-none';
+        textOverlay.innerHTML = `<span class='text-white font-orbitron text-xl tracking-widest text-center px-4'>Months later...<br><br><br>Flight School is complete.</span>`;
+        document.body.appendChild(textOverlay);
+
+        // Mutate Player State quietly behind the blackout
         const shipStatic = DB.SHIPS[shipId];
-        this.gameState.player.credits -= 25000; // Deduct exactly the loan amount
+        this.gameState.player.credits -= 25000; 
         this.gameState.player.ownedShipIds.push(shipId);
         this.gameState.player.activeShipId = shipId;
         this.gameState.player.shipStates[shipId] = {
@@ -420,48 +534,38 @@ export class IntroService {
             this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 };
         });
 
-        // Prepare the Game UI Container before calling _end() so it does not instantly appear
+        // Suppress visual jarring when the game container is booted
         const gameContainer = document.getElementById('game-container');
         if (gameContainer) {
-            // Suppress the native background/opacity transitions temporarily
             gameContainer.style.transition = 'none';
             gameContainer.style.opacity = '0';
-            gameContainer.style.filter = 'blur(10px)';
         }
+
+        // 3. Fade IN from black over 2s to reveal subtle starfield and text
+        await fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).finished;
+
+        // 4. Hold visual on Flight School for 4s
+        await new Promise(res => setTimeout(res, 4000));
+
+        // 5. Fade OUT to black over 2s
+        await fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).finished;
+
+        // Clean up cinematic elements
+        textOverlay.remove();
+        starfieldService.triggerQuickExit();
+        if (overlay) overlay.remove();
 
         // Boot the core game loop, generating the UI layout invisibly
         this._end();
 
-        // Hold for the remaining 2 seconds of the Starfield scene
-        await new Promise(res => setTimeout(res, 2000));
+        // Reveal the fully rendered game behind the blackout
+        if (gameContainer) gameContainer.style.opacity = '';
 
-        // [Phase 3: 4-6s] Crossfade
-        if (overlay) {
-            overlay.style.pointerEvents = 'none';
-            // Use Web Animations API so UIManager's class wiping doesn't interrupt it
-            overlay.animate([
-                { opacity: 1, filter: 'blur(0px)' },
-                { opacity: 0, filter: 'blur(10px)' }
-            ], { duration: 2000, easing: 'ease-in-out', fill: 'forwards' });
-        }
-        
-        if (gameContainer) {
-            // Strip the inline overrides so it targets its true default state (Opacity 1)
-            gameContainer.style.opacity = '';
-            gameContainer.style.filter = '';
-            
-            // Execute animation independently of CSS classes
-            gameContainer.animate([
-                { opacity: 0, filter: 'blur(10px)' },
-                { opacity: 1, filter: 'blur(0px)' }
-            ], { duration: 2000, easing: 'ease-in-out' });
-            
-            // Final cleanup after crossfade completes
-            setTimeout(() => {
-                gameContainer.style.transition = ''; // Restore CSS transitions
-                if (overlay) overlay.remove();
-            }, 2000);
-        }
+        // 6. Fade IN the Game UI from black over 2s
+        await fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).finished;
+
+        fader.remove();
+        if (gameContainer) gameContainer.style.transition = '';
     }
 
     /**
@@ -469,7 +573,6 @@ export class IntroService {
      * @private
      */
     _end() {
-        // Drop the hard UI lock
         this.gameState.introSequenceActive = false;
         this._transitioning = false;
         
