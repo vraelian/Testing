@@ -1828,48 +1828,30 @@
     background-color: rgba(20, 22, 25, 0.9) !important;
 }
 
-.modal-theme-guild-charter {
-    background: linear-gradient(145deg, #1e2024 0%, #0f1115 100%) !important;
-    border: 1px solid #3a3f47 !important; /* Dark, subtle outer border */
-    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05) !important;
-    padding: 2.5rem 2rem !important; /* Professional padding */
-    color: #e2e8f0 !important; /* Crisp silver text */
+.modal-content.modal-theme-guild-charter {
+    background: linear-gradient(145deg, #1e2024 0%, #0f1115 100%);
+    border: 1px solid #3a3f47; /* Dark, subtle outer border */
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    padding: 2.5rem 2rem; /* Professional padding */
+    color: #e2e8f0; /* Crisp silver text */
 }
 
-/* Neutralize all inner elements to prevent blue bleed or ugly borders */
-.modal-theme-guild-charter * {
-    border: none !important;
-    box-shadow: none !important;
-    text-shadow: none !important;
-    background-color: transparent !important;
-}
-
-/* Style the text cleanly */
-.modal-theme-guild-charter p, 
-.modal-theme-guild-charter div {
-    color: #e2e8f0 !important;
-    line-height: 1.6 !important;
+/* Style the text cleanly without aggressive overriding */
+.modal-content.modal-theme-guild-charter p, 
+.modal-content.modal-theme-guild-charter div {
+    color: #e2e8f0;
+    line-height: 1.6;
 }
 
 /* Keep the title gold */
-.modal-theme-guild-charter h3,
-.modal-theme-guild-charter #charter-title {
+.modal-content.modal-theme-guild-charter h3,
+.modal-content.modal-theme-guild-charter #charter-title {
     color: #d4af37 !important;
     text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
     margin-bottom: 1.5rem !important;
     font-family: 'Zorque', sans-serif !important;
     font-size: 1.8rem !important;
     letter-spacing: 1px !important;
-}
-
-/* Make highlights gold instead of default colors */
-.modal-theme-guild-charter .hl-yellow,
-.modal-theme-guild-charter .hl-blue,
-.modal-theme-guild-charter .hl-green,
-.modal-theme-guild-charter .hl-red,
-.modal-theme-guild-charter b {
-    color: #f3d360 !important;
-    font-weight: 600 !important;
 }
 
 .btn-gold-weighty {
@@ -1901,6 +1883,28 @@
     color: #888 !important;
     border: 1px solid #333 !important;
     box-shadow: none !important;
+}
+
+/* --- GOLDEN BLUR EXIT ANIMATION --- */
+@keyframes goldModalBlurOut {
+    0% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        border-color: #3a3f47;
+    }
+    100% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(1.05);
+        box-shadow: 0 0 60px rgba(212, 175, 55, 1), inset 0 0 30px rgba(212, 175, 55, 0.8);
+        border-color: #d4af37;
+    }
+}
+
+.modal-hiding.guild-backdrop .modal-content {
+    animation: goldModalBlurOut 2s ease-out forwards !important;
 }
 
 /* ========================================================================= */

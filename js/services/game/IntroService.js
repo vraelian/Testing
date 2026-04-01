@@ -103,7 +103,10 @@ export class IntroService {
                 // Explicitly close the signature modal to clear the stage
                 this.uiManager.hideModal('signature-modal');
 
-                this._startProcessingSequence();
+                // Wait for the golden blur animation (1000ms) before popping up the processing modal
+                setTimeout(() => {
+                    this._startProcessingSequence();
+                }, 2000);
             }
             // --- END VIRTUAL WORKBENCH ---
         }
@@ -142,7 +145,7 @@ export class IntroService {
 
         if (step.id === 'charter' || step.id === 'signature') {
             modalId = `${step.id}-modal`;
-            options.specialClass = 'modal-backdrop-grey';
+            options.specialClass = 'modal-backdrop-grey guild-backdrop';
             options.contentClass = 'modal-theme-guild-charter';
 
             if (step.id === 'charter') {
@@ -446,9 +449,16 @@ export class IntroService {
             this.uiManager.helpManager.anchorBtn.style.display = 'flex';
         }
         
+        // --- INJECT HIGH-FIDELITY STARFIELD ---
+        starfieldService.mount();
+        starfieldService.triggerEntry();
+
         const overlay = document.createElement('div');
         overlay.id = 'starter-ship-selection-overlay';
-        overlay.className = 'intro-starfield-bg';
+        
+        // Use a translucent radial gradient overlay so the starfield canvas shines through
+        overlay.className = 'fixed inset-0 z-[50] flex flex-col items-center justify-center';
+        overlay.style.background = 'radial-gradient(circle, rgba(12, 16, 29, 0.7) 0%, rgba(0, 0, 0, 0.95) 100%)';
         
         const starterShips = [
             {

@@ -64,12 +64,12 @@ export const DB = {
         },
         {
           id: 'charter',
-          title: "<span class=\"hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]\">MERCHANT'S GUILD<br>LOAN AGREEMENT</span>",
+          title: "<span class=\"hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)] block text-center w-full\">MERCHANT'S GUILD<br>LOAN AGREEMENT</span>",
           description: `
             <div class="font-roboto-mono text-left text-sm space-y-2">
                 <p><span class="text-gray-400">CHARTER ID:</span> G7-K491-38B</p>
-                <p><span class="text-gray-400">CREDIT AMOUNT:</span> <span class="credits-text-pulsing">⌬ 25,000</span></p>
-                <p><span class="text-gray-400">INTEREST RATE:</span> 1.56% (Monthly)</p>
+                <p><span class="text-gray-400">CREDIT AMOUNT:</span> <span class="credits-text-pulsing text-cyan-400 font-bold text-[15px] drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]">⌬ 25,000</span></p>
+                <p><span class="text-gray-400">INTEREST RATE:</span> <span class="text-red-500">1.56%</span> (Monthly)</p>
             </div>
             <div class="border-t border-slate-600 my-4"></div>
             <p class="text-sm text-gray-400 text-justify">Herein, the Applicant agrees to the terms of repayment and interest accrual, subject to the Interstellar Commerce Mandates of the Merchant's Guild. This binding digital agreement is logged on the system-wide ledger, whereupon it is considered immutable and enforceable system-wide. The principal of the debt is due in 1095 Terran-standard days, after which failure to remit payment shall authorize the automatic initiation of a garnishment sub-routine against the Applicant's credit.</p>
@@ -79,9 +79,13 @@ export const DB = {
         },
         {
             id: 'signature',
-            title: 'SIGN YOUR NAME',
+            title: "<span class=\"hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)] block text-center w-full\">SIGNATURE REQUIRED</span>",
             description: `
-            <p class="text-sm text-gray-400 text-justify mb-4">I, the undersigned, do hereby accept the aforementioned terms and enter into this agreement with the Merchant's Guild. My signature, digitally rendered, shall serve as my legal mark.</p>
+            <p class="text-[15px] text-gray-400 text-justify mb-4">I, the undersigned, do hereby accept the aforementioned terms and enter into this agreement with the Merchant's Guild. My signature, digitally rendered, shall serve as my legal mark.</p>
+            <div class="text-yellow-500 text-center font-roboto-mono mt-4">
+                <p>INTEREST: <span class="text-red-500 font-bold">⌬ 390</span> / MONTH</p>
+                <p>DUE DATE: 3 YEARS</p>
+            </div>
           `,
           buttonText: 'Submit Application'
         },
