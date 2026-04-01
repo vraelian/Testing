@@ -138,6 +138,16 @@ export class AssetService {
         return `assets/images/locations/${filePrefix}/${filePrefix}_${variantLetter}.webp`;
     }
 
+    /**
+     * Generates a path for a specific static modal image.
+     * @param {string} category - The subfolder name (e.g., 'intro', 'events').
+     * @param {string} imageId - The filename without extension (e.g., 'intro_1').
+     */
+    static _generateModalPath(category, imageId) {
+        if (!category || !imageId) return null;
+        return `assets/images/modals/${category}/${imageId}.webp`;
+    }
+
     // --- Public API ---
 
     /**
@@ -206,9 +216,22 @@ export class AssetService {
     }
 
     /**
+     * Retrieves the image path for a static modal asset.
+     */
+    static getModalImage(category, imageId) {
+        const path = this._generateModalPath(category, imageId);
+        if (!path) return '';
+
+        if (this.blobCache.has(path)) {
+            return this.blobCache.get(path);
+        }
+        return path;
+    }
+
+    /**
      * Hydrates (Fetches, Stores, and Caches) a list of assets.
      * This replaces the old "new Image()" preloading.
-     * @param {Array<{type: 'ship'|'commodity'|'location', id: string, seed?: number, path?: string}>} assetRequests 
+     * @param {Array<{type: 'ship'|'commodity'|'location'|'modal'|'direct', id?: string, category?: string, seed?: number, path?: string}>} assetRequests 
      */
     static async hydrateAssets(assetRequests) {
         const uniquePaths = new Set();
@@ -216,29 +239,27 @@ export class AssetService {
         // 1. Resolve logical paths
         assetRequests.forEach(req => {
             let path = null;
-            if (req.type === 'ship') {
+            if (req.type === 'ship' && req.id) {
                 path = this._generateShipPath(req.id, req.seed || 0);
-            } else if (req.type === 'commodity') {
+            } else if (req.type === 'commodity' && req.id) {
                 const name = DB.COMMODITIES.find(c => c.id === req.id)?.name;
                 if (name) path = this._generateCommodityPath(name, req.seed || 0);
             } else if (req.type === 'location') {
-                // If a direct path is provided (legacy), use it
                 if (req.path) {
                     path = req.path;
-                } 
-                // If an ID is provided, generate a random path (New System)
-                // Note: We might want to hydrate ALL variants for a location to prevent pop-in, 
-                // but for now we just hydrate the one requested if the caller specifies logic.
-                else if (req.id) {
+                } else if (req.id) {
                     path = this._generateLocationPath(req.id);
                 }
+            } else if (req.type === 'modal' && req.category && req.id) {
+                path = this._generateModalPath(req.category, req.id);
+            } else if ((req.type === 'modal' || req.type === 'direct') && req.path) {
+                path = req.path;
             }
+            
             if (path) uniquePaths.add(path);
         });
 
         // 2. Process hydration
-        // NOTE: Mapping the array creates Promises immediately, effectively starting the fetch.
-        // The order of the `assetRequests` array determines the order requests are queued by the browser.
         const promises = Array.from(uniquePaths).map(async (path) => {
             // A. Check Memory Cache
             if (this.blobCache.has(path)) return;
@@ -280,9 +301,6 @@ export class AssetService {
     /**
      * BOOT PHASE HYDRATION (Title Screen)
      * Loads high-priority UI assets that are needed immediately upon entering the game.
-     * - All Commodity Icons (used in Market cards)
-     * - All Location Backgrounds (used in Screen backgrounds)
-     * - Starter Ships (to prevent pop-in on new games)
      */
     static async hydrateBootAssets() {
         console.log("[AssetService] Starting Boot Phase Hydration...");
@@ -299,8 +317,7 @@ export class AssetService {
             if (m.imagePath) bootQueue.push({ type: 'location', path: m.imagePath });
         });
 
-        // 3. Starter Ships (ADD YOUR EARLY GAME SHIPS HERE)
-        // This ensures the initial ships are cached in memory before the Hangar UI loads.
+        // 3. Starter Ships
         const starterShips = [
             'Mule.Ship', 
             'Wanderer.Ship', 
@@ -310,9 +327,12 @@ export class AssetService {
         ]; 
         
         starterShips.forEach(shipId => {
-            // We use seed 0 as a default, ensuring the basic "A" variant is loaded instantly
             bootQueue.push({ type: 'ship', id: shipId, seed: 0 }); 
         });
+
+        // 4. Intro Modal Images (Preload directly to ensure they are ready before the first click)
+        bootQueue.push({ type: 'modal', category: 'intro', id: 'intro_1' });
+        bootQueue.push({ type: 'modal', category: 'intro', id: 'intro_2' });
 
         await this.hydrateAssets(bootQueue);
         console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);

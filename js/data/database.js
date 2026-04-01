@@ -42,14 +42,22 @@ export const DB = {
         {
           id: 'lore_1',
           title: 'Year 2220',
-          description: "<div class=\"w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500\">Image Data Missing</div>Humanity has expanded throughout the Solar System.<br><br> <span class=\"hl\">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.",
+          description: `<div class="w-full aspect-video border border-gray-600 mb-4 rounded overflow-hidden shadow-[0_0_10px_rgba(0,0,0,0.5)] bg-black flex items-center justify-center">
+                            <img src="assets/images/modals/intro/intro_1.webp" class="w-full h-full object-cover transition-opacity duration-300" 
+                            onerror="this.parentElement.innerHTML='Image Data Missing'; this.parentElement.className='w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500 rounded'">
+                        </div>
+                        Humanity has expanded throughout the Solar System.<br><br> <span class="hl">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.`,
           buttonText: 'Begin',
           contentClass: 'text-center'
         },
         {
           id: 'lore_2',
           title: "The Price of Freedom",
-          description: "<div class=\"w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500\">Image Data Missing</div>A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.",
+          description: `<div class="w-full aspect-video border border-gray-600 mb-4 rounded overflow-hidden shadow-[0_0_10px_rgba(0,0,0,0.5)] bg-black flex items-center justify-center">
+                            <img src="assets/images/modals/intro/intro_2.webp" class="w-full h-full object-cover transition-opacity duration-300" 
+                            onerror="this.parentElement.innerHTML='Image Data Missing'; this.parentElement.className='w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500 rounded'">
+                        </div>
+                        A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.`,
           buttonText: 'Apply for Loan',
           contentClass: 'text-center',
           buttonClass: 'btn-pulse-green'
