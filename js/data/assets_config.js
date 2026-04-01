@@ -91,7 +91,7 @@ export const LOCATION_VARIANT_COUNTS = {
     'Belt': 7,
     'Exchange': 6,
     'Jupiter': 9,
-    'Saturn': 11,
+    'Saturn': 10,
     'Uranus': 16,
     'Kepler': 12,
     'Pluto': 11,
