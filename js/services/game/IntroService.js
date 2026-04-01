@@ -131,13 +131,24 @@ export class IntroService {
         };
         
         if (this.gameState.player.introStep === 0) {
-            options.specialClass = 'intro-fade-in';
+            options.specialClass = 'intro-fade-in intro-backdrop-clear';
+            starfieldService.mount();
+            starfieldService.triggerEntry();
+        } else if (step.id !== 'charter' && step.id !== 'signature') {
+            options.specialClass = 'intro-backdrop-clear';
         }
 
         let modalId = 'event-modal';
 
         if (step.id === 'charter' || step.id === 'signature') {
             modalId = `${step.id}-modal`;
+            options.specialClass = 'modal-backdrop-grey';
+            options.contentClass = 'modal-theme-guild-charter';
+
+            if (step.id === 'charter') {
+                starfieldService.triggerQuickExit();
+            }
+
             options.customSetup = (modal, closeHandler) => { this._setupInteractiveModal(modal, step, closeHandler) };
         } else {
             options.customSetup = (modal, closeHandler) => {
@@ -147,7 +158,10 @@ export class IntroService {
 
                 const button = document.createElement('button');
                 button.className = 'btn px-6 py-2';
-                if(step.buttonClass) button.classList.add(step.buttonClass);
+                
+                // FIX: Support space-separated classes without throwing InvalidCharacterError
+                if(step.buttonClass) button.classList.add(...step.buttonClass.split(' ').filter(Boolean));
+                
                 button.id = 'intro-next-btn';
                 button.innerHTML = step.buttonText;
                 
@@ -182,7 +196,7 @@ export class IntroService {
         const buttonContainer = modal.querySelector(`#${step.id}-button-container`);
         buttonContainer.innerHTML = '';
         const button = document.createElement('button');
-        button.className = 'btn px-6 py-2';
+        button.className = 'btn px-6 py-2 btn-gold-weighty';
         button.innerHTML = step.buttonText;
         
         const safeCloseHandler = (e) => {
@@ -284,11 +298,12 @@ export class IntroService {
         this._transitioning = false;
         
         const descriptionHTML = `
-            <div class="mb-4 text-center text-gray-400">Ongoing Contract: #345J | ${this.gameState.player.name}</div>
-            <div class="mb-6 text-gray-300 text-left w-full max-w-sm mx-auto border border-gray-600 bg-gray-900 p-4 rounded shadow-inner">
-                <p class="mb-3 font-bold text-gray-400 border-b border-gray-700 pb-1">Employment Statistics:</p>
-                <p class="text-yellow-500">> Packages Routed: 1,932,320</p>
-                <p class="text-cyan-500">> Cycles Logged: 2,849</p>
+            <div class="mb-4 text-center text-gray-500 font-bold tracking-widest text-sm uppercase">Secure Terminal Link Established</div>
+            <div class="mb-6 text-green-500 text-left w-full mx-auto bg-black p-5 border border-green-900/30 rounded-sm shadow-[inset_0_0_20px_rgba(0,0,0,1)] font-roboto-mono text-sm">
+                <p class="mb-4 text-green-600 border-b border-green-900/50 pb-2 uppercase tracking-widest">>>> Employment Record: ${this.gameState.player.name}</p>
+                <p class="mb-2">> Packages Routed..... <span class="text-green-400">1,932,320</span></p>
+                <p class="mb-2">> Cycles Logged....... <span class="text-green-400">2,849</span></p>
+                <p class="mt-4 text-xs text-green-700 animate-pulse">> AWAITING INPUT...</p>
             </div>
             <div id="resignation-warning-container" class="min-h-[28px] mb-4"></div>
         `;
@@ -296,6 +311,14 @@ export class IntroService {
         this.uiManager.queueModal('event-modal', '<span class="text-[23px]">Asteroid Belt Mining Conglomerate Delta Co.</span>', descriptionHTML, null, {
             contentClass: 'modal-theme-drab-gray text-center font-roboto-mono',
             customSetup: (modal, closeHandler) => {
+                const quitText = document.createElement('div');
+                quitText.id = 'quit-job-text';
+                quitText.className = 'fixed font-orbitron font-bold text-white text-3xl z-[100] tracking-widest pointer-events-none text-center quit-job-pulse';
+                quitText.style.top = '10vh';
+                quitText.style.left = '50%';
+                quitText.innerHTML = 'QUIT YOUR JOB!';
+                document.body.appendChild(quitText);
+
                 const btnContainer = modal.querySelector('#event-button-container');
                 if (btnContainer) {
                     btnContainer.innerHTML = '';
@@ -321,6 +344,9 @@ export class IntroService {
                         } else {
                             this._transitioning = true;
                             button.disabled = true;
+                            
+                            const existingQuitText = document.getElementById('quit-job-text');
+                            if (existingQuitText) existingQuitText.remove();
                             
                             // Fade to black over 2 seconds
                             const fader = document.createElement('div');

@@ -193,8 +193,9 @@ export class UIModalEngine {
             return this.processModalQueue();
         }
 
+        // FIX: Ensure specialClass strings with spaces are split properly to prevent InvalidCharacterError
         if (options.specialClass) {
-            modal.classList.add(options.specialClass);
+            modal.classList.add(...options.specialClass.split(' ').filter(Boolean));
         }
         if (options.nonDismissible) {
             modal.classList.add('dismiss-disabled');
@@ -532,7 +533,7 @@ export class UIModalEngine {
                 }
 
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
+                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey');
                 
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
@@ -554,7 +555,7 @@ export class UIModalEngine {
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
-            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in');
+            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey');
             
             delete modal.dataset.theme;
             delete modal.dataset.dismissInside;
