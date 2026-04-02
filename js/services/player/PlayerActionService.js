@@ -162,7 +162,6 @@ export class PlayerActionService {
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
-        this.timeService._checkMilestones();
         this.missionService.checkTriggers();
 
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
@@ -300,7 +299,6 @@ export class PlayerActionService {
         this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
 
-        this.timeService._checkMilestones();
         this.missionService.checkTriggers();
 
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
@@ -744,7 +742,6 @@ export class PlayerActionService {
             player.seenGarnishmentWarning = false;
         }
 
-        this.timeService._checkMilestones();
         this.gameState.setState({});
     }
 

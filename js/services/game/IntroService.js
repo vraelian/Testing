@@ -74,15 +74,12 @@ export class IntroService {
         if (!button) return;
         
         if (button.id === 'intro-submit-btn') {
-            // --- VIRTUAL WORKBENCH: IMMEDIATE UI LOCK ---
             this._transitioning = true;
             button.disabled = true;
-            // --- END VIRTUAL WORKBENCH ---
 
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
             
-            // --- VIRTUAL WORKBENCH: STRICT SANITIZATION ---
             const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
     
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
@@ -108,7 +105,6 @@ export class IntroService {
                     this._startProcessingSequence();
                 }, 2000);
             }
-            // --- END VIRTUAL WORKBENCH ---
         }
     }
 
@@ -138,6 +134,19 @@ export class IntroService {
             options.exitClass = 'intro-blur-fade-out-3s';
             starfieldService.mount();
             starfieldService.triggerEntry();
+
+            // --- VIRTUAL WORKBENCH: PHYSICAL INTERACTION SHIELD ---
+            // Protects the 8.5-second visual apparition from being interrupted or spammed
+            // without applying 'disabled' attributes that alter CSS rendering.
+            const shield = document.createElement('div');
+            shield.id = 'intro-physical-shield';
+            shield.className = 'fixed inset-0 z-[9999]';
+            document.body.appendChild(shield);
+            setTimeout(() => {
+                if (document.body.contains(shield)) shield.remove();
+            }, 8500);
+            // --- END VIRTUAL WORKBENCH ---
+
         } else if (step.id !== 'charter' && step.id !== 'signature') {
             options.specialClass = 'intro-backdrop-clear';
         }
@@ -163,21 +172,37 @@ export class IntroService {
                 const button = document.createElement('button');
                 button.className = 'btn px-6 py-2';
                 
-                // FIX: Support space-separated classes without throwing InvalidCharacterError
                 if(step.buttonClass) button.classList.add(...step.buttonClass.split(' ').filter(Boolean));
                 
                 button.id = 'intro-next-btn';
                 button.innerHTML = step.buttonText;
                 
+                // --- VIRTUAL WORKBENCH: THE POINTER SHIELD ---
+                let isFirstModalLocked = (this.gameState.player.introStep === 0);
+                
+                if (isFirstModalLocked) {
+                    button.style.pointerEvents = 'none'; // Prevent iOS from targeting it during animation
+                    setTimeout(() => {
+                        if (document.body.contains(button)) {
+                            isFirstModalLocked = false;
+                            button.style.pointerEvents = 'auto';
+                        }
+                    }, 8500); // Matched to the duration of the physical shield
+                }
+                // --- END VIRTUAL WORKBENCH ---
+
                 button.onclick = (e) => {
-                    if (this._transitioning) { 
-                        e.preventDefault(); 
-                        return;
-                    }
+                    e.preventDefault();
+                    if (isFirstModalLocked || this._transitioning) return;
+                    
                     this._transitioning = true; 
-                    e.target.disabled = true;   
+                    button.disabled = true;
+                    // Neutralize the DOM element instantly to prevent race conditions during exit fade
+                    button.onclick = null; 
+                    
                     closeHandler();             
                 };
+
                 btnContainer.appendChild(button);
             };
         }
@@ -204,12 +229,14 @@ export class IntroService {
         button.innerHTML = step.buttonText;
         
         const safeCloseHandler = (e) => {
-            if (this._transitioning) {
-                if (e) e.preventDefault();
-                return;
-            }
+            if (e) e.preventDefault();
+            if (this._transitioning) return;
+
             this._transitioning = true;
-            if (e && e.target) e.target.disabled = true;
+            if (e && e.target) {
+                e.target.disabled = true;
+                e.target.onclick = null; 
+            }
             closeHandler();
         };
 

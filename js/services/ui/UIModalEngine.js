@@ -325,10 +325,15 @@ export class UIModalEngine {
             }
         }
 
+        // --- VIRTUAL WORKBENCH: THE CLOSURE LOCK ---
+        let isClosed = false;
         const closeHandler = () => {
+            if (isClosed) return;
+            isClosed = true;
             this.hideModal(modalId);
             if (callback) callback();
         };
+        // --- END VIRTUAL WORKBENCH ---
 
         const backdropDismissHandler = (e) => {
             if (modal.dataset.dismissOutside === 'true' && e.target === modal) {
@@ -503,18 +508,18 @@ export class UIModalEngine {
         if (modal && !modal.classList.contains('hidden')) {
             const exitClass = modal.dataset.exitClass || 'modal-hiding';
             modal.classList.add(exitClass);
-            
+
             modal.addEventListener('animationend', (e) => {
                 // Ensure we catch the backdrop animation end, not a child element's animation
                 if (e.target !== modal && e.target !== modal.querySelector('.modal-content')) return;
-                
+
                 if (!modal.classList.contains(exitClass)) {
                     return;
                 }
 
                 modal.classList.add('hidden');
                 modal.classList.remove(exitClass, 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s');
-                
+
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;

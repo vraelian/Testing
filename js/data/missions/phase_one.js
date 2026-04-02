@@ -125,6 +125,9 @@ export const PHASE_ONE_MISSIONS = {
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
         ],
+        onComplete: [
+            { "type": "reveal_tier", "value": 2 }
+        ],
         objectives: [
             { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 120 }
         ],
@@ -135,8 +138,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 20000 },
-            { "type": "unlock_tier", "value": 2 }
+            { "type": "credits", "amount": 20000 }
         ]
     },
     'mission_15': {

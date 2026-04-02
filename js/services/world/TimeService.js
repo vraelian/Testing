@@ -1,6 +1,6 @@
 // js/services/world/TimeService.js
 import { DB } from '../../data/database.js';
-import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
+import { GAME_RULES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { SystemStateService } from './SystemStateService.js';
@@ -361,30 +361,6 @@ export class TimeService {
                 });
             }
         });
-    }
-
-    _checkMilestones() {
-        const { credits, revealedTier } = this.gameState.player;
-        let currentTier = revealedTier;
-        
-        // Find the next milestone
-        let nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
-        
-        // Check if we passed it (and potentially subsequent ones)
-        while (nextMilestone && credits >= nextMilestone.threshold) {
-            this.gameState.player.revealedTier = nextMilestone.revealsTier;
-            
-            // Notify
-            this.logger.info.player(this.gameState.day, 'MILESTONE', `Wealth milestone reached! Tier ${nextMilestone.revealsTier} commodities unlocked.`);
-            this.uiManager.queueModal('event-modal', 'Market Update', `Your increasing wealth has granted you access to Tier ${nextMilestone.revealsTier} commodities.`);
-            
-            currentTier = nextMilestone.revealsTier;
-            nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
-        }
-        
-        if (this.gameState.player.revealedTier !== revealedTier) {
-            this.gameState.setState({});
-        }
     }
 
     // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---
