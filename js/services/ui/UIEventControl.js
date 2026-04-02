@@ -542,15 +542,29 @@ export class UIEventControl {
         });
     }
 
-    createFloatingText(text, x, y, color = '#fde047') {
+    /**
+     * Spawns floating text over the UI, optionally using HTML and extended durations.
+     * @param {string} text - The content to float
+     * @param {number} x - Origin X
+     * @param {number} y - Origin Y
+     * @param {string} color - Hex or standard color string
+     * @param {number} duration - Milliseconds the text should persist
+     * @param {boolean} isHtml - If true, innerHTML is used instead of textContent
+     */
+    createFloatingText(text, x, y, color = '#fde047', duration = 2450, isHtml = false) {
         const el = document.createElement('div');
-        el.textContent = text;
+        if (isHtml) {
+            el.innerHTML = text;
+        } else {
+            el.textContent = text;
+        }
         el.className = 'floating-text';
         el.style.left = `${x - 20}px`;
         el.style.top = `${y - 40}px`;
         el.style.color = color;
+        el.style.animationDuration = `${duration}ms`;
         document.body.appendChild(el);
-        setTimeout(() => el.remove(), 2450);
+        setTimeout(() => el.remove(), duration);
     }
 
     showStrandedModal(originName, lostDays, callback) {

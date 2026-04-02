@@ -134,7 +134,8 @@ export class IntroService {
         };
         
         if (this.gameState.player.introStep === 0) {
-            options.specialClass = 'intro-fade-in intro-backdrop-clear';
+            options.specialClass = 'intro-blur-fade-in-4s intro-backdrop-clear';
+            options.exitClass = 'intro-blur-fade-out-3s';
             starfieldService.mount();
             starfieldService.triggerEntry();
         } else if (step.id !== 'charter' && step.id !== 'signature') {
@@ -239,14 +240,35 @@ export class IntroService {
         const showApprovalModal = () => {
             this._transitioning = false;
 
-            const title = 'Loan Approved';
-            const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been <b>approved</b>.<br><br><span class="credits-text-pulsing">⌬ 25,000</span> is ready to transfer to your account.`;
+            const title = `<span class="hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)] block text-center w-full">APPLICATION APPROVED</span>`;
+            const description = `
+                <div style="font-size: calc(1rem + 2pt);">
+                    <div class="font-roboto-mono text-left space-y-2">
+                        <p><span class="text-gray-400">APPLICANT:</span> ${this.gameState.player.name}</p>
+                        <p><span class="text-gray-400">STATUS:</span> <span class="text-green-400 font-bold tracking-widest drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]">AUTHORIZED</span></p>
+                        <p><span class="text-gray-400">FUNDS:</span> <span class="credits-text-pulsing text-cyan-400 font-bold text-[17px] drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]">⌬ 25,000</span></p>
+                    </div>
+                    <div class="my-6 text-white text-center italic" style="text-shadow: 0 0 5px rgba(255,255,255,0.4);">
+                        "Dear ${this.gameState.player.name}, you have been approved for a loan in the amount of twenty-five thousand credits. Based on your positive credit history, we have decided to waive your initial financing fee."
+                    </div>
+                    <div class="border-t border-slate-600 my-4"></div>
+                    <p class="text-sm text-gray-400 text-justify">The Merchant's Guild has authorized the immediate disbursement of funds to your account. By accepting this transfer, you formally finalize the binding charter.</p>
+                </div>
+            `;
             
             const hangarTransition = (event) => {
                 this._transitioning = true;
                 if(event && event.target) event.target.disabled = true;
                 
-                this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
+                // Doubled size and dynamic duration for transition text
+                this.uiManager.createFloatingText(
+                    `<span style="font-size: 200%; text-shadow: 0 0 10px #34d399;">+${formatCredits(25000, false)}</span>`, 
+                    event.clientX, 
+                    event.clientY, 
+                    '#34d399', 
+                    3950, 
+                    true
+                );
                 
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
 
@@ -261,20 +283,20 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
+                // Extended black screen timing logic for income text persist
                 setTimeout(() => {
                     this._showResignationModal();
-                }, 2000);
+                }, 3500);
             };
 
             this.uiManager.queueModal('event-modal', title, description, null, {
-                contentClass: 'text-center',
+                contentClass: 'text-center modal-theme-guild-charter',
+                specialClass: 'modal-backdrop-grey guild-backdrop',
                 customSetup: (modal, closeHandler) => {
-                    modal.querySelector('.modal-content').classList.add('modal-theme-admin');
-     
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = '';
                     const button = document.createElement('button');
-                    button.className = 'btn px-6 py-2';
+                    button.className = 'btn px-6 py-2 btn-gold-weighty';
                     button.innerHTML = 'Accept Transfer';
                     
                     button.onclick = (event) => {
@@ -338,11 +360,11 @@ export class IntroService {
                             isConfirming = true;
                             button.innerHTML = 'CONFIRM TERMINATION';
                             button.classList.remove('bg-orange-700', 'hover:bg-orange-600', 'border-orange-500');
-                            button.classList.add('bg-red-900', 'hover:bg-red-800', 'border-red-600', 'text-white');
+                            button.classList.add('btn-confirm-red');
                             
                             const warningContainer = modal.querySelector('#resignation-warning-container');
                             if (warningContainer) {
-                                warningContainer.innerHTML = "<span class='text-orange-500 font-bold text-lg drop-shadow-[0_0_5px_rgba(249,115,22,0.8)]'>CONFIRM FORFEITURE OF PENSION: ⌬ 14 ?</span>";
+                                warningContainer.innerHTML = "<span class='dashboard-fade-in block text-orange-500 font-bold text-lg drop-shadow-[0_0_5px_rgba(249,115,22,0.8)]'>CONFIRM FORFEITURE OF PENSION: ⌬ 14 ?</span>";
                             }
                         } else {
                             this._transitioning = true;
@@ -456,9 +478,10 @@ export class IntroService {
         const overlay = document.createElement('div');
         overlay.id = 'starter-ship-selection-overlay';
         
-        // Use a translucent radial gradient overlay so the starfield canvas shines through
-        overlay.className = 'fixed inset-0 z-[50] flex flex-col items-center justify-center';
-        overlay.style.background = 'radial-gradient(circle, rgba(12, 16, 29, 0.7) 0%, rgba(0, 0, 0, 0.95) 100%)';
+        // Lowered to z-[40] to allow the Ship Detail Modal and Help Modal (z-50+) to stack above cleanly
+        // Background set to completely transparent so the starfield shines through beautifully
+        overlay.className = 'fixed inset-0 z-[40] flex flex-col items-center justify-center intro-blur-fade-in';
+        overlay.style.background = 'transparent'; 
         
         const starterShips = [
             {
@@ -532,6 +555,16 @@ export class IntroService {
         
         // Hide the detail modal immediately
         this.uiManager.hideModal('ship-detail-modal');
+
+        // Render dynamic purchase deduction text
+        this.uiManager.createFloatingText(
+            `<span style="font-size: 200%; font-weight: bold; text-shadow: 0 0 10px #ef4444;">-25k</span>`,
+            window.innerWidth / 2,
+            window.innerHeight / 2,
+            '#ef4444',
+            2000,
+            true
+        );
 
         // Create the blackout shield for transitions
         const fader = document.createElement('div');

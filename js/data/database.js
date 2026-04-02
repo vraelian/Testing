@@ -48,7 +48,8 @@ export const DB = {
                         </div>
                         Humanity has expanded throughout the Solar System.<br><br> <span class="hl">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.`,
           buttonText: 'Begin',
-          contentClass: 'text-center'
+          contentClass: 'text-center',
+          buttonClass: 'btn-intro-cyan delayed-fade-in-8s'
         },
         {
           id: 'lore_2',
@@ -57,7 +58,7 @@ export const DB = {
                             <img src="assets/images/modals/intro/intro_2.webp" class="w-full h-full object-cover transition-opacity duration-300" 
                             onerror="this.parentElement.innerHTML='Image Data Missing'; this.parentElement.className='w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500 rounded'">
                         </div>
-                        A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.`,
+                        You are a logistics specialist for a corporate mining company in the Asteroid Belt. You've traded your youth for endless shifts in the dark, with little to show for it.<br><br>This dead-end grind pays the bills, but it will never yield the <b class='hl-green font-bold'>prosperity</b> that you dream of. The <span class='hl'>Merchant's Guild</span> could fund your ambition, but their price is steep.<br><br>You choose to bet on yourself and borrow the credits for a ship, quit your job, and chart your own course.`,
           buttonText: 'Apply for Loan',
           contentClass: 'text-center',
           buttonClass: 'btn-pulse-green'

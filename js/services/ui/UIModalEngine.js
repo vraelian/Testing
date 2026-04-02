@@ -123,7 +123,6 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#guild-accept-btn');
                 acceptBtn.onclick = () => {
                     const selected = modal.querySelector('input[name="guild-labor"]:checked').value;
-                    // FIX: Using robust LOCATION_IDS instead of incomplete strings
                     let years = 6, payout = 10000, location = LOCATION_IDS.MARS;
                     if (selected === 'uranus') { years = 8; payout = 16000; location = LOCATION_IDS.URANUS; }
                     if (selected === 'mercury') { years = 10; payout = 25000; location = LOCATION_IDS.MERCURY; }
@@ -140,7 +139,7 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#syndicate-accept-btn');
                 acceptBtn.onclick = () => {
                     closeHandler();
-                    executeCallback(10, 25000, true, LOCATION_IDS.PLUTO); // FIX: Safe ID
+                    executeCallback(10, 25000, true, LOCATION_IDS.PLUTO); 
                 };
             };
         } else {
@@ -159,7 +158,7 @@ export class UIModalEngine {
         this.queueModal(modalId, title, description, null, {
             nonDismissible: true,
             customSetup: customSetup,
-            contentClass: 'text-center' // FIX: Enforces center alignment across modal body
+            contentClass: 'text-center' 
         });
     }
 
@@ -168,7 +167,6 @@ export class UIModalEngine {
      */
     queueModal(modalId, title, description, callback = null, options = {}) {
         this.modalQueue.push({ modalId, title, description, callback, options });
-        // Only trigger processing if NO modal backdrop is currently active/visible.
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
             this.processModalQueue();
         }
@@ -180,7 +178,6 @@ export class UIModalEngine {
     processModalQueue() {
         if (this.modalQueue.length === 0) return;
         
-        // Peek at the active modal state to ensure we don't clobber an animating modal
         if (document.querySelector('.modal-backdrop:not(.hidden)')) {
             return; 
         }
@@ -193,7 +190,6 @@ export class UIModalEngine {
             return this.processModalQueue();
         }
 
-        // FIX: Ensure specialClass strings with spaces are split properly to prevent InvalidCharacterError
         if (options.specialClass) {
             modal.classList.add(...options.specialClass.split(' ').filter(Boolean));
         }
@@ -206,11 +202,16 @@ export class UIModalEngine {
         } else {
             delete modal.dataset.theme;
         }
+        
+        if (options.exitClass) {
+            modal.dataset.exitClass = options.exitClass;
+        } else {
+            delete modal.dataset.exitClass;
+        }
 
         modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
 
-        // --- TITLE ELEMENT RESOLUTION ---
         let titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         let titleEl = modal.querySelector(`#${titleElId}`);
 
@@ -221,8 +222,6 @@ export class UIModalEngine {
         if (!titleEl) {
             titleEl = modal.querySelector('.modal-title') || modal.querySelector('h3');
         }
-
-        // --- PORTRAIT INJECTION & CLEANUP ---
         
         const existingOldWrapper = modal.querySelector('.portrait-wrapper');
         if (existingOldWrapper) existingOldWrapper.remove();
@@ -252,7 +251,6 @@ export class UIModalEngine {
                 const parsedName = options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 
                 if (modalId === 'mission-modal') {
-                    // --- Comm-Link Layout (Missions Only) ---
                     titleEl.style.textAlign = 'center';
                     
                     const wrapperDiv = document.createElement('div');
@@ -274,7 +272,6 @@ export class UIModalEngine {
                         modalContent.insertBefore(wrapperDiv, modalContent.firstChild);
                     }
                 } else {
-                    // --- Standard Side-by-Side Layout (Events, Lore, etc.) ---
                     if (!headerFlex) {
                         headerFlex = document.createElement('div');
                         titleEl.parentNode.insertBefore(headerFlex, titleEl);
@@ -305,7 +302,6 @@ export class UIModalEngine {
             }
         }
 
-        // --- DESCRIPTION ELEMENT RESOLUTION ---
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
         const descEl = modal.querySelector(`#${descElId}`) || modal.querySelector(`#${modalId.replace('-modal', '-scenario')}`);
 
@@ -334,7 +330,6 @@ export class UIModalEngine {
             if (callback) callback();
         };
 
-        // --- VIRTUAL WORKBENCH: GDD BACKDROP DISMISSAL ---
         const backdropDismissHandler = (e) => {
             if (modal.dataset.dismissOutside === 'true' && e.target === modal) {
                 modal.removeEventListener('click', backdropDismissHandler);
@@ -342,13 +337,11 @@ export class UIModalEngine {
             }
         };
         
-        // Clean up previous listeners to prevent memory leaks or duplicate triggers on reused modals
         if (modal._backdropDismissHandler) {
             modal.removeEventListener('click', modal._backdropDismissHandler);
         }
         modal._backdropDismissHandler = backdropDismissHandler;
         modal.addEventListener('click', backdropDismissHandler);
-        // --- END VIRTUAL WORKBENCH ---
 
         if (options.customSetup) {
             options.customSetup(modal, closeHandler);
@@ -381,7 +374,6 @@ export class UIModalEngine {
                 if (button) {
                     button.className = 'btn px-6 py-2';
                     if (options.buttonClass) {
-                        // FIX: Ensure class definitions with spaces don't crash the DOMTokenList
                         button.classList.add(...options.buttonClass.split(' ').filter(Boolean));
                     }
                     button.innerHTML = options.buttonText || 'Understood';
@@ -390,12 +382,10 @@ export class UIModalEngine {
             }
         }
 
-        // Ensure we start from a clean state.
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
         modal.classList.add('modal-visible');
 
-        // Bind the dynamic scroll indicator arrow for scrollable modal content
         this._bindScrollIndicator(modal);
     }
 
@@ -410,7 +400,6 @@ export class UIModalEngine {
             const modalContent = modal.querySelector('.modal-content');
             if (!modalContent) return;
 
-            // 1. Hard cleanup of any existing arrows and intervals
             const existingArrows = modalContent.querySelectorAll('.scroll-indicator-arrow');
             existingArrows.forEach(a => a.remove());
             
@@ -418,21 +407,18 @@ export class UIModalEngine {
                 clearInterval(modalContent._pollInterval);
             }
 
-            // 2. Inject fresh arrow initialized via VISIBILITY
             const arrow = document.createElement('div');
             arrow.className = 'scroll-indicator-arrow';
             arrow.innerHTML = '▾'; 
-            arrow.style.visibility = 'hidden'; // Core Fix: Layout-level visual suppression
+            arrow.style.visibility = 'hidden'; 
             modalContent.appendChild(arrow);
 
-            // Keep track of dynamically bound containers
             const activeScrollContainers = new Set();
 
             const scrollHandler = () => {
                 let needsArrow = false;
                 
                 for (const node of activeScrollContainers) {
-                    // Safety check: remove listener reference if node was destroyed
                     if (!document.contains(node)) {
                         activeScrollContainers.delete(node);
                         continue;
@@ -441,12 +427,11 @@ export class UIModalEngine {
                     const cHeight = node.clientHeight;
                     const sHeight = node.scrollHeight;
                     
-                    // Must have actual height and overflow by at least 5px
                     if (cHeight === 0 || sHeight <= cHeight + 5) continue;
 
                     const sTop = node.scrollTop;
                     const distanceToBottom = sHeight - (sTop + cHeight);
-                    const threshold = Math.max(sHeight * 0.10, 10); // Bottom 10%
+                    const threshold = Math.max(sHeight * 0.10, 10);
                     
                     if (distanceToBottom > threshold) {
                         needsArrow = true;
@@ -458,31 +443,26 @@ export class UIModalEngine {
             };
 
             const scanForContainersAndCheckScroll = () => {
-                // Dynamically scan for ANY element inside the modal configured to scroll
                 const allNodes = [modalContent, ...modalContent.querySelectorAll('*')];
                 
                 for (const node of allNodes) {
                     const cHeight = node.clientHeight;
                     const sHeight = node.scrollHeight;
 
-                    // Must have physical dimensions
                     if (cHeight === 0 || sHeight <= cHeight + 5) continue;
 
                     const style = window.getComputedStyle(node);
                     if (style.overflowY !== 'auto' && style.overflowY !== 'scroll') continue;
 
-                    // If a valid container was found, ensure it is actively tracked
                     if (!activeScrollContainers.has(node)) {
                         node.addEventListener('scroll', scrollHandler, { passive: true });
                         activeScrollContainers.add(node);
                     }
                 }
                 
-                // Immediately check scroll state after a scan completes
                 scrollHandler();
             };
 
-            // Clean up old observers
             if (modalContent._resizeObserver) {
                 modalContent._resizeObserver.disconnect();
             }
@@ -490,11 +470,9 @@ export class UIModalEngine {
                 modalContent._mutationObserver.disconnect();
             }
 
-            // Observe modal resizes
             modalContent._resizeObserver = new ResizeObserver(() => scanForContainersAndCheckScroll());
             modalContent._resizeObserver.observe(modalContent);
 
-            // Observe DOM mutations within the modal content (text/images added)
             modalContent._mutationObserver = new MutationObserver(() => scanForContainersAndCheckScroll());
             modalContent._mutationObserver.observe(modalContent, {
                 childList: true,
@@ -503,7 +481,6 @@ export class UIModalEngine {
                 attributes: true 
             });
 
-            // Poll for the first 1.5s to catch late-painting image reflows and fonts
             let pollCount = 0;
             modalContent._pollInterval = setInterval(() => {
                 scanForContainersAndCheckScroll();
@@ -513,7 +490,6 @@ export class UIModalEngine {
                 }
             }, 100);
 
-            // Run initial check
             scanForContainersAndCheckScroll();
         });
     }
@@ -525,19 +501,24 @@ export class UIModalEngine {
     hideModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
-            modal.classList.add('modal-hiding');
+            const exitClass = modal.dataset.exitClass || 'modal-hiding';
+            modal.classList.add(exitClass);
             
-            modal.addEventListener('animationend', () => {
-                if (!modal.classList.contains('modal-hiding')) {
+            modal.addEventListener('animationend', (e) => {
+                // Ensure we catch the backdrop animation end, not a child element's animation
+                if (e.target !== modal && e.target !== modal.querySelector('.modal-content')) return;
+                
+                if (!modal.classList.contains(exitClass)) {
                     return;
                 }
 
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey');
+                modal.classList.remove(exitClass, 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s');
                 
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
+                delete modal.dataset.exitClass;
 
                 if (this.modalQueue.length > 0) {
                     this.processModalQueue();
@@ -548,21 +529,21 @@ export class UIModalEngine {
 
     /**
      * Silently and instantly destroys a modal without CSS fade-out animations.
-     * Crucial for masking DOM swaps behind external overlays (e.g. White-out transitions).
+     * Crucial for masking DOM swaps behind external overlays (e.g. White-out transitions)
+     * and preventing visual overlapping issues.
      * @param {string} modalId - The ID of the modal to instantly hide.
      */
     destroyModalInstant(modalId) {
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
-            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey');
+            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s', 'intro-blur-fade-out-3s');
             
             delete modal.dataset.theme;
             delete modal.dataset.dismissInside;
             delete modal.dataset.dismissOutside;
+            delete modal.dataset.exitClass;
 
-            // Optional: If there are queued modals, process them.
-            // Normally avoided during a global sequence mask.
             if (this.modalQueue.length > 0) {
                 this.processModalQueue();
             }
@@ -619,22 +600,58 @@ export class UIModalEngine {
         const progressBar = modal.querySelector('#processing-progress-bar');
         const statusText = modal.querySelector('#processing-status');
 
+        // Apply consistent Guild themes dynamically
+        modal.classList.add('modal-backdrop-grey', 'guild-backdrop', 'proc-blur-fade-in');
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) modalContent.classList.add('modal-theme-guild-charter');
+
         titleEl.textContent = `Processing application for ${playerName}...`;
+        titleEl.style.color = '#d4af37';
+        // Force the Orbitron font via setProperty to override !important CSS constraints
+        titleEl.style.setProperty('font-family', "'Orbitron', sans-serif", 'important');
+        
         progressBar.style.width = '0%';
+        progressBar.style.background = 'linear-gradient(90deg, #B8860B, #FFD700)';
+        progressBar.style.boxShadow = '0 0 10px #FFD700';
+
         statusText.textContent = '';
+        statusText.style.color = '#e2e8f0';
+        
         modal.classList.remove('hidden');
 
+        // Step 1: Wait 1000ms for blur-fade-in to complete
         setTimeout(() => {
+            // Step 2: Start progress bar animation (takes ~3s natively in CSS)
             progressBar.style.width = '100%';
-        }, 100);
-
-        setTimeout(() => {
-            statusText.textContent = 'Processing complete!';
+            
+            // Step 3: Wait for progress bar to finish
             setTimeout(() => {
-                this.hideModal('processing-modal');
-                if (callback) callback();
-            }, 1000);
-        }, 4000);
+                statusText.textContent = 'Processing complete!';
+                
+                // Step 4: Wait 1000ms after text appears
+                setTimeout(() => {
+                    // Step 5: Blur-fade out
+                    modal.classList.remove('proc-blur-fade-in');
+                    modal.classList.add('proc-blur-fade-out');
+
+                    setTimeout(() => {
+                        // Prevent the "flash" of old styling by destroying it instantly
+                        this.destroyModalInstant('processing-modal');
+                        
+                        // Cleanup
+                        modal.classList.remove('proc-blur-fade-out', 'modal-backdrop-grey', 'guild-backdrop');
+                        if (modalContent) modalContent.classList.remove('modal-theme-guild-charter');
+                        titleEl.style.color = '';
+                        titleEl.style.removeProperty('font-family');
+                        progressBar.style.background = '';
+                        progressBar.style.boxShadow = '';
+                        statusText.style.color = '';
+                        
+                        if (callback) callback();
+                    }, 1000);
+                }, 1000);
+            }, 3000);
+        }, 1000);
     }
 
     /**
@@ -645,7 +662,6 @@ export class UIModalEngine {
      */
     showUpgradeProgressModal() {
         return new Promise((resolve) => {
-            // Apply global click lock
             document.body.classList.add('ui-locked');
 
             const modalId = 'upgrade-progress-modal';
@@ -660,10 +676,8 @@ export class UIModalEngine {
                 return;
             }
 
-            // Reset initial state to ensure repeatability 
             textEl.textContent = 'Installing component...';
             
-            // Force CSS reflow to restart animation reliably
             fillEl.style.animation = 'none';
             void fillEl.offsetWidth; 
             fillEl.style.animation = 'fillProgressBar 2s linear forwards';
@@ -671,13 +685,8 @@ export class UIModalEngine {
             modal.classList.remove('hidden');
             modal.classList.add('modal-visible');
 
-            // Wait exactly 2000ms for the bar fill to map to CSS timing
             setTimeout(() => {
-                // Update dynamic flavor text
                 textEl.textContent = 'Ship upgrade complete!';
-                
-                // Resolve so the external orchestrator can begin the white-out DOM swap
-                // Note: The global .ui-locked class remains active intentionally until Phase 4.
                 resolve();
             }, 2000);
         });
