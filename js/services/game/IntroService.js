@@ -136,15 +136,15 @@ export class IntroService {
             starfieldService.triggerEntry();
 
             // --- VIRTUAL WORKBENCH: PHYSICAL INTERACTION SHIELD ---
-            // Protects the 8.5-second visual apparition from being interrupted or spammed
-            // without applying 'disabled' attributes that alter CSS rendering.
+            // Protects the full visual apparition from being interrupted or spammed.
+            // Maintained at 9000ms to guarantee safety post-coalescence (8.5s).
             const shield = document.createElement('div');
             shield.id = 'intro-physical-shield';
             shield.className = 'fixed inset-0 z-[9999]';
             document.body.appendChild(shield);
             setTimeout(() => {
                 if (document.body.contains(shield)) shield.remove();
-            }, 8500);
+            }, 9000);
             // --- END VIRTUAL WORKBENCH ---
 
         } else if (step.id !== 'charter' && step.id !== 'signature') {
@@ -187,7 +187,7 @@ export class IntroService {
                             isFirstModalLocked = false;
                             button.style.pointerEvents = 'auto';
                         }
-                    }, 8500); // Matched to the duration of the physical shield
+                    }, 9000); 
                 }
                 // --- END VIRTUAL WORKBENCH ---
 
@@ -197,7 +197,6 @@ export class IntroService {
                     
                     this._transitioning = true; 
                     button.disabled = true;
-                    // Neutralize the DOM element instantly to prevent race conditions during exit fade
                     button.onclick = null; 
                     
                     closeHandler();             

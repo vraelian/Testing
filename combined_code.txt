@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 37.35</title>
+    <title>Orbital Trading 37.37</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 37.35 - Codex Update</p>
+            <p>Version 37.37 - Intro Polish Update</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3351,7 +3351,6 @@ card.
     animation: scanlineFadeOut 2s ease-in-out forwards;
 }
 
-/* [[FIXED]] Added missing keyframes for the boot sequence */
 @keyframes scanlineFadeOut {
     0% {
         opacity: 1;
@@ -3374,7 +3373,7 @@ card.
 
 /* Travel Animation Modal */
 #travel-animation-modal.modal-backdrop {
-    background-color: rgba(12, 16, 29, 0.6); /* Converted from solid #0c101d to bleed starfield */
+    background-color: rgba(12, 16, 29, 0.6); 
     transition: opacity 0.5s ease-out;
 }
 
@@ -3386,7 +3385,6 @@ card.
     width: 90%;
     max-width: 800px;
     padding: 0;
-    /* Converted from solid gradient to semi-transparent */
     background: radial-gradient(circle, rgba(26, 32, 48, 0.7) 0%, rgba(12, 16, 29, 0.9) 100%);
     border-color: #4a6a8a;
     overflow: hidden;
@@ -3428,19 +3426,6 @@ card.
     height: 350px; 
     overflow: hidden; 
     position: relative;
-    background-color: transparent; /* Converted from #000 */
-    border-left: 1px solid #374151;
-    border-right: 1px solid #374151;
-    z-index: 5; 
-    pointer-events: none;
-}
-
-/* Container for the cinematic image */
-#travel-image-wrapper {
-    width: 100%;
-    height: 350px; /* Cinematic aspect ratio area */
-    overflow: hidden; /* Critical to crop the zoomed image */
-    position: relative;
     background-color: #000;
     border-left: 1px solid #374151;
     border-right: 1px solid #374151;
@@ -3453,26 +3438,16 @@ card.
     width: 100%;
     height: 100%;
     object-fit: cover;
-    
-    /* INITIAL STATE: Zoomed IN (1.1) and Invisible */
     opacity: 0;
     transform: scale(1.1);
-    
-    /* Hardware acceleration for smooth animation on iOS */
     will-change: transform, opacity;
     backface-visibility: hidden;
     transform-origin: center center;
-
-    /* The transition duration (matches JS logic roughly) */
-    /* Opacity is faster (1s) to reveal, Transform is slower (2.5s) for the effect */
     transition: opacity 1.0s ease-in, transform 2.5s ease-out;
 }
 
-/* ACTIVE STATE: Zoomed OUT (1.0) */
-/* The JS adds this class 50ms after the image loads */
 #travel-background-image.travel-zoom-active {
     transform: scale(1.0);
-    /* Opacity is handled via inline style in JS, but this ensures transition applies */
 }
 
 
@@ -3791,14 +3766,6 @@ card.
 .btn-launch-glow:active {
     transform: translateY(2px);
     box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 3px 5px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.2);
-}
-
-/* Loan Agreement Modal Title */
-#charter-modal #charter-title {
-    font-family: 'Zorque', sans-serif;
-    font-size: 1.95rem;
-    text-align: center;
-    width: 100%;
 }
 
 /* --- EVENT BUTTON CONTAINER ALIGNMENT --- */
@@ -5137,6 +5104,239 @@ card.
     animation: pulse-white-border 1.5s infinite alternate;
     font-size: 1.1rem;
     letter-spacing: 1px;
+}
+
+/* ========================================================================= */
+/* --- GUILD CHARTER MODALS (PHASE 2 / POLISHED) --- */
+/* ========================================================================= */
+
+.modal-backdrop-grey {
+    background-color: rgba(20, 22, 25, 0.9) !important;
+}
+
+.modal-content.modal-theme-guild-charter {
+    background: linear-gradient(145deg, #1e2024 0%, #0f1115 100%);
+    border: 1px solid #3a3f47; /* Dark, subtle outer border */
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    padding: 2.5rem 2rem; /* Professional padding */
+    color: #e2e8f0; /* Crisp silver text */
+}
+
+/* Style the text cleanly without aggressive overriding */
+.modal-content.modal-theme-guild-charter p, 
+.modal-content.modal-theme-guild-charter div {
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+/* Keep the title gold */
+.modal-content.modal-theme-guild-charter h3,
+.modal-content.modal-theme-guild-charter #charter-title {
+    color: #d4af37 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+    margin-bottom: 1.5rem !important;
+    font-family: 'Zorque', sans-serif !important;
+    font-size: 1.8rem !important;
+    letter-spacing: 1px !important;
+}
+
+/* Ensure the Processing Modal overrides the Guild Theme's default Zorque font */
+.modal-content.modal-theme-guild-charter #processing-title {
+    font-family: 'Orbitron', sans-serif !important;
+}
+
+.btn-gold-weighty {
+    background: linear-gradient(to bottom, #e5c358 0%, #c49a22 40%, #997312 100%) !important;
+    color: #111 !important;
+    border: 1px solid #7a5a08 !important;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.7), inset 0 2px 1px rgba(255,255,255,0.5), inset 0 -2px 2px rgba(0,0,0,0.3) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px !important;
+    transition: all 0.1s ease-in-out;
+    border-radius: 4px !important;
+    padding: 0.6rem 2rem !important;
+}
+
+.btn-gold-weighty:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #f5d775 0%, #d4a930 40%, #a88018 100%) !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.8), inset 0 2px 1px rgba(255,255,255,0.6), inset 0 -2px 2px rgba(0,0,0,0.3) !important;
+    transform: translateY(-1px);
+}
+
+.btn-gold-weighty:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.9), inset 0 2px 4px rgba(0,0,0,0.5) !important;
+}
+
+.btn-gold-weighty:disabled {
+    background: linear-gradient(to bottom, #5a5038 0%, #423b28 100%) !important;
+    color: #888 !important;
+    border: 1px solid #333 !important;
+    box-shadow: none !important;
+}
+
+/* --- GOLDEN BLUR EXIT ANIMATION --- */
+@keyframes goldModalBlurOut {
+    0% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        border-color: #3a3f47;
+    }
+    100% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(1.05);
+        box-shadow: 0 0 60px rgba(212, 175, 55, 1), inset 0 0 30px rgba(212, 175, 55, 0.8);
+        border-color: #d4af37;
+    }
+}
+
+.modal-hiding.guild-backdrop .modal-content {
+    animation: goldModalBlurOut 2s ease-out forwards !important;
+}
+
+/* ========================================================================= */
+/* --- RESIGNATION TERMINAL PULSE & CLEAR BACKDROPS (PHASE 3) --- */
+/* ========================================================================= */
+
+.intro-backdrop-clear {
+    background-color: transparent !important;
+}
+
+@keyframes gentlePulseOpacity {
+    0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(1); text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+    50% { opacity: 0.6; transform: translateX(-50%) scale(1.02); text-shadow: 0 0 20px rgba(255,255,255,0.8); }
+}
+.quit-job-pulse {
+    animation: gentlePulseOpacity 3s ease-in-out infinite;
+    /* Baseline opacity handled natively within keyframes */
+}
+
+/* ========================================================================= */
+/* --- INTRO SEQUENCE POLISH (PHASE 1) --- */
+/* ========================================================================= */
+
+/* Intro Button Cyan */
+.btn-intro-cyan {
+    background: linear-gradient(135deg, #0284c7, #06b6d4) !important;
+    color: #fff !important;
+    border: 1px solid #22d3ee !important;
+    box-shadow: 0 4px 10px rgba(6, 182, 212, 0.4), inset 0 2px 2px rgba(255,255,255,0.2) !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 1.5rem !important; /* Doubled size */
+    padding: 1rem 3rem !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+.btn-intro-cyan:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0ea5e9, #22d3ee) !important;
+    box-shadow: 0 6px 15px rgba(6, 182, 212, 0.6), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    transform: translateY(-2px);
+}
+
+/* Ship Selection Intro Blur */
+@keyframes introBlurFadeIn {
+    0% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+.intro-blur-fade-in {
+    animation: introBlurFadeIn 3s ease-out forwards !important;
+}
+
+/* Gold Modal Blur In (Charter / Guild) */
+@keyframes goldModalBlurIn {
+    0% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(0.95);
+        box-shadow: 0 0 60px rgba(212, 175, 55, 0.5), inset 0 0 30px rgba(212, 175, 55, 0.3);
+        border-color: #d4af37;
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        border-color: #3a3f47;
+    }
+}
+.modal-visible.guild-backdrop .modal-content {
+    animation: goldModalBlurIn 1s ease-out forwards !important;
+}
+
+/* Processing Modal Fades */
+@keyframes procBlurFadeIn {
+    0% { opacity: 0; filter: blur(8px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+@keyframes procBlurFadeOut {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(8px); transform: scale(1.05); }
+}
+.proc-blur-fade-in {
+    animation: procBlurFadeIn 1s ease-out forwards !important;
+}
+.proc-blur-fade-out {
+    animation: procBlurFadeOut 1s ease-out forwards !important;
+    pointer-events: none;
+}
+
+/* Prolonged Intro Blur Fades (Phase 3 Polish) */
+@keyframes introModalBlurIn4s {
+    0% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+.intro-blur-fade-in-4s {
+    animation: fadeIn 4s ease-out forwards !important;
+}
+.intro-blur-fade-in-4s .modal-content {
+    animation: introModalBlurIn4s 4s ease-out forwards !important;
+}
+
+@keyframes introModalBlurOut3s {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+}
+
+.intro-blur-fade-out-3s {
+    animation: fadeOut 3s ease-out forwards !important;
+    pointer-events: none;
+}
+.intro-blur-fade-out-3s .modal-content {
+    animation: introModalBlurOut3s 3s ease-out forwards !important;
+}
+
+/* Delayed Button Fade */
+@keyframes delayedFadeInAnim {
+    0% { opacity: 0; pointer-events: none; }
+    100% { opacity: 1; pointer-events: auto; }
+}
+
+/* 8 Second Delay: 4s for Modal to load + 4s Wait */
+.delayed-fade-in-8s {
+    opacity: 0;
+    animation: delayedFadeInAnim 1s ease-in forwards;
+    animation-delay: 8s;
+    pointer-events: none; /* Prevents click-through while invisible */
+}
+
+/* Bright Red Confirmation Button Override */
+.btn-confirm-red {
+    background-color: #dc2626 !important; 
+    border-color: #f87171 !important; 
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255,255,255,0.5) !important;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.6), inset 0 0 8px rgba(248, 113, 113, 0.4) !important;
+}
+.btn-confirm-red:hover:not(:disabled) {
+    background-color: #b91c1c !important; 
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.8), inset 0 0 10px rgba(248, 113, 113, 0.6) !important;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -13878,73 +14078,6 @@ export const WEALTH_MILESTONES = [
 export const SAVE_KEY = 'orbitalTraderSave_v2';
 --- END OF FILE: ./js/data/constants.js ---
 
---- START OF FILE: ./js/data/missions.js ---
-// js/data/missions.js
-/**
- * @fileoverview
- * Defines all static mission data for the game.
- */
-import { COMMODITY_IDS, LOCATION_IDS } from './constants.js';
-
-export const MISSIONS = {
-    'mission_tutorial_01': {
-        id: "mission_tutorial_01",
-        name: "Milk Run to Luna",
-        type: "DELIVERY",
-        host: "STATION",
-        isRepeatable: false,
-        isAbandonable: false,
-        description: "Hey buddy, you're a new captain, right? My hauler's reactor is fried and I'm on the hook for a delivery to Luna.<br><br>Could you deliver this load of <b>Plasteel</b> to the <b>Moon</b> for me? I don't have any credits to spare, but I've padded the manifest.<br><br>Deliver what I owe, keep the rest. You won't have trouble selling it there, trust me.",
-        objectives: [
-            { "type": "have_item", "goodId": "plasteel", "quantity": 5 }
-        ],
-        completion: {
-            "locationId": "loc_luna",
-            "title": "Favor Complete",
-            "text": "The freelancer sends his thanks.",
-            "buttonText": "Deliver Plasteel"
-        },
-        rewards: [],
-        providedCargo: [ // Cargo given to the player on mission acceptance.
-            { "goodId": "plasteel", "quantity": 6 }
-        ]
-    },
-    'mission_tutorial_02': {
-        id: "mission_tutorial_02",
-        name: "Martian Resupply",
-        type: "DELIVERY",
-        host: "STATION",
-        isRepeatable: false,
-        isAbandonable: false,
-        description: "A construction crew on Mars has requested a small shipment of plasteel to complete a habitat.",
-        prerequisites: [ // This mission only becomes available after 'mission_tutorial_01' is complete.
-            { "type": "mission_completed", "missionId": "mission_tutorial_01" }
-        ],
-        objectives: [
-            { "type": "have_item", "goodId": "plasteel", "quantity": 2 }
-        ],
-        completion: {
-            "locationId": "loc_mars",
-            "title": "Delivery Complete",
-            "text": "The construction foreman thanks you for the Plasteel.",
-            "buttonText": "Deliver Plasteel"
-        },
-        rewards: [
-            { "type": "credits", "amount": 7500 }
-        ]
-    },
-    'mission_license_t3': {
-         id: "mission_license_t3", name: "Guild Certification", type: "LICENSE_GRANT", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "The Merchant's Guild requires you to certify your trade proficiency. Accepting this contract formally recognizes your status and grants you access to Tier 3 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 3 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t3_license" }]
-    },
-    'mission_license_t5': {
-         id: "mission_license_t5", name: "Governor's Contract", type: "LICENSE_GRANT", host: "STATION", isRepeatable: false, isAbandonable: false, description: "The planetary governor requires a sign of your commitment to local industry. This contract solidifies your standing and unlocks access to Tier 5 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 5 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t5_license" }]
-    },
-    'mission_license_t7': {
-         id: "mission_license_t7", name: "Legendary Run", type: "LICENSE_GRANT", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Your name is spoken in the farthest corners of the system. Only a legend of your stature may be granted the right to trade the most advanced technologies known.", prerequisites: [{ "type": "revealed_tier", "tier": 7 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t7_license" }]
-    }
-};
---- END OF FILE: ./js/data/missions.js ---
-
 --- START OF FILE: ./js/data/database.js ---
 // js/data/database.js
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
@@ -13996,7 +14129,8 @@ export const DB = {
                         </div>
                         Humanity has expanded throughout the Solar System.<br><br> <span class="hl">Commerce</span> has thrived among the numerous colonies and stations longer than living memory.`,
           buttonText: 'Begin',
-          contentClass: 'text-center'
+          contentClass: 'text-center',
+          buttonClass: 'btn-intro-cyan delayed-fade-in-8s'
         },
         {
           id: 'lore_2',
@@ -14005,19 +14139,19 @@ export const DB = {
                             <img src="assets/images/modals/intro/intro_2.webp" class="w-full h-full object-cover transition-opacity duration-300" 
                             onerror="this.parentElement.innerHTML='Image Data Missing'; this.parentElement.className='w-full aspect-video bg-gray-800 border border-gray-600 mb-4 flex items-center justify-center text-gray-500 rounded'">
                         </div>
-                        A dead-end job in the Belt pays the bills, but it does not offer the <b class='hl-green font-bold'>prosperity</b> that you dream of.<br><br>The <span class='hl'>Merchant's Guild</span> will fund your ambition, but their price is steep.`,
+                        You are a logistics specialist for a corporate mining company in the Asteroid Belt. You've traded your youth for endless shifts in the dark, with little to show for it.<br><br>This dead-end grind pays the bills, but it will never yield the <b class='hl-green font-bold'>prosperity</b> that you dream of. The <span class='hl'>Merchant's Guild</span> could fund your ambition, but their price is steep.<br><br>You choose to bet on yourself and borrow the credits for a ship, quit your job, and chart your own course.`,
           buttonText: 'Apply for Loan',
           contentClass: 'text-center',
           buttonClass: 'btn-pulse-green'
         },
         {
           id: 'charter',
-          title: "<span class=\"hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)]\">MERCHANT'S GUILD<br>LOAN AGREEMENT</span>",
+          title: "<span class=\"hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)] block text-center w-full\">MERCHANT'S GUILD<br>LOAN AGREEMENT</span>",
           description: `
             <div class="font-roboto-mono text-left text-sm space-y-2">
                 <p><span class="text-gray-400">CHARTER ID:</span> G7-K491-38B</p>
-                <p><span class="text-gray-400">CREDIT AMOUNT:</span> <span class="credits-text-pulsing">⌬ 25,000</span></p>
-                <p><span class="text-gray-400">INTEREST RATE:</span> 1.56% (Monthly)</p>
+                <p><span class="text-gray-400">CREDIT AMOUNT:</span> <span class="credits-text-pulsing text-cyan-400 font-bold text-[15px] drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]">⌬ 25,000</span></p>
+                <p><span class="text-gray-400">INTEREST RATE:</span> <span class="text-red-500">1.56%</span> (Monthly)</p>
             </div>
             <div class="border-t border-slate-600 my-4"></div>
             <p class="text-sm text-gray-400 text-justify">Herein, the Applicant agrees to the terms of repayment and interest accrual, subject to the Interstellar Commerce Mandates of the Merchant's Guild. This binding digital agreement is logged on the system-wide ledger, whereupon it is considered immutable and enforceable system-wide. The principal of the debt is due in 1095 Terran-standard days, after which failure to remit payment shall authorize the automatic initiation of a garnishment sub-routine against the Applicant's credit.</p>
@@ -14027,9 +14161,13 @@ export const DB = {
         },
         {
             id: 'signature',
-            title: 'SIGN YOUR NAME',
+            title: "<span class=\"hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)] block text-center w-full\">SIGNATURE REQUIRED</span>",
             description: `
-            <p class="text-sm text-gray-400 text-justify mb-4">I, the undersigned, do hereby accept the aforementioned terms and enter into this agreement with the Merchant's Guild. My signature, digitally rendered, shall serve as my legal mark.</p>
+            <p class="text-[15px] text-gray-400 text-justify mb-4">I, the undersigned, do hereby accept the aforementioned terms and enter into this agreement with the Merchant's Guild. My signature, digitally rendered, shall serve as my legal mark.</p>
+            <div class="text-yellow-500 text-center font-roboto-mono mt-4">
+                <p>INTEREST: <span class="text-red-500 font-bold">⌬ 390</span> / MONTH</p>
+                <p>DUE DATE: 3 YEARS</p>
+            </div>
           `,
           buttonText: 'Submit Application'
         },
@@ -15144,6 +15282,9 @@ export const PHASE_ONE_MISSIONS = {
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
         ],
+        onComplete: [
+            { "type": "reveal_tier", "value": 2 }
+        ],
         objectives: [
             { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 120 }
         ],
@@ -15154,8 +15295,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 20000 },
-            { "type": "unlock_tier", "value": 2 }
+            { "type": "credits", "amount": 20000 }
         ]
     },
     'mission_15': {
@@ -22058,15 +22198,29 @@ export class UIEventControl {
         });
     }
 
-    createFloatingText(text, x, y, color = '#fde047') {
+    /**
+     * Spawns floating text over the UI, optionally using HTML and extended durations.
+     * @param {string} text - The content to float
+     * @param {number} x - Origin X
+     * @param {number} y - Origin Y
+     * @param {string} color - Hex or standard color string
+     * @param {number} duration - Milliseconds the text should persist
+     * @param {boolean} isHtml - If true, innerHTML is used instead of textContent
+     */
+    createFloatingText(text, x, y, color = '#fde047', duration = 2450, isHtml = false) {
         const el = document.createElement('div');
-        el.textContent = text;
+        if (isHtml) {
+            el.innerHTML = text;
+        } else {
+            el.textContent = text;
+        }
         el.className = 'floating-text';
         el.style.left = `${x - 20}px`;
         el.style.top = `${y - 40}px`;
         el.style.color = color;
+        el.style.animationDuration = `${duration}ms`;
         document.body.appendChild(el);
-        setTimeout(() => el.remove(), 2450);
+        setTimeout(() => el.remove(), duration);
     }
 
     showStrandedModal(originName, lostDays, callback) {
@@ -25812,7 +25966,6 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#guild-accept-btn');
                 acceptBtn.onclick = () => {
                     const selected = modal.querySelector('input[name="guild-labor"]:checked').value;
-                    // FIX: Using robust LOCATION_IDS instead of incomplete strings
                     let years = 6, payout = 10000, location = LOCATION_IDS.MARS;
                     if (selected === 'uranus') { years = 8; payout = 16000; location = LOCATION_IDS.URANUS; }
                     if (selected === 'mercury') { years = 10; payout = 25000; location = LOCATION_IDS.MERCURY; }
@@ -25829,7 +25982,7 @@ export class UIModalEngine {
                 const acceptBtn = modal.querySelector('#syndicate-accept-btn');
                 acceptBtn.onclick = () => {
                     closeHandler();
-                    executeCallback(10, 25000, true, LOCATION_IDS.PLUTO); // FIX: Safe ID
+                    executeCallback(10, 25000, true, LOCATION_IDS.PLUTO); 
                 };
             };
         } else {
@@ -25848,7 +26001,7 @@ export class UIModalEngine {
         this.queueModal(modalId, title, description, null, {
             nonDismissible: true,
             customSetup: customSetup,
-            contentClass: 'text-center' // FIX: Enforces center alignment across modal body
+            contentClass: 'text-center' 
         });
     }
 
@@ -25857,7 +26010,6 @@ export class UIModalEngine {
      */
     queueModal(modalId, title, description, callback = null, options = {}) {
         this.modalQueue.push({ modalId, title, description, callback, options });
-        // Only trigger processing if NO modal backdrop is currently active/visible.
         if (!document.querySelector('.modal-backdrop:not(.hidden)')) {
             this.processModalQueue();
         }
@@ -25869,7 +26021,6 @@ export class UIModalEngine {
     processModalQueue() {
         if (this.modalQueue.length === 0) return;
         
-        // Peek at the active modal state to ensure we don't clobber an animating modal
         if (document.querySelector('.modal-backdrop:not(.hidden)')) {
             return; 
         }
@@ -25883,7 +26034,7 @@ export class UIModalEngine {
         }
 
         if (options.specialClass) {
-            modal.classList.add(options.specialClass);
+            modal.classList.add(...options.specialClass.split(' ').filter(Boolean));
         }
         if (options.nonDismissible) {
             modal.classList.add('dismiss-disabled');
@@ -25894,11 +26045,16 @@ export class UIModalEngine {
         } else {
             delete modal.dataset.theme;
         }
+        
+        if (options.exitClass) {
+            modal.dataset.exitClass = options.exitClass;
+        } else {
+            delete modal.dataset.exitClass;
+        }
 
         modal.dataset.dismissInside = options.dismissInside || 'false';
         modal.dataset.dismissOutside = options.dismissOutside || 'false';
 
-        // --- TITLE ELEMENT RESOLUTION ---
         let titleElId = modalId === 'mission-modal' ? 'mission-modal-title' : modalId.replace('-modal', '-title');
         let titleEl = modal.querySelector(`#${titleElId}`);
 
@@ -25909,8 +26065,6 @@ export class UIModalEngine {
         if (!titleEl) {
             titleEl = modal.querySelector('.modal-title') || modal.querySelector('h3');
         }
-
-        // --- PORTRAIT INJECTION & CLEANUP ---
         
         const existingOldWrapper = modal.querySelector('.portrait-wrapper');
         if (existingOldWrapper) existingOldWrapper.remove();
@@ -25940,7 +26094,6 @@ export class UIModalEngine {
                 const parsedName = options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 
                 if (modalId === 'mission-modal') {
-                    // --- Comm-Link Layout (Missions Only) ---
                     titleEl.style.textAlign = 'center';
                     
                     const wrapperDiv = document.createElement('div');
@@ -25962,7 +26115,6 @@ export class UIModalEngine {
                         modalContent.insertBefore(wrapperDiv, modalContent.firstChild);
                     }
                 } else {
-                    // --- Standard Side-by-Side Layout (Events, Lore, etc.) ---
                     if (!headerFlex) {
                         headerFlex = document.createElement('div');
                         titleEl.parentNode.insertBefore(headerFlex, titleEl);
@@ -25993,7 +26145,6 @@ export class UIModalEngine {
             }
         }
 
-        // --- DESCRIPTION ELEMENT RESOLUTION ---
         const descElId = modalId === 'mission-modal' ? 'mission-modal-description' : modalId.replace('-modal', '-description');
         const descEl = modal.querySelector(`#${descElId}`) || modal.querySelector(`#${modalId.replace('-modal', '-scenario')}`);
 
@@ -26017,12 +26168,16 @@ export class UIModalEngine {
             }
         }
 
+        // --- VIRTUAL WORKBENCH: THE CLOSURE LOCK ---
+        let isClosed = false;
         const closeHandler = () => {
+            if (isClosed) return;
+            isClosed = true;
             this.hideModal(modalId);
             if (callback) callback();
         };
+        // --- END VIRTUAL WORKBENCH ---
 
-        // --- VIRTUAL WORKBENCH: GDD BACKDROP DISMISSAL ---
         const backdropDismissHandler = (e) => {
             if (modal.dataset.dismissOutside === 'true' && e.target === modal) {
                 modal.removeEventListener('click', backdropDismissHandler);
@@ -26030,13 +26185,11 @@ export class UIModalEngine {
             }
         };
         
-        // Clean up previous listeners to prevent memory leaks or duplicate triggers on reused modals
         if (modal._backdropDismissHandler) {
             modal.removeEventListener('click', modal._backdropDismissHandler);
         }
         modal._backdropDismissHandler = backdropDismissHandler;
         modal.addEventListener('click', backdropDismissHandler);
-        // --- END VIRTUAL WORKBENCH ---
 
         if (options.customSetup) {
             options.customSetup(modal, closeHandler);
@@ -26069,7 +26222,6 @@ export class UIModalEngine {
                 if (button) {
                     button.className = 'btn px-6 py-2';
                     if (options.buttonClass) {
-                        // FIX: Ensure class definitions with spaces don't crash the DOMTokenList
                         button.classList.add(...options.buttonClass.split(' ').filter(Boolean));
                     }
                     button.innerHTML = options.buttonText || 'Understood';
@@ -26078,12 +26230,10 @@ export class UIModalEngine {
             }
         }
 
-        // Ensure we start from a clean state.
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
         modal.classList.add('modal-visible');
 
-        // Bind the dynamic scroll indicator arrow for scrollable modal content
         this._bindScrollIndicator(modal);
     }
 
@@ -26098,7 +26248,6 @@ export class UIModalEngine {
             const modalContent = modal.querySelector('.modal-content');
             if (!modalContent) return;
 
-            // 1. Hard cleanup of any existing arrows and intervals
             const existingArrows = modalContent.querySelectorAll('.scroll-indicator-arrow');
             existingArrows.forEach(a => a.remove());
             
@@ -26106,21 +26255,18 @@ export class UIModalEngine {
                 clearInterval(modalContent._pollInterval);
             }
 
-            // 2. Inject fresh arrow initialized via VISIBILITY
             const arrow = document.createElement('div');
             arrow.className = 'scroll-indicator-arrow';
             arrow.innerHTML = '▾'; 
-            arrow.style.visibility = 'hidden'; // Core Fix: Layout-level visual suppression
+            arrow.style.visibility = 'hidden'; 
             modalContent.appendChild(arrow);
 
-            // Keep track of dynamically bound containers
             const activeScrollContainers = new Set();
 
             const scrollHandler = () => {
                 let needsArrow = false;
                 
                 for (const node of activeScrollContainers) {
-                    // Safety check: remove listener reference if node was destroyed
                     if (!document.contains(node)) {
                         activeScrollContainers.delete(node);
                         continue;
@@ -26129,12 +26275,11 @@ export class UIModalEngine {
                     const cHeight = node.clientHeight;
                     const sHeight = node.scrollHeight;
                     
-                    // Must have actual height and overflow by at least 5px
                     if (cHeight === 0 || sHeight <= cHeight + 5) continue;
 
                     const sTop = node.scrollTop;
                     const distanceToBottom = sHeight - (sTop + cHeight);
-                    const threshold = Math.max(sHeight * 0.10, 10); // Bottom 10%
+                    const threshold = Math.max(sHeight * 0.10, 10);
                     
                     if (distanceToBottom > threshold) {
                         needsArrow = true;
@@ -26146,31 +26291,26 @@ export class UIModalEngine {
             };
 
             const scanForContainersAndCheckScroll = () => {
-                // Dynamically scan for ANY element inside the modal configured to scroll
                 const allNodes = [modalContent, ...modalContent.querySelectorAll('*')];
                 
                 for (const node of allNodes) {
                     const cHeight = node.clientHeight;
                     const sHeight = node.scrollHeight;
 
-                    // Must have physical dimensions
                     if (cHeight === 0 || sHeight <= cHeight + 5) continue;
 
                     const style = window.getComputedStyle(node);
                     if (style.overflowY !== 'auto' && style.overflowY !== 'scroll') continue;
 
-                    // If a valid container was found, ensure it is actively tracked
                     if (!activeScrollContainers.has(node)) {
                         node.addEventListener('scroll', scrollHandler, { passive: true });
                         activeScrollContainers.add(node);
                     }
                 }
                 
-                // Immediately check scroll state after a scan completes
                 scrollHandler();
             };
 
-            // Clean up old observers
             if (modalContent._resizeObserver) {
                 modalContent._resizeObserver.disconnect();
             }
@@ -26178,11 +26318,9 @@ export class UIModalEngine {
                 modalContent._mutationObserver.disconnect();
             }
 
-            // Observe modal resizes
             modalContent._resizeObserver = new ResizeObserver(() => scanForContainersAndCheckScroll());
             modalContent._resizeObserver.observe(modalContent);
 
-            // Observe DOM mutations within the modal content (text/images added)
             modalContent._mutationObserver = new MutationObserver(() => scanForContainersAndCheckScroll());
             modalContent._mutationObserver.observe(modalContent, {
                 childList: true,
@@ -26191,7 +26329,6 @@ export class UIModalEngine {
                 attributes: true 
             });
 
-            // Poll for the first 1.5s to catch late-painting image reflows and fonts
             let pollCount = 0;
             modalContent._pollInterval = setInterval(() => {
                 scanForContainersAndCheckScroll();
@@ -26201,7 +26338,6 @@ export class UIModalEngine {
                 }
             }, 100);
 
-            // Run initial check
             scanForContainersAndCheckScroll();
         });
     }
@@ -26213,19 +26349,24 @@ export class UIModalEngine {
     hideModal(modalId) {
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
-            modal.classList.add('modal-hiding');
-            
-            modal.addEventListener('animationend', () => {
-                if (!modal.classList.contains('modal-hiding')) {
+            const exitClass = modal.dataset.exitClass || 'modal-hiding';
+            modal.classList.add(exitClass);
+
+            modal.addEventListener('animationend', (e) => {
+                // Ensure we catch the backdrop animation end, not a child element's animation
+                if (e.target !== modal && e.target !== modal.querySelector('.modal-content')) return;
+
+                if (!modal.classList.contains(exitClass)) {
                     return;
                 }
 
                 modal.classList.add('hidden');
-                modal.classList.remove('modal-hiding', 'modal-visible', 'dismiss-disabled', 'intro-fade-in');
-                
+                modal.classList.remove(exitClass, 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s');
+
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
+                delete modal.dataset.exitClass;
 
                 if (this.modalQueue.length > 0) {
                     this.processModalQueue();
@@ -26236,21 +26377,21 @@ export class UIModalEngine {
 
     /**
      * Silently and instantly destroys a modal without CSS fade-out animations.
-     * Crucial for masking DOM swaps behind external overlays (e.g. White-out transitions).
+     * Crucial for masking DOM swaps behind external overlays (e.g. White-out transitions)
+     * and preventing visual overlapping issues.
      * @param {string} modalId - The ID of the modal to instantly hide.
      */
     destroyModalInstant(modalId) {
         const modal = document.getElementById(modalId);
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
-            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in');
+            modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s', 'intro-blur-fade-out-3s');
             
             delete modal.dataset.theme;
             delete modal.dataset.dismissInside;
             delete modal.dataset.dismissOutside;
+            delete modal.dataset.exitClass;
 
-            // Optional: If there are queued modals, process them.
-            // Normally avoided during a global sequence mask.
             if (this.modalQueue.length > 0) {
                 this.processModalQueue();
             }
@@ -26307,22 +26448,58 @@ export class UIModalEngine {
         const progressBar = modal.querySelector('#processing-progress-bar');
         const statusText = modal.querySelector('#processing-status');
 
+        // Apply consistent Guild themes dynamically
+        modal.classList.add('modal-backdrop-grey', 'guild-backdrop', 'proc-blur-fade-in');
+        const modalContent = modal.querySelector('.modal-content');
+        if (modalContent) modalContent.classList.add('modal-theme-guild-charter');
+
         titleEl.textContent = `Processing application for ${playerName}...`;
+        titleEl.style.color = '#d4af37';
+        // Force the Orbitron font via setProperty to override !important CSS constraints
+        titleEl.style.setProperty('font-family', "'Orbitron', sans-serif", 'important');
+        
         progressBar.style.width = '0%';
+        progressBar.style.background = 'linear-gradient(90deg, #B8860B, #FFD700)';
+        progressBar.style.boxShadow = '0 0 10px #FFD700';
+
         statusText.textContent = '';
+        statusText.style.color = '#e2e8f0';
+        
         modal.classList.remove('hidden');
 
+        // Step 1: Wait 1000ms for blur-fade-in to complete
         setTimeout(() => {
+            // Step 2: Start progress bar animation (takes ~3s natively in CSS)
             progressBar.style.width = '100%';
-        }, 100);
-
-        setTimeout(() => {
-            statusText.textContent = 'Processing complete!';
+            
+            // Step 3: Wait for progress bar to finish
             setTimeout(() => {
-                this.hideModal('processing-modal');
-                if (callback) callback();
-            }, 1000);
-        }, 4000);
+                statusText.textContent = 'Processing complete!';
+                
+                // Step 4: Wait 1000ms after text appears
+                setTimeout(() => {
+                    // Step 5: Blur-fade out
+                    modal.classList.remove('proc-blur-fade-in');
+                    modal.classList.add('proc-blur-fade-out');
+
+                    setTimeout(() => {
+                        // Prevent the "flash" of old styling by destroying it instantly
+                        this.destroyModalInstant('processing-modal');
+                        
+                        // Cleanup
+                        modal.classList.remove('proc-blur-fade-out', 'modal-backdrop-grey', 'guild-backdrop');
+                        if (modalContent) modalContent.classList.remove('modal-theme-guild-charter');
+                        titleEl.style.color = '';
+                        titleEl.style.removeProperty('font-family');
+                        progressBar.style.background = '';
+                        progressBar.style.boxShadow = '';
+                        statusText.style.color = '';
+                        
+                        if (callback) callback();
+                    }, 1000);
+                }, 1000);
+            }, 3000);
+        }, 1000);
     }
 
     /**
@@ -26333,7 +26510,6 @@ export class UIModalEngine {
      */
     showUpgradeProgressModal() {
         return new Promise((resolve) => {
-            // Apply global click lock
             document.body.classList.add('ui-locked');
 
             const modalId = 'upgrade-progress-modal';
@@ -26348,10 +26524,8 @@ export class UIModalEngine {
                 return;
             }
 
-            // Reset initial state to ensure repeatability 
             textEl.textContent = 'Installing component...';
             
-            // Force CSS reflow to restart animation reliably
             fillEl.style.animation = 'none';
             void fillEl.offsetWidth; 
             fillEl.style.animation = 'fillProgressBar 2s linear forwards';
@@ -26359,13 +26533,8 @@ export class UIModalEngine {
             modal.classList.remove('hidden');
             modal.classList.add('modal-visible');
 
-            // Wait exactly 2000ms for the bar fill to map to CSS timing
             setTimeout(() => {
-                // Update dynamic flavor text
                 textEl.textContent = 'Ship upgrade complete!';
-                
-                // Resolve so the external orchestrator can begin the white-out DOM swap
-                // Note: The global .ui-locked class remains active intentionally until Phase 4.
                 resolve();
             }, 2000);
         });
@@ -27840,7 +28009,6 @@ ${logHistory}
             skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
-                this.simulationService.timeService._checkMilestones();
                 this.gameState.setState({});
             }},
             reduceCredits: { name: 'Reduce Credits', type: 'button', handler: () => {
@@ -34515,7 +34683,7 @@ export class TravelService {
 --- START OF FILE: ./js/services/world/TimeService.js ---
 // js/services/world/TimeService.js
 import { DB } from '../../data/database.js';
-import { GAME_RULES, WEALTH_MILESTONES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
+import { GAME_RULES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { SystemStateService } from './SystemStateService.js';
@@ -34878,30 +35046,6 @@ export class TimeService {
         });
     }
 
-    _checkMilestones() {
-        const { credits, revealedTier } = this.gameState.player;
-        let currentTier = revealedTier;
-        
-        // Find the next milestone
-        let nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
-        
-        // Check if we passed it (and potentially subsequent ones)
-        while (nextMilestone && credits >= nextMilestone.threshold) {
-            this.gameState.player.revealedTier = nextMilestone.revealsTier;
-            
-            // Notify
-            this.logger.info.player(this.gameState.day, 'MILESTONE', `Wealth milestone reached! Tier ${nextMilestone.revealsTier} commodities unlocked.`);
-            this.uiManager.queueModal('event-modal', 'Market Update', `Your increasing wealth has granted you access to Tier ${nextMilestone.revealsTier} commodities.`);
-            
-            currentTier = nextMilestone.revealsTier;
-            nextMilestone = WEALTH_MILESTONES.find(m => m.revealsTier === currentTier + 1);
-        }
-        
-        if (this.gameState.player.revealedTier !== revealedTier) {
-            this.gameState.setState({});
-        }
-    }
-
     // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---
     _applyGarnishment() {
         const { player, day } = this.gameState;
@@ -35051,15 +35195,12 @@ export class IntroService {
         if (!button) return;
         
         if (button.id === 'intro-submit-btn') {
-            // --- VIRTUAL WORKBENCH: IMMEDIATE UI LOCK ---
             this._transitioning = true;
             button.disabled = true;
-            // --- END VIRTUAL WORKBENCH ---
 
             const input = document.getElementById('signature-input');
             const playerName = input.value.trim();
             
-            // --- VIRTUAL WORKBENCH: STRICT SANITIZATION ---
             const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
     
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
@@ -35080,9 +35221,11 @@ export class IntroService {
                 // Explicitly close the signature modal to clear the stage
                 this.uiManager.hideModal('signature-modal');
 
-                this._startProcessingSequence();
+                // Wait for the golden blur animation (1000ms) before popping up the processing modal
+                setTimeout(() => {
+                    this._startProcessingSequence();
+                }, 2000);
             }
-            // --- END VIRTUAL WORKBENCH ---
         }
     }
 
@@ -35108,13 +35251,38 @@ export class IntroService {
         };
         
         if (this.gameState.player.introStep === 0) {
-            options.specialClass = 'intro-fade-in';
+            options.specialClass = 'intro-blur-fade-in-4s intro-backdrop-clear';
+            options.exitClass = 'intro-blur-fade-out-3s';
+            starfieldService.mount();
+            starfieldService.triggerEntry();
+
+            // --- VIRTUAL WORKBENCH: PHYSICAL INTERACTION SHIELD ---
+            // Protects the full visual apparition from being interrupted or spammed.
+            // Maintained at 9000ms to guarantee safety post-coalescence (8.5s).
+            const shield = document.createElement('div');
+            shield.id = 'intro-physical-shield';
+            shield.className = 'fixed inset-0 z-[9999]';
+            document.body.appendChild(shield);
+            setTimeout(() => {
+                if (document.body.contains(shield)) shield.remove();
+            }, 9000);
+            // --- END VIRTUAL WORKBENCH ---
+
+        } else if (step.id !== 'charter' && step.id !== 'signature') {
+            options.specialClass = 'intro-backdrop-clear';
         }
 
         let modalId = 'event-modal';
 
         if (step.id === 'charter' || step.id === 'signature') {
             modalId = `${step.id}-modal`;
+            options.specialClass = 'modal-backdrop-grey guild-backdrop';
+            options.contentClass = 'modal-theme-guild-charter';
+
+            if (step.id === 'charter') {
+                starfieldService.triggerQuickExit();
+            }
+
             options.customSetup = (modal, closeHandler) => { this._setupInteractiveModal(modal, step, closeHandler) };
         } else {
             options.customSetup = (modal, closeHandler) => {
@@ -35124,19 +35292,37 @@ export class IntroService {
 
                 const button = document.createElement('button');
                 button.className = 'btn px-6 py-2';
-                if(step.buttonClass) button.classList.add(step.buttonClass);
+                
+                if(step.buttonClass) button.classList.add(...step.buttonClass.split(' ').filter(Boolean));
+                
                 button.id = 'intro-next-btn';
                 button.innerHTML = step.buttonText;
                 
+                // --- VIRTUAL WORKBENCH: THE POINTER SHIELD ---
+                let isFirstModalLocked = (this.gameState.player.introStep === 0);
+                
+                if (isFirstModalLocked) {
+                    button.style.pointerEvents = 'none'; // Prevent iOS from targeting it during animation
+                    setTimeout(() => {
+                        if (document.body.contains(button)) {
+                            isFirstModalLocked = false;
+                            button.style.pointerEvents = 'auto';
+                        }
+                    }, 9000); 
+                }
+                // --- END VIRTUAL WORKBENCH ---
+
                 button.onclick = (e) => {
-                    if (this._transitioning) { 
-                        e.preventDefault(); 
-                        return;
-                    }
+                    e.preventDefault();
+                    if (isFirstModalLocked || this._transitioning) return;
+                    
                     this._transitioning = true; 
-                    e.target.disabled = true;   
+                    button.disabled = true;
+                    button.onclick = null; 
+                    
                     closeHandler();             
                 };
+
                 btnContainer.appendChild(button);
             };
         }
@@ -35159,16 +35345,18 @@ export class IntroService {
         const buttonContainer = modal.querySelector(`#${step.id}-button-container`);
         buttonContainer.innerHTML = '';
         const button = document.createElement('button');
-        button.className = 'btn px-6 py-2';
+        button.className = 'btn px-6 py-2 btn-gold-weighty';
         button.innerHTML = step.buttonText;
         
         const safeCloseHandler = (e) => {
-            if (this._transitioning) {
-                if (e) e.preventDefault();
-                return;
-            }
+            if (e) e.preventDefault();
+            if (this._transitioning) return;
+
             this._transitioning = true;
-            if (e && e.target) e.target.disabled = true;
+            if (e && e.target) {
+                e.target.disabled = true;
+                e.target.onclick = null; 
+            }
             closeHandler();
         };
 
@@ -35199,14 +35387,35 @@ export class IntroService {
         const showApprovalModal = () => {
             this._transitioning = false;
 
-            const title = 'Loan Approved';
-            const description = `Dear ${this.gameState.player.name},<br><br>Your line of credit has been <b>approved</b>.<br><br><span class="credits-text-pulsing">⌬ 25,000</span> is ready to transfer to your account.`;
+            const title = `<span class="hl font-orbitron text-[26px] text-yellow-400 drop-shadow-[0_0_8px_rgba(250,204,21,0.5)] block text-center w-full">APPLICATION APPROVED</span>`;
+            const description = `
+                <div style="font-size: calc(1rem + 2pt);">
+                    <div class="font-roboto-mono text-left space-y-2">
+                        <p><span class="text-gray-400">APPLICANT:</span> ${this.gameState.player.name}</p>
+                        <p><span class="text-gray-400">STATUS:</span> <span class="text-green-400 font-bold tracking-widest drop-shadow-[0_0_5px_rgba(74,222,128,0.5)]">AUTHORIZED</span></p>
+                        <p><span class="text-gray-400">FUNDS:</span> <span class="credits-text-pulsing text-cyan-400 font-bold text-[17px] drop-shadow-[0_0_5px_rgba(34,211,238,0.6)]">⌬ 25,000</span></p>
+                    </div>
+                    <div class="my-6 text-white text-center italic" style="text-shadow: 0 0 5px rgba(255,255,255,0.4);">
+                        "Dear ${this.gameState.player.name}, you have been approved for a loan in the amount of twenty-five thousand credits. Based on your positive credit history, we have decided to waive your initial financing fee."
+                    </div>
+                    <div class="border-t border-slate-600 my-4"></div>
+                    <p class="text-sm text-gray-400 text-justify">The Merchant's Guild has authorized the immediate disbursement of funds to your account. By accepting this transfer, you formally finalize the binding charter.</p>
+                </div>
+            `;
             
             const hangarTransition = (event) => {
                 this._transitioning = true;
                 if(event && event.target) event.target.disabled = true;
                 
-                this.uiManager.createFloatingText(`+${formatCredits(25000, false)}`, event.clientX, event.clientY, '#34d399');
+                // Doubled size and dynamic duration for transition text
+                this.uiManager.createFloatingText(
+                    `<span style="font-size: 200%; text-shadow: 0 0 10px #34d399;">+${formatCredits(25000, false)}</span>`, 
+                    event.clientX, 
+                    event.clientY, 
+                    '#34d399', 
+                    3950, 
+                    true
+                );
                 
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
 
@@ -35221,20 +35430,20 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
+                // Extended black screen timing logic for income text persist
                 setTimeout(() => {
                     this._showResignationModal();
-                }, 2000);
+                }, 3500);
             };
 
             this.uiManager.queueModal('event-modal', title, description, null, {
-                contentClass: 'text-center',
+                contentClass: 'text-center modal-theme-guild-charter',
+                specialClass: 'modal-backdrop-grey guild-backdrop',
                 customSetup: (modal, closeHandler) => {
-                    modal.querySelector('.modal-content').classList.add('modal-theme-admin');
-     
                     const btnContainer = modal.querySelector('#event-button-container');
                     btnContainer.innerHTML = '';
                     const button = document.createElement('button');
-                    button.className = 'btn px-6 py-2';
+                    button.className = 'btn px-6 py-2 btn-gold-weighty';
                     button.innerHTML = 'Accept Transfer';
                     
                     button.onclick = (event) => {
@@ -35261,11 +35470,12 @@ export class IntroService {
         this._transitioning = false;
         
         const descriptionHTML = `
-            <div class="mb-4 text-center text-gray-400">Ongoing Contract: #345J | ${this.gameState.player.name}</div>
-            <div class="mb-6 text-gray-300 text-left w-full max-w-sm mx-auto border border-gray-600 bg-gray-900 p-4 rounded shadow-inner">
-                <p class="mb-3 font-bold text-gray-400 border-b border-gray-700 pb-1">Employment Statistics:</p>
-                <p class="text-yellow-500">> Packages Routed: 1,932,320</p>
-                <p class="text-cyan-500">> Cycles Logged: 2,849</p>
+            <div class="mb-4 text-center text-gray-500 font-bold tracking-widest text-sm uppercase">Secure Terminal Link Established</div>
+            <div class="mb-6 text-green-500 text-left w-full mx-auto bg-black p-5 border border-green-900/30 rounded-sm shadow-[inset_0_0_20px_rgba(0,0,0,1)] font-roboto-mono text-sm">
+                <p class="mb-4 text-green-600 border-b border-green-900/50 pb-2 uppercase tracking-widest">>>> Employment Record: ${this.gameState.player.name}</p>
+                <p class="mb-2">> Packages Routed..... <span class="text-green-400">1,932,320</span></p>
+                <p class="mb-2">> Cycles Logged....... <span class="text-green-400">2,849</span></p>
+                <p class="mt-4 text-xs text-green-700 animate-pulse">> AWAITING INPUT...</p>
             </div>
             <div id="resignation-warning-container" class="min-h-[28px] mb-4"></div>
         `;
@@ -35273,6 +35483,14 @@ export class IntroService {
         this.uiManager.queueModal('event-modal', '<span class="text-[23px]">Asteroid Belt Mining Conglomerate Delta Co.</span>', descriptionHTML, null, {
             contentClass: 'modal-theme-drab-gray text-center font-roboto-mono',
             customSetup: (modal, closeHandler) => {
+                const quitText = document.createElement('div');
+                quitText.id = 'quit-job-text';
+                quitText.className = 'fixed font-orbitron font-bold text-white text-3xl z-[100] tracking-widest pointer-events-none text-center quit-job-pulse';
+                quitText.style.top = '10vh';
+                quitText.style.left = '50%';
+                quitText.innerHTML = 'QUIT YOUR JOB!';
+                document.body.appendChild(quitText);
+
                 const btnContainer = modal.querySelector('#event-button-container');
                 if (btnContainer) {
                     btnContainer.innerHTML = '';
@@ -35289,15 +35507,18 @@ export class IntroService {
                             isConfirming = true;
                             button.innerHTML = 'CONFIRM TERMINATION';
                             button.classList.remove('bg-orange-700', 'hover:bg-orange-600', 'border-orange-500');
-                            button.classList.add('bg-red-900', 'hover:bg-red-800', 'border-red-600', 'text-white');
+                            button.classList.add('btn-confirm-red');
                             
                             const warningContainer = modal.querySelector('#resignation-warning-container');
                             if (warningContainer) {
-                                warningContainer.innerHTML = "<span class='text-orange-500 font-bold text-lg drop-shadow-[0_0_5px_rgba(249,115,22,0.8)]'>CONFIRM FORFEITURE OF PENSION: ⌬ 14 ?</span>";
+                                warningContainer.innerHTML = "<span class='dashboard-fade-in block text-orange-500 font-bold text-lg drop-shadow-[0_0_5px_rgba(249,115,22,0.8)]'>CONFIRM FORFEITURE OF PENSION: ⌬ 14 ?</span>";
                             }
                         } else {
                             this._transitioning = true;
                             button.disabled = true;
+                            
+                            const existingQuitText = document.getElementById('quit-job-text');
+                            if (existingQuitText) existingQuitText.remove();
                             
                             // Fade to black over 2 seconds
                             const fader = document.createElement('div');
@@ -35397,9 +35618,17 @@ export class IntroService {
             this.uiManager.helpManager.anchorBtn.style.display = 'flex';
         }
         
+        // --- INJECT HIGH-FIDELITY STARFIELD ---
+        starfieldService.mount();
+        starfieldService.triggerEntry();
+
         const overlay = document.createElement('div');
         overlay.id = 'starter-ship-selection-overlay';
-        overlay.className = 'intro-starfield-bg';
+        
+        // Lowered to z-[40] to allow the Ship Detail Modal and Help Modal (z-50+) to stack above cleanly
+        // Background set to completely transparent so the starfield shines through beautifully
+        overlay.className = 'fixed inset-0 z-[40] flex flex-col items-center justify-center intro-blur-fade-in';
+        overlay.style.background = 'transparent'; 
         
         const starterShips = [
             {
@@ -35473,6 +35702,16 @@ export class IntroService {
         
         // Hide the detail modal immediately
         this.uiManager.hideModal('ship-detail-modal');
+
+        // Render dynamic purchase deduction text
+        this.uiManager.createFloatingText(
+            `<span style="font-size: 200%; font-weight: bold; text-shadow: 0 0 10px #ef4444;">-25k</span>`,
+            window.innerWidth / 2,
+            window.innerHeight / 2,
+            '#ef4444',
+            2000,
+            true
+        );
 
         // Create the blackout shield for transitions
         const fader = document.createElement('div');
@@ -44704,7 +44943,6 @@ export class PlayerActionService {
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
-        this.timeService._checkMilestones();
         this.missionService.checkTriggers();
 
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
@@ -44842,7 +45080,6 @@ export class PlayerActionService {
         this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
 
-        this.timeService._checkMilestones();
         this.missionService.checkTriggers();
 
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
@@ -45286,7 +45523,6 @@ export class PlayerActionService {
             player.seenGarnishmentWarning = false;
         }
 
-        this.timeService._checkMilestones();
         this.gameState.setState({});
     }
 
@@ -45656,6 +45892,14 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.37] - 2026-4-1
+-  intro sequence polish
+-  added images to intro modals
+
+# [37.35] - 2026-3-31
+-  updated intro sequence
+-  writing updates
 
 # [37.33] - 2026-3-31
 -  codex polish
