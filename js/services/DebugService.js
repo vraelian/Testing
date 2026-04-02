@@ -748,7 +748,6 @@ ${logHistory}
             skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
-                this.simulationService.timeService._checkMilestones();
                 this.gameState.setState({});
             }},
             reduceCredits: { name: 'Reduce Credits', type: 'button', handler: () => {
