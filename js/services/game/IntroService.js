@@ -347,75 +347,183 @@ export class IntroService {
      */
     _showResignationModal() {
         this._transitioning = false;
-        
-        const descriptionHTML = `
-            <div class="mb-4 text-center text-gray-500 font-bold tracking-widest text-sm uppercase">Secure Terminal Link Established</div>
-            <div class="mb-6 text-green-500 text-left w-full mx-auto bg-black p-5 border border-green-900/30 rounded-sm shadow-[inset_0_0_20px_rgba(0,0,0,1)] font-roboto-mono text-sm">
-                <p class="mb-4 text-green-600 border-b border-green-900/50 pb-2 uppercase tracking-widest">>>> Employment Record: ${this.gameState.player.name}</p>
-                <p class="mb-2">> Packages Routed..... <span class="text-green-400">1,932,320</span></p>
-                <p class="mb-2">> Cycles Logged....... <span class="text-green-400">2,849</span></p>
-                <p class="mt-4 text-xs text-green-700 animate-pulse">> AWAITING INPUT...</p>
-            </div>
-            <div id="resignation-warning-container" class="min-h-[28px] mb-4"></div>
-        `;
-        
-        this.uiManager.queueModal('event-modal', '<span class="text-[23px]">Asteroid Belt Mining Conglomerate Delta Co.</span>', descriptionHTML, null, {
-            contentClass: 'modal-theme-drab-gray text-center font-roboto-mono',
-            customSetup: (modal, closeHandler) => {
-                const quitText = document.createElement('div');
-                quitText.id = 'quit-job-text';
-                quitText.className = 'fixed font-orbitron font-bold text-white text-3xl z-[100] tracking-widest pointer-events-none text-center quit-job-pulse';
-                quitText.style.top = '10vh';
-                quitText.style.left = '50%';
-                quitText.innerHTML = 'QUIT YOUR JOB!';
-                document.body.appendChild(quitText);
 
-                const btnContainer = modal.querySelector('#event-button-container');
-                if (btnContainer) {
-                    btnContainer.innerHTML = '';
-                    const button = document.createElement('button');
-                    button.className = 'btn px-6 py-2 bg-orange-700 hover:bg-orange-600 text-white border-orange-500';
-                    button.innerHTML = 'TERMINATE CONTRACT';
-                    
-                    let isConfirming = false;
+        // 1. Retain the Anchor
+        const quitText = document.createElement('div');
+        quitText.id = 'quit-job-text';
+        quitText.className = 'fixed font-orbitron font-bold text-white text-[21px] z-[100] tracking-widest pointer-events-none text-center quit-job-pulse';
+        quitText.style.top = '10vh';
+        quitText.style.left = '50%';
+        quitText.innerHTML = 'QUIT YOUR JOB!';
+        document.body.appendChild(quitText);
 
-                    button.onclick = (e) => {
-                        if (this._transitioning) return;
+        // 2. Build the Container
+        const overlay = document.createElement('div');
+        overlay.className = 'sev-term-overlay';
+        
+        const panel = document.createElement('div');
+        panel.className = 'sev-term-panel opacity-0'; // Will be faded in by CRT Turn On
+
+        const textContainer = document.createElement('div');
+        textContainer.id = 'sev-text-container';
+        textContainer.className = 'min-h-[290px] relative z-10';
+
+        const actuatorBtn = document.createElement('button');
+        actuatorBtn.id = 'sev-action-btn';
+        actuatorBtn.className = 'sev-actuator-btn opacity-0 pointer-events-none relative z-10 rounded-lg';
+        
+        const btnText = document.createElement('span');
+        btnText.id = 'sev-btn-text';
+        btnText.className = 'sev-btn-text';
+        btnText.innerHTML = 'TERMINATE CONTRACT';
+        
+        actuatorBtn.appendChild(btnText);
+
+        // Warning wrapper physically guarantees layout height underneath button
+        const warningWrapper = document.createElement('div');
+        warningWrapper.className = 'h-[24px] mt-4 w-full relative z-10';
+        
+        const warningMsg = document.createElement('div');
+        warningMsg.id = 'sev-warning-msg';
+        warningMsg.className = 'opacity-0 text-center font-bold text-[15px] text-[#fbbf24] font-roboto-mono transition-opacity duration-500';
+        warningMsg.innerHTML = 'WARNING: PENSION WILL BE FORFEITED';
+        
+        warningWrapper.appendChild(warningMsg);
+
+        panel.appendChild(textContainer);
+        panel.appendChild(actuatorBtn);
+        panel.appendChild(warningWrapper);
+        overlay.appendChild(panel);
+        document.body.appendChild(overlay);
+
+        // D. Modal opens with reverse CRT effect
+        panel.classList.add('sev-crt-turn-on');
+
+        let currentPhase = 0;
+
+        // E. CRT Turn On (1.3s), then Typewriter company name (1.5s)
+        setTimeout(() => {
+            const headerDiv = document.createElement('div');
+            headerDiv.className = 'font-orbitron text-[22px] text-[#d97706] text-center tracking-[0.2em] uppercase mb-8 pb-3 border-b border-current opacity-80 font-bold';
+            const headerSpan = document.createElement('span');
+            headerDiv.appendChild(headerSpan);
+            textContainer.appendChild(headerDiv);
+
+            const textToType = "Belt Delta Mining Co.";
+            let charIndex = 0;
+            const typeInterval = 1500 / textToType.length; // ~71ms
+            const typer = setInterval(() => {
+                headerSpan.textContent += textToType[charIndex];
+                charIndex++;
+                if (charIndex >= textToType.length) clearInterval(typer);
+            }, typeInterval);
+
+            // Start line rendering after typewriter
+            setTimeout(() => {
+                const terminalLines = [
+                    `<div id="secure-link-line" class='font-roboto-mono mb-8 font-bold tracking-widest text-[13px] text-center opacity-90'>SECURE TERMINAL LINK ESTABLISHED</div>`,
+                    `<div class='font-roboto-mono flex justify-between py-3 border-b border-current border-opacity-30 text-[15px]'><span class='opacity-70'>[ EMPLOYEE ID ]</span><span class='text-[#cffafe] font-bold'>${this.gameState.player.name}</span></div>`,
+                    `<div class='font-roboto-mono flex justify-between py-3 border-b border-current border-opacity-30 text-[15px]'><span class='opacity-70'>[ PACKAGES ROUTED ]</span><span class='text-[#cffafe]'>1,932,320</span></div>`,
+                    `<div class='font-roboto-mono flex justify-between py-3 border-b border-current border-opacity-30 text-[15px]'><span class='opacity-70'>[ CYCLES LOGGED ]</span><span class='text-[#cffafe]'>2,849</span></div>`
+                ];
+
+                const timings = [0, 4000, 5800, 7600]; // 4s pause, 1.8s delays
+
+                terminalLines.forEach((line, i) => {
+                    const lineDiv = document.createElement('div');
+                    lineDiv.className = 'sev-type-line';
+                    lineDiv.innerHTML = line;
+                    textContainer.appendChild(lineDiv);
+
+                    setTimeout(() => {
+                        lineDiv.classList.add('sev-line-visible');
                         
-                        if (!isConfirming) {
-                            isConfirming = true;
-                            button.innerHTML = 'CONFIRM TERMINATION';
-                            button.classList.remove('bg-orange-700', 'hover:bg-orange-600', 'border-orange-500');
-                            button.classList.add('btn-confirm-red');
-                            
-                            const warningContainer = modal.querySelector('#resignation-warning-container');
-                            if (warningContainer) {
-                                warningContainer.innerHTML = "<span class='dashboard-fade-in block text-orange-500 font-bold text-lg drop-shadow-[0_0_5px_rgba(249,115,22,0.8)]'>CONFIRM FORFEITURE OF PENSION: ⌬ 14 ?</span>";
-                            }
-                        } else {
-                            this._transitioning = true;
-                            button.disabled = true;
-                            
-                            const existingQuitText = document.getElementById('quit-job-text');
-                            if (existingQuitText) existingQuitText.remove();
-                            
-                            // Fade to black over 2 seconds
+                        if (i === 0) {
+                            const linkEl = document.getElementById('secure-link-line');
+                            if (linkEl) linkEl.classList.add('sev-rhythmic-pulse');
+                        }
+                        
+                        if (i === 3) {
+                            setTimeout(() => {
+                                currentPhase = 1;
+                                actuatorBtn.classList.remove('pointer-events-none');
+                                actuatorBtn.style.animation = 'sevBtnFadeIn 1.5s ease-out forwards';
+                            }, 1800); // Wait 1.8s after 4th line drops
+                        }
+                    }, timings[i]);
+                });
+            }, 1500); // 1.5s typewriter duration
+        }, 1300); // 1.3s CRT turn on duration
+
+        // 5. Actuation and Closure Logic
+        actuatorBtn.onclick = (e) => {
+            if (this._transitioning) return;
+
+            if (currentPhase === 1) {
+                currentPhase = 2;
+                actuatorBtn.classList.add('confirm-phase');
+                
+                // Warning text strictly appears only at confirmation phase
+                warningMsg.classList.remove('opacity-0');
+                warningMsg.classList.add('animate-pulse');
+                
+                btnText.innerHTML = 'CONFIRM?';
+            } else if (currentPhase === 2) {
+                currentPhase = 3;
+                this._transitioning = true;
+                actuatorBtn.style.pointerEvents = 'none';
+                btnText.innerHTML = 'EXECUTING...';
+                
+                // C. Smoothly fade away "QUIT YOUR JOB!"
+                if (quitText) {
+                    quitText.style.animation = 'quitJobFadeOut 0.6s ease-out forwards';
+                }
+
+                // Remove CRT Turn On and force reflow to prevent animation conflict
+                panel.classList.remove('sev-crt-turn-on');
+                void panel.offsetWidth;
+                panel.classList.add('sev-crt-shutdown');
+
+                // 6. Post-Closure Cinematic Handoff
+                setTimeout(() => {
+                    panel.remove();
+
+                    const finalSpan = document.createElement('span');
+                    finalSpan.className = 'text-[#f97316] font-orbitron text-xl tracking-widest text-center px-4 drop-shadow-[0_0_15px_rgba(249,115,22,0.8)]';
+                    finalSpan.style.animation = 'sevLineFade 1s ease-out forwards';
+                    finalSpan.innerHTML = '> PENSION FORFEITED. TERMINATION COMPLETE <';
+                    overlay.appendChild(finalSpan);
+
+                    setTimeout(() => {
+                        // Blur fade the text out into the void
+                        overlay.style.transition = 'all 3s ease-out';
+                        overlay.style.opacity = '0';
+                        overlay.style.filter = 'blur(12px)';
+
+                        setTimeout(() => {
+                            // D. 0.5-second screen fade to black bridging to Mars sequence
                             const fader = document.createElement('div');
-                            fader.className = 'fixed inset-0 bg-black z-[150]'; // Physical click shield
+                            fader.className = 'fixed inset-0 bg-black z-[150]';
                             fader.style.opacity = '0';
+                            fader.style.transition = 'opacity 0.5s ease-in-out';
                             document.body.appendChild(fader);
                             
-                            fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
-                                closeHandler();
+                            // Force reflow
+                            void fader.offsetWidth;
+                            fader.style.opacity = '1';
+
+                            setTimeout(() => {
+                                overlay.remove();
+                                if (quitText && quitText.parentNode) quitText.remove();
+                                
                                 this._triggerMarsTravelSequence(fader);
-                            };
-                        }
-                    };
-                    
-                    btnContainer.appendChild(button);
-                }
+                            }, 500); // Wait 0.5s for black screen
+                            
+                        }, 3000); // Wait 3s for text blur fade
+                    }, 3000); // 3s persistence time before fading text
+                }, 1300); // Wait 1.3s for CRT shutdown
             }
-        });
+        };
     }
 
     /**
