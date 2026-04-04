@@ -1,3 +1,4 @@
+
 // js/services/ui/TravelAnimationService.js
 import { DB } from '../../data/database.js';
 import { AssetService } from '../AssetService.js';
@@ -53,6 +54,12 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
+        
+        // Add the blur-fade-in animation for smooth cinematic entry
+        this.modal.classList.add('blur-fade-in');
+        setTimeout(() => {
+            this.modal.classList.remove('blur-fade-in');
+        }, 2000);
         
         // Ensure Travel Modal sits strictly above the Starfield Background Overlay
         this.modal.style.zIndex = '60';

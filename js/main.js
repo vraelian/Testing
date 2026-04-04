@@ -134,6 +134,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pendingSlotAction = null; 
     let cachedExportCode = "";
     let importConfirmState = false;
+    let isTransitioningMenu = false; // Lock to prevent animation collisions
 
     // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
     if (navigator.storage && navigator.storage.persist) {
@@ -223,29 +224,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- V4 SAVE SYSTEM: Menu State Machine Transitions ---
     function showSplashView(viewId) {
-        splashMainMenu.classList.add('hidden');
-        splashNewGameMenu.classList.add('hidden');
-        splashLoadGameMenu.classList.add('hidden');
-        splashOptionsMenu.classList.add('hidden');
-        if (splashDataMenu) splashDataMenu.classList.add('hidden');
+        if (isTransitioningMenu) return;
 
-        // Hide title header if we need ultra-compact screen (like Options)
-        if (splashTitleHeader) {
-            if (viewId === 'options' || viewId === 'data') {
-                splashTitleHeader.classList.add('hidden');
-            } else {
-                splashTitleHeader.classList.remove('hidden');
+        const views = {
+            'main': splashMainMenu,
+            'new': splashNewGameMenu,
+            'load': splashLoadGameMenu,
+            'options': splashOptionsMenu,
+            'data': splashDataMenu
+        };
+
+        const targetView = views[viewId];
+        if (!targetView) return;
+
+        let currentView = null;
+        for (const key in views) {
+            if (views[key] && !views[key].classList.contains('hidden')) {
+                currentView = views[key];
+                break;
             }
         }
 
-        if (viewId === 'main') splashMainMenu.classList.remove('hidden');
-        else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
-        else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
-        else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
-        else if (viewId === 'data') {
-            splashDataMenu.classList.remove('hidden');
+        if (currentView === targetView) return;
+
+        isTransitioningMenu = true;
+
+        if (viewId === 'data') {
             preGenerateExportCode();
         }
+
+        const titleTargetHidden = (viewId === 'options' || viewId === 'data');
+        const duration = 250; // Smooth 250ms crossfade
+
+        // Immediate fallback if no view is currently visible
+        if (!currentView) {
+            targetView.classList.remove('hidden');
+            if (splashTitleHeader) {
+                if (titleTargetHidden) splashTitleHeader.classList.add('hidden');
+                else splashTitleHeader.classList.remove('hidden');
+            }
+            isTransitioningMenu = false;
+            return;
+        }
+
+        const titleCurrentlyHidden = splashTitleHeader ? splashTitleHeader.classList.contains('hidden') : true;
+
+        // Animate Out Current
+        const animOut = currentView.animate([
+            { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' },
+            { opacity: 0, filter: 'blur(8px)', transform: 'scale(0.95)' }
+        ], { duration, easing: 'ease-in' });
+
+        if (splashTitleHeader && titleCurrentlyHidden !== titleTargetHidden) {
+            splashTitleHeader.animate([
+                { opacity: titleCurrentlyHidden ? 0 : 1 },
+                { opacity: titleTargetHidden ? 0 : 1 }
+            ], { duration, easing: 'ease-in-out' });
+        }
+
+        animOut.onfinish = () => {
+            currentView.classList.add('hidden');
+            targetView.classList.remove('hidden');
+
+            if (splashTitleHeader) {
+                if (titleTargetHidden) splashTitleHeader.classList.add('hidden');
+                else splashTitleHeader.classList.remove('hidden');
+            }
+
+            // Animate In Target
+            const animIn = targetView.animate([
+                { opacity: 0, filter: 'blur(8px)', transform: 'scale(1.05)' },
+                { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' }
+            ], { duration, easing: 'ease-out' });
+
+            animIn.onfinish = () => {
+                isTransitioningMenu = false;
+            };
+        };
     }
 
     mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });

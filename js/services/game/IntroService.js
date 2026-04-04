@@ -685,6 +685,11 @@ export class IntroService {
         if (this._transitioning) return;
         this._transitioning = true;
 
+        // Hide tutorial modal button ' ( ? ) ' after ship selection screen is concluded.
+        if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
+            this.uiManager.helpManager.anchorBtn.style.display = 'none';
+        }
+
         const overlay = document.getElementById('starter-ship-selection-overlay');
         
         // Hide the detail modal immediately

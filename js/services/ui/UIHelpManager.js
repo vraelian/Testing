@@ -199,7 +199,14 @@ export class UIHelpManager {
                 if (!this.isVisible) {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('help-anim-out');
-                    if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+                    
+                    // Ensure we don't accidentally reveal the anchor during the cinematic handoff
+                    const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
+                                               && this.uiManager?.lastKnownState?.introSequenceActive;
+                    
+                    if (this.anchorBtn && !isCinematicTransition) {
+                        this.anchorBtn.style.display = 'flex';
+                    }
 
                     if (typeof this.onCloseCallback === 'function') {
                         const callback = this.onCloseCallback;
@@ -209,7 +216,11 @@ export class UIHelpManager {
                 }
             }, 400); 
         } else {
-            if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+            const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
+                                       && this.uiManager?.lastKnownState?.introSequenceActive;
+            if (this.anchorBtn && !isCinematicTransition) {
+                this.anchorBtn.style.display = 'flex';
+            }
             if (typeof this.onCloseCallback === 'function') {
                 const callback = this.onCloseCallback;
                 this.onCloseCallback = null;
