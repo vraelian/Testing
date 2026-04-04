@@ -337,6 +337,10 @@ export class AssetService {
         // 5. Global Character Spritesheet
         bootQueue.push({ type: 'direct', path: 'assets/images/characters/characters_sprite.webp' });
 
+        // 6. Global UI Textures
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/ui_noise_base.webp' });
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/ui_metal_tile.webp' });
+
         await this.hydrateAssets(bootQueue);
         console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);
     }
