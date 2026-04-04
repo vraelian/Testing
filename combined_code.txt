@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 37.40</title>
+    <title>Orbital Trading 37.43</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 37.40</p>
+            <p>Version 37.43</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -13023,6 +13023,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let pendingSlotAction = null; 
     let cachedExportCode = "";
     let importConfirmState = false;
+    let isTransitioningMenu = false; // Lock to prevent animation collisions
 
     // --- PHASE 2: REQUEST BROWSER STORAGE PERSISTENCE ---
     if (navigator.storage && navigator.storage.persist) {
@@ -13112,29 +13113,83 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- V4 SAVE SYSTEM: Menu State Machine Transitions ---
     function showSplashView(viewId) {
-        splashMainMenu.classList.add('hidden');
-        splashNewGameMenu.classList.add('hidden');
-        splashLoadGameMenu.classList.add('hidden');
-        splashOptionsMenu.classList.add('hidden');
-        if (splashDataMenu) splashDataMenu.classList.add('hidden');
+        if (isTransitioningMenu) return;
 
-        // Hide title header if we need ultra-compact screen (like Options)
-        if (splashTitleHeader) {
-            if (viewId === 'options' || viewId === 'data') {
-                splashTitleHeader.classList.add('hidden');
-            } else {
-                splashTitleHeader.classList.remove('hidden');
+        const views = {
+            'main': splashMainMenu,
+            'new': splashNewGameMenu,
+            'load': splashLoadGameMenu,
+            'options': splashOptionsMenu,
+            'data': splashDataMenu
+        };
+
+        const targetView = views[viewId];
+        if (!targetView) return;
+
+        let currentView = null;
+        for (const key in views) {
+            if (views[key] && !views[key].classList.contains('hidden')) {
+                currentView = views[key];
+                break;
             }
         }
 
-        if (viewId === 'main') splashMainMenu.classList.remove('hidden');
-        else if (viewId === 'new') splashNewGameMenu.classList.remove('hidden');
-        else if (viewId === 'load') splashLoadGameMenu.classList.remove('hidden');
-        else if (viewId === 'options') splashOptionsMenu.classList.remove('hidden');
-        else if (viewId === 'data') {
-            splashDataMenu.classList.remove('hidden');
+        if (currentView === targetView) return;
+
+        isTransitioningMenu = true;
+
+        if (viewId === 'data') {
             preGenerateExportCode();
         }
+
+        const titleTargetHidden = (viewId === 'options' || viewId === 'data');
+        const duration = 250; // Smooth 250ms crossfade
+
+        // Immediate fallback if no view is currently visible
+        if (!currentView) {
+            targetView.classList.remove('hidden');
+            if (splashTitleHeader) {
+                if (titleTargetHidden) splashTitleHeader.classList.add('hidden');
+                else splashTitleHeader.classList.remove('hidden');
+            }
+            isTransitioningMenu = false;
+            return;
+        }
+
+        const titleCurrentlyHidden = splashTitleHeader ? splashTitleHeader.classList.contains('hidden') : true;
+
+        // Animate Out Current
+        const animOut = currentView.animate([
+            { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' },
+            { opacity: 0, filter: 'blur(8px)', transform: 'scale(0.95)' }
+        ], { duration, easing: 'ease-in' });
+
+        if (splashTitleHeader && titleCurrentlyHidden !== titleTargetHidden) {
+            splashTitleHeader.animate([
+                { opacity: titleCurrentlyHidden ? 0 : 1 },
+                { opacity: titleTargetHidden ? 0 : 1 }
+            ], { duration, easing: 'ease-in-out' });
+        }
+
+        animOut.onfinish = () => {
+            currentView.classList.add('hidden');
+            targetView.classList.remove('hidden');
+
+            if (splashTitleHeader) {
+                if (titleTargetHidden) splashTitleHeader.classList.add('hidden');
+                else splashTitleHeader.classList.remove('hidden');
+            }
+
+            // Animate In Target
+            const animIn = targetView.animate([
+                { opacity: 0, filter: 'blur(8px)', transform: 'scale(1.05)' },
+                { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' }
+            ], { duration, easing: 'ease-out' });
+
+            animIn.onfinish = () => {
+                isTransitioningMenu = false;
+            };
+        };
     }
 
     mainNewGameBtn.addEventListener('click', () => { if (checkEula()) showSplashView('new'); });
@@ -15278,7 +15333,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when you factor in the distances between planetary stations. Do not waste time repaying your debt to the Merchant’s Guild. To further assist you, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and leverage the opportunity to your benefit. Your success will reflect well on me with the guild.",
+        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when travel takes months! <b>Do not wait</b> - repay your debt to the Merchant’s Guild <i>as soon as possible</i>. To help, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and leverage a unique opportunity on Earth to your benefit. Your success will reflect well on me with the guild.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_09" }
         ],
@@ -16217,7 +16272,7 @@ export const INTEL_CONTENT = {
     },
     "STORY_HOOK_01": {
         "sample": "A Guild-subsidized operational charter has been secured.",
-        "details": "My sources report that [commodity name] is currently in a state of stagnant oversupply on [location name] following the unexpected arrival of a massive automated hauling fleet from the outer rim. The markets of Earth are completely saturated, with local distributors refusing to even store more fresh water. Rumours are that there is an [discount amount %] loss margin below galactic average.<br><br>This intelligence is likely good for only [durationDays] so take advantage of it while you can.<br><br>- Audita"
+        "details": "An unexpected outer rim fleet just flooded [location name] with [commodity name]. Local distributors are completely maxed out, driving prices [discount amount %] below the galactic average.<br><br>This is a fantastic opportunity to buy ice at an incredible discount.<br><br>This lead is good for [durationDays] before the market is likely to correct itself. <br><br>- <b><i>Audita</b></i>"
     }
 };
 --- END OF FILE: ./js/data/intelContent.js ---
@@ -20771,7 +20826,7 @@ export class UIMissionControl {
 
                 const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
 
-                // 1. INBOUND
+                // 1. GRANTED
                 let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
                     mission.grantedCargo.forEach(cargo => {
@@ -20801,7 +20856,7 @@ export class UIMissionControl {
                     
                     flexColumns.push(`
                         <div class="telemetry-panel panel-inbound${inboundFullWidthClass}">
-                            <div class="telemetry-header">INBOUND</div>
+                            <div class="telemetry-header">GRANTED</div>
                             <div class="telemetry-content">${grantedStr}</div>
                         </div>
                     `);
@@ -23331,7 +23386,14 @@ export class UIHelpManager {
                 if (!this.isVisible) {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('help-anim-out');
-                    if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+                    
+                    // Ensure we don't accidentally reveal the anchor during the cinematic handoff
+                    const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
+                                               && this.uiManager?.lastKnownState?.introSequenceActive;
+                    
+                    if (this.anchorBtn && !isCinematicTransition) {
+                        this.anchorBtn.style.display = 'flex';
+                    }
 
                     if (typeof this.onCloseCallback === 'function') {
                         const callback = this.onCloseCallback;
@@ -23341,7 +23403,11 @@ export class UIHelpManager {
                 }
             }, 400); 
         } else {
-            if (this.anchorBtn) this.anchorBtn.style.display = 'flex';
+            const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
+                                       && this.uiManager?.lastKnownState?.introSequenceActive;
+            if (this.anchorBtn && !isCinematicTransition) {
+                this.anchorBtn.style.display = 'flex';
+            }
             if (typeof this.onCloseCallback === 'function') {
                 const callback = this.onCloseCallback;
                 this.onCloseCallback = null;
@@ -23396,6 +23462,7 @@ export class UIHelpManager {
 --- END OF FILE: ./js/services/ui/UIHelpManager.js ---
 
 --- START OF FILE: ./js/services/ui/TravelAnimationService.js ---
+
 // js/services/ui/TravelAnimationService.js
 import { DB } from '../../data/database.js';
 import { AssetService } from '../AssetService.js';
@@ -23451,6 +23518,12 @@ export class TravelAnimationService {
     play(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
         this.modal.classList.remove('hidden');
         this.modal.classList.add('dismiss-disabled');
+        
+        // Add the blur-fade-in animation for smooth cinematic entry
+        this.modal.classList.add('blur-fade-in');
+        setTimeout(() => {
+            this.modal.classList.remove('blur-fade-in');
+        }, 2000);
         
         // Ensure Travel Modal sits strictly above the Starfield Background Overlay
         this.modal.style.zIndex = '60';
@@ -32601,6 +32674,9 @@ export class AssetService {
         bootQueue.push({ type: 'modal', category: 'intro', id: 'intro_1' });
         bootQueue.push({ type: 'modal', category: 'intro', id: 'intro_2' });
 
+        // 5. Global Character Spritesheet
+        bootQueue.push({ type: 'direct', path: 'assets/images/characters/characters_sprite.webp' });
+
         await this.hydrateAssets(bootQueue);
         console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);
     }
@@ -35913,6 +35989,11 @@ export class IntroService {
     async handleStarterPurchase(shipId) {
         if (this._transitioning) return;
         this._transitioning = true;
+
+        // Hide tutorial modal button ' ( ? ) ' after ship selection screen is concluded.
+        if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
+            this.uiManager.helpManager.anchorBtn.style.display = 'none';
+        }
 
         const overlay = document.getElementById('starter-ship-selection-overlay');
         
@@ -44236,6 +44317,15 @@ export class ActionClickHandler {
                 e.preventDefault();
                 // Custom Override during Intro Sequence
                 if (state.introSequenceActive) {
+                    const modal = document.getElementById('event-modal');
+                    const isVisible = modal && !modal.classList.contains('hidden') && !modal.classList.contains('modal-hiding');
+                    const titleEl = modal ? (modal.querySelector('#event-title') || modal.querySelector('.modal-title') || modal.querySelector('h3')) : null;
+                    
+                    if (isVisible && titleEl && titleEl.textContent.includes('Starter Selection')) {
+                        this.uiManager.hideModal('event-modal');
+                        return;
+                    }
+                    
                     const helpHtml = `
                         <div class="text-left text-sm text-gray-300">
                             <p class="mb-4">Choosing your first ship is an exciting first step on the road to becoming a wealthy captain.</p>
@@ -46109,8 +46199,11 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [37.40] - 2026-4-3
+# [37.43] - 2026-4-3
 -  intro resignation sequence polish
+-  travel animation polish
+-  launch animation polish
+-  ship selection modal polish
 
 # [37.39] - 2026-4-2
 -  intro timing polish and hardening

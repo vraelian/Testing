@@ -334,6 +334,9 @@ export class AssetService {
         bootQueue.push({ type: 'modal', category: 'intro', id: 'intro_1' });
         bootQueue.push({ type: 'modal', category: 'intro', id: 'intro_2' });
 
+        // 5. Global Character Spritesheet
+        bootQueue.push({ type: 'direct', path: 'assets/images/characters/characters_sprite.webp' });
+
         await this.hydrateAssets(bootQueue);
         console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);
     }

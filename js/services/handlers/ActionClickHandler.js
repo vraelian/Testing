@@ -439,6 +439,15 @@ export class ActionClickHandler {
                 e.preventDefault();
                 // Custom Override during Intro Sequence
                 if (state.introSequenceActive) {
+                    const modal = document.getElementById('event-modal');
+                    const isVisible = modal && !modal.classList.contains('hidden') && !modal.classList.contains('modal-hiding');
+                    const titleEl = modal ? (modal.querySelector('#event-title') || modal.querySelector('.modal-title') || modal.querySelector('h3')) : null;
+                    
+                    if (isVisible && titleEl && titleEl.textContent.includes('Starter Selection')) {
+                        this.uiManager.hideModal('event-modal');
+                        return;
+                    }
+                    
                     const helpHtml = `
                         <div class="text-left text-sm text-gray-300">
                             <p class="mb-4">Choosing your first ship is an exciting first step on the road to becoming a wealthy captain.</p>

@@ -335,7 +335,7 @@ export class UIMissionControl {
 
                 const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
 
-                // 1. INBOUND
+                // 1. GRANTED
                 let inboundItems = [];
                 if (mission.grantedCargo && mission.grantedCargo.length > 0) {
                     mission.grantedCargo.forEach(cargo => {
@@ -365,7 +365,7 @@ export class UIMissionControl {
                     
                     flexColumns.push(`
                         <div class="telemetry-panel panel-inbound${inboundFullWidthClass}">
-                            <div class="telemetry-header">INBOUND</div>
+                            <div class="telemetry-header">GRANTED</div>
                             <div class="telemetry-content">${grantedStr}</div>
                         </div>
                     `);
