@@ -1249,3 +1249,79 @@ card.
     60% { opacity: 1; } /* Hold at peak opacity */
     100% { opacity: 0; }
 }
+
+/* --- GLOBAL TEXTURE DITHER --- */
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100dvh;
+    background-image: url('../assets/images/textures/ui_noise_base.webp');
+    background-repeat: repeat;
+    opacity: 0.03; /* Adjust between 0.02 and 0.05 based on physical display read */
+    pointer-events: none;
+    z-index: 1; 
+}
+
+/* ========================================================================= */
+/* --- PHASE 3: DYNAMIC CARD TEXTURE INTEGRATION (PERFORMANCE SAFE) ---      */
+/* ========================================================================= */
+
+/* 1. Base Card Structural Integrity */
+.card,
+.cargo-item-card {
+    position: relative;
+    z-index: 1;
+    overflow: hidden; /* Prevent texture bleeding past border-radius */
+}
+
+/* 2. Decoupled Tiling Layer (NO BLEND MODES) */
+.card::after,
+.cargo-item-card::after {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: url('../assets/images/textures/ui_metal_tile.webp');
+    background-repeat: repeat;
+    opacity: 0.12; /* Low raw opacity replaces expensive blend modes */
+    pointer-events: none;
+    z-index: -1; /* Sits beneath content, above standard background */
+    border-radius: inherit;
+}
+
+/* 3. Typographic Shielding: Standard Cards */
+.card-header {
+    background: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    border-radius: inherit; /* Matches top corners */
+}
+
+.card-content {
+    background-color: rgba(12, 16, 29, 0.7);
+    border-radius: 6px;
+    padding: 0.5rem;
+    margin: 0.25rem 0;
+    box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+}
+
+/* 4. Typographic Shielding: Cargo/Commodity Cards */
+.cargo-item-card .pt-header {
+    background: rgba(0, 0, 0, 0.75) !important;
+    text-shadow: 0 1px 3px #000;
+}
+
+.cargo-item-card .pt-quantity {
+    background: rgba(12, 16, 29, 0.85);
+    border-radius: 4px;
+    padding: 2px 6px;
+    margin-top: auto; /* Push towards bottom if space allows */
+    margin-bottom: 4px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.5);
+}
+
+.cargo-item-card .pt-name {
+    background: rgba(12, 16, 29, 0.95);
+    border-top: 1px solid rgba(255,255,255,0.05);
+}
