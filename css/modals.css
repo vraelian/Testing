@@ -581,11 +581,21 @@
 .sol-station-modal .modal-content {
     width: 80% !important;
     max-width: 1200px !important;
-    max-height: 90vh; /* Prevent clipping on small screens */
+    /* [FIX] FORCED HEIGHT TO FIX TRUNCATION */
+    height: 90vh !important;
+    max-height: 90vh !important;
     display: flex;
     flex-direction: column;
     padding: 1rem;
 }
+
+/* [RESTORED] Explicit Sol Station Level Background Gradients */
+.sol-station-modal .modal-content.sol-theme-white { background: linear-gradient(145deg, #1f2937, #111827) !important; border-color: #6b7280 !important; box-shadow: 0 0 20px rgba(107, 114, 128, 0.2), inset 0 0 15px rgba(107, 114, 128, 0.1) !important;}
+.sol-station-modal .modal-content.sol-theme-green { background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827) !important; border-color: #34d399 !important; box-shadow: 0 0 20px rgba(52, 211, 153, 0.2), inset 0 0 15px rgba(52, 211, 153, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-blue { background: linear-gradient(145deg, rgba(12, 74, 110, 0.9), #111827) !important; border-color: #38bdf8 !important; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 15px rgba(56, 189, 248, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-gold { background: linear-gradient(145deg, rgba(69, 42, 15, 0.9), #111827) !important; border-color: #fbbf24 !important; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2), inset 0 0 15px rgba(251, 191, 36, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-orange { background: linear-gradient(145deg, rgba(124, 45, 18, 0.9), #111827) !important; border-color: #f97316 !important; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), inset 0 0 15px rgba(249, 115, 22, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-red { background: linear-gradient(145deg, rgba(127, 29, 29, 0.9), #111827) !important; border-color: #ef4444 !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2), inset 0 0 15px rgba(239, 68, 68, 0.1) !important; }
 
 /* [FIX] Target the Description Wrapper injected by UIModalEngine */
 /* This element must grow and scroll to prevent the modal from exploding vertically */
@@ -593,8 +603,14 @@
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0 !important;
     padding-right: 0.25rem; /* Space for scrollbar */
+}
+
+/* Tighten the gap above the button container specifically in Sol Station */
+.sol-station-modal #event-button-container {
+    margin-top: 0.25rem !important; 
+    padding-bottom: 0.25rem;
 }
 
 .sol-dashboard-container {
@@ -2201,6 +2217,12 @@
     opacity: 0.15;
     pointer-events: none;
     z-index: 1; /* Above background */
+}
+
+/* VIRTUAL WORKBENCH: Exempt Sol Station from generic textures to preserve dynamic level themes */
+.sol-station-modal .modal-content::before,
+.sol-station-modal .modal-content::after {
+    display: none !important;
 }
 
 /* Push text elements ABOVE the texture layers */
