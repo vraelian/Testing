@@ -62,7 +62,6 @@ COMPONENT-SPECIFIC STYLING
     flex-grow: 1;
     display: flex;
     overflow: hidden;
-    /* Optimization: Isolate layout containment */
     contain: content; 
 }
 .carousel-container:active {
@@ -74,10 +73,7 @@ COMPONENT-SPECIFIC STYLING
     height: 100%;
     width: 100%;
     transition: transform 0.4s ease-out;
-    
-    /* OPTIMIZATION: Standard hardware acceleration */
     will-change: transform;
-    /* iOS Fix: Prevent flickering during drag */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
@@ -88,19 +84,15 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     user-select: none;
+    /* Restored safe padding bottom to push cards up off the pagination dots */
     padding-bottom: 4.0rem;
-    
-    /* VIRTUAL WORKBENCH: CRITICAL PERFORMANCE FIX (Virtualization-Lite) */
-    /* UPDATED (1/11/26): Aggressive optimization restored; SVG Atom is immune to culling */
     contain: paint layout style; 
     content-visibility: auto; 
 }
 
 /* Backgrounds & Theming */
 #ship-terminal {
-    /* Default (Shipyard) Background */
     background-image: var(--theme-bg-gradient);
-    
     display: flex; 
     flex-direction: column; 
     flex-grow: 1;
@@ -109,17 +101,13 @@ COMPONENT-SPECIFIC STYLING
     z-index: 0;
 }
 
-/* Hangar Mode Background (Baked) */
 #ship-terminal-container.mode-hangar #ship-terminal {
-    /* Stacked gradient to simulate overlay blend mode cheaply */
     background-image: 
         linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
         var(--theme-bg-gradient);
-    
     background-color: #1a193d;
 }
 
-/* The grid texture overlay */
 #ship-terminal-container.mode-hangar #ship-terminal::after { 
     content: '';
     position: absolute;
@@ -131,49 +119,39 @@ COMPONENT-SPECIFIC STYLING
     z-index: -1;
 }
 
-/* Glow Pseudo-Element (Dematerialize Effect) */
 #ship-terminal::before {
     content: '';
     position: absolute;
     inset: 0;
     z-index: -2;
     border-radius: 0.5rem;
-    
     background: radial-gradient(circle, var(--frame-border-color) 30%, transparent 70%);
-    
     opacity: 0;
     pointer-events: none;
-    
     transform-origin: center;
     transform: scale(0.5);
 }
 
-/* Generic Opacity Pulse */
 @keyframes pulse-opacity {
     0%, 100% { opacity: 0.5; }
     50% { opacity: 1.0; }
 }
 
-/* The Active Ship Glow Layer */
 .active-ship-glow-layer {
     position: absolute;
     inset: -2px;
     border-radius: 0.5rem;
     pointer-events: none;
     z-index: -1;
-
     border: 2px solid var(--ot-hangar-red-glow);
     box-shadow: 
         0 0 15px var(--ot-hangar-red-glow), 
         0 0 25px var(--ot-hangar-red-glow), 
         inset 0 0 12px rgba(239, 68, 68, 0.3);
-    
     animation: pulse-opacity 2.5s infinite ease-in-out;
     will-change: opacity;
 }
 
-
-/* Intermediate Container */
 #ship-card-main-content {
     flex: 1 1 auto;
     min-height: 0;
@@ -181,7 +159,6 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column;
 }
 
-/* Scrollable Grid */
 .ship-card-content-wrapper {
     overflow-y: auto; 
     scrollbar-width: none;
@@ -200,7 +177,6 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column;
 }
 
-
 #ship-terminal-container.mode-hangar .ship-display-area,
 #ship-terminal-container.mode-shipyard .info-panel-content {
     margin-bottom: 1rem;
@@ -211,12 +187,7 @@ COMPONENT-SPECIFIC STYLING
     display: flex;
 }
 
-
-/* Hologram */
 .ship-display-area { 
-    /* VIRTUAL WORKBENCH: CRITICAL FIX */
-    /* Removed perspective and transform-style: preserve-3d.
-       This was creating a 3D stacking context for EVERY ship, causing memory explosion. */
     position: relative; 
     flex-grow: 1;
 }
@@ -243,7 +214,6 @@ COMPONENT-SPECIFIC STYLING
     z-index: 20; 
 }
 
-/* Hangar/Shipyard Toggle Switch */
 .toggle-container {
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 8px;
@@ -284,7 +254,6 @@ COMPONENT-SPECIFIC STYLING
     box-shadow: 0 0 10px var(--ot-shipyard-blue-glow);
 }
 
-/* Info Panel */
 .info-panel-content { 
     display: none; 
     flex-grow: 1;
@@ -308,29 +277,21 @@ COMPONENT-SPECIFIC STYLING
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
 }
 
-/* Parameter Bars */
 .ship-param-bars {
     display: flex;
     flex-direction: column;
-    /* VIRTUAL WORKBENCH: GAP ADJUSTMENT (1/11/26) */
-    /* Restored to 0.2rem for better separation between the stacked bars */
     gap: 0.1rem;
     font-family: 'Roboto Mono', sans-serif;
     width: 25%;
     max-width: 85px;
     flex-shrink: 0;
     margin-left: 0.2rem;
-    
     transform: scale(1.15); 
     transform-origin: top right;
 }
 
-/* VIRTUAL WORKBENCH: SVG ATOM ARCHITECTURE (1/11/26) */
-/* Replaced modern layout engines with atomic graphics to prevent iOS text culling. */
 .param-bar-item {
     width: 100%;
-    /* VIRTUAL WORKBENCH: HEIGHT INCREASE (1/11/26) */
-    /* Locked to 20px to support the vertical stack coordinates in the SVG */
     height: 20px;
     margin-bottom: 0.2rem;
 }
@@ -339,14 +300,11 @@ COMPONENT-SPECIFIC STYLING
     width: 100%;
     height: 100%;
     display: block;
-    overflow: visible; /* Allows shadows to bleed out if needed */
+    overflow: visible; 
 }
 
-/* Base styles for SVG content, mimicking original Orbitron/Roboto feel */
 .svg-bar-label {
     font-family: 'Orbitron', sans-serif;
-    /* VIRTUAL WORKBENCH: FONT SIZE INCREASE (1/11/26) */
-    /* Increased to 9px for high visibility of HULL, CARGO, FUEL labels */
     font-size: 9px;
     font-weight: 700;
 }
@@ -355,11 +313,9 @@ COMPONENT-SPECIFIC STYLING
     font-family: 'Roboto Mono', monospace;
     font-size: 14px;
     font-weight: 700;
-    /* Optimization: Static shadow for readability on GPU */
     filter: drop-shadow(0 1px 1px black);
 }
 
-/* Action Buttons - GPU Optimized Glows */
 .action-button { 
     transition: transform 0.2s ease; 
     border-radius: 0.5rem; 
@@ -370,8 +326,6 @@ COMPONENT-SPECIFIC STYLING
     position: relative;
     overflow: visible;
     z-index: 1; 
-    
-    /* VIRTUAL WORKBENCH: CRITICAL FIX - Prevent Line Breaking */
     white-space: nowrap;
 }
 
@@ -393,7 +347,6 @@ COMPONENT-SPECIFIC STYLING
 .action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
 .action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
 
-/* Button Variations */
 .action-button.is-glowing-button::before {
     background-color: var(--ot-cyan-base);
     box-shadow: 0 0 15px var(--ot-cyan-glow), 0 0 25px var(--ot-cyan-glow);
@@ -415,24 +368,19 @@ COMPONENT-SPECIFIC STYLING
 .action-button.is-glowing-red { animation: none; }
 .action-button.is-glowing-red::before { animation: pulse-opacity 1.0s ease-in-out; }
 
-
 .action-button-price {
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
-    
-    /* VIRTUAL WORKBENCH: Safety measure to prevent internal wrapping */
     white-space: nowrap;
 }
 
-/* Flavor Text Styling */
 .flavor-text-box {
     padding-left: 0.75rem;
     border-left: 2px solid;
     box-shadow: inset 3px 0 5px -2px rgba(0,0,0,0.5);
 }
 
-/* Inset Text Shadow */
 .inset-text-shadow {
     text-shadow: 0 2px 3px rgba(0,0,0,0.6);
 }
@@ -440,6 +388,7 @@ COMPONENT-SPECIFIC STYLING
 /* Pagination Dots */
 #hangar-pagination-wrapper {
     position: absolute;
+    /* Restored original bottom spacing to ensure dots sit correctly below cards */
     bottom: 1.25rem;
     left: 0;
     right: 0;
@@ -492,7 +441,6 @@ COMPONENT-SPECIFIC STYLING
     opacity: 0.2;
 }
 
-/* Responsive adjustments */
 @media (max-width: 768px) {
     .ship-card-content-wrapper {
         grid-template-columns: 1fr;
@@ -539,7 +487,6 @@ COMPONENT-SPECIFIC STYLING
     }
 }
 
-/* Ship Lore Modal Wrapper */
 .ship-lore-modal-wrapper {
     max-height: 50vh;
     overflow-y: auto;
@@ -582,42 +529,22 @@ COMPONENT-SPECIFIC STYLING
     white-space: pre-line;
 }
 
-/* Colored Text Glows */
-.glow-text-z {
-    text-shadow: 0 0 2px #000, 0 0 10px var(--class-z-color) !important;
-}
-.glow-text-o {
-     text-shadow: 0 0 2px #000, 0 0 10px var(--class-o-color) !important;
-}
-.glow-text-s {
-     text-shadow: 0 0 2px #000, 0 0 10px var(--class-s-color) !important;
-}
+.glow-text-z { text-shadow: 0 0 2px #000, 0 0 10px var(--class-z-color) !important; }
+.glow-text-o { text-shadow: 0 0 2px #000, 0 0 10px var(--class-o-color) !important; }
+.glow-text-s { text-shadow: 0 0 2px #000, 0 0 10px var(--class-s-color) !important; }
 
-/* UTILITY: Shrink text to fit (Added for large credit values) */
-/* General shrink for Shipyard Info Panel */
 .text-shrink {
     font-size: 0.85em !important;
     white-space: nowrap !important;
     letter-spacing: -0.05em;
 }
 
-/* Stronger shrink specifically for Hangar Buttons */
 .text-shrink-button {
-    /* VIRTUAL WORKBENCH: UPDATED - Increased from 0.75em to 0.9em for better legibility */
     font-size: 0.9em !important;
     white-space: nowrap !important;
-    /* VIRTUAL WORKBENCH: UPDATED - Relaxed from -0.07em to -0.05em */
     letter-spacing: -0.05em;
 }
 
-/* MAINTENANCE NOTES FOR SVG ATOM FIX (1/11/26):
-   1. Atomic Graphics: Replaced individual HTML/CSS elements with rigid SVG components to force single-layer rendering.
-   2. Unbreakable Composition: Labels and values are part of the same SVG drawing, preventing the browser from independently culling text.
-   3. Performance Standard: Restored aggressive content-visibility:auto as SVG rendering is highly efficient on iOS.
-   4. Sub-pixel Stability: SVG viewBox coordinates provide mathematical rigidity that survives 3D carousel scaling transforms.
-*/
-
-/* [[NEW]] Animation Classes for Ship Transactions */
 .is-dematerializing {
     animation: dematerialize 0.8s forwards;
 }
@@ -638,63 +565,48 @@ COMPONENT-SPECIFIC STYLING
     100% { border-color: var(--ot-green-accent); box-shadow: 0 0 30px var(--ot-green-accent), inset 0 0 30px var(--ot-green-accent); }
 }
 
-/* ================================================================================
-   UPGRADE PILL "ART PASS" (ADR-008 Compliant)
-   ================================================================================ */
-
 .attribute-pill {
-    /* Base Layout & Typography */
     font-family: 'Orbitron', sans-serif;
     font-size: 0.64rem;
     font-weight: 700;
     letter-spacing: 0.02em;
-    padding: 2px 8px; /* Slightly increased padding */
+    padding: 2px 8px; 
     border-radius: 4px;
     white-space: nowrap;
-    
-    /* Interaction & Performance */
     cursor: pointer;
     pointer-events: auto;
-    touch-action: manipulation; /* ADR-011 */
+    touch-action: manipulation;
     user-select: none;
     z-index: 20;
-
-    /* Theming Defaults */
     color: #ffffff;
     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
-    
-    /* GPU Transitions */
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
     will-change: transform;
 }
 
-/* Interaction States */
 .attribute-pill:hover {
     filter: brightness(1.2);
     transform: scale(1.05);
-    z-index: 30; /* Pop on hover */
+    z-index: 30; 
 }
 .attribute-pill:active {
     transform: scale(0.95);
     filter: brightness(0.9);
 }
 
-/* --- TIER 1: COMMON (Utilitarian / Matte) --- */
 .pill-tier-1 {
     background-color: #1e293b;
     border: 1px solid var(--pill-dark);
-    color: var(--pill-color); /* Colored text for contrast */
+    color: var(--pill-color); 
     box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
-/* --- TIER 2: UNCOMMON (Brushed Metal) --- */
 .pill-tier-2 {
     background: linear-gradient(180deg, var(--pill-mid) 0%, var(--pill-dark) 100%);
     border: 1px solid var(--pill-mid);
     box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 
-/* --- TIER 3: RARE (Glassy / Ceramic) --- */
 .pill-tier-3 {
     background: linear-gradient(135deg, var(--pill-mid), var(--pill-dark));
     border: 1px solid var(--pill-color);
@@ -703,17 +615,15 @@ COMPONENT-SPECIFIC STYLING
         0 2px 4px rgba(0,0,0,0.5);
 }
 
-/* --- TIER 4: EPIC (High-Tech / Neon) --- */
 .pill-tier-4 {
     background: linear-gradient(to bottom, var(--pill-mid), #0f172a);
     border: 1px solid var(--pill-light);
-    border-bottom: 2px solid var(--pill-light); /* Underlight */
+    border-bottom: 2px solid var(--pill-light);
     box-shadow: 
         0 2px 6px rgba(0,0,0,0.6),
-        0 0 5px var(--pill-dark); /* Subtle glow */
+        0 0 5px var(--pill-dark); 
 }
 
-/* --- TIER 5: LEGENDARY (Holographic / Prismatic) --- */
 .pill-tier-5 {
     background: linear-gradient(90deg, var(--pill-dark) 0%, var(--pill-color) 50%, var(--pill-light) 100%);
     background-size: 200% 100%;
@@ -729,7 +639,6 @@ COMPONENT-SPECIFIC STYLING
     100% { background-position: -100% 0; }
 }
 
-/* --- ALIEN / Z-CLASS (Organic / Bioluminescent) --- */
 .pill-alien {
     background: radial-gradient(circle at center, var(--pill-color), var(--pill-dark));
     border: 1px solid var(--pill-light);
@@ -745,10 +654,6 @@ COMPONENT-SPECIFIC STYLING
     50% { box-shadow: 0 0 15px var(--pill-color), inset 0 0 10px var(--pill-light); }
 }
 
-/* ================================================================================
-   SHIP UPGRADE ANIMATION REVEAL (PHASE 1)
-   ================================================================================ */
-
 .card-scanline-active {
     position: relative;
     overflow: hidden;
@@ -763,7 +668,7 @@ COMPONENT-SPECIFIC STYLING
     height: 20%;
     background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.8), transparent);
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
-    z-index: 25; /* Ensure it plays over the card content */
+    z-index: 25; 
     pointer-events: none;
     animation: cardScanline 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
