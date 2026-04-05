@@ -3941,9 +3941,9 @@ card.
 .sol-station-modal .modal-content {
     width: 80% !important;
     max-width: 1200px !important;
-    /* [FIX] FORCED HEIGHT TO FIX TRUNCATION */
-    height: 90vh !important;
-    max-height: 90vh !important;
+    /* VIRTUAL WORKBENCH: Flex-wrap sizing natively up to 85dvh safe area */
+    height: auto !important;
+    max-height: 85dvh !important;
     display: flex;
     flex-direction: column;
     padding: 1rem;
@@ -3965,12 +3965,21 @@ card.
     min-height: 0;
     margin-bottom: 0 !important;
     padding-right: 0.25rem; /* Space for scrollbar */
+    /* VIRTUAL WORKBENCH: Removed the padding-bottom entirely to ensure text scrolls flush to the bottom */
+    padding-bottom: 0 !important; 
+}
+
+/* Sol Station specifically placed indicator arrow inside modal text boundary */
+.sol-station-modal .scroll-indicator-arrow {
+    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal */
+    bottom: 1rem; 
+    right: 1rem;
 }
 
 /* Tighten the gap above the button container specifically in Sol Station */
 .sol-station-modal #event-button-container {
-    margin-top: 0.25rem !important; 
-    padding-bottom: 0.25rem;
+    margin-top: 0.75rem !important; 
+    padding-bottom: 0;
 }
 
 .sol-dashboard-container {
@@ -4934,15 +4943,17 @@ card.
 
 .scroll-indicator-arrow {
     position: absolute;
-    bottom: 0px;
+    /* VIRTUAL WORKBENCH: Ensure it stays near the bottom, shrunk to prevent layout occlusion */
+    bottom: 5px;
     right: 15px;
-    font-size: 3rem; /* Doubled size */
+    font-size: 2rem; 
     font-weight: bold;
     color: var(--theme-color-glow, #38bdf8);
     text-shadow: 0 0 8px var(--theme-color-glow, #38bdf8);
     animation: scrollBounceGlow 1.5s infinite;
     pointer-events: none;
-    z-index: 10;
+    /* VIRTUAL WORKBENCH: High z-index to overlay correctly on all modals */
+    z-index: 50;
     transition: opacity 0.3s ease;
 }
 
@@ -8773,8 +8784,8 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     user-select: none;
-    /* Restored safe padding bottom to push cards up off the pagination dots */
-    padding-bottom: 4.0rem;
+    /* VIRTUAL WORKBENCH: Reduced from 4.0rem to 2.0rem to relieve upward pressure on cards */
+    padding-bottom: 2.0rem;
     contain: paint layout style; 
     content-visibility: auto; 
 }
@@ -8790,6 +8801,7 @@ COMPONENT-SPECIFIC STYLING
     z-index: 0;
 }
 
+/* Hangar Mode Background (Baked) */
 #ship-terminal-container.mode-hangar #ship-terminal {
     background-image: 
         linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
@@ -8797,6 +8809,7 @@ COMPONENT-SPECIFIC STYLING
     background-color: #1a193d;
 }
 
+/* The grid texture overlay */
 #ship-terminal-container.mode-hangar #ship-terminal::after { 
     content: '';
     position: absolute;
@@ -8808,6 +8821,7 @@ COMPONENT-SPECIFIC STYLING
     z-index: -1;
 }
 
+/* Glow Pseudo-Element (Dematerialize Effect) */
 #ship-terminal::before {
     content: '';
     position: absolute;
@@ -8821,11 +8835,13 @@ COMPONENT-SPECIFIC STYLING
     transform: scale(0.5);
 }
 
+/* Generic Opacity Pulse */
 @keyframes pulse-opacity {
     0%, 100% { opacity: 0.5; }
     50% { opacity: 1.0; }
 }
 
+/* The Active Ship Glow Layer */
 .active-ship-glow-layer {
     position: absolute;
     inset: -2px;
@@ -8841,6 +8857,8 @@ COMPONENT-SPECIFIC STYLING
     will-change: opacity;
 }
 
+
+/* Intermediate Container */
 #ship-card-main-content {
     flex: 1 1 auto;
     min-height: 0;
@@ -8848,6 +8866,7 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column;
 }
 
+/* Scrollable Grid */
 .ship-card-content-wrapper {
     overflow-y: auto; 
     scrollbar-width: none;
@@ -8866,6 +8885,7 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column;
 }
 
+
 #ship-terminal-container.mode-hangar .ship-display-area,
 #ship-terminal-container.mode-shipyard .info-panel-content {
     margin-bottom: 1rem;
@@ -8876,6 +8896,8 @@ COMPONENT-SPECIFIC STYLING
     display: flex;
 }
 
+
+/* Hologram */
 .ship-display-area { 
     position: relative; 
     flex-grow: 1;
@@ -8903,6 +8925,7 @@ COMPONENT-SPECIFIC STYLING
     z-index: 20; 
 }
 
+/* Hangar/Shipyard Toggle Switch */
 .toggle-container {
     border: 1px solid rgba(255,255,255,0.15);
     border-radius: 8px;
@@ -8943,6 +8966,7 @@ COMPONENT-SPECIFIC STYLING
     box-shadow: 0 0 10px var(--ot-shipyard-blue-glow);
 }
 
+/* Info Panel */
 .info-panel-content { 
     display: none; 
     flex-grow: 1;
@@ -8966,6 +8990,7 @@ COMPONENT-SPECIFIC STYLING
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
 }
 
+/* Parameter Bars */
 .ship-param-bars {
     display: flex;
     flex-direction: column;
@@ -9005,6 +9030,7 @@ COMPONENT-SPECIFIC STYLING
     filter: drop-shadow(0 1px 1px black);
 }
 
+/* Action Buttons - GPU Optimized Glows */
 .action-button { 
     transition: transform 0.2s ease; 
     border-radius: 0.5rem; 
@@ -9036,6 +9062,7 @@ COMPONENT-SPECIFIC STYLING
 .action-button:active:not(:disabled) { transform: scale(0.98); filter: brightness(1.2); }
 .action-button:disabled { opacity: 0.4; cursor: not-allowed; filter: grayscale(50%); }
 
+/* Button Variations */
 .action-button.is-glowing-button::before {
     background-color: var(--ot-cyan-base);
     box-shadow: 0 0 15px var(--ot-cyan-glow), 0 0 25px var(--ot-cyan-glow);
@@ -9057,6 +9084,7 @@ COMPONENT-SPECIFIC STYLING
 .action-button.is-glowing-red { animation: none; }
 .action-button.is-glowing-red::before { animation: pulse-opacity 1.0s ease-in-out; }
 
+
 .action-button-price {
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
@@ -9064,6 +9092,7 @@ COMPONENT-SPECIFIC STYLING
     white-space: nowrap;
 }
 
+/* Flavor Text Styling */
 .flavor-text-box {
     padding-left: 0.75rem;
     border-left: 2px solid;
@@ -9077,8 +9106,8 @@ COMPONENT-SPECIFIC STYLING
 /* Pagination Dots */
 #hangar-pagination-wrapper {
     position: absolute;
-    /* Restored original bottom spacing to ensure dots sit correctly below cards */
-    bottom: 1.25rem;
+    /* VIRTUAL WORKBENCH: Pushed flawlessly to absolute bottom edge */
+    bottom: 0;
     left: 0;
     right: 0;
     z-index: 10;
@@ -9130,6 +9159,7 @@ COMPONENT-SPECIFIC STYLING
     opacity: 0.2;
 }
 
+/* Responsive adjustments */
 @media (max-width: 768px) {
     .ship-card-content-wrapper {
         grid-template-columns: 1fr;
@@ -9176,6 +9206,7 @@ COMPONENT-SPECIFIC STYLING
     }
 }
 
+/* Ship Lore Modal Wrapper */
 .ship-lore-modal-wrapper {
     max-height: 50vh;
     overflow-y: auto;
@@ -9218,22 +9249,33 @@ COMPONENT-SPECIFIC STYLING
     white-space: pre-line;
 }
 
-.glow-text-z { text-shadow: 0 0 2px #000, 0 0 10px var(--class-z-color) !important; }
-.glow-text-o { text-shadow: 0 0 2px #000, 0 0 10px var(--class-o-color) !important; }
-.glow-text-s { text-shadow: 0 0 2px #000, 0 0 10px var(--class-s-color) !important; }
+/* Colored Text Glows */
+.glow-text-z {
+    text-shadow: 0 0 2px #000, 0 0 10px var(--class-z-color) !important;
+}
+.glow-text-o {
+     text-shadow: 0 0 2px #000, 0 0 10px var(--class-o-color) !important;
+}
+.glow-text-s {
+     text-shadow: 0 0 2px #000, 0 0 10px var(--class-s-color) !important;
+}
 
+/* UTILITY: Shrink text to fit (Added for large credit values) */
+/* General shrink for Shipyard Info Panel */
 .text-shrink {
     font-size: 0.85em !important;
     white-space: nowrap !important;
     letter-spacing: -0.05em;
 }
 
+/* Stronger shrink specifically for Hangar Buttons */
 .text-shrink-button {
     font-size: 0.9em !important;
     white-space: nowrap !important;
     letter-spacing: -0.05em;
 }
 
+/* [[NEW]] Animation Classes for Ship Transactions */
 .is-dematerializing {
     animation: dematerialize 0.8s forwards;
 }
@@ -9254,48 +9296,63 @@ COMPONENT-SPECIFIC STYLING
     100% { border-color: var(--ot-green-accent); box-shadow: 0 0 30px var(--ot-green-accent), inset 0 0 30px var(--ot-green-accent); }
 }
 
+/* ================================================================================
+   UPGRADE PILL "ART PASS" (ADR-008 Compliant)
+   ================================================================================ */
+
 .attribute-pill {
+    /* Base Layout & Typography */
     font-family: 'Orbitron', sans-serif;
     font-size: 0.64rem;
     font-weight: 700;
     letter-spacing: 0.02em;
-    padding: 2px 8px; 
+    padding: 2px 8px; /* Slightly increased padding */
     border-radius: 4px;
     white-space: nowrap;
+    
+    /* Interaction & Performance */
     cursor: pointer;
     pointer-events: auto;
-    touch-action: manipulation;
+    touch-action: manipulation; /* ADR-011 */
     user-select: none;
     z-index: 20;
+
+    /* Theming Defaults */
     color: #ffffff;
     text-shadow: 0 1px 2px rgba(0,0,0,0.8);
+    
+    /* GPU Transitions */
     transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s ease;
     will-change: transform;
 }
 
+/* Interaction States */
 .attribute-pill:hover {
     filter: brightness(1.2);
     transform: scale(1.05);
-    z-index: 30; 
+    z-index: 30; /* Pop on hover */
 }
 .attribute-pill:active {
     transform: scale(0.95);
     filter: brightness(0.9);
 }
 
+/* --- TIER 1: COMMON (Utilitarian / Matte) --- */
 .pill-tier-1 {
     background-color: #1e293b;
     border: 1px solid var(--pill-dark);
-    color: var(--pill-color); 
+    color: var(--pill-color); /* Colored text for contrast */
     box-shadow: 0 1px 2px rgba(0,0,0,0.3);
 }
 
+/* --- TIER 2: UNCOMMON (Brushed Metal) --- */
 .pill-tier-2 {
     background: linear-gradient(180deg, var(--pill-mid) 0%, var(--pill-dark) 100%);
     border: 1px solid var(--pill-mid);
     box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.1);
 }
 
+/* --- TIER 3: RARE (Glassy / Ceramic) --- */
 .pill-tier-3 {
     background: linear-gradient(135deg, var(--pill-mid), var(--pill-dark));
     border: 1px solid var(--pill-color);
@@ -9304,15 +9361,17 @@ COMPONENT-SPECIFIC STYLING
         0 2px 4px rgba(0,0,0,0.5);
 }
 
+/* --- TIER 4: EPIC (High-Tech / Neon) --- */
 .pill-tier-4 {
     background: linear-gradient(to bottom, var(--pill-mid), #0f172a);
     border: 1px solid var(--pill-light);
-    border-bottom: 2px solid var(--pill-light);
+    border-bottom: 2px solid var(--pill-light); /* Underlight */
     box-shadow: 
         0 2px 6px rgba(0,0,0,0.6),
-        0 0 5px var(--pill-dark); 
+        0 0 5px var(--pill-dark); /* Subtle glow */
 }
 
+/* --- TIER 5: LEGENDARY (Holographic / Prismatic) --- */
 .pill-tier-5 {
     background: linear-gradient(90deg, var(--pill-dark) 0%, var(--pill-color) 50%, var(--pill-light) 100%);
     background-size: 200% 100%;
@@ -9328,6 +9387,7 @@ COMPONENT-SPECIFIC STYLING
     100% { background-position: -100% 0; }
 }
 
+/* --- ALIEN / Z-CLASS (Organic / Bioluminescent) --- */
 .pill-alien {
     background: radial-gradient(circle at center, var(--pill-color), var(--pill-dark));
     border: 1px solid var(--pill-light);
@@ -9343,6 +9403,10 @@ COMPONENT-SPECIFIC STYLING
     50% { box-shadow: 0 0 15px var(--pill-color), inset 0 0 10px var(--pill-light); }
 }
 
+/* ================================================================================
+   SHIP UPGRADE ANIMATION REVEAL (PHASE 1)
+   ================================================================================ */
+
 .card-scanline-active {
     position: relative;
     overflow: hidden;
@@ -9357,7 +9421,7 @@ COMPONENT-SPECIFIC STYLING
     height: 20%;
     background: linear-gradient(to bottom, transparent, rgba(56, 189, 248, 0.8), transparent);
     box-shadow: 0 0 15px rgba(56, 189, 248, 0.5);
-    z-index: 25; 
+    z-index: 25; /* Ensure it plays over the card content */
     pointer-events: none;
     animation: cardScanline 1s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }

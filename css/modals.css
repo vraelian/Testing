@@ -581,9 +581,9 @@
 .sol-station-modal .modal-content {
     width: 80% !important;
     max-width: 1200px !important;
-    /* [FIX] FORCED HEIGHT TO FIX TRUNCATION */
-    height: 90vh !important;
-    max-height: 90vh !important;
+    /* VIRTUAL WORKBENCH: Flex-wrap sizing natively up to 85dvh safe area */
+    height: auto !important;
+    max-height: 85dvh !important;
     display: flex;
     flex-direction: column;
     padding: 1rem;
@@ -605,12 +605,21 @@
     min-height: 0;
     margin-bottom: 0 !important;
     padding-right: 0.25rem; /* Space for scrollbar */
+    /* VIRTUAL WORKBENCH: Removed the padding-bottom entirely to ensure text scrolls flush to the bottom */
+    padding-bottom: 0 !important; 
+}
+
+/* Sol Station specifically placed indicator arrow inside modal text boundary */
+.sol-station-modal .scroll-indicator-arrow {
+    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal */
+    bottom: 1rem; 
+    right: 1rem;
 }
 
 /* Tighten the gap above the button container specifically in Sol Station */
 .sol-station-modal #event-button-container {
-    margin-top: 0.25rem !important; 
-    padding-bottom: 0.25rem;
+    margin-top: 0.75rem !important; 
+    padding-bottom: 0;
 }
 
 .sol-dashboard-container {
@@ -1574,15 +1583,17 @@
 
 .scroll-indicator-arrow {
     position: absolute;
-    bottom: 0px;
+    /* VIRTUAL WORKBENCH: Ensure it stays near the bottom, shrunk to prevent layout occlusion */
+    bottom: 5px;
     right: 15px;
-    font-size: 3rem; /* Doubled size */
+    font-size: 2rem; 
     font-weight: bold;
     color: var(--theme-color-glow, #38bdf8);
     text-shadow: 0 0 8px var(--theme-color-glow, #38bdf8);
     animation: scrollBounceGlow 1.5s infinite;
     pointer-events: none;
-    z-index: 10;
+    /* VIRTUAL WORKBENCH: High z-index to overlay correctly on all modals */
+    z-index: 50;
     transition: opacity 0.3s ease;
 }
 
