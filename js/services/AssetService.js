@@ -342,6 +342,14 @@ export class AssetService {
         bootQueue.push({ type: 'direct', path: 'assets/images/textures/ui_metal_tile.webp' });
 
         await this.hydrateAssets(bootQueue);
+
+        // --- TEXTURE CSS VARIABLE INJECTION ---
+        // Binds the Blob URLs to CSS to guarantee offline rendering and bypass pathing errors
+        const noiseUrl = this.blobCache.get('assets/images/textures/ui_noise_base.webp');
+        const metalUrl = this.blobCache.get('assets/images/textures/ui_metal_tile.webp');
+        if (noiseUrl) document.documentElement.style.setProperty('--bg-noise', `url(${noiseUrl})`);
+        if (metalUrl) document.documentElement.style.setProperty('--bg-metal', `url(${metalUrl})`);
+
         console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);
     }
 

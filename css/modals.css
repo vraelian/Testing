@@ -2162,68 +2162,61 @@
 }
 
 /* ========================================================================= */
-/* --- PHASE 2: STATIC MODAL TEXTURE INTEGRATION ---                         */
+/* --- STATIC MODAL TEXTURE INTEGRATION ---                                  */
 /* ========================================================================= */
 
-/* Ensure modal containers support absolute pseudo-elements and layering */
-.modal {
+.modal-content {
     position: relative;
-    z-index: 1; /* Establish local stacking context */
+    /* Ensure the base color exists for the blend modes to calculate against */
+    background-color: #111827; 
 }
 
-/* Push all modal content above the texture layers */
-.modal-header,
-.modal-header-flex,
-.modal-content,
-.modal-footer {
-    position: relative;
-    z-index: 3;
-}
-
-/* Bottom Texture Layer: Multiply (Darkens recesses into the base color) */
-.modal::before {
+/* Bottom Texture Layer: Multiply */
+.modal-content::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('../assets/images/textures/ui_metal_tile.webp');
-    background-repeat: repeat;
+    inset: 0;
+    background-image: var(--bg-metal);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border-radius: inherit;
     mix-blend-mode: multiply;
     opacity: 0.35;
     pointer-events: none;
-    z-index: 2;
+    z-index: 1; /* Above background */
 }
 
-/* Top Texture Layer: Screen (Catches highlights) */
-.modal::after {
+/* Top Texture Layer: Screen */
+.modal-content::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('../assets/images/textures/ui_metal_tile.webp');
-    background-repeat: repeat;
+    inset: 0;
+    background-image: var(--bg-metal);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border-radius: inherit;
     mix-blend-mode: screen;
     opacity: 0.15;
     pointer-events: none;
+    z-index: 1; /* Above background */
+}
+
+/* Push text elements ABOVE the texture layers */
+.modal-header,
+.modal-header-flex,
+.modal-content > div,
+.modal-footer {
+    position: relative;
     z-index: 2;
 }
 
-/* Typographic Shielding: Modal Headers */
+/* Typographic Shielding */
 .modal-header h2,
 .modal-title-group {
     text-shadow: 
-        -1px -1px 0 #000, 
-         1px -1px 0 #000, 
-        -1px  1px 0 #000, 
-         1px  1px 0 #000, 
+        -1px -1px 0 #000, 1px -1px 0 #000, 
+        -1px  1px 0 #000, 1px  1px 0 #000, 
          0 4px 8px rgba(0, 0, 0, 0.8);
-}
-
-/* Typographic Shielding: Content Backing Plates */
-.modal-content {
-    /* Flat semi-transparent gradient plate to kill background noise under text */
-    background: linear-gradient(180deg, rgba(17, 24, 39, 0.90) 0%, rgba(17, 24, 39, 0.60) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.05);
-    box-shadow: inset 0 0 15px rgba(0,0,0,0.5);
-    border-radius: 8px; /* Smooth inner edge */
 }

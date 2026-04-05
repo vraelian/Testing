@@ -126,6 +126,7 @@ export class UIEventControl {
          this.manager.queueModal('random-event-modal', title, description, null, {
             nonDismissible: true,
             contentClass: 'text-center', // Enforce center alignment for Description
+            specialClass: 'blur-fade-in', // Interruption blur-fade in cinematic
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
@@ -689,7 +690,8 @@ export class UIEventControl {
             dismissOutside: false, 
             dismissInside: false,
             contentClass: 'text-center', 
-            buttonText: 'Continue'
+            buttonText: 'Continue',
+            exitClass: 'modal-blur-fade-out' // Blur-fade out into travel animation
         });
     }
 
