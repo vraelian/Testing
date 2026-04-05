@@ -238,56 +238,58 @@
 }
 
 /* ========================================================================= */
-/* --- PHASE 2: HELP MODAL TEXTURE INTEGRATION ---                           */
+/* --- HELP MODAL TEXTURE INTEGRATION ---                                    */
 /* ========================================================================= */
 
 .help-modal-container {
     position: relative;
-    z-index: 1;
-}
-
-.help-header,
-.help-slide-track,
-.help-footer {
-    position: relative;
-    z-index: 3;
 }
 
 /* Bottom Texture Layer: Multiply */
 .help-modal-container::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('../assets/images/textures/ui_metal_tile.webp');
-    background-repeat: repeat;
+    inset: 0;
+    background-image: var(--bg-metal);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border-radius: inherit;
     mix-blend-mode: multiply;
     opacity: 0.35;
     pointer-events: none;
-    z-index: 2;
+    z-index: 1; 
 }
 
 /* Top Texture Layer: Screen */
 .help-modal-container::after {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('../assets/images/textures/ui_metal_tile.webp');
-    background-repeat: repeat;
+    inset: 0;
+    background-image: var(--bg-metal);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
     border-radius: inherit;
     mix-blend-mode: screen;
     opacity: 0.15;
     pointer-events: none;
+    z-index: 1; 
+}
+
+/* Push layout structure above textures */
+.help-modal-header,
+.help-modal-viewport,
+.help-modal-footer {
+    position: relative;
     z-index: 2;
 }
 
 /* Typographic Shielding for Slides */
 .help-slide {
     background: linear-gradient(180deg, rgba(17, 24, 39, 0.95) 0%, rgba(17, 24, 39, 0.75) 100%);
-    border: 1px solid rgba(255, 255, 255, 0.05);
     border-radius: 8px;
 }
-
 .help-slide h3 {
     text-shadow: 0 2px 5px rgba(0, 0, 0, 0.9);
 }

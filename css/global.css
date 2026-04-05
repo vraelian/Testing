@@ -119,7 +119,7 @@ body {
 
 .game-container {
    
- max-width: 1200px;
+    max-width: 1200px;
     width: 100%;
     height: 100dvh; /* MODIFIED: Use dynamic viewport height */
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
@@ -133,6 +133,7 @@ body {
     padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
+    position: relative; /* Added to contain the ::before noise texture */
 }
 
 .game-container.fade-in {
@@ -146,13 +147,15 @@ body {
 
 .main-content-wrapper {
    
- flex-grow: 1;
+    flex-grow: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
     padding-top: 1rem;
     min-height: 0;
-    display: flex; /* ADDED */
-    flex-direction: column; /* ADDED */
+    display: flex; 
+    flex-direction: column; 
+    position: relative; /* Added to elevate over global noise */
+    z-index: 1; /* Added to elevate over global noise */
 }
 
 #main-content {
@@ -1250,78 +1253,73 @@ card.
     100% { opacity: 0; }
 }
 
-/* --- GLOBAL TEXTURE DITHER --- */
-body::before {
-    content: '';
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100dvh;
-    background-image: url('../assets/images/textures/ui_noise_base.webp');
-    background-repeat: repeat;
-    opacity: 0.03; /* Adjust between 0.02 and 0.05 based on physical display read */
-    pointer-events: none;
-    z-index: 1; 
+/* ========================================================================= */
+/* --- DYNAMIC CARD TEXTURE INTEGRATION (PERFORMANCE SAFE) ---               */
+/* ========================================================================= */
+
+/* Global Dither */
+.game-container {
+    position: relative; /* Ensure ::before anchors here */
 }
 
-/* ========================================================================= */
-/* --- PHASE 3: DYNAMIC CARD TEXTURE INTEGRATION (PERFORMANCE SAFE) ---      */
-/* ========================================================================= */
+.game-container::before {
+    content: '';
+    position: absolute; 
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-image: var(--bg-noise);
+    background-repeat: repeat;
+    opacity: 0.19; /* Substantially increased to overcome monitor contrast compression */
+    pointer-events: none;
+    z-index: 0; 
+}
 
 /* 1. Base Card Structural Integrity */
 .card,
 .cargo-item-card {
     position: relative;
-    z-index: 1;
-    overflow: hidden; /* Prevent texture bleeding past border-radius */
+    overflow: hidden; 
 }
 
-/* 2. Decoupled Tiling Layer (NO BLEND MODES) */
-.card::after,
-.cargo-item-card::after {
+/* 2. Decoupled Tiling Layer */
+.card::before,
+.cargo-item-card::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image: url('../assets/images/textures/ui_metal_tile.webp');
-    background-repeat: repeat;
-    opacity: 0.12; /* Low raw opacity replaces expensive blend modes */
+    inset: 0;
+    background-image: var(--bg-metal);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    opacity: 0.12; 
     pointer-events: none;
-    z-index: -1; /* Sits beneath content, above standard background */
+    z-index: 0; /* Sits immediately above the card's background color */
     border-radius: inherit;
 }
 
-/* 3. Typographic Shielding: Standard Cards */
+/* 3. Push content above the texture layer */
+.card-header, 
+.card-content, 
+.card-actions,
+.pt-header,
+.pt-symbol-wrapper,
+.pt-quantity,
+.pt-name {
+    position: relative;
+    z-index: 1;
+}
+
+/* 4. Typographic Shielding */
 .card-header {
     background: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
-    border-radius: inherit; /* Matches top corners */
 }
-
 .card-content {
     background-color: rgba(12, 16, 29, 0.7);
     border-radius: 6px;
     padding: 0.5rem;
-    margin: 0.25rem 0;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
 }
-
-/* 4. Typographic Shielding: Cargo/Commodity Cards */
-.cargo-item-card .pt-header {
-    background: rgba(0, 0, 0, 0.75) !important;
-    text-shadow: 0 1px 3px #000;
-}
-
 .cargo-item-card .pt-quantity {
     background: rgba(12, 16, 29, 0.85);
-    border-radius: 4px;
-    padding: 2px 6px;
-    margin-top: auto; /* Push towards bottom if space allows */
-    margin-bottom: 4px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
-}
-
-.cargo-item-card .pt-name {
-    background: rgba(12, 16, 29, 0.95);
-    border-top: 1px solid rgba(255,255,255,0.05);
 }
