@@ -611,9 +611,9 @@
 
 /* Sol Station specifically placed indicator arrow inside modal text boundary */
 .sol-station-modal .scroll-indicator-arrow {
-    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal */
-    bottom: 1rem; 
-    right: 1rem;
+    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal to extreme bottom right */
+    bottom: 4px; 
+    right: 4px;
 }
 
 /* Tighten the gap above the button container specifically in Sol Station */
