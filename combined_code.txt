@@ -3971,9 +3971,9 @@ card.
 
 /* Sol Station specifically placed indicator arrow inside modal text boundary */
 .sol-station-modal .scroll-indicator-arrow {
-    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal */
-    bottom: 1rem; 
-    right: 1rem;
+    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal to extreme bottom right */
+    bottom: 4px; 
+    right: 4px;
 }
 
 /* Tighten the gap above the button container specifically in Sol Station */
@@ -8751,7 +8751,8 @@ COMPONENT-SPECIFIC STYLING
 */
 
 #ship-terminal-container {
-    margin-top: -0.9625rem;
+    /* VIRTUAL WORKBENCH: Pull the entire container upwards towards the nav bar */
+    margin-top: -0.75rem;
 }
 
 /* Carousel: Main container for ship cards */
@@ -8763,6 +8764,9 @@ COMPONENT-SPECIFIC STYLING
     display: flex;
     overflow: hidden;
     contain: content; 
+    /* VIRTUAL WORKBENCH: Stripped top padding to allow the card to shift up */
+    padding-top: 0; 
+    padding-bottom: 0; 
 }
 .carousel-container:active {
     cursor: grabbing;
@@ -8780,12 +8784,14 @@ COMPONENT-SPECIFIC STYLING
 
 .carousel-page {
     width: 100%;
+    height: 100%;
     flex-shrink: 0;
     display: flex; 
     flex-direction: column; 
+    justify-content: flex-start; /* Anchor to the top */
     user-select: none;
-    /* VIRTUAL WORKBENCH: Reduced from 4.0rem to 2.0rem to relieve upward pressure on cards */
-    padding-bottom: 2.0rem;
+    /* VIRTUAL WORKBENCH: Top padding 0, Right 0.5rem, Bottom 4rem, Left 0.5rem. Shifting card UP. */
+    padding: 0 0.5rem 4rem 0.5rem; 
     contain: paint layout style; 
     content-visibility: auto; 
 }
@@ -8795,8 +8801,13 @@ COMPONENT-SPECIFIC STYLING
     background-image: var(--theme-bg-gradient);
     display: flex; 
     flex-direction: column; 
-    flex-grow: 1;
-    height: auto;
+    width: 100%;
+    
+    /* VIRTUAL WORKBENCH: Height remains 580px, but the card is physically shifted 16px higher to clear the bottom boundary */
+    height: 580px; 
+    
+    flex-shrink: 0; /* Guarantee browser cannot squish the card inside the parent */
+    margin: 0 auto; 
     position: relative;
     z-index: 0;
 }
@@ -8872,8 +8883,9 @@ COMPONENT-SPECIFIC STYLING
     scrollbar-width: none;
     display: grid; 
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    gap: 1rem;
-    padding: 1rem;
+    gap: 0.5rem;
+    padding: 0.5rem;
+    height: 100%;
 }
 .ship-card-content-wrapper::-webkit-scrollbar {
     display: none; 
@@ -8886,11 +8898,6 @@ COMPONENT-SPECIFIC STYLING
 }
 
 
-#ship-terminal-container.mode-hangar .ship-display-area,
-#ship-terminal-container.mode-shipyard .info-panel-content {
-    margin-bottom: 1rem;
-}
-
 #ship-terminal-container.mode-hangar .info-panel-hangar, 
 #ship-terminal-container.mode-shipyard .info-panel-shipyard { 
     display: flex;
@@ -8900,7 +8907,6 @@ COMPONENT-SPECIFIC STYLING
 /* Hologram */
 .ship-display-area { 
     position: relative; 
-    flex-grow: 1;
 }
 
 .ship-image-placeholder { 
@@ -8969,7 +8975,6 @@ COMPONENT-SPECIFIC STYLING
 /* Info Panel */
 .info-panel-content { 
     display: none; 
-    flex-grow: 1;
     flex-direction: column;
 }
 .info-panel-header {
@@ -8985,7 +8990,7 @@ COMPONENT-SPECIFIC STYLING
 }
 
 .ship-price-display {
-    margin-top: 0.5rem;
+    margin-top: 0.25rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
 }
@@ -9004,10 +9009,11 @@ COMPONENT-SPECIFIC STYLING
     transform-origin: top right;
 }
 
+/* VIRTUAL WORKBENCH: SVG ATOM ARCHITECTURE */
 .param-bar-item {
     width: 100%;
-    height: 20px;
-    margin-bottom: 0.2rem;
+    height: 22px; 
+    margin-bottom: 0.1rem; 
 }
 
 .param-bar-svg {
@@ -9099,29 +9105,28 @@ COMPONENT-SPECIFIC STYLING
     box-shadow: inset 3px 0 5px -2px rgba(0,0,0,0.5);
 }
 
+/* Inset Text Shadow */
 .inset-text-shadow {
     text-shadow: 0 2px 3px rgba(0,0,0,0.6);
 }
 
 /* Pagination Dots */
 #hangar-pagination-wrapper {
-    position: absolute;
-    /* VIRTUAL WORKBENCH: Pushed flawlessly to absolute bottom edge */
-    bottom: 0;
+    position: fixed;
+    bottom: 14px;
     left: 0;
     right: 0;
-    z-index: 10;
-    flex-shrink: 0;
-    overflow-x: auto;
-    padding-top: 0.5rem;
-    padding-bottom: 0.5rem;
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    z-index: 40;
     display: flex;
     justify-content: center;
+    pointer-events: none; 
+    padding-bottom: 0.5rem;
 }
-#hangar-pagination-wrapper::-webkit-scrollbar {
-    display: none;
+
+@media (min-width: 768px) {
+    #hangar-pagination-wrapper {
+        padding-bottom: 1rem;
+    }
 }
 
 #hangar-pagination {
@@ -9131,6 +9136,7 @@ COMPONENT-SPECIFIC STYLING
     gap: 0.9775rem;
     width: max-content;
     padding: 0 1rem;
+    pointer-events: auto; 
 }
 
 .pagination-dot {
@@ -9141,7 +9147,6 @@ COMPONENT-SPECIFIC STYLING
     opacity: 0.3;
     transition: all 0.3s ease;
     cursor: pointer;
-    pointer-events: auto; 
     display: block; 
 }
 .pagination-dot.active { 
@@ -9167,9 +9172,6 @@ COMPONENT-SPECIFIC STYLING
     .ship-card-content-wrapper > .col-span-2,
     .ship-card-content-wrapper > .col-span-3 {
         grid-column: span 1 / span 1;
-    }
-    .ship-display-area {
-        min-height: 180px;
     }
 }
 
@@ -10705,11 +10707,12 @@ export function renderHangarScreen(gameState, simulationService) {
     // Only show Access Archive if in Hangar Mode OR if Shipyard has ships.
     const showArchive = isHangarMode || shipList.length > 0;
 
+    // VIRTUAL WORKBENCH: Removed mb-1 margin to eliminate 4px of dead space below the toggle button
     return `
-        <div class="flex flex-col h-full">
+        <div class="flex flex-col h-full w-full relative">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
                 
-                <div class="relative mx-auto my-1 w-max flex justify-center items-center">
+                <div class="relative mx-auto mt-0 mb-0 w-max flex justify-center items-center flex-shrink-0 z-10">
                     <div class="toggle-container">
                         <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
                             <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
@@ -10719,13 +10722,14 @@ export function renderHangarScreen(gameState, simulationService) {
                     <div class="archive-link ${showArchive ? '' : 'hidden'}" data-action="show_ship_lore">ACCESS<br>ARCHIVE</div>
                 </div>
 
-                <div class="carousel-container flex-grow overflow-hidden relative">
-                    <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
+                <div class="carousel-container flex-grow overflow-hidden relative z-0">
+                    <div id="hangar-carousel" class="flex h-full w-full" style="transform: translateX(-${displayIndex * 100}%)">
                         ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService)).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
-            <div id="hangar-pagination-wrapper">
+            
+            <div id="hangar-pagination-wrapper" class="w-full pt-1 z-10">
                 <div id="hangar-pagination">
                     {/* This will be populated by UIManager._renderHangarPagination */}
                 </div>
@@ -10743,8 +10747,8 @@ export function renderHangarScreen(gameState, simulationService) {
 function _renderEmptyCarouselPage(isHangarMode) {
     const message = isHangarMode ? "Your hangar is empty." : "No ships available in the shipyard.";
     return `
-        <div class="carousel-page p-2 md:p-4 w-full">
-            <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+        <div class="carousel-page">
+            <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 <div class="flex flex-col items-center justify-center h-full">
                     <p class="text-gray-400">${message}</p>
                 </div>
@@ -10912,47 +10916,47 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     const infoPanel = _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService);
 
     const shipyardLayout = `
-        <div class="col-span-3 flex flex-col justify-between">
-            <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+        <div class="col-span-3 flex flex-col justify-start gap-1">
+            <div class="ship-display-area flex items-center justify-center relative">
+                <div class="ship-image-placeholder w-[90%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden">
                     ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
         </div>
-        <div class="col-span-2 flex flex-col justify-between">
+        <div class="col-span-2 flex flex-col justify-start gap-1">
             ${infoPanel}
-            <div class="action-buttons-container pt-2">
+            <div class="action-buttons-container pt-1">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
 
     const hangarLayout = `
-        <div class="col-span-2 flex flex-col justify-between">
+        <div class="col-span-2 flex flex-col justify-start gap-1">
             ${infoPanel}
         </div>
 
-        <div class="col-span-3 flex flex-col justify-between">
-            <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+        <div class="col-span-3 flex flex-col justify-start gap-1">
+            <div class="ship-display-area flex items-center justify-center relative">
+                <div class="ship-image-placeholder w-[90%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden">
                     ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
             
-            <div class="action-buttons-container pt-2">
+            <div class="action-buttons-container pt-1">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
 
     return `
-        <div class="carousel-page p-2 md:p-4 w-full" data-ship-id="${shipId}" data-index="${itemIndex}">
-            <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}">
+            <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
-                <div id="ship-card-main-content" class="h-full relative z-10">
-                    <div class="ship-card-content-wrapper h-full">
+                <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
+                    <div class="ship-card-content-wrapper h-full p-2">
                         ${isHangarMode ? hangarLayout : shipyardLayout}
                     </div>
                 </div>
@@ -11004,7 +11008,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
 
     if (isHangarMode) {
         return `
-            <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
+            <div class="info-panel-content info-panel-hangar flex-col justify-start">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
@@ -11013,7 +11017,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                     ${paramBars}
                 </div>
                 
-                <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
+                <div class="flavor-text-box mt-2" style="border-color: var(--frame-border-color);">
                     <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
@@ -11023,7 +11027,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
         const priceClass = priceStr.length > 9 ? 'text-shrink' : '';
         
         return `
-             <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
+             <div class="info-panel-content info-panel-shipyard flex-col justify-start">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
@@ -11033,7 +11037,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                     ${paramBars}
                 </div>
 
-                <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
+                <div class="flavor-text-box mt-2" style="border-color: var(--frame-border-color);">
                     <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
@@ -14236,7 +14240,7 @@ export const ACTION_IDS = Object.freeze({
     TRAVEL: 'travel',
     BUY_SHIP: 'buy-ship',
     INTRO_BUY_SHIP: 'intro-buy-ship',
-    SELL_SHIP: 'select-ship',
+    SELL_SHIP: 'sell-ship',
     SELECT_SHIP: 'select-ship',
     PAY_DEBT: 'pay-debt',
     TAKE_LOAN: 'take-loan',
@@ -14422,6 +14426,73 @@ export const WEALTH_MILESTONES = [
  */
 export const SAVE_KEY = 'orbitalTraderSave_v2';
 --- END OF FILE: ./js/data/constants.js ---
+
+--- START OF FILE: ./js/data/missions.js ---
+// js/data/missions.js
+/**
+ * @fileoverview
+ * Defines all static mission data for the game.
+ */
+import { COMMODITY_IDS, LOCATION_IDS } from './constants.js';
+
+export const MISSIONS = {
+    'mission_tutorial_01': {
+        id: "mission_tutorial_01",
+        name: "Milk Run to Luna",
+        type: "DELIVERY",
+        host: "STATION",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Hey buddy, you're a new captain, right? My hauler's reactor is fried and I'm on the hook for a delivery to Luna.<br><br>Could you deliver this load of <b>Plasteel</b> to the <b>Moon</b> for me? I don't have any credits to spare, but I've padded the manifest.<br><br>Deliver what I owe, keep the rest. You won't have trouble selling it there, trust me.",
+        objectives: [
+            { "type": "have_item", "goodId": "plasteel", "quantity": 5 }
+        ],
+        completion: {
+            "locationId": "loc_luna",
+            "title": "Favor Complete",
+            "text": "The freelancer sends his thanks.",
+            "buttonText": "Deliver Plasteel"
+        },
+        rewards: [],
+        providedCargo: [ // Cargo given to the player on mission acceptance.
+            { "goodId": "plasteel", "quantity": 6 }
+        ]
+    },
+    'mission_tutorial_02': {
+        id: "mission_tutorial_02",
+        name: "Martian Resupply",
+        type: "DELIVERY",
+        host: "STATION",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "A construction crew on Mars has requested a small shipment of plasteel to complete a habitat.",
+        prerequisites: [ // This mission only becomes available after 'mission_tutorial_01' is complete.
+            { "type": "mission_completed", "missionId": "mission_tutorial_01" }
+        ],
+        objectives: [
+            { "type": "have_item", "goodId": "plasteel", "quantity": 2 }
+        ],
+        completion: {
+            "locationId": "loc_mars",
+            "title": "Delivery Complete",
+            "text": "The construction foreman thanks you for the Plasteel.",
+            "buttonText": "Deliver Plasteel"
+        },
+        rewards: [
+            { "type": "credits", "amount": 7500 }
+        ]
+    },
+    'mission_license_t3': {
+         id: "mission_license_t3", name: "Guild Certification", type: "LICENSE_GRANT", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "The Merchant's Guild requires you to certify your trade proficiency. Accepting this contract formally recognizes your status and grants you access to Tier 3 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 3 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t3_license" }]
+    },
+    'mission_license_t5': {
+         id: "mission_license_t5", name: "Governor's Contract", type: "LICENSE_GRANT", host: "STATION", isRepeatable: false, isAbandonable: false, description: "The planetary governor requires a sign of your commitment to local industry. This contract solidifies your standing and unlocks access to Tier 5 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 5 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t5_license" }]
+    },
+    'mission_license_t7': {
+         id: "mission_license_t7", name: "Legendary Run", type: "LICENSE_GRANT", host: "UNKNOWN", isRepeatable: false, isAbandonable: false, description: "Your name is spoken in the farthest corners of the system. Only a legend of your stature may be granted the right to trade the most advanced technologies known.", prerequisites: [{ "type": "revealed_tier", "tier": 7 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t7_license" }]
+    }
+};
+--- END OF FILE: ./js/data/missions.js ---
 
 --- START OF FILE: ./js/data/database.js ---
 // js/data/database.js
