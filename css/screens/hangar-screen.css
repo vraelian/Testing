@@ -62,7 +62,6 @@ COMPONENT-SPECIFIC STYLING
     flex-grow: 1;
     display: flex;
     overflow: hidden;
-    /* Optimization: Isolate layout containment */
     contain: content; 
 }
 .carousel-container:active {
@@ -74,10 +73,7 @@ COMPONENT-SPECIFIC STYLING
     height: 100%;
     width: 100%;
     transition: transform 0.4s ease-out;
-    
-    /* OPTIMIZATION: Standard hardware acceleration */
     will-change: transform;
-    /* iOS Fix: Prevent flickering during drag */
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
 }
@@ -87,35 +83,32 @@ COMPONENT-SPECIFIC STYLING
     flex-shrink: 0;
     display: flex; 
     flex-direction: column; 
+    justify-content: center; /* VIRTUAL WORKBENCH: Centers the constrained card vertically */
     user-select: none;
-    /* VIRTUAL WORKBENCH: Restored to 2.0rem to relieve baseline upward pressure */
-    padding-bottom: 2.0rem;
-    
-    /* VIRTUAL WORKBENCH: CRITICAL PERFORMANCE FIX (Virtualization-Lite) */
+    padding: 0 0.5rem; /* Standardized horizontal padding, no bottom padding */
     contain: paint layout style; 
     content-visibility: auto; 
 }
 
 /* Backgrounds & Theming */
 #ship-terminal {
-    /* Default (Shipyard) Background */
     background-image: var(--theme-bg-gradient);
-    
     display: flex; 
     flex-direction: column; 
     flex-grow: 1;
-    height: auto;
+    width: 100%;
+    max-height: 700px; /* VIRTUAL WORKBENCH: Absolute stop to dynamic stretching on tall screens */
+    margin-top: auto;  /* Works with flex to vertically center */
+    margin-bottom: auto;
     position: relative;
     z-index: 0;
 }
 
 /* Hangar Mode Background (Baked) */
 #ship-terminal-container.mode-hangar #ship-terminal {
-    /* Stacked gradient to simulate overlay blend mode cheaply */
     background-image: 
         linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
         var(--theme-bg-gradient);
-    
     background-color: #1a193d;
 }
 
@@ -138,12 +131,9 @@ COMPONENT-SPECIFIC STYLING
     inset: 0;
     z-index: -2;
     border-radius: 0.5rem;
-    
     background: radial-gradient(circle, var(--frame-border-color) 30%, transparent 70%);
-    
     opacity: 0;
     pointer-events: none;
-    
     transform-origin: center;
     transform: scale(0.5);
 }
@@ -161,13 +151,11 @@ COMPONENT-SPECIFIC STYLING
     border-radius: 0.5rem;
     pointer-events: none;
     z-index: -1;
-
     border: 2px solid var(--ot-hangar-red-glow);
     box-shadow: 
         0 0 15px var(--ot-hangar-red-glow), 
         0 0 25px var(--ot-hangar-red-glow), 
         inset 0 0 12px rgba(239, 68, 68, 0.3);
-    
     animation: pulse-opacity 2.5s infinite ease-in-out;
     will-change: opacity;
 }
@@ -188,9 +176,9 @@ COMPONENT-SPECIFIC STYLING
     display: grid; 
     grid-template-columns: repeat(5, minmax(0, 1fr));
     gap: 1rem;
-    /* VIRTUAL WORKBENCH: Inject massive bottom padding inside the scroll container.
-       This enables the user to scroll the ship cards completely clear of the pagination dots. */
-    padding: 1rem 1rem 5rem 1rem;
+    /* VIRTUAL WORKBENCH: Normalized padding. The card grid now calculates flawlessly within its max-height */
+    padding: 1rem;
+    height: 100%;
 }
 .ship-card-content-wrapper::-webkit-scrollbar {
     display: none; 
@@ -216,9 +204,6 @@ COMPONENT-SPECIFIC STYLING
 
 /* Hologram */
 .ship-display-area { 
-    /* VIRTUAL WORKBENCH: CRITICAL FIX */
-    /* Removed perspective and transform-style: preserve-3d.
-       This was creating a 3D stacking context for EVERY ship, causing memory explosion. */
     position: relative; 
     flex-grow: 1;
 }
@@ -314,14 +299,12 @@ COMPONENT-SPECIFIC STYLING
 .ship-param-bars {
     display: flex;
     flex-direction: column;
-    /* VIRTUAL WORKBENCH: GAP ADJUSTMENT */
     gap: 0.1rem;
     font-family: 'Roboto Mono', sans-serif;
     width: 25%;
     max-width: 85px;
     flex-shrink: 0;
     margin-left: 0.2rem;
-    
     transform: scale(1.15); 
     transform-origin: top right;
 }
@@ -364,8 +347,6 @@ COMPONENT-SPECIFIC STYLING
     position: relative;
     overflow: visible;
     z-index: 1; 
-    
-    /* VIRTUAL WORKBENCH: CRITICAL FIX - Prevent Line Breaking */
     white-space: nowrap;
 }
 
@@ -414,8 +395,6 @@ COMPONENT-SPECIFIC STYLING
     font-size: 1.1rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
-    
-    /* VIRTUAL WORKBENCH: Safety measure to prevent internal wrapping */
     white-space: nowrap;
 }
 
@@ -434,23 +413,20 @@ COMPONENT-SPECIFIC STYLING
 /* Pagination Dots */
 #hangar-pagination-wrapper {
     position: absolute;
-    /* VIRTUAL WORKBENCH: Re-anchored flush to the absolute bottom of the container */
-    bottom: 0 !important;
+    /* VIRTUAL WORKBENCH: Counter-offsets the .main-content-wrapper padding to place dots flush at absolute physical bottom edge */
+    bottom: calc(-1rem - env(safe-area-inset-bottom, 0px));
     left: 0;
     right: 0;
-    z-index: 10;
-    flex-shrink: 0;
-    overflow-x: auto;
-    padding-top: 0.5rem;
-    /* Removed custom bottom padding, dynamically adapting to safe area inset to sit as low as possible */
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-    scrollbar-width: none;
-    -ms-overflow-style: none;
+    z-index: 40;
     display: flex;
     justify-content: center;
+    pointer-events: none; /* Let background clicks pass through empty space */
 }
-#hangar-pagination-wrapper::-webkit-scrollbar {
-    display: none;
+
+@media (min-width: 768px) {
+    #hangar-pagination-wrapper {
+        bottom: calc(-2rem - env(safe-area-inset-bottom, 0px)); /* Desktop/Tablet padding offset */
+    }
 }
 
 #hangar-pagination {
@@ -460,6 +436,7 @@ COMPONENT-SPECIFIC STYLING
     gap: 0.9775rem;
     width: max-content;
     padding: 0 1rem;
+    pointer-events: auto; /* Reactivate pointer events strictly for the dots */
 }
 
 .pagination-dot {
@@ -470,7 +447,6 @@ COMPONENT-SPECIFIC STYLING
     opacity: 0.3;
     transition: all 0.3s ease;
     cursor: pointer;
-    pointer-events: auto; 
     display: block; 
 }
 .pagination-dot.active { 

@@ -137,10 +137,10 @@ export function renderHangarScreen(gameState, simulationService) {
     const showArchive = isHangarMode || shipList.length > 0;
 
     return `
-        <div class="flex flex-col h-full">
+        <div class="flex flex-col h-full w-full relative -mb-4 md:-mb-8 pb-1">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
                 
-                <div class="relative mx-auto my-1 w-max flex justify-center items-center">
+                <div class="relative mx-auto my-1 w-max flex justify-center items-center flex-shrink-0 z-10">
                     <div class="toggle-container">
                         <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
                             <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
@@ -150,13 +150,14 @@ export function renderHangarScreen(gameState, simulationService) {
                     <div class="archive-link ${showArchive ? '' : 'hidden'}" data-action="show_ship_lore">ACCESS<br>ARCHIVE</div>
                 </div>
 
-                <div class="carousel-container flex-grow overflow-hidden relative">
-                    <div id="hangar-carousel" class="flex h-full" style="transform: translateX(-${displayIndex * 100}%)">
+                <div class="carousel-container flex-grow overflow-hidden relative z-0">
+                    <div id="hangar-carousel" class="flex h-full w-full" style="transform: translateX(-${displayIndex * 100}%)">
                         ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService)).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
-            <div id="hangar-pagination-wrapper">
+            
+            <div id="hangar-pagination-wrapper" class="flex-shrink-0 w-full pt-1 z-10" style="padding-bottom: env(safe-area-inset-bottom, 0.25rem);">
                 <div id="hangar-pagination">
                     {/* This will be populated by UIManager._renderHangarPagination */}
                 </div>
@@ -174,8 +175,8 @@ export function renderHangarScreen(gameState, simulationService) {
 function _renderEmptyCarouselPage(isHangarMode) {
     const message = isHangarMode ? "Your hangar is empty." : "No ships available in the shipyard.";
     return `
-        <div class="carousel-page p-2 md:p-4 w-full">
-            <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+        <div class="carousel-page">
+            <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 <div class="flex flex-col items-center justify-center h-full">
                     <p class="text-gray-400">${message}</p>
                 </div>
@@ -379,11 +380,11 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     `;
 
     return `
-        <div class="carousel-page p-2 md:p-4 w-full" data-ship-id="${shipId}" data-index="${itemIndex}">
-            <div id="ship-terminal" class="relative h-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}">
+            <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
-                <div id="ship-card-main-content" class="h-full relative z-10">
-                    <div class="ship-card-content-wrapper h-full">
+                <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
+                    <div class="ship-card-content-wrapper h-full p-2 md:p-4">
                         ${isHangarMode ? hangarLayout : shipyardLayout}
                     </div>
                 </div>
