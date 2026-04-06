@@ -136,11 +136,12 @@ export function renderHangarScreen(gameState, simulationService) {
     // Only show Access Archive if in Hangar Mode OR if Shipyard has ships.
     const showArchive = isHangarMode || shipList.length > 0;
 
+    // VIRTUAL WORKBENCH: Removed mb-1 margin to eliminate 4px of dead space below the toggle button
     return `
-        <div class="flex flex-col h-full w-full relative -mb-4 md:-mb-8 pb-1">
+        <div class="flex flex-col h-full w-full relative">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
                 
-                <div class="relative mx-auto my-1 w-max flex justify-center items-center flex-shrink-0 z-10">
+                <div class="relative mx-auto mt-0 mb-0 w-max flex justify-center items-center flex-shrink-0 z-10">
                     <div class="toggle-container">
                         <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
                             <div class="toggle-label hangar flex-1 text-center py-1 cursor-pointer" data-action="${ACTION_IDS.TOGGLE_HANGAR_MODE}" data-mode="hangar">HANGAR</div>
@@ -157,7 +158,7 @@ export function renderHangarScreen(gameState, simulationService) {
                 </div>
             </div>
             
-            <div id="hangar-pagination-wrapper" class="flex-shrink-0 w-full pt-1 z-10" style="padding-bottom: env(safe-area-inset-bottom, 0.25rem);">
+            <div id="hangar-pagination-wrapper" class="w-full pt-1 z-10">
                 <div id="hangar-pagination">
                     {/* This will be populated by UIManager._renderHangarPagination */}
                 </div>
@@ -344,36 +345,36 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     const infoPanel = _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService);
 
     const shipyardLayout = `
-        <div class="col-span-3 flex flex-col justify-between">
-            <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+        <div class="col-span-3 flex flex-col justify-start gap-1">
+            <div class="ship-display-area flex items-center justify-center relative">
+                <div class="ship-image-placeholder w-[90%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden">
                     ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
         </div>
-        <div class="col-span-2 flex flex-col justify-between">
+        <div class="col-span-2 flex flex-col justify-start gap-1">
             ${infoPanel}
-            <div class="action-buttons-container pt-2">
+            <div class="action-buttons-container pt-1">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
 
     const hangarLayout = `
-        <div class="col-span-2 flex flex-col justify-between">
+        <div class="col-span-2 flex flex-col justify-start gap-1">
             ${infoPanel}
         </div>
 
-        <div class="col-span-3 flex flex-col justify-between">
-            <div class="ship-display-area flex-grow flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-full rounded-lg flex items-center justify-center relative overflow-hidden">
+        <div class="col-span-3 flex flex-col justify-start gap-1">
+            <div class="ship-display-area flex items-center justify-center relative">
+                <div class="ship-image-placeholder w-[90%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden">
                     ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
             
-            <div class="action-buttons-container pt-2">
+            <div class="action-buttons-container pt-1">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
@@ -384,7 +385,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
                 <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
-                    <div class="ship-card-content-wrapper h-full p-2 md:p-4">
+                    <div class="ship-card-content-wrapper h-full p-2">
                         ${isHangarMode ? hangarLayout : shipyardLayout}
                     </div>
                 </div>
@@ -436,7 +437,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
 
     if (isHangarMode) {
         return `
-            <div class="info-panel-content info-panel-hangar flex-col justify-between h-full">
+            <div class="info-panel-content info-panel-hangar flex-col justify-start">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
@@ -445,7 +446,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                     ${paramBars}
                 </div>
                 
-                <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
+                <div class="flavor-text-box mt-2" style="border-color: var(--frame-border-color);">
                     <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
@@ -455,7 +456,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
         const priceClass = priceStr.length > 9 ? 'text-shrink' : '';
         
         return `
-             <div class="info-panel-content info-panel-shipyard flex-col justify-between h-full">
+             <div class="info-panel-content info-panel-shipyard flex-col justify-start">
                 <div class="info-panel-header">
                     <div class="info-panel-text">
                         <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
@@ -465,7 +466,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                     ${paramBars}
                 </div>
 
-                <div class="flavor-text-box mt-auto" style="border-color: var(--frame-border-color);">
+                <div class="flavor-text-box mt-2" style="border-color: var(--frame-border-color);">
                     <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
