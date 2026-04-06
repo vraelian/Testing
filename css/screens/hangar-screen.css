@@ -413,7 +413,7 @@ COMPONENT-SPECIFIC STYLING
 /* Pagination Dots */
 #hangar-pagination-wrapper {
     position: fixed;
-    bottom: 0;
+    bottom: 14px;
     left: 0;
     right: 0;
     z-index: 40;

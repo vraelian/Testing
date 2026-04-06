@@ -140,7 +140,7 @@ export const ACTION_IDS = Object.freeze({
     TRAVEL: 'travel',
     BUY_SHIP: 'buy-ship',
     INTRO_BUY_SHIP: 'intro-buy-ship',
-    SELL_SHIP: 'select-ship',
+    SELL_SHIP: 'sell-ship',
     SELECT_SHIP: 'select-ship',
     PAY_DEBT: 'pay-debt',
     TAKE_LOAN: 'take-loan',
