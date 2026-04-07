@@ -57,6 +57,8 @@
 
 /* Intel Market Button Styling */
 .btn-intel {
+    position: relative;
+    isolation: isolate; /* Create stack context so negative z-index textures do not bleed behind the screen */
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 1px;
     background-color: #1e293b; /* slate-800 */
@@ -65,6 +67,38 @@
     padding: 0.75rem 1rem;
     text-align: center;
     transition: all 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+/* VIRTUAL WORKBENCH: Intel Button Texture Layers */
+.btn-intel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.40;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.btn-intel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .btn-intel:hover:not(:disabled) {

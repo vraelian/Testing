@@ -284,6 +284,7 @@
 
 .mission-card {
     position: relative;
+    isolation: isolate; /* Stack context to keep textures behind text */
     display: flex;
     flex-direction: column;
     padding: 1rem;
@@ -309,6 +310,37 @@
     
     /* Entry Animation */
     animation: card-slide-in 0.3s ease-out backwards;
+}
+
+/* VIRTUAL WORKBENCH: Mission Cards Texture Overlay (Phase 2) */
+.mission-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: -1; /* Place securely behind text content */
+}
+
+.mission-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: -1; /* Place securely behind text content */
 }
 
 /* Touch Interaction (Active State) */
@@ -855,4 +887,46 @@
     .telemetry-panel.full-width {
         grid-column: auto;
     }
+}
+
+/* --- SCROLL INDICATOR --- */
+.mission-scroll-outer {
+    position: relative;
+}
+
+.scroll-indicator-arrow {
+    position: absolute;
+    font-size: 2rem; 
+    font-weight: bold;
+    color: var(--theme-color-glow, #38bdf8);
+    text-shadow: 0 0 8px var(--theme-color-glow, #38bdf8);
+    animation: scrollBounceGlow 1.5s infinite;
+    pointer-events: none;
+    z-index: 50;
+    transition: opacity 0.3s ease;
+}
+
+/* VIRTUAL WORKBENCH: Aggressive absolute override to rip arrow from flex-flow */
+#mission-modal .scroll-indicator-arrow,
+#mission-complete-modal .scroll-indicator-arrow {
+    position: absolute !important; 
+    bottom: 12px !important;
+    right: 15px !important;
+    left: auto !important; 
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    animation: scrollBounceGlowCorner 1.5s infinite !important;
+}
+
+@keyframes scrollBounceGlow {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(4px); opacity: 1; }
+}
+
+@keyframes scrollBounceGlowCorner {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(4px); opacity: 1; }
 }

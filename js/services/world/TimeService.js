@@ -184,7 +184,14 @@ export class TimeService {
                         );
                     }
                 }
-                this.simulationService.pushNewsMessage(`Intel on ${DB.COMMODITIES.find(c => c.id === expiredDeal.commodityId).name} at ${DB.MARKETS.find(m => m.id === expiredDeal.targetMarketId).name} has expired.`, 'INTEL');
+                
+                // VIRTUAL WORKBENCH: Corrected Property Reference for Target Location
+                const targetLocationDef = DB.MARKETS.find(m => m.id === expiredDeal.dealLocationId);
+                const targetName = targetLocationDef ? targetLocationDef.name : 'Unknown Location';
+                const commodityDef = DB.COMMODITIES.find(c => c.id === expiredDeal.commodityId);
+                const commodityName = commodityDef ? commodityDef.name : 'Unknown Commodity';
+
+                this.simulationService.pushNewsMessage(`Intel on ${commodityName} at ${targetName} has expired.`, 'INTEL');
             }
 
             // Periodic Intel Generation
