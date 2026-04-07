@@ -2,6 +2,10 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [37.46] - 2026-4-6
+-  added textures to background and modals
+-  fixed sol station modal performance
+-  tuned ship card and pagination positioning
 
 # [37.43] - 2026-4-3
 -  intro resignation sequence polish
