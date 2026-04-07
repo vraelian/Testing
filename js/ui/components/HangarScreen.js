@@ -380,8 +380,9 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         </div>
     `;
 
+    // VIRTUAL WORKBENCH: Inject data-ship-class so CSS can dynamically assign the gradient layer
     return `
-        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}">
+        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}" data-ship-class="${shipStatic.class}">
             <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
                 <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">

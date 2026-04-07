@@ -185,7 +185,7 @@
 }
 
 /* --- HOST FACTION COLORS & GRADIENTS --- */
-/* These now force an override of the default 'm-type-*' background to apply the unique dual gradients */
+/* These force an override of the default 'm-type-*' background to apply the unique dual gradients */
 
 /* Guild: Silver to Gold */
 .host-guild { 
@@ -310,53 +310,6 @@
     /* Entry Animation */
     animation: card-slide-in 0.3s ease-out backwards;
 }
-
-/* Mission Card Texture Layers (Path Corrected) */
-.mission-card::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: var(--bg-flat-smooth-metal, url('../assets/images/textures/flat_smooth_metal.webp'));
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-radius: inherit;
-    mix-blend-mode: multiply;
-    opacity: 0.35;
-    pointer-events: none;
-    z-index: 1;
-}
-
-.mission-card::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background-image: var(--bg-flat-smooth-metal, url('../assets/images/textures/flat_smooth_metal.webp'));
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-radius: inherit;
-    mix-blend-mode: screen;
-    opacity: 0.15;
-    pointer-events: none;
-    z-index: 1;
-}
-
-/* Elevate Content */
-.mission-card > * {
-    position: relative;
-    z-index: 2;
-}
-
-/* Staggered Entry for the first 8 items */
-.mission-card:nth-child(1) { animation-delay: 0.05s; }
-.mission-card:nth-child(2) { animation-delay: 0.10s; }
-.mission-card:nth-child(3) { animation-delay: 0.15s; }
-.mission-card:nth-child(4) { animation-delay: 0.20s; }
-.mission-card:nth-child(5) { animation-delay: 0.25s; }
-.mission-card:nth-child(6) { animation-delay: 0.30s; }
-.mission-card:nth-child(7) { animation-delay: 0.35s; }
-.mission-card:nth-child(8) { animation-delay: 0.40s; }
 
 /* Touch Interaction (Active State) */
 .mission-card:active {
@@ -659,47 +612,6 @@
 /* ========================================================================= */
 /* --- MISSION MODAL BUTTON & TITLE THEMING --- */
 /* ========================================================================= */
-
-/* Mission Modals Texturing Force Override (Path & Blob Corrected) */
-/* VIRTUAL WORKBENCH: Removed overflow:hidden to allow portrait to extend out of card */
-#mission-modal .modal-content {
-    /* No overflow hidden! */
-}
-
-#mission-modal .modal-content::before {
-    content: '';
-    position: absolute;
-    inset: 0; /* Perfectly binds to the border radius without clipping external elements */
-    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-radius: inherit;
-    mix-blend-mode: multiply;
-    opacity: 0.35;
-    pointer-events: none;
-    z-index: 1;
-}
-
-#mission-modal .modal-content::after {
-    content: '';
-    position: absolute;
-    inset: 0; /* Perfectly binds to the border radius without clipping external elements */
-    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
-    background-size: cover;
-    background-position: center;
-    background-repeat: no-repeat;
-    border-radius: inherit;
-    mix-blend-mode: screen;
-    opacity: 0.15;
-    pointer-events: none;
-    z-index: 1;
-}
-
-#mission-modal .modal-content > * {
-    position: relative;
-    z-index: 2;
-}
 
 /* Title overrides */
 .host-guild #mission-modal-title { color: #facc15; text-shadow: 0 0 8px rgba(250, 204, 21, 0.4); }
