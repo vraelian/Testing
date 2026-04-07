@@ -2247,7 +2247,9 @@
 #launch-modal .modal-content::before,
 #launch-modal .modal-content::after,
 #cargo-detail-modal .modal-content::before,
-#cargo-detail-modal .modal-content::after {
+#cargo-detail-modal .modal-content::after,
+#mission-modal .modal-content::before,
+#mission-modal .modal-content::after {
     display: none !important;
 }
 
