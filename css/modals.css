@@ -238,6 +238,44 @@
     flex-direction: column;
     justify-content: space-between;
     gap: 1rem;
+    overflow: hidden; /* Ensure texture respects border radius */
+}
+
+/* Launch Modal Texture Injection (Path Corrected) */
+.launch-modal-wrapper::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-flat-metal, url('../assets/images/textures/flat_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.launch-modal-wrapper::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-flat-metal, url('../assets/images/textures/flat_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Elevate Wrapper Content Above Texture */
+.launch-modal-wrapper > * {
+    position: relative;
+    z-index: 2;
 }
 
 .launch-modal-wrapper h3 {
@@ -2208,12 +2246,12 @@
     background-color: #111827; 
 }
 
-/* Bottom Texture Layer: Multiply */
+/* Bottom Texture Layer: Multiply (Path Corrected) */
 .modal-content::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-image: var(--bg-metal);
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -2224,12 +2262,12 @@
     z-index: 1; /* Above background */
 }
 
-/* Top Texture Layer: Screen */
+/* Top Texture Layer: Screen (Path Corrected) */
 .modal-content::after {
     content: '';
     position: absolute;
     inset: 0;
-    background-image: var(--bg-metal);
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -2240,9 +2278,13 @@
     z-index: 1; /* Above background */
 }
 
-/* VIRTUAL WORKBENCH: Exempt Sol Station from generic textures to preserve dynamic level themes */
+/* VIRTUAL WORKBENCH: Exempt Sol Station and Custom Wrappers from generic textures to preserve dynamic level themes */
 .sol-station-modal .modal-content::before,
-.sol-station-modal .modal-content::after {
+.sol-station-modal .modal-content::after,
+#launch-modal .modal-content::before,
+#launch-modal .modal-content::after,
+#cargo-detail-modal .modal-content::before,
+#cargo-detail-modal .modal-content::after {
     display: none !important;
 }
 

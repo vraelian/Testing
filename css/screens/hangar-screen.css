@@ -96,9 +96,37 @@ COMPONENT-SPECIFIC STYLING
     content-visibility: auto; 
 }
 
-/* Backgrounds & Theming */
+
+/* Unified Ship Class Overlay Gradients (Reduced Alpha for Texture Pass-through) */
+/* Utilizing a highly robust selector map to guarantee execution against DOM permutations */
+.class-c #ship-terminal, #ship-terminal.class-c, [data-class="C"] #ship-terminal, #ship-terminal[data-class="C"], .ship-c #ship-terminal, #ship-terminal.ship-c, .ship-class-c #ship-terminal {
+    --ship-overlay-grad: linear-gradient(145deg, rgba(229, 231, 235, 0.65), rgba(156, 163, 175, 0.65)) !important;
+}
+.class-b #ship-terminal, #ship-terminal.class-b, [data-class="B"] #ship-terminal, #ship-terminal[data-class="B"], .ship-b #ship-terminal, #ship-terminal.ship-b, .ship-class-b #ship-terminal {
+    --ship-overlay-grad: linear-gradient(145deg, rgba(74, 222, 128, 0.65), rgba(22, 163, 74, 0.65)) !important;
+}
+.class-a #ship-terminal, #ship-terminal.class-a, [data-class="A"] #ship-terminal, #ship-terminal[data-class="A"], .ship-a #ship-terminal, #ship-terminal.ship-a, .ship-class-a #ship-terminal {
+    --ship-overlay-grad: linear-gradient(145deg, rgba(96, 165, 250, 0.65), rgba(168, 85, 247, 0.65)) !important;
+}
+.class-s #ship-terminal, #ship-terminal.class-s, [data-class="S"] #ship-terminal, #ship-terminal[data-class="S"], .ship-s #ship-terminal, #ship-terminal.ship-s, .ship-class-s #ship-terminal {
+    --ship-overlay-grad: linear-gradient(145deg, rgba(250, 204, 21, 0.65), rgba(217, 119, 6, 0.65)) !important;
+}
+.class-o #ship-terminal, #ship-terminal.class-o, [data-class="O"] #ship-terminal, #ship-terminal[data-class="O"], .ship-o #ship-terminal, #ship-terminal.ship-o, .ship-class-o #ship-terminal {
+    --ship-overlay-grad: linear-gradient(145deg, rgba(249, 115, 22, 0.65), rgba(239, 68, 68, 0.65)) !important;
+}
+.class-z #ship-terminal, #ship-terminal.class-z, [data-class="Z"] #ship-terminal, #ship-terminal[data-class="Z"], .ship-z #ship-terminal, #ship-terminal.ship-z, .ship-class-z #ship-terminal {
+    --ship-overlay-grad: linear-gradient(145deg, rgba(239, 68, 68, 0.65), rgba(0, 0, 0, 0.65)) !important;
+}
+
+/* Universal Backgrounds & Theming (With ADR-008 Compliant Texture Injection) */
 #ship-terminal {
-    background-image: var(--theme-bg-gradient);
+    background-image: 
+        radial-gradient(circle at 10px 10px, rgba(255,255,255,0.05) 1px, transparent 1px),
+        var(--ship-overlay-grad, var(--theme-bg-gradient, linear-gradient(145deg, rgba(26, 25, 61, 0.65), rgba(15, 23, 42, 0.65)))),
+        url('../../assets/images/textures/dark_metal.webp');
+    background-size: 20px 20px, 100% 100%, cover;
+    background-position: top left, center, center;
+    background-color: #111827; /* Dark fallback */
     display: flex; 
     flex-direction: column; 
     width: 100%;
@@ -110,26 +138,6 @@ COMPONENT-SPECIFIC STYLING
     margin: 0 auto; 
     position: relative;
     z-index: 0;
-}
-
-/* Hangar Mode Background (Baked) */
-#ship-terminal-container.mode-hangar #ship-terminal {
-    background-image: 
-        linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
-        var(--theme-bg-gradient);
-    background-color: #1a193d;
-}
-
-/* The grid texture overlay */
-#ship-terminal-container.mode-hangar #ship-terminal::after { 
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image:
-        radial-gradient(circle at 10px 10px, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 20px 20px;
-    pointer-events: none;
-    z-index: -1;
 }
 
 /* Glow Pseudo-Element (Dematerialize Effect) */
@@ -211,7 +219,7 @@ COMPONENT-SPECIFIC STYLING
 
 .ship-image-placeholder { 
     background: transparent; 
-    border: 1px solid var(--ot-border-light); 
+    border: 3px solid var(--ot-border-light); /* Thickened border */
     color: var(--theme-color-primary); 
     box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
     aspect-ratio: 1 / 1;
