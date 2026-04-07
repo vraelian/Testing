@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 37.46</title>
+    <title>Orbital Trading 37.53</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 37.46</p>
+            <p>Version 37.53</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -751,7 +751,7 @@
 }
 
 /* --- HOST FACTION COLORS & GRADIENTS --- */
-/* These now force an override of the default 'm-type-*' background to apply the unique dual gradients */
+/* These force an override of the default 'm-type-*' background to apply the unique dual gradients */
 
 /* Guild: Silver to Gold */
 .host-guild { 
@@ -850,6 +850,7 @@
 
 .mission-card {
     position: relative;
+    isolation: isolate; /* Stack context to keep textures behind text */
     display: flex;
     flex-direction: column;
     padding: 1rem;
@@ -877,15 +878,36 @@
     animation: card-slide-in 0.3s ease-out backwards;
 }
 
-/* Staggered Entry for the first 8 items */
-.mission-card:nth-child(1) { animation-delay: 0.05s; }
-.mission-card:nth-child(2) { animation-delay: 0.10s; }
-.mission-card:nth-child(3) { animation-delay: 0.15s; }
-.mission-card:nth-child(4) { animation-delay: 0.20s; }
-.mission-card:nth-child(5) { animation-delay: 0.25s; }
-.mission-card:nth-child(6) { animation-delay: 0.30s; }
-.mission-card:nth-child(7) { animation-delay: 0.35s; }
-.mission-card:nth-child(8) { animation-delay: 0.40s; }
+/* VIRTUAL WORKBENCH: Mission Cards Texture Overlay (Phase 2) */
+.mission-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: -1; /* Place securely behind text content */
+}
+
+.mission-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: -1; /* Place securely behind text content */
+}
 
 /* Touch Interaction (Active State) */
 .mission-card:active {
@@ -1431,6 +1453,48 @@
     .telemetry-panel.full-width {
         grid-column: auto;
     }
+}
+
+/* --- SCROLL INDICATOR --- */
+.mission-scroll-outer {
+    position: relative;
+}
+
+.scroll-indicator-arrow {
+    position: absolute;
+    font-size: 2rem; 
+    font-weight: bold;
+    color: var(--theme-color-glow, #38bdf8);
+    text-shadow: 0 0 8px var(--theme-color-glow, #38bdf8);
+    animation: scrollBounceGlow 1.5s infinite;
+    pointer-events: none;
+    z-index: 50;
+    transition: opacity 0.3s ease;
+}
+
+/* VIRTUAL WORKBENCH: Aggressive absolute override to rip arrow from flex-flow */
+#mission-modal .scroll-indicator-arrow,
+#mission-complete-modal .scroll-indicator-arrow {
+    position: absolute !important; 
+    bottom: 12px !important;
+    right: 15px !important;
+    left: auto !important; 
+    top: auto !important;
+    width: auto !important;
+    height: auto !important;
+    transform: none !important;
+    margin: 0 !important;
+    animation: scrollBounceGlowCorner 1.5s infinite !important;
+}
+
+@keyframes scrollBounceGlow {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(4px); opacity: 1; }
+}
+
+@keyframes scrollBounceGlowCorner {
+    0%, 100% { transform: translateY(0); opacity: 0.4; }
+    50% { transform: translateY(4px); opacity: 1; }
 }
 --- END OF FILE: ./css/missions.css ---
 
@@ -3583,6 +3647,7 @@ card.
     max-width: none;
 }
 
+/* Reverted Pre-Texture Launch Modal Settings */
 .launch-modal-wrapper {
     position: relative;
     background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
@@ -4985,7 +5050,7 @@ card.
 
 /* 2. Give the launch wrapper a slight transparency so it floats elegantly over the stars */
 .launch-modal-wrapper {
-    background: radial-gradient(circle, rgba(26, 32, 48, 0.85) 0%, rgba(12, 16, 29, 0.95) 100%);
+    /* Maintained blank as requested */
 }
 
 /* 3. Set the starfield to Deep Black and remove the redundant blur filters */
@@ -5568,12 +5633,12 @@ card.
     background-color: #111827; 
 }
 
-/* Bottom Texture Layer: Multiply */
+/* Bottom Texture Layer: Multiply (Path Corrected) */
 .modal-content::before {
     content: '';
     position: absolute;
     inset: 0;
-    background-image: var(--bg-metal);
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -5584,12 +5649,12 @@ card.
     z-index: 1; /* Above background */
 }
 
-/* Top Texture Layer: Screen */
+/* Top Texture Layer: Screen (Path Corrected) */
 .modal-content::after {
     content: '';
     position: absolute;
     inset: 0;
-    background-image: var(--bg-metal);
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -5600,9 +5665,15 @@ card.
     z-index: 1; /* Above background */
 }
 
-/* VIRTUAL WORKBENCH: Exempt Sol Station from generic textures to preserve dynamic level themes */
+/* VIRTUAL WORKBENCH: Exempt Sol Station and Custom Wrappers from generic textures to preserve dynamic level themes */
 .sol-station-modal .modal-content::before,
-.sol-station-modal .modal-content::after {
+.sol-station-modal .modal-content::after,
+#launch-modal .modal-content::before,
+#launch-modal .modal-content::after,
+#cargo-detail-modal .modal-content::before,
+#cargo-detail-modal .modal-content::after,
+#mission-modal .modal-content::before,
+#mission-modal .modal-content::after {
     display: none !important;
 }
 
@@ -7919,6 +7990,8 @@ card.
 
 /* Intel Market Button Styling */
 .btn-intel {
+    position: relative;
+    isolation: isolate; /* Create stack context so negative z-index textures do not bleed behind the screen */
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 1px;
     background-color: #1e293b; /* slate-800 */
@@ -7927,6 +8000,38 @@ card.
     padding: 0.75rem 1rem;
     text-align: center;
     transition: all 0.2s ease-in-out;
+    overflow: hidden;
+}
+
+/* VIRTUAL WORKBENCH: Intel Button Texture Layers */
+.btn-intel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.40;
+    pointer-events: none;
+    z-index: -1;
+}
+
+.btn-intel::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-smooth-metal, url('../../assets/images/textures/flat_smooth_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: -1;
 }
 
 .btn-intel:hover:not(:disabled) {
@@ -8282,6 +8387,46 @@ card.
     padding: 1.5rem;
     text-align: left;
     border: 2px solid;
+    position: relative;
+    background-color: #111827; /* Fallback baseline */
+    overflow: hidden;
+}
+
+/* Max Cargo Texture Layers */
+.max-cargo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.max-cargo-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Elevate Max Cargo Content */
+.max-cargo-card > * {
+    position: relative;
+    z-index: 2;
 }
 
 .max-cargo-card h3, .max-cargo-card p, .max-cargo-card div {
@@ -8739,11 +8884,6 @@ CORE THEME & VARIABLE SETUP
     --class-o-color: #fb923c; /* Orange (Capital) */
     --class-z-color: #ef4444; /* Red (Alien) */
     --class-f-color: #9ca3af; /* Grey (Flotsam) */
-    
-    /* Placeholder Theme */
-    --theme-color-primary: #fde047;
-    --theme-color-glow: #fef08a;
-    --theme-bg-gradient: linear-gradient(145deg, rgba(113, 63, 18, 0.5), rgba(49, 46, 129, 0.8));
 
     /* Dynamic Frame Border Color */
     --frame-border-color: var(--ot-shipyard-blue-base);
@@ -8806,69 +8946,61 @@ COMPONENT-SPECIFIC STYLING
     content-visibility: auto; 
 }
 
-/* Backgrounds & Theming */
+/* Dynamic Class Overlay Gradients tied to HTML data attributes generated by JS */
+.carousel-page[data-ship-class="C"] #ship-terminal { --ship-gradient: linear-gradient(145deg, rgba(229, 231, 235, 0.65), rgba(156, 163, 175, 0.65)); }
+.carousel-page[data-ship-class="B"] #ship-terminal { --ship-gradient: linear-gradient(145deg, rgba(74, 222, 128, 0.65), rgba(22, 163, 74, 0.65)); }
+.carousel-page[data-ship-class="A"] #ship-terminal { --ship-gradient: linear-gradient(145deg, rgba(96, 165, 250, 0.65), rgba(168, 85, 247, 0.65)); }
+.carousel-page[data-ship-class="S"] #ship-terminal { --ship-gradient: linear-gradient(145deg, rgba(250, 204, 21, 0.65), rgba(180, 83, 9, 0.65)); }
+.carousel-page[data-ship-class="O"] #ship-terminal { --ship-gradient: linear-gradient(145deg, rgba(249, 115, 22, 0.65), rgba(239, 68, 68, 0.65)); }
+.carousel-page[data-ship-class="Z"] #ship-terminal { --ship-gradient: linear-gradient(145deg, rgba(239, 68, 68, 0.65), rgba(0, 0, 0, 0.65)); }
+
+
+/* Robust Base Container with Explicit Z-Index layering to prevent override wars */
 #ship-terminal {
-    background-image: var(--theme-bg-gradient);
+    background-color: #0c101d; /* Very deep dark backdrop */
+    position: relative;
+    z-index: 0;
+    overflow: hidden; /* Keeps pseudo-elements inside the rounded corners */
     display: flex; 
     flex-direction: column; 
     width: 100%;
-    
     /* VIRTUAL WORKBENCH: Height remains 580px, but the card is physically shifted 16px higher to clear the bottom boundary */
     height: 580px; 
-    
     flex-shrink: 0; /* Guarantee browser cannot squish the card inside the parent */
     margin: 0 auto; 
-    position: relative;
-    z-index: 0;
 }
 
-/* Hangar Mode Background (Baked) */
-#ship-terminal-container.mode-hangar #ship-terminal {
-    background-image: 
-        linear-gradient(to bottom, rgba(26, 25, 61, 0.85), rgba(26, 25, 61, 0.7)), 
-        var(--theme-bg-gradient);
-    background-color: #1a193d;
-}
-
-/* The grid texture overlay */
-#ship-terminal-container.mode-hangar #ship-terminal::after { 
-    content: '';
-    position: absolute;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-image:
-        radial-gradient(circle at 10px 10px, rgba(255,255,255,0.05) 1px, transparent 1px);
-    background-size: 20px 20px;
-    pointer-events: none;
-    z-index: -1;
-}
-
-/* Glow Pseudo-Element (Dematerialize Effect) */
+/* Layer 1 (Bottom): Dark Metal Texture */
 #ship-terminal::before {
     content: '';
     position: absolute;
     inset: 0;
+    background-image: url('../../assets/images/textures/dark_metal.webp');
+    background-size: cover;
+    background-position: center;
+    opacity: 0.45; /* Texture lowered to let gradient punch through */
     z-index: -2;
-    border-radius: 0.5rem;
-    background: radial-gradient(circle, var(--frame-border-color) 30%, transparent 70%);
-    opacity: 0;
     pointer-events: none;
-    transform-origin: center;
-    transform: scale(0.5);
 }
 
-/* Generic Opacity Pulse */
-@keyframes pulse-opacity {
-    0%, 100% { opacity: 0.5; }
-    50% { opacity: 1.0; }
+/* Layer 2 (Middle): Dynamic Class Gradient Overlay */
+#ship-terminal::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    /* Default fallback gradient if ship class is not recognized */
+    background-image: var(--ship-gradient, linear-gradient(145deg, rgba(30, 41, 59, 0.65), rgba(15, 23, 42, 0.65)));
+    z-index: -1;
+    pointer-events: none;
 }
 
-/* The Active Ship Glow Layer */
+/* The Active Ship Glow Layer (Dematerialize Effect) */
 .active-ship-glow-layer {
     position: absolute;
     inset: -2px;
     border-radius: 0.5rem;
     pointer-events: none;
-    z-index: -1;
+    z-index: -3;
     border: 2px solid var(--ot-hangar-red-glow);
     box-shadow: 
         0 0 15px var(--ot-hangar-red-glow), 
@@ -8876,6 +9008,12 @@ COMPONENT-SPECIFIC STYLING
         inset 0 0 12px rgba(239, 68, 68, 0.3);
     animation: pulse-opacity 2.5s infinite ease-in-out;
     will-change: opacity;
+}
+
+/* Generic Opacity Pulse */
+@keyframes pulse-opacity {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1.0; }
 }
 
 
@@ -8921,7 +9059,7 @@ COMPONENT-SPECIFIC STYLING
 
 .ship-image-placeholder { 
     background: transparent; 
-    border: 1px solid var(--ot-border-light); 
+    border: 3px solid var(--ot-border-light); /* Thickened border */
     color: var(--theme-color-primary); 
     box-shadow: inset 0 0 15px rgba(0,0,0,0.3);
     aspect-ratio: 1 / 1;
@@ -9466,26 +9604,18 @@ COMPONENT-SPECIFIC STYLING
 --- START OF FILE: ./css/screens/navigation-screen.css ---
 /* css/screens/navigation-screen.css */
 .navigation-scroll-panel {
-    /* height: 75vh; */ /* REMOVED */
     overflow-y: auto;
     scrollbar-width: none; /* For Firefox */
     -ms-overflow-style: none; /* For Internet Explorer 10+ */
     touch-action: pan-y; /* Allow vertical scrolling */
-
-    /*
-     * This creates a 1.5rem buffer on the left and right
-     * and maintains the 0.25rem vertical padding.
-     * This is a compromise to prevent clipping on hover
-     * without making the cards "skinnier".
-    */
     padding-top: 0.25rem;
     padding-bottom: 0.25rem;
-    padding-left: 1.5rem;  /* Reduced from 3.5rem */
-    padding-right: 1.5rem; /* Reduced from 3.5rem */
-    box-sizing: border-box; /* Ensures padding is inset */
+    padding-left: 1.5rem;  
+    padding-right: 1.5rem; 
+    box-sizing: border-box; 
 }
 .navigation-scroll-panel::-webkit-scrollbar {
-    display: none; /* For Chrome, Safari, and Opera */
+    display: none; 
 }
 
 .location-card {
@@ -9494,7 +9624,56 @@ COMPONENT-SPECIFIC STYLING
     border-width: 2px;
     transition: all 0.3s ease;
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    position: relative;
+    background-color: #111827; 
+    overflow: hidden; 
 }
+
+/* Base Texture Layers */
+.location-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-flat-metal, url('../../assets/images/textures/flat_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.30;
+    pointer-events: none;
+    z-index: 1;
+    /* GPU Promotion */
+    will-change: opacity, transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+.location-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-flat-metal, url('../../assets/images/textures/flat_metal.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.10;
+    pointer-events: none;
+    z-index: 1;
+    /* GPU Promotion */
+    will-change: opacity, transform;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+}
+
+/* Elevate Content Above Texture */
+.location-card > * {
+    position: relative;
+    z-index: 2;
+}
+
 .location-card p {
     word-wrap: break-word;
     white-space: normal;
@@ -9502,8 +9681,7 @@ COMPONENT-SPECIFIC STYLING
     line-height: 1.25rem;
 }
 .location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
-.location-card.disabled-current { cursor: pointer;
-}
+.location-card.disabled-current { cursor: pointer; }
 
 .location-card.highlight-current {
     animation: themed-glow-animation 3s infinite;
@@ -10961,8 +11139,9 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         </div>
     `;
 
+    // VIRTUAL WORKBENCH: Inject data-ship-class so CSS can dynamically assign the gradient layer
     return `
-        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}">
+        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}" data-ship-class="${shipStatic.class}">
             <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
                 ${activeGlowLayer}
                 <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
@@ -32903,6 +33082,36 @@ export class AssetService {
     }
 
     /**
+     * Forces the browser to decode and upload CSS background textures to the GPU
+     * by rendering them in a hidden, off-screen DOM element.
+     * Prevents texture "pop-in" upon entering the game UI.
+     * @private
+     */
+    static _prewarmTextures() {
+        const warmDiv = document.createElement('div');
+        warmDiv.style.cssText = `
+            position: fixed; 
+            top: -9999px; 
+            left: -9999px; 
+            width: 1px; 
+            height: 1px; 
+            opacity: 0.01; 
+            pointer-events: none; 
+            z-index: -1;
+            /* Stack multiple backgrounds to load them all simultaneously */
+            background-image: var(--bg-flat-metal), var(--bg-smooth-metal), var(--bg-metal), var(--bg-noise), var(--bg-dark-metal);
+        `;
+        document.body.appendChild(warmDiv);
+        
+        // Clean up the div after allowing the browser time to paint/decode (2 seconds)
+        setTimeout(() => {
+            if (document.body.contains(warmDiv)) {
+                document.body.removeChild(warmDiv);
+            }
+        }, 2000);
+    }
+
+    /**
      * BOOT PHASE HYDRATION (Title Screen)
      * Loads high-priority UI assets that are needed immediately upon entering the game.
      */
@@ -32944,6 +33153,9 @@ export class AssetService {
         // 6. Global UI Textures
         bootQueue.push({ type: 'direct', path: 'assets/images/textures/ui_noise_base.webp' });
         bootQueue.push({ type: 'direct', path: 'assets/images/textures/ui_metal_tile.webp' });
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/flat_smooth_metal.webp' });
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/flat_metal.webp' });
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/dark_metal.webp' });
 
         await this.hydrateAssets(bootQueue);
 
@@ -32951,8 +33163,18 @@ export class AssetService {
         // Binds the Blob URLs to CSS to guarantee offline rendering and bypass pathing errors
         const noiseUrl = this.blobCache.get('assets/images/textures/ui_noise_base.webp');
         const metalUrl = this.blobCache.get('assets/images/textures/ui_metal_tile.webp');
+        const smoothMetalUrl = this.blobCache.get('assets/images/textures/flat_smooth_metal.webp');
+        const flatMetalUrl = this.blobCache.get('assets/images/textures/flat_metal.webp');
+        const darkMetalUrl = this.blobCache.get('assets/images/textures/dark_metal.webp');
+
         if (noiseUrl) document.documentElement.style.setProperty('--bg-noise', `url(${noiseUrl})`);
         if (metalUrl) document.documentElement.style.setProperty('--bg-metal', `url(${metalUrl})`);
+        if (smoothMetalUrl) document.documentElement.style.setProperty('--bg-smooth-metal', `url(${smoothMetalUrl})`);
+        if (flatMetalUrl) document.documentElement.style.setProperty('--bg-flat-metal', `url(${flatMetalUrl})`);
+        if (darkMetalUrl) document.documentElement.style.setProperty('--bg-dark-metal', `url(${darkMetalUrl})`);
+
+        // Guarantee GPU decoding before transition
+        this._prewarmTextures();
 
         console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);
     }
@@ -35327,7 +35549,14 @@ export class TimeService {
                         );
                     }
                 }
-                this.simulationService.pushNewsMessage(`Intel on ${DB.COMMODITIES.find(c => c.id === expiredDeal.commodityId).name} at ${DB.MARKETS.find(m => m.id === expiredDeal.targetMarketId).name} has expired.`, 'INTEL');
+                
+                // VIRTUAL WORKBENCH: Corrected Property Reference for Target Location
+                const targetLocationDef = DB.MARKETS.find(m => m.id === expiredDeal.dealLocationId);
+                const targetName = targetLocationDef ? targetLocationDef.name : 'Unknown Location';
+                const commodityDef = DB.COMMODITIES.find(c => c.id === expiredDeal.commodityId);
+                const commodityName = commodityDef ? commodityDef.name : 'Unknown Commodity';
+
+                this.simulationService.pushNewsMessage(`Intel on ${commodityName} at ${targetName} has expired.`, 'INTEL');
             }
 
             // Periodic Intel Generation
@@ -46473,6 +46702,17 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [37.53] - 2026-4-7
+-  added textures to mission cards
+-  added textures to intel buttons
+-  scroll arrow polish
+-  adjusted multiple texture opacities
+-  improved performance of texture pre-hydration
+
+# [37.48] - 2026-4-6
+-  added textures and class themes to ship cards
+-  added textures to navigation cards
 
 # [37.46] - 2026-4-6
 -  added textures to background and modals

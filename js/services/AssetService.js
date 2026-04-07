@@ -299,6 +299,36 @@ export class AssetService {
     }
 
     /**
+     * Forces the browser to decode and upload CSS background textures to the GPU
+     * by rendering them in a hidden, off-screen DOM element.
+     * Prevents texture "pop-in" upon entering the game UI.
+     * @private
+     */
+    static _prewarmTextures() {
+        const warmDiv = document.createElement('div');
+        warmDiv.style.cssText = `
+            position: fixed; 
+            top: -9999px; 
+            left: -9999px; 
+            width: 1px; 
+            height: 1px; 
+            opacity: 0.01; 
+            pointer-events: none; 
+            z-index: -1;
+            /* Stack multiple backgrounds to load them all simultaneously */
+            background-image: var(--bg-flat-metal), var(--bg-smooth-metal), var(--bg-metal), var(--bg-noise), var(--bg-dark-metal);
+        `;
+        document.body.appendChild(warmDiv);
+        
+        // Clean up the div after allowing the browser time to paint/decode (2 seconds)
+        setTimeout(() => {
+            if (document.body.contains(warmDiv)) {
+                document.body.removeChild(warmDiv);
+            }
+        }, 2000);
+    }
+
+    /**
      * BOOT PHASE HYDRATION (Title Screen)
      * Loads high-priority UI assets that are needed immediately upon entering the game.
      */
@@ -340,6 +370,9 @@ export class AssetService {
         // 6. Global UI Textures
         bootQueue.push({ type: 'direct', path: 'assets/images/textures/ui_noise_base.webp' });
         bootQueue.push({ type: 'direct', path: 'assets/images/textures/ui_metal_tile.webp' });
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/flat_smooth_metal.webp' });
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/flat_metal.webp' });
+        bootQueue.push({ type: 'direct', path: 'assets/images/textures/dark_metal.webp' });
 
         await this.hydrateAssets(bootQueue);
 
@@ -347,8 +380,18 @@ export class AssetService {
         // Binds the Blob URLs to CSS to guarantee offline rendering and bypass pathing errors
         const noiseUrl = this.blobCache.get('assets/images/textures/ui_noise_base.webp');
         const metalUrl = this.blobCache.get('assets/images/textures/ui_metal_tile.webp');
+        const smoothMetalUrl = this.blobCache.get('assets/images/textures/flat_smooth_metal.webp');
+        const flatMetalUrl = this.blobCache.get('assets/images/textures/flat_metal.webp');
+        const darkMetalUrl = this.blobCache.get('assets/images/textures/dark_metal.webp');
+
         if (noiseUrl) document.documentElement.style.setProperty('--bg-noise', `url(${noiseUrl})`);
         if (metalUrl) document.documentElement.style.setProperty('--bg-metal', `url(${metalUrl})`);
+        if (smoothMetalUrl) document.documentElement.style.setProperty('--bg-smooth-metal', `url(${smoothMetalUrl})`);
+        if (flatMetalUrl) document.documentElement.style.setProperty('--bg-flat-metal', `url(${flatMetalUrl})`);
+        if (darkMetalUrl) document.documentElement.style.setProperty('--bg-dark-metal', `url(${darkMetalUrl})`);
+
+        // Guarantee GPU decoding before transition
+        this._prewarmTextures();
 
         console.log(`[AssetService] Boot Hydration Complete. Loaded ${bootQueue.length} assets.`);
     }
