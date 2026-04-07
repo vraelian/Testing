@@ -121,6 +121,46 @@
     padding: 1.5rem;
     text-align: left;
     border: 2px solid;
+    position: relative;
+    background-color: #111827; /* Fallback baseline */
+    overflow: hidden;
+}
+
+/* Max Cargo Texture Layers */
+.max-cargo-card::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 1;
+}
+
+.max-cargo-card::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* Elevate Max Cargo Content */
+.max-cargo-card > * {
+    position: relative;
+    z-index: 2;
 }
 
 .max-cargo-card h3, .max-cargo-card p, .max-cargo-card div {
