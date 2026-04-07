@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 37.43</title>
+    <title>Orbital Trading 37.46</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,7 +112,7 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 37.43</p>
+            <p>Version 37.46</p>
             <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
@@ -3946,7 +3946,17 @@ card.
     max-height: 85dvh !important;
     display: flex;
     flex-direction: column;
-    padding: 1rem;
+    /* [FIX] +10px Top Padding, -4px Bottom Padding */
+    padding: 1.25rem 0.75rem 0.25rem 0.75rem !important; 
+}
+
+/* Completely hide the default modal title/header to reclaim vertical space */
+.sol-station-modal .modal-header-flex,
+.sol-station-modal > h3,
+.sol-station-modal h3#event-title {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* [RESTORED] Explicit Sol Station Level Background Gradients */
@@ -3963,23 +3973,23 @@ card.
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    margin-bottom: 0 !important;
+    margin: 0 !important; /* [FIX] Aggressively clamp UIModalEngine's injected my-4 and mb-6 Tailwind classes */
     padding-right: 0.25rem; /* Space for scrollbar */
-    /* VIRTUAL WORKBENCH: Removed the padding-bottom entirely to ensure text scrolls flush to the bottom */
     padding-bottom: 0 !important; 
 }
 
 /* Sol Station specifically placed indicator arrow inside modal text boundary */
 .sol-station-modal .scroll-indicator-arrow {
-    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal to extreme bottom right */
-    bottom: 4px; 
-    right: 4px;
+    bottom: 4px; /* [FIX] Lowered since padding-bottom is now explicitly 4px */
+    right: 8px;
 }
 
 /* Tighten the gap above the button container specifically in Sol Station */
 .sol-station-modal #event-button-container {
-    margin-top: 0.75rem !important; 
-    padding-bottom: 0;
+    margin-top: 0.5rem !important; 
+    margin-bottom: 0 !important; /* [FIX] Nuke inherited tailwind margins killing vertical space */
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
 }
 
 .sol-dashboard-container {
@@ -3988,7 +3998,7 @@ card.
     gap: 0.75rem; /* [FIX] Tighter gap */
     font-family: 'Orbitron', sans-serif;
     color: #fff;
-    /* Removed flex scroll here, letting parent (#event-description) handle it */
+    margin-bottom: 0 !important; /* [FIX] Kill layout bleed */
 }
 
 /* Scrollbar Styling for Webkit */
@@ -25003,26 +25013,24 @@ export class UISolStationControl {
         if (!this.currentView || !this.scrollMemory[this.currentView]) return;
         const memory = this.scrollMemory[this.currentView];
 
-        // Ensure browser has fully painted the new DOM and established layout heights before restoring
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    const elementsToRestore = [
-                        'event-description',
-                        'roster-avail-scroll',
-                        'roster-active-scroll',
-                        'roster-lore-scroll',
-                        'roster-buffs-scroll'
-                    ];
+        // Force a synchronous layout calculation to ensure scrollable heights are established
+        // before painting to the screen, eliminating the visual scroll flash.
+        const root = document.getElementById('sol-dashboard-root');
+        if (root) void root.offsetHeight;
 
-                    elementsToRestore.forEach(id => {
-                        if (memory[id] !== undefined) {
-                            const el = document.getElementById(id);
-                            if (el) el.scrollTop = memory[id];
-                        }
-                    });
-                }, 10);
-            });
+        const elementsToRestore = [
+            'event-description',
+            'roster-avail-scroll',
+            'roster-active-scroll',
+            'roster-lore-scroll',
+            'roster-buffs-scroll'
+        ];
+
+        elementsToRestore.forEach(id => {
+            if (memory[id] !== undefined) {
+                const el = document.getElementById(id);
+                if (el) el.scrollTop = memory[id];
+            }
         });
     }
 
@@ -25535,10 +25543,10 @@ export class UISolStationControl {
         }).join('');
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-between items-center mb-3">
+            <div class="sol-subview-header flex justify-between items-center mb-1">
                 <div class="sol-level-header ${getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 70vh; min-height: 500px;">
+            <div class="officer-mgmt-container flex gap-2 w-full mb-1" style="height: 70vh; min-height: 500px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
                     <div id="roster-avail-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
@@ -25549,7 +25557,7 @@ export class UISolStationControl {
                 </div>
             </div>
             
-            <div class="flex justify-center mt-2 border-t border-gray-700 pt-3">
+            <div class="flex justify-center mt-1 border-t border-gray-700 pt-2">
                 <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
                     &larr; RETURN TO DASHBOARD
                 </button>
@@ -25742,7 +25750,7 @@ export class UISolStationControl {
         }
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-center items-center mb-2 border-b pb-2 mt-2" style="border-color: var(--nameplate-border);">
+            <div class="sol-subview-header flex justify-center items-center mb-1 border-b pb-1 mt-1" style="border-color: var(--nameplate-border);">
                 <div class="sol-level-header text-[22px] tracking-wider uppercase text-center w-full" style="color: var(--nameplate-text);">${officer.name}</div>
             </div>
             
@@ -25860,10 +25868,10 @@ export class UISolStationControl {
             : '';
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-between items-center mb-4">
+            <div class="sol-subview-header flex justify-between items-center mb-1">
                 <div class="sol-level-header ${getLevelStyleClass(station.level)} text-lg font-bold">ENGINEERING: PROJECT ${station.level + 1}</div>
             </div>
-            <div class="eng-project-info mb-6 p-4 bg-black/40 border border-gray-700 rounded">
+            <div class="eng-project-info mb-2 p-3 bg-black/40 border border-gray-700 rounded">
                 <div class="text-lg font-bold text-yellow-400 mb-1 tracking-wide">${nextLevelData.projectName}</div>
                 <div class="text-xs text-gray-400 italic mb-3 leading-relaxed border-b border-gray-700 pb-3">"${nextLevelData.lore}"</div>
                 
@@ -25879,7 +25887,7 @@ export class UISolStationControl {
                 ${reqsHtml}
             </div>
             
-            <div class="flex justify-center mt-6 border-t border-gray-700 pt-4">
+            <div class="flex justify-center mt-2 border-t border-gray-700 pt-2">
                 <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
                     &larr; RETURN TO DASHBOARD
                 </button>
@@ -46466,6 +46474,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [37.46] - 2026-4-6
+-  added textures to background and modals
+-  fixed sol station modal performance
+-  tuned ship card and pagination positioning
 
 # [37.43] - 2026-4-3
 -  intro resignation sequence polish

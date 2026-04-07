@@ -142,26 +142,24 @@ export class UISolStationControl {
         if (!this.currentView || !this.scrollMemory[this.currentView]) return;
         const memory = this.scrollMemory[this.currentView];
 
-        // Ensure browser has fully painted the new DOM and established layout heights before restoring
-        requestAnimationFrame(() => {
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    const elementsToRestore = [
-                        'event-description',
-                        'roster-avail-scroll',
-                        'roster-active-scroll',
-                        'roster-lore-scroll',
-                        'roster-buffs-scroll'
-                    ];
+        // Force a synchronous layout calculation to ensure scrollable heights are established
+        // before painting to the screen, eliminating the visual scroll flash.
+        const root = document.getElementById('sol-dashboard-root');
+        if (root) void root.offsetHeight;
 
-                    elementsToRestore.forEach(id => {
-                        if (memory[id] !== undefined) {
-                            const el = document.getElementById(id);
-                            if (el) el.scrollTop = memory[id];
-                        }
-                    });
-                }, 10);
-            });
+        const elementsToRestore = [
+            'event-description',
+            'roster-avail-scroll',
+            'roster-active-scroll',
+            'roster-lore-scroll',
+            'roster-buffs-scroll'
+        ];
+
+        elementsToRestore.forEach(id => {
+            if (memory[id] !== undefined) {
+                const el = document.getElementById(id);
+                if (el) el.scrollTop = memory[id];
+            }
         });
     }
 
@@ -674,10 +672,10 @@ export class UISolStationControl {
         }).join('');
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-between items-center mb-3">
+            <div class="sol-subview-header flex justify-between items-center mb-1">
                 <div class="sol-level-header ${getLevelStyleClass(station.level)}">OFFICER MANAGEMENT</div>
             </div>
-            <div class="officer-mgmt-container flex gap-2 w-full mb-3" style="height: 70vh; min-height: 500px;">
+            <div class="officer-mgmt-container flex gap-2 w-full mb-1" style="height: 70vh; min-height: 500px;">
                 <div class="column-avail flex-1 flex flex-col bg-black/40 border border-gray-700 rounded overflow-hidden">
                     <div class="bg-gray-800 p-2 text-center text-xs text-gray-400 font-bold border-b border-gray-700 shadow shrink-0">AVAILABLE ROSTER</div>
                     <div id="roster-avail-scroll" class="flex-1 overflow-y-auto p-2" style="scrollbar-width: thin;">${availHtml}</div>
@@ -688,7 +686,7 @@ export class UISolStationControl {
                 </div>
             </div>
             
-            <div class="flex justify-center mt-2 border-t border-gray-700 pt-3">
+            <div class="flex justify-center mt-1 border-t border-gray-700 pt-2">
                 <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
                     &larr; RETURN TO DASHBOARD
                 </button>
@@ -881,7 +879,7 @@ export class UISolStationControl {
         }
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-center items-center mb-2 border-b pb-2 mt-2" style="border-color: var(--nameplate-border);">
+            <div class="sol-subview-header flex justify-center items-center mb-1 border-b pb-1 mt-1" style="border-color: var(--nameplate-border);">
                 <div class="sol-level-header text-[22px] tracking-wider uppercase text-center w-full" style="color: var(--nameplate-text);">${officer.name}</div>
             </div>
             
@@ -999,10 +997,10 @@ export class UISolStationControl {
             : '';
 
         root.innerHTML = `
-            <div class="sol-subview-header flex justify-between items-center mb-4">
+            <div class="sol-subview-header flex justify-between items-center mb-1">
                 <div class="sol-level-header ${getLevelStyleClass(station.level)} text-lg font-bold">ENGINEERING: PROJECT ${station.level + 1}</div>
             </div>
-            <div class="eng-project-info mb-6 p-4 bg-black/40 border border-gray-700 rounded">
+            <div class="eng-project-info mb-2 p-3 bg-black/40 border border-gray-700 rounded">
                 <div class="text-lg font-bold text-yellow-400 mb-1 tracking-wide">${nextLevelData.projectName}</div>
                 <div class="text-xs text-gray-400 italic mb-3 leading-relaxed border-b border-gray-700 pb-3">"${nextLevelData.lore}"</div>
                 
@@ -1018,7 +1016,7 @@ export class UISolStationControl {
                 ${reqsHtml}
             </div>
             
-            <div class="flex justify-center mt-6 border-t border-gray-700 pt-4">
+            <div class="flex justify-center mt-2 border-t border-gray-700 pt-2">
                 <button type="button" class="bg-gray-800 hover:bg-gray-700 border border-gray-600 text-white font-bold py-2 px-6 rounded uppercase tracking-wider text-xs shadow transition-colors" data-local-action="return-dashboard">
                     &larr; RETURN TO DASHBOARD
                 </button>

@@ -586,7 +586,17 @@
     max-height: 85dvh !important;
     display: flex;
     flex-direction: column;
-    padding: 1rem;
+    /* [FIX] +10px Top Padding, -4px Bottom Padding */
+    padding: 1.25rem 0.75rem 0.25rem 0.75rem !important; 
+}
+
+/* Completely hide the default modal title/header to reclaim vertical space */
+.sol-station-modal .modal-header-flex,
+.sol-station-modal > h3,
+.sol-station-modal h3#event-title {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 /* [RESTORED] Explicit Sol Station Level Background Gradients */
@@ -603,23 +613,23 @@
     flex: 1;
     overflow-y: auto;
     min-height: 0;
-    margin-bottom: 0 !important;
+    margin: 0 !important; /* [FIX] Aggressively clamp UIModalEngine's injected my-4 and mb-6 Tailwind classes */
     padding-right: 0.25rem; /* Space for scrollbar */
-    /* VIRTUAL WORKBENCH: Removed the padding-bottom entirely to ensure text scrolls flush to the bottom */
     padding-bottom: 0 !important; 
 }
 
 /* Sol Station specifically placed indicator arrow inside modal text boundary */
 .sol-station-modal .scroll-indicator-arrow {
-    /* VIRTUAL WORKBENCH: Adjusted anchoring specifically for the Sol Station Modal to extreme bottom right */
-    bottom: 4px; 
-    right: 4px;
+    bottom: 4px; /* [FIX] Lowered since padding-bottom is now explicitly 4px */
+    right: 8px;
 }
 
 /* Tighten the gap above the button container specifically in Sol Station */
 .sol-station-modal #event-button-container {
-    margin-top: 0.75rem !important; 
-    padding-bottom: 0;
+    margin-top: 0.5rem !important; 
+    margin-bottom: 0 !important; /* [FIX] Nuke inherited tailwind margins killing vertical space */
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
 }
 
 .sol-dashboard-container {
@@ -628,7 +638,7 @@
     gap: 0.75rem; /* [FIX] Tighter gap */
     font-family: 'Orbitron', sans-serif;
     color: #fff;
-    /* Removed flex scroll here, letting parent (#event-description) handle it */
+    margin-bottom: 0 !important; /* [FIX] Kill layout bleed */
 }
 
 /* Scrollbar Styling for Webkit */
