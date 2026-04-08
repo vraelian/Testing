@@ -315,13 +315,6 @@ COMPONENT-SPECIFIC STYLING
     filter: drop-shadow(0 3px 4px rgba(0,0,0,0.8));
 }
 
-/* Target tooltip to enforce horizontal centering if possible based on contextual hook */
-#generic-tooltip.hangar-lore-trigger, 
-.hangar-lore-trigger + #generic-tooltip {
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-}
-
 /* Parameter Bars */
 .ship-param-bars {
     display: flex;
@@ -421,7 +414,7 @@ COMPONENT-SPECIFIC STYLING
 
 
 .action-button-price {
-    font-size: 1.1rem;
+    font-size: 0.88rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
     white-space: nowrap;

@@ -392,7 +392,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-start w-full">
-                <div class="flex w-full items-center justify-between" style="margin-top: 25px;">
+                <div class="flex w-full items-center justify-between" style="margin-top: 35px;">
                     <div class="flex flex-col justify-center items-start flex-grow pr-2">
                         <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
                         <div class="flex items-center">
@@ -416,7 +416,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
         
         return `
              <div class="info-panel-content info-panel-shipyard flex-col justify-start w-full">
-                <div class="flex w-full items-center justify-between -mt-2">
+                <div class="flex w-full items-center justify-between mt-2">
                     <div class="flex flex-col justify-center items-start flex-grow pr-2">
                         <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
                         <div class="flex items-center mb-1">
@@ -428,7 +428,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                                 </svg>
                             </button>
                         </div>
-                        <p class="ship-price-display font-roboto-mono credits-text-pulsing ${priceClass}" style="font-size: calc(2.2rem + 2pt); margin-top: 0.1rem;">${priceStr}</p>
+                        <p class="ship-price-display font-roboto-mono credits-text-pulsing ${priceClass}" style="font-size: calc(1.76rem + 1.6pt); margin-top: 0.1rem;">${priceStr}</p>
                     </div>
 
                     ${paramBars}
