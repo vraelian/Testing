@@ -9170,13 +9170,6 @@ COMPONENT-SPECIFIC STYLING
     filter: drop-shadow(0 3px 4px rgba(0,0,0,0.8));
 }
 
-/* Target tooltip to enforce horizontal centering if possible based on contextual hook */
-#generic-tooltip.hangar-lore-trigger, 
-.hangar-lore-trigger + #generic-tooltip {
-    left: 50% !important;
-    transform: translateX(-50%) !important;
-}
-
 /* Parameter Bars */
 .ship-param-bars {
     display: flex;
@@ -9276,7 +9269,7 @@ COMPONENT-SPECIFIC STYLING
 
 
 .action-button-price {
-    font-size: 1.1rem;
+    font-size: 0.88rem;
     color: var(--ot-cyan-base);
     text-shadow: 0 0 5px var(--ot-cyan-glow), 0 0 10px var(--ot-cyan-glow), 0 2px 4px rgba(0,0,0,0.8);
     white-space: nowrap;
@@ -11192,7 +11185,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
     if (isHangarMode) {
         return `
             <div class="info-panel-content info-panel-hangar flex-col justify-start w-full">
-                <div class="flex w-full items-center justify-between" style="margin-top: 25px;">
+                <div class="flex w-full items-center justify-between" style="margin-top: 35px;">
                     <div class="flex flex-col justify-center items-start flex-grow pr-2">
                         <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
                         <div class="flex items-center">
@@ -11216,7 +11209,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
         
         return `
              <div class="info-panel-content info-panel-shipyard flex-col justify-start w-full">
-                <div class="flex w-full items-center justify-between -mt-2">
+                <div class="flex w-full items-center justify-between mt-2">
                     <div class="flex flex-col justify-center items-start flex-grow pr-2">
                         <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
                         <div class="flex items-center mb-1">
@@ -11228,7 +11221,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                                 </svg>
                             </button>
                         </div>
-                        <p class="ship-price-display font-roboto-mono credits-text-pulsing ${priceClass}" style="font-size: calc(2.2rem + 2pt); margin-top: 0.1rem;">${priceStr}</p>
+                        <p class="ship-price-display font-roboto-mono credits-text-pulsing ${priceClass}" style="font-size: calc(1.76rem + 1.6pt); margin-top: 0.1rem;">${priceStr}</p>
                     </div>
 
                     ${paramBars}
@@ -40877,6 +40870,16 @@ export class UIManager {
             leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
             topPos = rect.top - tooltipHeight - 10;
             if (topPos < 10) topPos = rect.bottom + 10;
+        } else if (this.activeGenericTooltipPosition === 'center') {
+            const card = this.activeGenericTooltipAnchor.closest('.carousel-page, .item-card-container');
+            const referenceRect = card ? card.getBoundingClientRect() : rect;
+            
+            leftPos = referenceRect.left + (referenceRect.width / 2) - (tooltipWidth / 2);
+            topPos = rect.bottom + 10;
+            
+            if (topPos + tooltipHeight > window.innerHeight - 10) {
+                topPos = rect.top - tooltipHeight - 10; 
+            }
         } else {
             leftPos = rect.right + 10;
             topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
