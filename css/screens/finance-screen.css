@@ -359,7 +359,7 @@ input[type=range]#debt-slider::-moz-range-track {
     /* VIRTUAL WORKBENCH: Use a slightly darker bg to stand out from panel */
     background: rgba(13, 17, 23, 0.8); /* bg-[#0D1117]/80 */
     backdrop-filter: blur(2px);
-    /* END VIRTUAL WORKBENCH */
+/* END VIRTUAL WORKBENCH */
     flex-shrink: 0; /* Prevent header from shrinking */
 }
 

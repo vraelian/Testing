@@ -4,7 +4,7 @@
  * and other contextual pop-ups that appear on user interaction (hover or click).
  */
 import { ACTION_IDS } from '../../data/constants.js';
-import { GameAttributes } from '../../services/GameAttributes.js'; // VIRTUAL WORKBENCH: Added import
+import { GameAttributes } from '../../services/GameAttributes.js'; 
 
 export class TooltipHandler {
     /**
@@ -45,7 +45,6 @@ export class TooltipHandler {
                     this._toggleStatusTooltip(actionTarget);
                     return;
                 
-                // --- VIRTUAL WORKBENCH MODIFICATION: Phase 2 ---
                 case 'show-attribute-tooltip':
                     e.stopPropagation(); 
                     e.preventDefault();
@@ -62,6 +61,19 @@ export class TooltipHandler {
                             this.uiManager.showGenericTooltip(actionTarget, content, 'top');
                             this.activeTooltipTarget = actionTarget;
                         }
+                    }
+                    return;
+
+                // --- VIRTUAL WORKBENCH: Tooltip Centering Fix ---
+                case 'show-lore-tooltip':
+                    e.stopPropagation();
+                    e.preventDefault();
+                    if (this.activeTooltipTarget === actionTarget) {
+                        this.uiManager.hideGenericTooltip();
+                        this.activeTooltipTarget = null;
+                    } else {
+                        this.uiManager.showGenericTooltip(actionTarget, actionTarget.dataset.tooltip, 'center');
+                        this.activeTooltipTarget = actionTarget;
                     }
                     return;
                 // --- END VIRTUAL WORKBENCH ---

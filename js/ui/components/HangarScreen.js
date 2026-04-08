@@ -136,7 +136,6 @@ export function renderHangarScreen(gameState, simulationService) {
     // Only show Access Archive if in Hangar Mode OR if Shipyard has ships.
     const showArchive = isHangarMode || shipList.length > 0;
 
-    // VIRTUAL WORKBENCH: Removed mb-1 margin to eliminate 4px of dead space below the toggle button
     return `
         <div class="flex flex-col h-full w-full relative">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
@@ -213,55 +212,43 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         statusBadgeHtml = `<div class="status-badge" style="border-color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-border-light)'}; color: ${isActive ? 'var(--theme-color-primary)' : 'var(--ot-text-secondary)'};">${isActive ? 'ACTIVE' : 'STORED'}</div>`;
     }
 
-    // --- VIRTUAL WORKBENCH: PHASE 4 (UI LAYOUT OVERHAUL - TIER STYLING) ---
     let attributesHtml = '';
     
-    // Only render upgrades if in Hangar Mode (owned ship)
     if (isHangarMode && shipDynamic) {
-        // [[FIXED]]: Combine Innate Mechanics (Static) with Installed Upgrades (Dynamic)
-        // This ensures Z-Class attributes like "Osseous Regrowth" appear as pills.
         const allAttributes = [
             ...(shipStatic.mechanicIds || []),
             ...(shipDynamic.upgrades || [])
         ];
 
         if (allAttributes.length > 0) {
-            // --- VIRTUAL WORKBENCH: SORTING LOGIC ---
             const sortedUpgrades = [...allAttributes].sort((a, b) => {
                 const getTier = (id) => {
                     const def = GameAttributes.getDefinition(id);
                     if (def && def.tier) return def.tier;
                     if (def && def.isAlien) return 5;
-
-                    // Fallback: Check for both Roman and Arabic suffixes
                     if (id.endsWith('_V') || id.endsWith('_5')) return 5;
                     if (id.endsWith('_IV') || id.endsWith('_4')) return 4;
                     if (id.endsWith('_III') || id.endsWith('_3')) return 3;
                     if (id.endsWith('_II') || id.endsWith('_2')) return 2;
-                    return 1; // Default
+                    return 1; 
                 };
                 
                 const tierA = getTier(a);
                 const tierB = getTier(b);
                 
                 if (tierA !== tierB) {
-                    return tierA - tierB; // Low to High (I, II, III)
+                    return tierA - tierB; 
                 }
-                // Secondary Sort: ID (Alphabetical) to group types
                 return a.localeCompare(b);
             });
 
-            // 1. Pre-Calculation Phase: Check for Clipping Risk
             const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
             
             const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
             const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
 
-            // Use sortedUpgrades for rendering loop
             const pills = sortedUpgrades.map((upgradeId, idx) => {
                 const definition = upgradeDefinitions[idx];
-                
-                // 2. Label Logic
                 let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
                 const tooltipText = definition ? definition.description : '';
                 
@@ -269,13 +256,9 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                     label = _getAbbreviatedLabel(label);
                 }
 
-                // 3. Base Color Logic
                 const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
                 
-                // 4. Tier & Style Logic
                 let tier = definition?.tier || 1;
-                
-                // Robust Fallback: If DB tier is missing, try string parsing (Arabic/Roman)
                 if (!definition?.tier) {
                     if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
                     else if (upgradeId.endsWith('_IV') || upgradeId.endsWith('_4')) tier = 4;
@@ -283,13 +266,10 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                     else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
                 }
                 
-                // Ensure Aliens get high-tier styling hooks if not explicitly set
                 if (definition && definition.isAlien) tier = 5;
 
-                // Generate Data-Driven Styles (CSS Class + Variables)
                 const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
 
-                // Semantic Button
                 return `
                     <button class="attribute-pill ${styleData.className}" 
                         data-action="show-attribute-tooltip" 
@@ -308,7 +288,6 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
             `;
         }
     }
-    // --- END VIRTUAL WORKBENCH ---
 
     const distance = Math.abs(itemIndex - activeIndex);
     const inBuffer = distance <= 5;
@@ -341,46 +320,44 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         </div>
     `;
 
-    // Pass simulationService to info panel
     const infoPanel = _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService);
 
     const shipyardLayout = `
-        <div class="col-span-3 flex flex-col justify-start gap-1">
-            <div class="ship-display-area flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-[90%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden">
+        <div class="col-span-3 flex flex-col justify-start gap-1 h-full">
+            <div class="ship-display-area flex items-center justify-center relative" style="margin-top: 7px;">
+                <div class="ship-image-placeholder w-[95%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden mb-0">
                     ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
         </div>
-        <div class="col-span-2 flex flex-col justify-start gap-1">
+        <div class="col-span-2 flex flex-col justify-start gap-1 h-full">
             ${infoPanel}
-            <div class="action-buttons-container pt-1">
+            <div class="action-buttons-container mt-auto w-full pt-2" style="margin-bottom: 15px;">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
 
     const hangarLayout = `
-        <div class="col-span-2 flex flex-col justify-start gap-1">
+        <div class="col-span-2 flex flex-col justify-start gap-1 h-full">
             ${infoPanel}
         </div>
 
-        <div class="col-span-3 flex flex-col justify-start gap-1">
+        <div class="col-span-3 flex flex-col justify-start gap-1 h-full">
             <div class="ship-display-area flex items-center justify-center relative">
-                <div class="ship-image-placeholder w-[90%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden">
+                <div class="ship-image-placeholder w-[95%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden mb-0">
                     ${shipImageHtml}
                 </div>
                 ${statusBadgeHtml}
             </div>
             
-            <div class="action-buttons-container pt-1">
+            <div class="action-buttons-container mt-auto w-full pt-2" style="margin-bottom: 15px;">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
         </div>
     `;
 
-    // VIRTUAL WORKBENCH: Inject data-ship-class so CSS can dynamically assign the gradient layer
     return `
         <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}" data-ship-class="${shipStatic.class}">
             <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
@@ -402,53 +379,34 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
  */
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService) {
     const shipClassLower = shipStatic.class.toLowerCase();
-    const len = shipStatic.name.length;
-    let nameClass = 'text-xl'; 
-
-    if (len > 25) {
-        nameClass = 'text-xs leading-tight'; 
-    } else if (len > 22) {
-        nameClass = 'text-sm leading-tight'; 
-    } else if (len > 17) {
-        nameClass = 'text-base leading-tight';
-    } else {
-        nameClass = 'text-xl'; 
-    }
     
-    const descLen = shipStatic.description.length;
-    let descClass = 'text-sm'; 
-    let descStyle = '';
-
-    if (descLen > 240) {
-        descClass = 'text-xs'; 
-    } else if (descLen > 190) {
-        descClass = ''; 
-        descStyle = 'font-size: 0.8rem; line-height: 1.4;';
-    }
-    
-    const nameStyles = `color: var(--class-${shipClassLower}-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis;`;
-
     let shadowClass = 'inset-text-shadow'; 
     if (shipStatic.class === 'Z') shadowClass = 'glow-text-z';
     else if (shipStatic.class === 'O') shadowClass = 'glow-text-o';
     else if (shipStatic.class === 'S') shadowClass = 'glow-text-s';
 
-    // Pass simulationService to param bars
     const paramBars = _renderParamBars(shipStatic, shipDynamic, gameState.player, !isHangarMode, shipId, simulationService);
+
+    const tooltipContent = shipStatic.description ? shipStatic.description.replace(/"/g, '&quot;') : '';
 
     if (isHangarMode) {
         return `
-            <div class="info-panel-content info-panel-hangar flex-col justify-start">
-                <div class="info-panel-header">
-                    <div class="info-panel-text">
-                        <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
-                        <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
+            <div class="info-panel-content info-panel-hangar flex-col justify-start w-full">
+                <div class="flex w-full items-center justify-between" style="margin-top: 25px;">
+                    <div class="flex flex-col justify-center items-start flex-grow pr-2">
+                        <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
+                        <div class="flex items-center">
+                            <div class="text-[0.9rem] rounded-md px-2 py-0.5 border font-semibold text-gray-300 inline-block shadow-sm" style="background-color: var(--badge-bg); border-color: rgba(255,255,255,0.2);">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</div>
+                            <button class="ship-info-icon hangar-lore-trigger cursor-help flex items-center justify-center px-2" data-action="show-lore-tooltip" data-position="center" data-tooltip="${tooltipContent}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--ot-cyan-base)" class="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity pointer-events-none">
+                                    <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4M12 8h.01"/>
+                                </svg>
+                            </button>
+                        </div>
                     </div>
+                    
                     ${paramBars}
-                </div>
-                
-                <div class="flavor-text-box mt-2" style="border-color: var(--frame-border-color);">
-                    <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
                 </div>
             </div>
         `;
@@ -457,18 +415,23 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
         const priceClass = priceStr.length > 9 ? 'text-shrink' : '';
         
         return `
-             <div class="info-panel-content info-panel-shipyard flex-col justify-start">
-                <div class="info-panel-header">
-                    <div class="info-panel-text">
-                        <h3 class="${nameClass} font-orbitron ${shadowClass}" style="${nameStyles}">${shipStatic.name}</h3>
-                        <p class="text-md text-gray-400 inset-text-shadow">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</p>
-                        <p class="ship-price-display font-roboto-mono text-2xl credits-text-pulsing ${priceClass}">${priceStr}</p>
+             <div class="info-panel-content info-panel-shipyard flex-col justify-start w-full">
+                <div class="flex w-full items-center justify-between -mt-2">
+                    <div class="flex flex-col justify-center items-start flex-grow pr-2">
+                        <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
+                        <div class="flex items-center mb-1">
+                            <div class="text-[0.9rem] rounded-md px-2 py-0.5 border font-semibold text-gray-300 inline-block shadow-sm" style="background-color: var(--badge-bg); border-color: rgba(255,255,255,0.2);">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</div>
+                            <button class="ship-info-icon hangar-lore-trigger cursor-help flex items-center justify-center px-2" data-action="show-lore-tooltip" data-position="center" data-tooltip="${tooltipContent}">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--ot-cyan-base)" class="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity pointer-events-none">
+                                    <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4M12 8h.01"/>
+                                </svg>
+                            </button>
+                        </div>
+                        <p class="ship-price-display font-roboto-mono credits-text-pulsing ${priceClass}" style="font-size: calc(2.2rem + 2pt); margin-top: 0.1rem;">${priceStr}</p>
                     </div>
-                    ${paramBars}
-                </div>
 
-                <div class="flavor-text-box mt-2" style="border-color: var(--frame-border-color);">
-                    <p class="${descClass} text-gray-300" style="${descStyle}">${shipStatic.description}</p>
+                    ${paramBars}
                 </div>
             </div>
         `;
@@ -518,10 +481,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
  * @private
  */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId, simulationService) {
-    // --- UPGRADE SYSTEM: Effective Stats Display ---
-    // If we are in Hangar mode (owned ship), we must use the Effective Stats 
-    // to show the boosted capacities (e.g., from Aux Tanks or Hull Armor).
-    // If in Shipyard, we default to the static base stats from the DB.
     let effectiveStats = shipStatic;
     
     if (!isShipyard && simulationService) {
@@ -532,7 +491,6 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
     const currentCargo = isShipyard ? shipStatic.cargoCapacity : calculateInventoryUsed(player.inventories[shipId]);
     const currentFuel = isShipyard ? shipStatic.maxFuel : shipDynamic?.fuel ?? 0;
 
-    // Use Effective Max for percentage calculations
     const hullPct = effectiveStats.maxHealth > 0 ? (currentHull / effectiveStats.maxHealth) * 100 : 0;
     const cargoPct = effectiveStats.cargoCapacity > 0 ? (currentCargo / effectiveStats.cargoCapacity) * 100 : 0;
     const fuelPct = effectiveStats.maxFuel > 0 ? (currentFuel / effectiveStats.maxFuel) * 100 : 0;
@@ -541,34 +499,25 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
     const cargoColor = '#f59e0b'; 
     const fuelColor = '#3b82f6'; 
 
-    /**
-     * VIRTUAL WORKBENCH: SVG ATOM REFACTOR (1/11/26)
-     * Replaced HTML/CSS bars with rigid SVG components.
-     * This forces atomic rendering, preventing the browser from independently culling text labels
-     * or miscalculating sub-pixel offsets during scaled 3D carousel animations.
-     */
     const renderBar = (label, current, max, percentage, color) => {
         const c = Math.floor(current);
         const m = Math.floor(max);
         const isMax = (c >= m);
         const displayText = isMax ? m : `${c} / ${m}`;
         
-        // VIRTUAL WORKBENCH: VERTICAL STACK COORDINATE ADJUSTMENT (1/11/26)
-        // viewBox 100x20 provides ample space for centered stacking with padding.
-        // Label: y=4 (Shifted up to restore breathing room)
-        // Bar: y=10, height=10 (Bottom edge is 20)
-        // Value Text: y=15.5 (Vertically centered in the bar)
         const trackWidth = 100;
         const fillWidth = (percentage / 100) * trackWidth;
 
         return `
             <div class="param-bar-item">
                 <svg viewBox="0 0 100 20" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
+                    <rect x="28" y="-4" width="44" height="11" rx="3" fill="var(--badge-bg)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5" />
+                    
                     <text x="50" y="2" text-anchor="middle" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
                     
-                    <rect x="0" y="8.4" width="${trackWidth}" height="14" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" />
+                    <rect x="0" y="8.4" width="${trackWidth}" height="14" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" stroke="#000000" stroke-width="0.5" />
                     
-                    <rect x="0" y="8.4" width="${fillWidth}" height="14" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" />
+                    <rect x="0" y="8.4" width="${fillWidth}" height="14" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" stroke="#000000" stroke-width="0.5" />
                     
                     <text x="50" y="16.4" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
                 </svg>
