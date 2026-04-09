@@ -136,7 +136,7 @@ The ship looks like it was scavenged rather than built. Its 'hull' is merely a s
         maxHealth: 40,
         cargoCapacity: 35,
         maxFuel: 150,
-        role: "Balanced",
+        role: "Explorer",
         attribute: "None",
         description: "Resembling a manned deep-space probe, its fragile, asymmetric frame carries massive fuel reserves at the cost of armor and crew comfort.",
         lore: `The Nomad, born from the Helium Rush, is a direct response to the chaos and opportunity of Luna's new economy.
