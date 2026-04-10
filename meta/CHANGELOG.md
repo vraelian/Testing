@@ -2,6 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [37.57] - 2026-4-10
+-  added game menu
+-  added manual in-game saving
+-  added exit game option
+
 # [37.54] - 2026-4-7
 -  overhauled ship cards
 
