@@ -101,7 +101,7 @@ export function renderFinanceScreen(gameState) {
 
         // --- VIRTUAL WORKBENCH: Interactive Payment Slider ---
         const completedMissionIds = missions?.completedMissionIds || [];
-        const isDebtLocked = !completedMissionIds.includes('mission_10') && !gameState.isDebugStart;
+        const isDebtLocked = !completedMissionIds.includes('mission_tutorial_09') && !gameState.isDebugStart;
         let sliderHtml = '';
 
         if (isDebtLocked) {
