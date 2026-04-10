@@ -1,3 +1,4 @@
+
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -26,7 +27,7 @@
     "Antimatter": "A Tier 7 commodity generated exclusively by the Sol Station. Used for extreme wealth generation or high-tier crafting.",
     "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
-    "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
+    "Wealth_Milestones": "Specific credit thresholds that previously gated progression. Now replaced functionally by the active License Acquisition sequence, ensuring commodity tiers and mission types unlock based on explicit gameplay achievements rather than passive wealth accumulation.",
     "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
     "Blockade_Events": "A specific class of dynamic events that restrict access to locations or severely penalize travel routes, altering standard arbitrage pathways.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
@@ -62,10 +63,14 @@
     "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs.",
     "Freight_Depositing": "The mechanic allowing piecemeal fulfillment of massive cargo requirements at a destination without monopolizing the fleet's entire hold.",
     "Mission_Freight_Leakage": "A macroeconomic link where depositing freight for a delivery mission injects that volume directly into the destination market's actual inventory, driving down local prices and opening new arbitrage pathways.",
-    "Two-Step_Mission": "A mission architecture requiring the player to fulfill an initial objective (like gathering specific cargo) before a secondary objective or location is revealed and required for completion.",
+    "Two-Step_Mission": "A multi-phase mission architecture requiring the player to fulfill an initial objective (such as bulk cargo delivery) before a secondary objective or location is dynamically revealed and required for completion.",
     "Ship_Destruction": "The critical consequence of allowing a ship's hull health to reach zero during transit or via random events. Results in a split probability of either being towed (loss of time/fuel) or absolute destruction (loss of asset, cargo, and potential game over).",
     "Player_Footprint_Indicator": "A UI element on the market price graph that overlays the player's historical buy/sell interactions with a specific commodity, providing contextual visualization of their impact on the local economy.",
-    "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not at the turn-in destination."
+    "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not at the turn-in destination.",
+    "Game_Menu": "The top-level application pause menu allowing players explicit control over system operations, manual persistence, and session termination.",
+    "Manual_Save": "A user-driven state serialization commit that exists independently of the background, event-driven auto-save architecture, facilitating strict progression control.",
+    "Texture_Pre-hydration": "The performance-critical boot sequence process of reading large UI texture blobs into memory and injecting them as CSS variables prior to the first render pass, preventing stutter.",
+    "Officer_Recruitment_Pipeline": "The mechanical bridge connecting static lore/stat profiles in the registry to the player's persistent active `officerRoster` through a transactional interface."
   },
   "service_summaries": {
     "SolStationService": {
@@ -1044,7 +1049,7 @@
     "F076": {
       "path": "./js/services/ui/UIEventControl.js",
       "role": "UI_CONTROLLER",
-      "description": "Domain Controller: Manages World Events, Maps, and Lore."
+      "description": "Domain Controller: Manages World Events, Maps, Lore, and the explicit Game Menu interface."
     },
     "F077": {
       "path": "./js/services/RandomEventService.js",

@@ -7,6 +7,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  added manual in-game saving
 -  added exit game option
 -  title screen menus polish
+-  updated meta files
 
 # [37.54] - 2026-4-7
 -  overhauled ship cards

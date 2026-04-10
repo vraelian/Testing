@@ -47016,6 +47016,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  added manual in-game saving
 -  added exit game option
 -  title screen menus polish
+-  updated meta files
 
 # [37.54] - 2026-4-7
 -  overhauled ship cards
@@ -48237,7 +48238,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
-Last Edit: 3/27/26, ver. [37.29]
+Last Edit: 4/10/26, ver. [37.58]
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -48286,7 +48287,7 @@ How much fuel is removed from the tank per trip.
 
 JavaScript
 FuelBurn = DistanceAU * BASE_FUEL_BURN * (1 + ShipBurnMod + EngineUpgradeMod)
-BASE_FUEL_BURN: Defined per ship class (recently reduced by 50% system-wide for travel baseline cost adjustments).
+BASE_FUEL_BURN: Defined per ship class (reduced by 50% system-wide for travel baseline cost adjustments).
 EngineUpgradeMod: Typically positive (increases burn) for speed upgrades (e.g., +0.20).
 
 2.2 Travel Time
@@ -48303,7 +48304,7 @@ JavaScript
 BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
 HullDecay = Math.ceil(BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod * 0.8)
 HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
-HULL_DECAY_PER_TRAVEL_DAY: Increased by 5% to (1 / 7) * 1.0605 to force more frequent maintenance.
+HULL_DECAY_PER_TRAVEL_DAY: Increased by an additional 5% to 1.1135 (from 1.0605) to force more frequent maintenance stops.
 
 2.4 Fuel-Coupled Event Delays
 When a random event introduces a time delay, it consumes standard travel fuel proportional to the route's base burn rate.
@@ -48482,6 +48483,7 @@ Modal Mask900The generic modal-overlay background.
 Modal1000Active Modal Dialogs, Help Modals.
 Toast2000Notifications, Floating Battle Text.
 Cinematic Skip2500Floating skip buttons during overlays.
+Game Menu3000Global Pause/Game Menu Overlay.
 Cursor9999Custom hardware cursors (if applicable).
 
 2. Component Blueprints
@@ -48653,6 +48655,45 @@ Text input fields within the market interface dynamically scale their font-size 
 2.15 Hull Health Warning States
 A contextual UI enhancement on the Services screen. As the active ship's hull drops below predefined thresholds (e.g., <50%, <20%), dynamic CSS classes inject pulsing animations and shift the primary coloration of the health bar from blue to amber, and finally to critical red, providing immediate visual feedback of structural peril.
 
+2.16 Game Menu Overlay (.game-menu-overlay)
+The top-level pause/system menu overlay sitting at Z-Index 3000. Houses execution paths for manual persistence, settings, and session termination.
+HTML
+<div class="game-menu-overlay hidden">
+    <div class="menu-container">
+        <h2>GAME MENU</h2>
+        <button class="btn btn-menu" type="button" data-action="resume-game">RESUME</button>
+        <button class="btn btn-menu" type="button" data-action="save-game">MANUAL SAVE</button>
+        <button class="btn btn-danger" type="button" data-action="exit-game">EXIT TO TITLE</button>
+    </div>
+</div>
+
+2.17 Officer Recruitment Modal (.officer-recruit-modal)
+A specialized modal designed for the recruitment pipeline. Integrates stat previews, UI portraits, and transactional confirmation buttons into a distinct flow.
+HTML
+<div class="modal officer-recruit-modal">
+    <div class="modal-header-flex">
+        <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
+        <h2 class="modal-title-group">{Officer Name}</h2>
+    </div>
+    <div class="modal-content">
+        <p class="officer-lore">{Flavor Text}</p>
+        <div class="stat-block">
+            <span>Engineering Buffs:</span>
+            <span>{Buff 1}, {Buff 2}</span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="button" data-action="confirm-recruit">RECRUIT ({Cost})</button>
+    </div>
+</div>
+
+2.18 Textured Elements (.textured-bg, .card-textured)
+Core structural classes enabling the high-fidelity UI overhaul. Relies on `AssetStorageService` blob URLs dynamically injected as CSS variables (`--ui-texture-base`) to avoid HTTP request blocking.
+HTML
+<div class="card card-textured" style="background-image: var(--ui-texture-base);">
+    ...
+</div>
+
 3. CSS Utilities
 .hidden: display: none !important. Used for toggling visibility.
 .text-center: text-align: center.
@@ -48768,7 +48809,7 @@ Correction: Define these as constants in js/data/constants.js and import them.
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 3/27/26, ver. [37.29]
+Last Edit: 4/10/26, ver. [37.58]
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
@@ -48901,9 +48942,13 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
 1. Systemic Supply Bottlenecks: Officers with severe negative consumptionMods will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system, driving up localized prices globally.
 2. Capacity Buffers: Officers with high capacityMods drastically increase the "runway" a station has before reaching critical entropy, expanding the viable geographic radius of arbitrage loops.
 3. Volumetric Scaling: The station's endgame requirements are volumetrically scaled down (maxing at ~4,000 units for Level 50) to perfectly align with Capital ship constraints, ensuring progression requires multiple focused supply runs.
+
+IX. Detached Commodity Progression
+Commodity tiers are no longer unlocked by passive Wealth Milestones. Access to higher-tier trade goods is explicitly gated by the player's active progression through the License Acquisition sequence and targeted mission completion, shifting the economic unlock phase from a passive accumulation check to an active gameplay objective.
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
+
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -48932,7 +48977,7 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
     "Antimatter": "A Tier 7 commodity generated exclusively by the Sol Station. Used for extreme wealth generation or high-tier crafting.",
     "Market_Pressure": "A value representing recent player trading activity for a commodity at a specific location. This value is now used exclusively to influence a market's 'targetStock' for replenishment, simulating the market adapting to new supply/demand.",
     "Galactic_Average": "The baseline, long-term average price for a commodity across the entire system. Market prices tend to revert to this average over time.",
-    "Wealth_Milestones": "Specific credit thresholds that, when reached by the player, unlock higher tiers of commodities for trading, gating progression.",
+    "Wealth_Milestones": "Specific credit thresholds that previously gated progression. Now replaced functionally by the active License Acquisition sequence, ensuring commodity tiers and mission types unlock based on explicit gameplay achievements rather than passive wealth accumulation.",
     "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
     "Blockade_Events": "A specific class of dynamic events that restrict access to locations or severely penalize travel routes, altering standard arbitrage pathways.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
@@ -48968,10 +49013,14 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
     "Officer_Roster": "The collection of recruitable officers, tracked and managed via the UI, providing distinct systemic buffs.",
     "Freight_Depositing": "The mechanic allowing piecemeal fulfillment of massive cargo requirements at a destination without monopolizing the fleet's entire hold.",
     "Mission_Freight_Leakage": "A macroeconomic link where depositing freight for a delivery mission injects that volume directly into the destination market's actual inventory, driving down local prices and opening new arbitrage pathways.",
-    "Two-Step_Mission": "A mission architecture requiring the player to fulfill an initial objective (like gathering specific cargo) before a secondary objective or location is revealed and required for completion.",
+    "Two-Step_Mission": "A multi-phase mission architecture requiring the player to fulfill an initial objective (such as bulk cargo delivery) before a secondary objective or location is dynamically revealed and required for completion.",
     "Ship_Destruction": "The critical consequence of allowing a ship's hull health to reach zero during transit or via random events. Results in a split probability of either being towed (loss of time/fuel) or absolute destruction (loss of asset, cargo, and potential game over).",
     "Player_Footprint_Indicator": "A UI element on the market price graph that overlays the player's historical buy/sell interactions with a specific commodity, providing contextual visualization of their impact on the local economy.",
-    "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not at the turn-in destination."
+    "Synthesized_Objective": "The UI logic that dynamically overrides the mission sticky bar to instruct 'Travel to [Location]' when all item prerequisites are met but the player is not at the turn-in destination.",
+    "Game_Menu": "The top-level application pause menu allowing players explicit control over system operations, manual persistence, and session termination.",
+    "Manual_Save": "A user-driven state serialization commit that exists independently of the background, event-driven auto-save architecture, facilitating strict progression control.",
+    "Texture_Pre-hydration": "The performance-critical boot sequence process of reading large UI texture blobs into memory and injecting them as CSS variables prior to the first render pass, preventing stutter.",
+    "Officer_Recruitment_Pipeline": "The mechanical bridge connecting static lore/stat profiles in the registry to the player's persistent active `officerRoster` through a transactional interface."
   },
   "service_summaries": {
     "SolStationService": {
@@ -49950,7 +49999,7 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
     "F076": {
       "path": "./js/services/ui/UIEventControl.js",
       "role": "UI_CONTROLLER",
-      "description": "Domain Controller: Manages World Events, Maps, and Lore."
+      "description": "Domain Controller: Manages World Events, Maps, Lore, and the explicit Game Menu interface."
     },
     "F077": {
       "path": "./js/services/RandomEventService.js",
@@ -50817,7 +50866,7 @@ Decision: Implemented Fleet Trading and Storage with an associated "Convoy Tax".
 * A "Convoy Tax" is assessed during travel, dynamically increasing resource burn based on the total number of ships traversing the route.
 
 Consequences:
-* **Pro:** Expands player progression, allowing for specialized ship collections.
+* **Pro:** ExpExpands player progression, allowing for specialized ship collections.
 * **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource costs.
 
 ADR-031: Balance v2 - Parametric Pacing & Volumetric Sinks
@@ -50937,6 +50986,49 @@ Decision: Implemented an opt-in telemetry array mapped directly into the root `G
 Consequences:
 * Pro: Allows rapid tuning of systemic economic behavior based on objective longitudinal data.
 * Pro: Identifies compounding inflation/deflation errors.
+
+ADR-042: Game Menu and Manual Persistence
+Status: Accepted (2026-04-10)
+
+Context: Progression previously relied strictly on automated saving triggers. Players required explicit control over their session state and a dedicated "Pause/Menu" overlay to manage game exit and manual state commits.
+
+Decision: Implemented a dedicated Game Menu UI overlay.
+* Explicit Triggers: Manual save buttons directly interface with `SaveStorageService.saveGame`.
+* State Decoupling: Separated intentional state commits from purely cyclic or event-driven persistence.
+* Exit Protocol: Added a formal "Exit Game" flow to ensure all pending JIT commits and telemetry buffers are flushed before terminating the session.
+
+Consequences:
+* Pro: Increases player agency over persistence.
+* Pro: Provides a scalable UI hub for future settings and system controls.
+
+ADR-043: Texture Pre-Hydration & High-Fidelity UI
+Status: Accepted (2026-04-07)
+
+Context: Recent UI overhauls introduced complex textures to high-frequency components (ship cards, mission modals, backgrounds). Standard CSS background loading caused frame drops and layout thrashing during carousel navigation on mobile targets.
+
+Decision: Extended the `AssetStorageService` and `AssetService` to support Texture Pre-Hydration.
+* Pre-Load Execution: High-use tileable textures (e.g., dark metal, noise base) are explicitly hydrated during the "Pre-Flight" boot phase.
+* Blob Injection: Blob URLs are dynamically injected into CSS variables or inline styles prior to standard `UIManager` render cycles.
+* DOM Decoupling: Prevents the browser's render thread from blocking while waiting for network/cache retrieval of UI styling elements.
+
+Consequences:
+* Pro: Maintains 60fps scrolling performance despite increased visual complexity.
+* Pro: Eliminates "pop-in" of background textures on modal generation.
+* Con: Increases initial memory payload during the boot sequence.
+
+ADR-044: The Officer Recruitment Pipeline
+Status: Accepted (2026-03-17)
+
+Context: Sol Station previously relied on static or abstract officer assignments. A systemic pipeline was needed to allow players to discover, review, and recruit officers into a persistent roster.
+
+Decision: Implemented an explicit recruitment pipeline architecture.
+* Data Separation: Static officer profiles (stats, lore, portrait IDs) reside in `officers.js` and `characters.js`.
+* State Representation: The player's active state only retains an array of string IDs (`officerRoster`).
+* UI Handoff: The recruitment modal acts as the transactional bridge, deducting recruitment fees and pushing the ID to the state array, which `SolStationService` then parses for engineering buffs.
+
+Consequences:
+* Pro: Clean separation of static lore/stats from the mutable save file.
+* Pro: Highly extensible for future officer generation or procedural traits.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -50990,7 +51082,7 @@ Code snippet
 graph TD
     subgraph Phase 1: DOM Ready
         A[main.js executes] --> B[Initialize AssetService];
-        B --> C[Background Hydration: Title Assets];
+        B --> C[Background Hydration: Title Assets & UI Textures];
         A --> D[Initialize UIManager: Partial];
         D --> E[Render Title Screen & EULA Modal];
     end
@@ -51010,12 +51102,12 @@ graph TD
         M --> N[UIManager.render: Hangar/Shipyard];
     end
 2.3 Asset Hydration Architecture
-Persistence strategy to prevent iOS cache eviction.
+Persistence strategy to prevent iOS cache eviction, expanded to include high-frequency UI textures.
 
 Code snippet
 graph TD
     subgraph Request
-        A[Asset Requested] --> B[AssetService.hydrateAssets];
+        A[Asset/Texture Requested] --> B[AssetService.hydrateAssets];
     end
 
     subgraph Resolution Strategy
@@ -51033,7 +51125,7 @@ graph TD
     end
 
     subgraph Render
-        D & H --> K[DOM Image Element];
+        D & H --> K[DOM Image/CSS Variable Injection];
     end
 2.4 Intel Market System (Local Data Broker)
 Flow for generating and purchasing temporary market advantages.
@@ -51187,7 +51279,7 @@ graph TD
         J --> K((Mutate GameState));
     end
 2.10 Contextual Help Modal Flow
-The interaction loop for context-sensitive player assistance, replacing the legacy tutorial triggers.
+The interaction loop for context-sensitive player assistance.
 
 Code snippet
 graph TD
@@ -51225,11 +51317,11 @@ graph TD
     subgraph Availability Check
         C --> D[MissionService.getAvailableMissions];
         D --> E[MissionTriggerEvaluator];
-        E -->|Check Triggers| F{Passed?};
+        E -->|Check Triggers & Unlocked Tiers| F{Passed?};
         F -- Yes --> G[Render 'Terminal' Card];
     end
 
-    subgraph Active Lifecycle
+    subgraph Active Lifecycle (Two-Step & Standard)
         G --> H[User Accepts];
         H --> I[Push to activeMissionIds];
         I --> J[Init missionProgress];
@@ -51237,15 +51329,16 @@ graph TD
 
     subgraph Progress Evaluation
         J --> K[MissionObjectiveEvaluator];
-        K -->|Evaluate Frame| L{Is Met?};
-        L -- Partial --> M[Update Progress Bar];
-        L -- All Met --> N[Mark isCompletable=true];
+        K -->|Evaluate Frame| L{Is Primary Met?};
+        L -- Yes, Two-Step --> M[Reveal Secondary Objective/Location];
+        L -- Partial --> N[Update Progress Bar];
+        L -- All Met --> O[Mark isCompletable=true];
     end
 
     subgraph Completion
-        N --> O[User Returns to Host];
-        O --> P[MissionService.completeMission];
-        P --> Q[Grant Rewards & Archive];
+        O --> P[User Returns to Target Location];
+        P --> Q[MissionService.completeMission];
+        Q --> R[Grant Rewards/Licenses & Archive];
     end
 2.12 Consumable Item Usage (Folded Space)
 Flow for using an item to bypass standard travel costs.
@@ -51316,12 +51409,12 @@ graph TD
         G --> H[Assess Scaling Convoy Tax against resources];
     end
 2.15 Game State Persistence & Dual-Write Storage
-Flow for saving and loading game data, utilizing an iOS native bridge, IDB, and manual File I/O for Imports/Exports.
+Flow for saving and loading game data.
 
 Code snippet
 graph TD
     subgraph Save Operation
-        A1[User Saves Game] --> B1[SaveStorageService.saveGame];
+        A1[User/Auto Saves Game] --> B1[SaveStorageService.saveGame];
         B1 --> C1[Write to IndexedDB];
         C1 --> D1{Is iOS WebKit Bridge Active?};
         D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
@@ -51346,7 +51439,7 @@ graph TD
         J2 --> G2;
     end
 2.16 Universal Toast System Queue
-Flow for evaluating, capping, and rendering non-blocking notifications upon location arrival.
+Flow for evaluating, capping, and rendering non-blocking notifications.
 
 Code snippet
 graph TD
@@ -51509,8 +51602,274 @@ graph TD
         H[Player Clicks Launch / Travel] --> I[TravelService.initiateTravel];
         I --> J[State Mutation: Force Wipe activeHotIntel];
     end
+2.23 Manual Save & Exit Protocol
+Execution path for explicit state commits and session termination via the Game Menu.
+
+Code snippet
+graph TD
+    subgraph Trigger
+        A[Player Opens Game Menu] --> B[Select 'Save Game' or 'Exit Game'];
+    end
+    
+    subgraph Execution
+        B --> C[SaveStorageService.saveGame];
+        C --> D[Force IDB and iOS Native Bridge Writes];
+    end
+    
+    subgraph Termination
+        B -- Exit Selected --> E[Wait for Writes to Resolve];
+        E --> F[Clear Ephemeral State / Flush JIT Telemetry];
+        F --> G[Return to Title Screen];
+    end
+2.24 Officer Recruitment Pipeline
+Flow converting static roster data into persistent player state via the UI.
+
+Code snippet
+graph TD
+    subgraph Generation
+        A[Player Accesses Services] --> B[UI Queries `officers.js` for Roster];
+        B --> C[Render Recruitment Modal with Stat/Cost Previews];
+    end
+    
+    subgraph Transaction
+        C --> D[Player Selects Officer to Recruit];
+        D --> E[PlayerActionService validates Credit Cost];
+        E -- Valid --> F[Deduct Credits];
+    end
+    
+    subgraph State Mutation
+        F --> G[Push String ID to `player.officerRoster`];
+        G --> H[GameState.setState];
+        H --> I[SolStationService calculates new systemic engineering buffs];
+    end
 
 ```markdown
+// meta/STATE_SCHEMA.md
+
+# Orbital Trading: State Schema Definition
+
+## 1. Root State Object
+
+The `GameState` class manages a monolithic state object. All properties below are children of this root.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `day` | Number | Current game day (starts at 1). |
+| `currentLocationId` | String | ID of the player's current location (e.g., 'loc_mars'). |
+| `activeNav` | String | ID of the currently active main navigation tab. |
+| `activeScreen` | String | ID of the currently active sub-screen. |
+| `isGameOver` | Boolean | Flag indicating if the session has ended. |
+| `introSequenceActive` | Boolean | Flag for the initial prologue sequence. |
+| `player` | Object | **(See Section 2)** All player-specific data. |
+| `market` | Object | **(See Section 3)** All economic data. |
+| `systemStates` | Object | **(See Section 10)** System-wide macroeconomic conditions (Economic Weather). |
+| `intelMarket` | Object | **(See Section 4)** Dynamic intel packets for sale. |
+| `activeIntelDeal` | Object | **(See Section 5)** Currently active trade advantage. |
+| **`activeHotIntel`** | **Object** | **(See Section 5)** Ephemeral intelligence that expires immediately upon departing a system. |
+| **`pendingTravel`** | **Object** | **Transient state for event consequences during travel.** |
+| `tutorials` | Object | **(See Section 6)** State regarding the Contextual Help Modal system. |
+| `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
+| `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
+| `uiState` | Object | Ephemeral UI state (scroll positions, active tabs, menu overlays). |
+| `telemetry` | Object | Debug/Analytics data tracking macro-economic trends and bot logs. |
+
+**Pending Travel Structure (`state.pendingTravel`)**
+This object buffers data during the async travel/event loop.
+
+* `destinationId`: The intended target location ID.
+* `travelTimeAdd`: Additional days added to the trip by an event.
+* `travelTimeAddPercent`: Percentage modifier for trip duration.
+* `eventHullDamagePercent`: Accumulated hull damage from event outcomes.
+* `setTravelTime`: Hard override for travel duration (if > 0).
+* `convoyTaxDeduction`: Amount of resources/credits deducted due to fleet size during travel.
+* `blockadeActive`: Boolean flag indicating an active blockade event affecting the travel route or destination access.
+
+---
+
+## 2. Player State (`state.player`)
+
+Contains all progression, assets, and statistics for the user.
+
+**IMPORTANT NOTE ON SHIP ATTRIBUTES:** All physical ship attributes (`maxHealth`, `cargoCapacity`, `maxFuel`) stored here or retrieved via DB definitions are strictly bounded to remain `<= 1000`. This constraint is mathematically necessary to sustain the Tier-Scaled Upkeep economy and the "Packing Peanut" inventory strategy.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `name` | String | Player's chosen name. |
+| `introStep` | Number | Current progression step within the cinematic intro sequence. |
+| `playerAge` | Number | Current age (starts at 24). |
+| `lastBirthdayYear` | Number | Year of the last processed birthday event. |
+| `credits` | Number | Current currency balance. |
+| `debt` | Object | Structured debt ledgers for 'guild' and 'syndicate' balances, tracking principal, interest rates, and loan start/due dates. |
+| `bankruptcy` | Object | Flags and trackers for insolvency status, grace periods, and active Repo Events. |
+| `revealedTier` | Number | Highest commodity tier visibly mapped, independent of strict wealth milestones. |
+| `unlockedCommodityTiers` | Array<Number> | Detached milestone list of commodity tiers explicitly unlocked for trade (e.g., via licenses). |
+| `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
+| **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
+|   `profitBonus` | Number | % Bonus to trade profits (e.g., 0.01 = 1%). |
+|   `intelCost` | Number | % Discount on Intel purchases. |
+|   `purchaseCost` | Number | % Discount on Commodity purchases. |
+|   `intelDuration` | Number | % Increase to Intel deal duration. |
+|   `fuelCost` | Number | % Discount on station refueling. |
+|   `repairCost` | Number | % Discount on station repairs. |
+|   `commoditySupply` | Number | % Increase to global market inventory. |
+|   `shipPrice` | Number | % Discount on ship purchases. |
+|   `travelSpeed` | Number | % Reduction in travel time calculations. |
+|   `shipSpawnRate` | Number | % Increased chance for Rare Ships in shipyard. |
+|   `upgradeSpawnRate` | Number | % Increased chance for upgrades in Tuning Shop. |
+| **`serviceTokens`** | **Object** | **Counters for free service vouchers (Era 3).** |
+|   `fuel` | Number | Count of free fuel fills available. |
+|   `repair` | Number | Count of free hull repairs available. |
+| `activeShipId` | String | ID of the currently piloted ship. |
+| `ownedShipIds` | Array<String> | List of all ship IDs owned by the player. |
+| `fleet` | Object | Map of stored `shipId`s to their status, docked location, and specific cargo configurations. |
+| `officerRoster` | Array<String> | List of recruited officer IDs utilized in engineering pipelines. |
+| `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[] }`. |
+| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
+| `unlockedLicenseIds` | Array<String> | List of trade licenses owned, gating specific mission or commodity tiers. |
+| `unlockedLocationIds` | Array<String> | List of locations visited/unlocked. |
+| `seenEvents` | Array<String> | List of unique Event IDs already triggered. |
+
+---
+
+## 3. Market State (`state.market`)
+
+The economic simulation data.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `prices` | Object | Map of `locationId` -> `commodityId` -> `currentPrice`. |
+| `inventory` | Object | Map of `locationId` -> `commodityId` -> `InventoryItem`. |
+| `shipyardStock` | Object | Map of `locationId` -> `{ day, shipsForSale[] }`. |
+| `priceHistory` | Object | Historical price data for graphing. |
+
+**InventoryItem Structure:**
+
+* `quantity`: Current stock level.
+* `marketPressure`: Accumulator for player-driven price changes.
+* `lastPlayerInteractionTimestamp`: Day of last trade (controls decay).
+* `priceLockEndDay`: Day when the "Price Lock" effect expires.
+* `isDepleted`: Flag for "Panic Buy" price hikes.
+* `depletionDay`: Day the depletion triggered.
+
+---
+
+## 4. UI State (`state.uiState`)
+
+Ephemeral data used to persist UI context across re-renders.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `marketCardMinimized` | Object | Map of commodity IDs to boolean (true = minimized). |
+| `hangarShipyardToggleState` | String | 'hangar' or 'shipyard'. |
+| `hangarActiveIndex` | Number | Index of the currently viewed ship in the carousel. |
+| `shipyardActiveIndex` | Number | Index of the currently viewed ship in the shipyard. |
+| `activeFleetIndex` | Number | Index tracking the currently selected ship within the player's stored fleet on the services screen. |
+| `activeIntelTab` | String | ID of the active Intel tab ('intel-codex-content' vs 'market'). |
+| `servicesTab` | String | ID of the active Services sub-tab ('supply' vs 'tuning'). |
+| `activeMissionTab` | String | ID of the active Mission tab ('terminal' vs 'log'). |
+| `enableEconomicTelemetry` | Boolean | Toggles data aggregation for deep transaction logging. |
+| `gameMenuActive` | Boolean | Toggles the active visibility and blocking state of the core Game/Pause Menu. |
+
+---
+
+## 5. Intel State
+
+Data structures for the "Local Data Broker" system and volatile alerts.
+
+**`state.intelMarket`**
+
+* Map of `locationId` -> `Array<IntelPacket>`.
+* **IntelPacket**: `{ id, commodityId, dealLocationId, discountPercent, durationDays, cost, isPurchased }`.
+
+**`state.activeIntelDeal`**
+
+* Represents the currently active market advantage.
+* **Structure**: `{ locationId, commodityId, overridePrice, expiryDay, sourcePacketId }`.
+* *Note: Only one long-term deal can be active at a time.*
+
+**`state.activeHotIntel`**
+
+* Represents volatile intelligence that vanishes instantly if the player initiates travel.
+* **Structure**: `{ targetMarketId, commodityId, type, startDay, endDay }`.
+
+---
+
+## 6. Tutorial State (`state.tutorials`)
+
+Exclusively manages the auto-instantiation tracking for the Contextual Help Modal System (ADR-033). Legacy Popper.js properties have been deprecated and removed.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `seenHelpContexts` | Array<String> | List of Help Context IDs the player has already auto-triggered. |
+
+---
+
+## 7. Sol Station State (`state.solStation`)
+
+Manages the Endgame Engine mechanics.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `level` | Number | Current progression level (1-50). |
+| `activeProject` | Object | The currently active progression project requirements. |
+| `activeProjectBank` | Object | Incremental ledger of resources donated to the active project. |
+| `unlocked` | Boolean | Whether the player has acquired access (default: false). |
+| `mode` | String | Current mode: 'STABILITY', 'COMMERCE', 'PRODUCTION'. |
+| `health` | Number | Aggregate health (0-100) based on cache fill %. |
+| `caches` | Object | Map of `tierX` -> `{ current, max }` for Tier 1-6. |
+| `engineering` | Object | State data for the engineering interface, including active systemic upgrades and layout configurations. |
+| `officers` | Array | List of assigned officer objects `{ slotId, assignedOfficerId }`. |
+| `stockpile` | Object | `{ credits, antimatter }` generated resources waiting for pickup. |
+| `synthesisPipeline` | Object | Pipeline metrics for conversion, including `{ active, inputCommodities, targetAntimatter, completionDay }`. |
+| `deferredState` | Object | Accumulator for view-model interpolation tracking unprocessed entropy and yields before JIT commits. |
+
+---
+
+## 8. Mission State (`state.missions`)
+
+Manages the active concurrent missions and their granular progress.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `activeMissionIds` | Array<String> | List of currently accepted mission IDs (Max 4). |
+| `completedMissionIds` | Array<String> | History of all completed missions. |
+| `trackedMissionId` | String | The specific mission ID currently pinned to the HUD. |
+| `missionProgress` | Object | Map of `missionId` -> `{ objectives, isCompletable }`. |
+
+**MissionProgress Structure:**
+
+* `isCompletable`: Boolean flag indicating if all objectives are met.
+* `objectives`: Map of `objectiveId` -> `{ current, target, deposited }`.
+
+---
+
+## 9. Serialized Save Structure
+
+When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `slotId` | String | The primary key identifier for the save slot (e.g., 'auto', 'slot1'). |
+| `version` | Number | The schema version of the save file to handle future migrations. |
+| `metadata` | Object | Lightweight summary data used for rendering the splash/load screen without parsing the entire gamestate. |
+|   `day` | Number | The game day the save occurred. |
+|   `credits` | Number | The player's wealth at the time of saving. |
+|   `locationId` | String | The player's location. |
+|   `timestamp` | Number | Standard UNIX epoch timestamp of the save event. |
+| `...payload` | Object | The full, stringified (or direct, depending on bridge) `GameState` root object unpacked into the save object. |
+
+---
+
+## 10. System States (`state.systemStates`)
+
+Manages procedural Economic Weather modifiers impacting global behavior.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `activeWeatherId` | String | ID of the currently active macroeconomic modifier. |
+| `expirationDay` | Number | The game day the current weather naturally ends. |
+| `weatherModifiers` | Object | Current active stat weights affecting global pricing, event rates, and availability. |
+Markdown
 // meta/SERVICES.md
 
 Service Responsibility & Dependency Matrix
@@ -51534,8 +51893,8 @@ Responsibility: Manages the entire new game introduction sequence, from initial 
 Dependencies: GameState, UIManager, Logger, SimulationService.
 
 PlayerActionService (F034)
-Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0029`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
+Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair, Recruit Officers.
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0029`) for repairs. Orchestrates fleet trading, storage mechanics, dynamic fleet cost averaging, and UI handoffs for officer recruitment.
 Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
 
 GameAttributes (F069)
@@ -51562,12 +51921,12 @@ Key Behavior: Triggers daily/weekly simulation ticks (Market, News, Weather). Ma
 Dependencies: GameState, MarketService, BankruptcyService, SystemStateService, SolStationService.
 
 MissionService (F018)
-Responsibility: Coordinates the Mission System 2.0 lifecycle. Delegates logic to evaluators. Facilitates massive bulk objectives by handling localized `depositMissionCargo` loops and `loadDeferredCargo` routines across the active fleet.
+Responsibility: Coordinates the Mission System 2.0 lifecycle. Delegates logic to evaluators. Facilitates massive bulk objectives by handling localized `depositMissionCargo` loops and `loadDeferredCargo` routines across the active fleet. Validates two-step progression and explicit license unlocks.
 Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator.
 
 SolStationService (F098)
 Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
-Key Behavior: Manages progression from Level 1-50. Implements deferred universe calculations and view-model interpolation. Executes Just-In-Time (JIT) commits. Manages the Synthesis Pipeline for Antimatter conversion.
+Key Behavior: Manages progression from Level 1-50. Implements deferred universe calculations and view-model interpolation. Executes Just-In-Time (JIT) commits. Manages the Synthesis Pipeline for Antimatter conversion and implements global buffs from the newly structured `officerRoster`.
 Dependencies: GameState, Logger.
 
 ToastService (F106)
@@ -51622,7 +51981,7 @@ Controllers (Delegates):
 * UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
 * UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel interactions.
 * UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-* UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA, Launch Modals).
+* UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA, Launch Modals, Game Menu).
 * UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
 
 IntelMarketRenderer (F058)
@@ -51634,8 +51993,12 @@ Responsibility: Manages the scrolling text bar content.
 Dependencies: GameState.
 
 AssetService (F065)
-Responsibility: Centralized path resolution and "Hydration" for visual assets.
+Responsibility: Centralized path resolution and "Hydration" for visual assets. Expands into high-frequency UI texture pre-hydration for rendering stability.
 Dependencies: AssetStorageService, assets_config.js.
+
+StarfieldService
+Responsibility: UI Service managing rendering context for dynamic starfield layers and deep space visual assets.
+Dependencies: Canvas Context APIs.
 
 TravelAnimationService (F044)
 Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
@@ -51647,12 +52010,12 @@ Dependencies: None.
 
 5. Persistence Services
 SaveStorageService (F101)
-Responsibility: Manages game saves using a dual-write architecture and local file I/O operations.
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation.
+Responsibility: Manages game saves using a dual-write architecture and local file I/O operations. Integrates explicit manual Save/Load commands and safe 'Exit Game' termination logic.
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation. Flushes telemetry and buffers upon session termination requests.
 Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
 AssetStorageService (F070)
-Responsibility: Low-level IndexedDB wrapper.
+Responsibility: Low-level IndexedDB wrapper for preserving core blobs and dynamic UI textures.
 Dependencies: Native IndexedDB API.
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
