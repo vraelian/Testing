@@ -563,13 +563,13 @@ export class IntroService {
                     overlay.remove();
                     starfieldService.triggerQuickExit();
                     
-                    // 4. Fade back out of black to reveal meta tutorials
-                    fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 1000, fill: 'forwards' }).onfinish = () => {
-                        fader.remove();
-                    };
+                    // Instead of fading out the black screen here, we keep it persistent
+                    // We set z-index to 10000. This perfectly sandwiches the fader underneath
+                    // the Help Modals (z-index: 10001) but above ALL game UI elements.
+                    fader.style.zIndex = '10000'; 
                     
                     this._transitioning = false;
-                    this._showMetaHelpModals();
+                    this._showMetaHelpModals(fader);
                 };
 
             }, 2000); 
@@ -579,14 +579,15 @@ export class IntroService {
     /**
      * Executes the sequential meta help modals before allowing the UI to render.
      * @private
+     * @param {HTMLElement} fader - The black overlay div shielding the transition
      */
-    _showMetaHelpModals() {
+    _showMetaHelpModals(fader) {
         this.uiManager.showGameContainer();
 
         this.uiManager.showHelpModal('meta-tutorial', 0, () => {
             setTimeout(() => {
                 this.uiManager.showHelpModal('meta-autosave', 0, () => {
-                    this._showStarterShipSelection();
+                    this._showStarterShipSelection(fader);
                 });
             }, 1000);
         });
@@ -595,8 +596,9 @@ export class IntroService {
     /**
      * Generates and displays the bespoke starter ship selection screen dynamically over the game UI.
      * @public - Accessible by DebugService
+     * @param {HTMLElement} fader - The black overlay div shielding the transition
      */
-    _showStarterShipSelection() {
+    _showStarterShipSelection(fader) {
         this._transitioning = false;
         
         this.uiManager.showGameContainer();
@@ -679,6 +681,14 @@ export class IntroService {
         overlay.appendChild(narrativeBox);
 
         document.body.appendChild(overlay);
+
+        // --- REVEAL FROM BLACK ---
+        // Fades the persistent black fader screen out, revealing the starfield and UI below it.
+        if (fader) {
+            fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
+                fader.remove();
+            };
+        }
     }
 
     /**
