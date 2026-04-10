@@ -1,7 +1,7 @@
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
-Last Edit: 3/27/26, ver. [37.29]
+Last Edit: 4/10/26, ver. [37.58]
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -50,7 +50,7 @@ How much fuel is removed from the tank per trip.
 
 JavaScript
 FuelBurn = DistanceAU * BASE_FUEL_BURN * (1 + ShipBurnMod + EngineUpgradeMod)
-BASE_FUEL_BURN: Defined per ship class (recently reduced by 50% system-wide for travel baseline cost adjustments).
+BASE_FUEL_BURN: Defined per ship class (reduced by 50% system-wide for travel baseline cost adjustments).
 EngineUpgradeMod: Typically positive (increases burn) for speed upgrades (e.g., +0.20).
 
 2.2 Travel Time
@@ -67,7 +67,7 @@ JavaScript
 BaseTravelTime = TRAVEL_DATA[Origin][Destination].time
 HullDecay = Math.ceil(BaseTravelTime * HULL_DECAY_PER_TRAVEL_DAY * HullStressMod * 0.8)
 HullStressMod: Derived from Engine Mods. Faster engines multiply structural stress (e.g., +15% to +60%).
-HULL_DECAY_PER_TRAVEL_DAY: Increased by 5% to (1 / 7) * 1.0605 to force more frequent maintenance.
+HULL_DECAY_PER_TRAVEL_DAY: Increased by an additional 5% to 1.1135 (from 1.0605) to force more frequent maintenance stops.
 
 2.4 Fuel-Coupled Event Delays
 When a random event introduces a time delay, it consumes standard travel fuel proportional to the route's base burn rate.

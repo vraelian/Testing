@@ -2,7 +2,7 @@
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 3/27/26, ver. [37.29]
+Last Edit: 4/10/26, ver. [37.58]
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
@@ -135,3 +135,6 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
 1. Systemic Supply Bottlenecks: Officers with severe negative consumptionMods will aggressively drain the station's maintenance caches. Because players must replenish these to maintain Integrity, they must purchase massive quantities from the inner system, driving up localized prices globally.
 2. Capacity Buffers: Officers with high capacityMods drastically increase the "runway" a station has before reaching critical entropy, expanding the viable geographic radius of arbitrage loops.
 3. Volumetric Scaling: The station's endgame requirements are volumetrically scaled down (maxing at ~4,000 units for Level 50) to perfectly align with Capital ship constraints, ensuring progression requires multiple focused supply runs.
+
+IX. Detached Commodity Progression
+Commodity tiers are no longer unlocked by passive Wealth Milestones. Access to higher-tier trade goods is explicitly gated by the player's active progression through the License Acquisition sequence and targeted mission completion, shifting the economic unlock phase from a passive accumulation check to an active gameplay objective.

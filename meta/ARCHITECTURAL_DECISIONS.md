@@ -449,7 +449,7 @@ Decision: Implemented Fleet Trading and Storage with an associated "Convoy Tax".
 * A "Convoy Tax" is assessed during travel, dynamically increasing resource burn based on the total number of ships traversing the route.
 
 Consequences:
-* **Pro:** Expands player progression, allowing for specialized ship collections.
+* **Pro:** ExpExpands player progression, allowing for specialized ship collections.
 * **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource costs.
 
 ADR-031: Balance v2 - Parametric Pacing & Volumetric Sinks
@@ -569,3 +569,46 @@ Decision: Implemented an opt-in telemetry array mapped directly into the root `G
 Consequences:
 * Pro: Allows rapid tuning of systemic economic behavior based on objective longitudinal data.
 * Pro: Identifies compounding inflation/deflation errors.
+
+ADR-042: Game Menu and Manual Persistence
+Status: Accepted (2026-04-10)
+
+Context: Progression previously relied strictly on automated saving triggers. Players required explicit control over their session state and a dedicated "Pause/Menu" overlay to manage game exit and manual state commits.
+
+Decision: Implemented a dedicated Game Menu UI overlay.
+* Explicit Triggers: Manual save buttons directly interface with `SaveStorageService.saveGame`.
+* State Decoupling: Separated intentional state commits from purely cyclic or event-driven persistence.
+* Exit Protocol: Added a formal "Exit Game" flow to ensure all pending JIT commits and telemetry buffers are flushed before terminating the session.
+
+Consequences:
+* Pro: Increases player agency over persistence.
+* Pro: Provides a scalable UI hub for future settings and system controls.
+
+ADR-043: Texture Pre-Hydration & High-Fidelity UI
+Status: Accepted (2026-04-07)
+
+Context: Recent UI overhauls introduced complex textures to high-frequency components (ship cards, mission modals, backgrounds). Standard CSS background loading caused frame drops and layout thrashing during carousel navigation on mobile targets.
+
+Decision: Extended the `AssetStorageService` and `AssetService` to support Texture Pre-Hydration.
+* Pre-Load Execution: High-use tileable textures (e.g., dark metal, noise base) are explicitly hydrated during the "Pre-Flight" boot phase.
+* Blob Injection: Blob URLs are dynamically injected into CSS variables or inline styles prior to standard `UIManager` render cycles.
+* DOM Decoupling: Prevents the browser's render thread from blocking while waiting for network/cache retrieval of UI styling elements.
+
+Consequences:
+* Pro: Maintains 60fps scrolling performance despite increased visual complexity.
+* Pro: Eliminates "pop-in" of background textures on modal generation.
+* Con: Increases initial memory payload during the boot sequence.
+
+ADR-044: The Officer Recruitment Pipeline
+Status: Accepted (2026-03-17)
+
+Context: Sol Station previously relied on static or abstract officer assignments. A systemic pipeline was needed to allow players to discover, review, and recruit officers into a persistent roster.
+
+Decision: Implemented an explicit recruitment pipeline architecture.
+* Data Separation: Static officer profiles (stats, lore, portrait IDs) reside in `officers.js` and `characters.js`.
+* State Representation: The player's active state only retains an array of string IDs (`officerRoster`).
+* UI Handoff: The recruitment modal acts as the transactional bridge, deducting recruitment fees and pushing the ID to the state array, which `SolStationService` then parses for engineering buffs.
+
+Consequences:
+* Pro: Clean separation of static lore/stats from the mutable save file.
+* Pro: Highly extensible for future officer generation or procedural traits.

@@ -37,6 +37,7 @@ Modal Mask900The generic modal-overlay background.
 Modal1000Active Modal Dialogs, Help Modals.
 Toast2000Notifications, Floating Battle Text.
 Cinematic Skip2500Floating skip buttons during overlays.
+Game Menu3000Global Pause/Game Menu Overlay.
 Cursor9999Custom hardware cursors (if applicable).
 
 2. Component Blueprints
@@ -207,6 +208,45 @@ Text input fields within the market interface dynamically scale their font-size 
 
 2.15 Hull Health Warning States
 A contextual UI enhancement on the Services screen. As the active ship's hull drops below predefined thresholds (e.g., <50%, <20%), dynamic CSS classes inject pulsing animations and shift the primary coloration of the health bar from blue to amber, and finally to critical red, providing immediate visual feedback of structural peril.
+
+2.16 Game Menu Overlay (.game-menu-overlay)
+The top-level pause/system menu overlay sitting at Z-Index 3000. Houses execution paths for manual persistence, settings, and session termination.
+HTML
+<div class="game-menu-overlay hidden">
+    <div class="menu-container">
+        <h2>GAME MENU</h2>
+        <button class="btn btn-menu" type="button" data-action="resume-game">RESUME</button>
+        <button class="btn btn-menu" type="button" data-action="save-game">MANUAL SAVE</button>
+        <button class="btn btn-danger" type="button" data-action="exit-game">EXIT TO TITLE</button>
+    </div>
+</div>
+
+2.17 Officer Recruitment Modal (.officer-recruit-modal)
+A specialized modal designed for the recruitment pipeline. Integrates stat previews, UI portraits, and transactional confirmation buttons into a distinct flow.
+HTML
+<div class="modal officer-recruit-modal">
+    <div class="modal-header-flex">
+        <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
+        <h2 class="modal-title-group">{Officer Name}</h2>
+    </div>
+    <div class="modal-content">
+        <p class="officer-lore">{Flavor Text}</p>
+        <div class="stat-block">
+            <span>Engineering Buffs:</span>
+            <span>{Buff 1}, {Buff 2}</span>
+        </div>
+    </div>
+    <div class="modal-footer">
+        <button class="btn btn-primary" type="button" data-action="confirm-recruit">RECRUIT ({Cost})</button>
+    </div>
+</div>
+
+2.18 Textured Elements (.textured-bg, .card-textured)
+Core structural classes enabling the high-fidelity UI overhaul. Relies on `AssetStorageService` blob URLs dynamically injected as CSS variables (`--ui-texture-base`) to avoid HTTP request blocking.
+HTML
+<div class="card card-textured" style="background-image: var(--ui-texture-base);">
+    ...
+</div>
 
 3. CSS Utilities
 .hidden: display: none !important. Used for toggling visibility.
