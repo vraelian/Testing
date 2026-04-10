@@ -6,7 +6,7 @@
  * more complex interactions are handled by other specialized handlers.
  */
 import { DB } from '../../data/database.js';
-import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { ACTION_IDS, NAV_IDS, SCREEN_IDS, APP_FEEDBACK_URL } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
 import { startLicenseAnimation, endLicenseAnimation } from '../ui/AnimationService.js';
@@ -73,6 +73,64 @@ export class ActionClickHandler {
         const { action, ...dataset } = actionTarget.dataset;
 
         switch (action) {
+            // --- GAME MENU (PHASE 3 & 4) ---
+            case 'open-pause-menu':
+                this.uiManager.eventControl.showPauseMenu();
+                break;
+            
+            case 'close-pause-menu':
+                this.uiManager.eventControl.hidePauseMenu();
+                break;
+
+            case 'open-feedback':
+                window.open(APP_FEEDBACK_URL, '_blank');
+                break;
+
+            case 'manual-save': {
+                e.stopPropagation();
+                
+                // Route through the established SimulationService pipeline
+                // This guarantees exportState() serialization and safe IndexedDB/iOS Dual-Writes
+                await this.simulationService.saveGame();
+                
+                // Mutate button to locked Gold State for immediate visual feedback
+                actionTarget.className = 'btn w-full py-3 text-lg btn-gold-weighty';
+                actionTarget.innerHTML = 'Progress Saved!';
+                actionTarget.disabled = true;
+                break;
+            }
+
+            case 'exit-game-init':
+                e.stopPropagation();
+                // Mutate button to locked Danger State
+                actionTarget.className = 'btn w-full py-3 text-lg bg-red-800 hover:bg-red-700 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]';
+                actionTarget.innerHTML = 'CONFIRM EXIT?';
+                actionTarget.dataset.action = 'exit-game-confirm';
+                break;
+
+            case 'exit-game-confirm': {
+                e.stopPropagation();
+                
+                // Construct the absolute blackout shield
+                const fader = document.createElement('div');
+                fader.className = 'fixed inset-0 bg-black z-[9999] pointer-events-none';
+                fader.style.opacity = '0';
+                fader.style.transition = 'opacity 1s ease-in-out';
+                document.body.appendChild(fader);
+                
+                // Force layout reflow before opacity change
+                void fader.offsetWidth;
+                fader.style.opacity = '1';
+                
+                // Wait for the 1.0s fade to finish, set the persistent state flag, then hard reset
+                setTimeout(() => {
+                    sessionStorage.setItem('isRebooting', 'true');
+                    window.location.reload();
+                }, 1000);
+                break;
+            }
+            // --- END GAME MENU ---
+
             // --- Ship Actions (Hangar/Shipyard) ---
             case ACTION_IDS.BUY_SHIP: {
                 const { shipId } = dataset;

@@ -2200,6 +2200,23 @@
 }
 
 /* ========================================================================= */
+/* --- GAME MENU / PAUSE SCREEN ---                                */
+/* ========================================================================= */
+
+.btn-game-menu {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Game Menu Faster CRT */
+.pause-menu-crt-on { 
+    animation: sevCrtTurnOn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
+}
+.pause-menu-crt-off { 
+    animation: sevCrtTurnOff 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards !important; 
+    transform-origin: center center; 
+}
+
+/* ========================================================================= */
 /* --- STATIC MODAL TEXTURE INTEGRATION ---                                  */
 /* ========================================================================= */
 
@@ -2249,7 +2266,9 @@
 #cargo-detail-modal .modal-content::before,
 #cargo-detail-modal .modal-content::after,
 #mission-modal .modal-content::before,
-#mission-modal .modal-content::after {
+#mission-modal .modal-content::after,
+#pause-menu-modal .modal-content::before,
+#pause-menu-modal .modal-content::after {
     display: none !important;
 }
 

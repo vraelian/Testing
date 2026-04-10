@@ -5,7 +5,7 @@ import { LORE_REGISTRY } from '../../data/lore/loreRegistry.js';
 import { formatCredits, getCommodityStyle } from '../../utils.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
-import { COMMODITY_IDS } from '../../data/constants.js';
+import { COMMODITY_IDS, APP_VERSION } from '../../data/constants.js';
 import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 
@@ -714,5 +714,96 @@ export class UIEventControl {
                     </button>`;
         }).join('');
         // --- END VIRTUAL WORKBENCH ---
+    }
+
+    // ========================================================================= 
+    // --- GAME MENU / PAUSE SCREEN (PHASE 3) --- 
+    // ========================================================================= 
+
+    /**
+     * Initializes and displays the Game Menu modal with location-themed styling.
+     */
+    showPauseMenu() {
+        const modal = document.getElementById('pause-menu-modal');
+        if (!modal) return;
+        
+        const state = this.manager.lastKnownState;
+        const locationId = state?.currentLocationId || 'loc_earth';
+        const location = DB.MARKETS.find(l => l.id === locationId);
+
+        const modalContent = modal.querySelector('.modal-content');
+        
+        // Reset base classes
+        modalContent.className = 'modal-content relative flex flex-col items-center justify-between p-8';
+        
+        // Apply Location Theme dynamically
+        if (location && location.navTheme) {
+            modalContent.style.background = location.navTheme.gradient;
+            modalContent.style.borderColor = location.navTheme.borderColor;
+            modalContent.style.boxShadow = `0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px ${location.navTheme.borderColor}40`;
+        }
+
+        // Hydrate Version String
+        const versionEl = document.getElementById('pause-menu-version');
+        if (versionEl) versionEl.innerText = `Version ${APP_VERSION}`;
+
+        // Reset the Save button to default state
+        const saveBtn = document.getElementById('pause-btn-save');
+        if (saveBtn) {
+            saveBtn.className = 'btn w-full py-3 text-lg';
+            saveBtn.innerHTML = 'Save Progress';
+            saveBtn.disabled = false;
+        }
+
+        // Reset the Exit button to default state
+        const exitBtn = document.getElementById('pause-btn-exit');
+        if (exitBtn) {
+            exitBtn.className = 'btn w-full py-3 text-lg';
+            exitBtn.innerHTML = 'Exit Game';
+            exitBtn.dataset.action = 'exit-game-init';
+        }
+
+        // Display Modal and Trigger CRT Open Animation
+        modal.classList.remove('hidden', 'modal-hiding');
+        modalContent.classList.remove('sev-crt-shutdown');
+        modalContent.classList.add('sev-crt-turn-on');
+        modalContent.style.animationDuration = '0.4s';
+
+        // Bind transient click-outside dismissal
+        this._pauseMenuCloseHandler = (e) => {
+            if (e.target === modal) {
+                this.hidePauseMenu();
+            }
+        };
+        modal.addEventListener('click', this._pauseMenuCloseHandler);
+    }
+
+    /**
+     * Executes the CRT shutdown animation and hides the Game Menu.
+     */
+    hidePauseMenu() {
+        const modal = document.getElementById('pause-menu-modal');
+        if (!modal) return;
+
+        const modalContent = modal.querySelector('.modal-content');
+        
+        // Trigger CRT Close Animation
+        modalContent.classList.remove('sev-crt-turn-on');
+        void modalContent.offsetWidth; // Force reflow
+        modalContent.classList.add('sev-crt-shutdown');
+        modalContent.style.animationDuration = '0.4s';
+
+        // Clean up transient listener
+        if (this._pauseMenuCloseHandler) {
+            modal.removeEventListener('click', this._pauseMenuCloseHandler);
+            this._pauseMenuCloseHandler = null;
+        }
+
+        // Hide entirely after animation concludes
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modalContent.classList.remove('sev-crt-shutdown');
+            modalContent.style.animationDuration = '';
+        }, 400); 
     }
 }

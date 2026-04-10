@@ -1,4 +1,9 @@
 // js/data/constants.js
+/** //////////////////    VERSION INFO    ///////////////////  */
+export const APP_VERSION = '37.53';
+export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
+/** /////////////////////////////////////////////////////////  */
+
 /**
  * @fileoverview This file contains centralized constant values and enumerations used throughout the game.
  * Consolidating these values here makes the codebase easier to manage, read, and modify, as it provides

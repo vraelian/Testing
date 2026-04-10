@@ -37,6 +37,11 @@ export class IntroService {
         const econBtn = document.getElementById('btn-econ-weather');
         if (econBtn) econBtn.style.display = 'none';
 
+        // --- VIRTUAL WORKBENCH: Hide Pause Menu Cog during Intro ---
+        const cogBtn = document.getElementById('btn-game-menu');
+        if (cogBtn) cogBtn.style.display = 'none';
+        // --- END VIRTUAL WORKBENCH ---
+
         // Ensure the Help Anchor is completely suppressed early in the intro.
         if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
             this.uiManager.helpManager.anchorBtn.style.display = 'none';
@@ -789,6 +794,11 @@ export class IntroService {
         // Restore Economic Weather button visibility via inline styles
         const econBtn = document.getElementById('btn-econ-weather');
         if (econBtn) econBtn.style.display = '';
+
+        // --- VIRTUAL WORKBENCH: Restore Pause Menu Cog after Intro ---
+        const cogBtn = document.getElementById('btn-game-menu');
+        if (cogBtn) cogBtn.style.display = '';
+        // --- END VIRTUAL WORKBENCH ---
 
         // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
         this.gameState.uiState.hangarShipyardToggleState = 'hangar';

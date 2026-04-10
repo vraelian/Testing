@@ -20,7 +20,7 @@ export const HELP_REGISTRY = {
         `<div class="help-slide"><h3>Local Station Market</h3><p>The best way to earn credits is to play the market: Buy low and sell high.<br><br>Buying commodities and <i>traveling to a different station to sell them for more than your original purchase price</i> is how you play arbitrage.</p></div>`,
         `<div class="help-slide"><h3>Inspecting the Market</h3><p>Prices evolve dynamically based on <b>supply, demand, and your trading actions</b>.<br><br>Tap the prices to view their price history and performance.</p></div>`,
         `<div class="help-slide"><h3>Economic Behavior</h3><p>Each commodity has a limited quantity available for purchase at each station. Supply will recover eventually over time.<br><br><i>Prices fluctuate naturally but are also influenced by supply, purchases, and sales.</i></p></div>`,
-        `<div class="help-slide"><h3>Market Pressure</h3><p>Massive sales create market pressure, delaying inventory replenishment and stabilizing prices.<br><br>Large purchases will quickly drive up prices.</p></div>`
+        `<div class="help-slide"><h3>Market Pressure</h3><p>Massive sales create market pressure, delaying inventory replenishment and destabilizing prices.<br><br>Large purchases will quickly drive up prices.</p></div>`
     ],
     'services-supply': [
         `<div class="help-slide"><h3>Station Services</h3><p>Refuel your ship and repair its hull here.<br><br>Fuel price varies by station.</p></div>`
