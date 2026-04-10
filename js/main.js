@@ -16,6 +16,7 @@ import { TravelService } from './services/world/TravelService.js';
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
 import { SHIP_IDS, APP_VERSION, APP_FEEDBACK_URL } from './data/constants.js'; 
+import { DB } from './data/database.js';
 import './data/characters.js';
 
 const setAppHeight = () => {
@@ -202,10 +203,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const newSlotBtn = document.createElement('button');
             if (data) {
+                const dateObj = new Date(data.metadata.timestamp);
+                const monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                const locId = data.metadata.locationId || 'loc_earth';
+                const location = DB.MARKETS.find(m => m.id === locId) || DB.MARKETS.find(m => m.id === 'loc_earth');
+                const locationName = location.name;
+                const theme = location.navTheme || { gradient: '#1e293b', borderColor: '#334155' };
+                const playerName = data.metadata.playerName || 'Captain';
+
                 newSlotBtn.className = 'save-slot-btn';
+                newSlotBtn.style.background = theme.gradient;
+                newSlotBtn.style.borderColor = theme.borderColor;
                 newSlotBtn.innerHTML = `
-                    <span class="text-lg text-cyan-300 font-orbitron mb-1">Slot ${slotNumber}</span>
-                    <span class="save-slot-metadata">[${data.metadata.realDate}] | [<span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span>] | [${data.metadata.shipName}]</span>
+                    <span class="text-lg text-cyan-300 font-orbitron mb-1" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Slot ${slotNumber} - ${playerName}</span>
+                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span><br>${data.metadata.shipName} | ${locationName}</span>
                 `;
                 newSlotBtn.onclick = () => showOverwriteWarning(slotId);
 
@@ -222,14 +233,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Build Load Game Slot
             if (data) {
+                const dateObj = new Date(data.metadata.timestamp);
+                const monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                const locId = data.metadata.locationId || 'loc_earth';
+                const location = DB.MARKETS.find(m => m.id === locId) || DB.MARKETS.find(m => m.id === 'loc_earth');
+                const locationName = location.name;
+                const theme = location.navTheme || { gradient: '#1e293b', borderColor: '#334155' };
+                const playerName = data.metadata.playerName || 'Captain';
+
                 const loadSlotWrapper = document.createElement('div');
                 loadSlotWrapper.className = 'save-slot-wrapper';
 
                 const loadSlotBtn = document.createElement('button');
                 loadSlotBtn.className = 'save-slot-btn';
+                loadSlotBtn.style.background = theme.gradient;
+                loadSlotBtn.style.borderColor = theme.borderColor;
                 loadSlotBtn.innerHTML = `
-                    <span class="text-lg text-cyan-300 font-orbitron mb-1">Slot ${slotNumber}</span>
-                    <span class="save-slot-metadata">[${data.metadata.realDate}] | [<span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span>] | [${data.metadata.shipName}]</span>
+                    <span class="text-lg text-cyan-300 font-orbitron mb-1" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Slot ${slotNumber} - ${playerName}</span>
+                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span><br>${data.metadata.shipName} | ${locationName}</span>
                 `;
                 loadSlotBtn.onclick = () => executeStartGame('load', slotId);
 

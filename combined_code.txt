@@ -66,7 +66,7 @@
             </div>
     
             <div id="splash-new-game-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-xl mx-auto">
-                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Select Save Slot</h3>
+                <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">Start New Game</h3>
                 <div id="new-game-slots" class="w-full flex flex-col gap-3">
                     </div>
                 <button id="new-game-back-btn" class="btn mt-6 w-full max-w-xs">Return to Main Menu</button>
@@ -81,11 +81,12 @@
 
             <div id="splash-options-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-sm mx-auto">
                 <h3 class="text-2xl font-orbitron text-cyan-300 mb-4">OPTIONS</h3>
-                <button id="options-data-btn" class="btn btn-header w-full">Export/Import Saved Game</button>
-                <button id="options-back-btn" class="btn btn-header w-full mt-6">Return to Main Menu</button>
+                <button id="options-data-btn" class="btn btn-header w-full" style="font-size: 1.15em; padding-top: 1.15rem; padding-bottom: 1.15rem;">Export/Import Saved Game</button>
+                <button id="options-back-btn" class="btn btn-header w-full mt-6" style="font-size: 1.15em; padding-top: 1.15rem; padding-bottom: 1.15rem;">Return to Main Menu</button>
             </div>
 
             <div id="splash-data-menu" class="hidden flex flex-col items-center gap-4 w-full max-w-4xl mx-auto">
+                <p class="text-sm text-gray-300 text-center w-full mb-2">Export or Import <b>ALL</b> save slots with a generated code.</p>
                 <div class="w-full flex flex-col sm:flex-row gap-4">
                     
                     <div class="flex-1 bg-slate-800/50 border border-slate-600 rounded-lg p-3 flex flex-col relative">
@@ -2362,7 +2363,7 @@ display: flex;
 
 .save-slot-metadata {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.85rem;
+    font-size: calc(0.85rem + 1pt);
     color: #e2e8f0;
     pointer-events: none;
 }
@@ -13307,6 +13308,7 @@ import { TravelService } from './services/world/TravelService.js';
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
 import { SHIP_IDS, APP_VERSION, APP_FEEDBACK_URL } from './data/constants.js'; 
+import { DB } from './data/database.js';
 import './data/characters.js';
 
 const setAppHeight = () => {
@@ -13493,10 +13495,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const newSlotBtn = document.createElement('button');
             if (data) {
+                const dateObj = new Date(data.metadata.timestamp);
+                const monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                const locId = data.metadata.locationId || 'loc_earth';
+                const location = DB.MARKETS.find(m => m.id === locId) || DB.MARKETS.find(m => m.id === 'loc_earth');
+                const locationName = location.name;
+                const theme = location.navTheme || { gradient: '#1e293b', borderColor: '#334155' };
+                const playerName = data.metadata.playerName || 'Captain';
+
                 newSlotBtn.className = 'save-slot-btn';
+                newSlotBtn.style.background = theme.gradient;
+                newSlotBtn.style.borderColor = theme.borderColor;
                 newSlotBtn.innerHTML = `
-                    <span class="text-lg text-cyan-300 font-orbitron mb-1">Slot ${slotNumber}</span>
-                    <span class="save-slot-metadata">[${data.metadata.realDate}] | [<span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span>] | [${data.metadata.shipName}]</span>
+                    <span class="text-lg text-cyan-300 font-orbitron mb-1" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Slot ${slotNumber} - ${playerName}</span>
+                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span><br>${data.metadata.shipName} | ${locationName}</span>
                 `;
                 newSlotBtn.onclick = () => showOverwriteWarning(slotId);
 
@@ -13513,14 +13525,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Build Load Game Slot
             if (data) {
+                const dateObj = new Date(data.metadata.timestamp);
+                const monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                const locId = data.metadata.locationId || 'loc_earth';
+                const location = DB.MARKETS.find(m => m.id === locId) || DB.MARKETS.find(m => m.id === 'loc_earth');
+                const locationName = location.name;
+                const theme = location.navTheme || { gradient: '#1e293b', borderColor: '#334155' };
+                const playerName = data.metadata.playerName || 'Captain';
+
                 const loadSlotWrapper = document.createElement('div');
                 loadSlotWrapper.className = 'save-slot-wrapper';
 
                 const loadSlotBtn = document.createElement('button');
                 loadSlotBtn.className = 'save-slot-btn';
+                loadSlotBtn.style.background = theme.gradient;
+                loadSlotBtn.style.borderColor = theme.borderColor;
                 loadSlotBtn.innerHTML = `
-                    <span class="text-lg text-cyan-300 font-orbitron mb-1">Slot ${slotNumber}</span>
-                    <span class="save-slot-metadata">[${data.metadata.realDate}] | [<span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span>] | [${data.metadata.shipName}]</span>
+                    <span class="text-lg text-cyan-300 font-orbitron mb-1" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Slot ${slotNumber} - ${playerName}</span>
+                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span><br>${data.metadata.shipName} | ${locationName}</span>
                 `;
                 loadSlotBtn.onclick = () => executeStartGame('load', slotId);
 
@@ -14343,7 +14365,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.57';
+export const APP_VERSION = '37.58';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -14379,7 +14401,6 @@ export const NAV_IDS = Object.freeze({
     DATA: 'data',
 });
 
-// --- [[START]] VIRTUAL WORKBENCH (Phase 2) ---
 /**
  * Unique identifiers for each type of ship available in the game.
  * Values are mapped to the 'GAME ID' column from the ship database.
@@ -14565,9 +14586,9 @@ export const UPGRADE_COLORS = Object.freeze({
     RED: '#ef4444',     // Tailwind Red 500
     VIOLET: '#8b5cf6'   // Tailwind Violet 500
 });
-// --- [[END]] VIRTUAL WORKBENCH ---
 
-// --- [[START]] EVENT SYSTEM 2.0 (Phase 1) ---
+
+// --- [[START]] EVENT SYSTEM 2.0 ---
 /**
  * Core constants for the Random Event Engine v2.0.
  * Defines standard tags, condition logic, and outcome resolution types.
@@ -37183,7 +37204,9 @@ export class SimulationService {
                     realDate: new Date().toLocaleDateString(),
                     inGameDay: stateToSave.day,
                     creditsFormatted: formatCredits(stateToSave.player.credits),
-                    shipName: shipName
+                    shipName: shipName,
+                    playerName: stateToSave.player.name,
+                    locationId: stateToSave.currentLocationId
                 },
                 state: stateToSave
             };
@@ -46988,10 +47011,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [37.57] - 2026-4-10
+# [37.58] - 2026-4-10
 -  added game menu
 -  added manual in-game saving
 -  added exit game option
+-  title screen menus polish
 
 # [37.54] - 2026-4-7
 -  overhauled ship cards

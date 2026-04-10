@@ -109,7 +109,9 @@ export class SimulationService {
                     realDate: new Date().toLocaleDateString(),
                     inGameDay: stateToSave.day,
                     creditsFormatted: formatCredits(stateToSave.player.credits),
-                    shipName: shipName
+                    shipName: shipName,
+                    playerName: stateToSave.player.name,
+                    locationId: stateToSave.currentLocationId
                 },
                 state: stateToSave
             };
