@@ -1,6 +1,6 @@
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.57';
+export const APP_VERSION = '37.58';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -36,7 +36,6 @@ export const NAV_IDS = Object.freeze({
     DATA: 'data',
 });
 
-// --- [[START]] VIRTUAL WORKBENCH (Phase 2) ---
 /**
  * Unique identifiers for each type of ship available in the game.
  * Values are mapped to the 'GAME ID' column from the ship database.
@@ -222,9 +221,9 @@ export const UPGRADE_COLORS = Object.freeze({
     RED: '#ef4444',     // Tailwind Red 500
     VIOLET: '#8b5cf6'   // Tailwind Violet 500
 });
-// --- [[END]] VIRTUAL WORKBENCH ---
 
-// --- [[START]] EVENT SYSTEM 2.0 (Phase 1) ---
+
+// --- [[START]] EVENT SYSTEM 2.0 ---
 /**
  * Core constants for the Random Event Engine v2.0.
  * Defines standard tags, condition logic, and outcome resolution types.
