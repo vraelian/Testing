@@ -15,7 +15,7 @@ import { TravelService } from './services/world/TravelService.js';
 
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
-import { SHIP_IDS } from './data/constants.js'; 
+import { SHIP_IDS, APP_VERSION, APP_FEEDBACK_URL } from './data/constants.js'; 
 import './data/characters.js';
 
 const setAppHeight = () => {
@@ -45,6 +45,33 @@ const setAppHeight = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // --- REBOOT SEQUENCE (Phase 5) ---
+    if (sessionStorage.getItem('isRebooting') === 'true') {
+        sessionStorage.removeItem('isRebooting');
+        
+        const fader = document.createElement('div');
+        fader.className = 'fixed inset-0 bg-black z-[9999] pointer-events-none';
+        fader.style.opacity = '1';
+        fader.style.transition = 'opacity 1s ease-in-out';
+        document.body.appendChild(fader);
+
+        // Force reflow
+        void fader.offsetWidth;
+
+        setTimeout(() => {
+            fader.style.opacity = '0';
+            fader.addEventListener('transitionend', () => fader.remove());
+        }, 50);
+    }
+
+    // --- CONSTANT HYDRATION (Phase 1) ---
+    document.title = `Orbital Trading ${APP_VERSION}`;
+    const versionDisplay = document.getElementById('splash-version-display');
+    if (versionDisplay) versionDisplay.innerText = `Version ${APP_VERSION}`;
+    
+    const feedbackLink = document.getElementById('splash-feedback-link');
+    if (feedbackLink) feedbackLink.href = APP_FEEDBACK_URL;
 
     // --- App Initialization Definitions ---
     const splashScreen = document.getElementById('splash-screen');

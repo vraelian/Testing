@@ -104,36 +104,61 @@ class SaveStorageService {
     }
 
     /**
-     * Loads a game save. Prioritizes the indestructible iOS Native Storage if available.
+     * Loads a game save. Dynamically compares IDB vs iOS Native Storage to bypass
+     * stale WKUserScript injections upon window.reload().
      */
     async loadGame(slotId) {
-        // --- PHASE 1: iOS NATIVE BRIDGE (HEALING FALLBACK) ---
-        // Native saves are injected directly into the window at boot by Swift.
+        await this.initPromise;
+        
+        // 1. Fetch Primary IDB Save
+        let idbSave = null;
+        try {
+            idbSave = await new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.get(slotId);
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (e) {
+            console.warn("[SaveStorageService] IDB load failed", e);
+        }
+
+        // 2. Fetch iOS Native Fallback
+        let nativeSave = null;
         if (window.__IOS_SAVES && window.__IOS_SAVES[slotId]) {
             try {
-                console.log(`[iOS Bridge] Loading slot ${slotId} from unbreakable native storage.`);
-                const nativeSave = typeof window.__IOS_SAVES[slotId] === 'string' 
+                nativeSave = typeof window.__IOS_SAVES[slotId] === 'string' 
                     ? JSON.parse(window.__IOS_SAVES[slotId]) 
                     : window.__IOS_SAVES[slotId];
-                
-                // Heal IndexedDB silently in the background
-                this._syncToIndexedDB(nativeSave);
-                return nativeSave;
             } catch (e) {
                 console.error("[iOS Bridge] Failed to parse native iOS save:", e);
             }
         }
 
-        // Standard IndexedDB Load
-        await this.initPromise;
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const store = transaction.objectStore(this.storeName);
-            const request = store.get(slotId);
+        // 3. Resolution Logic
+        if (!idbSave && !nativeSave) return null;
+        
+        if (!idbSave && nativeSave) {
+            console.log(`[iOS Bridge] IDB wiped. Healing from unbreakable native storage.`);
+            this._syncToIndexedDB(nativeSave);
+            return nativeSave;
+        }
+        
+        if (idbSave && !nativeSave) return idbSave;
 
-            request.onsuccess = (event) => resolve(event.target.result || null);
-            request.onerror = (e) => reject(e.target.error);
-        });
+        // Both exist: Prevent WKWebView stale-script bug by comparing timestamps/progress
+        const idbTime = idbSave.metadata?.timestamp || idbSave.state?.day || 0;
+        const nativeTime = nativeSave.metadata?.timestamp || nativeSave.state?.day || 0;
+
+        if (nativeTime > idbTime) {
+            console.log(`[iOS Bridge] Native save is newer. Healing IDB.`);
+            this._syncToIndexedDB(nativeSave);
+            return nativeSave;
+        } else {
+            console.log(`[SaveStorageService] IDB save is newer or equal to Native. Using IDB to bypass stale iOS memory.`);
+            return idbSave;
+        }
     }
 
     /**
@@ -159,7 +184,7 @@ class SaveStorageService {
     }
 
     /**
-     * Retrieves metadata for the Splash Screen by safely merging Native and IDB data.
+     * Retrieves metadata for the Splash Screen, safely resolving desyncs between Native and IDB data.
      */
     async getAllSaveMetadata() {
         await this.initPromise;
@@ -174,20 +199,40 @@ class SaveStorageService {
                 
                 // 1. Log IDB saves
                 indexedDBSaves.forEach(save => {
-                    metadataMap.set(save.slotId, { slotId: save.slotId, version: save.version, metadata: save.metadata });
+                    metadataMap.set(save.slotId, save);
                 });
 
-                // 2. Overwrite/Rescue with Native iOS saves (survives IDB wipe)
+                // 2. Overwrite with Native iOS saves ONLY IF NEWER (Bypasses stale WKUserScript)
                 if (window.__IOS_SAVES) {
                     for (const [slotId, data] of Object.entries(window.__IOS_SAVES)) {
                         try {
                             const nativeSave = typeof data === 'string' ? JSON.parse(data) : data;
-                            metadataMap.set(slotId, { slotId: nativeSave.slotId, version: nativeSave.version, metadata: nativeSave.metadata });
+                            const existing = metadataMap.get(slotId);
+                            
+                            let useNative = true;
+                            if (existing) {
+                                const nativeTime = nativeSave.metadata?.timestamp || nativeSave.state?.day || 0;
+                                const existingTime = existing.metadata?.timestamp || existing.state?.day || 0;
+                                if (existingTime >= nativeTime) {
+                                    useNative = false; // IDB is fresher or equal
+                                }
+                            }
+
+                            if (useNative) {
+                                metadataMap.set(slotId, nativeSave);
+                            }
                         } catch(e) {}
                     }
                 }
 
-                resolve(Array.from(metadataMap.values()));
+                // Format back to what the UI expects
+                const results = Array.from(metadataMap.values()).map(save => ({
+                    slotId: save.slotId,
+                    version: save.version,
+                    metadata: save.metadata
+                }));
+
+                resolve(results);
             };
             request.onerror = (e) => reject(e.target.error);
         });

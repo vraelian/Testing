@@ -6,7 +6,7 @@
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS, APP_VERSION } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 import { saveStorageService } from './SaveStorageService.js';
 import { MarketService } from './simulation/MarketService.js';
@@ -102,9 +102,10 @@ export class SimulationService {
             const shipName = DB.SHIPS[activeShipId]?.name || "Unknown";
             
             const payload = {
-                version: "36.10",
+                version: APP_VERSION,
                 slotId: this.gameState.slotId,
                 metadata: {
+                    timestamp: Date.now(), // CRITICAL FIX: Absolute timestamp for iOS bridge reconciliation
                     realDate: new Date().toLocaleDateString(),
                     inGameDay: stateToSave.day,
                     creditsFormatted: formatCredits(stateToSave.player.credits),
