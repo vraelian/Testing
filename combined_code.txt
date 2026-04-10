@@ -16,7 +16,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black">
-    <title>Orbital Trading 37.53</title>
+    <title id="app-title">Orbital Trading</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/lil-gui@0.19"></script>
@@ -112,8 +112,8 @@
 
         <footer class="absolute bottom-4 text-center text-slate-500 text-sm w-full flex flex-col items-center">
             <p class="text-xs text-slate-600 mb-1">Alpha Build</p>
-            <p>Version 37.53</p>
-            <a href="https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
+            <p id="splash-version-display"></p>
+            <a id="splash-feedback-link" href="#" target="_blank" class="hover:text-cyan-300 transition-colors"><span class="hl">Submit Playtesting Feedback</span></a>
         </footer>
     </div>
 
@@ -173,6 +173,13 @@
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
                 <path d="M3 15h4l3-3 4 4 7-7"></path>
+            </svg>
+        </button>
+
+        <button id="btn-game-menu" class="fixed bottom-[75px] right-[22px] z-[800] w-9 h-9 rounded-full bg-slate-800 text-gray-300 flex items-center justify-center transition-all shadow-[0_0_10px_rgba(0,0,0,0.5)] opacity-65 hover:opacity-100 hover:bg-slate-700 hover:text-cyan-300" data-action="open-pause-menu" title="Game Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
         </button>
 
@@ -327,6 +334,24 @@
     <div id="cargo-detail-modal" class="modal-backdrop hidden">
         <div id="cargo-detail-content" class="modal-content">
             </div>
+    </div>
+
+    <div id="pause-menu-modal" class="modal-backdrop hidden z-[1000]">
+        <div class="modal-content relative flex flex-col items-center justify-between p-8" style="min-height: 400px; max-width: 400px; width: 90%;">
+            <button class="absolute top-2 right-4 text-gray-400 hover:text-white text-4xl font-bold leading-none cursor-pointer transition-colors" data-action="close-pause-menu" title="Close">&minus;</button>
+            
+            <h2 class="text-4xl font-orbitron font-bold text-center text-cyan-300 mt-2 mb-8" style="-webkit-text-stroke: 1px black; text-shadow: 0 0 10px rgba(6, 182, 212, 0.8);">Orbital Trading</h2>
+            
+            <div class="flex flex-col gap-5 w-full mb-8">
+                <button id="pause-btn-save" class="btn w-full py-3 text-lg" data-action="manual-save">Save Progress</button>
+                <button id="pause-btn-feedback" class="btn w-full py-3 text-lg" data-action="open-feedback">Feedback</button>
+                <button id="pause-btn-exit" class="btn w-full py-3 text-lg" data-action="exit-game-init">Exit Game</button>
+            </div>
+            
+            <div class="mt-auto pt-4 w-full text-center">
+                <p id="pause-menu-version" class="text-sm text-slate-500 font-roboto-mono"></p>
+            </div>
+        </div>
     </div>
 
     <div id="graph-tooltip"></div>
@@ -5624,6 +5649,23 @@ card.
 }
 
 /* ========================================================================= */
+/* --- GAME MENU / PAUSE SCREEN ---                                */
+/* ========================================================================= */
+
+.btn-game-menu {
+    transition: all 0.2s ease-in-out;
+}
+
+/* Game Menu Faster CRT */
+.pause-menu-crt-on { 
+    animation: sevCrtTurnOn 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards; 
+}
+.pause-menu-crt-off { 
+    animation: sevCrtTurnOff 0.4s cubic-bezier(0.23, 1, 0.32, 1) forwards !important; 
+    transform-origin: center center; 
+}
+
+/* ========================================================================= */
 /* --- STATIC MODAL TEXTURE INTEGRATION ---                                  */
 /* ========================================================================= */
 
@@ -5673,7 +5715,9 @@ card.
 #cargo-detail-modal .modal-content::before,
 #cargo-detail-modal .modal-content::after,
 #mission-modal .modal-content::before,
-#mission-modal .modal-content::after {
+#mission-modal .modal-content::after,
+#pause-menu-modal .modal-content::before,
+#pause-menu-modal .modal-content::after {
     display: none !important;
 }
 
@@ -13262,7 +13306,7 @@ import { TravelService } from './services/world/TravelService.js';
 
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
-import { SHIP_IDS } from './data/constants.js'; 
+import { SHIP_IDS, APP_VERSION, APP_FEEDBACK_URL } from './data/constants.js'; 
 import './data/characters.js';
 
 const setAppHeight = () => {
@@ -13292,6 +13336,33 @@ const setAppHeight = () => {
 };
 
 document.addEventListener('DOMContentLoaded', () => {
+
+    // --- REBOOT SEQUENCE (Phase 5) ---
+    if (sessionStorage.getItem('isRebooting') === 'true') {
+        sessionStorage.removeItem('isRebooting');
+        
+        const fader = document.createElement('div');
+        fader.className = 'fixed inset-0 bg-black z-[9999] pointer-events-none';
+        fader.style.opacity = '1';
+        fader.style.transition = 'opacity 1s ease-in-out';
+        document.body.appendChild(fader);
+
+        // Force reflow
+        void fader.offsetWidth;
+
+        setTimeout(() => {
+            fader.style.opacity = '0';
+            fader.addEventListener('transitionend', () => fader.remove());
+        }, 50);
+    }
+
+    // --- CONSTANT HYDRATION (Phase 1) ---
+    document.title = `Orbital Trading ${APP_VERSION}`;
+    const versionDisplay = document.getElementById('splash-version-display');
+    if (versionDisplay) versionDisplay.innerText = `Version ${APP_VERSION}`;
+    
+    const feedbackLink = document.getElementById('splash-feedback-link');
+    if (feedbackLink) feedbackLink.href = APP_FEEDBACK_URL;
 
     // --- App Initialization Definitions ---
     const splashScreen = document.getElementById('splash-screen');
@@ -14271,6 +14342,11 @@ export class EffectsManager {
 
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
+/** //////////////////    VERSION INFO    ///////////////////  */
+export const APP_VERSION = '37.53';
+export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
+/** /////////////////////////////////////////////////////////  */
+
 /**
  * @fileoverview This file contains centralized constant values and enumerations used throughout the game.
  * Consolidating these values here makes the codebase easier to manage, read, and modify, as it provides
@@ -16841,7 +16917,7 @@ The ship looks like it was scavenged rather than built. Its 'hull' is merely a s
         maxHealth: 40,
         cargoCapacity: 35,
         maxFuel: 150,
-        role: "Balanced",
+        role: "Explorer",
         attribute: "None",
         description: "Resembling a manned deep-space probe, its fragile, asymmetric frame carries massive fuel reserves at the cost of armor and crew comfort.",
         lore: `The Nomad, born from the Helium Rush, is a direct response to the chaos and opportunity of Luna's new economy.
@@ -20861,7 +20937,7 @@ export const HELP_REGISTRY = {
         `<div class="help-slide"><h3>Local Station Market</h3><p>The best way to earn credits is to play the market: Buy low and sell high.<br><br>Buying commodities and <i>traveling to a different station to sell them for more than your original purchase price</i> is how you play arbitrage.</p></div>`,
         `<div class="help-slide"><h3>Inspecting the Market</h3><p>Prices evolve dynamically based on <b>supply, demand, and your trading actions</b>.<br><br>Tap the prices to view their price history and performance.</p></div>`,
         `<div class="help-slide"><h3>Economic Behavior</h3><p>Each commodity has a limited quantity available for purchase at each station. Supply will recover eventually over time.<br><br><i>Prices fluctuate naturally but are also influenced by supply, purchases, and sales.</i></p></div>`,
-        `<div class="help-slide"><h3>Market Pressure</h3><p>Massive sales create market pressure, delaying inventory replenishment and stabilizing prices.<br><br>Large purchases will quickly drive up prices.</p></div>`
+        `<div class="help-slide"><h3>Market Pressure</h3><p>Massive sales create market pressure, delaying inventory replenishment and destabilizing prices.<br><br>Large purchases will quickly drive up prices.</p></div>`
     ],
     'services-supply': [
         `<div class="help-slide"><h3>Station Services</h3><p>Refuel your ship and repair its hull here.<br><br>Fuel price varies by station.</p></div>`
@@ -22249,7 +22325,7 @@ import { LORE_REGISTRY } from '../../data/lore/loreRegistry.js';
 import { formatCredits, getCommodityStyle } from '../../utils.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
-import { COMMODITY_IDS } from '../../data/constants.js';
+import { COMMODITY_IDS, APP_VERSION } from '../../data/constants.js';
 import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 
@@ -22959,8 +23035,98 @@ export class UIEventControl {
         }).join('');
         // --- END VIRTUAL WORKBENCH ---
     }
-}
 
+    // ========================================================================= 
+    // --- GAME MENU / PAUSE SCREEN (PHASE 3) --- 
+    // ========================================================================= 
+
+    /**
+     * Initializes and displays the Game Menu modal with location-themed styling.
+     */
+    showPauseMenu() {
+        const modal = document.getElementById('pause-menu-modal');
+        if (!modal) return;
+        
+        const state = this.manager.lastKnownState;
+        const locationId = state?.currentLocationId || 'loc_earth';
+        const location = DB.MARKETS.find(l => l.id === locationId);
+
+        const modalContent = modal.querySelector('.modal-content');
+        
+        // Reset base classes
+        modalContent.className = 'modal-content relative flex flex-col items-center justify-between p-8';
+        
+        // Apply Location Theme dynamically
+        if (location && location.navTheme) {
+            modalContent.style.background = location.navTheme.gradient;
+            modalContent.style.borderColor = location.navTheme.borderColor;
+            modalContent.style.boxShadow = `0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px ${location.navTheme.borderColor}40`;
+        }
+
+        // Hydrate Version String
+        const versionEl = document.getElementById('pause-menu-version');
+        if (versionEl) versionEl.innerText = `Version ${APP_VERSION}`;
+
+        // Reset the Save button to default state
+        const saveBtn = document.getElementById('pause-btn-save');
+        if (saveBtn) {
+            saveBtn.className = 'btn w-full py-3 text-lg';
+            saveBtn.innerHTML = 'Save Progress';
+            saveBtn.disabled = false;
+        }
+
+        // Reset the Exit button to default state
+        const exitBtn = document.getElementById('pause-btn-exit');
+        if (exitBtn) {
+            exitBtn.className = 'btn w-full py-3 text-lg';
+            exitBtn.innerHTML = 'Exit Game';
+            exitBtn.dataset.action = 'exit-game-init';
+        }
+
+        // Display Modal and Trigger CRT Open Animation
+        modal.classList.remove('hidden', 'modal-hiding');
+        modalContent.classList.remove('sev-crt-shutdown');
+        modalContent.classList.add('sev-crt-turn-on');
+        modalContent.style.animationDuration = '0.4s';
+
+        // Bind transient click-outside dismissal
+        this._pauseMenuCloseHandler = (e) => {
+            if (e.target === modal) {
+                this.hidePauseMenu();
+            }
+        };
+        modal.addEventListener('click', this._pauseMenuCloseHandler);
+    }
+
+    /**
+     * Executes the CRT shutdown animation and hides the Game Menu.
+     */
+    hidePauseMenu() {
+        const modal = document.getElementById('pause-menu-modal');
+        if (!modal) return;
+
+        const modalContent = modal.querySelector('.modal-content');
+        
+        // Trigger CRT Close Animation
+        modalContent.classList.remove('sev-crt-turn-on');
+        void modalContent.offsetWidth; // Force reflow
+        modalContent.classList.add('sev-crt-shutdown');
+        modalContent.style.animationDuration = '0.4s';
+
+        // Clean up transient listener
+        if (this._pauseMenuCloseHandler) {
+            modal.removeEventListener('click', this._pauseMenuCloseHandler);
+            this._pauseMenuCloseHandler = null;
+        }
+
+        // Hide entirely after animation concludes
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modalContent.classList.remove('sev-crt-shutdown');
+            modalContent.style.animationDuration = '';
+        }, 400); 
+    }
+}
 --- END OF FILE: ./js/services/ui/UIEventControl.js ---
 
 --- START OF FILE: ./js/services/ui/UIMarketControl.js ---
@@ -35830,6 +35996,11 @@ export class IntroService {
         const econBtn = document.getElementById('btn-econ-weather');
         if (econBtn) econBtn.style.display = 'none';
 
+        // --- VIRTUAL WORKBENCH: Hide Pause Menu Cog during Intro ---
+        const cogBtn = document.getElementById('btn-game-menu');
+        if (cogBtn) cogBtn.style.display = 'none';
+        // --- END VIRTUAL WORKBENCH ---
+
         // Ensure the Help Anchor is completely suppressed early in the intro.
         if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
             this.uiManager.helpManager.anchorBtn.style.display = 'none';
@@ -36583,6 +36754,11 @@ export class IntroService {
         const econBtn = document.getElementById('btn-econ-weather');
         if (econBtn) econBtn.style.display = '';
 
+        // --- VIRTUAL WORKBENCH: Restore Pause Menu Cog after Intro ---
+        const cogBtn = document.getElementById('btn-game-menu');
+        if (cogBtn) cogBtn.style.display = '';
+        // --- END VIRTUAL WORKBENCH ---
+
         // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
 
@@ -36904,7 +37080,7 @@ export class MissionTriggerEvaluator {
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
-import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS } from '../data/constants.js';
+import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS, APP_VERSION } from '../data/constants.js';
 import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 import { saveStorageService } from './SaveStorageService.js';
 import { MarketService } from './simulation/MarketService.js';
@@ -37000,9 +37176,10 @@ export class SimulationService {
             const shipName = DB.SHIPS[activeShipId]?.name || "Unknown";
             
             const payload = {
-                version: "36.10",
+                version: APP_VERSION,
                 slotId: this.gameState.slotId,
                 metadata: {
+                    timestamp: Date.now(), // CRITICAL FIX: Absolute timestamp for iOS bridge reconciliation
                     realDate: new Date().toLocaleDateString(),
                     inGameDay: stateToSave.day,
                     creditsFormatted: formatCredits(stateToSave.player.credits),
@@ -42606,36 +42783,61 @@ class SaveStorageService {
     }
 
     /**
-     * Loads a game save. Prioritizes the indestructible iOS Native Storage if available.
+     * Loads a game save. Dynamically compares IDB vs iOS Native Storage to bypass
+     * stale WKUserScript injections upon window.reload().
      */
     async loadGame(slotId) {
-        // --- PHASE 1: iOS NATIVE BRIDGE (HEALING FALLBACK) ---
-        // Native saves are injected directly into the window at boot by Swift.
+        await this.initPromise;
+        
+        // 1. Fetch Primary IDB Save
+        let idbSave = null;
+        try {
+            idbSave = await new Promise((resolve, reject) => {
+                const transaction = this.db.transaction([this.storeName], 'readonly');
+                const store = transaction.objectStore(this.storeName);
+                const request = store.get(slotId);
+                request.onsuccess = (e) => resolve(e.target.result);
+                request.onerror = (e) => reject(e.target.error);
+            });
+        } catch (e) {
+            console.warn("[SaveStorageService] IDB load failed", e);
+        }
+
+        // 2. Fetch iOS Native Fallback
+        let nativeSave = null;
         if (window.__IOS_SAVES && window.__IOS_SAVES[slotId]) {
             try {
-                console.log(`[iOS Bridge] Loading slot ${slotId} from unbreakable native storage.`);
-                const nativeSave = typeof window.__IOS_SAVES[slotId] === 'string' 
+                nativeSave = typeof window.__IOS_SAVES[slotId] === 'string' 
                     ? JSON.parse(window.__IOS_SAVES[slotId]) 
                     : window.__IOS_SAVES[slotId];
-                
-                // Heal IndexedDB silently in the background
-                this._syncToIndexedDB(nativeSave);
-                return nativeSave;
             } catch (e) {
                 console.error("[iOS Bridge] Failed to parse native iOS save:", e);
             }
         }
 
-        // Standard IndexedDB Load
-        await this.initPromise;
-        return new Promise((resolve, reject) => {
-            const transaction = this.db.transaction([this.storeName], 'readonly');
-            const store = transaction.objectStore(this.storeName);
-            const request = store.get(slotId);
+        // 3. Resolution Logic
+        if (!idbSave && !nativeSave) return null;
+        
+        if (!idbSave && nativeSave) {
+            console.log(`[iOS Bridge] IDB wiped. Healing from unbreakable native storage.`);
+            this._syncToIndexedDB(nativeSave);
+            return nativeSave;
+        }
+        
+        if (idbSave && !nativeSave) return idbSave;
 
-            request.onsuccess = (event) => resolve(event.target.result || null);
-            request.onerror = (e) => reject(e.target.error);
-        });
+        // Both exist: Prevent WKWebView stale-script bug by comparing timestamps/progress
+        const idbTime = idbSave.metadata?.timestamp || idbSave.state?.day || 0;
+        const nativeTime = nativeSave.metadata?.timestamp || nativeSave.state?.day || 0;
+
+        if (nativeTime > idbTime) {
+            console.log(`[iOS Bridge] Native save is newer. Healing IDB.`);
+            this._syncToIndexedDB(nativeSave);
+            return nativeSave;
+        } else {
+            console.log(`[SaveStorageService] IDB save is newer or equal to Native. Using IDB to bypass stale iOS memory.`);
+            return idbSave;
+        }
     }
 
     /**
@@ -42661,7 +42863,7 @@ class SaveStorageService {
     }
 
     /**
-     * Retrieves metadata for the Splash Screen by safely merging Native and IDB data.
+     * Retrieves metadata for the Splash Screen, safely resolving desyncs between Native and IDB data.
      */
     async getAllSaveMetadata() {
         await this.initPromise;
@@ -42676,20 +42878,40 @@ class SaveStorageService {
                 
                 // 1. Log IDB saves
                 indexedDBSaves.forEach(save => {
-                    metadataMap.set(save.slotId, { slotId: save.slotId, version: save.version, metadata: save.metadata });
+                    metadataMap.set(save.slotId, save);
                 });
 
-                // 2. Overwrite/Rescue with Native iOS saves (survives IDB wipe)
+                // 2. Overwrite with Native iOS saves ONLY IF NEWER (Bypasses stale WKUserScript)
                 if (window.__IOS_SAVES) {
                     for (const [slotId, data] of Object.entries(window.__IOS_SAVES)) {
                         try {
                             const nativeSave = typeof data === 'string' ? JSON.parse(data) : data;
-                            metadataMap.set(slotId, { slotId: nativeSave.slotId, version: nativeSave.version, metadata: nativeSave.metadata });
+                            const existing = metadataMap.get(slotId);
+                            
+                            let useNative = true;
+                            if (existing) {
+                                const nativeTime = nativeSave.metadata?.timestamp || nativeSave.state?.day || 0;
+                                const existingTime = existing.metadata?.timestamp || existing.state?.day || 0;
+                                if (existingTime >= nativeTime) {
+                                    useNative = false; // IDB is fresher or equal
+                                }
+                            }
+
+                            if (useNative) {
+                                metadataMap.set(slotId, nativeSave);
+                            }
                         } catch(e) {}
                     }
                 }
 
-                resolve(Array.from(metadataMap.values()));
+                // Format back to what the UI expects
+                const results = Array.from(metadataMap.values()).map(save => ({
+                    slotId: save.slotId,
+                    version: save.version,
+                    metadata: save.metadata
+                }));
+
+                resolve(results);
             };
             request.onerror = (e) => reject(e.target.error);
         });
@@ -44382,7 +44604,7 @@ export class HoldEventHandler {
  * more complex interactions are handled by other specialized handlers.
  */
 import { DB } from '../../data/database.js';
-import { ACTION_IDS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
+import { ACTION_IDS, NAV_IDS, SCREEN_IDS, APP_FEEDBACK_URL } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
 import { startLicenseAnimation, endLicenseAnimation } from '../ui/AnimationService.js';
@@ -44449,6 +44671,64 @@ export class ActionClickHandler {
         const { action, ...dataset } = actionTarget.dataset;
 
         switch (action) {
+            // --- GAME MENU (PHASE 3 & 4) ---
+            case 'open-pause-menu':
+                this.uiManager.eventControl.showPauseMenu();
+                break;
+            
+            case 'close-pause-menu':
+                this.uiManager.eventControl.hidePauseMenu();
+                break;
+
+            case 'open-feedback':
+                window.open(APP_FEEDBACK_URL, '_blank');
+                break;
+
+            case 'manual-save': {
+                e.stopPropagation();
+                
+                // Route through the established SimulationService pipeline
+                // This guarantees exportState() serialization and safe IndexedDB/iOS Dual-Writes
+                await this.simulationService.saveGame();
+                
+                // Mutate button to locked Gold State for immediate visual feedback
+                actionTarget.className = 'btn w-full py-3 text-lg btn-gold-weighty';
+                actionTarget.innerHTML = 'Progress Saved!';
+                actionTarget.disabled = true;
+                break;
+            }
+
+            case 'exit-game-init':
+                e.stopPropagation();
+                // Mutate button to locked Danger State
+                actionTarget.className = 'btn w-full py-3 text-lg bg-red-800 hover:bg-red-700 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]';
+                actionTarget.innerHTML = 'CONFIRM EXIT?';
+                actionTarget.dataset.action = 'exit-game-confirm';
+                break;
+
+            case 'exit-game-confirm': {
+                e.stopPropagation();
+                
+                // Construct the absolute blackout shield
+                const fader = document.createElement('div');
+                fader.className = 'fixed inset-0 bg-black z-[9999] pointer-events-none';
+                fader.style.opacity = '0';
+                fader.style.transition = 'opacity 1s ease-in-out';
+                document.body.appendChild(fader);
+                
+                // Force layout reflow before opacity change
+                void fader.offsetWidth;
+                fader.style.opacity = '1';
+                
+                // Wait for the 1.0s fade to finish, set the persistent state flag, then hard reset
+                setTimeout(() => {
+                    sessionStorage.setItem('isRebooting', 'true');
+                    window.location.reload();
+                }, 1000);
+                break;
+            }
+            // --- END GAME MENU ---
+
             // --- Ship Actions (Hangar/Shipyard) ---
             case ACTION_IDS.BUY_SHIP: {
                 const { shipId } = dataset;
