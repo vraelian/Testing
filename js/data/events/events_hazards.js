@@ -8,9 +8,6 @@
 import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
 
 export const EVENTS_HAZARDS = [
-    // =========================================================================
-    // CATEGORY II: HAZARDS (Navigational Threats)
-    // =========================================================================
     {
         id: 'evt_hazard_meteoroid',
         tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
@@ -107,7 +104,7 @@ export const EVENTS_HAZARDS = [
             'out_run_fail': {
                 title: 'Radiation Leak',
                 text: 'Hard radiation pierces the cargo bay, ionizing a portion of your manifest.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.35 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 35 }]
             }
         }
     },
@@ -115,44 +112,39 @@ export const EVENTS_HAZARDS = [
         id: 'evt_hazard_gravity',
         tags: [EVENT_CONSTANTS.TAGS.SPACE],
         weight: 10,
-        requirements: [],
+        requirements: [
+            { type: EVENT_CONSTANTS.CONDITIONS.LOCATION_IS, operator: 'IN', value: ['loc_earth', 'loc_mars', 'loc_venus', 'loc_pluto'] }
+        ],
         template: {
-            title: 'Gravity Well',
-            description: 'A navigational error brought you too close to a gas giant\'s gravity well. The tidal forces are dragging you off course.'
+            title: 'The Gravity Well',
+            description: 'Navigational thrusters misfire during orbital departure, dragging your vector dangerously close to the atmosphere.'
         },
         choices: [
             {
                 id: 'choice_burn',
-                text: 'Corrective Burn (-Fuel)',
+                text: 'Deep Burn (Massive Fuel Drain)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_burn' }] }
             },
             {
-                id: 'choice_decay',
-                text: 'Orbital Decay (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_decay' }] }
-            },
-            {
-                id: 'choice_slingshot',
-                text: 'Slingshot (Req: Navigator)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.NAVIGATOR, operator: 'EQ', value: 1 }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_slingshot' }] }
+                id: 'choice_arrestor',
+                text: 'Emergency Arrestor Catch (Return to Origin, Extreme Damage)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_arrestor' }] }
             }
         ],
         outcomes: {
             'out_burn': {
                 title: 'Orbit Corrected',
-                text: 'You burn directly against the gravity vector. The engines scream, consuming reaction mass at a terrifying rate.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
+                text: 'You burn directly against the gravity vector. The engines scream, consuming your reserves at a terrifying rate, but you break free.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, isCurrentPercent: true, value: -90 }]
             },
-            'out_decay': {
-                title: 'Decay & Recovery',
-                text: 'You surrender to the physics, letting the planet pull you into a long, elliptical orbit before flinging you back out.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
-            },
-            'out_slingshot': {
-                title: 'Gravity Assist',
-                text: 'You dip deeper into the well, using the Oberth effect to steal momentum. You exit faster than you entered.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: -0.15 } }]
+            'out_arrestor': {
+                title: 'Travel Aborted',
+                text: 'You deploy the emergency atmospheric arrestors. The ship violently decelerates, ripping hull plates away, and falls back into the origin port.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -85 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, isCurrentPercent: true, value: -10 }
+                ]
             }
         }
     },
@@ -163,55 +155,48 @@ export const EVENTS_HAZARDS = [
         requirements: [],
         template: {
             title: 'Sensor Blindness',
-            description: 'You\'ve entered a region of intense magnetic flux. The lidar is whited out. You can try to filter the signal with high-end hardware or wait it out.'
+            description: 'You enter a dense region of polarized cosmic dust. Abrasive particulate causes static buildup, blinding lidar and collision warnings.'
         },
         choices: [
             {
-                id: 'choice_filter',
-                text: 'Filter Signal (-10 Processors * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_filter' }] }
-            },
-            {
-                id: 'choice_wait',
-                text: 'All Stop (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
-            },
-            {
-                id: 'choice_blind',
-                text: 'Fly Blind (Risk Hull)',
+                id: 'choice_fly',
+                text: 'Fly by Telemetry (High Risk, High Reward)',
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
-                        { outcomeId: 'out_blind_success', weight: 70 },
-                        { outcomeId: 'out_blind_fail', weight: 30 }
+                        { outcomeId: 'out_fly_success', weight: 30 },
+                        { outcomeId: 'out_fly_fail', weight: 70 }
                     ]
                 }
+            },
+            {
+                id: 'choice_wait',
+                text: 'Hold Position & Wait (Time Delay, Fuel Burn)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_wait' }] }
             }
         ],
         outcomes: {
-            'out_filter': {
-                title: 'Signal Clear',
-                text: 'The new Processors work overtime, filtering the noise from the data. The sensor picture snaps into focus.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+            'out_fly_success': {
+                title: 'Clear Vector',
+                text: 'Trusting your instruments pays off. You ride the magnetic currents out of the dust cloud, cutting your travel time significantly.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, isCurrentPercent: true, value: -50 }]
+            },
+            'out_fly_fail': {
+                title: 'Collision Alert',
+                text: 'You never saw it coming. A chunk of debris slams into your prow, damaging sensors and severely delaying your journey.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -50 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, isCurrentPercent: true, value: 30 },
+                    { type: EVENT_CONSTANTS.EFFECTS.APPLY_STATUS, target: 'status_nav_glitch', value: 1 }
+                ]
             },
             'out_wait': {
                 title: 'Storm Waited Out',
-                text: 'It is too dangerous. You cut velocity and wait for the magnetic storm to drift past.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
-            },
-            'out_blind_success': {
-                title: 'Pure Luck',
-                text: 'You flew by feel and luck. The hull remains intact.',
-                effects: []
-            },
-            'out_blind_fail': {
-                title: 'Collision Alert',
-                text: 'You never saw it coming. A chunk of ice the size of a car slams into your prow.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.30 } }]
+                text: 'It is too dangerous. You hold position and burn fuel to maintain orientation until the cloud disperses.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, isCurrentPercent: true, value: 20 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, isCurrentPercent: true, value: -10 }
+                ]
             }
         }
     },
@@ -221,62 +206,73 @@ export const EVENTS_HAZARDS = [
         weight: 8,
         requirements: [],
         template: {
-            title: 'Kessler Cascade',
-            description: 'A catastrophic satellite collision has blanketed the orbital lane ahead in hyper-velocity debris. The corridor is effectively blocked.'
+            title: 'Kessler Survivor',
+            description: 'A massive cloud of hyper-velocity micro-debris completely blocks the transit vector.'
         },
         choices: [
             {
-                id: 'choice_reinforce',
-                text: 'Reinforce & Push (-10 Plasteel * Scale)',
-                requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
-                ],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_reinforce' }] }
-            },
-            {
                 id: 'choice_crawl',
-                text: 'Crawl Through (Trip Delay & Risk Hull)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_crawl_success', weight: 60 },
-                        { outcomeId: 'out_crawl_fail', weight: 40 }
-                    ]
-                }
+                text: 'Crawl Through (Time Delay, Minor Damage)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_crawl' }] }
             },
             {
-                id: 'choice_divert',
-                text: 'Divert Course (Redirect & -Fuel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
+                id: 'choice_gun',
+                text: 'Gun It (Severe Damage, Gain Status)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_gun' }] }
             }
         ],
         outcomes: {
-            'out_reinforce': {
-                title: 'Punched Through',
-                text: 'You weld extra Plasteel to the prow and ram your way through the thinnest part of the debris field. The armor holds.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
-            },
-            'out_crawl_success': {
+            'out_crawl': {
                 title: 'Navigated Safely',
-                text: 'You drop to maneuvering thrusters and painstakingly weave through the shrapnel over several days.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }]
-            },
-            'out_crawl_fail': {
-                title: 'Hull Strike',
-                text: 'Despite your slow speed, a rogue shard of metal shears off a stabilizer fin, causing damage and delaying your trip.',
+                text: 'You drop to maneuvering thrusters and painstakingly weave through the shrapnel. It takes time, and your hull still takes a beating.',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.15 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -15 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, isCurrentPercent: true, value: 20 },
+                    { type: EVENT_CONSTANTS.EFFECTS.QUEUE_EVENT, target: 'evt_kessler_mechanic', value: 0 } 
                 ]
             },
-            'out_divert': {
-                title: 'Diverted Course',
-                text: 'You burn extra fuel to find a completely new vector, abandoning your original destination.',
+            'out_gun': {
+                title: 'Punched Through',
+                text: 'You hit the thrusters and blast through the debris field. You save time, but the micro-impacts severely compromise your hull integrity.',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -25 },
+                    { type: EVENT_CONSTANTS.EFFECTS.APPLY_STATUS, target: 'status_micro_fractures', value: 1 }
                 ]
+            }
+        }
+    },
+    {
+        id: 'evt_kessler_mechanic',
+        tags: [],
+        weight: 0,
+        requirements: [],
+        template: {
+            title: 'Shipyard Inspection',
+            description: 'A shipyard mechanic inspects the micro-pitting on your hull from your recent encounter with the Kessler debris.'
+        },
+        choices: [
+            {
+                id: 'choice_accept',
+                text: 'Accept Prototype Armor',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_accept_t2', weight: 50 },
+                        { outcomeId: 'out_accept_t3', weight: 50 }
+                    ]
+                }
+            }
+        ],
+        outcomes: {
+            'out_accept_t2': {
+                title: 'Armor Upgraded',
+                text: '"I\'ve never seen pitting quite like this," she mutters. "Let me test a new reinforcement alloy on your ship. It\'s on the house."',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE, target: 'UPG_UTIL_HULL_2', value: 1 }]
+            },
+            'out_accept_t3': {
+                title: 'Armor Upgraded',
+                text: '"I\'ve never seen pitting quite like this," she mutters. "Let me test a new reinforcement alloy on your ship. It\'s on the house."',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.ADD_UPGRADE, target: 'UPG_UTIL_HULL_3', value: 1 }]
             }
         }
     }

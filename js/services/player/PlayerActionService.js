@@ -10,15 +10,6 @@ import { GAME_RULES, PERK_IDS, ACTION_IDS, LOCATION_IDS, COMMODITY_IDS } from '.
 import { GameAttributes } from '../../services/GameAttributes.js';
 
 export class PlayerActionService {
-    /**
-     * @param {import('../GameState.js').GameState} gameState
-     * @param {import('../UIManager.js').UIManager} uiManager
-     * @param {import('../MissionService.js').MissionService} missionService
-     * @param {import('../simulation/MarketService.js').MarketService} marketService
-     * @param {import('../world/TimeService.js').TimeService} timeService
-     * @param {import('../../services/LoggingService.js').Logger} logger
-     * @param {import('../SimulationService.js').SimulationService} simulationServiceFacade
-     */
     constructor(gameState, uiManager, missionService, marketService, timeService, logger, simulationServiceFacade) {
         this.gameState = gameState;
         this.uiManager = uiManager;
@@ -30,12 +21,6 @@ export class PlayerActionService {
         this.isTransactionInProgress = false;
     }
 
-    /**
-     * Handles the purchase of a specified quantity of a commodity from the current market.
-     * @param {string} goodId - The COMMODITY_ID of the item to purchase.
-     * @param {number} quantity - The integer amount to buy.
-     * @returns {boolean} - True if the purchase was successful, false otherwise.
-     */
     buyItem(goodId, quantity) {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return false;
@@ -51,21 +36,16 @@ export class PlayerActionService {
         const shipState = state.player.shipStates[activeShipId];
         const upgrades = shipState.upgrades || [];
         
-        // --- UPGRADE SYSTEM: PRICE MODIFIERS ---
         const priceMod = GameAttributes.getPriceModifier(upgrades, 'buy');
         let price = Math.max(1, Math.round(basePrice * priceMod));
-        // --- END UPGRADE SYSTEM ---
 
         let totalCost = price * quantity;
 
-        // --- PHASE 2: AGE PERK (PURCHASE COST) ---
         const agePurchaseDiscount = state.player.statModifiers?.purchaseCost || 0;
         if (agePurchaseDiscount > 0) {
             totalCost = Math.floor(totalCost * (1 - agePurchaseDiscount));
         }
-        // --- END PHASE 2 ---
 
-        // --- SYSTEM STATES V3 HOOKS (Survival Goods Discount) ---
         const systemState = state.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
 
@@ -74,9 +54,7 @@ export class PlayerActionService {
                 totalCost = Math.floor(totalCost * activeStateDef.modifiers.survivalGoodsDiscountMod);
             }
         }
-        // --- END SYSTEM STATES V3 ---
 
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (NEPTUNE & BELT DISCOUNT) ---
         if (state.currentLocationId === LOCATION_IDS.NEPTUNE && 
             (goodId === COMMODITY_IDS.PROPELLANT || goodId === COMMODITY_IDS.PLASTEEL) &&
             quantity > 50) {
@@ -91,14 +69,12 @@ export class PlayerActionService {
             totalCost = Math.floor(totalCost * 0.95);
             this.uiManager.createFloatingText("MINER'S DISCOUNT", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
 
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
-        // --- FLEET OVERFLOW SYSTEM: CAPACITY CHECK ---
         let totalAvailableCapacity = 0;
         const shipCapacities = [];
         
@@ -114,7 +90,6 @@ export class PlayerActionService {
              this.uiManager.queueModal('event-modal', "Fleet Cargo Full", "Your fleet does not have enough cargo space for this transaction.");
             return false;
         }
-        // --- END FLEET OVERFLOW SYSTEM ---
 
          if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
@@ -126,7 +101,6 @@ export class PlayerActionService {
             this.marketService.checkDepletion(good, inventoryItem, stockBeforeBuy, state.day);
         }
 
-        // --- VIRTUAL WORKBENCH: ATTR_TRADER Logic ---
         let finalQuantity = quantity;
         const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
         if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
@@ -134,10 +108,7 @@ export class PlayerActionService {
             this.uiManager.createFloatingText("+1 Bonus!", window.innerWidth/2, window.innerHeight/2, '#34d399');
             this.logger.info.player(state.day, 'ATTR_TRIGGER', `Trader perk triggered: +1 ${good.name}.`);
         }
-        // --- END VIRTUAL WORKBENCH ---
 
-        // --- FLEET OVERFLOW SYSTEM: DISTRIBUTION LOGIC ---
-        // Sort: Active ship first, then remaining inactive ships by max capacity descending
         shipCapacities.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
@@ -157,7 +128,6 @@ export class PlayerActionService {
                 remainingToBuy -= toAdd;
             }
         }
-        // --- END FLEET OVERFLOW SYSTEM ---
 
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
@@ -168,7 +138,6 @@ export class PlayerActionService {
 
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
 
-        // TELEMETRY: Gated execution
         if (state.uiState?.enableEconomicTelemetry) {
             if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
             
@@ -191,12 +160,6 @@ export class PlayerActionService {
         return true;
     }
 
-    /**
-     * Sells a specified quantity of a commodity from the fleet to the current market.
-     * @param {string} goodId - The COMMODITY_ID of the item to sell.
-     * @param {number} quantity - The integer amount to sell.
-     * @returns {number} - The total value of the sale, or 0 if failed.
-     */
     sellItem(goodId, quantity) {
         const state = this.gameState.getState();
         if (state.isGameOver || quantity <= 0) return 0;
@@ -207,7 +170,6 @@ export class PlayerActionService {
             return 0;
         }
 
-        // --- FLEET OVERFLOW SYSTEM: INVENTORY CHECK ---
         let fleetQty = 0;
         const shipInventories = [];
         
@@ -225,7 +187,6 @@ export class PlayerActionService {
              this.uiManager.queueModal('event-modal', "Insufficient Inventory", `Your fleet does not have ${quantity} units of ${good.name} to sell.`);
             return 0;
         }
-        // --- END FLEET OVERFLOW SYSTEM ---
 
         const activeShipId = state.player.activeShipId;
         const shipState = state.player.shipStates[activeShipId];
@@ -234,29 +195,22 @@ export class PlayerActionService {
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
 
-        // --- UPGRADE SYSTEM: PRICE MODIFIERS ---
         const priceMod = GameAttributes.getPriceModifier(upgrades, 'sell');
         totalSaleValue = Math.floor(totalSaleValue * priceMod);
-        // --- END UPGRADE SYSTEM ---
 
-        // --- SYSTEM STATES V3 HOOKS (Sell Bonus) ---
         const systemState = state.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
 
         if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.sellPriceBonusMod) {
             totalSaleValue = Math.floor(totalSaleValue * activeStateDef.modifiers.sellPriceBonusMod);
         }
-        // --- END SYSTEM STATES V3 ---
 
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (SOL EXPORT YIELD) ---
         if (state.currentLocationId === LOCATION_IDS.SUN &&
             (goodId === COMMODITY_IDS.GRAPHENE_LATTICES || goodId === COMMODITY_IDS.PLASTEEL)) {
             totalSaleValue = Math.floor(totalSaleValue * 1.25);
             this.uiManager.createFloatingText("EXPORT YIELD BONUS", window.innerWidth / 2, window.innerHeight / 2 - 50, '#eab308');
         }
-        // --- END VIRTUAL WORKBENCH ---
 
-        // --- FLEET OVERFLOW SYSTEM: DRAIN LOGIC ---
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
@@ -277,14 +231,11 @@ export class PlayerActionService {
                 remainingToSell -= toRemove;
             }
         }
-        // --- END FLEET OVERFLOW SYSTEM ---
 
         const profit = totalSaleValue - totalCostBasis;
         if (profit > 0) {
-            // --- PHASE 2: AGE PERK (PROFIT BONUS) ---
             const ageProfitBonus = state.player.statModifiers?.profitBonus || 0;
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + ageProfitBonus;
-            // --- END PHASE 2 ---
             
             totalSaleValue += profit * totalBonus;
         }
@@ -305,7 +256,6 @@ export class PlayerActionService {
 
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
 
-        // TELEMETRY: Gated execution
         if (state.uiState?.enableEconomicTelemetry) {
             if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
             
@@ -329,11 +279,6 @@ export class PlayerActionService {
         return totalSaleValue;
     }
 
-    /**
-     * Validates if a ship purchase is possible.
-     * @param {string} shipId - The ID of the ship to buy.
-     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     */
      validateBuyShip(shipId) {
         if (this.isTransactionInProgress) {
             return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
@@ -344,22 +289,18 @@ export class PlayerActionService {
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist in the database." };
         }
 
-        // --- PHASE 2: AGE PERK (SHIP PRICE) ---
         let effectivePrice = ship.price;
         const discount = this.gameState.player.statModifiers?.shipPrice || 0;
         if (discount > 0) {
             effectivePrice = Math.floor(ship.price * (1 - discount));
         }
-        // --- END PHASE 2 ---
 
-        // --- SYSTEM STATES V3 HOOKS (Shipyard Price) ---
         const systemState = this.gameState.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
 
         if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.shipyardPriceMod) {
             effectivePrice = Math.floor(effectivePrice * activeStateDef.modifiers.shipyardPriceMod);
         }
-        // --- END SYSTEM STATES V3 ---
 
         if (this.gameState.player.credits < effectivePrice) {
              return { success: false, errorTitle: "Insufficient Funds", errorMessage: "You cannot afford this ship." };
@@ -367,12 +308,6 @@ export class PlayerActionService {
         return { success: true };
     }
 
-    /**
-     * Executes the purchase of a new ship (Assumes validation passed).
-     * @param {string} shipId - The ID of the ship to buy.
-     * @param {Event} [event] - The click event for placing floating text.
-     * @returns {object|null} - The purchased ship object.
-     */
     executeBuyShip(shipId, event) {
         this.isTransactionInProgress = true;
 
@@ -383,22 +318,18 @@ export class PlayerActionService {
                 return null;
             }
 
-            // --- PHASE 2: AGE PERK (SHIP PRICE) ---
             let effectivePrice = ship.price;
             const discount = this.gameState.player.statModifiers?.shipPrice || 0;
             if (discount > 0) {
                 effectivePrice = Math.floor(ship.price * (1 - discount));
             }
-            // --- END PHASE 2 ---
 
-            // --- SYSTEM STATES V3 HOOKS (Shipyard Price) ---
             const systemState = this.gameState.systemState;
             const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
 
             if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.shipyardPriceMod) {
                 effectivePrice = Math.floor(effectivePrice * activeStateDef.modifiers.shipyardPriceMod);
             }
-            // --- END SYSTEM STATES V3 ---
 
             this.gameState.player.credits -= effectivePrice;
             this.logger.info.player(this.gameState.day, 'SHIP_PURCHASE', `Purchased ${ship.name} for ${formatCredits(effectivePrice)}.`);
@@ -442,11 +373,6 @@ export class PlayerActionService {
         }
     }
 
-    /**
-     * Validates if a ship sale is possible.
-     * @param {string} shipId - The ID of the ship to sell.
-     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string, requiresForfeit?: boolean, forfeitMessage?: string }
-     */
     validateSellShip(shipId) {
         if (this.isTransactionInProgress) {
             return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
@@ -465,7 +391,6 @@ export class PlayerActionService {
             return { success: false, errorTitle: "Ship Not Found", errorMessage: "The selected ship does not exist." };
         }
 
-        // --- PHASE 4: FLEET OVERFLOW SYSTEM (SALE VALIDATION) ---
         let cargoToMove = calculateInventoryUsed(state.player.inventories[shipId]);
         let availableSpace = 0;
 
@@ -479,23 +404,16 @@ export class PlayerActionService {
 
         if (cargoToMove > 0 && cargoToMove > availableSpace) {
             return { 
-                success: true, // It is allowed, but requires warning
+                success: true,
                 ship: ship, 
                 requiresForfeit: true, 
                 forfeitMessage: `This ship has ${cargoToMove} units of cargo aboard, but the rest of your fleet only has space for ${availableSpace} units.<br>Selling this ship will permanently destroy the excess cargo.`
             };
         }
-        // --- END PHASE 4 ---
 
         return { success: true, ship: ship, requiresForfeit: false };
     }
 
-    /**
-     * Executes the sale of a ship (Assumes validation passed).
-     * @param {string} shipId - The ID of the ship to sell.
-     * @param {Event} [event] - The click event for placing floating text.
-     * @returns {number|false} - The sale price.
-     */
     executeSellShip(shipId, event) {
         this.isTransactionInProgress = true;
 
@@ -508,7 +426,6 @@ export class PlayerActionService {
                 return false;
             }
 
-            // --- PHASE 4: FLEET OVERFLOW SYSTEM (AUTO-TRANSFER CARGO) ---
             const inventoryToMove = this.gameState.player.inventories[shipId];
             let transferredSome = false;
             let forfeitedSome = false;
@@ -521,7 +438,6 @@ export class PlayerActionService {
                         maxCapacity: this.simulationService.getEffectiveShipStats(id).cargoCapacity
                     }))
                     .sort((a, b) => {
-                        // Prioritize Active Ship, then descending max capacity
                         if (a.id === this.gameState.player.activeShipId) return -1;
                         if (b.id === this.gameState.player.activeShipId) return 1;
                         return b.maxCapacity - a.maxCapacity;
@@ -544,7 +460,6 @@ export class PlayerActionService {
                             if (!targetInv[goodId]) {
                                 targetInv[goodId] = { quantity: 0, avgCost: 0 };
                             }
-                            // Calculate blended average cost for the receiving ship
                             const targetItem = targetInv[goodId];
                             targetItem.avgCost = ((targetItem.quantity * targetItem.avgCost) + (toMove * item.avgCost)) / (targetItem.quantity + toMove);
                             targetItem.quantity += toMove;
@@ -557,9 +472,7 @@ export class PlayerActionService {
                     }
                 }
             }
-            // --- END AUTO-TRANSFER ---
             
-            // --- PERCENTAGE-BASED UPGRADE PRICING ---
             let upgradeValue = 0;
             if (shipState.upgrades && Array.isArray(shipState.upgrades)) {
                 shipState.upgrades.forEach(upgradeId => {
@@ -584,7 +497,7 @@ export class PlayerActionService {
             const shipIndex = this.gameState.player.ownedShipIds.indexOf(shipId);
             this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
             delete this.gameState.player.shipStates[shipId];
-            delete this.gameState.player.inventories[shipId]; // Remaining un-transferred cargo is naturally deleted here
+            delete this.gameState.player.inventories[shipId]; 
 
             let newActiveIndex = this.gameState.uiState.hangarActiveIndex;
             if (shipIndex < newActiveIndex) {
@@ -603,7 +516,6 @@ export class PlayerActionService {
 
             const shipNameSpan = `<span class="${shadowClass}" style="color: ${colorVar}; font-weight: bold;">${ship.name}</span>`;
 
-            // Dynamic post-sale cargo statement based on precise outcomes
             let cargoOutcomeText = "";
             if (transferredSome && !forfeitedSome) {
                 cargoOutcomeText = "<br>Its cargo has been fully transferred to your fleet.";
@@ -629,11 +541,6 @@ export class PlayerActionService {
         }
     }
 
-    /**
-     * Validates if setting a ship as active is possible.
-     * @param {string} shipId - The ID of the ship to make active.
-     * @returns {object} { success: boolean, errorTitle?: string, errorMessage?: string }
-     */
     validateSetActiveShip(shipId) {
         if (this.isTransactionInProgress) {
             return { success: false, errorTitle: "Transaction in Progress", errorMessage: "Please wait for the current transaction to complete." };
@@ -648,11 +555,6 @@ export class PlayerActionService {
         return { success: true };
     }
 
-
-    /**
-     * Executes setting the player's currently active ship (Assumes validation passed).
-     * @param {string} shipId - The ID of the ship to make active.
-     */
     executeSetActiveShip(shipId) {
         if (!this.gameState.player.ownedShipIds.includes(shipId)) return;
         
@@ -678,28 +580,18 @@ export class PlayerActionService {
         }
     }
 
-
-    /**
-     * Pays off a specified amount of the player's outstanding debt.
-     * @param {number|Event} amount - The specific amount to pay off, or the Event object for pre-Phase 3 compatibility.
-     * @param {Event} [event] - The click event for placing floating text.
-     */
     payOffDebt(amount, event) {
         if (this.gameState.isGameOver) return;
         const { player, currentLocationId } = this.gameState;
         
-        // Heal any lingering fractional debt from floating-point errors
         player.debt = Math.round(player.debt);
         
-        // --- BACKWARD COMPATIBILITY SAFEGUARD ---
-        // Until Phase 3 updates ActionClickHandler, `amount` might be the MouseEvent
         let paymentAmount = amount;
         let domEvent = event;
         if (amount instanceof Event || (amount && amount.type)) {
-            paymentAmount = null; // Pay full debt
+            paymentAmount = null; 
             domEvent = amount;
         }
-        // ----------------------------------------
 
         let paymentRequired = paymentAmount !== null && paymentAmount !== undefined ? Math.round(paymentAmount) : player.debt;
         if (paymentRequired > player.debt) paymentRequired = player.debt;
@@ -707,11 +599,9 @@ export class PlayerActionService {
         
         let actualCost = paymentRequired;
         
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER DEBT DISCOUNT) ---
         if (currentLocationId === LOCATION_IDS.KEPLER) {
             actualCost = Math.floor(paymentRequired * 0.85);
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         if (player.credits < actualCost) {
             const extraText = (currentLocationId === LOCATION_IDS.KEPLER) ? 
@@ -730,7 +620,6 @@ export class PlayerActionService {
         this.logger.info.player(this.gameState.day, 'DEBT_PAID', `Paid off ${formatCredits(paymentRequired)} in debt (Cost: ${formatCredits(actualCost)}).`);
         this.simulationService._logTransaction('loan', -actualCost, `Paid down debt principal`);
         
-        // Handle full repayment clears
         if (player.debt <= 0) {
             player.debt = 0;
             player.monthlyInterestAmount = 0;
@@ -745,11 +634,6 @@ export class PlayerActionService {
         this.gameState.setState({});
     }
 
-    /**
-     * Allows the player to take out a loan, adding to their debt.
-     * @param {object} loanData - Contains amount, fee, interest, type, and termDays for the loan.
-     * @param {Event} [event] - The click event for placing floating text.
-     */
     takeLoan(loanData, event) {
         const { player, day, currentLocationId } = this.gameState;
         if (player.debt > 0) {
@@ -759,11 +643,9 @@ export class PlayerActionService {
         
         let finalFee = loanData.fee;
         
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (KEPLER FINANCING DISCOUNT) ---
         if (currentLocationId === LOCATION_IDS.KEPLER) {
             finalFee = Math.floor(loanData.fee * 0.85);
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         if (player.credits < finalFee) {
             this.uiManager.queueModal('event-modal', "Unable to Secure Loan", `The financing fee is ${formatCredits(finalFee)}, but you only have ${formatCredits(player.credits)}.`);
@@ -800,11 +682,6 @@ export class PlayerActionService {
         this.gameState.setState({});
     }
 
-    /**
-     * Purchases a trade license for a specific commodity tier.
-     * @param {string} licenseId - The ID of the license to purchase.
-     * @returns {object} A structured object indicating success or failure with a specific error code.
-     */
     purchaseLicense(licenseId) {
         const license = DB.LICENSES[licenseId];
         const { player, day } = this.gameState;
@@ -826,10 +703,6 @@ export class PlayerActionService {
         return { success: true };
     }
 
-    /**
-     * Purchases market intel, providing a temporary trade advantage.
-     * @param {number} cost - The credit cost of the intel.
-     */
     purchaseIntel(cost) {
         const { player, currentLocationId, day } = this.gameState;
         if (player.credits < cost) {
@@ -850,7 +723,6 @@ export class PlayerActionService {
         const commodity = availableCommodities[Math.floor(Math.random() * availableCommodities.length)];
 
         if (commodity) {
-      
              this.gameState.intel.active = {
                 targetMarketId: targetMarket.id,
                 commodityId: commodity.id,
@@ -863,25 +735,19 @@ export class PlayerActionService {
          this.gameState.setState({});
     }
 
-    /**
-     * Processes one "tick" of refueling while the button is held, costing credits and adding fuel.
-     * @returns {number} - The cost of the fuel tick, or 0 if no fuel was added.
-     */
     refuelTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
         if (!ship) return 0;
 
-        // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
         const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
         const currentFuel = state.player.shipStates[ship.id].fuel;
         
-        // Prevent overfilling
         if (currentFuel >= effectiveStats.maxFuel) return 0;
-        // --- END UPGRADE SYSTEM ---
 
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
+        const statusEffects = shipState.statusEffects || []; // Phase 4 hook
         const shipDef = DB.SHIPS[ship.id];
 
         let fuelClassMod = 1;
@@ -895,14 +761,11 @@ export class PlayerActionService {
             }
         }
 
-        // Apply 50% base reduction (0.50 multiplier) before class scaling
         let unitCost = ((DB.MARKETS.find(m => m.id === state.currentLocationId).fuelPrice / 10) * 0.50) * fuelClassMod;
         
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
             unitCost *= 2.0;
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
              unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
@@ -911,14 +774,16 @@ export class PlayerActionService {
         const attrMod = GameAttributes.getFuelPriceModifier(upgrades);
         unitCost *= attrMod;
 
-        // --- PHASE 2: AGE PERK (FUEL COST) ---
         const ageFuelDiscount = state.player.statModifiers?.fuelCost || 0;
         if (ageFuelDiscount > 0) {
             unitCost *= (1 - ageFuelDiscount);
         }
-        // --- END PHASE 2 ---
 
-        // --- SYSTEM STATES V3 HOOKS (Service Costs) ---
+        // --- PHASE 4: STATUS EFFECT SURCHARGE ---
+        if (statusEffects.some(s => s.id === 'status_service_surcharges')) {
+            unitCost *= 3;
+        }
+
         const systemState = state.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
         const isTargetLocation = systemState && systemState.targetLocations?.includes(state.currentLocationId);
@@ -927,21 +792,28 @@ export class PlayerActionService {
             if (activeStateDef.modifiers.serviceCostMod) unitCost *= activeStateDef.modifiers.serviceCostMod;
             if (isTargetLocation && activeStateDef.modifiers.localServiceCostMod !== undefined) unitCost *= activeStateDef.modifiers.localServiceCostMod;
         }
-        // --- END SYSTEM STATES V3 ---
 
-        const fuelDeficit = effectiveStats.maxFuel - currentFuel;
+        let fuelTargetMax = effectiveStats.maxFuel;
+        if (statusEffects.some(s => s.id === 'status_contaminated_fuel')) {
+            fuelTargetMax = Math.floor(effectiveStats.maxFuel * 0.5); 
+        }
+
+        const fuelDeficit = fuelTargetMax - currentFuel;
         const fuelDeficitPct = fuelDeficit / effectiveStats.maxFuel;
         
         let tickAmount = 0;
-        if (fuelDeficitPct < 0.05) {
-            tickAmount = Math.ceil(effectiveStats.maxFuel * 0.01);
-        } else {
-            tickAmount = Math.ceil(effectiveStats.maxFuel * 0.05);
+        if (fuelDeficit > 0) {
+            if (fuelDeficitPct < 0.05) {
+                 tickAmount = Math.ceil(effectiveStats.maxFuel * 0.01);
+            } else {
+                 tickAmount = Math.ceil(effectiveStats.maxFuel * 0.05);
+            }
+            tickAmount = Math.min(tickAmount, fuelDeficit);
         }
 
         let totalCost = Math.max(1, Math.round(unitCost * tickAmount));
 
-        if (state.player.credits < totalCost) return 0;
+        if (state.player.credits < totalCost || tickAmount <= 0) return 0;
 
         state.player.credits -= totalCost;
         state.player.shipStates[ship.id].fuel = Math.min(effectiveStats.maxFuel, currentFuel + tickAmount);
@@ -960,25 +832,20 @@ export class PlayerActionService {
         return totalCost;
     }
 
-    /**
-     * Processes one "tick" of repairing while the button is held, costing credits and restoring health.
-     * @returns {number} - The cost of the repair tick, or 0 if no repairs were made.
-     */
     repairTick() {
         const state = this.gameState;
         const ship = this.simulationService._getActiveShip();
         if (!ship) return 0;
 
-        // --- UPGRADE SYSTEM: DYNAMIC STATS CHECK ---
         const effectiveStats = this.simulationService.getEffectiveShipStats(ship.id);
         const currentHealth = state.player.shipStates[ship.id].health;
         
         if (currentHealth >= effectiveStats.maxHealth) return 0;
-        // --- END UPGRADE SYSTEM ---
 
         const shipDef = DB.SHIPS[ship.id];
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
+        const statusEffects = shipState.statusEffects || [];
 
         const shipAttributes = GameAttributes.getShipAttributes(ship.id);
         if (shipAttributes.includes('ATTR_BESPOKE')) {
@@ -987,14 +854,12 @@ export class PlayerActionService {
 
         let unitCost = shipDef ? Math.max(1, shipDef.price * 0.0029) : 215;
 
-        // --- VIRTUAL WORKBENCH: STATION QUIRKS (SERVICE COSTS) ---
         if (state.currentLocationId === LOCATION_IDS.LUNA) {
             unitCost *= 0.8; 
         }
         if (state.currentLocationId === LOCATION_IDS.SATURN || state.currentLocationId === LOCATION_IDS.PLUTO) {
             unitCost *= 2.0;
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
             unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
@@ -1003,14 +868,16 @@ export class PlayerActionService {
         const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
         unitCost *= attrMod;
 
-        // --- PHASE 2: AGE PERK (REPAIR COST) ---
         const ageRepairDiscount = state.player.statModifiers?.repairCost || 0;
         if (ageRepairDiscount > 0) {
             unitCost *= (1 - ageRepairDiscount);
         }
-        // --- END PHASE 2 ---
 
-        // --- SYSTEM STATES V3 HOOKS (Service Costs) ---
+        // --- PHASE 4: STATUS EFFECT SURCHARGE ---
+        if (statusEffects.some(s => s.id === 'status_service_surcharges')) {
+            unitCost *= 3;
+        }
+
         const systemState = state.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
         const isTargetLocation = systemState && systemState.targetLocations?.includes(state.currentLocationId);
@@ -1020,16 +887,15 @@ export class PlayerActionService {
             if (activeStateDef.modifiers.serviceCostMod) unitCost *= activeStateDef.modifiers.serviceCostMod;
             if (isTargetLocation && activeStateDef.modifiers.localServiceCostMod !== undefined) unitCost *= activeStateDef.modifiers.localServiceCostMod;
         }
-        // --- END SYSTEM STATES V3 ---
 
         const healthDeficit = effectiveStats.maxHealth - currentHealth;
         const healthDeficitPct = healthDeficit / effectiveStats.maxHealth;
         
         let tickAmount = 0;
         if (healthDeficitPct < 0.05) {
-            tickAmount = Math.ceil(effectiveStats.maxHealth * 0.01);
+             tickAmount = Math.ceil(effectiveStats.maxHealth * 0.01);
         } else {
-            tickAmount = Math.ceil(effectiveStats.maxHealth * 0.05);
+             tickAmount = Math.ceil(effectiveStats.maxHealth * 0.05);
         }
 
         let totalCost = Math.max(1, Math.round(unitCost * tickAmount));
@@ -1039,10 +905,8 @@ export class PlayerActionService {
         state.player.credits -= totalCost;
         state.player.shipStates[ship.id].health = Math.min(effectiveStats.maxHealth, currentHealth + tickAmount);
         
-        // --- PHASE 4: DRYDOCKING (TIME-COST REPAIRS) ---
         this.timeService.advanceDays(1);
         if (this.gameState.isGameOver) return totalCost;
-        // --- END PHASE 4 ---
 
         this.simulationService._logConsolidatedTransaction('repair', -totalCost, 'Hull Repairs');
         this.simulationService._checkHullWarnings(ship.id);
@@ -1059,13 +923,6 @@ export class PlayerActionService {
         return totalCost;
     }
 
-    /**
-     * Validates if an upgrade can be installed on a ship.
-     * Checks: Ownership, Active Status (Instant App Rule), Capacity.
-     * @param {string} shipId 
-     * @param {string} upgradeId 
-     * @returns {object} { success: boolean, error?: string }
-     */
     validateInstallUpgrade(shipId, upgradeId) {
         const state = this.gameState.getState();
         const shipState = state.player.shipStates[shipId];
@@ -1086,12 +943,6 @@ export class PlayerActionService {
         return { success: true };
     }
 
-    /**
-     * Installs an upgrade onto a ship.
-     * Assumes validation has passed.
-     * @param {string} shipId 
-     * @param {string} upgradeId 
-     */
     executeInstallUpgrade(shipId, upgradeId) {
         const state = this.gameState;
         if (!state.player.shipStates[shipId].upgrades) {

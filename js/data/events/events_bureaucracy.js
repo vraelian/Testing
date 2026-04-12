@@ -3,117 +3,12 @@
  * @fileoverview
  * Event Category: BUREAUCRACY
  * Focus: Legal challenges, corporate audits, tariffs, and quarantine protocols.
+ * UPDATED: Purged evt_bureau_audit & evt_bureau_tariff. Medical Liner (Event Chain) & Override (Event Chain) Added.
  */
 
 import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
 
 export const EVENTS_BUREAUCRACY = [
-    // =========================================================================
-    // CATEGORY III: BUREAUCRACY (Corporate & Legal)
-    // =========================================================================
-    {
-        id: 'evt_bureau_audit',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Guild Authority Audit',
-            description: '"Unidentified vessel, this is Guild Authority 44-Bravo. Heave to for a mandatory safety standard audit." You know the drill: pay the fee, suffer the delay, or cite the bylaws.'
-        },
-        choices: [
-            {
-                id: 'choice_bribe',
-                text: 'Expedited Fee (-4% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bribe' }] }
-            },
-            {
-                id: 'choice_inspect',
-                text: 'Full Inspection (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_inspect' }] }
-            },
-            {
-                id: 'choice_bylaws',
-                text: 'Cite Bylaws (Req: Trademaster)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_PERK, target: PERK_IDS.TRADEMASTER, operator: 'EQ', value: 1 }],
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_bylaws' }] }
-            }
-        ],
-        outcomes: {
-            'out_bribe': {
-                title: 'Fee Accepted',
-                text: 'You transfer the fee. The inspector suddenly decides your ship looks visibly compliant.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.04 } }]
-            },
-            'out_inspect': {
-                title: 'Bureaucratic Delay',
-                text: 'They board you. They check every seal, delaying your journey considerably.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }]
-            },
-            'out_bylaws': {
-                title: 'Inspection Waived',
-                text: 'You transmit Guild Statute 12-C regarding "In-Transit Sovereignty." The inspector grumbles and moves on.',
-                effects: []
-            }
-        }
-    },
-    {
-        id: 'evt_bureau_tariff',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.TRADE],
-        weight: 10,
-        requirements: [],
-        template: {
-            title: 'Corporate Tariff',
-            description: 'Local Corporate Security has claimed this sector as a "Protectorate Zone." All commercial traffic must pay a tariff or divert.'
-        },
-        choices: [
-            {
-                id: 'choice_pay',
-                text: 'Pay Tariff (-2% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_pay' }] }
-            },
-            {
-                id: 'choice_divert',
-                text: 'Divert (-Fuel & Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_divert' }] }
-            },
-            {
-                id: 'choice_run',
-                text: 'Run Blockade (Risk Fine)',
-                resolution: {
-                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
-                    pool: [
-                        { outcomeId: 'out_run_success', weight: 60 },
-                        { outcomeId: 'out_run_fail', weight: 40 }
-                    ]
-                }
-            }
-        ],
-        outcomes: {
-            'out_pay': {
-                title: 'Tariff Paid',
-                text: 'You pay the toll. It stings, but they grant you a coded squawk that clears your passage.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } }]
-            },
-            'out_divert': {
-                title: 'Detour Plotted',
-                text: 'You plot a course through deep space, skirting the edge of their sensor net.',
-                effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
-                ]
-            },
-            'out_run_success': {
-                title: 'Blockade Runner',
-                text: 'You run silent, masking your thermal signature. You slip through their net.',
-                effects: []
-            },
-            'out_run_fail': {
-                title: 'Violation Detected',
-                text: 'A patrol drone tags you. "Toll violation detected." They garnish your accounts automatically.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.08 } }]
-            }
-        }
-    },
     {
         id: 'evt_bureau_quarantine',
         tags: [EVENT_CONSTANTS.TAGS.SPACE],
@@ -121,44 +16,57 @@ export const EVENTS_BUREAUCRACY = [
         requirements: [],
         template: {
             title: 'Contaminant Alert',
-            description: 'An automated navigation buoy flags your ship. "Biological contaminant detected on outer hull. Sector access denied pending sterilization."'
+            description: 'Station buoys detect dangerous levels of "radiation fleas"—ionized particulate coating your hull from unmaintained exhaust wash. Access denied.'
         },
         choices: [
             {
                 id: 'choice_service',
-                text: 'Drone Service (-5% Wealth)',
+                text: 'Hire Drone Decon Service (Pay Credits)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_service' }] }
             },
             {
                 id: 'choice_chem',
-                text: 'Chemical Bath (-15 Propellant * Scale)',
+                text: 'Chemical Flush (Pay Propellant)',
                 requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 }, 
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROPELLANT, operator: 'GTE', value: 15 }
                 ],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_chem' }] }
             },
             {
-                id: 'choice_park',
-                text: 'Solar Sterilization (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_park' }] }
+                id: 'choice_manual',
+                text: 'Manual Vacuum Purge (Risk Cargo & Status)',
+                resolution: {
+                    type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
+                    pool: [
+                        { outcomeId: 'out_manual_success', weight: 30 },
+                        { outcomeId: 'out_manual_fail', weight: 70 }
+                    ]
+                }
             }
         ],
         outcomes: {
             'out_service': {
                 title: 'Decon Complete',
                 text: 'You pay for a remote drone service. It sprays your hull with harsh foam and clears your flag.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.05 } }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, isCurrentPercent: true, value: -10 }]
             },
             'out_chem': {
                 title: 'Chemical Scrub',
-                text: 'You flush the hull with volatile Propellant. It strips the paint, but kills the mold.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
+                text: 'You flush the hull with volatile Propellant. It strips the paint, but kills the contamination.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROPELLANT, value: 15 }]
             },
-            'out_park': {
-                title: 'Solar Cleanse',
-                text: 'You park the ship in a high-radiation orbit and wait for the UV light to kill the spores.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.25 } }]
+            'out_manual_success': {
+                title: 'Purge Successful',
+                text: 'You vent the affected sections to hard vacuum, freezing the particulate without damaging your systems.',
+                effects: []
+            },
+            'out_manual_fail': {
+                title: 'Purge Failure',
+                text: 'The rapid depressurization severely fractures the hull plates and causes massive cargo loss.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 25 },
+                    { type: EVENT_CONSTANTS.EFFECTS.APPLY_STATUS, target: 'status_micro_fractures', value: 1 }
+                ]
             }
         }
     },
@@ -169,57 +77,158 @@ export const EVENTS_BUREAUCRACY = [
         requirements: [],
         template: {
             title: 'Expired Credential',
-            description: 'You receive a summons. A clerical error has flagged your Pilot\'s License as expired. Operating a heavy freighter without a license carries a hefty fine.'
+            description: 'A bureaucratic sweep flags your primary Pilot\'s License as expired.'
         },
         choices: [
             {
-                id: 'choice_lawyer',
-                text: 'Auto-Lawyer (-3% Wealth)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_lawyer' }] }
-            },
-            {
                 id: 'choice_spoof',
-                text: 'Data Spoof (-10 Processors * Scale)',
+                text: 'Spoof Data Registry (Pay Processors)',
                 requirements: [
-                    { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 3 },
-                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }
+                    { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PROCESSORS, operator: 'GTE', value: 10 }
                 ],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_spoof' }] }
             },
             {
-                id: 'choice_dispute',
-                text: 'Dispute (Risk Fine & Trip Delay)',
+                id: 'choice_fine',
+                text: 'Pay Retroactive Fine (Pay Credits)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_fine' }] }
+            },
+            {
+                id: 'choice_arbitration',
+                text: 'Engage Arbitration AI (High Risk, Reward)',
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
-                        { outcomeId: 'out_dispute_success', weight: 40 }, // Hard legal battle
-                        { outcomeId: 'out_dispute_fail', weight: 60 }
+                        { outcomeId: 'out_arbitration_success', weight: 20 },
+                        { outcomeId: 'out_arbitration_fail', weight: 80 }
                     ]
                 }
             }
         ],
         outcomes: {
-            'out_lawyer': {
-                title: 'Case Dismissed',
-                text: 'You hire a digital legal AI. It files an injunction and clears the error in milliseconds.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.03 } }]
-            },
             'out_spoof': {
                 title: 'Records Falsified',
                 text: 'You use Processors to brute-force a timestamp correction. The record now shows you renewed it yesterday.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 10 }]
             },
-            'out_dispute_success': {
-                title: 'Appeal Granted',
-                text: 'You argue your case with passion. The AI finds a precedent and dismisses the charge.',
-                effects: []
+            'out_fine': {
+                title: 'Fine Paid',
+                text: 'You quietly transfer the credits to clear the flag.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, isCurrentPercent: true, value: -5 }]
             },
-            'out_dispute_fail': {
-                title: 'Appeal Denied',
-                text: 'The lengthy arbitration process ends with the magistrate AI rejecting your appeal. You pay the reinstatement fee plus the late penalty.',
+            'out_arbitration_success': {
+                title: 'Charge Dismissed',
+                text: 'The Arbitration AI finds a loophole in the filing and not only dismisses the charge, but awards you a settlement.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, isCurrentPercent: true, value: 2 }]
+            },
+            'out_arbitration_fail': {
+                title: 'Digital Lockdown',
+                text: 'The AI rejects your appeal and initiates a punitive digital lockdown. Your ship is stalled, your clearance is revoked, and all future services are surcharged.',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.09 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: 20 },
+                    { type: EVENT_CONSTANTS.EFFECTS.APPLY_STATUS, target: 'status_revoked_clearance', value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.APPLY_STATUS, target: 'status_service_surcharges', value: 1 }
+                ]
+            }
+        }
+    },
+    {
+        id: 'evt_customs_override',
+        tags: [],
+        weight: 0,
+        requirements: [],
+        template: {
+            title: 'Customs Intercept',
+            description: 'Guild Customs tracked the unlogged cache\'s silent ping. They override your nav-computer and forcefully engage magnetic boarding clamps.'
+        },
+        choices: [
+            {
+                id: 'choice_dump',
+                text: 'Dump Cache to Void',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dump' }] }
+            },
+            {
+                id: 'choice_resist',
+                text: 'Resist Impound Protocol (Severe Hull Stress)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_resist' }] }
+            }
+        ],
+        outcomes: {
+            'out_dump': {
+                title: 'Evidence Destroyed',
+                text: 'You blow the airlock and vent the illicit goods just as the inspectors board.',
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 100 }]
+            },
+            'out_resist': {
+                title: 'Clamps Sheared',
+                text: 'You thrust hard against the boarding clamps. The hull screams and buckles as you tear free, earning you a permanent mark on corporate registries.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -30 },
+                    { type: EVENT_CONSTANTS.EFFECTS.APPLY_STATUS, target: 'status_corporate_blacklist', value: 1 }
+                ]
+            }
+        }
+    },
+    {
+        id: 'evt_medical_liner',
+        tags: [EVENT_CONSTANTS.TAGS.SPACE],
+        weight: 10,
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CLONED_ORGANS, operator: 'GTE', value: 15 }],
+        template: {
+            title: 'The Medical Liner',
+            description: 'A luxury liner broadcasts a pan-pan for emergency medical supplies to handle an onboard crisis.'
+        },
+        choices: [
+            {
+                id: 'choice_donate',
+                text: 'Donate Cloned Organs (Lose Cargo)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate' }] }
+            },
+            {
+                id: 'choice_ignore',
+                text: 'Ignore Distress Signal (Move On)',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
+            }
+        ],
+        outcomes: {
+            'out_donate': {
+                title: 'Cargo Transferred',
+                text: 'You jettison the organ containers in specialized pods for the liner to catch. They immediately break radio silence to focus on their patients.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.CLONED_ORGANS, value: 15 },
+                    { type: EVENT_CONSTANTS.EFFECTS.QUEUE_EVENT, target: 'evt_medical_liner_thanks', value: 3 }
+                ]
+            },
+            'out_ignore': {
+                title: 'Course Maintained',
+                text: 'You keep your transponder dark and move on.',
+                effects: []
+            }
+        }
+    },
+    {
+        id: 'evt_medical_liner_thanks',
+        tags: [],
+        weight: 0,
+        requirements: [],
+        template: {
+            title: 'An Encrypted Hail',
+            description: 'The captain of the medical liner you assisted weeks ago hails you on an encrypted channel to express gratitude for saving their passengers.'
+        },
+        choices: [
+            {
+                id: 'choice_auto',
+                text: 'Accept Transmission',
+                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_auto' }] }
+            }
+        ],
+        outcomes: {
+            'out_auto': {
+                title: 'Rewards Transmitted',
+                text: 'They transmit a highly lucrative market tip and authorize a massive fuel voucher at the nearest depot.',
+                effects: [
+                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 },
+                    { type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }
                 ]
             }
         }
@@ -285,7 +294,7 @@ export const EVENTS_BUREAUCRACY = [
             'out_bribe': {
                 title: 'Toll Extracted',
                 text: 'You quietly transfer a massive sum to an anonymous account. The blockade "temporarily fails" in your sector, allowing you to pass.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.09 } }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, isCurrentPercent: true, value: -9 }]
             },
             'out_run_success': {
                 title: 'Slipped Through',
@@ -296,10 +305,10 @@ export const EVENTS_BUREAUCRACY = [
                 title: 'Warning Shots',
                 text: 'They spot you immediately. Warning shots rake your hull, forcing you to abort the jump and flee to the nearest safe port.',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -25 },
                     { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.20 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, isCurrentPercent: true, value: -20 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, isCurrentPercent: true, value: 20 }
                 ]
             },
             'out_turn_away': {
@@ -307,8 +316,8 @@ export const EVENTS_BUREAUCRACY = [
                 text: 'You begrudgingly alter course and burn extra fuel to find a detour, abandoning your original destination.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.10 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.15 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, isCurrentPercent: true, value: -10 },
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, isCurrentPercent: true, value: 15 }
                 ]
             }
         }

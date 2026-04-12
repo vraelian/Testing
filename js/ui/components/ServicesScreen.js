@@ -1,28 +1,12 @@
 // js/ui/components/ServicesScreen.js
-/**
- * @fileoverview This file contains the rendering logic for the Station Services screen.
- * It displays options for refueling and repairing the player's active ship, calculating
- * costs based on the current location and any active player perks.
- * * UPDATED: Includes Sol Station Orbital Interface entry point (Phase 3).
- * * UPDATED: Fleet Quick-Swap UI.
- * * UPDATED: Added ID hooks for Level Up Animation.
- * * FIX: Added type="button" to comply with ADR-026.
- * * FIX: Synchronized repair cost algorithm with backend ActionService.
- */
 import { DB } from '../../data/database.js';
 import { formatCredits } from '../../utils.js';
 import { GAME_RULES, PERK_IDS, LOCATION_IDS, UPGRADE_COLORS, NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
-/**
- * Renders the entire Services screen UI.
- * @param {object} gameState - The current state of the game.
- * @param {import('../../services/SimulationService.js').SimulationService} simulationService - The simulation service.
- * @returns {string} The HTML content for the Services screen.
- */
 export function renderServicesScreen(gameState, simulationService) {
     const { player, currentLocationId } = gameState;
-    const { servicesTab = 'supply' } = gameState.uiState; // Default to 'supply'
+    const { servicesTab = 'supply' } = gameState.uiState; 
 
     const STARPORT_NAMES = {
         [LOCATION_IDS.SUN]: "Sol Station",
@@ -50,7 +34,6 @@ export function renderServicesScreen(gameState, simulationService) {
     `;
     const locationName = STARPORT_NAMES[currentLocationId] || 'UNKNOWN STARPORT';
 
-    // --- Sub-Nav Render ---
     const supplyActive = servicesTab === 'supply' ? 'active' : '';
     const tuningActive = servicesTab === 'tuning' ? 'active' : '';
     
@@ -64,7 +47,6 @@ export function renderServicesScreen(gameState, simulationService) {
         </div>
     `;
 
-    // --- View Routing ---
     if (servicesTab === 'tuning') {
         return `
             <div class="flex flex-col h-full">
@@ -77,7 +59,6 @@ export function renderServicesScreen(gameState, simulationService) {
         `;
     }
 
-    // --- Fallback / Default View (Supply) ---
     if (!player.activeShipId || !gameState.player.shipStates[player.activeShipId]) {
         return `
             <div class="flex flex-col h-full">
@@ -103,9 +84,9 @@ export function renderServicesScreen(gameState, simulationService) {
     const shipState = gameState.player.shipStates[player.activeShipId];
     const shipName = shipStatic?.name || 'NO ACTIVE SHIP';
     const upgrades = shipState.upgrades || [];
+    const statusEffects = shipState.statusEffects || []; 
     const shipClassColorVar = shipStatic ? `var(--class-${shipStatic.class.toLowerCase()}-color)` : '#f0f0f0';
 
-    // --- UPGRADE SYSTEM: Effective Stats ---
     let effectiveMaxHealth = shipStatic.maxHealth;
     let effectiveMaxFuel = shipStatic.maxFuel;
 
@@ -117,12 +98,8 @@ export function renderServicesScreen(gameState, simulationService) {
         }
     }
 
-    // =========================================================================
-    // --- PHASE 3: SOL STATION ENTRY POINT (UPDATED) ---
-    // =========================================================================
     let solStationButtonHtml = '';
     
-    // Resolve dynamic class styling based on Level Matrix logic
     const stationLevel = gameState.solStation?.level || 1;
     let levelClass = 'sol-level-white';
     if (stationLevel >= 50) levelClass = 'sol-level-red';
@@ -131,7 +108,6 @@ export function renderServicesScreen(gameState, simulationService) {
     else if (stationLevel >= 20) levelClass = 'sol-level-blue';
     else if (stationLevel >= 10) levelClass = 'sol-level-green';
 
-    // Show button if at Sun AND Station is unlocked
     if (currentLocationId === LOCATION_IDS.SUN && gameState.solStation?.unlocked) {
         solStationButtonHtml = `
             <div class="flex justify-center mb-6 px-4">
@@ -160,11 +136,10 @@ export function renderServicesScreen(gameState, simulationService) {
         `;
     }
 
-    // =========================================================================
-    // --- COST CALCULATION: FUEL (Dynamic 5% / 1% Logic) ---
-    // =========================================================================
-    
-    // Determine fuel class modifier
+    const hasSurcharges = statusEffects.some(s => s.id === 'status_service_surcharges');
+    const hasContaminatedLines = statusEffects.some(s => s.id === 'status_contaminated_fuel');
+    const surchargeTag = hasSurcharges ? `<span class="text-red-500 font-bold ml-2">(x3 Penalty)</span>` : '';
+
     let fuelClassMod = 1;
     if (shipStatic) {
         switch(shipStatic.class) {
@@ -176,13 +151,8 @@ export function renderServicesScreen(gameState, simulationService) {
         }
     }
 
-    // 1. Calculate Base Unit Cost (Cost for 1 Fuel Unit)
-    // Standard rate is Fuel Price / 2 for 5 units. So 1 unit = Price / 10.
-    // Applying the 50% base reduction and geometric scaling.
     let fuelUnitCost = ((DB.MARKETS.find(m => m.id === currentLocationId).fuelPrice / 10) * 0.50) * fuelClassMod;
     
-    // 2. Apply Modifiers to Unit Cost
-    // --- VIRTUAL WORKBENCH: STATION QUIRKS ---
     if (currentLocationId === LOCATION_IDS.SATURN || currentLocationId === LOCATION_IDS.PLUTO) {
         fuelUnitCost *= 2.0;
     }
@@ -193,40 +163,36 @@ export function renderServicesScreen(gameState, simulationService) {
     const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
     fuelUnitCost *= fuelAttrMod;
     
-    // --- PHASE 2: AGE PERK ---
     const ageFuelDiscount = player.statModifiers?.fuelCost || 0;
     if (ageFuelDiscount > 0) {
         fuelUnitCost *= (1 - ageFuelDiscount);
     }
 
-    // 3. Determine Dynamic Tick Size (5% vs 1%)
+    if (hasSurcharges) fuelUnitCost *= 3; 
+
+    let fuelTargetMax = effectiveMaxFuel;
+    if (hasContaminatedLines) {
+        fuelTargetMax = Math.floor(effectiveMaxFuel * 0.5); 
+    }
+
     const currentFuel = shipState.fuel;
-    const fuelDeficit = effectiveMaxFuel - currentFuel;
+    const fuelDeficit = fuelTargetMax - currentFuel;
     const fuelDeficitPct = fuelDeficit / effectiveMaxFuel;
     
     let fuelTickAmount = 0;
     if (fuelDeficit > 0) {
-        // Precision Mode: If less than 5% deficit, fill 1% at a time. Otherwise 5%.
         if (fuelDeficitPct < 0.05) {
              fuelTickAmount = Math.ceil(effectiveMaxFuel * 0.01);
         } else {
              fuelTickAmount = Math.ceil(effectiveMaxFuel * 0.05);
         }
+        fuelTickAmount = Math.min(fuelTickAmount, fuelDeficit);
     }
 
-    // 4. Final Cost Per Tick
     let fuelCostPerTick = Math.max(1, Math.round(fuelUnitCost * fuelTickAmount));
 
-    // =========================================================================
-    // --- COST CALCULATION: REPAIR (Dynamic 5% / 1% Logic) ---
-    // =========================================================================
-
-    // 1. Calculate Base Unit Cost (Cost for 1 HP)
-    // Synchronized with PlayerActionService: Algorithmic pricing based on ship class/base price
     let repairUnitCost = shipStatic ? Math.max(1, shipStatic.price * 0.0029) : 215;
     
-    // 2. Apply Modifiers to Unit Cost
-    // --- VIRTUAL WORKBENCH: STATION QUIRKS ---
     if (currentLocationId === LOCATION_IDS.LUNA) {
         repairUnitCost *= 0.8; 
     }
@@ -240,13 +206,13 @@ export function renderServicesScreen(gameState, simulationService) {
     const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
     repairUnitCost *= repairAttrMod;
 
-    // --- PHASE 2: AGE PERK ---
     const ageRepairDiscount = player.statModifiers?.repairCost || 0;
     if (ageRepairDiscount > 0) {
         repairUnitCost *= (1 - ageRepairDiscount);
     }
 
-    // 3. Determine Dynamic Tick Size (5% vs 1%)
+    if (hasSurcharges) repairUnitCost *= 3; 
+
     const currentHealth = shipState.health;
     const healthDeficit = effectiveMaxHealth - currentHealth;
     const healthDeficitPct = healthDeficit / effectiveMaxHealth;
@@ -260,24 +226,26 @@ export function renderServicesScreen(gameState, simulationService) {
         }
     }
 
-    // 4. Final Cost Per Tick
     let repairCostPerTick = Math.max(1, Math.round(repairUnitCost * repairTickAmount));
 
-    // =========================================================================
-
-    // --- Calculate Percentages ---
     const fuelPct = (shipState.fuel / effectiveMaxFuel) * 100;
     const healthPct = (shipState.health / effectiveMaxHealth) * 100;
     const healthPulseClass = healthPct < 30 ? ' bg-critical-pulse' : '';
 
-    const isFuelFull = shipState.fuel >= effectiveMaxFuel;
+    const isFuelFull = currentFuel >= fuelTargetMax; 
     const isHealthFull = shipState.health >= effectiveMaxHealth;
     const canAffordRefuel = player.credits >= fuelCostPerTick;
     const canAffordRepair = player.credits >= repairCostPerTick;
-    const isDisabledRefuel = isFuelFull || !canAffordRefuel;
+    
+    let isDisabledRefuel = isFuelFull || !canAffordRefuel;
+    let dataContaminatedStr = '';
+    if (hasContaminatedLines && currentFuel >= fuelTargetMax) {
+        isDisabledRefuel = true; 
+        dataContaminatedStr = 'data-contaminated="true"';
+    }
+
     const isDisabledRepair = isHealthFull || !canAffordRepair;
 
-    // --- FLEET OVERFLOW SYSTEM: QUICK SWAP ARROWS ---
     let shipNavArrowsHtml = '';
     if (player.ownedShipIds && player.ownedShipIds.length > 1) {
         shipNavArrowsHtml = `
@@ -333,10 +301,12 @@ export function renderServicesScreen(gameState, simulationService) {
                             <span class="price-digits text-sm whitespace-nowrap ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(fuelCostPerTick, true)}
                             </span>
-                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest" style="color: #08d9d6; opacity: 0.9;">${shipStatic ? shipStatic.class : 'C'} - CLASS FUEL</div>
+                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest leading-tight" style="color: #08d9d6; opacity: 0.9;">
+                                ${shipStatic ? shipStatic.class : 'C'} - CLASS FUEL${surchargeTag}
+                            </div>
                           </div>
-                          <button id="refuel-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
-                            <span class="engraved-text">${isFuelFull ? 'MAX' : 'REFUEL'}</span>
+                          <button type="button" id="refuel-btn" ${dataContaminatedStr} class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRefuel ? 'disabled' : ''}>
+                            <span class="engraved-text pointer-events-none">${isFuelFull ? 'MAX' : 'REFUEL'}</span>
                           </button>
                         </div>
                       </div>
@@ -359,10 +329,12 @@ export function renderServicesScreen(gameState, simulationService) {
                             <span class="price-digits text-sm whitespace-nowrap ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(repairCostPerTick, true)}
                             </span>
-                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest" style="color: #60a5fa; opacity: 0.9;">+1 Day / Tick</div>
+                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest leading-tight" style="color: #60a5fa; opacity: 0.9;">
+                                +1 Day / Tick${surchargeTag}
+                            </div>
                           </div>
-                          <button id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
-                              <span class="engraved-text">${isHealthFull ? 'MAX' : 'REPAIR'}</span>
+                          <button type="button" id="repair-btn" class="industrial-button w-32 h-12 flex justify-center items-center text-center p-2 text-base font-orbitron uppercase tracking-wider transition-all duration-100 ease-in-out focus:outline-none" ${isDisabledRepair ? 'disabled' : ''}>
+                              <span class="engraved-text pointer-events-none">${isHealthFull ? 'MAX' : 'REPAIR'}</span>
                           </button>
                         </div>
                       </div>
@@ -373,11 +345,10 @@ export function renderServicesScreen(gameState, simulationService) {
     `;
 }
 
-// Map of locations to their preferred upgrade prefixes for thematic bias
 const LOCATION_PREFERENCES = {
     [LOCATION_IDS.SUN]: ['UPG_ENG_SPEED_', 'UPG_UTIL_NANO_'],
     [LOCATION_IDS.MERCURY]: ['UPG_UTIL_HULL_', 'UPG_UTIL_NANO_'],
-    [LOCATION_IDS.VENUS]: ['UPG_ECO_BUY_'], // Guild badges are mission only
+    [LOCATION_IDS.VENUS]: ['UPG_ECO_BUY_'], 
     [LOCATION_IDS.EARTH]: ['UPG_UTIL_CARGO_'],
     [LOCATION_IDS.LUNA]: ['UPG_ECO_REPAIR_', 'UPG_UTIL_CARGO_'],
     [LOCATION_IDS.MARS]: ['UPG_UTIL_FUEL_', 'UPG_UTIL_CARGO_'],
@@ -391,33 +362,17 @@ const LOCATION_PREFERENCES = {
     [LOCATION_IDS.PLUTO]: ['UPG_UTIL_FUEL_', 'UPG_UTIL_RADAR_']
 };
 
-/**
- * Deterministically filters and selects daily stock using a "Quantity First, Selection Second" logic.
- * * 1. Quantity Roll: Determines shop size (0-5 items) based on fixed distribution.
- * 0:5%, 1:20%, 2:35%, 3:25%, 4:10%, 5:5%
- * * 2. Weighted Selection: Picks unique items to fill the slots based on Tier rarity.
- * Weights: T1(17), T2(11), T3(9), T4(6), T5(4)
- * * @param {object} gameState
- * @returns {string[]} Array of selected upgrade IDs.
- */
 function _getDailyStock(gameState) {
     const { day, currentLocationId, player } = gameState;
     const allIds = GameAttributes.getAllUpgradeIds();
 
-    // 1. FILTER CANDIDATES
-    // Create a list of all *possible* items allowed to spawn here/now.
     let candidates = allIds.filter(id => {
-        // Strict Allowlist
         if (!id.startsWith('UPG_')) return false;
 
-        // --- NEW: Hard Exclusion ---
-        // Exclude Rewards (Guild/Syndicate) from standard shop rotation.
         if (id.startsWith('UPG_ECO_SELL_') || id.startsWith('UPG_ECO_DEBT_')) {
             return false;
         }
-        // --- END CHANGE ---
 
-        // Wealth Gate for Tier 4/5 (1 Million Credits)
         if (id.endsWith('_4') || id.endsWith('_5')) {
             if (player.credits < 1000000) return false;
         }
@@ -425,23 +380,17 @@ function _getDailyStock(gameState) {
         return true;
     });
 
-    // 2. DETERMINE SHOP CAPACITY (Quantity Roll)
-    // 0: 5%, 1: 20%, 2: 35%, 3: 25%, 4: 10%, 5: 5%
     const quantitySeed = `quantity_${currentLocationId}_${day}`;
     const quantityRoll = _generatePseudoRandom(quantitySeed);
     
     let targetCount = 0;
     if (quantityRoll < 0.05) targetCount = 0;
-    else if (quantityRoll < 0.25) targetCount = 1; // 0.05 + 0.20
-    else if (quantityRoll < 0.60) targetCount = 2; // 0.25 + 0.35
-    else if (quantityRoll < 0.85) targetCount = 3; // 0.60 + 0.25
-    else if (quantityRoll < 0.95) targetCount = 4; // 0.85 + 0.10
+    else if (quantityRoll < 0.25) targetCount = 1; 
+    else if (quantityRoll < 0.60) targetCount = 2; 
+    else if (quantityRoll < 0.85) targetCount = 3; 
+    else if (quantityRoll < 0.95) targetCount = 4; 
     else targetCount = 5;
 
-    // 3. ASSIGN WEIGHTS TO CANDIDATES
-    // Tier 1: 17, Tier 2: 11, Tier 3: 9, Tier 4: 6, Tier 5: 4
-    // Modifiers: Age Perk (Multiplicative), Uranus Quirk, Location Bias Penalty
-    
     const ageMultiplier = 1 + (gameState.player.statModifiers?.upgradeSpawnRate || 0);
     const isUranus = currentLocationId === LOCATION_IDS.URANUS;
     const preferredPrefixes = LOCATION_PREFERENCES[currentLocationId] || [];
@@ -449,34 +398,28 @@ function _getDailyStock(gameState) {
     let weightedPool = candidates.map(id => {
         let weight = 0;
         
-        // Base Weights
         if (id.endsWith('_1')) weight = 17;
         else if (id.endsWith('_2')) weight = 11;
         else if (id.endsWith('_3')) weight = 9;
         else if (id.endsWith('_4')) weight = 6;
         else if (id.endsWith('_5')) weight = 4;
         
-        // Age Perk (Multiplicative to preserve relative tier rarity)
         weight *= ageMultiplier;
 
-        // Uranus Quirk (Advanced Multiplier)
         if (isUranus && (id.endsWith('_3') || id.endsWith('_4') || id.endsWith('_5'))) {
             weight *= 2;
         }
 
-        // Off-Nominal Penalty (Location Bias)
         const isPreferred = preferredPrefixes.some(prefix => id.startsWith(prefix));
         if (!isPreferred) {
-            weight *= 0.80; // 20% weight reduction for upgrades not matching station theme
+            weight *= 0.80; 
         }
 
         return { id, weight };
     });
 
-    // 4. SELECT ITEMS
     const selectedIds = [];
     
-    // Loop until we fill the slots or run out of candidates
     for (let i = 0; i < targetCount; i++) {
         if (weightedPool.length === 0) break;
 
@@ -484,7 +427,6 @@ function _getDailyStock(gameState) {
         const selectionSeed = `select_${currentLocationId}_${day}_${i}`;
         let roll = _generatePseudoRandom(selectionSeed) * totalWeight;
 
-        // Weighted Pick
         let selectedIndex = -1;
         for (let j = 0; j < weightedPool.length; j++) {
             roll -= weightedPool[j].weight;
@@ -494,12 +436,10 @@ function _getDailyStock(gameState) {
             }
         }
         
-        // Fallback (rounding errors)
         if (selectedIndex === -1 && weightedPool.length > 0) selectedIndex = weightedPool.length - 1;
 
         if (selectedIndex !== -1) {
             selectedIds.push(weightedPool[selectedIndex].id);
-            // Remove from pool to prevent duplicates
             weightedPool.splice(selectedIndex, 1);
         }
     }
@@ -507,36 +447,22 @@ function _getDailyStock(gameState) {
     return selectedIds;
 }
 
-/**
- * Generates a deterministic pseudo-random number (0-1) from a string seed using Mulberry32.
- * @param {string} seedString 
- * @returns {number} 0.0 to 1.0
- */
 function _generatePseudoRandom(seedString) {
-    // 1. Simple hash to create an initial integer seed from the string
     let h = 0xdeadbeef;
     for(let i = 0; i < seedString.length; i++) {
         h = Math.imul(h ^ seedString.charCodeAt(i), 2654435761);
     }
     let seed = ((h ^ h >>> 16) >>> 0);
 
-    // 2. Mulberry32 PRNG for mathematically uniform distribution
     let t = seed += 0x6D2B79F5;
     t = Math.imul(t ^ t >>> 15, t | 1);
     t ^= t + Math.imul(t ^ t >>> 7, t | 61);
     return ((t ^ t >>> 14) >>> 0) / 4294967296;
 }
 
-/**
- * Renders the "Tuning" view (Upgrade Shop).
- * @param {object} gameState
- * @returns {string} HTML content
- * @private
- */
 function _renderTuningView(gameState) {
     const availableUpgradeIds = _getDailyStock(gameState);
     
-    // Sort slightly for nicer presentation (Tier I -> II -> III -> IV -> V, then alphabetical)
     availableUpgradeIds.sort();
 
     if (availableUpgradeIds.length === 0) {
@@ -547,7 +473,6 @@ function _renderTuningView(gameState) {
         `;
     }
     
-    // [[NEW]] LABOR & HARDWARE DYNAMIC CALCULATION
     const activeShipId = gameState.player.activeShipId;
     const activeShipStatic = DB.SHIPS[activeShipId];
     const shipBasePrice = activeShipStatic ? activeShipStatic.price : 0;
@@ -557,19 +482,16 @@ function _renderTuningView(gameState) {
         const def = GameAttributes.getDefinition(id);
         if (!def) return '';
 
-        // Color Logic for shop view to match pills
         const baseColor = def.pillColor || def.color || UPGRADE_COLORS.GREY;
         const styleVars = `
             --item-color: ${baseColor};
             --item-glow: ${baseColor}80;
         `;
         
-        // PHASE 1: Percentage-based cost calculation
         const hardwareCost = GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice);
         const totalCost = hardwareCost + laborFee;
         const canAfford = gameState.player.credits >= totalCost;
         
-        // VIRTUAL WORKBENCH: Dynamic Name Size logic
         const nameSizeClass = def.name.length > 12 ? 'text-base' : 'text-lg';
 
         return `

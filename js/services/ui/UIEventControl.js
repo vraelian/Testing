@@ -10,29 +10,20 @@ import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 
 export class UIEventControl {
-    /**
-     * @param {import('../UIManager.js').UIManager} manager
-     */
     constructor(manager) {
         this.manager = manager;
     }
 
-    /**
-     * Constructs and queues the Hot Intel modal announcement.
-     * @param {object} intelData - The active Hot Intel object containing location, commodity, and discount properties.
-     */
     showHotIntelModal(intelData) {
         const commodity = DB.COMMODITIES.find(c => c.id === intelData.commodityId);
         const commodityName = commodity ? commodity.name : intelData.commodityId;
         const discountPct = Math.round((1 - intelData.discountMultiplier) * 100);
 
-        // --- VIRTUAL WORKBENCH: Removed word "units" ---
         const htmlPayload = `
             <div class="text-lg text-gray-200 text-center">
                 Data from the local exchange confirms an unexpected influx of <span class="text-result-cargo font-bold">${commodityName}</span>. To maintain market stability, vendors have authorized an immediate <span class="text-req-yellow font-bold">${discountPct}% discount</span> on all current inventory.
             </div>
         `;
-        // --- END VIRTUAL WORKBENCH ---
 
         this.manager.queueModal('event-modal', 'Intel Acquired', htmlPayload, null, {
             dismissOutside: true,
@@ -41,24 +32,17 @@ export class UIEventControl {
         });
     }
 
-    // --- PHASE 3/4: CRITICAL HULL WARNING MODAL ---
-    /**
-     * Displays a high-priority warning modal preventing immediate launch when hull is < 15%.
-     * @param {string} locationId - The intended destination ID.
-     * @param {boolean} useFoldedDrive - Whether the player was attempting to use a folded drive.
-     */
     showCriticalHullWarningModal(locationId, useFoldedDrive) {
         const state = this.manager.lastKnownState;
         const day = state?.day || 0;
         const shipId = state?.player?.activeShipId || 'unknown_ship';
         const currentLoc = state?.currentLocationId || 'unknown_loc';
 
-        // Deterministic Hash: Locks the flavor text to the specific day, location, and ship.
         const seedString = `${day}_${currentLoc}_${shipId}`;
         let hash = 0;
         for (let i = 0; i < seedString.length; i++) {
             hash = (hash << 5) - hash + seedString.charCodeAt(i);
-            hash |= 0; // Convert to 32bit integer
+            hash |= 0; 
         }
         
         const randomIndex = Math.abs(hash) % CRITICAL_HULL_WARNINGS.length;
@@ -78,7 +62,6 @@ export class UIEventControl {
         let isProceeding = false;
 
         this.manager.queueModal('event-modal', '<span class="text-red-500">CRITICAL HULL DAMAGE</span>', htmlPayload, () => {
-            // Callback fires if dismissed via outside click or Cancel button
             if (!isProceeding) {
                 starfieldService.triggerQuickExit();
             }
@@ -93,7 +76,7 @@ export class UIEventControl {
                 if (cancelBtn) {
                     cancelBtn.onclick = (e) => {
                         e.preventDefault();
-                        closeHandler(); // Triggers modal closure and the onCloseCallback
+                        closeHandler(); 
                     };
                 }
 
@@ -101,15 +84,13 @@ export class UIEventControl {
                     launchBtn.onclick = (e) => {
                         e.preventDefault();
                         if (launchBtn.dataset.primed !== 'true') {
-                            // Step 1: Prime the confirmation
                             launchBtn.dataset.primed = 'true';
                             launchBtn.classList.remove('bg-red-950/30', 'text-red-400', 'border-red-900', 'hover:bg-red-900/50');
                             launchBtn.classList.add('bg-red-700', 'text-white', 'border-red-500', 'hover:bg-red-600', 'shadow-[0_0_15px_rgba(239,68,68,0.8)]');
                             launchBtn.innerText = 'CONFIRM?';
                         } else {
-                            // Step 2: Execute the travel sequence
-                            isProceeding = true; // Prevent starfield teardown
-                            closeHandler(); // Visually dismiss modal
+                            isProceeding = true; 
+                            closeHandler(); 
                             this.manager.simulationService.travelTo(locationId, useFoldedDrive);
                         }
                     };
@@ -117,7 +98,6 @@ export class UIEventControl {
             }
         });
     }
-    // --- END PHASE 3/4 ---
 
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
@@ -125,8 +105,8 @@ export class UIEventControl {
 
          this.manager.queueModal('random-event-modal', title, description, null, {
             nonDismissible: true,
-            contentClass: 'text-center', // Enforce center alignment for Description
-            specialClass: 'blur-fade-in', // Interruption blur-fade in cinematic
+            contentClass: 'text-center', 
+            specialClass: 'blur-fade-in', 
             customSetup: (modal, closeHandler) => {
                 const choicesContainer = modal.querySelector('#random-event-choices-container');
                 choicesContainer.innerHTML = '';
@@ -151,7 +131,7 @@ export class UIEventControl {
                             colorClass = 'text-req-yellow';
                         } else if (lower.includes('delay')) {
                             colorClass = 'text-delay-blue';
-                        } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium'].some(k => lower.includes(k))) {
+                        } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium', 'damage', 'drain', 'stress'].some(k => lower.includes(k))) {
                             colorClass = 'text-cost-orange';
                         }
                     }
@@ -210,11 +190,9 @@ export class UIEventControl {
             this.manager.logger.error('UIEventControl', `No lore content found for ID: ${loreId}`);
             contentEl.innerHTML = '<p>Error: Lore content not found.</p>';
         } else {
-            // --- VIRTUAL WORKBENCH: Name Replacement & Viewed State ---
             const state = this.manager.lastKnownState;
             const playerName = state?.player?.name || 'Captain';
             
-            // Mark as viewed if not already tracking
             if (this.manager.simulationService && this.manager.simulationService.gameState) {
                 const liveState = this.manager.simulationService.gameState;
                 if (!liveState.intelMarket.viewedLore) {
@@ -222,12 +200,11 @@ export class UIEventControl {
                 }
                 if (!liveState.intelMarket.viewedLore.includes(loreId)) {
                     liveState.intelMarket.viewedLore.push(loreId);
-                    liveState.setState({}); // Force UI refresh to remove glow
+                    liveState.setState({}); 
                 }
             }
             
             contentEl.innerHTML = loreEntry.content.replace(/\[playerName\]/g, playerName);
-            // --- END VIRTUAL WORKBENCH ---
         }
         
         contentEl.scrollTop = 0;
@@ -286,16 +263,13 @@ export class UIEventControl {
 
         if (!travelInfo) return;
 
-        // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Check ---
         const inventory = state.player.inventories[state.player.activeShipId] || {};
         const foldedDriveQty = inventory[COMMODITY_IDS.FOLDED_DRIVES]?.quantity || 0;
         
-        // REMOVED `playerTier >= 7` constraint. Possession is the only requirement.
         const canFoldSpace = foldedDriveQty > 0;
         
         let foldSpaceHtml = '';
         if (canFoldSpace) {
-             // [[REFINED]]: Split lines, centered, dynamic color
              foldSpaceHtml = `
                 <div class="mt-4 flex flex-col items-center justify-center text-center space-y-1">
                     <div class="flex items-center justify-center space-x-2">
@@ -310,7 +284,6 @@ export class UIEventControl {
                 </div>
             `;
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         const modalContentHtml = `
             <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
@@ -334,7 +307,6 @@ export class UIEventControl {
         this.manager.cache.launchModalContent.innerHTML = modalContentHtml;
         modal.classList.remove('hidden');
 
-        // --- VIRTUAL WORKBENCH: Event Listener for Checkbox ---
         if (canFoldSpace) {
             const checkbox = modal.querySelector('#fold-space-checkbox');
             const infoText = modal.querySelector('#launch-travel-info');
@@ -344,10 +316,8 @@ export class UIEventControl {
                 checkbox.addEventListener('change', (e) => {
                     const isChecked = e.target.checked;
                     
-                    // Update Launch Button Dataset
                     launchBtn.dataset.useFoldedDrive = isChecked ? 'true' : 'false';
                     
-                    // Update Info Text
                     if (isChecked) {
                         infoText.innerHTML = `
                             <p class="font-bold animate-pulse" style="color: ${theme.borderColor};">Travel Time: INSTANT (Warp)</p>
@@ -362,7 +332,6 @@ export class UIEventControl {
                 });
             }
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
@@ -373,7 +342,6 @@ export class UIEventControl {
                 });
             }
             
-            // Initiate Starfield Effect behind Launch Modal
             starfieldService.mount(document.body);
             starfieldService.triggerEntry();
         });
@@ -382,7 +350,6 @@ export class UIEventControl {
             if (e.target.id === 'launch-modal') {
                 this.manager.hideModal('launch-modal');
                 
-                // Trigger quick exit transition upon explicit player dismissal
                 starfieldService.triggerQuickExit();
                 
                 modal.removeEventListener('click', closeHandler);
@@ -436,7 +403,6 @@ export class UIEventControl {
             quirksHtml = `<p class="font-roboto-mono imprinted-text-embedded">None reported</p>`;
         }
 
-        // --- TUTORIAL GUARDRAIL CHECK ---
         const isMapNavLocked = state?.missions?.activeMissionIds?.some(id => ['mission_tutorial_04', 'mission_tutorial_05', 'mission_tutorial_06', 'mission_tutorial_07'].includes(id));
         const isCurrentLocation = state?.currentLocationId === locationId;
         const navigateBtnHtml = (isMapNavLocked || isCurrentLocation) ? '' : `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
@@ -510,7 +476,6 @@ export class UIEventControl {
     showCargoDetailModal(gameState, goodId) {
         const good = DB.COMMODITIES.find(c => c.id === goodId);
         
-        // --- FLEET OVERFLOW SYSTEM: AGGREGATE INVENTORY FOR MODAL ---
         let totalQty = 0;
         let totalCostValue = 0;
         
@@ -528,7 +493,6 @@ export class UIEventControl {
             quantity: totalQty,
             avgCost: totalCostValue / totalQty
         };
-        // --- END FLEET OVERFLOW SYSTEM ---
 
         this.manager.queueModal('cargo-detail-modal', null, null, null, {
             dismissInside: true,
@@ -543,15 +507,6 @@ export class UIEventControl {
         });
     }
 
-    /**
-     * Spawns floating text over the UI, optionally using HTML and extended durations.
-     * @param {string} text - The content to float
-     * @param {number} x - Origin X
-     * @param {number} y - Origin Y
-     * @param {string} color - Hex or standard color string
-     * @param {number} duration - Milliseconds the text should persist
-     * @param {boolean} isHtml - If true, innerHTML is used instead of textContent
-     */
     createFloatingText(text, x, y, color = '#fde047', duration = 2450, isHtml = false) {
         const el = document.createElement('div');
         if (isHtml) {
@@ -573,8 +528,8 @@ export class UIEventControl {
         const text = `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`;
         
         const effects = [
-            { type: 'EFF_FUEL', value: 0 }, 
-            { type: 'EFF_TRAVEL_TIME', value: lostDays }
+            { type: 'EFF_FUEL', actualChange: 0 }, 
+            { type: 'EFF_TRAVEL_TIME', actualChange: lostDays }
         ];
 
         this.showEventResultModal(title, text, effects, callback);
@@ -603,13 +558,14 @@ export class UIEventControl {
              effects = [];
         }
         else {
-             console.warn('[UIEventControl] Invalid arguments passed to showEventResultModal', { titleOrText, textOrEffects, effectsOrUndefined });
              title = 'System Alert'; 
              text = '';
              effects = [];
         }
 
+        let pendingOverwriteId = null;
         let effectsHtml = '';
+        
         if (effects && effects.length > 0) {
             effectsHtml = '<ul class="list-none text-lg text-gray-300 mt-6 space-y-3 text-center">';
             effects.forEach(eff => {
@@ -618,48 +574,68 @@ export class UIEventControl {
                 
                 switch (eff.type) {
                     case 'EFF_CREDITS':
-                        const isGain = eff.value > 0;
+                        const changeC = eff.actualChange || 0;
+                        const isGain = changeC > 0;
                         const sign = isGain ? '+' : '';
                         const creditClass = isGain ? 'text-result-credit-gain' : 'text-result-credit-loss';
-                        
-                        effectText = `<span class="${baseStyle} ${creditClass}">Credits: ${sign}${formatCredits(eff.value)}</span>`;
+                        effectText = `<span class="${baseStyle} ${creditClass}">Credits: ${sign}${formatCredits(changeC)}</span>`;
                         break;
                     case 'EFF_DEBT':
-                        const isDebtGain = eff.value > 0;
+                        const changeD = eff.actualChange || 0;
+                        const isDebtGain = changeD > 0;
                         const debtSign = isDebtGain ? '+' : '';
                         const debtClass = isDebtGain ? 'text-result-credit-loss' : 'text-result-credit-gain';
-                        effectText = `<span class="${baseStyle} ${debtClass}">Debt: ${debtSign}${formatCredits(eff.value)}</span>`;
+                        effectText = `<span class="${baseStyle} ${debtClass}">Debt: ${debtSign}${formatCredits(changeD)}</span>`;
                         break;
                     case 'EFF_FUEL':
-                        effectText = `<span class="${baseStyle} text-result-fuel">Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
+                        const changeF = eff.actualChange || 0;
+                        effectText = `<span class="${baseStyle} text-result-fuel">Fuel: ${changeF > 0 ? '+' : ''}${changeF}</span>`;
                         break;
                     case 'EFF_FULL_REFUEL':
                         effectText = `<span class="${baseStyle} text-result-fuel">Fuel Tanks Replenished</span>`;
                         break;
                     case 'EFF_HULL':
-                        effectText = `<span class="${baseStyle} text-result-hull">Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}</span>`;
+                        const changeH = eff.actualChange || 0;
+                        effectText = `<span class="${baseStyle} text-result-hull">Hull: ${changeH > 0 ? '+' : ''}${changeH}</span>`;
                         break;
                     case 'EFF_TRAVEL_TIME':
                     case 'EFF_MODIFY_TRAVEL':
-                        effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days</span>`;
+                        const changeT = eff.actualChange || 0;
+                        effectText = `<span class="${baseStyle} text-result-time">Travel Time: ${changeT > 0 ? '+' : ''}${changeT} Days</span>`;
                         break;
                     case 'EFF_REDIRECT_TRAVEL':
                         effectText = `<span class="${baseStyle} text-yellow-400">Course Diverted</span>`;
                         break;
                     case 'EFF_ADD_ITEM':
-                        const itemName = eff.addedItem || eff.target;
-                        const itemQty = eff.addedQty || Math.round(eff.value);
-                        effectText = `<span class="${baseStyle} text-result-cargo">Received: ${itemQty}x ${itemName}</span>`; 
+                        if (eff.failedTier) {
+                            effectText = `<span class="${baseStyle} text-gray-500">However, without the proper Tier ${eff.requiredTier || 3} encryption keys it is inaccessible. You will have to abandon the cargo.</span>`;
+                        } else if (eff.failedCapacity) {
+                            effectText = `<span class="${baseStyle} text-gray-500">Fleet holds full! Cargo abandoned.</span>`;
+                        } else if (eff.addedQty && eff.addedItem) {
+                            effectText = `<span class="${baseStyle} text-result-cargo">Received: ${eff.addedQty}x ${eff.addedItem}</span>`; 
+                        }
                         break;
                     case 'EFF_REMOVE_ITEM':
                         effectText = `<span class="${baseStyle} text-result-cargo">Removed: ${Math.round(eff.value)}x ${eff.target}</span>`;
                         break;
                     case 'EFF_LOSE_RANDOM_CARGO':
-                         effectText = `<span class="${baseStyle} text-result-cargo">Cargo Lost: ${Math.round(eff.value * 100)}%</span>`;
+                         const totalLost = eff.actualChange || 0;
+                         effectText = `<span class="${baseStyle} text-result-cargo">Cargo Lost: ${totalLost} Units</span>`;
+                         if (eff.lostItems && eff.lostItems.length > 0) {
+                             effectText += `<br><span class="text-sm text-gray-500 mt-1 block">`;
+                             eff.lostItems.forEach(item => {
+                                 effectText += `-${item.qty} ${item.name}<br>`;
+                             });
+                             effectText += `</span>`;
+                         }
                          break;
                     case 'EFF_ADD_RANDOM_CARGO':
-                        if (eff.addedItem && eff.addedQty) {
-                             effectText = `<span class="${baseStyle} text-result-cargo">Received: ${eff.addedQty}x ${eff.addedItem}</span>`;
+                        if (eff.failedTier) {
+                            effectText = `<span class="${baseStyle} text-gray-500">However, without the proper Tier encryption keys it is inaccessible. You will have to abandon the cargo.</span>`;
+                        } else if (eff.failedCapacity) {
+                            effectText = `<span class="${baseStyle} text-gray-500">Fleet holds full! Cargo abandoned.</span>`;
+                        } else if (eff.addedQty && eff.targetName) {
+                             effectText = `<span class="${baseStyle} text-result-cargo">Received: ${eff.addedQty}x ${eff.targetName}</span>`;
                         } else {
                              effectText = `<span class="${baseStyle} text-gray-500">No salvage recovered.</span>`;
                         }
@@ -667,31 +643,78 @@ export class UIEventControl {
                     case 'EFF_ADD_UPGRADE':
                         if (eff.installedUpgrade) {
                              effectText = `<span class="${baseStyle} text-result-cargo">Installed: ${eff.installedUpgrade}</span>`;
-                        } else {
-                             effectText = `<span class="${baseStyle} text-gray-500">Upgrade already installed.</span>`;
+                        } else if (eff.pendingOverwrite) {
+                             pendingOverwriteId = eff.pendingOverwrite;
+                             effectText = `<span class="${baseStyle} text-orange-400">Upgrade Pending Installation</span>`;
+                        } else if (eff.failedUpgrade) {
+                             effectText = `<span class="${baseStyle} text-gray-500">Upgrade ${eff.targetName} already installed. Salvaged for parts.</span>`;
                         }
                         break;
+                    case 'EFF_APPLY_STATUS':
+                        const sName = eff.statusName || 'Unknown';
+                        effectText = `<span class="${baseStyle} text-red-500">Status Applied: ${sName}</span>`;
+                        break;
                     case 'EFF_UNLOCK_INTEL':
-                        if (eff.intelLocation && eff.intelCommodity) {
+                        if (eff.failedIntel) {
+                            effectText = `<span class="${baseStyle} text-gray-500">Data corrupted. You can only maintain one active intel deal. Items expended during this attempt have been refunded.</span>`;
+                        } else if (eff.intelLocation && eff.intelCommodity) {
                             effectText = `<span class="${baseStyle} text-req-yellow">Intel Acquired: ${eff.intelCommodity} at ${eff.intelLocation}</span>`;
                         } else {
                             effectText = `<span class="${baseStyle} text-gray-500">Encrypted Data Unreadable</span>`;
                         }
                         break;
+                    case 'GRANT_OFFICER':
+                        if (eff.installedOfficer) {
+                             effectText = `<span class="${baseStyle} text-green-400">Recruited Officer: ${eff.installedOfficer}</span>`;
+                        } else if (eff.failedOfficer) {
+                             effectText = `<span class="${baseStyle} text-gray-500">Officer ${eff.officerName} is already in your roster.</span>`;
+                        }
+                        break;
                     default:
+                         if (eff.type === 'EFF_QUEUE_EVENT') return; 
                          return;
                 }
-                effectsHtml += `<li>${effectText}</li>`;
+                if (effectText) {
+                    effectsHtml += `<li>${effectText}</li>`;
+                }
             });
             effectsHtml += '</ul>';
         }
+
+        const originalOnDismiss = onDismiss;
+        onDismiss = () => {
+            if (pendingOverwriteId) {
+                const state = this.manager.lastKnownState;
+                const activeShip = state?.player?.activeShipId;
+                const shipState = state?.player?.shipStates[activeShip];
+                
+                const hangarCtrl = this.manager.hangarControl || this.manager.uiHangarControl;
+                
+                if (shipState && hangarCtrl) {
+                    hangarCtrl.showUpgradeInstallationModal(pendingOverwriteId, 0, 0, shipState, (idxToRemove) => {
+                        if (idxToRemove !== -1) {
+                            shipState.upgrades.splice(idxToRemove, 1);
+                            shipState.upgrades.push(pendingOverwriteId);
+                            this.manager.simulationService.logger.info.player(state.day, 'REWARD_UPGRADE', `Installed overwrite upgrade: ${pendingOverwriteId}`);
+                            
+                            this.manager.simulationService.gameState.setState({});
+                        }
+                        if (originalOnDismiss) originalOnDismiss();
+                    });
+                } else {
+                    if (originalOnDismiss) originalOnDismiss();
+                }
+            } else {
+                if (originalOnDismiss) originalOnDismiss();
+            }
+        };
 
         this.manager.queueModal('event-result-modal', title, text + effectsHtml, onDismiss, {
             dismissOutside: false, 
             dismissInside: false,
             contentClass: 'text-center', 
             buttonText: 'Continue',
-            exitClass: 'modal-blur-fade-out' // Blur-fade out into travel animation
+            exitClass: 'modal-blur-fade-out' 
         });
     }
 
@@ -699,7 +722,6 @@ export class UIEventControl {
         const loreContainer = screenContainer.querySelector('#lore-button-container');
         if (!loreContainer) return;
         
-        // --- VIRTUAL WORKBENCH: Name Replacement & Unread Glow Logic ---
         const state = this.manager.lastKnownState;
         const playerName = state?.player?.name || 'Captain';
         const viewedLore = state?.intelMarket?.viewedLore || [];
@@ -713,16 +735,8 @@ export class UIEventControl {
                         ${title}
                     </button>`;
         }).join('');
-        // --- END VIRTUAL WORKBENCH ---
     }
 
-    // ========================================================================= 
-    // --- GAME MENU / PAUSE SCREEN (PHASE 3) --- 
-    // ========================================================================= 
-
-    /**
-     * Initializes and displays the Game Menu modal with location-themed styling.
-     */
     showPauseMenu() {
         const modal = document.getElementById('pause-menu-modal');
         if (!modal) return;
@@ -733,21 +747,17 @@ export class UIEventControl {
 
         const modalContent = modal.querySelector('.modal-content');
         
-        // Reset base classes
         modalContent.className = 'modal-content relative flex flex-col items-center justify-between p-8';
         
-        // Apply Location Theme dynamically
         if (location && location.navTheme) {
             modalContent.style.background = location.navTheme.gradient;
             modalContent.style.borderColor = location.navTheme.borderColor;
             modalContent.style.boxShadow = `0 10px 25px rgba(0,0,0,0.5), inset 0 0 15px ${location.navTheme.borderColor}40`;
         }
 
-        // Hydrate Version String
         const versionEl = document.getElementById('pause-menu-version');
         if (versionEl) versionEl.innerText = `Version ${APP_VERSION}`;
 
-        // Reset the Save button to default state
         const saveBtn = document.getElementById('pause-btn-save');
         if (saveBtn) {
             saveBtn.className = 'btn w-full py-3 text-lg';
@@ -755,7 +765,6 @@ export class UIEventControl {
             saveBtn.disabled = false;
         }
 
-        // Reset the Exit button to default state
         const exitBtn = document.getElementById('pause-btn-exit');
         if (exitBtn) {
             exitBtn.className = 'btn w-full py-3 text-lg';
@@ -763,13 +772,11 @@ export class UIEventControl {
             exitBtn.dataset.action = 'exit-game-init';
         }
 
-        // Display Modal and Trigger CRT Open Animation
         modal.classList.remove('hidden', 'modal-hiding');
         modalContent.classList.remove('sev-crt-shutdown');
         modalContent.classList.add('sev-crt-turn-on');
         modalContent.style.animationDuration = '0.4s';
 
-        // Bind transient click-outside dismissal
         this._pauseMenuCloseHandler = (e) => {
             if (e.target === modal) {
                 this.hidePauseMenu();
@@ -778,28 +785,22 @@ export class UIEventControl {
         modal.addEventListener('click', this._pauseMenuCloseHandler);
     }
 
-    /**
-     * Executes the CRT shutdown animation and hides the Game Menu.
-     */
     hidePauseMenu() {
         const modal = document.getElementById('pause-menu-modal');
         if (!modal) return;
 
         const modalContent = modal.querySelector('.modal-content');
         
-        // Trigger CRT Close Animation
         modalContent.classList.remove('sev-crt-turn-on');
-        void modalContent.offsetWidth; // Force reflow
+        void modalContent.offsetWidth; 
         modalContent.classList.add('sev-crt-shutdown');
         modalContent.style.animationDuration = '0.4s';
 
-        // Clean up transient listener
         if (this._pauseMenuCloseHandler) {
             modal.removeEventListener('click', this._pauseMenuCloseHandler);
             this._pauseMenuCloseHandler = null;
         }
 
-        // Hide entirely after animation concludes
         setTimeout(() => {
             modal.classList.add('hidden');
             modalContent.classList.remove('sev-crt-shutdown');
