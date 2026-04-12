@@ -369,10 +369,8 @@ export class TravelService {
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
         
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
-        const eventHullDamageValue = effectiveStats.maxHealth * ((eventMods.eventHullDamagePercent || 0) / 100);
-        const totalHullDamageValue = travelHullDamage + eventHullDamageValue;
         
-        activeShipState.health -= totalHullDamageValue;
+        activeShipState.health -= travelHullDamage;
         this.simulationService._checkHullWarnings(activeShip.id);
 
         if (activeShipState.health <= 0) {
@@ -386,7 +384,7 @@ export class TravelService {
         const convoyTaxRate = additionalShips * 0.02; 
 
         let convoyFuelTax = Math.max(0, Math.ceil(travelInfo.fuelCost * convoyTaxRate));
-        let convoyHullTax = Math.max(0, Math.ceil(totalHullDamageValue * convoyTaxRate));
+        let convoyHullTax = Math.max(0, Math.ceil(travelHullDamage * convoyTaxRate));
 
         if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.convoyTaxWaiver) {
             convoyFuelTax = 0;
@@ -458,7 +456,7 @@ export class TravelService {
             return;
         }
 
-        const totalHullDamagePercentForDisplay = (totalHullDamageValue / effectiveStats.maxHealth) * 100;
+        const totalHullDamagePercentForDisplay = (travelHullDamage / effectiveStats.maxHealth) * 100;
         
         this.logger.info.player(this.gameState.day, 'TRAVEL_END', `Arrived at ${locationId}.`, {
             fuelUsed: travelInfo.fuelCost,

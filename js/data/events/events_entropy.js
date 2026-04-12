@@ -22,7 +22,7 @@ export const EVENTS_ENTROPY = [
         choices: [
             {
                 id: 'choice_vent',
-                text: 'Vent Cargo Bay (Purge Assorted Goods)',
+                text: 'Vent Cargo Bay (Risk Any Onboard Cargo)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent' }] }
             },
             {
@@ -33,8 +33,8 @@ export const EVENTS_ENTROPY = [
         ],
         outcomes: {
             'out_vent': {
-                title: 'Cargo Purged',
-                text: 'You blow the bay doors, using the vacuum to flash-freeze the section. Half your cargo is sucked into the void.',
+                title: 'Cargo Bay Purged',
+                text: 'You blow the bay doors, using the vacuum to flash-freeze the section.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 50 }]
             },
             'out_override': {
@@ -51,7 +51,7 @@ export const EVENTS_ENTROPY = [
         requirements: [],
         template: {
             title: 'Injector Misfire',
-            description: 'A violent stutter reverberates through the deck. Diagnostics show the primary plasma injector is choking on slag buildup, threatening to starve the engine.'
+            description: 'A violent stutter reverberates through the deck. Diagnostics show a primary plasma injector is choking on slag buildup, threatening to starve the engine.'
         },
         choices: [
             {
@@ -67,19 +67,19 @@ export const EVENTS_ENTROPY = [
             },
             {
                 id: 'choice_push',
-                text: 'Push the Engine (Hull Damage, Gain Status)',
+                text: 'Push the Engine (Hull Damage)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_push' }] }
             }
         ],
         outcomes: {
             'out_recalibrate_success': {
-                title: 'Harmonics Aligned',
-                text: 'You perfectly balance the plasma flow. The engine runs so cleanly that your fuel tanks are essentially topped off for the rest of the jump.',
+                title: 'Injector Recalibrated',
+                text: 'You manage to perfectly balance the plasma flow again. The engines are now running even more efficiently than before!',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.FULL_REFUEL, value: 1 }]
             },
             'out_recalibrate_fail': {
-                title: 'Total Fuel Dump',
-                text: 'The recalibration fails catastrophically, forcing an emergency dump of all remaining plasma to prevent an explosion.',
+                title: 'Fuel Loss',
+                text: 'The recalibration fails catastrophically, forcing an emergency dump of all plasma-contaminated fuel to prevent an explosion.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, isCurrentPercent: true, value: -100 }]
             },
             'out_push': {
@@ -118,7 +118,7 @@ export const EVENTS_ENTROPY = [
             },
             {
                 id: 'choice_override',
-                text: 'Manual Override (Risk Trip Delay)',
+                text: 'Manual Override (Potential Trip Delay)',
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [

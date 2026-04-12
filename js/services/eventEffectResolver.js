@@ -37,7 +37,7 @@ const effectHandlers = {
             change = gameState.player.credits * (effect.value / 100);
         }
         
-        change = Math.round(change); 
+        change = Math.floor(change); 
         effect.actualChange = change;
 
         const oldValue = gameState.player.credits;
@@ -58,7 +58,7 @@ const effectHandlers = {
             change = shipState.fuel * (effect.value / 100);
         }
         
-        change = Math.round(change);
+        change = Math.floor(change);
         effect.actualChange = change;
 
         shipState.fuel = Math.max(0, Math.min(ship.maxFuel, shipState.fuel + change));
@@ -86,12 +86,12 @@ const effectHandlers = {
             change = shipState.health * (effect.value / 100);
         }
         
-        change = Math.round(change);
+        change = Math.floor(change);
 
         if (change < 0) {
             const upgrades = shipState.upgrades || [];
             const resistance = GameAttributes.getHullResistanceModifier(upgrades);
-            change = Math.round(change * (1 - resistance));
+            change = Math.floor(change * (1 - resistance));
 
             const convoyHullTax = Math.abs(change) * 0.05;
             if (convoyHullTax > 0) {
@@ -120,7 +120,7 @@ const effectHandlers = {
              change = gameState.player.debt * (effect.value / 100);
         }
         
-        change = Math.round(change);
+        change = Math.floor(change);
         effect.actualChange = change;
         gameState.player.debt = Math.max(0, gameState.player.debt + change);
     },
@@ -218,7 +218,7 @@ const effectHandlers = {
                 change = baseDays * (effect.value / 100);
             }
             
-            change = Math.round(change);
+            change = Math.floor(change);
             effect.actualChange = change;
             gameState.pendingTravel.travelTimeAdd = (gameState.pendingTravel.travelTimeAdd || 0) + change;
 
@@ -246,11 +246,11 @@ const effectHandlers = {
                     if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) extraFuelCost = 0;
                     if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
                         const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
-                        const toDist = DB.MARKETS.find(m => m.id === toId)?.distance || 0;
+                        const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
                         if (toDist < fromDist) extraFuelCost = 0;
                     }
 
-                    extraFuelCost = Math.round(extraFuelCost);
+                    extraFuelCost = Math.floor(extraFuelCost);
 
                     if (extraFuelCost > 0) {
                         shipState.fuel = Math.max(0, shipState.fuel - extraFuelCost);
@@ -287,7 +287,7 @@ const effectHandlers = {
                         }
                     }
                     if (eff.type === EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS && eff.value < 0) {
-                        gameState.player.credits += Math.abs(Math.round(eff.value));
+                        gameState.player.credits += Math.abs(Math.floor(eff.value));
                     }
                 });
             }

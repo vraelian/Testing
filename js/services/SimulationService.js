@@ -144,9 +144,6 @@ export class SimulationService {
     resolveEventChoice(eventId, choiceId) {
         const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this);
         if (!result) return;
-
-        // DEFENSIVE FIX: Removed this._applyEventEffects(result.effects).
-        // The eventEffectResolver applies math automatically. Running it again here caused instant death.
         
         // Pass the result payload directly to the UI layer
         if (this.uiManager.eventControl && this.uiManager.eventControl.showEventResultModal) {
@@ -191,9 +188,9 @@ export class SimulationService {
                 'Fuel Depleted', 
                 `Your engines sputter and die. A passing freighter tows you back to <b>${locName}</b>.`
             );
-            
-            this.gameState.setState({});
         }
+        
+        this.gameState.setState({});
     }
 
     startIntroSequence() { this.introService.start(); }
