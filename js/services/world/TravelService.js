@@ -2,6 +2,7 @@
 /**
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
+ * UPDATED: Re-routes modal resolution specifically to UIEventControl intercept hook.
  */
 import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
@@ -12,13 +13,6 @@ import { formatCredits } from '../../utils.js';
 import { starfieldService } from '../ui/StarfieldService.js';
 
 export class TravelService {
-    /**
-     * @param {import('../GameState.js').GameState} gameState
-     * @param {import('../UIManager.js').UIManager} uiManager
-     * @param {import('./TimeService.js').TimeService} timeService
-     * @param {import('../../services/LoggingService.js').Logger} logger
-     * @param {import('../SimulationService.js').SimulationService} simulationServiceFacade
-     */
     constructor(gameState, uiManager, timeService, logger, simulationServiceFacade) {
         this.gameState = gameState;
         this.uiManager = uiManager;
@@ -26,18 +20,10 @@ export class TravelService {
         this.logger = logger;
         this.simulationService = simulationServiceFacade;
         
-        // Instantiate Event Engine
         this.randomEventService = new RandomEventService(); 
-
-        // [[DEBUG FLAG]]
         this.debugAlwaysTriggerEvents = false;
     }
 
-    /**
-     * Initiates travel to a new location after validating fuel and other conditions.
-     * @param {string} locationId - The ID of the destination market.
-     * @param {boolean} [useFoldedDrive=false] - Whether to consume a Folded Drive for instant travel.
-     */
     travelTo(locationId, useFoldedDrive = false) {
         this.uiManager.resetMarketTransactionState();
         const { tutorials } = this.gameState;
@@ -52,13 +38,11 @@ export class TravelService {
         const state = this.gameState.getState();
         if (state.isGameOver || state.pendingTravel) return;
         
-        // --- VIRTUAL WORKBENCH: UI SAFEGUARD ---
         if (state.currentLocationId === locationId) {
             starfieldService.triggerQuickExit();
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
-        // --- END VIRTUAL WORKBENCH ---
 
         const activeShip = this.simulationService._getActiveShip();
         if (!activeShip) {
@@ -67,7 +51,6 @@ export class TravelService {
             return;
         }
 
-        // --- UPGRADE SYSTEM & Z-CLASS LOGIC ---
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const effectiveMaxFuel = effectiveStats.maxFuel;
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
@@ -77,7 +60,6 @@ export class TravelService {
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
         
-        // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Logic ---
         if (useFoldedDrive) {
              const inventory = state.player.inventories[activeShip.id] || {};
              const qty = inventory[COMMODITY_IDS.FOLDED_DRIVES]?.quantity || 0;
@@ -86,28 +68,19 @@ export class TravelService {
                  this.uiManager.queueModal('event-modal', "Missing Component", "You do not have a Folded-Space Drive to consume.");
                  return;
              }
-
-             // Folded Space = 0 Fuel, Instant Travel
              requiredFuel = 0;
         } else {
-             // Standard Fuel Logic
-            // 1. Apply Perk Modifier
             if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
                 requiredFuel = Math.round(requiredFuel * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
             }
 
-            // 2. Apply Attribute/Upgrade Modifier
             const attrFuelMod = GameAttributes.getFuelBurnModifier(upgrades);
             requiredFuel = Math.round(requiredFuel * attrFuelMod);
 
-            // --- Z-CLASS VALIDATION OVERRIDES ---
-            
-            // ATTR_METABOLIC_BURN: 50% Fuel Cost
             if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
                 requiredFuel = Math.round(requiredFuel * 0.5);
             }
 
-            // ATTR_SOLAR_HARMONY: 0 Fuel if traveling inward
             if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
                 const fromDist = DB.MARKETS.find(m => m.id === state.currentLocationId)?.distance || 0;
                 const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
@@ -116,30 +89,25 @@ export class TravelService {
                 }
             }
 
-            // ATTR_NEWTONS_GHOST: 0 Fuel always (Cryo Pod)
             if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
                 requiredFuel = 0;
             }
 
-            // --- SYSTEM STATES V3 HOOKS (Pre-Flight Validation) ---
             const systemState = state.systemState;
             const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
 
             if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
                 requiredFuel = Math.round(requiredFuel * activeStateDef.modifiers.travelFuelBurnMod);
             }
-            // --- END SYSTEM STATES V3 ---
         }
-        // --- END VIRTUAL WORKBENCH ---
 
-        // --- FUEL VALIDATION BLOCK ---
         const currentFuel = Math.floor(state.player.shipStates[activeShip.id].fuel);
         
         if (currentFuel < requiredFuel || effectiveMaxFuel < requiredFuel) {
             starfieldService.triggerQuickExit();
             
             const shipDef = DB.SHIPS[activeShip.id];
-            let shipClassColor = 'text-white'; // Default fallback
+            let shipClassColor = 'text-white'; 
             
             if (shipDef && shipDef.class) {
                 switch(shipDef.class.toUpperCase()) {
@@ -179,7 +147,7 @@ export class TravelService {
         }
 
         const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
-        if (!isFirstTutorialFlight && !useFoldedDrive) { // Bypass event check if warping
+        if (!isFirstTutorialFlight && !useFoldedDrive) { 
             if (this._checkForRandomEvent(locationId)) {
                 return;
             }
@@ -188,15 +156,9 @@ export class TravelService {
         this.initiateTravel(locationId, { useFoldedDrive });
     }
 
-    /**
-     * Executes the core travel logic: applies fuel costs and hull damage, advances time, and shows the animation.
-     */
     initiateTravel(locationId, eventMods = {}) {
-        // --- PHASE 2: HOT INTEL EXPIRATION ---
-        // Forcefully wipe the activeHotIntel state the moment the player commits to departing.
         this.gameState.setState({ activeHotIntel: null });
 
-        // --- HARD INTERRUPT: Clear Universal Toast Queue ---
         if (this.simulationService.toastService) {
             this.simulationService.toastService.clearQueueAndHide();
         }
@@ -204,9 +166,7 @@ export class TravelService {
         const state = this.gameState.getState();
         const fromId = state.currentLocationId;
         
-        // --- PHASE 4 FIX: Safe-guard against Origin Redirects ---
         if (fromId === locationId) {
-             // NEW: Process any time delays incurred during the failed trip before aborting
              if (eventMods && eventMods.travelTimeAdd > 0) {
                  this.timeService.advanceDays(eventMods.travelTimeAdd);
              }
@@ -215,16 +175,13 @@ export class TravelService {
              return;
         }
 
-        // --- VIRTUAL WORKBENCH: SYNDICATE SABOTAGE INTERCEPT ---
         if (state.player.debt > 0 && state.player.loanType === 'syndicate' && state.player.repoNextEventDay && state.day >= state.player.repoNextEventDay) {
             const activeShip = this.simulationService._getActiveShip();
             const activeShipState = this.gameState.player.shipStates[activeShip.id];
             
-            // 85% damage to *current* health
             const damage = Math.floor(activeShipState.health * 0.85);
             activeShipState.health = Math.max(1, activeShipState.health - damage);
             
-            // Reset loop for next warning/strike
             state.player.repoNextEventDay = null;
             state.player.lastRepoStrikeDay = state.day;
 
@@ -241,19 +198,14 @@ export class TravelService {
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
-        // --- END VIRTUAL WORKBENCH ---
 
-        // --- SOL STATION: SYNC JIT STATE IF DEPARTING ---
         if (fromId === 'sol' && this.timeService.solStationService) {
             if (typeof this.timeService.solStationService.stopLocalLiveLoop === 'function') {
                 this.timeService.solStationService.stopLocalLiveLoop();
             }
         }
-        // -------------------------------------------------
 
         let travelInfo = { ...state.TRAVEL_DATA[fromId][locationId] };
-        
-        // Capture distance-equivalent base time BEFORE modifiers for Phase 2 Hull Entropy
         const baseTravelTime = travelInfo.time;
         
         this.logger.info.player(state.day, 'TRAVEL_START', `Departing from ${fromId} to ${locationId}.`);
@@ -262,8 +214,10 @@ export class TravelService {
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const upgrades = activeShipState.upgrades || [];
+        const statusEffects = activeShipState.statusEffects || [];
 
-        // --- SYSTEM STATES V3 HOOKS (Fuel & Time) ---
+        const hasStatus = (id) => statusEffects.some(s => s.id === id);
+
         const systemState = state.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
 
@@ -271,10 +225,18 @@ export class TravelService {
             if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
                 travelInfo.fuelCost = Math.round(travelInfo.fuelCost * activeStateDef.modifiers.travelFuelBurnMod);
             }
+            
+            if (hasStatus('status_plasma_leak')) {
+                travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 1.25);
+            }
+            if (hasStatus('status_thrust_imbalance')) {
+                travelInfo.time = Math.round(travelInfo.time * 1.20);
+            }
+            if (hasStatus('status_nav_glitch')) {
+                travelInfo.time += Math.floor(Math.random() * 5) + 1;
+            }
         }
-        // --- END SYSTEM STATES V3 ---
 
-        // --- VIRTUAL WORKBENCH (Phase 6): Folded Space Consumption ---
         if (eventMods.useFoldedDrive) {
             travelInfo.time = 0;
             travelInfo.fuelCost = 0;
@@ -286,8 +248,6 @@ export class TravelService {
                 this.logger.info.player(state.day, 'ITEM_CONSUMED', 'Folded-Space Drive consumed for instant travel.');
             }
         } else {
-             // Standard Logic
-            // --- UPGRADE SYSTEM: Attribute Logic (Time & Fuel) ---
             if (state.player.activePerks[PERK_IDS.NAVIGATOR]) {
                 travelInfo.time = Math.round(travelInfo.time * DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
                 travelInfo.fuelCost = Math.round(travelInfo.fuelCost * DB.PERKS[PERK_IDS.NAVIGATOR].fuelMod);
@@ -299,19 +259,14 @@ export class TravelService {
             travelInfo.fuelCost = Math.round(travelInfo.fuelCost * attrFuelMod);
             travelInfo.time = Math.max(1, Math.round(travelInfo.time * attrTimeMod));
 
-            // --- Z-CLASS EXECUTION LOGIC ---
-
-            // ATTR_METABOLIC_BURN
             if (shipAttributes.includes('ATTR_METABOLIC_BURN')) {
                 travelInfo.fuelCost = Math.round(travelInfo.fuelCost * 0.5);
             }
 
-            // ATTR_HYPER_CALCULATION (-25% Time)
             if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) {
                 travelInfo.time = Math.max(1, Math.round(travelInfo.time * 0.75));
             }
 
-            // ATTR_SOLAR_HARMONY (0 Fuel Inward)
             if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
                 const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
                 const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
@@ -321,17 +276,14 @@ export class TravelService {
                 }
             }
 
-            // ATTR_NEWTONS_GHOST (0 Fuel, 10x Time)
             if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) {
                 travelInfo.fuelCost = 0;
                 travelInfo.time *= 10;
             }
 
-            // Legacy: Sleeper
             shipAttributes.forEach(attrId => {
                 const def = GameAttributes.getDefinition(attrId);
                 if (def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME) {
-                    // Prevent double dipping if handled above, but legacy logic kept for safety
                     if (attrId !== 'ATTR_HYPER_CALCULATION' && def.value) travelInfo.time *= def.value;
                 }
                 if (attrId === 'ATTR_SLEEPER') {
@@ -348,7 +300,6 @@ export class TravelService {
                 }
             }
 
-            // --- PHASE 2: AGE PERK (TRAVEL SPEED) ---
             const speedBonus = state.player.statModifiers?.travelSpeed || 0;
             if (speedBonus > 0) {
                 travelInfo.time = travelInfo.time / (1 + speedBonus);
@@ -358,28 +309,23 @@ export class TravelService {
             if (eventMods.travelTimeAddPercent) travelInfo.time *= (1 + eventMods.travelTimeAddPercent);
             if (eventMods.setTravelTime) travelInfo.time = eventMods.setTravelTime;
         }
-        // --- END VIRTUAL WORKBENCH ---
 
-        travelInfo.time = Math.max(0, Math.round(travelInfo.time)); // Allow 0 for warp
+        travelInfo.time = Math.max(0, Math.round(travelInfo.time)); 
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
-        // --- PHASE 2: STRANDING MECHANIC ---
         if (activeShipState.fuel < travelInfo.fuelCost) {
             const originName = DB.MARKETS.find(m => m.id === fromId)?.name || "Origin";
             const lostDays = travelInfo.time;
             
-            // Apply consequences
             activeShipState.fuel = 0;
             this.timeService.advanceDays(lostDays);
             this.gameState.setState({ pendingTravel: null });
             
             this.logger.info.player(this.gameState.day, 'TRAVEL_STRANDED', `Stranded returning to ${originName}.`);
             
-            // Route to UI Control
             if (this.uiManager.eventControl && this.uiManager.eventControl.showStrandedModal) {
                 this.uiManager.eventControl.showStrandedModal(originName, lostDays);
             } else {
-                // Safe Fallback
                 this.uiManager.showEventResultModal(
                     "Critical Failure: Stranded",
                     `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`,
@@ -390,7 +336,6 @@ export class TravelService {
                 );
             }
             
-            // Abort intended travel screen flow, refresh market
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
@@ -401,18 +346,18 @@ export class TravelService {
             }
         }
 
-        // --- PHASE 2: DISTANCE-BASED HULL ENTROPY ---
         const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
         let travelHullDamage = Math.ceil(baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod * 0.8);
         
-        // --- SYSTEM STATES V3 HOOKS (Hull Decay) ---
+        if (hasStatus('status_micro_fractures')) {
+            travelHullDamage *= 1.20;
+        }
+
         if (activeStateDef && activeStateDef.modifiers) {
             if (activeStateDef.modifiers.travelHullDecayMod) travelHullDamage *= activeStateDef.modifiers.travelHullDecayMod;
             if (activeStateDef.modifiers.travelHullDecayMitigation) travelHullDamage *= activeStateDef.modifiers.travelHullDecayMitigation;
         }
-        // --- END SYSTEM STATES V3 ---
 
-        // --- Z-CLASS HULL LOGIC ---
         if (shipAttributes.includes('ATTR_XENO_HULL') || 
             shipAttributes.includes('ATTR_FLUID_HULL') || 
             shipAttributes.includes('ATTR_NO_DECAY')) {
@@ -437,19 +382,16 @@ export class TravelService {
         
         activeShipState.fuel -= travelInfo.fuelCost;
 
-        // --- FLEET OVERFLOW SYSTEM: CONVOY TAX (TRAVEL) ---
         const additionalShips = Math.max(0, this.gameState.player.ownedShipIds.length - 1);
-        const convoyTaxRate = additionalShips * 0.02; // 2% per inactive ship
+        const convoyTaxRate = additionalShips * 0.02; 
 
         let convoyFuelTax = Math.max(0, Math.ceil(travelInfo.fuelCost * convoyTaxRate));
         let convoyHullTax = Math.max(0, Math.ceil(totalHullDamageValue * convoyTaxRate));
 
-        // --- SYSTEM STATES V3 HOOKS (Convoy Tax) ---
         if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.convoyTaxWaiver) {
             convoyFuelTax = 0;
             convoyHullTax = 0;
         }
-        // --- END SYSTEM STATES V3 ---
 
         if (convoyFuelTax > 0 || convoyHullTax > 0) {
             for (const shipId of this.gameState.player.ownedShipIds) {
@@ -466,7 +408,6 @@ export class TravelService {
                 }
             }
         }
-        // --- END CONVOY TAX ---
 
         this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
@@ -478,9 +419,6 @@ export class TravelService {
         }
         this.gameState.player.tripCount++;
 
-        // --- Z-CLASS POST-TRAVEL LOGIC ---
-
-        // ATTR_TRAVELLER (Atlas)
         if (shipAttributes.includes('ATTR_TRAVELLER') && this.gameState.player.tripCount % 20 === 0) {
             activeShipState.health = effectiveStats.maxHealth;
             activeShipState.fuel = effectiveStats.maxFuel;
@@ -488,7 +426,6 @@ export class TravelService {
             this.uiManager.createFloatingText("Systems Restored", window.innerWidth / 2, window.innerHeight / 2, '#34d399');
         }
 
-        // ATTR_OSSEOUS_REGROWTH (Shell That Echoes)
         if (shipAttributes.includes('ATTR_OSSEOUS_REGROWTH')) {
             const healAmount = effectiveStats.maxHealth * 0.10;
             if (activeShipState.health < effectiveStats.maxHealth) {
@@ -497,13 +434,11 @@ export class TravelService {
             }
         }
 
-        // ATTR_FUEL_SCOOP (Atlas)
         if (shipAttributes.includes('ATTR_FUEL_SCOOP')) {
             const fuelRestore = effectiveStats.maxFuel * 0.15;
             activeShipState.fuel = Math.min(effectiveStats.maxFuel, activeShipState.fuel + fuelRestore);
         }
 
-        // ATTR_MATTER_ABSORPTION (Finality of Whispers) - CHANGED: Refund 50% of cost
         if (shipAttributes.includes('ATTR_MATTER_ABSORPTION') && !eventMods.useFoldedDrive) {
             const refund = travelInfo.fuelCost * 0.5;
             if (refund > 0) {
@@ -532,43 +467,38 @@ export class TravelService {
 
         const finalCallback = () => {
             this.gameState.isTraveling = false;
+
+            if (this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
+                this.gameState.pendingEventChains.forEach(chain => {
+                    chain.tripsRemaining--;
+                });
+            }
             
-            // [[FIXED]] Force Mission Trigger Check on Arrival
             if (this.simulationService.missionService) {
                 this.simulationService.missionService.checkTriggers();
             }
 
-            // --- PHASE 2: HOT INTEL TRIGGER EVALUATION ---
-            // Evaluated silently upon arrival, before the UI renders the new destination
             if (this.simulationService.intelService) {
                 this.simulationService.intelService.evaluateHotIntelTrigger();
             }
 
-            // --- UNIVERSAL TOAST SYSTEM (Post-Arrival Notification Queue) ---
             if (this.simulationService.toastService) {
                 this.simulationService.toastService.evaluateArrivalTriggers();
             }
 
-            // --- SOL STATION: SYNC JIT STATE IF ARRIVING ---
             if (locationId === 'sol' && this.timeService.solStationService) {
                 if (typeof this.timeService.solStationService.catchUpDays === 'function') {
-                    // 1. Batch calculate all missed time instantly
                     this.timeService.solStationService.catchUpDays(this.gameState.day);
-                    // 2. Start the local 120s real-time ticking
                     this.timeService.solStationService.startLocalLiveLoop();
                 }
             }
-            // -------------------------------------------------
 
-            // --- V4 SAVE SYSTEM: INVISIBLE AUTO-SAVE ON ARRIVAL ---
             this.simulationService.saveGame();
-            // ------------------------------------------------------
 
             const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
             if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
-                // Keep old logic safeguard
                 this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
             } else {
                 this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
@@ -578,9 +508,6 @@ export class TravelService {
         this.uiManager.showTravelAnimation(fromLocation, destination, travelInfo, totalHullDamagePercentForDisplay, finalCallback);
     }
     
-    /**
-     * Resumes a pending travel action after it was interrupted by an event.
-     */
     resumeTravel() {
         if (!this.gameState.pendingTravel) return;
         this.logger.info.system('Game', this.gameState.day, 'TRAVEL_RESUME', 'Resuming travel after event.');
@@ -588,55 +515,63 @@ export class TravelService {
         this.initiateTravel(destinationId, eventMods);
     }
 
-    /**
-     * Checks for and triggers a random event based on a probability roll.
-     * Uses Event System 2.0 (RandomEventService).
-     * @param {string} destinationId
-     * @param {boolean|number} [force=false]
-     * @returns {boolean}
-     * @private
-     */
     _checkForRandomEvent(destinationId, force = false) {
-        // --- SYSTEM STATES V3 HOOKS (Hazards) ---
+        if (this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
+            const readyIndex = this.gameState.pendingEventChains.findIndex(c => c.tripsRemaining <= 0);
+            if (readyIndex !== -1) {
+                const chain = this.gameState.pendingEventChains[readyIndex];
+                const eventId = chain.followUpEventId;
+                
+                this.gameState.pendingEventChains.splice(readyIndex, 1);
+                
+                const event = DB.RANDOM_EVENTS.find(e => e.id === eventId);
+                if (event) {
+                    this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER_CHAIN', `Triggered chained event: ${event.title}`);
+                    const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[destinationId]?.time || 7;
+                    this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
+                    
+                    this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
+                    return true;
+                }
+            }
+        }
+
         const systemState = this.gameState.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
         
         if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.hazardsRemoved) {
-             return false; // Silent Correction completely bypasses hazards/events for smooth sailing
+             return false; 
         }
-        // --- END SYSTEM STATES V3 ---
 
-        // --- UPGRADE SYSTEM: Event Modifier ---
         const activeShip = this.simulationService._getActiveShip();
         const shipState = this.gameState.player.shipStates[activeShip.id];
         const upgrades = shipState.upgrades || [];
         const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const statusEffects = shipState.statusEffects || [];
         const currentLoc = this.gameState.currentLocationId;
         
         let eventChance = GAME_RULES.RANDOM_EVENT_CHANCE;
 
-        // [[DEBUG OVERRIDE]]
         if (this.debugAlwaysTriggerEvents) {
             eventChance = 1.0;
             this.logger.warn('TravelService', 'DEBUG: Event chance forced to 100%.');
         }
 
-        // Apply Upgrade Modifier (Radar Mod - Additive)
         const chanceMod = GameAttributes.getEventChanceModifier(upgrades);
         eventChance += chanceMod;
 
-        // --- PHASE 2: Distance-Scaled Event Probability ---
+        if (statusEffects.some(s => s.id === 'status_corporate_blacklist')) {
+             eventChance *= 1.40;
+        }
+
         const baseTime = this.gameState.TRAVEL_DATA[currentLoc]?.[destinationId]?.time || 7;
         if (baseTime > 0) {
             eventChance += ((baseTime / 3) * 0.005);
         }
-        // --- END PHASE 2 ---
 
-        // ATTR_ADVANCED_COMMS: +25% chance
         if (shipAttributes.includes('ATTR_ADVANCED_COMMS')) {
             eventChance *= 1.25;
         }
-        // --- END UPGRADE SYSTEM ---
 
         if (force === false && Math.random() > eventChance) return false;
 
@@ -653,19 +588,12 @@ export class TravelService {
         
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         
-        // [[UPDATED]] - Populate base travel time to ensure scalar calculations work
         this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
         
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;
     }
 
-    /**
-     * Resolves the player's choice in a random event and applies the outcome using RandomEventService.
-     * @param {string} eventId
-     * @param {string} choiceId
-     * @private
-     */
     _resolveEventChoice(eventId, choiceId) {
         const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
 
@@ -675,58 +603,25 @@ export class TravelService {
             return;
         }
 
-        let effectsHtml = '';
-        if (result.effects && result.effects.length > 0) {
-            effectsHtml = '<ul class="list-none text-sm text-gray-400 mt-4 space-y-1">';
-            result.effects.forEach(eff => {
-                let effectText = '';
-                switch (eff.type) {
-                    case 'EFF_CREDITS':
-                        effectText = `Credits: ${eff.value > 0 ? '+' : ''}${formatCredits(eff.value)}`;
-                        break;
-                    case 'EFF_FUEL':
-                        effectText = `Fuel: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
-                        break;
-                    case 'EFF_HULL':
-                        effectText = `Hull: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)}`;
-                        break;
-                    case 'EFF_TRAVEL_TIME':
-                    case 'EFF_MODIFY_TRAVEL':
-                        effectText = `Travel Time: ${eff.value > 0 ? '+' : ''}${Math.round(eff.value)} Days`;
-                        break;
-                    case 'EFF_ADD_ITEM':
-                        effectText = `Received: ${Math.round(eff.value)}x ${eff.target}`; 
-                        break;
-                    case 'EFF_REMOVE_ITEM':
-                        effectText = `Removed: ${Math.round(eff.value)}x ${eff.target}`;
-                        break;
-                    case 'EFF_LOSE_RANDOM_CARGO':
-                         effectText = `Cargo Lost: ${Math.round(eff.value * 100)}%`;
-                         break;
-                    case 'EFF_REDIRECT_TRAVEL':
-                         effectText = `Course Diverted`;
-                         break;
-                    default:
-                        effectText = `Effect Applied`;
-                }
-                effectsHtml += `<li>${effectText}</li>`;
-            });
-            effectsHtml += '</ul>';
-        }
-    
         this.logger.info.player(this.gameState.day, 'EVENT_CHOICE', `Chose outcome: ${result.outcomeId}`);
         
-        this.uiManager.queueModal('event-result-modal', result.title, result.text + effectsHtml, () => this._postEventCheck(), {
-            dismissOutside: true,
-            buttonText: 'Continue Journey'
-        });
+        if (this.uiManager.eventControl && this.uiManager.eventControl.showEventResultModal) {
+            this.uiManager.eventControl.showEventResultModal(
+                result.title,
+                result.text,
+                result.effects,
+                () => this._postEventCheck()
+            );
+        } else if (this.uiManager.showEventResultModal) {
+            this.uiManager.showEventResultModal(
+                result.title,
+                result.text,
+                result.effects,
+                () => this._postEventCheck()
+            );
+        }
     }
 
-    /**
-     * Checks for critical failures (Hull or Fuel depletion) after an event outcome.
-     * If failed, aborts the travel. If healthy, resumes travel.
-     * @private
-     */
     _postEventCheck() {
         const ship = this.simulationService._getActiveShip();
         if (!ship) { 
@@ -734,29 +629,20 @@ export class TravelService {
             return; 
         }
 
-        // 1. Check Destruction (Hull <= 0)
         if (ship.health <= 0) {
             this.gameState.pendingTravel = null;
             this._handleShipDestruction(ship.id);
             return;
         }
 
-        // 2. Check Fuel Depletion (Fuel < 0) -> Clamp to zero.
         if (ship.fuel <= 0) {
             this.gameState.player.shipStates[ship.id].fuel = 0;
         }
 
-        // 3. All Systems Nominal - Proceed
         this.resumeTravel();
     }
 
-    /**
-     * Handles the destruction of a player ship by routing to the appropriate outcome based on chance.
-     * @param {string} shipId
-     * @private
-     */
     _handleShipDestruction(shipId) {
-        // Roll 33% chance for the ship to be disabled and towed instead of completely destroyed
         if (Math.random() <= 0.33) {
             this._handleShipDisabledAndTowed(shipId);
         } else {
@@ -764,59 +650,43 @@ export class TravelService {
         }
     }
 
-    /**
-     * Outcome where the ship is not fully destroyed, but severely damaged and towed back.
-     * @param {string} shipId
-     * @private
-     */
     _handleShipDisabledAndTowed(shipId) {
         const state = this.gameState.getState();
         const shipState = this.gameState.player.shipStates[shipId];
         const originName = DB.MARKETS.find(m => m.id === state.currentLocationId)?.name || "Origin";
         const lostDays = 21;
 
-        // Apply severe survival consequences
         shipState.health = 1;
         shipState.fuel = 0;
 
-        // Fix starfield lock from travel animation overlay
         starfieldService.triggerQuickExit();
         const travelModal = document.getElementById('travel-animation-modal');
         if (travelModal) travelModal.classList.add('hidden');
 
-        // Advance time and clear travel status
         this.timeService.advanceDays(lostDays);
         this.gameState.setState({ pendingTravel: null });
 
         this.logger.info.player(this.gameState.day, 'TRAVEL_TOWED', `Ship disabled and towed back to ${originName}. Lost ${lostDays} days.`);
 
-        // Route to the Services screen so the player can immediately repair
         this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.SERVICES);
 
-        // Show narrative explanation
         this.uiManager.showEventResultModal(
             "Critical Failure: Systems Dead",
             `Your ship suffered catastrophic system failure during transit. Drifting in the void for weeks on failing life support, you were eventually found by a passing deep-space freighter and towed back to <b>${originName}</b>.<br><br>Your ship survived, but just barely.`,
             [
-                { type: 'EFF_HULL', value: -1 }, // Visual only indicator of loss
+                { type: 'EFF_HULL', value: -1 }, 
                 { type: 'EFF_FUEL', value: 0 },
                 { type: 'EFF_TRAVEL_TIME', value: lostDays }
             ]
         );
     }
 
-    /**
-     * Executes the absolute destruction sequence of a ship, playing the cinematic overlay and resolving backups.
-     * @param {string} shipId
-     * @private
-     */
     _executeShipDestruction(shipId) {
         const shipName = DB.SHIPS[shipId].name;
         this.logger.error('TravelService', `Ship ${shipName} was destroyed.`);
         
         const isGameOver = this.gameState.player.ownedShipIds.length <= 1;
 
-        // Phase 3 Bug Fix (B/C): Free the Starfield Lock or maintain background for Game Over
         if (!isGameOver) {
             starfieldService.triggerQuickExit();
         } else {
@@ -837,7 +707,6 @@ export class TravelService {
             gameContainer.style.pointerEvents = 'none';
         }
 
-        // Phase 3 Animation (A): Cinematic Overlay
         const overlay = document.createElement('div');
         overlay.style.position = 'fixed';
         overlay.style.top = '0';
@@ -845,15 +714,14 @@ export class TravelService {
         overlay.style.width = '100vw';
         overlay.style.height = '100vh';
         overlay.style.backgroundColor = 'transparent';
-        overlay.style.zIndex = '9999'; // Intercepts above game, below modals
+        overlay.style.zIndex = '9999'; 
         overlay.style.pointerEvents = 'none';
         document.body.appendChild(overlay);
 
-        // Web Animations API: Transparent -> Red -> Pitch Black
         const animation = overlay.animate([
             { backgroundColor: 'transparent', offset: 0 },
-            { backgroundColor: '#991b1b', offset: 0.6 }, // 3 seconds: Solid Red
-            { backgroundColor: '#000000', offset: 1 }    // 5 seconds: Pitch Black
+            { backgroundColor: '#991b1b', offset: 0.6 }, 
+            { backgroundColor: '#000000', offset: 1 }    
         ], {
             duration: 5000,
             fill: 'forwards',
@@ -861,11 +729,10 @@ export class TravelService {
         });
 
         animation.onfinish = () => {
-            // Execute core destruction state logic
             this.gameState.player.ownedShipIds = this.gameState.player.ownedShipIds.filter(id => id !== shipId);
             delete this.gameState.player.shipStates[shipId];
             delete this.gameState.player.inventories[shipId];
-            this.gameState.pendingTravel = null; // Clear travel state
+            this.gameState.pendingTravel = null; 
 
             this.gameState.setState({});
 

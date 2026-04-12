@@ -2,100 +2,51 @@
 
 import { DB } from '../../data/database.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
-import { ACTION_IDS, SHIP_IDS, GAME_RULES } from '../../data/constants.js';
+import { ACTION_IDS, SHIP_IDS, GAME_RULES, STATUS_EFFECTS } from '../../data/constants.js';
 import { AssetService } from '../../services/AssetService.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 
-// --- VIRTUAL WORKBENCH: UI CONFIG ---
-// Fallback configuration for upgrade pills if definition is missing color
 const DEFAULT_UPGRADE_STYLE = { label: 'MOD', color: '#94a3b8' };
-// Safe character limit for the pill container before clipping likely occurs
 const PILL_CONTAINER_SAFE_CHARS = 38;
 
-// Universal list of generic words to strip when abbreviation is active.
 const ABBREVIATION_STOP_WORDS = [
-    'Auxiliary', 
-    'Standard', 
-    'Badge', 
-    'Pass', 
-    'Mod', 
-    'Hacker', 
-    'Machines', 
-    'Hull' 
+    'Auxiliary', 'Standard', 'Badge', 'Pass', 'Mod', 'Hacker', 'Machines', 'Hull' 
 ];
 
-/**
- * Helper to programmatically darken/lighten a hex color.
- * Uses string parsing to prevent channel swapping issues.
- * @param {string} color - Hex code (e.g., "#3b82f6")
- * @param {number} amount - Percentage to darken (negative) or lighten (positive) (e.g., -40)
- * @returns {string} New Hex code
- */
 function _adjustColor(color, amount) {
     if (!color || !color.startsWith('#')) return color;
-    
-    // Remove hash
     const hex = color.replace('#', '');
-    
-    // Parse individual channels
     const r = Math.max(0, Math.min(255, parseInt(hex.substring(0, 2), 16) + amount));
     const g = Math.max(0, Math.min(255, parseInt(hex.substring(2, 4), 16) + amount));
     const b = Math.max(0, Math.min(255, parseInt(hex.substring(4, 6), 16) + amount));
-
-    // Reconstruct with padding
     const rr = r.toString(16).padStart(2, '0');
     const gg = g.toString(16).padStart(2, '0');
     const bb = b.toString(16).padStart(2, '0');
-
     return `#${rr}${gg}${bb}`;
 }
 
-/**
- * Helper to abbreviate upgrade labels to prevent clipping.
- * Universal Logic: Filters out generic stop words defined in ABBREVIATION_STOP_WORDS.
- * @param {string} label - The full name of the upgrade
- * @returns {string} The abbreviated label
- */
 function _getAbbreviatedLabel(label) {
     if (!label) return '';
-    
-    // Split into words, filter out stop words, and rejoin
     const abbreviated = label.split(/\s+/)
         .filter(word => !ABBREVIATION_STOP_WORDS.includes(word))
         .join(' ');
-
-    // Fallback: If we stripped everything (unlikely), return original to avoid empty pill
     return abbreviated.length > 0 ? abbreviated : label;
 }
 
-/**
- * Generates the CSS variable injection and class names for an upgrade pill.
- * Refactored to separate Data (Variables) from Presentation (CSS Classes).
- * @param {object} definition - The attribute definition object.
- * @param {number} tier - The calculated tier (1-5).
- * @param {string} color - The base hex color.
- * @returns {object} { className, styleVars }
- * @private
- */
 function _getUpgradePillStyle(definition, tier, color) {
-    // 1. Calculate palette derivatives (Data Layer)
     const dark = _adjustColor(color, -60);
     const mid = _adjustColor(color, -20);
     const light = _adjustColor(color, 40);
     const bright = _adjustColor(color, 80);
 
-    // 2. Determine CSS Class (Visual Layer Hook)
     let cssClass = `pill-tier-${tier}`;
     let extraStyle = '';
 
     if (definition.isAlien) {
         cssClass = 'pill-alien';
-        // Add thin black outline for alien pills (e.g. Osseous Regrowth)
         extraStyle = 'text-shadow: 1px 1px 0 #000, -1px -1px 0 #000, 1px -1px 0 #000, -1px 1px 0 #000;';
     }
 
-    // 3. Generate Variable Injection (The "Style String")
-    // We only inject variables. The CSS handles the painting.
     return {
         className: cssClass,
         styleVars: `
@@ -109,37 +60,22 @@ function _getUpgradePillStyle(definition, tier, color) {
     };
 }
 
-
-/**
- * Renders the entire Hangar screen UI.
- * @param {object} gameState - The current state of the game.
- * @param {import('../../services/SimulationService.js').SimulationService} simulationService - The simulation service.
- * @returns {string} The HTML content for the Hangar screen.
- */
 export function renderHangarScreen(gameState, simulationService) {
     const { uiState, player } = gameState;
-
-    // Determine the current mode (Hangar or Shipyard)
     const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
     const modeClass = isHangarMode ? 'mode-hangar' : 'mode-shipyard';
-    
     const shipList = isHangarMode ? player.ownedShipIds : simulationService._getShipyardInventory().map(([id]) => id);
     
-    // Use the active index from the UI state for the carousel
     const activeCarouselIndex = isHangarMode 
         ? (uiState.hangarActiveIndex || 0) 
         : (uiState.shipyardActiveIndex || 0);
 
-    // Ensure index is not out of bounds if ship list changes
     const displayIndex = Math.min(activeCarouselIndex, Math.max(0, shipList.length - 1));
-
-    // Only show Access Archive if in Hangar Mode OR if Shipyard has ships.
     const showArchive = isHangarMode || shipList.length > 0;
 
     return `
         <div class="flex flex-col h-full w-full relative">
             <div id="ship-terminal-container" class="flex flex-col flex-grow min-h-0 ${modeClass}">
-                
                 <div class="relative mx-auto mt-0 mb-0 w-max flex justify-center items-center flex-shrink-0 z-10">
                     <div class="toggle-container">
                         <div class="toggle-switch p-1 rounded-md flex w-[180px] h-10">
@@ -158,20 +94,12 @@ export function renderHangarScreen(gameState, simulationService) {
             </div>
             
             <div id="hangar-pagination-wrapper" class="w-full pt-1 z-10">
-                <div id="hangar-pagination">
-                    {/* This will be populated by UIManager._renderHangarPagination */}
-                </div>
+                <div id="hangar-pagination"></div>
             </div>
         </div>
     `;
 }
 
-/**
- * Renders a placeholder page for when a carousel is empty.
- * @param {boolean} isHangarMode - True if the hangar is empty, false if the shipyard is empty.
- * @returns {string} HTML for the empty page.
- * @private
- */
 function _renderEmptyCarouselPage(isHangarMode) {
     const message = isHangarMode ? "Your hangar is empty." : "No ships available in the shipyard.";
     return `
@@ -185,27 +113,13 @@ function _renderEmptyCarouselPage(isHangarMode) {
     `;
 }
 
-
-/**
- * Renders a single page within the ship carousel.
- * @param {object} gameState The current game state.
- * @param {string} shipId The ID of the ship for this page.
- * @param {number} itemIndex The index of this ship in the list.
- * @param {number} activeIndex The currently viewed index.
- * @param {boolean} isHangarMode True if the view is for the player's hangar.
- * @param {object} simulationService The simulation service for calculating effective stats.
- * @returns {string} The HTML for a single carousel page.
- * @private
- */
 function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; 
 
-    // Determine Status Badge
     let statusBadgeHtml = '';
     const isActive = player.activeShipId === shipId; 
-    
     const activeGlowLayer = (isActive && isHangarMode) ? '<div class="active-ship-glow-layer"></div>' : '';
 
     if (isHangarMode) {
@@ -213,8 +127,35 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     }
 
     let attributesHtml = '';
+    let statusEffectsHtml = '';
     
     if (isHangarMode && shipDynamic) {
+        // Render Status Effects (Top)
+        if (shipDynamic.statusEffects && shipDynamic.statusEffects.length > 0) {
+            const pills = shipDynamic.statusEffects.map(effect => {
+                const daysLeft = effect.expiryDay - gameState.day;
+                const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
+                if (!def) return '';
+
+                const cssClass = def.gradientClasses || 'bg-gray-500 border-gray-400 text-white';
+                return `
+                    <button class="status-effect-pill status-hazard-pulse ${cssClass}" 
+                        style="touch-action: manipulation; pointer-events: auto;"
+                        data-action="show-generic-tooltip" 
+                        data-tooltip="${def.description}\n\nExpires in ${daysLeft} days">
+                        ${def.name}
+                    </button>
+                `;
+            }).join('');
+
+            statusEffectsHtml = `
+                <div class="absolute top-2 w-full flex flex-col items-center gap-1 z-20 pointer-events-none px-2">
+                    ${pills}
+                </div>
+            `;
+        }
+
+        // Render Upgrades (Bottom)
         const allAttributes = [
             ...(shipStatic.mechanicIds || []),
             ...(shipDynamic.upgrades || [])
@@ -232,22 +173,17 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                     if (id.endsWith('_II') || id.endsWith('_2')) return 2;
                     return 1; 
                 };
-                
                 const tierA = getTier(a);
                 const tierB = getTier(b);
-                
-                if (tierA !== tierB) {
-                    return tierA - tierB; 
-                }
+                if (tierA !== tierB) return tierA - tierB; 
                 return a.localeCompare(b);
             });
 
             const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
-            
             const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
             const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
 
-            const pills = sortedUpgrades.map((upgradeId, idx) => {
+            const upgradesHtmlStr = sortedUpgrades.map((upgradeId, idx) => {
                 const definition = upgradeDefinitions[idx];
                 let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
                 const tooltipText = definition ? definition.description : '';
@@ -257,7 +193,6 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                 }
 
                 const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
-                
                 let tier = definition?.tier || 1;
                 if (!definition?.tier) {
                     if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
@@ -265,25 +200,24 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                     else if (upgradeId.endsWith('_III') || upgradeId.endsWith('_3')) tier = 3;
                     else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
                 }
-                
                 if (definition && definition.isAlien) tier = 5;
 
                 const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
 
                 return `
                     <button class="attribute-pill ${styleData.className}" 
-                        data-action="show-attribute-tooltip" 
+                        data-action="show-generic-tooltip" 
                         data-attribute-id="${upgradeId}"
                         data-tooltip="${tooltipText}"
-                        style="${styleData.styleVars}">
+                        style="${styleData.styleVars} touch-action: manipulation; pointer-events: auto;">
                         ${label}
                     </button>
                 `;
             }).join('');
 
             attributesHtml = `
-                <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-nowrap gap-1 z-20 w-full justify-center pointer-events-none px-1">
-                    ${pills}
+                <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap justify-center pointer-events-none px-1 w-full" style="gap: 4px;">
+                    ${upgradesHtmlStr}
                 </div>
             `;
         }
@@ -291,22 +225,18 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
 
     const distance = Math.abs(itemIndex - activeIndex);
     const inBuffer = distance <= 5;
-
     const realPath = AssetService.getShipImage(shipId, player.visualSeed);
     const fallbackPath = AssetService.getFallbackImage(shipId);
-    
     const src = inBuffer ? realPath : AssetService.PLACEHOLDER;
-    const dataSrc = realPath; 
-    
     const isVariantA = realPath.endsWith('_A.jpeg');
-
     const imgStyle = isActive ? 'opacity: 1;' : 'opacity: 0; transition: opacity 0.3s ease-in;';
     const placeholderStyle = isActive ? 'display: none;' : '';
 
     const shipImageHtml = `
         <div class="relative w-full h-full">
+            ${statusEffectsHtml}
             <img src="${src}" 
-                 data-src="${dataSrc}"
+                 data-src="${realPath}"
                  class="w-full h-full object-cover rounded-lg relative z-10" 
                  alt="${shipStatic.name}"
                  loading="${inBuffer ? 'eager' : 'lazy'}" 
@@ -343,7 +273,6 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
         <div class="col-span-2 flex flex-col justify-start gap-1 h-full">
             ${infoPanel}
         </div>
-
         <div class="col-span-3 flex flex-col justify-start gap-1 h-full">
             <div class="ship-display-area flex items-center justify-center relative">
                 <div class="ship-image-placeholder w-[95%] mx-auto rounded-lg flex items-center justify-center relative overflow-hidden mb-0">
@@ -351,7 +280,6 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                 </div>
                 ${statusBadgeHtml}
             </div>
-            
             <div class="action-buttons-container mt-auto w-full pt-2" style="margin-bottom: 15px;">
                 ${_renderActionButtons(shipId, shipStatic, player, isHangarMode)}
             </div>
@@ -372,11 +300,6 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     `;
 }
 
-
-/**
- * Renders the appropriate info panel (Hangar or Shipyard).
- * @private
- */
 function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMode, simulationService) {
     const shipClassLower = shipStatic.class.toLowerCase();
     
@@ -386,7 +309,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
     else if (shipStatic.class === 'S') shadowClass = 'glow-text-s';
 
     const paramBars = _renderParamBars(shipStatic, shipDynamic, gameState.player, !isHangarMode, shipId, simulationService);
-
     const tooltipContent = shipStatic.description ? shipStatic.description.replace(/"/g, '&quot;') : '';
 
     if (isHangarMode) {
@@ -397,7 +319,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
                         <div class="flex items-center">
                             <div class="text-[0.9rem] rounded-md px-2 py-0.5 border font-semibold text-gray-300 inline-block shadow-sm" style="background-color: var(--badge-bg); border-color: rgba(255,255,255,0.2);">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</div>
-                            <button class="ship-info-icon hangar-lore-trigger cursor-help flex items-center justify-center px-2" data-action="show-lore-tooltip" data-position="center" data-tooltip="${tooltipContent}">
+                            <button class="ship-info-icon hangar-lore-trigger cursor-help flex items-center justify-center px-2" data-action="show-generic-tooltip" data-tooltip="${tooltipContent}">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--ot-cyan-base)" class="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity pointer-events-none">
                                     <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4M12 8h.01"/>
@@ -405,7 +327,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                             </button>
                         </div>
                     </div>
-                    
                     ${paramBars}
                 </div>
             </div>
@@ -421,7 +342,7 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         <h3 class="font-orbitron font-bold ${shadowClass} mb-2" style="color: var(--class-${shipClassLower}-color); font-size: calc(1.32rem + 2pt); line-height: 1.1;">${shipStatic.name}</h3>
                         <div class="flex items-center mb-1">
                             <div class="text-[0.9rem] rounded-md px-2 py-0.5 border font-semibold text-gray-300 inline-block shadow-sm" style="background-color: var(--badge-bg); border-color: rgba(255,255,255,0.2);">Class ${shipStatic.class} ${shipStatic.role || 'Freighter'}</div>
-                            <button class="ship-info-icon hangar-lore-trigger cursor-help flex items-center justify-center px-2" data-action="show-lore-tooltip" data-position="center" data-tooltip="${tooltipContent}">
+                            <button class="ship-info-icon hangar-lore-trigger cursor-help flex items-center justify-center px-2" data-action="show-generic-tooltip" data-tooltip="${tooltipContent}">
                                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="var(--ot-cyan-base)" class="w-8 h-8 opacity-80 hover:opacity-100 transition-opacity pointer-events-none">
                                     <circle cx="12" cy="12" r="10" stroke-linecap="round" stroke-linejoin="round"/>
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M12 16v-4M12 8h.01"/>
@@ -430,7 +351,6 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
                         </div>
                         <p class="ship-price-display font-roboto-mono credits-text-pulsing ${priceClass}" style="font-size: calc(1.76rem + 1.6pt); margin-top: 0.1rem;">${priceStr}</p>
                     </div>
-
                     ${paramBars}
                 </div>
             </div>
@@ -438,17 +358,11 @@ function _renderInfoPanel(gameState, shipId, shipStatic, shipDynamic, isHangarMo
     }
 }
 
-
-/**
- * Renders the appropriate action buttons (Hangar or Shipyard).
- * @private
- */
 function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
     if (isHangarMode) {
         const isActive = player.activeShipId === shipId;
         const canSell = player.ownedShipIds.length > 1 && !isActive;
         const salePrice = Math.floor(shipStatic.price * GAME_RULES.SHIP_SELL_MODIFIER);
-        
         const salePriceStr = formatCredits(salePrice, true);
         const salePriceClass = salePriceStr.length > 8 ? 'text-shrink-button' : '';
 
@@ -463,10 +377,9 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
                 </button>
             </div>
         `;
-    } else { // Shipyard
+    } else {
         const canAfford = player.credits >= shipStatic.price;
         const isDisabled = !canAfford;
-        
         return `
             <button class="action-button w-full justify-center" data-action="${ACTION_IDS.BUY_SHIP}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''} style="background-color: var(--ot-green-accent);">
                 <span class="font-bold z-10 relative">PURCHASE</span>
@@ -475,11 +388,6 @@ function _renderActionButtons(shipId, shipStatic, player, isHangarMode) {
     }
 }
 
-
-/**
- * Renders the HULL, FUEL, and CARGO parameter bars.
- * @private
- */
 function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, shipId, simulationService) {
     let effectiveStats = shipStatic;
     
@@ -512,13 +420,9 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
             <div class="param-bar-item">
                 <svg viewBox="0 0 100 20" class="param-bar-svg" preserveAspectRatio="xMidYMid meet">
                     <rect x="28" y="-4" width="44" height="11" rx="3" fill="var(--badge-bg)" stroke="rgba(255,255,255,0.15)" stroke-width="0.5" />
-                    
                     <text x="50" y="2" text-anchor="middle" dominant-baseline="middle" class="svg-bar-label" fill="var(--ot-text-secondary)">${label}</text>
-                    
                     <rect x="0" y="8.4" width="${trackWidth}" height="14" rx="3" class="svg-bar-track" fill="rgba(0,0,0,0.4)" stroke="#000000" stroke-width="0.5" />
-                    
                     <rect x="0" y="8.4" width="${fillWidth}" height="14" rx="3" class="svg-bar-fill" fill="${color}" style="transition: width 0.4s ease-out;" stroke="#000000" stroke-width="0.5" />
-                    
                     <text x="50" y="16.4" text-anchor="middle" dominant-baseline="middle" class="svg-bar-text" fill="#ffffff">${displayText}</text>
                 </svg>
             </div>

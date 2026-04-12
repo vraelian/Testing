@@ -8,9 +8,6 @@
 import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
 
 export const EVENTS_LOGISTICS = [
-    // =========================================================================
-    // CATEGORY V: LOGISTICS (Cargo & Storage)
-    // =========================================================================
     {
         id: 'evt_logistics_containment',
         tags: [EVENT_CONSTANTS.TAGS.SPACE],
@@ -56,7 +53,7 @@ export const EVENTS_LOGISTICS = [
             'out_jettison': {
                 title: 'Cargo Ejected',
                 text: 'You blow the emergency bolts. The pod tumbles away into the dark.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 15 }]
             },
             'out_hold_success': {
                 title: 'Locks Holding',
@@ -67,8 +64,8 @@ export const EVENTS_LOGISTICS = [
                 title: 'Containment Breach',
                 text: 'The clamp fails. The pod shears off, ripping through the dorsal plating.',
                 effects: [
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.25 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.30 }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -25 },
+                    { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 30 }
                 ]
             }
         }
@@ -80,7 +77,7 @@ export const EVENTS_LOGISTICS = [
         requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
         template: {
             title: 'Temp Rising',
-            description: 'The refrigeration unit in Bay 4 is dying. Your perishable cargo will rot if you don\'t act fast.'
+            description: 'The refrigeration unit in Bay 4 is dying. Your temperature-sensitive cargo (Cloned Organs, Cybernetics) will rot if you don\'t act fast.'
         },
         choices: [
             {
@@ -109,56 +106,12 @@ export const EVENTS_LOGISTICS = [
             'out_power': {
                 title: 'Power Diverted',
                 text: 'You divert main engine power to the cryo-units. Your engines run inefficiently.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.20 } }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, isCurrentPercent: true, value: -20 }]
             },
             'out_vent': {
                 title: 'Partial Loss',
                 text: 'You open the airlock, flash-freezing the cargo. Some is sucked out, but the rest is saved.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.10 }]
-            }
-        }
-    },
-    {
-        id: 'evt_logistics_shift',
-        tags: [EVENT_CONSTANTS.TAGS.SPACE, EVENT_CONSTANTS.TAGS.HAZARD],
-        weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
-        template: {
-            title: 'Imbalance',
-            description: 'A hard maneuver caused the cargo to shift. The ship\'s center of mass is off, causing a dangerous wobble.'
-        },
-        choices: [
-            {
-                id: 'choice_restack',
-                text: 'EVA Re-Stack (Trip Delay)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_restack' }] }
-            },
-            {
-                id: 'choice_thrust',
-                text: 'Thrust Compensation (-Fuel)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_thrust' }] }
-            },
-            {
-                id: 'choice_ignore',
-                text: 'Ignore (-Hull)',
-                resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_ignore' }] }
-            }
-        ],
-        outcomes: {
-            'out_restack': {
-                title: 'Cargo Secured',
-                text: 'You spend a grueling shift in zero-G, manually winching containers back into place.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_TRAVEL, value: { scaleWith: 'TRIP_DURATION', factor: 0.10 } }]
-            },
-            'out_thrust': {
-                title: 'Thrusters Compensating',
-                text: 'You let the thrusters fight the wobble. They fire constantly to keep the ship straight.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.25 } }]
-            },
-            'out_ignore': {
-                title: 'Structural Stress',
-                text: 'The constant oscillation stresses the ship\'s frame until rivets start popping.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, value: { scaleWith: 'MAX_HULL', factor: -0.20 } }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 10 }]
             }
         }
     },
@@ -201,12 +154,12 @@ export const EVENTS_LOGISTICS = [
             'out_vac': {
                 title: 'Vacuum Exposure',
                 text: 'You vent the atmosphere. The sudden pressure drop ruptures some containers.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 15 }]
             },
             'out_ignore': {
                 title: 'Cargo Spoiled',
                 text: 'By the time you arrive, a quarter of the shipment is covered in green slime.',
-                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.35 }]
+                effects: [{ type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, isCurrentPercent: true, value: 35 }]
             }
         }
     }

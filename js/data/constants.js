@@ -248,6 +248,7 @@ export const EVENT_CONSTANTS = Object.freeze({
         HAS_CREDITS: 'COND_HAS_CREDITS',
         HAS_HULL: 'COND_HAS_HULL',
         HAS_CARGO_SPACE: 'COND_HAS_CARGO_SPACE',
+        HAS_USED_CARGO_SPACE: 'COND_HAS_USED_CARGO_SPACE', // Event System 3.0
         HAS_ITEM: 'COND_HAS_ITEM',
         
         // Player State Checks
@@ -282,10 +283,67 @@ export const EVENT_CONSTANTS = Object.freeze({
         ADD_RANDOM_CARGO: 'EFF_ADD_RANDOM_CARGO', // Specific logic
         ADD_UPGRADE: 'EFF_ADD_UPGRADE', // Grants a specific ship upgrade
         FULL_REFUEL: 'EFF_FULL_REFUEL',  // Sets active ship fuel to 100%
-        REDIRECT_TRAVEL: 'EFF_REDIRECT_TRAVEL' // Diverts travel to an intermediate or origin location
+        REDIRECT_TRAVEL: 'EFF_REDIRECT_TRAVEL', // Diverts travel to an intermediate or origin location
+        APPLY_STATUS: 'EFF_APPLY_STATUS', // Applies a lingering debuff to the ship
+        QUEUE_EVENT: 'EFF_QUEUE_EVENT' // Pushes an untelegraphed event into the FIFO trip queue
     }
 });
 // --- [[END]] EVENT SYSTEM 2.0 ---
+
+/**
+ * Status Effects Registry
+ * Defines lingering debuffs applied to ships via events with specific duration ranges.
+ */
+export const STATUS_EFFECTS = Object.freeze({
+    MICRO_FRACTURES: { 
+        id: 'status_micro_fractures', 
+        name: 'Micro-Fractures', 
+        description: 'Base hull decay rate during travel is increased by 20%.', 
+        gradientClasses: 'bg-gradient-to-r from-red-900 to-orange-500 border-red-500 text-white' 
+    },
+    PLASMA_LEAK: { 
+        id: 'status_plasma_leak', 
+        name: 'Plasma Leak', 
+        description: 'Fuel consumption rate increased by 25%.', 
+        gradientClasses: 'bg-gradient-to-r from-yellow-300 to-orange-600 border-orange-400 text-black' 
+    },
+    NAV_COMPUTER_GLITCH: { 
+        id: 'status_nav_glitch', 
+        name: 'Nav-Computer Glitch', 
+        description: 'Travel times randomly fluctuate by +1 to +5 days per jump.', 
+        gradientClasses: 'bg-gradient-to-r from-cyan-400 to-indigo-900 border-cyan-300 text-white' 
+    },
+    THRUST_VECTORING_IMBALANCE: { 
+        id: 'status_thrust_imbalance', 
+        name: 'Thrust Vectoring Imbalance', 
+        description: 'Base travel time across the board increased by 20%.', 
+        gradientClasses: 'bg-gradient-to-r from-slate-500 to-red-800 border-slate-400 text-white' 
+    },
+    CONTAMINATED_FUEL_LINES: { 
+        id: 'status_contaminated_fuel', 
+        name: 'Contaminated Fuel Lines', 
+        description: 'Fuel tank cannot be filled past 50% capacity at stations. Refueling disabled if over 50%.', 
+        gradientClasses: 'bg-gradient-to-r from-green-500 to-amber-900 border-green-400 text-white' 
+    },
+    CORPORATE_BLACKLIST: { 
+        id: 'status_corporate_blacklist', 
+        name: 'Corporate Blacklist', 
+        description: 'Increased chance of Guild audits, customs searches, and corporate cordons.', 
+        gradientClasses: 'bg-gradient-to-r from-black to-yellow-500 border-yellow-500 text-white' 
+    },
+    SERVICE_SURCHARGES: { 
+        id: 'status_service_surcharges', 
+        name: 'Service Surcharges', 
+        description: 'All station service costs (Refuel, Repair) are tripled.', 
+        gradientClasses: 'bg-gradient-to-r from-white to-blue-200 border-blue-400 text-blue-900' 
+    },
+    REVOKED_CLEARANCE: { 
+        id: 'status_revoked_clearance', 
+        name: 'Revoked Clearance', 
+        description: 'Cannot purchase Intel Deals while active.', 
+        gradientClasses: 'bg-gradient-to-r from-red-600 to-slate-800 border-red-500 text-white' 
+    }
+});
 
 /**
  * A collection of core game balance numbers and rules.

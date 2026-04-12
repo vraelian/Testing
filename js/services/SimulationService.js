@@ -1,8 +1,7 @@
 // js/services/SimulationService.js
 /**
  * @fileoverview This file contains the SimulationService class, which acts as the core game engine
- * facade. It instantiates all specialized game logic services and delegates calls to them,
- * providing a single, clean API for the EventManager.
+ * facade. It instantiates all specialized game logic services and delegates calls to them.
  */
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
@@ -23,12 +22,6 @@ import { OFFICERS } from '../data/officers.js';
 import { ToastService } from './ToastService.js';
 
 export class SimulationService {
-    /**
-     * @param {import('./GameState.js').GameState} gameState - The central state object.
-     * @param {import('./UIManager.js').UIManager} uiManager - The UI rendering service.
-     * @param {import('./LoggingService.js').Logger} logger - The logging utility.
-     * @param {import('./NewsTickerService.js').NewsTickerService} newsTickerService - The news ticker service.
-     */
     constructor(gameState, uiManager, logger, newsTickerService) { 
         this.gameState = gameState;
         this.uiManager = uiManager;
@@ -59,7 +52,6 @@ export class SimulationService {
         this.uiManager.setSimulationService(this);
         this.newsTickerService.setServices(this, this.marketService);
         
-        // Initialize Bankruptcy hooks
         this.bankruptcyService.setServices(this.gameState, this.timeService, this.marketService, this.solStationService, this.uiManager);
 
         if (this.gameState.currentLocationId === 'sol') {
@@ -105,7 +97,7 @@ export class SimulationService {
                 version: APP_VERSION,
                 slotId: this.gameState.slotId,
                 metadata: {
-                    timestamp: Date.now(), // CRITICAL FIX: Absolute timestamp for iOS bridge reconciliation
+                    timestamp: Date.now(),
                     realDate: new Date().toLocaleDateString(),
                     inGameDay: stateToSave.day,
                     creditsFormatted: formatCredits(stateToSave.player.credits),
@@ -153,14 +145,25 @@ export class SimulationService {
         const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this);
         if (!result) return;
 
-        this._applyEventEffects(result.effects);
-
-        this.uiManager.showEventResultModal(
-            result.title, 
-            result.text, 
-            result.effects, 
-            () => this._handlePostForceEvent()
-        );
+        // DEFENSIVE FIX: Removed this._applyEventEffects(result.effects).
+        // The eventEffectResolver applies math automatically. Running it again here caused instant death.
+        
+        // Pass the result payload directly to the UI layer
+        if (this.uiManager.eventControl && this.uiManager.eventControl.showEventResultModal) {
+            this.uiManager.eventControl.showEventResultModal(
+                result.title, 
+                result.text, 
+                result.effects, 
+                () => this._handlePostForceEvent()
+            );
+        } else {
+             this.uiManager.showEventResultModal(
+                result.title, 
+                result.text, 
+                result.effects, 
+                () => this._handlePostForceEvent()
+            );
+        }
     }
 
     _handlePostForceEvent() {
@@ -191,43 +194,6 @@ export class SimulationService {
             
             this.gameState.setState({});
         }
-    }
-
-    _applyEventEffects(effects) {
-        effects.forEach(eff => {
-            switch (eff.type) {
-                case 'EFF_CREDITS':
-                    this.gameState.player.credits += eff.value;
-                    break;
-                case 'EFF_FUEL':
-                    const ship = this._getActiveShip();
-                    if(ship) this.gameState.player.shipStates[ship.id].fuel = Math.max(0, Math.min(ship.maxFuel, ship.fuel + eff.value));
-                    break;
-                case 'EFF_HULL':
-                    const s = this._getActiveShip();
-                    if(s) this.gameState.player.shipStates[s.id].health = Math.max(0, Math.min(s.maxHealth, s.health + eff.value));
-                    break;
-                case 'EFF_TRAVEL_TIME':
-                case 'EFF_MODIFY_TRAVEL':
-                     if (this.gameState.pendingTravel) {
-                        this.gameState.pendingTravel.travelTimeAdd = (this.gameState.pendingTravel.travelTimeAdd || 0) + eff.value;
-                    }
-                    break;
-                case 'EFF_ADD_ITEM':
-                    const invAdd = this._getActiveInventory();
-                    if(invAdd && invAdd[eff.target]) {
-                        invAdd[eff.target].quantity += eff.value;
-                    }
-                    break;
-                case 'EFF_REMOVE_ITEM':
-                    const invRem = this._getActiveInventory();
-                    if(invRem && invRem[eff.target]) {
-                        invRem[eff.target].quantity = Math.max(0, invRem[eff.target].quantity - eff.value);
-                    }
-                    break;
-            }
-        });
-        this.gameState.setState({}); 
     }
 
     startIntroSequence() { this.introService.start(); }
@@ -292,9 +258,6 @@ export class SimulationService {
             if (sellButton) {
                 sellButton.disabled = true;
             }
-        }
-
-         if (boardButton) {
             await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
         }
 
@@ -329,21 +292,17 @@ export class SimulationService {
         }
     }
 
-    // --- CORE & SHARED METHODS ---
     setScreen(navId, screenId) {
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
         
-        // 1. Mutate raw state instantly
         this.gameState.activeNav = navId;
         this.gameState.activeScreen = screenId;
         this.gameState.lastActiveScreen = newLastActive;
 
-        // 2. Evaluate objectives silently against the fresh raw state
         if (this.missionService) {
             this.missionService.checkTriggers(true);
         }
 
-        // 3. Commit state change and broadcast UI render
         this.gameState.setState({});
     }
 
@@ -400,10 +359,6 @@ export class SimulationService {
         }, { buttonText: 'Restart' });
     }
 
-    /**
-     * Hook into the core loop to evaluate if the player is fundamentally bankrupt.
-     * Triggers the "Indentured Servitude" time-skip mechanic to avoid a hard game over.
-     */
     _checkGameOverConditions() {
         if (this.bankruptcyService && this.bankruptcyService.isPlayerBankrupt(this.gameState.getState())) {
             this.bankruptcyService.triggerBankruptcyFlow();
@@ -445,7 +400,8 @@ export class SimulationService {
             health: ship.maxHealth, 
             fuel: ship.maxFuel, 
             hullAlerts: { one: false, two: false },
-            upgrades: [] 
+            upgrades: [],
+            statusEffects: []
         };
         
         if (!this.gameState.player.inventories[shipId]) {
@@ -563,6 +519,11 @@ export class SimulationService {
         this.gameState.day++;
         this.logger.info.system(this.gameState.day, 'DAY_START', `Day ${this.gameState.day} started.`);
 
+        const activeShip = this._getActiveShip();
+        if (activeShip && activeShip.statusEffects) {
+            this.gameState.player.shipStates[activeShip.id].statusEffects = activeShip.statusEffects.filter(effect => this.gameState.day < effect.expiryDay);
+        }
+
         this._updateMarkets();
         this._processFinancials();
 
@@ -673,7 +634,7 @@ export class SimulationService {
                          if (shipState.upgrades.length < 3) {
                              shipState.upgrades.push(reward.target || reward.id);
                          } else {
-                             shipState.upgrades[2] = reward.target || reward.id; // overwrite last if full, to guarantee receipt
+                             shipState.upgrades[2] = reward.target || reward.id; 
                          }
                          this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target || reward.id}`);
                      }
@@ -702,7 +663,8 @@ export class SimulationService {
             health: ship ? ship.maxHealth : 100,
             fuel: ship ? ship.maxFuel : 40,
             hullAlerts: { one: false, two: false },
-            upgrades: [] 
+            upgrades: [],
+            statusEffects: []
         };
     }
 
@@ -736,10 +698,6 @@ export class SimulationService {
 
                 market.prices[loc.id][good.id] = newPrice;
             });
-            
-            if (this.gameState.day % 7 === 0) {
-                // Shipyard stock logic...
-            }
         });
 
         this.gameState.lastMarketUpdateDay = this.gameState.day;

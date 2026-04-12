@@ -1,6 +1,6 @@
 // js/services/DebugService.js
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
+import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS, STATUS_EFFECTS } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
@@ -116,6 +116,7 @@ export class DebugService {
             logLevel: 'INFO',
             
             selectedUpgrade: null, 
+            selectedStatusEffect: null, // NEW: Status Effect Selection
             selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
             quantityToAdd: 10,
             alwaysTriggerEvents: false,
@@ -251,11 +252,6 @@ ${logHistory}
         if(this.logger && this.logger.info) this.logger.info.system('DebugService', `Exported ${telemetry.length} rows of ${type} telemetry.`);
     }
 
-    /**
-     * Automatically populates the player's seen tutorials array with all available help contexts 
-     * to prevent modal auto-triggering during debug sessions.
-     * @private
-     */
     _markAllTutorialsSeen() {
         if (!this.gameState.tutorials) {
             this.gameState.tutorials = { seenHelpContexts: [] };
@@ -353,7 +349,6 @@ ${logHistory}
     skipToStarterSelection() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO STARTER SHIP SELECTION.');
         
-        // Setup initial intro parameters
         this.gameState.introSequenceActive = true;
         this.gameState.isDebugStart = true;
         
@@ -374,11 +369,9 @@ ${logHistory}
 
         this.uiManager.showGameContainer();
         
-        // Execute Ship Selection
         if (this.simulationService && this.simulationService.introService) {
             this.simulationService.introService._showStarterShipSelection();
         } else {
-            // Dynamic fallback if IntroService is not strictly bound to SimulationService
             import('./game/IntroService.js').then(({IntroService}) => {
                 const intro = new IntroService(this.gameState, this.uiManager, this.logger, this.simulationService);
                 intro._showStarterShipSelection();
@@ -555,6 +548,40 @@ ${logHistory}
         this.gameState.setState({});
     }
 
+    applySelectedStatusEffect(statusId) {
+        if (!statusId) return;
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) return;
+
+        const shipState = this.gameState.player.shipStates[activeShip.id];
+        if (!shipState.statusEffects) shipState.statusEffects = [];
+        
+        const duration = Math.floor(Math.random() * (480 - 120 + 1)) + 120;
+        const expiryDay = this.gameState.day + duration;
+
+        const existing = shipState.statusEffects.find(s => s.id === statusId);
+        if (existing) {
+            existing.expiryDay = expiryDay;
+        } else {
+            shipState.statusEffects.push({ id: statusId, expiryDay });
+        }
+
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Applied ${statusId} on ${activeShip.name}`);
+        this.uiManager.createFloatingText('Status Effect Applied', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+        this.gameState.setState({}); 
+    }
+
+    removeAllStatusEffects() {
+        const activeShip = this.simulationService._getActiveShip();
+        if (!activeShip) return;
+        const shipState = this.gameState.player.shipStates[activeShip.id];
+        
+        shipState.statusEffects = [];
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Removed all status effects from ${activeShip.name}`);
+        this.uiManager.createFloatingText('Statuses Cleared', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+        this.gameState.setState({});
+    }
+
     resetEconomyMemory() {
         const { market } = this.gameState;
         DB.MARKETS.forEach(loc => {
@@ -625,7 +652,6 @@ ${logHistory}
     triggerToast(type) {
         if (!this.simulationService.toastService) return;
         
-        // Interrupt to clear anything currently displaying
         this.simulationService.toastService.clearQueueAndHide();
         
         let config;
@@ -648,16 +674,11 @@ ${logHistory}
         }
         
         if (config) {
-            // Push manually into queue and start the lifecycle
             this.simulationService.toastService.toastQueue.push(config);
             this.simulationService.toastService.playNextInQueue();
         }
     }
 
-    /**
-     * Helper logic to instantly wipe player assets to prepare state for bankruptcy testing.
-     * @private
-     */
     _clearAssetsForBankruptcy() {
         const player = this.gameState.player;
         player.ownedShipIds = [SHIP_IDS.WANDERER];
@@ -668,10 +689,6 @@ ${logHistory}
         }
     }
 
-    /**
-     * Helper to execute cinematic grant sequences
-     * @private
-     */
     _triggerCinematicDebugGrant(tierNum) {
         const licenseId = `t${tierNum}_license`;
         const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
@@ -697,7 +714,6 @@ ${logHistory}
                 theme: `license-t${tierNum}`,
                 customSetup: (licModal, licCloseHandler) => {
                     const modalContent = licModal.querySelector('.modal-content');
-                    // FIX: Remove sticky exit class from previous singleton usages
                     modalContent.classList.remove('license-modal-blur-out');
                     modalContent.classList.add('license-modal-blur-in');
 
@@ -712,7 +728,6 @@ ${logHistory}
                         modalContent.classList.add('license-modal-blur-out');
                         
                         setTimeout(async () => {
-                            // FIX: Purge the class so it's clean for the next modal
                             modalContent.classList.remove('license-modal-blur-out');
                             licCloseHandler();
                             await endLicenseAnimation(tierNum);
@@ -967,6 +982,9 @@ ${logHistory}
 
             applyRandomUpgrades: { name: 'Apply 3 Random Upgrades', type: 'button', handler: () => this.applyRandomUpgrades() },
             removeAllUpgrades: { name: 'Remove All Upgrades', type: 'button', handler: () => this.removeAllUpgrades() },
+            
+            applySelectedStatusEffect: { name: 'Apply Status Effect', type: 'button', handler: () => this.applySelectedStatusEffect(this.debugState.selectedStatusEffect) },
+            removeAllStatusEffects: { name: 'Remove All Statuses', type: 'button', handler: () => this.removeAllStatusEffects() },
 
             resetEconomyMemory: { name: 'Reset Econ Memory', type: 'button', handler: () => this.resetEconomyMemory() },
             sootheEconomy: { name: 'Bullish Economy (Soothe)', type: 'button', handler: () => this.sootheEconomy() },
@@ -1178,6 +1196,18 @@ ${logHistory}
             
         attributesFolder.add(this.actions.applyRandomUpgrades, 'handler').name('Apply 3 Random');
         attributesFolder.add(this.actions.removeAllUpgrades, 'handler').name('Remove All');
+
+        const statusFolder = this.gui.addFolder('Status Effects');
+        const statusOptions = Object.values(STATUS_EFFECTS).reduce((acc, effect) => {
+            acc[effect.name] = effect.id;
+            return acc;
+        }, {});
+
+        statusFolder.add(this.debugState, 'selectedStatusEffect', statusOptions)
+            .name('Apply Status')
+            .onChange((id) => this.applySelectedStatusEffect(id));
+            
+        statusFolder.add(this.actions.removeAllStatusEffects, 'handler').name('Remove All');
 
         const worldFolder = this.gui.addFolder('World & Time');
         worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');

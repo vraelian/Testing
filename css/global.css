@@ -1323,3 +1323,43 @@ card.
     background: rgba(12, 16, 29, 0.85);
     box-shadow: 0 2px 5px rgba(0,0,0,0.5);
 }
+
+/* --- EVENT SYSTEM 3.0: STATUS EFFECTS --- */
+.status-effect-pill {
+    border-radius: 0px !important;
+    border: 2px solid;
+    padding: 2px 6px;
+    font-weight: bold;
+    font-family: 'Oxanium ExtraBold', sans-serif;
+    text-transform: uppercase;
+    font-size: 0.7rem;
+    margin-right: 4px;
+    margin-bottom: 4px;
+    box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    transition: transform 0.1s ease-out;
+}
+
+.status-effect-pill:active {
+    transform: scale(0.92);
+    opacity: 0.8;
+}
+
+@keyframes hazard-flash-border {
+    0% { border-color: rgba(255, 50, 50, 0.9); box-shadow: 0 0 5px rgba(255, 50, 50, 0.5); }
+    50% { border-color: rgba(255, 200, 50, 0.9); box-shadow: 0 0 12px rgba(255, 200, 50, 0.8); }
+    100% { border-color: rgba(255, 50, 50, 0.9); box-shadow: 0 0 5px rgba(255, 50, 50, 0.5); }
+}
+
+.status-hazard-pulse {
+    animation: hazard-flash-border 1.5s infinite;
+}
+
+/* Gradients */
+.status-micro-fractures { background: linear-gradient(to right, #7f1d1d, #f97316); border-color: #ef4444; color: #ffffff; } 
+.status-plasma-leak { background: linear-gradient(to right, #fde047, #ea580c); border-color: #fb923c; color: #000000; text-shadow: none; } 
+.status-nav-glitch { background: linear-gradient(to right, #22d3ee, #312e81); border-color: #67e8f9; color: #ffffff; } 
+.status-thrust-imbalance { background: linear-gradient(to right, #64748b, #991b1b); border-color: #94a3b8; color: #ffffff; } 
+.status-contaminated-fuel { background: linear-gradient(to right, #22c55e, #78350f); border-color: #4ade80; color: #ffffff; } 
+.status-corporate-blacklist { background: linear-gradient(to right, #000000, #eab308); border-color: #facc15; color: #ffffff; } 
+.status-service-surcharges { background: linear-gradient(to right, #ffffff, #bfdbfe); border-color: #60a5fa; color: #1e3a8a; text-shadow: none; } 
+.status-revoked-clearance { background: linear-gradient(to right, #dc2626, #1e293b); border-color: #ef4444; color: #ffffff; }

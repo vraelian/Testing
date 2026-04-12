@@ -61,6 +61,7 @@ export class GameState {
         this.state = {};
         this.subscribers = [];
         this.TRAVEL_DATA = procedurallyGenerateTravelData(DB.MARKETS);
+        this.pendingEventChains = []; // Event System 3.0: Array of FIFO queued objects for delayed events
     }
 
     /**
@@ -258,6 +259,7 @@ export class GameState {
             } else {
                 // Patch missing arrays/objects on existing ships
                 if (!this.player.shipStates[shipId].upgrades) this.player.shipStates[shipId].upgrades = [];
+                if (!this.player.shipStates[shipId].statusEffects) this.player.shipStates[shipId].statusEffects = [];
                 if (!this.player.shipStates[shipId].hullAlerts) this.player.shipStates[shipId].hullAlerts = { one: false, two: false };
             }
 
@@ -405,6 +407,7 @@ export class GameState {
                 [NAV_IDS.DATA]: SCREEN_IDS.MISSIONS,
             },
             pendingTravel: null,
+            pendingEventChains: [], // Event System 3.0: Array of FIFO queued objects
             
             // --- SYSTEM STATES V3 ---
             systemStates: { // Schema Alignment
@@ -441,8 +444,8 @@ export class GameState {
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
                 unlockedOfficerIds: [], // Added for Officer Acquisition Pipeline
                 // --- VIRTUAL WORKBENCH: SHIP STATE UPGRADES ---
-                // Added `upgrades: []` to the initial Wanderer state
-                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [] } },
+                // Added `upgrades: []` and `statusEffects: []` to the initial Wanderer state
+                shipStates: { [SHIP_IDS.WANDERER]: { health: DB.SHIPS[SHIP_IDS.WANDERER].maxHealth, fuel: DB.SHIPS[SHIP_IDS.WANDERER].maxFuel, hullAlerts: { one: false, two: false }, upgrades: [], statusEffects: [] } },
                 // --- END VIRTUAL WORKBENCH ---
                 inventories: { },
                 debugEventIndex: 0,
@@ -639,7 +642,8 @@ export class GameState {
             health: ship ? ship.maxHealth : 100,
             fuel: ship ? ship.maxFuel : 40,
             hullAlerts: { one: false, two: false },
-            upgrades: [] // Initialize empty upgrades array
+            upgrades: [], // Initialize empty upgrades array
+            statusEffects: [] // Event System 3.0: Initialize empty status effects array
         };
     }
 }

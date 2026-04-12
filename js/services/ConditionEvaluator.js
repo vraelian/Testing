@@ -7,11 +7,11 @@
 
 import { EVENT_CONSTANTS, SHIP_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
-import { DynamicValueResolver } from './DynamicValueResolver.js'; // [[UPDATED]]
+import { DynamicValueResolver } from './DynamicValueResolver.js';
 
 export class ConditionEvaluator {
     constructor() {
-        this.valueResolver = new DynamicValueResolver(); // [[UPDATED]]
+        this.valueResolver = new DynamicValueResolver(); 
     }
 
     /**
@@ -22,7 +22,7 @@ export class ConditionEvaluator {
      * @returns {boolean} True if ALL conditions are met (AND logic).
      */
     checkAll(conditions, gameState, simulationService) {
-        if (!conditions) return true; // No conditions = always valid
+        if (!conditions) return true; 
         if (!Array.isArray(conditions)) conditions = [conditions];
 
         return conditions.every(cond => this.evaluate(cond, gameState, simulationService));
@@ -39,11 +39,8 @@ export class ConditionEvaluator {
         const { type, operator, value, target } = condition;
         
         let currentValue = null;
-        
-        // [[UPDATED]]: Resolve dynamic values (e.g. { scaleWith: 'SHIP_CLASS_SCALAR', base: 5 })
         let threshold = this.valueResolver.resolve(value, gameState);
 
-        // 1. Resolve the 'currentValue' based on the condition type
         switch (type) {
             // --- RESOURCE CHECKS ---
             case EVENT_CONSTANTS.CONDITIONS.HAS_FUEL:
@@ -57,7 +54,6 @@ export class ConditionEvaluator {
 
             case EVENT_CONSTANTS.CONDITIONS.HAS_HULL:
                 const activeShip = gameState.player.shipStates[gameState.player.activeShipId];
-                // Checks current Health points, not percentage
                 currentValue = activeShip ? activeShip.health : 0; 
                 break;
 
@@ -70,6 +66,17 @@ export class ConditionEvaluator {
                 currentValue = shipStats.cargoCapacity - usedSpace;
                 break;
 
+            case EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE:
+                let totalUsedSpace = 0;
+                gameState.player.ownedShipIds.forEach(id => {
+                    const inv = gameState.player.inventories[id];
+                    if (inv) {
+                        totalUsedSpace += Object.values(inv).reduce((sum, item) => sum + (item.quantity || 0), 0);
+                    }
+                });
+                currentValue = totalUsedSpace > 0 ? 1 : 0;
+                break;
+
             case EVENT_CONSTANTS.CONDITIONS.HAS_ITEM:
                 const activeInv = simulationService._getActiveInventory();
                 currentValue = activeInv[target]?.quantity || 0;
@@ -77,13 +84,11 @@ export class ConditionEvaluator {
 
             // --- PLAYER STATE CHECKS ---
             case EVENT_CONSTANTS.CONDITIONS.HAS_PERK:
-                // Boolean check: 1 if true, 0 if false
                 currentValue = gameState.player.activePerks[target] ? 1 : 0;
                 break;
 
             case EVENT_CONSTANTS.CONDITIONS.HAS_SHIP_CLASS:
                 const shipDef = DB.SHIPS[gameState.player.activeShipId];
-                // String comparison: 'A' == 'A'
                 currentValue = shipDef ? shipDef.class : ''; 
                 break;
             
@@ -94,13 +99,10 @@ export class ConditionEvaluator {
             // --- WORLD CHECKS ---
             case EVENT_CONSTANTS.CONDITIONS.LOCATION_IS:
                 currentValue = gameState.currentLocationId;
-                // If checking strict equality, threshold is the target location ID (if value is string)
                 if (typeof value === 'string') threshold = value; 
                 break;
 
             case EVENT_CONSTANTS.CONDITIONS.RNG_ROLL:
-                // A dynamic roll every time it's checked. 
-                // e.g., Value 0.5 means "50% chance this condition passes"
                 return Math.random() < threshold;
 
             default:
@@ -108,15 +110,11 @@ export class ConditionEvaluator {
                 return false;
         }
 
-        // 2. Compare 'currentValue' against 'threshold' using the 'operator'
         return this.compare(currentValue, operator, threshold);
     }
 
     /**
      * Standardized comparison logic.
-     * @param {number|string} a - The value from the game state.
-     * @param {string} op - The operator code ('GT', 'EQ', etc).
-     * @param {number|string} b - The threshold value from the event data.
      */
     compare(a, op, b) {
         switch (op) {
@@ -126,8 +124,7 @@ export class ConditionEvaluator {
             case 'LTE': return a <= b;
             case 'EQ': return a === b;
             case 'NEQ': return a !== b;
-            case 'IN': // Check if A is in array B
-                return Array.isArray(b) && b.includes(a);
+            case 'IN': return Array.isArray(b) && b.includes(a);
             default:
                 console.warn(`[ConditionEvaluator] Unknown operator: ${op}`);
                 return false;
