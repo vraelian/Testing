@@ -15,7 +15,7 @@ export const EVENTS_HAZARDS = [
         requirements: [],
         template: {
             title: 'Debris Field',
-            description: 'Long-range radar paints a cloud of "gravel" directly in your path—remnants of a collision moving at 15 km/s. You can burn hard to go around, or shield up and tank it.'
+            description: 'Long-range radar paints a cloud of gravel directly in your path—remnants of a collision moving at high speed. You can burn hard to go around, or brace and tank it.'
         },
         choices: [
             {
@@ -30,14 +30,14 @@ export const EVENTS_HAZARDS = [
             },
             {
                 id: 'choice_drift',
-                text: 'Drift Through (Trip Delay)',
+                text: 'Drift Through Carefully (Trip Delay)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_drift' }] }
             }
         ],
         outcomes: {
             'out_evade': {
                 title: 'Evasion Successful',
-                text: 'You slam the throttle forward, vectoring hard "up" relative to the ecliptic. It consumes fuel, but you clear the cloud.',
+                text: 'You slam the throttle forward, vectoring hard upwards. It consumes fuel, but you clear the cloud.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.MODIFY_FUEL, value: { scaleWith: 'MAX_FUEL', factor: -0.15 } }]
             },
             'out_tank': {
@@ -64,7 +64,7 @@ export const EVENTS_HAZARDS = [
         choices: [
             {
                 id: 'choice_harden',
-                text: 'Harden Shields (-10 Plasteel * Scale)',
+                text: 'Harden Ship (-10 Plasteel * Scale)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_harden' }] }
             },
