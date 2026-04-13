@@ -449,13 +449,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const triggerSuccessVisuals = () => {
             exportSavesBtn.textContent = 'Save Code Copied!';
-            exportSavesBtn.classList.remove('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
-            exportSavesBtn.classList.add('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
+            exportSavesBtn.classList.remove('bg-cyan-900/30', 'border-cyan-700');
+            exportSavesBtn.classList.add('bg-green-800/60', 'border-green-500', 'text-white');
             
             setTimeout(() => {
                 exportSavesBtn.textContent = 'Export Save Code';
-                exportSavesBtn.classList.add('bg-cyan-900/30', 'hover:bg-cyan-800/50', 'border-cyan-700');
-                exportSavesBtn.classList.remove('bg-green-800/60', 'hover:bg-green-700/80', 'border-green-500', 'text-white');
+                exportSavesBtn.classList.add('bg-cyan-900/30', 'border-cyan-700');
+                exportSavesBtn.classList.remove('bg-green-800/60', 'border-green-500', 'text-white');
             }, 2000);
         };
 
@@ -501,8 +501,8 @@ document.addEventListener('DOMContentLoaded', () => {
     function resetImportButton() {
         importConfirmState = false;
         importSavesBtn.textContent = 'Import Save Code';
-        importSavesBtn.classList.add('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
-        importSavesBtn.classList.remove('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
+        importSavesBtn.classList.add('bg-blue-900/30', 'border-blue-700');
+        importSavesBtn.classList.remove('bg-red-800/80', 'border-red-600', 'text-white');
     }
 
     importDataTextarea.addEventListener('input', resetImportButton);
@@ -517,8 +517,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (!importConfirmState) {
             importConfirmState = true;
             importSavesBtn.textContent = 'OVERWRITE & IMPORT?';
-            importSavesBtn.classList.remove('bg-blue-900/30', 'hover:bg-blue-800/50', 'border-blue-700');
-            importSavesBtn.classList.add('bg-red-800/80', 'hover:bg-red-700', 'border-red-600', 'text-white');
+            importSavesBtn.classList.remove('bg-blue-900/30', 'border-blue-700');
+            importSavesBtn.classList.add('bg-red-800/80', 'border-red-600', 'text-white');
             return;
         }
 

@@ -30,15 +30,16 @@ export class ActionClickHandler {
                 primedBtns.forEach(btn => {
                     if (btn !== closestTarget) {
                         delete btn.dataset.primed;
-                        btn.classList.remove('primed');
+                        btn.classList.remove('primed', 'bg-red-600', 'text-white', 'border-red-800', 'bg-green-600', 'border-green-800', 'bg-white', 'text-black');
+                        btn.style.backgroundColor = '';
+                        btn.style.color = '';
+                        btn.style.borderColor = '';
+                        btn.style.minWidth = '';
                         
                         if (btn.dataset.action === 'skip-tutorial') {
                             btn.textContent = 'Skip Tutorial';
-                            btn.classList.remove('bg-red-600', 'text-white', 'border-red-800');
-                            btn.classList.add('bg-white', 'text-black');
                         } else if (btn.dataset.action === 'intro_buy_ship') {
                             btn.textContent = 'Purchase';
-                            btn.classList.remove('bg-green-600', 'text-white', 'border-green-800');
                         }
                     }
                 });
@@ -105,8 +106,8 @@ export class ActionClickHandler {
 
             case 'exit-game-init':
                 e.stopPropagation();
-                // Mutate button to locked Danger State
-                actionTarget.className = 'btn w-full py-3 text-lg bg-red-800 hover:bg-red-700 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]';
+                // Mutate button to locked Danger State without hover mechanics
+                actionTarget.className = 'btn w-full py-3 text-lg bg-red-800 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]';
                 actionTarget.innerHTML = 'CONFIRM EXIT?';
                 actionTarget.dataset.action = 'exit-game-confirm';
                 break;
@@ -152,24 +153,39 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
+                e.preventDefault();
                 
                 if (!actionTarget.dataset.primed) {
-                    // Reset any previously primed buttons universally
+                    // Universally unprime all other primed buttons to prevent stuck states
                     document.querySelectorAll('.primed').forEach(btn => {
-                        delete btn.dataset.primed;
-                        btn.classList.remove('primed');
-                        
-                        if (btn.dataset.action === 'intro_buy_ship') {
-                            btn.textContent = 'Purchase';
-                            btn.classList.remove('bg-green-600', 'text-white', 'border-green-800');
+                        if (btn !== actionTarget) {
+                            delete btn.dataset.primed;
+                            btn.classList.remove('primed', 'bg-red-600', 'text-white', 'border-red-800', 'bg-green-600', 'border-green-800', 'bg-white', 'text-black');
+                            btn.style.backgroundColor = '';
+                            btn.style.color = '';
+                            btn.style.borderColor = '';
+                            btn.style.minWidth = '';
+                            
+                            if (btn.dataset.action === 'skip-tutorial') {
+                                btn.textContent = 'Skip Tutorial';
+                            } else if (btn.dataset.action === 'intro_buy_ship') {
+                                btn.textContent = 'Purchase';
+                            }
                         }
                     });
 
-                    // Prime this button
                     actionTarget.dataset.primed = "true";
-                    actionTarget.classList.add('primed', 'bg-green-600', 'text-white', 'border-green-800');
+                    actionTarget.classList.add('primed');
+                    
+                    // Directly apply inline styles to bypass Safari's CSS rule swap tap-drop
+                    actionTarget.style.backgroundColor = '#16a34a'; 
+                    actionTarget.style.color = '#ffffff';
+                    actionTarget.style.borderColor = '#166534';
+                    
+                    // Hard-lock the width to guarantee no layout shift swallows the second tap
+                    actionTarget.style.minWidth = '180px';
                     actionTarget.textContent = 'Confirm Purchase?';
-                    return; // Prevent immediate execution
+                    return; 
                 }
 
                 // Route to the special IntroService handler
@@ -587,29 +603,39 @@ export class ActionClickHandler {
             }
             
             case 'skip-tutorial': {
+                e.stopPropagation();
+                e.preventDefault();
+                
                 if (!actionTarget.dataset.primed) {
-                    // Reset any previously primed buttons universally
                     document.querySelectorAll('.primed').forEach(btn => {
-                        delete btn.dataset.primed;
-                        btn.classList.remove('primed');
-                        
-                        if (btn.dataset.action === 'skip-tutorial') {
-                            btn.textContent = 'Skip Tutorial';
-                            btn.classList.remove('bg-red-600', 'text-white', 'border-red-800');
-                            btn.classList.add('bg-white', 'text-black');
+                        if (btn !== actionTarget) {
+                            delete btn.dataset.primed;
+                            btn.classList.remove('primed', 'bg-red-600', 'text-white', 'border-red-800', 'bg-green-600', 'border-green-800', 'bg-white', 'text-black');
+                            btn.style.backgroundColor = '';
+                            btn.style.color = '';
+                            btn.style.borderColor = '';
+                            btn.style.minWidth = '';
+                            
+                            if (btn.dataset.action === 'skip-tutorial') {
+                                btn.textContent = 'Skip Tutorial';
+                            } else if (btn.dataset.action === 'intro_buy_ship') {
+                                btn.textContent = 'Purchase';
+                            }
                         }
                     });
 
-                    // Prime this button
                     actionTarget.dataset.primed = "true";
-                    actionTarget.classList.add('primed', 'bg-red-600', 'text-white', 'border-red-800');
-                    actionTarget.classList.remove('bg-white', 'text-black');
+                    actionTarget.classList.add('primed');
+                    
+                    actionTarget.style.backgroundColor = '#dc2626'; 
+                    actionTarget.style.color = '#ffffff';
+                    actionTarget.style.borderColor = '#991b1b'; 
+                    
+                    actionTarget.style.minWidth = '160px';
                     actionTarget.textContent = 'Confirm Skip?';
-                    e.stopPropagation();
-                    return; // Prevent immediate execution
+                    return; 
                 }
 
-                // Second click: execute the skip
                 if (this.simulationService && this.simulationService.missionService) {
                     this.simulationService.missionService.skipTutorial();
                 }
@@ -664,18 +690,17 @@ export class ActionClickHandler {
                 break;
 
             case ACTION_IDS.PAY_DEBT: {
+                e.stopPropagation();
+                e.preventDefault();
                 if (!actionTarget.dataset.primed) {
-                    // Reset any previously primed buttons universally
                     document.querySelectorAll('.primed').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });
                     
-                    // Prime this button
                     actionTarget.dataset.primed = "true";
                     actionTarget.classList.add('primed');
-                    e.stopPropagation();
-                    return; // Prevent immediate execution
+                    return; 
                 }
 
                 let payAmount = null;
@@ -688,26 +713,23 @@ export class ActionClickHandler {
                 this.simulationService.payOffDebt(payAmount !== null ? payAmount : e, e);
                 break;
             }
-            case ACTION_IDS.TAKE_LOAN:
-                // --- VIRTUAL WORKBENCH START: Two-Step Loan Confirmation ---
+            case ACTION_IDS.TAKE_LOAN: {
+                e.stopPropagation();
+                e.preventDefault();
                 if (!actionTarget.dataset.primed) {
-                    // Reset any previously primed buttons universally
                     document.querySelectorAll('.primed').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });
                     
-                    // Prime this button
                     actionTarget.dataset.primed = "true";
                     actionTarget.classList.add('primed');
-                    e.stopPropagation();
-                    return; // Prevent immediate execution
+                    return; 
                 }
-                // --- VIRTUAL WORKBENCH END ---
                 
-                // Second click: execute the loan
                 this.simulationService.takeLoan(JSON.parse(dataset.loanDetails), e);
                 break;
+            }
             case ACTION_IDS.PURCHASE_INTEL:
                 this.logger.warn('ActionClickHandler', 'Obsolete ACTION_IDS.PURCHASE_INTEL called.');
                 break;
