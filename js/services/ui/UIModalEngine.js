@@ -30,25 +30,25 @@ export class UIModalEngine {
                     <div id="guild-labor-options" class="flex flex-col gap-3 my-6">
                         <div class="relative">
                             <input type="radio" name="guild-labor" value="mars" id="guild-mars" class="hidden peer" checked>
-                            <label for="guild-mars" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                            <label for="guild-mars" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
                                 Mars Habitat Construction <br><span class="text-red-500">6 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 10k</span>
                             </label>
                         </div>
                         <div class="relative">
                             <input type="radio" name="guild-labor" value="uranus" id="guild-uranus" class="hidden peer">
-                            <label for="guild-uranus" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                            <label for="guild-uranus" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
                                 Uranus Orbital Assembly <br><span class="text-red-500">8 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 16k</span>
                             </label>
                         </div>
                         <div class="relative">
                             <input type="radio" name="guild-labor" value="mercury" id="guild-mercury" class="hidden peer">
-                            <label for="guild-mercury" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer hover:bg-yellow-900/30 peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
+                            <label for="guild-mercury" class="block p-3 border border-yellow-700/50 rounded bg-black/50 cursor-pointer peer-checked:bg-yellow-900/60 peer-checked:border-yellow-400 transition-colors text-center">
                                 Mercury Sub-Surface Mining <br><span class="text-red-500">10 Years Labor</span>, <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 25k</span>
                             </label>
                         </div>
                     </div>
                     <div id="bankruptcy-guild-button-container" class="mt-6 flex justify-center gap-4">
-                        <button id="guild-accept-btn" class="btn bg-yellow-900 hover:bg-yellow-800 text-white border-yellow-600">Accept Terms</button>
+                        <button id="guild-accept-btn" class="btn bg-yellow-900 text-white border-yellow-600">Accept Terms</button>
                     </div>
                 </div>
             </div>
@@ -63,7 +63,7 @@ export class UIModalEngine {
                         <span class="text-red-600 font-bold mt-2 block">Ship Seized.</span>
                     </div>
                     <div id="bankruptcy-syndicate-button-container" class="mt-6 flex justify-center gap-4">
-                        <button id="syndicate-accept-btn" class="btn bg-red-900 hover:bg-red-800 text-white border-red-600">Submit</button>
+                        <button id="syndicate-accept-btn" class="btn bg-red-900 text-white border-red-600">Submit</button>
                     </div>
                 </div>
             </div>
@@ -77,7 +77,7 @@ export class UIModalEngine {
                         <span class="text-cyan-400 drop-shadow-[0_0_5px_rgba(34,211,238,0.6)] font-bold">+ ⌬ 8k</span>
                     </div>
                     <div id="bankruptcy-vagrancy-button-container" class="mt-6 flex justify-center gap-4">
-                        <button id="vagrancy-accept-btn" class="btn bg-gray-700 hover:bg-gray-600 text-white border-gray-500">Comply</button>
+                        <button id="vagrancy-accept-btn" class="btn bg-gray-700 text-white border-gray-500">Comply</button>
                     </div>
                 </div>
             </div>
