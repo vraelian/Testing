@@ -26,7 +26,7 @@ export class ActionClickHandler {
         document.addEventListener('click', (e) => {
             const primedBtns = document.querySelectorAll('.primed');
             if (primedBtns.length > 0) {
-                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"], [data-action="skip-tutorial"]');
+                const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"], [data-action="skip-tutorial"], [data-action="intro_buy_ship"]');
                 primedBtns.forEach(btn => {
                     if (btn !== closestTarget) {
                         delete btn.dataset.primed;
@@ -36,6 +36,9 @@ export class ActionClickHandler {
                             btn.textContent = 'Skip Tutorial';
                             btn.classList.remove('bg-red-600', 'text-white', 'border-red-800');
                             btn.classList.add('bg-white', 'text-black');
+                        } else if (btn.dataset.action === 'intro_buy_ship') {
+                            btn.textContent = 'Purchase';
+                            btn.classList.remove('bg-green-600', 'text-white', 'border-green-800');
                         }
                     }
                 });
@@ -150,6 +153,25 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
                 
+                if (!actionTarget.dataset.primed) {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('.primed').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                        
+                        if (btn.dataset.action === 'intro_buy_ship') {
+                            btn.textContent = 'Purchase';
+                            btn.classList.remove('bg-green-600', 'text-white', 'border-green-800');
+                        }
+                    });
+
+                    // Prime this button
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed', 'bg-green-600', 'text-white', 'border-green-800');
+                    actionTarget.textContent = 'Confirm Purchase?';
+                    return; // Prevent immediate execution
+                }
+
                 // Route to the special IntroService handler
                 await this.simulationService.introService.handleStarterPurchase(shipId);
                 break;

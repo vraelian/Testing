@@ -171,7 +171,6 @@ export class UIHangarControl {
         modalContent.classList.remove('modal-theme-amber', 'modal-theme-blue', 'modal-theme-green');
 
         if (context === 'shipyard' || context === 'intro_shipyard') {
-            // [Shipyard code remains unchanged]
             let displayPrice = shipStatic.price;
             if (context === 'intro_shipyard') {
                 displayPrice = 25000;
@@ -245,7 +244,7 @@ export class UIHangarControl {
                      ${btnHtml}
                 </div>`;
 
-        } else { // context === 'hangar'
+        } else { 
             modalContent.classList.remove('intro-modal-width');
             const shipDynamic = player.shipStates[shipId];
             const shipInventory = player.inventories[shipId];
@@ -262,30 +261,14 @@ export class UIHangarControl {
             }
             const salePrice = Math.floor((shipStatic.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
 
-            let statusEffectsHtml = '';
-            if (shipDynamic.statusEffects && shipDynamic.statusEffects.length > 0) {
-                const pills = shipDynamic.statusEffects.map(effect => {
-                    const daysLeft = effect.expiryDay - gameState.day;
-                    const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
-                    if (!def) return '';
-
-                    const cssClass = def.gradientClasses || 'bg-gray-500 border-gray-400 text-white';
-                    return `
-                        <button class="status-effect-pill status-hazard-pulse ${cssClass}" 
-                            style="touch-action: manipulation; pointer-events: auto;"
-                            data-action="show-generic-tooltip" 
-                            data-tooltip="${def.description}\n\nExpires in ${daysLeft} days">
-                            ${def.name}
-                        </button>
-                    `;
-                }).join('');
-
-                statusEffectsHtml = `
-                    <div class="flex flex-col items-center gap-1 w-full mt-2 mb-2">
-                        ${pills}
-                    </div>
-                `;
-            }
+            // [[BUG FIX]]: Fetching correct tailwind gradient classes from the registry
+            const statusEffectsHtml = (shipDynamic.statusEffects || []).map(effect => {
+                const daysLeft = effect.expiryDay - gameState.day;
+                const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
+                if (!def) return '';
+                const cssClass = def.gradientClasses || 'bg-gray-500 border-gray-400 text-white';
+                return `<span class="status-effect-pill ${cssClass} cursor-help" data-tooltip="Expires in ${daysLeft} days">${def.name}</span>`;
+            }).join('');
 
             const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
                 const def = GameAttributes.getDefinition(id);
@@ -314,19 +297,18 @@ export class UIHangarControl {
                     backgroundStyle = `linear-gradient(45deg, ${baseColor}, ${this._adjustColor(baseColor, 40)})`;
                 }
 
-                return `<button class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1" 
-                              data-action="show-generic-tooltip"
-                              data-tooltip="${tooltipText}"
-                              style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5); touch-action: manipulation; pointer-events: auto;">
+                return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
+                              title="${tooltipText}"
+                              style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5);">
                             ${label}
-                        </button>`;
+                        </span>`;
             }).join('');
             
-            const upgradeSection = upgradesHtml ? `<div class="mt-2 flex flex-wrap justify-center w-full" id="upgrade-pill-container-${shipId}">${upgradesHtml}</div>` : '';
+            const combinedPillsHtml = upgradesHtml + statusEffectsHtml;
+            const upgradeSection = combinedPillsHtml ? `<div class="mt-2 flex flex-wrap-reverse justify-center" id="upgrade-pill-container-${shipId}">${combinedPillsHtml}</div>` : '';
 
             modalContentHtml = `
                  <div class="ship-card p-4 flex flex-col space-y-3 ${isActive ? 'border-yellow-400' : ''}">
-                    ${statusEffectsHtml}
                     <h3 class="text-xl font-orbitron text-center ${isActive ? 'text-yellow-300' : 'text-cyan-300'}">${shipStatic.name}</h3>
                     <p class="text-sm text-gray-400 text-center">Class ${shipStatic.class}</p>
                     <p class="text-sm text-gray-400 flex-grow text-left my-2">${shipStatic.lore}</p>
@@ -345,6 +327,34 @@ export class UIHangarControl {
 
         const modalContentTarget = modal.querySelector('#ship-detail-content');
         modalContentTarget.innerHTML = modalContentHtml;
+
+        if (context === 'intro_shipyard') {
+            const purchaseBtn = modalContentTarget.querySelector('#intro-purchase-btn');
+            if (purchaseBtn) {
+                purchaseBtn.addEventListener('click', (e) => {
+                    if (purchaseBtn.dataset.confirmed !== 'true') {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        purchaseBtn.dataset.confirmed = 'true';
+                        purchaseBtn.textContent = 'Confirm Purchase?';
+                        purchaseBtn.classList.add('btn-confirm-purchase');
+                        purchaseBtn.setAttribute('data-action', ACTION_IDS.INTRO_BUY_SHIP);
+                    }
+                });
+            }
+        }
+
+        if (context === 'intro_shipyard') {
+            const dismissHandler = (e) => {
+                if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
+                    this.manager.hideModal('ship-detail-modal');
+                    modal.removeEventListener('click', dismissHandler);
+                }
+            };
+            modal.removeEventListener('click', modal._introDismissHandler);
+            modal._introDismissHandler = dismissHandler;
+            modal.addEventListener('click', dismissHandler);
+        }
 
         modal.classList.remove('hidden');
         modal.classList.add('modal-visible');
