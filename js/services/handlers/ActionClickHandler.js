@@ -22,24 +22,30 @@ export class ActionClickHandler {
         this.simulationService = simulationService;
         this.uiManager = uiManager;
 
-        // --- VIRTUAL WORKBENCH: Global click listener to dismiss primed loan buttons ---
+        // --- VIRTUAL WORKBENCH: Global click listener to dismiss primed buttons ---
         document.addEventListener('click', (e) => {
-            const primedBtns = document.querySelectorAll('.primed');
+            const primedBtns = document.querySelectorAll('[data-primed="true"]');
             if (primedBtns.length > 0) {
                 const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"], [data-action="skip-tutorial"], [data-action="intro_buy_ship"]');
                 primedBtns.forEach(btn => {
                     if (btn !== closestTarget) {
+                        // Strip state flags
                         delete btn.dataset.primed;
-                        btn.classList.remove('primed', 'bg-red-600', 'text-white', 'border-red-800', 'bg-green-600', 'border-green-800', 'bg-white', 'text-black');
+                        btn.classList.remove('primed'); 
+                        
+                        // Strip inline overrides
                         btn.style.backgroundColor = '';
                         btn.style.color = '';
                         btn.style.borderColor = '';
-                        btn.style.minWidth = '';
+                        btn.style.width = '';
+                        btn.style.height = '';
+                        btn.style.transition = '';
                         
+                        // Restore original text safely shielded
                         if (btn.dataset.action === 'skip-tutorial') {
-                            btn.textContent = 'Skip Tutorial';
+                            btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
                         } else if (btn.dataset.action === 'intro_buy_ship') {
-                            btn.textContent = 'Purchase';
+                            btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
                         }
                     }
                 });
@@ -54,7 +60,7 @@ export class ActionClickHandler {
                     display.innerHTML = formatCredits(-parseInt(e.target.value, 10), true);
                     
                     // Unprime the pay button if sliding to prevent accidental payment of new amount
-                    const payBtn = document.querySelector('[data-action="pay_debt"].primed');
+                    const payBtn = document.querySelector('[data-action="pay_debt"][data-primed="true"]');
                     if (payBtn) {
                         delete payBtn.dataset.primed;
                         payBtn.classList.remove('primed');
@@ -106,7 +112,7 @@ export class ActionClickHandler {
 
             case 'exit-game-init':
                 e.stopPropagation();
-                // Mutate button to locked Danger State without hover mechanics
+                // Mutate button to locked Danger State
                 actionTarget.className = 'btn w-full py-3 text-lg bg-red-800 text-white border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)]';
                 actionTarget.innerHTML = 'CONFIRM EXIT?';
                 actionTarget.dataset.action = 'exit-game-confirm';
@@ -153,42 +159,50 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                e.preventDefault();
                 
                 if (!actionTarget.dataset.primed) {
-                    // Universally unprime all other primed buttons to prevent stuck states
-                    document.querySelectorAll('.primed').forEach(btn => {
+                    // Reset any previously primed buttons universally
+                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
                         if (btn !== actionTarget) {
                             delete btn.dataset.primed;
-                            btn.classList.remove('primed', 'bg-red-600', 'text-white', 'border-red-800', 'bg-green-600', 'border-green-800', 'bg-white', 'text-black');
+                            btn.classList.remove('primed');
                             btn.style.backgroundColor = '';
                             btn.style.color = '';
                             btn.style.borderColor = '';
-                            btn.style.minWidth = '';
+                            btn.style.width = '';
+                            btn.style.height = '';
+                            btn.style.transition = '';
                             
-                            if (btn.dataset.action === 'skip-tutorial') {
-                                btn.textContent = 'Skip Tutorial';
-                            } else if (btn.dataset.action === 'intro_buy_ship') {
-                                btn.textContent = 'Purchase';
+                            if (btn.dataset.action === 'intro_buy_ship') {
+                                btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
+                            } else if (btn.dataset.action === 'skip-tutorial') {
+                                btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
                             }
                         }
                     });
 
-                    actionTarget.dataset.primed = "true";
-                    actionTarget.classList.add('primed');
+                    // 1. FREEZE DIMENSIONS: Prevent layout shift that triggers Safari's tap-swallow
+                    const rect = actionTarget.getBoundingClientRect();
+                    actionTarget.style.width = Math.max(rect.width, 200) + 'px';
+                    actionTarget.style.height = rect.height + 'px';
                     
-                    // Directly apply inline styles to bypass Safari's CSS rule swap tap-drop
+                    // 2. DISABLE TRANSITIONS: Prevent Safari from waiting on CSS animations
+                    actionTarget.style.transition = 'none';
+
+                    // 3. PRIME STATE
+                    actionTarget.dataset.primed = "true";
+                    
+                    // 4. APPLY STYLES INLINE: Bypass CSS rule evaluation
                     actionTarget.style.backgroundColor = '#16a34a'; 
                     actionTarget.style.color = '#ffffff';
                     actionTarget.style.borderColor = '#166534';
                     
-                    // Hard-lock the width to guarantee no layout shift swallows the second tap
-                    actionTarget.style.minWidth = '180px';
-                    actionTarget.textContent = 'Confirm Purchase?';
+                    // 5. UPDATE TEXT WITH POINTER SHIELD
+                    actionTarget.innerHTML = '<span style="pointer-events: none;">Confirm Purchase?</span>';
                     return; 
                 }
 
-                // Route to the special IntroService handler
+                // Execute the purchase sequence on the 2nd valid tap
                 await this.simulationService.introService.handleStarterPurchase(shipId);
                 break;
             }
@@ -604,35 +618,44 @@ export class ActionClickHandler {
             
             case 'skip-tutorial': {
                 e.stopPropagation();
-                e.preventDefault();
                 
                 if (!actionTarget.dataset.primed) {
-                    document.querySelectorAll('.primed').forEach(btn => {
+                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
                         if (btn !== actionTarget) {
                             delete btn.dataset.primed;
-                            btn.classList.remove('primed', 'bg-red-600', 'text-white', 'border-red-800', 'bg-green-600', 'border-green-800', 'bg-white', 'text-black');
+                            btn.classList.remove('primed');
                             btn.style.backgroundColor = '';
                             btn.style.color = '';
                             btn.style.borderColor = '';
-                            btn.style.minWidth = '';
+                            btn.style.width = '';
+                            btn.style.height = '';
+                            btn.style.transition = '';
                             
                             if (btn.dataset.action === 'skip-tutorial') {
-                                btn.textContent = 'Skip Tutorial';
+                                btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
                             } else if (btn.dataset.action === 'intro_buy_ship') {
-                                btn.textContent = 'Purchase';
+                                btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
                             }
                         }
                     });
 
-                    actionTarget.dataset.primed = "true";
-                    actionTarget.classList.add('primed');
+                    // Lock dimensions
+                    const rect = actionTarget.getBoundingClientRect();
+                    actionTarget.style.width = Math.max(rect.width, 160) + 'px';
+                    actionTarget.style.height = rect.height + 'px';
                     
+                    // Disable transitions
+                    actionTarget.style.transition = 'none';
+
+                    // Prime state
+                    actionTarget.dataset.primed = "true";
+                    
+                    // Inline styles
                     actionTarget.style.backgroundColor = '#dc2626'; 
                     actionTarget.style.color = '#ffffff';
                     actionTarget.style.borderColor = '#991b1b'; 
                     
-                    actionTarget.style.minWidth = '160px';
-                    actionTarget.textContent = 'Confirm Skip?';
+                    actionTarget.innerHTML = '<span style="pointer-events: none;">Confirm Skip?</span>';
                     return; 
                 }
 
@@ -691,9 +714,8 @@ export class ActionClickHandler {
 
             case ACTION_IDS.PAY_DEBT: {
                 e.stopPropagation();
-                e.preventDefault();
                 if (!actionTarget.dataset.primed) {
-                    document.querySelectorAll('.primed').forEach(btn => {
+                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });
@@ -715,9 +737,8 @@ export class ActionClickHandler {
             }
             case ACTION_IDS.TAKE_LOAN: {
                 e.stopPropagation();
-                e.preventDefault();
                 if (!actionTarget.dataset.primed) {
-                    document.querySelectorAll('.primed').forEach(btn => {
+                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });
