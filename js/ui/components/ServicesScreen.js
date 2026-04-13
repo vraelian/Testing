@@ -138,7 +138,8 @@ export function renderServicesScreen(gameState, simulationService) {
 
     const hasSurcharges = statusEffects.some(s => s.id === 'status_service_surcharges');
     const hasContaminatedLines = statusEffects.some(s => s.id === 'status_contaminated_fuel');
-    const surchargeTag = hasSurcharges ? `<span class="text-red-500 font-bold ml-2">(x3 Penalty)</span>` : '';
+    const surchargeTag = hasSurcharges ? `<br><span class="text-red-500 font-bold">(x3 Penalty)</span>` : '';
+    const topClass = hasSurcharges ? '-top-8' : '-top-5';
 
     let fuelClassMod = 1;
     if (shipStatic) {
@@ -301,7 +302,7 @@ export function renderServicesScreen(gameState, simulationService) {
                             <span class="price-digits text-sm whitespace-nowrap ${canAffordRefuel ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(fuelCostPerTick, true)}
                             </span>
-                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest leading-tight" style="color: #08d9d6; opacity: 0.9;">
+                            <div class="absolute ${topClass} left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest leading-tight" style="color: #08d9d6; opacity: 0.9;">
                                 ${shipStatic ? shipStatic.class : 'C'} - CLASS FUEL${surchargeTag}
                             </div>
                           </div>
@@ -329,7 +330,7 @@ export function renderServicesScreen(gameState, simulationService) {
                             <span class="price-digits text-sm whitespace-nowrap ${canAffordRepair ? 'credits-text-pulsing' : 'text-red-500 shadow-red-500'}">
                               ${formatCredits(repairCostPerTick, true)}
                             </span>
-                            <div class="absolute -top-5 left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest leading-tight" style="color: #60a5fa; opacity: 0.9;">
+                            <div class="absolute ${topClass} left-0 w-full text-center text-[10px] font-mono uppercase tracking-widest leading-tight" style="color: #60a5fa; opacity: 0.9;">
                                 +1 Day / Tick${surchargeTag}
                             </div>
                           </div>
