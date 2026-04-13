@@ -50,7 +50,8 @@ export class TooltipHandler {
                     e.preventDefault();
 
                     // Stateful Toggle Logic
-                    if (this.activeTooltipTarget === actionTarget) {
+                    const isGenericVisible = document.getElementById('generic-tooltip')?.classList.contains('visible');
+                    if (this.activeTooltipTarget === actionTarget && isGenericVisible) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
                     } else {
@@ -64,11 +65,11 @@ export class TooltipHandler {
                     }
                     return;
 
-                // --- VIRTUAL WORKBENCH: Tooltip Centering Fix ---
                 case 'show-lore-tooltip':
                     e.stopPropagation();
                     e.preventDefault();
-                    if (this.activeTooltipTarget === actionTarget) {
+                    const isVisibleLore = document.getElementById('generic-tooltip')?.classList.contains('visible');
+                    if (this.activeTooltipTarget === actionTarget && isVisibleLore) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
                     } else {
@@ -76,7 +77,6 @@ export class TooltipHandler {
                         this.activeTooltipTarget = actionTarget;
                     }
                     return;
-                // --- END VIRTUAL WORKBENCH ---
 
                 case ACTION_IDS.SHOW_PRICE_GRAPH:
                 case ACTION_IDS.SHOW_FINANCE_GRAPH:
@@ -135,7 +135,10 @@ export class TooltipHandler {
     _toggleStatusTooltip(target) {
         const tooltip = target.querySelector('.status-tooltip');
         if (!tooltip) return;
-        if (this.activeStatusTooltip === tooltip) {
+        
+        const isVisible = tooltip.classList.contains('visible');
+        
+        if (this.activeStatusTooltip === tooltip && isVisible) {
             tooltip.classList.remove('visible');
             this.activeStatusTooltip = null;
         } else {

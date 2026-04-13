@@ -652,7 +652,7 @@ export class UIEventControl {
                         break;
                     case 'EFF_APPLY_STATUS':
                         const sName = eff.statusName || 'Unknown';
-                        effectText = `<span class="${baseStyle} text-red-500">Status Applied: ${sName}</span>`;
+                        effectText = `<span class="${baseStyle} text-red-500">Ship Status: + ${sName}</span>`;
                         break;
                     case 'EFF_UNLOCK_INTEL':
                         if (eff.failedIntel) {

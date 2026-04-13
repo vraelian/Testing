@@ -233,7 +233,7 @@ export class TravelService {
                 travelInfo.time = Math.round(travelInfo.time * 1.20);
             }
             if (hasStatus('status_nav_glitch')) {
-                travelInfo.time += Math.floor(Math.random() * 5) + 1;
+                travelInfo.time += Math.floor(Math.random() * 26) + 5;
             }
         }
 
