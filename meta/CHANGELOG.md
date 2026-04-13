@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.63] - 2026-4-12
+-  added ship status effects
+-  added event-chains
+-  event polish
+-  ship card polish
+
 # [37.59] - 2026-4-10
 -  intro sequence polish
 

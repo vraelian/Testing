@@ -571,7 +571,10 @@ export class UIModalEngine {
         const isBackdropClick = !e.target.closest('.modal-content');
         const isContentClick = e.target.closest('.modal-content');
 
-        if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick)) {
+        // --- VIRTUAL WORKBENCH: Bypass for specific modals lacking explicit flags ---
+        const isShipDetailException = (modalBackdrop.id === 'ship-detail-modal' && isBackdropClick);
+
+        if ((dismissOutside && isBackdropClick) || (dismissInside && isContentClick) || isShipDetailException) {
             if (modalBackdrop.id === 'lore-modal' && e.target.closest('#lore-modal-content')) return modalBackdrop.id;
             if (modalBackdrop.id === 'eula-modal' && e.target.closest('#eula-modal-content')) return modalBackdrop.id;
             if (modalBackdrop.id !== 'lore-modal' &&  modalBackdrop.id !== 'eula-modal' && !e.target.closest('.modal-content')) return modalBackdrop.id;

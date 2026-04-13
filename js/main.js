@@ -15,6 +15,7 @@ import { TravelService } from './services/world/TravelService.js';
 
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
+import { formatCredits } from './utils.js';
 import { SHIP_IDS, APP_VERSION, APP_FEEDBACK_URL } from './data/constants.js'; 
 import { DB } from './data/database.js';
 import './data/characters.js';
@@ -203,8 +204,20 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const newSlotBtn = document.createElement('button');
             if (data) {
-                const dateObj = new Date(data.metadata.timestamp);
-                const monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                let monthYear = 'Unknown Date';
+                if (data.metadata && data.metadata.timestamp) {
+                    const dateObj = new Date(data.metadata.timestamp);
+                    if (!isNaN(dateObj.getTime())) {
+                        monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                    }
+                }
+                
+                let creditsStr = data.metadata.creditsFormatted;
+                if (!creditsStr) {
+                    const rawCredits = data.metadata.credits !== undefined ? data.metadata.credits : (data.state && data.state.player ? data.state.player.credits : 0);
+                    creditsStr = formatCredits(rawCredits, true);
+                }
+
                 const locId = data.metadata.locationId || 'loc_earth';
                 const location = DB.MARKETS.find(m => m.id === locId) || DB.MARKETS.find(m => m.id === 'loc_earth');
                 const locationName = location.name;
@@ -216,7 +229,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 newSlotBtn.style.borderColor = theme.borderColor;
                 newSlotBtn.innerHTML = `
                     <span class="text-lg text-cyan-300 font-orbitron mb-1" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Slot ${slotNumber} - ${playerName}</span>
-                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span><br>${data.metadata.shipName} | ${locationName}</span>
+                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${creditsStr}</span><br>${data.metadata.shipName} | ${locationName}</span>
                 `;
                 newSlotBtn.onclick = () => showOverwriteWarning(slotId);
 
@@ -233,8 +246,20 @@ document.addEventListener('DOMContentLoaded', () => {
 
             // 2. Build Load Game Slot
             if (data) {
-                const dateObj = new Date(data.metadata.timestamp);
-                const monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                let monthYear = 'Unknown Date';
+                if (data.metadata && data.metadata.timestamp) {
+                    const dateObj = new Date(data.metadata.timestamp);
+                    if (!isNaN(dateObj.getTime())) {
+                        monthYear = (dateObj.getMonth() + 1) + '/' + dateObj.getFullYear();
+                    }
+                }
+                
+                let creditsStr = data.metadata.creditsFormatted;
+                if (!creditsStr) {
+                    const rawCredits = data.metadata.credits !== undefined ? data.metadata.credits : (data.state && data.state.player ? data.state.player.credits : 0);
+                    creditsStr = formatCredits(rawCredits, true);
+                }
+
                 const locId = data.metadata.locationId || 'loc_earth';
                 const location = DB.MARKETS.find(m => m.id === locId) || DB.MARKETS.find(m => m.id === 'loc_earth');
                 const locationName = location.name;
@@ -250,7 +275,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 loadSlotBtn.style.borderColor = theme.borderColor;
                 loadSlotBtn.innerHTML = `
                     <span class="text-lg text-cyan-300 font-orbitron mb-1" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">Slot ${slotNumber} - ${playerName}</span>
-                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${data.metadata.creditsFormatted}</span><br>${data.metadata.shipName} | ${locationName}</span>
+                    <span class="save-slot-metadata" style="text-shadow: 1px 1px 2px rgba(0,0,0,0.8);">${monthYear} | <span class="save-slot-metadata-hl">${creditsStr}</span><br>${data.metadata.shipName} | ${locationName}</span>
                 `;
                 loadSlotBtn.onclick = () => executeStartGame('load', slotId);
 
