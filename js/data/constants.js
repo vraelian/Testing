@@ -57,7 +57,6 @@ export const SHIP_IDS = Object.freeze({
     STARGAZER: 'rare_s4', // Obsolete
     BEHEMOTH: 'Behemoth.Ship',
 });
-// --- [[END]] VIRTUAL WORKBENCH (Phase 2) ---
 
 /**
  * Unique identifiers for each type of commodity that can be traded.
@@ -222,6 +221,16 @@ export const UPGRADE_COLORS = Object.freeze({
     VIOLET: '#8b5cf6'   // Tailwind Violet 500
 });
 
+// --- V4 SAVE SYSTEM: SMART ARRAY UNION DEFINITIONS ---
+export const UNION_ARRAYS = [
+    'unlockedLocationIds', 
+    'unlockedLicenseIds', 
+    'seenEvents', 
+    'seenCommodityMilestones', 
+    'seenBatchIds', 
+    'skippedTutorialBatches', 
+    'officerRoster'
+];
 
 // --- [[START]] EVENT SYSTEM 2.0 ---
 /**

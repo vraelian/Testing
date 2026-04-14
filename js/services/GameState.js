@@ -348,23 +348,6 @@ export class GameState {
     }
 
     /**
-     * Saves the current game state to localStorage.
-     * NOTE: This functionality is currently disabled in favor of V4 Save System.
-     */
-    saveGame() {
-        // Obsolete
-    }
-
-    /**
-     * Loads the game state from localStorage.
-     * NOTE: This functionality is currently disabled in favor of V4 Save System.
-     * @returns {boolean} True if a game was successfully loaded, false otherwise.
-     */
-    loadGame() {
-        return false;
-    }
-
-    /**
      * Initializes the game state for a new game session, setting all player, market,
      * and other dynamic data to their default starting values.
      * @param {string} playerName - The name entered by the player.

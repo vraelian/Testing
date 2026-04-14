@@ -275,11 +275,8 @@ export class UIHangarControl {
                 const tooltipText = def ? def.description : '';
                 const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
-                let tier = 1;
-                if (id.endsWith('_3') || id.endsWith('_III')) tier = 3;
-                else if (id.endsWith('_2') || id.endsWith('_II')) tier = 2;
-                else if (id.endsWith('_4')) tier = 4;
-                else if (id.endsWith('_5')) tier = 5;
+                // Refactored: Dynamically extract tier using the central Registry pattern
+                const tier = GameAttributes.extractTier(id);
 
                 const borderColor = this._adjustColor(baseColor, -40);
                 const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;

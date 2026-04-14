@@ -195,7 +195,6 @@ const ATTRIBUTE_DEFINITIONS = {
         color: COLORS.GREY,
         isAlien: true
     },
-    // --- CHANGED: Updated description to reflect Arrival Refund ---
     'ATTR_MATTER_ABSORPTION': {
         name: "Matter Absorption",
         description: "Absorbs stellar matter to regenerate 50% of spent fuel upon arrival.",
@@ -490,7 +489,7 @@ const ATTRIBUTE_DEFINITIONS = {
         color: COLORS.GOLD
     },
     
-    // Syndicate Badge: Unchanged in request, keeping defaults or logic as previous
+    // Syndicate Badge
     'UPG_ECO_DEBT_1': {
         name: "Syndicate Badge I",
         description: "Reduces monthly debt interest by 20%.",
@@ -779,28 +778,36 @@ export class GameAttributes {
     }
 
     /**
-     * Retrieves the station quirk IDs for a specific location.
+     * Extracts the numerical tier from an ID string, defaulting to 1 if not found.
+     * Parses standard trailing numerics (e.g., '_3') and roman numerals (e.g., '_III').
+     * @param {string} id 
+     * @returns {number} The integer tier.
+     */
+    static extractTier(id) {
+        if (!id) return 1;
+        const match = id.match(/_([0-9]+|[IVX]+)$/i);
+        if (match) {
+            const val = match[1].toUpperCase();
+            if (val === '1' || val === 'I') return 1;
+            if (val === '2' || val === 'II') return 2;
+            if (val === '3' || val === 'III') return 3;
+            if (val === '4' || val === 'IV') return 4;
+            if (val === '5' || val === 'V') return 5;
+            if (val === '6' || val === 'VI') return 6;
+            if (val === '7' || val === 'VII') return 7;
+            return parseInt(val, 10) || 1;
+        }
+        return 1;
+    }
+
+    /**
+     * Retrieves the station quirk IDs for a specific location dynamically from the DB.
      * @param {string} locationId 
      * @returns {string[]} Array of Quirk IDs
      */
     static getStationQuirks(locationId) {
-        const map = {
-            [LOCATION_IDS.SUN]: ['QUIRK_SOL_FORGE'],
-            [LOCATION_IDS.MERCURY]: ['QUIRK_MERCURY_THIRST'],
-            [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_DATA'],
-            [LOCATION_IDS.EARTH]: ['QUIRK_EARTH_CONSUMPTION'],
-            [LOCATION_IDS.LUNA]: ['QUIRK_LUNA_SHIPYARD'],
-            [LOCATION_IDS.MARS]: ['QUIRK_MARS_COLONY'],
-            [LOCATION_IDS.BELT]: ['QUIRK_BELT_ANOMALY'],
-            [LOCATION_IDS.EXCHANGE]: ['QUIRK_EXCHANGE_VOLATILITY'],
-            [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_REFINERY'],
-            [LOCATION_IDS.SATURN]: ['QUIRK_SATURN_LUXURY'],
-            [LOCATION_IDS.URANUS]: ['QUIRK_URANUS_RESEARCH'],
-            [LOCATION_IDS.NEPTUNE]: ['QUIRK_NEPTUNE_MILITARY'],
-            [LOCATION_IDS.KEPLER]: ['QUIRK_KEPLER_BANK'],
-            [LOCATION_IDS.PLUTO]: ['QUIRK_PLUTO_FRINGE']
-        };
-        return map[locationId] || [];
+        const market = DB.MARKETS.find(m => m.id === locationId);
+        return market?.quirks || [];
     }
 
     // --- HELPER METHODS FOR CALCULATING MODIFIERS ---

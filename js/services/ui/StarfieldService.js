@@ -28,6 +28,11 @@ class StarfieldService {
         this.currentSpeedMultiplier = 0.2;
         this.targetSpeedMultiplier = 0.2;
         this.starColor = 'rgba(255, 255, 255, 1.0)';
+
+        // Cached values for performance
+        this.cx = 0;
+        this.cy = 0;
+        this._boundResize = this._resizeCanvas.bind(this);
     }
 
     /**
@@ -55,7 +60,7 @@ class StarfieldService {
         parentElement.appendChild(this.container);
 
         this._resizeCanvas();
-        window.addEventListener('resize', this._resizeCanvas.bind(this));
+        window.addEventListener('resize', this._boundResize);
 
         this._initStars();
         this._renderLoop();
@@ -146,7 +151,7 @@ class StarfieldService {
         if (this.container && this.container.parentNode) {
             this.container.parentNode.removeChild(this.container);
         }
-        window.removeEventListener('resize', this._resizeCanvas.bind(this));
+        window.removeEventListener('resize', this._boundResize);
         this.container = null;
         this.canvas = null;
         this.ctx = null;
@@ -176,6 +181,10 @@ class StarfieldService {
         // Scale the internal rendering buffer to the hardware pixel density
         this.canvas.width = window.innerWidth * dpr;
         this.canvas.height = window.innerHeight * dpr;
+
+        // Cache center coordinates for render loop
+        this.cx = this.canvas.width / 2;
+        this.cy = this.canvas.height / 2;
     }
 
     /**
@@ -212,9 +221,6 @@ class StarfieldService {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const cx = this.canvas.width / 2;
-        const cy = this.canvas.height / 2;
-
         // Smoothly interpolate current speed towards the target speed (The "Punch It" effect)
         this.currentSpeedMultiplier += (this.targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.05;
 
@@ -233,14 +239,14 @@ class StarfieldService {
                 star.pz = 1000;
             }
 
-            // 3D to 2D Projection mapping
+            // 3D to 2D Projection mapping using cached center points
             const factor = 400 / star.z;
-            const px = cx + star.x * factor;
-            const py = cy + star.y * factor;
+            const px = this.cx + star.x * factor;
+            const py = this.cy + star.y * factor;
             
             const pFactor = 400 / star.pz;
-            const ppx = cx + star.x * pFactor;
-            const ppy = cy + star.y * pFactor;
+            const ppx = this.cx + star.x * pFactor;
+            const ppy = this.cy + star.y * pFactor;
 
             // Size scales up as it gets closer to the camera (Increased minimum thickness for visibility)
             const size = Math.max(1.2, (1 - star.z / 1000) * 4.0);

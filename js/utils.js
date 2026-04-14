@@ -5,6 +5,7 @@
  * These helpers are used throughout the application to standardize common operations.
  */
 import { DATE_CONFIG } from './data/database.js';
+import { UNION_ARRAYS } from './data/constants.js';
 
 /**
  * A centralized map for commodity visual styles.
@@ -199,19 +200,6 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
 
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
-
-// --- V4 SAVE SYSTEM: SMART ARRAY UNION DEFINITIONS ---
-// Arrays that should dynamically expand to include new codebase defaults
-// instead of being strictly overwritten by an old save file.
-const UNION_ARRAYS = [
-    'unlockedLocationIds', 
-    'unlockedLicenseIds', 
-    'seenEvents', 
-    'seenCommodityMilestones', 
-    'seenBatchIds', 
-    'skippedTutorialBatches', 
-    'officerRoster'
-];
 
 /**
  * Recursively merges a source object into a target object.

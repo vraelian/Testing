@@ -107,7 +107,6 @@ export class DebugService {
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
-            selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
             selectedMission: 'debug_kitchen_sink',
             selectedSystemState: 'NEUTRAL', 
             botDaysToRun: 365,
@@ -909,12 +908,6 @@ ${logHistory}
                 }
             }},
 
-            triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
-                const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
-                if (event) {
-                    this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
-                }
-            }},
             forceAddTerminalMission: { name: 'Force to Terminal', type: 'button', handler: () => {
                 if (this.debugState.selectedMission && this.simulationService && this.simulationService.missionService) {
                     this.simulationService.missionService.forceToTerminal(this.debugState.selectedMission);
@@ -1243,12 +1236,6 @@ ${logHistory}
                     this.simulationService.travelService.debugAlwaysTriggerEvents = val;
                 }
             });
-        
-        if (DB.AGE_EVENTS.length > 0) {
-            const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
-            triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
-            triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
-        }
         
         const sortedMissions = Object.values(DB.MISSIONS).map(m => {
             const match = m.id.match(/\d+$/);

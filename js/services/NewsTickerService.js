@@ -97,16 +97,6 @@ export class NewsTickerService {
     }
 
     /**
-     * Called by TimeService each day.
-     * The old version added flavor text here. The V2 design moves flavor
-     * text to onLocationChange, so this pulse is now empty.
-     * Kept for compatibility with TimeService.
-     */
-    pulse() {
-        // No longer used for flavor text as per V2 design.
-    }
-
-    /**
      * Called by SimulationService when the player arrives at a new location.
      * Rebuilds the entire default message queue.
      * @param {string|null} locationOverride - The new location ID if called before state update.
