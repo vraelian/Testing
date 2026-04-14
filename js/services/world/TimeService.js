@@ -107,11 +107,6 @@ export class TimeService {
             // --- SYSTEM STATES V3: Daily Evaluation Loop ---
             this.systemStateService.evaluateTick();
 
-            // Pulse News Ticker
-            if (this.simulationService) {
-                this.simulationService.pulseNewsTicker();
-            }
-
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
             // Only applies to the active ship.
             let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
@@ -155,7 +150,6 @@ export class TimeService {
                 this._handleBirthday(this.gameState.player.playerAge);
             }
 
-            this._checkAgeEvents();
             this.marketService.evolveMarketPrices();
 
             // Weekly Market Updates
@@ -350,24 +344,6 @@ export class TimeService {
                 this.uiManager.queueModal('event-modal', title, `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`);
             }
         }
-    }
-
-    _checkAgeEvents() {
-        DB.AGE_EVENTS.forEach(event => {
-            if (this.gameState.player.seenEvents.includes(event.id)) return;
-
-            // Trigger conditions
-            if ((event.trigger.day && this.gameState.day >= event.trigger.day) || 
-                (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
-                
-                this.gameState.player.seenEvents.push(event.id);
-                this.uiManager.showAgeEventModal(event, (choice) => {
-                    if (this.simulationService) {
-                        this.simulationService._applyPerk(choice);
-                    }
-                });
-            }
-        });
     }
 
     // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---

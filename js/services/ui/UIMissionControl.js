@@ -912,13 +912,16 @@ export class UIMissionControl {
                            }
 
                            const activeTrackedId = newState.missions.trackedMissionId;
-                           document.querySelectorAll('.mission-track-star').forEach(star => {
-                               if (star.dataset.missionId === activeTrackedId) {
-                                   star.classList.add('active');
-                               } else {
-                                   star.classList.remove('active');
-                               }
-                           });
+                           const screen = uiManager.cache.missionsScreen;
+                           if (screen) {
+                               screen.querySelectorAll('.mission-track-star').forEach(star => {
+                                   if (star.dataset.missionId === activeTrackedId) {
+                                       star.classList.add('active');
+                                   } else {
+                                       star.classList.remove('active');
+                                   }
+                               });
+                           }
                        };
 
                        if (this.manager.simulationService) {

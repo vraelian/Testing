@@ -1866,59 +1866,6 @@
     visibility: visible;
 }
 
-/* DEPRECATED STYLES - Kept for non-nav UI elements */
-.ship-hud {
-    background-color: rgba(10, 20, 40, 0.5);
-    border: 2px solid #2a3a5a;
-    padding: 0.45rem;
-    font-size: 0.8rem;
-    border-radius: 10px;
-    position: relative;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-.ship-hud::before, .ship-hud::after {
-    content: '';
-    position: absolute; width: 15px; height: 15px;
-    border-color: #7a9ac0; border-style: solid;
-}
-.ship-hud::before { top: -2px; left: -2px; border-width: 2px 0 0 2px;
-    border-top-left-radius: 10px; }
-.ship-hud::after { bottom: -2px; right: -2px;
-    border-width: 0 2px 2px 0; border-bottom-right-radius: 10px; }
-
-.hud-stat-bar { background-color: #1a253c;
-    border-radius: 3px; overflow: hidden; height: 6px;
-}
-.hud-stat-bar > div { transition: width 0.5s ease-out;
-    height: 100%; }
-
-.sci-fi-frame {
-    position: relative;
-    border: 1px solid #2a3a5a;
-    box-shadow: inset 0 0 15px rgba(12, 16, 29, 0.5);
-}
-.sci-fi-frame::before, .sci-fi-frame::after {
-    content: '';
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    border-color: #7a9ac0; /* Default border color */
-    border-style: solid;
-    transition: border-color 0.3s; /* Smooth transition for border color */
-}
-.sci-fi-frame::before {
-    top: -1px;
-    left: -1px;
-    border-width: 2px 0 0 2px;
-    border-top-left-radius: 8px; /* Top-left corner */
-}
-.sci-fi-frame::after {
-    bottom: -1px;
-    right: -1px;
-    border-width: 0 2px 2px 0;
-    border-bottom-right-radius: 8px; /* Bottom-right corner */
-}
-
 .bottom-sticky-bar {
     display: none;
     position: fixed;
@@ -9967,27 +9914,6 @@ BULKHEAD NAVIGATION STYLES
 /* --- [[END]] NEW BULKHEAD STYLES --- */
 
 
-/* --- [[START]] DEPRECATED STYLES --- */
-.btn-header {
-     padding: 0.2rem 1.5rem;
-     font-size: 1.125rem;
-     flex: 1;
-     background-blend-mode: overlay;
-     background-image: linear-gradient(rgba(255,255,255,0.08), rgba(0,0,0,0.1));
-}
-
-@media (max-width: 768px) {
-    .btn-header {
-        padding: 0.2rem 0.6rem;
-        font-size: 0.8rem;
-        flex: 1;
-        min-width: 0;
-        width: auto;
-    }
-}
-/* --- [[END]] DEPRECATED STYLES --- */
-
-
 /* --- PHASE 2: SOL DATE PULSE ANIMATION --- */
 @keyframes solPulse {
     0% { text-shadow: 0 0 2px rgba(253, 224, 71, 0.3); opacity: 0.8; }
@@ -13861,6 +13787,7 @@ document.addEventListener('DOMContentLoaded', () => {
  * These helpers are used throughout the application to standardize common operations.
  */
 import { DATE_CONFIG } from './data/database.js';
+import { UNION_ARRAYS } from './data/constants.js';
 
 /**
  * A centralized map for commodity visual styles.
@@ -14055,19 +13982,6 @@ export function renderIndicatorPills({ price, sellPrice, galacticAvg, playerItem
 
     return `${marketIndicatorHtml}${plIndicatorHtml}`;
 }
-
-// --- V4 SAVE SYSTEM: SMART ARRAY UNION DEFINITIONS ---
-// Arrays that should dynamically expand to include new codebase defaults
-// instead of being strictly overwritten by an old save file.
-const UNION_ARRAYS = [
-    'unlockedLocationIds', 
-    'unlockedLicenseIds', 
-    'seenEvents', 
-    'seenCommodityMilestones', 
-    'seenBatchIds', 
-    'skippedTutorialBatches', 
-    'officerRoster'
-];
 
 /**
  * Recursively merges a source object into a target object.
@@ -14326,7 +14240,6 @@ export const SHIP_IDS = Object.freeze({
     STARGAZER: 'rare_s4', // Obsolete
     BEHEMOTH: 'Behemoth.Ship',
 });
-// --- [[END]] VIRTUAL WORKBENCH (Phase 2) ---
 
 /**
  * Unique identifiers for each type of commodity that can be traded.
@@ -14491,6 +14404,16 @@ export const UPGRADE_COLORS = Object.freeze({
     VIOLET: '#8b5cf6'   // Tailwind Violet 500
 });
 
+// --- V4 SAVE SYSTEM: SMART ARRAY UNION DEFINITIONS ---
+export const UNION_ARRAYS = [
+    'unlockedLocationIds', 
+    'unlockedLicenseIds', 
+    'seenEvents', 
+    'seenCommodityMilestones', 
+    'seenBatchIds', 
+    'skippedTutorialBatches', 
+    'officerRoster'
+];
 
 // --- [[START]] EVENT SYSTEM 2.0 ---
 /**
@@ -14730,7 +14653,6 @@ export const MISSIONS = {
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
 import { MISSION_REGISTRY } from './missions/missionRegistry.js';
 import { RANDOM_EVENTS } from './events.js';
-import { AGE_EVENTS } from './age_events.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
 import { SHIP_DATABASE } from './ship_database.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
@@ -14869,9 +14791,6 @@ export const DB = {
         [PERK_IDS.VENETIAN_SYNDICATE]: { fuelDiscount: 0.25, repairDiscount: 0.25 }
     },
 
-    // --- Narrative Events Triggered by Game Progression ---
-    AGE_EVENTS: AGE_EVENTS,
-
     // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: RANDOM_EVENTS,
 
@@ -14946,7 +14865,8 @@ export const DB = {
                 commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.03, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.03 }, 
                 dampeners: { [COMMODITY_IDS.PLASTEEL]: 0.5, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5 } 
             },
-            intelProfile: { costMod: 1.30, minDiscount: 0.30, maxDiscount: 0.60, focusCats: ['RARE', 'BIO', 'TECH'] }
+            intelProfile: { costMod: 1.30, minDiscount: 0.30, maxDiscount: 0.60, focusCats: ['RARE', 'BIO', 'TECH'] },
+            quirks: ['QUIRK_SOL_FORGE']
         },
         { 
             id: LOCATION_IDS.MERCURY, 
@@ -14970,7 +14890,8 @@ export const DB = {
                 [COMMODITY_IDS.PLASTEEL]: 2.0
             },
             ecoProfile: { replenishRate: 0.05, panicMult: 2.0, commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.15 } },
-            intelProfile: { costMod: 0.75, durationMod: 0.90 }
+            intelProfile: { costMod: 0.75, durationMod: 0.90 },
+            quirks: ['QUIRK_MERCURY_THIRST']
         },
         { 
             id: LOCATION_IDS.VENUS, 
@@ -14996,7 +14917,8 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5
             },
             ecoProfile: { pressureMod: 1.15 },
-            intelProfile: { costMod: 0.50, durationMod: 1.30, focusCats: ['TECH'] }
+            intelProfile: { costMod: 0.50, durationMod: 1.30, focusCats: ['TECH'] },
+            quirks: ['QUIRK_VENUS_DATA']
         },
         { 
             id: LOCATION_IDS.EARTH, 
@@ -15022,7 +14944,8 @@ export const DB = {
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 
             },
             ecoProfile: { pressureMod: 0.70 },
-            intelProfile: { costMod: 1.15, durationMod: 1.20, focusCats: ['BIO', 'TECH'] }
+            intelProfile: { costMod: 1.15, durationMod: 1.20, focusCats: ['BIO', 'TECH'] },
+            quirks: ['QUIRK_EARTH_CONSUMPTION']
         },
         { 
             id: LOCATION_IDS.LUNA, 
@@ -15049,7 +14972,8 @@ export const DB = {
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
             },
             ecoProfile: { replenishRate: 0.12 },
-            intelProfile: { focusCats: ['IND', 'RAW'] }
+            intelProfile: { focusCats: ['IND', 'RAW'] },
+            quirks: ['QUIRK_LUNA_SHIPYARD']
         },
         { 
             id: LOCATION_IDS.MARS, 
@@ -15075,7 +14999,8 @@ export const DB = {
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
             },
             ecoProfile: { commodityReplenishRates: { [COMMODITY_IDS.HYDROPONICS]: 0.08, [COMMODITY_IDS.WATER_ICE]: 0.08 } },
-            intelProfile: {}
+            intelProfile: {},
+            quirks: ['QUIRK_MARS_COLONY']
         },
         { 
             id: LOCATION_IDS.BELT, 
@@ -15101,7 +15026,8 @@ export const DB = {
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
             },
             ecoProfile: { replenishRate: 0.15 },
-            intelProfile: { minDiscount: 0.05, maxDiscount: 0.60, durationMod: 0.50, costMod: 0.80 }
+            intelProfile: { minDiscount: 0.05, maxDiscount: 0.60, durationMod: 0.50, costMod: 0.80 },
+            quirks: ['QUIRK_BELT_ANOMALY']
         },
         { 
             id: LOCATION_IDS.EXCHANGE, 
@@ -15127,7 +15053,8 @@ export const DB = {
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5
             },
             ecoProfile: { pressureMod: 1.30 },
-            intelProfile: { focusCats: ['TECH', 'BIO', 'RARE'] }
+            intelProfile: { focusCats: ['TECH', 'BIO', 'RARE'] },
+            quirks: ['QUIRK_EXCHANGE_VOLATILITY']
         },
         { 
             id: LOCATION_IDS.JUPITER, 
@@ -15152,7 +15079,8 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
             },
             ecoProfile: { dampeners: { [COMMODITY_IDS.PROPELLANT]: 0.20 }, commodityReplenishRates: { [COMMODITY_IDS.PROPELLANT]: 0.20 } },
-            intelProfile: { focusCats: ['IND'] }
+            intelProfile: { focusCats: ['IND'] },
+            quirks: ['QUIRK_JUPITER_REFINERY']
         },
         { 
             id: LOCATION_IDS.SATURN, 
@@ -15177,7 +15105,8 @@ export const DB = {
                 [COMMODITY_IDS.CLONED_ORGANS]: 0.5 
             },
             ecoProfile: { recoveryMod: 1.25 },
-            intelProfile: { costMod: 1.25, minDiscount: 0.25, focusCats: ['CIV', 'BIO'] }
+            intelProfile: { costMod: 1.25, minDiscount: 0.25, focusCats: ['CIV', 'BIO'] },
+            quirks: ['QUIRK_SATURN_LUXURY']
         },
         { 
             id: LOCATION_IDS.URANUS, 
@@ -15202,7 +15131,8 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
             },
             ecoProfile: {},
-            intelProfile: { focusCats: ['TECH', 'RARE'] }
+            intelProfile: { focusCats: ['TECH', 'RARE'] },
+            quirks: ['QUIRK_URANUS_RESEARCH']
         },
         { 
             id: LOCATION_IDS.NEPTUNE, 
@@ -15228,7 +15158,8 @@ export const DB = {
                 [COMMODITY_IDS.PROPELLANT]: 0.5 
             },
             ecoProfile: { disableFluctuation: true, meanReversionMod: 1.25 },
-            intelProfile: { focusCats: ['CIV', 'IND'] }
+            intelProfile: { focusCats: ['CIV', 'IND'] },
+            quirks: ['QUIRK_NEPTUNE_MILITARY']
         },
         { 
             id: LOCATION_IDS.KEPLER, 
@@ -15253,7 +15184,8 @@ export const DB = {
                 [COMMODITY_IDS.PROCESSORS]: 0.5
             },
             ecoProfile: {},
-            intelProfile: { packetMultiplier: 2 }
+            intelProfile: { packetMultiplier: 2 },
+            quirks: ['QUIRK_KEPLER_BANK']
         },
         { 
             id: LOCATION_IDS.PLUTO, 
@@ -15279,7 +15211,8 @@ export const DB = {
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
             },
             ecoProfile: { replenishRate: 0.05, panicMult: 2.0 },
-            intelProfile: { minDiscount: 0.40, maxDiscount: 0.75, focusCats: ['BIO', 'TECH', 'RARE'] }
+            intelProfile: { minDiscount: 0.40, maxDiscount: 0.75, focusCats: ['BIO', 'TECH', 'RARE'] },
+            quirks: ['QUIRK_PLUTO_FRINGE']
         }
     ],
 
@@ -16454,21 +16387,6 @@ export const OFFICERS = {
     }
 };
 --- END OF FILE: ./js/data/officers.js ---
-
---- START OF FILE: ./js/data/age_events.js ---
-// js/data/age_events.js
-/**
- * @fileoverview
- * Defines all static narrative "age" events triggered by game progression.
- * * [DEPRECATED] 
- * These static events have been replaced by the procedural 3-Era Age System 
- * handled dynamically in TimeService.js. This array is intentionally left empty 
- * to prevent legacy triggers while preserving imports in database.js.
- */
-import { PERK_IDS } from './constants.js';
-
-export const AGE_EVENTS = [];
---- END OF FILE: ./js/data/age_events.js ---
 
 --- START OF FILE: ./js/data/lore/lore_broadstrokes.js ---
 // js/data/lore/lore_broadstrokes.js
@@ -18280,14 +18198,6 @@ export const CONSUMABLES = {
     }
 };
 --- END OF FILE: ./js/data/items.js ---
-
---- START OF FILE: ./js/data/tutorials/tuts_progression.js ---
-
---- END OF FILE: ./js/data/tutorials/tuts_progression.js ---
-
---- START OF FILE: ./js/data/tutorials/tuts_economy.js ---
-
---- END OF FILE: ./js/data/tutorials/tuts_economy.js ---
 
 --- START OF FILE: ./js/data/tutorials/tuts_intro.js ---
 // js/data/tutorials/tuts_intro.js
@@ -21884,13 +21794,16 @@ export class UIMissionControl {
                            }
 
                            const activeTrackedId = newState.missions.trackedMissionId;
-                           document.querySelectorAll('.mission-track-star').forEach(star => {
-                               if (star.dataset.missionId === activeTrackedId) {
-                                   star.classList.add('active');
-                               } else {
-                                   star.classList.remove('active');
-                               }
-                           });
+                           const screen = uiManager.cache.missionsScreen;
+                           if (screen) {
+                               screen.querySelectorAll('.mission-track-star').forEach(star => {
+                                   if (star.dataset.missionId === activeTrackedId) {
+                                       star.classList.add('active');
+                                   } else {
+                                       star.classList.remove('active');
+                                   }
+                               });
+                           }
                        };
 
                        if (this.manager.simulationService) {
@@ -24564,11 +24477,8 @@ export class UIHangarControl {
                 const tooltipText = def ? def.description : '';
                 const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
-                let tier = 1;
-                if (id.endsWith('_3') || id.endsWith('_III')) tier = 3;
-                else if (id.endsWith('_2') || id.endsWith('_II')) tier = 2;
-                else if (id.endsWith('_4')) tier = 4;
-                else if (id.endsWith('_5')) tier = 5;
+                // Refactored: Dynamically extract tier using the central Registry pattern
+                const tier = GameAttributes.extractTier(id);
 
                 const borderColor = this._adjustColor(baseColor, -40);
                 const borderStyle = tier > 1 ? `2px solid ${borderColor}` : `1px solid ${baseColor}`;
@@ -24859,6 +24769,11 @@ class StarfieldService {
         this.currentSpeedMultiplier = 0.2;
         this.targetSpeedMultiplier = 0.2;
         this.starColor = 'rgba(255, 255, 255, 1.0)';
+
+        // Cached values for performance
+        this.cx = 0;
+        this.cy = 0;
+        this._boundResize = this._resizeCanvas.bind(this);
     }
 
     /**
@@ -24886,7 +24801,7 @@ class StarfieldService {
         parentElement.appendChild(this.container);
 
         this._resizeCanvas();
-        window.addEventListener('resize', this._resizeCanvas.bind(this));
+        window.addEventListener('resize', this._boundResize);
 
         this._initStars();
         this._renderLoop();
@@ -24977,7 +24892,7 @@ class StarfieldService {
         if (this.container && this.container.parentNode) {
             this.container.parentNode.removeChild(this.container);
         }
-        window.removeEventListener('resize', this._resizeCanvas.bind(this));
+        window.removeEventListener('resize', this._boundResize);
         this.container = null;
         this.canvas = null;
         this.ctx = null;
@@ -25007,6 +24922,10 @@ class StarfieldService {
         // Scale the internal rendering buffer to the hardware pixel density
         this.canvas.width = window.innerWidth * dpr;
         this.canvas.height = window.innerHeight * dpr;
+
+        // Cache center coordinates for render loop
+        this.cx = this.canvas.width / 2;
+        this.cy = this.canvas.height / 2;
     }
 
     /**
@@ -25043,9 +24962,6 @@ class StarfieldService {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        const cx = this.canvas.width / 2;
-        const cy = this.canvas.height / 2;
-
         // Smoothly interpolate current speed towards the target speed (The "Punch It" effect)
         this.currentSpeedMultiplier += (this.targetSpeedMultiplier - this.currentSpeedMultiplier) * 0.05;
 
@@ -25064,14 +24980,14 @@ class StarfieldService {
                 star.pz = 1000;
             }
 
-            // 3D to 2D Projection mapping
+            // 3D to 2D Projection mapping using cached center points
             const factor = 400 / star.z;
-            const px = cx + star.x * factor;
-            const py = cy + star.y * factor;
+            const px = this.cx + star.x * factor;
+            const py = this.cy + star.y * factor;
             
             const pFactor = 400 / star.pz;
-            const ppx = cx + star.x * pFactor;
-            const ppy = cy + star.y * pFactor;
+            const ppx = this.cx + star.x * pFactor;
+            const ppy = this.cy + star.y * pFactor;
 
             // Size scales up as it gets closer to the camera (Increased minimum thickness for visibility)
             const size = Math.max(1.2, (1 - star.z / 1000) * 4.0);
@@ -25348,12 +25264,9 @@ export class UISolStationControl {
         // Strip any dynamically injected rarity themes from Phase 3
         targetEl.className = targetEl.className.replace(/\bmodal-theme-rarity-\S+/g, '').trim();
 
-        if (level < 10) targetEl.classList.add('sol-theme-white');
-        else if (level < 20) targetEl.classList.add('sol-theme-green');
-        else if (level < 30) targetEl.classList.add('sol-theme-blue');
-        else if (level < 40) targetEl.classList.add('sol-theme-gold');
-        else if (level < 50) targetEl.classList.add('sol-theme-orange');
-        else targetEl.classList.add('sol-theme-red');
+        // Dynamically apply theme mapped from level style class helper
+        const themeClass = getLevelStyleClass(level).replace('level', 'theme');
+        targetEl.classList.add(themeClass);
     }
 
     _applyLevelTheme(level) {
@@ -25497,6 +25410,7 @@ export class UISolStationControl {
 
     _buildDomCache(root) {
         this.domCache = {
+            root: root,
             integrityLabel: root.querySelector('.sol-health-bar-label > div:nth-child(2)'),
             integrityBar: root.querySelector('.sol-health-fill'),
             entropyVal: root.querySelector('[data-id="output-entropy"]'),
@@ -25637,10 +25551,13 @@ export class UISolStationControl {
         if (!svc) return;
 
         let lastSyncTime = 0;
+        let cachedRoot = null;
 
         const loop = () => {
-            const root = document.getElementById('sol-dashboard-root');
-            if (!root || !document.body.contains(root) || root.closest('.hidden')) {
+            if (!cachedRoot || !document.body.contains(cachedRoot)) {
+                cachedRoot = document.getElementById('sol-dashboard-root');
+            }
+            if (!cachedRoot || cachedRoot.closest('.hidden')) {
                 this._stopRefreshLoop();
                 return;
             }
@@ -28041,7 +27958,6 @@ export class DebugService {
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
-            selectedAgeEvent: DB.AGE_EVENTS[0]?.id || null, 
             selectedMission: 'debug_kitchen_sink',
             selectedSystemState: 'NEUTRAL', 
             botDaysToRun: 365,
@@ -28843,12 +28759,6 @@ ${logHistory}
                 }
             }},
 
-            triggerAgeEvent: { name: 'Trigger Age Event', type: 'button', handler: () => {
-                const event = DB.AGE_EVENTS.find(e => e.id === this.debugState.selectedAgeEvent);
-                if (event) {
-                    this.uiManager.showAgeEventModal(event, (choice) => this.simulationService._applyPerk(choice));
-                }
-            }},
             forceAddTerminalMission: { name: 'Force to Terminal', type: 'button', handler: () => {
                 if (this.debugState.selectedMission && this.simulationService && this.simulationService.missionService) {
                     this.simulationService.missionService.forceToTerminal(this.debugState.selectedMission);
@@ -29177,12 +29087,6 @@ ${logHistory}
                     this.simulationService.travelService.debugAlwaysTriggerEvents = val;
                 }
             });
-        
-        if (DB.AGE_EVENTS.length > 0) {
-            const ageEventOptions = DB.AGE_EVENTS.reduce((acc, event) => ({...acc, [event.title]: event.id }), {});
-            triggerFolder.add(this.debugState, 'selectedAgeEvent', ageEventOptions).name('Age Event');
-            triggerFolder.add(this.actions.triggerAgeEvent, 'handler').name('Trigger Event');
-        }
         
         const sortedMissions = Object.values(DB.MISSIONS).map(m => {
             const match = m.id.match(/\d+$/);
@@ -30081,23 +29985,6 @@ export class GameState {
                 }
             }
         }
-    }
-
-    /**
-     * Saves the current game state to localStorage.
-     * NOTE: This functionality is currently disabled in favor of V4 Save System.
-     */
-    saveGame() {
-        // Obsolete
-    }
-
-    /**
-     * Loads the game state from localStorage.
-     * NOTE: This functionality is currently disabled in favor of V4 Save System.
-     * @returns {boolean} True if a game was successfully loaded, false otherwise.
-     */
-    loadGame() {
-        return false;
     }
 
     /**
@@ -32581,16 +32468,6 @@ export class NewsTickerService {
         }
 
         this.isDirty = true;
-    }
-
-    /**
-     * Called by TimeService each day.
-     * The old version added flavor text here. The V2 design moves flavor
-     * text to onLocationChange, so this pulse is now empty.
-     * Kept for compatibility with TimeService.
-     */
-    pulse() {
-        // No longer used for flavor text as per V2 design.
     }
 
     /**
@@ -35422,11 +35299,6 @@ export class TimeService {
             // --- SYSTEM STATES V3: Daily Evaluation Loop ---
             this.systemStateService.evaluateTick();
 
-            // Pulse News Ticker
-            if (this.simulationService) {
-                this.simulationService.pulseNewsTicker();
-            }
-
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
             // Only applies to the active ship.
             let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
@@ -35470,7 +35342,6 @@ export class TimeService {
                 this._handleBirthday(this.gameState.player.playerAge);
             }
 
-            this._checkAgeEvents();
             this.marketService.evolveMarketPrices();
 
             // Weekly Market Updates
@@ -35665,24 +35536,6 @@ export class TimeService {
                 this.uiManager.queueModal('event-modal', title, `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`);
             }
         }
-    }
-
-    _checkAgeEvents() {
-        DB.AGE_EVENTS.forEach(event => {
-            if (this.gameState.player.seenEvents.includes(event.id)) return;
-
-            // Trigger conditions
-            if ((event.trigger.day && this.gameState.day >= event.trigger.day) || 
-                (event.trigger.credits && this.gameState.player.credits >= event.trigger.credits)) {
-                
-                this.gameState.player.seenEvents.push(event.id);
-                this.uiManager.showAgeEventModal(event, (choice) => {
-                    if (this.simulationService) {
-                        this.simulationService._applyPerk(choice);
-                    }
-                });
-            }
-        });
     }
 
     // --- VIRTUAL WORKBENCH START: Garnishment Debt Reduction Update ---
@@ -38357,7 +38210,6 @@ const ATTRIBUTE_DEFINITIONS = {
         color: COLORS.GREY,
         isAlien: true
     },
-    // --- CHANGED: Updated description to reflect Arrival Refund ---
     'ATTR_MATTER_ABSORPTION': {
         name: "Matter Absorption",
         description: "Absorbs stellar matter to regenerate 50% of spent fuel upon arrival.",
@@ -38652,7 +38504,7 @@ const ATTRIBUTE_DEFINITIONS = {
         color: COLORS.GOLD
     },
     
-    // Syndicate Badge: Unchanged in request, keeping defaults or logic as previous
+    // Syndicate Badge
     'UPG_ECO_DEBT_1': {
         name: "Syndicate Badge I",
         description: "Reduces monthly debt interest by 20%.",
@@ -38941,28 +38793,36 @@ export class GameAttributes {
     }
 
     /**
-     * Retrieves the station quirk IDs for a specific location.
+     * Extracts the numerical tier from an ID string, defaulting to 1 if not found.
+     * Parses standard trailing numerics (e.g., '_3') and roman numerals (e.g., '_III').
+     * @param {string} id 
+     * @returns {number} The integer tier.
+     */
+    static extractTier(id) {
+        if (!id) return 1;
+        const match = id.match(/_([0-9]+|[IVX]+)$/i);
+        if (match) {
+            const val = match[1].toUpperCase();
+            if (val === '1' || val === 'I') return 1;
+            if (val === '2' || val === 'II') return 2;
+            if (val === '3' || val === 'III') return 3;
+            if (val === '4' || val === 'IV') return 4;
+            if (val === '5' || val === 'V') return 5;
+            if (val === '6' || val === 'VI') return 6;
+            if (val === '7' || val === 'VII') return 7;
+            return parseInt(val, 10) || 1;
+        }
+        return 1;
+    }
+
+    /**
+     * Retrieves the station quirk IDs for a specific location dynamically from the DB.
      * @param {string} locationId 
      * @returns {string[]} Array of Quirk IDs
      */
     static getStationQuirks(locationId) {
-        const map = {
-            [LOCATION_IDS.SUN]: ['QUIRK_SOL_FORGE'],
-            [LOCATION_IDS.MERCURY]: ['QUIRK_MERCURY_THIRST'],
-            [LOCATION_IDS.VENUS]: ['QUIRK_VENUS_DATA'],
-            [LOCATION_IDS.EARTH]: ['QUIRK_EARTH_CONSUMPTION'],
-            [LOCATION_IDS.LUNA]: ['QUIRK_LUNA_SHIPYARD'],
-            [LOCATION_IDS.MARS]: ['QUIRK_MARS_COLONY'],
-            [LOCATION_IDS.BELT]: ['QUIRK_BELT_ANOMALY'],
-            [LOCATION_IDS.EXCHANGE]: ['QUIRK_EXCHANGE_VOLATILITY'],
-            [LOCATION_IDS.JUPITER]: ['QUIRK_JUPITER_REFINERY'],
-            [LOCATION_IDS.SATURN]: ['QUIRK_SATURN_LUXURY'],
-            [LOCATION_IDS.URANUS]: ['QUIRK_URANUS_RESEARCH'],
-            [LOCATION_IDS.NEPTUNE]: ['QUIRK_NEPTUNE_MILITARY'],
-            [LOCATION_IDS.KEPLER]: ['QUIRK_KEPLER_BANK'],
-            [LOCATION_IDS.PLUTO]: ['QUIRK_PLUTO_FRINGE']
-        };
-        return map[locationId] || [];
+        const market = DB.MARKETS.find(m => m.id === locationId);
+        return market?.quirks || [];
     }
 
     // --- HELPER METHODS FOR CALCULATING MODIFIERS ---

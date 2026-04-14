@@ -252,12 +252,9 @@ export class UISolStationControl {
         // Strip any dynamically injected rarity themes from Phase 3
         targetEl.className = targetEl.className.replace(/\bmodal-theme-rarity-\S+/g, '').trim();
 
-        if (level < 10) targetEl.classList.add('sol-theme-white');
-        else if (level < 20) targetEl.classList.add('sol-theme-green');
-        else if (level < 30) targetEl.classList.add('sol-theme-blue');
-        else if (level < 40) targetEl.classList.add('sol-theme-gold');
-        else if (level < 50) targetEl.classList.add('sol-theme-orange');
-        else targetEl.classList.add('sol-theme-red');
+        // Dynamically apply theme mapped from level style class helper
+        const themeClass = getLevelStyleClass(level).replace('level', 'theme');
+        targetEl.classList.add(themeClass);
     }
 
     _applyLevelTheme(level) {
@@ -401,6 +398,7 @@ export class UISolStationControl {
 
     _buildDomCache(root) {
         this.domCache = {
+            root: root,
             integrityLabel: root.querySelector('.sol-health-bar-label > div:nth-child(2)'),
             integrityBar: root.querySelector('.sol-health-fill'),
             entropyVal: root.querySelector('[data-id="output-entropy"]'),
@@ -541,10 +539,13 @@ export class UISolStationControl {
         if (!svc) return;
 
         let lastSyncTime = 0;
+        let cachedRoot = null;
 
         const loop = () => {
-            const root = document.getElementById('sol-dashboard-root');
-            if (!root || !document.body.contains(root) || root.closest('.hidden')) {
+            if (!cachedRoot || !document.body.contains(cachedRoot)) {
+                cachedRoot = document.getElementById('sol-dashboard-root');
+            }
+            if (!cachedRoot || cachedRoot.closest('.hidden')) {
                 this._stopRefreshLoop();
                 return;
             }

@@ -2,7 +2,6 @@
 import { LOCATION_IDS, PERK_IDS, SHIP_IDS, COMMODITY_IDS, SCREEN_IDS, TUTORIAL_ACTION_TYPES, ACTION_IDS, NAV_IDS } from './constants.js';
 import { MISSION_REGISTRY } from './missions/missionRegistry.js';
 import { RANDOM_EVENTS } from './events.js';
-import { AGE_EVENTS } from './age_events.js';
 // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
 import { SHIP_DATABASE } from './ship_database.js';
 // --- [[END]] VIRTUAL WORKBENCH (Phase 3) ---
@@ -141,9 +140,6 @@ export const DB = {
         [PERK_IDS.VENETIAN_SYNDICATE]: { fuelDiscount: 0.25, repairDiscount: 0.25 }
     },
 
-    // --- Narrative Events Triggered by Game Progression ---
-    AGE_EVENTS: AGE_EVENTS,
-
     // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: RANDOM_EVENTS,
 
@@ -218,7 +214,8 @@ export const DB = {
                 commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.03, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.03 }, 
                 dampeners: { [COMMODITY_IDS.PLASTEEL]: 0.5, [COMMODITY_IDS.GRAPHENE_LATTICES]: 0.5 } 
             },
-            intelProfile: { costMod: 1.30, minDiscount: 0.30, maxDiscount: 0.60, focusCats: ['RARE', 'BIO', 'TECH'] }
+            intelProfile: { costMod: 1.30, minDiscount: 0.30, maxDiscount: 0.60, focusCats: ['RARE', 'BIO', 'TECH'] },
+            quirks: ['QUIRK_SOL_FORGE']
         },
         { 
             id: LOCATION_IDS.MERCURY, 
@@ -242,7 +239,8 @@ export const DB = {
                 [COMMODITY_IDS.PLASTEEL]: 2.0
             },
             ecoProfile: { replenishRate: 0.05, panicMult: 2.0, commodityReplenishRates: { [COMMODITY_IDS.PLASTEEL]: 0.15 } },
-            intelProfile: { costMod: 0.75, durationMod: 0.90 }
+            intelProfile: { costMod: 0.75, durationMod: 0.90 },
+            quirks: ['QUIRK_MERCURY_THIRST']
         },
         { 
             id: LOCATION_IDS.VENUS, 
@@ -268,7 +266,8 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5
             },
             ecoProfile: { pressureMod: 1.15 },
-            intelProfile: { costMod: 0.50, durationMod: 1.30, focusCats: ['TECH'] }
+            intelProfile: { costMod: 0.50, durationMod: 1.30, focusCats: ['TECH'] },
+            quirks: ['QUIRK_VENUS_DATA']
         },
         { 
             id: LOCATION_IDS.EARTH, 
@@ -294,7 +293,8 @@ export const DB = {
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5 
             },
             ecoProfile: { pressureMod: 0.70 },
-            intelProfile: { costMod: 1.15, durationMod: 1.20, focusCats: ['BIO', 'TECH'] }
+            intelProfile: { costMod: 1.15, durationMod: 1.20, focusCats: ['BIO', 'TECH'] },
+            quirks: ['QUIRK_EARTH_CONSUMPTION']
         },
         { 
             id: LOCATION_IDS.LUNA, 
@@ -321,7 +321,8 @@ export const DB = {
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
             },
             ecoProfile: { replenishRate: 0.12 },
-            intelProfile: { focusCats: ['IND', 'RAW'] }
+            intelProfile: { focusCats: ['IND', 'RAW'] },
+            quirks: ['QUIRK_LUNA_SHIPYARD']
         },
         { 
             id: LOCATION_IDS.MARS, 
@@ -347,7 +348,8 @@ export const DB = {
                 [COMMODITY_IDS.HYDROPONICS]: 0.5 
             },
             ecoProfile: { commodityReplenishRates: { [COMMODITY_IDS.HYDROPONICS]: 0.08, [COMMODITY_IDS.WATER_ICE]: 0.08 } },
-            intelProfile: {}
+            intelProfile: {},
+            quirks: ['QUIRK_MARS_COLONY']
         },
         { 
             id: LOCATION_IDS.BELT, 
@@ -373,7 +375,8 @@ export const DB = {
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
             },
             ecoProfile: { replenishRate: 0.15 },
-            intelProfile: { minDiscount: 0.05, maxDiscount: 0.60, durationMod: 0.50, costMod: 0.80 }
+            intelProfile: { minDiscount: 0.05, maxDiscount: 0.60, durationMod: 0.50, costMod: 0.80 },
+            quirks: ['QUIRK_BELT_ANOMALY']
         },
         { 
             id: LOCATION_IDS.EXCHANGE, 
@@ -399,7 +402,8 @@ export const DB = {
                 [COMMODITY_IDS.XENO_GEOLOGICALS]: 0.5
             },
             ecoProfile: { pressureMod: 1.30 },
-            intelProfile: { focusCats: ['TECH', 'BIO', 'RARE'] }
+            intelProfile: { focusCats: ['TECH', 'BIO', 'RARE'] },
+            quirks: ['QUIRK_EXCHANGE_VOLATILITY']
         },
         { 
             id: LOCATION_IDS.JUPITER, 
@@ -424,7 +428,8 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
             },
             ecoProfile: { dampeners: { [COMMODITY_IDS.PROPELLANT]: 0.20 }, commodityReplenishRates: { [COMMODITY_IDS.PROPELLANT]: 0.20 } },
-            intelProfile: { focusCats: ['IND'] }
+            intelProfile: { focusCats: ['IND'] },
+            quirks: ['QUIRK_JUPITER_REFINERY']
         },
         { 
             id: LOCATION_IDS.SATURN, 
@@ -449,7 +454,8 @@ export const DB = {
                 [COMMODITY_IDS.CLONED_ORGANS]: 0.5 
             },
             ecoProfile: { recoveryMod: 1.25 },
-            intelProfile: { costMod: 1.25, minDiscount: 0.25, focusCats: ['CIV', 'BIO'] }
+            intelProfile: { costMod: 1.25, minDiscount: 0.25, focusCats: ['CIV', 'BIO'] },
+            quirks: ['QUIRK_SATURN_LUXURY']
         },
         { 
             id: LOCATION_IDS.URANUS, 
@@ -474,7 +480,8 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5 
             },
             ecoProfile: {},
-            intelProfile: { focusCats: ['TECH', 'RARE'] }
+            intelProfile: { focusCats: ['TECH', 'RARE'] },
+            quirks: ['QUIRK_URANUS_RESEARCH']
         },
         { 
             id: LOCATION_IDS.NEPTUNE, 
@@ -500,7 +507,8 @@ export const DB = {
                 [COMMODITY_IDS.PROPELLANT]: 0.5 
             },
             ecoProfile: { disableFluctuation: true, meanReversionMod: 1.25 },
-            intelProfile: { focusCats: ['CIV', 'IND'] }
+            intelProfile: { focusCats: ['CIV', 'IND'] },
+            quirks: ['QUIRK_NEPTUNE_MILITARY']
         },
         { 
             id: LOCATION_IDS.KEPLER, 
@@ -525,7 +533,8 @@ export const DB = {
                 [COMMODITY_IDS.PROCESSORS]: 0.5
             },
             ecoProfile: {},
-            intelProfile: { packetMultiplier: 2 }
+            intelProfile: { packetMultiplier: 2 },
+            quirks: ['QUIRK_KEPLER_BANK']
         },
         { 
             id: LOCATION_IDS.PLUTO, 
@@ -551,7 +560,8 @@ export const DB = {
                 [COMMODITY_IDS.CYBERNETICS]: 0.5 
             },
             ecoProfile: { replenishRate: 0.05, panicMult: 2.0 },
-            intelProfile: { minDiscount: 0.40, maxDiscount: 0.75, focusCats: ['BIO', 'TECH', 'RARE'] }
+            intelProfile: { minDiscount: 0.40, maxDiscount: 0.75, focusCats: ['BIO', 'TECH', 'RARE'] },
+            quirks: ['QUIRK_PLUTO_FRINGE']
         }
     ],
 
