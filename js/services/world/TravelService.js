@@ -340,7 +340,8 @@ export class TravelService {
             return;
         }
 
-        if (eventMods.forceEvent) {
+        // VIRTUAL WORKBENCH MODIFICATION: Phase 1 (Event Blocks)
+        if (eventMods.forceEvent && !eventMods.useFoldedDrive) {
             if (this._checkForRandomEvent(locationId, true)) {
                 return;
             }
@@ -466,7 +467,8 @@ export class TravelService {
         const finalCallback = () => {
             this.gameState.isTraveling = false;
 
-            if (this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
+            // VIRTUAL WORKBENCH MODIFICATION: Phase 1 (Event Blocks)
+            if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                 this.gameState.pendingEventChains.forEach(chain => {
                     chain.tripsRemaining--;
                 });
