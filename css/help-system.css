@@ -2,16 +2,17 @@
 
 .global-help-anchor {
     position: fixed; /* Phase 4 Fix: Decoupled from #game-container relative context */
-    bottom: 1rem;
-    right: 1rem;
-    width: 40px; 
-    height: 40px; 
-    border-radius: 50%;
+    bottom: 112px;
+    right: 0;
+    width: 44px; 
+    height: 44px; 
+    border-radius: 44px 0 0 44px;
     background-color: rgba(45, 55, 72, 0.6);
     color: #fff;
     border: 1px solid rgba(122, 154, 192, 0.5);
+    border-right: none;
     font-family: 'Orbitron', sans-serif;
-    font-size: 1.35rem; 
+    font-size: 1.6rem; 
     display: flex;
     justify-content: center;
     align-items: center;
@@ -21,11 +22,6 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
-}
-
-.global-help-anchor:hover {
-    opacity: 1;
-    background-color: rgba(45, 55, 72, 0.9);
 }
 
 .global-help-anchor:active {
