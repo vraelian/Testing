@@ -24,28 +24,19 @@ export class ActionClickHandler {
 
         // --- VIRTUAL WORKBENCH: Global click listener to dismiss primed buttons ---
         document.addEventListener('click', (e) => {
-            const primedBtns = document.querySelectorAll('[data-primed="true"]');
+            const primedBtns = document.querySelectorAll('.primed, [data-primed="true"]');
             if (primedBtns.length > 0) {
                 const closestTarget = e.target.closest('[data-action="take_loan"], [data-action="pay_debt"], [data-action="skip-tutorial"], [data-action="intro_buy_ship"]');
                 primedBtns.forEach(btn => {
                     if (btn !== closestTarget) {
-                        // Strip state flags
                         delete btn.dataset.primed;
                         btn.classList.remove('primed'); 
                         
-                        // Strip inline overrides
-                        btn.style.backgroundColor = '';
-                        btn.style.color = '';
-                        btn.style.borderColor = '';
-                        btn.style.width = '';
-                        btn.style.height = '';
-                        btn.style.transition = '';
-                        
-                        // Restore original text safely shielded
                         if (btn.dataset.action === 'skip-tutorial') {
                             btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
                         } else if (btn.dataset.action === 'intro_buy_ship') {
                             btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
+                            btn.classList.remove('btn-confirm-purchase');
                         }
                     }
                 });
@@ -60,7 +51,7 @@ export class ActionClickHandler {
                     display.innerHTML = formatCredits(-parseInt(e.target.value, 10), true);
                     
                     // Unprime the pay button if sliding to prevent accidental payment of new amount
-                    const payBtn = document.querySelector('[data-action="pay_debt"][data-primed="true"]');
+                    const payBtn = document.querySelector('[data-action="pay_debt"].primed');
                     if (payBtn) {
                         delete payBtn.dataset.primed;
                         payBtn.classList.remove('primed');
@@ -155,57 +146,66 @@ export class ActionClickHandler {
                 });
                 break;
             }
+            
+            // --- INTRO SEQUENCE ---
             case ACTION_IDS.INTRO_BUY_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
                 
                 if (!actionTarget.dataset.primed) {
-                    // Reset any previously primed buttons universally
-                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
-                        if (btn !== actionTarget) {
-                            delete btn.dataset.primed;
-                            btn.classList.remove('primed');
-                            btn.style.backgroundColor = '';
-                            btn.style.color = '';
-                            btn.style.borderColor = '';
-                            btn.style.width = '';
-                            btn.style.height = '';
-                            btn.style.transition = '';
-                            
-                            if (btn.dataset.action === 'intro_buy_ship') {
-                                btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
-                            } else if (btn.dataset.action === 'skip-tutorial') {
-                                btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
-                            }
+                    document.querySelectorAll('.primed, [data-primed="true"]').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                        
+                        if (btn.dataset.action === 'skip-tutorial') {
+                            btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
+                        } else if (btn.dataset.action === 'intro_buy_ship') {
+                            btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
+                            btn.classList.remove('btn-confirm-purchase');
                         }
                     });
 
-                    // 1. FREEZE DIMENSIONS: Prevent layout shift that triggers Safari's tap-swallow
-                    const rect = actionTarget.getBoundingClientRect();
-                    actionTarget.style.width = Math.max(rect.width, 200) + 'px';
-                    actionTarget.style.height = rect.height + 'px';
-                    
-                    // 2. DISABLE TRANSITIONS: Prevent Safari from waiting on CSS animations
-                    actionTarget.style.transition = 'none';
-
-                    // 3. PRIME STATE
                     actionTarget.dataset.primed = "true";
-                    
-                    // 4. APPLY STYLES INLINE: Bypass CSS rule evaluation
-                    actionTarget.style.backgroundColor = '#16a34a'; 
-                    actionTarget.style.color = '#ffffff';
-                    actionTarget.style.borderColor = '#166534';
-                    
-                    // 5. UPDATE TEXT WITH POINTER SHIELD
+                    // Apply both the logic flag and the CSS class that colors it white
+                    actionTarget.classList.add('primed', 'btn-confirm-purchase');
                     actionTarget.innerHTML = '<span style="pointer-events: none;">Confirm Purchase?</span>';
                     return; 
                 }
 
-                // Execute the purchase sequence on the 2nd valid tap
                 await this.simulationService.introService.handleStarterPurchase(shipId);
                 break;
             }
+            
+            case 'skip-tutorial': {
+                e.stopPropagation();
+                
+                if (!actionTarget.dataset.primed) {
+                    document.querySelectorAll('.primed, [data-primed="true"]').forEach(btn => {
+                        delete btn.dataset.primed;
+                        btn.classList.remove('primed');
+                        
+                        if (btn.dataset.action === 'skip-tutorial') {
+                            btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
+                        } else if (btn.dataset.action === 'intro_buy_ship') {
+                            btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
+                            btn.classList.remove('btn-confirm-purchase');
+                        }
+                    });
+
+                    actionTarget.dataset.primed = "true";
+                    actionTarget.classList.add('primed');
+                    actionTarget.innerHTML = '<span style="pointer-events: none;">Confirm Skip?</span>';
+                    return; 
+                }
+
+                if (this.simulationService && this.simulationService.missionService) {
+                    this.simulationService.missionService.skipTutorial();
+                }
+                break;
+            }
+            // --- END INTRO SEQUENCE ---
+
             case ACTION_IDS.SELL_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
@@ -615,55 +615,6 @@ export class ActionClickHandler {
                 }
                 break;
             }
-            
-            case 'skip-tutorial': {
-                e.stopPropagation();
-                
-                if (!actionTarget.dataset.primed) {
-                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
-                        if (btn !== actionTarget) {
-                            delete btn.dataset.primed;
-                            btn.classList.remove('primed');
-                            btn.style.backgroundColor = '';
-                            btn.style.color = '';
-                            btn.style.borderColor = '';
-                            btn.style.width = '';
-                            btn.style.height = '';
-                            btn.style.transition = '';
-                            
-                            if (btn.dataset.action === 'skip-tutorial') {
-                                btn.innerHTML = '<span style="pointer-events: none;">Skip Tutorial</span>';
-                            } else if (btn.dataset.action === 'intro_buy_ship') {
-                                btn.innerHTML = '<span style="pointer-events: none;">Purchase</span>';
-                            }
-                        }
-                    });
-
-                    // Lock dimensions
-                    const rect = actionTarget.getBoundingClientRect();
-                    actionTarget.style.width = Math.max(rect.width, 160) + 'px';
-                    actionTarget.style.height = rect.height + 'px';
-                    
-                    // Disable transitions
-                    actionTarget.style.transition = 'none';
-
-                    // Prime state
-                    actionTarget.dataset.primed = "true";
-                    
-                    // Inline styles
-                    actionTarget.style.backgroundColor = '#dc2626'; 
-                    actionTarget.style.color = '#ffffff';
-                    actionTarget.style.borderColor = '#991b1b'; 
-                    
-                    actionTarget.innerHTML = '<span style="pointer-events: none;">Confirm Skip?</span>';
-                    return; 
-                }
-
-                if (this.simulationService && this.simulationService.missionService) {
-                    this.simulationService.missionService.skipTutorial();
-                }
-                break;
-            }
 
             case 'accept-mission': {
                 const mission = DB.MISSIONS[dataset.missionId];
@@ -715,7 +666,7 @@ export class ActionClickHandler {
             case ACTION_IDS.PAY_DEBT: {
                 e.stopPropagation();
                 if (!actionTarget.dataset.primed) {
-                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
+                    document.querySelectorAll('.primed, [data-primed="true"]').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });
@@ -738,7 +689,7 @@ export class ActionClickHandler {
             case ACTION_IDS.TAKE_LOAN: {
                 e.stopPropagation();
                 if (!actionTarget.dataset.primed) {
-                    document.querySelectorAll('[data-primed="true"]').forEach(btn => {
+                    document.querySelectorAll('.primed, [data-primed="true"]').forEach(btn => {
                         delete btn.dataset.primed;
                         btn.classList.remove('primed');
                     });
