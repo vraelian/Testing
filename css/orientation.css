@@ -20,7 +20,8 @@
         display: flex;
     }
     /* Optional: Hide the main game container to be safe */
-    #game-container {
-        display: none;
+    #game-container,
+    #global-help-anchor {
+        display: none !important;
     }
 }

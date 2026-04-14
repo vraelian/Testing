@@ -217,7 +217,7 @@ export const EVENTS_HAZARDS = [
             },
             {
                 id: 'choice_gun',
-                text: 'Gun It (Severe Damage, Gain Status)',
+                text: 'Gun It (Severe Damage)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_gun' }] }
             }
         ],

@@ -269,7 +269,7 @@ export class SimulationService {
         return true;
     }
 
-    payOffDebt(event) { this.playerActionService.payOffDebt(event); }
+    payOffDebt(amount, event) { this.playerActionService.payOffDebt(amount, event); }
     takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     refuelTick() { return this.playerActionService.refuelTick(); }
