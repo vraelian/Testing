@@ -2173,6 +2173,12 @@ body {
     outline: none;
 }
 
+/* Force elimination of the iOS 300ms tap delay on elements AND their nested children */
+a, button, [data-action], .tab,
+a *, button *, [data-action] *, .tab * {
+    touch-action: manipulation;
+}
+
 #debug-start-btn {
     position: absolute;
     bottom: 1rem;
@@ -2263,7 +2269,7 @@ display: flex;
 /* .scroll-panel::-webkit-scrollbar { display: none; } */
 
 .btn {
-    transition: all 0.3s ease;
+    transition: all 0.1s ease; /* Reduced to 0.1s for snappy feedback */
     border: 1px solid #4a6a8a;
     border-radius: 8px;
     background-color: #22304a;
@@ -2998,8 +3004,9 @@ transform: translateY(-50%);
          display: flex;
     }
 
-    #game-container {
-        display: none;
+    #game-container,
+    #global-help-anchor { /* HIDDEN IN LANDSCAPE */
+        display: none !important;
     }
 }
 
@@ -3619,7 +3626,7 @@ card.
 
 
 /* Map Detail Modal has its own animation override already */
-#map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
+#map-detail-modal.modal-visible .modal-content {
     animation: fadeIn 1s ease-out forwards;
 }
 
@@ -6975,7 +6982,7 @@ card.
 }
 
 #map-detail-modal.modal-visible .modal-content {
-    animation: fadeIn 0.3s ease-out forwards;
+    animation: fadeIn 1s ease-out forwards;
 }
 
 .imprinted-text {
@@ -7167,6 +7174,8 @@ card.
 .item-card-container {
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     position: relative;
+    border-radius: var(--market-card-border-radius);
+    z-index: 10;
 }
 
 /* This is the main card element */
@@ -9815,7 +9824,7 @@ BULKHEAD NAVIGATION STYLES
     background-color: #444;
     border-top: 1px solid #666;
     /* Added transition for smooth scaling and filter effects */
-    transition: all 0.3s ease;
+    transition: all 0.1s ease; /* Reduced to 0.1s for snappy feedback */
     text-decoration: none;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
     -webkit-user-select: none;
@@ -9873,7 +9882,7 @@ BULKHEAD NAVIGATION STYLES
     padding: 8.75px 0;
     text-decoration: none;
     position: relative; /* Needed for the ::after pseudo-element */
-    transition: all 0.2s;
+    transition: all 0.1s; /* Reduced to 0.1s for snappy feedback */
     background-color: #3a3a3a;
     border-right: 1px solid #1c1c1c;
     border-left: 1px solid #4a4a4a;
@@ -10309,8 +10318,9 @@ BULKHEAD NAVIGATION STYLES
         display: flex;
     }
     /* Optional: Hide the main game container to be safe */
-    #game-container {
-        display: none;
+    #game-container,
+    #global-help-anchor {
+        display: none !important;
     }
 }
 --- END OF FILE: ./css/orientation.css ---
@@ -12086,7 +12096,7 @@ export function renderFinanceScreen(gameState) {
                                 </div>
                             </div>
                             <div class="loan-confirm-content">
-                                ACCEPT SYNDICATE TERMS?
+                                ACCEPT<br>SYNDICATE TERMS?
                             </div>
                         </button>
                     </div>
@@ -14183,7 +14193,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.65';
+export const APP_VERSION = '37.70';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -20434,7 +20444,7 @@ export const EVENTS_HAZARDS = [
             },
             {
                 id: 'choice_gun',
-                text: 'Gun It (Severe Damage, Gain Status)',
+                text: 'Gun It (Severe Damage)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_gun' }] }
             }
         ],
@@ -37007,7 +37017,7 @@ export class SimulationService {
         return true;
     }
 
-    payOffDebt(event) { this.playerActionService.payOffDebt(event); }
+    payOffDebt(amount, event) { this.playerActionService.payOffDebt(amount, event); }
     takeLoan(loanData, event) { this.playerActionService.takeLoan(loanData, event); }
     purchaseLicense(licenseId) { return this.playerActionService.purchaseLicense(licenseId); }
     refuelTick() { return this.playerActionService.refuelTick(); }
@@ -46325,6 +46335,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.70] - 2026-4-14
+-  spot refactoring
+-  fixed memory leaks
+-  removed dead code
+-  performance improvements
+-  UI polish
 
 # [37.65] - 2026-4-13
 -  bug fixes

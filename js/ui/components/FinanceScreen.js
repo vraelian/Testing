@@ -242,7 +242,7 @@ export function renderFinanceScreen(gameState) {
                                 </div>
                             </div>
                             <div class="loan-confirm-content">
-                                ACCEPT SYNDICATE TERMS?
+                                ACCEPT<br>SYNDICATE TERMS?
                             </div>
                         </button>
                     </div>

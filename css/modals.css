@@ -166,7 +166,7 @@
 
 
 /* Map Detail Modal has its own animation override already */
-#map-detail-modal .modal-backdrop:not(.hidden) .modal-content {
+#map-detail-modal.modal-visible .modal-content {
     animation: fadeIn 1s ease-out forwards;
 }
 

@@ -88,6 +88,12 @@ body {
     outline: none;
 }
 
+/* Force elimination of the iOS 300ms tap delay on elements AND their nested children */
+a, button, [data-action], .tab,
+a *, button *, [data-action] *, .tab * {
+    touch-action: manipulation;
+}
+
 #debug-start-btn {
     position: absolute;
     bottom: 1rem;
@@ -178,7 +184,7 @@ display: flex;
 /* .scroll-panel::-webkit-scrollbar { display: none; } */
 
 .btn {
-    transition: all 0.3s ease;
+    transition: all 0.1s ease; /* Reduced to 0.1s for snappy feedback */
     border: 1px solid #4a6a8a;
     border-radius: 8px;
     background-color: #22304a;
@@ -913,8 +919,9 @@ transform: translateY(-50%);
          display: flex;
     }
 
-    #game-container {
-        display: none;
+    #game-container,
+    #global-help-anchor { /* HIDDEN IN LANDSCAPE */
+        display: none !important;
     }
 }
 

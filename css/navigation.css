@@ -30,7 +30,7 @@ BULKHEAD NAVIGATION STYLES
     background-color: #444;
     border-top: 1px solid #666;
     /* Added transition for smooth scaling and filter effects */
-    transition: all 0.3s ease;
+    transition: all 0.1s ease; /* Reduced to 0.1s for snappy feedback */
     text-decoration: none;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
     -webkit-user-select: none;
@@ -88,7 +88,7 @@ BULKHEAD NAVIGATION STYLES
     padding: 8.75px 0;
     text-decoration: none;
     position: relative; /* Needed for the ::after pseudo-element */
-    transition: all 0.2s;
+    transition: all 0.1s; /* Reduced to 0.1s for snappy feedback */
     background-color: #3a3a3a;
     border-right: 1px solid #1c1c1c;
     border-left: 1px solid #4a4a4a;
