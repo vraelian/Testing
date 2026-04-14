@@ -219,9 +219,8 @@ export class UIHangarControl {
             const titleColorClass = context === 'intro_shipyard' ? 'text-white' : 'text-cyan-300';
             const valBoldClass = context === 'intro_shipyard' ? 'font-bold' : '';
 
-            const btnHtml = context === 'intro_shipyard' 
-                ? `<button id="intro-purchase-btn" class="btn w-full mt-2" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`
-                : `<button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`;
+            // Natively assigned data-action replaces the rogue UIHangarControl listener
+            const btnHtml = `<button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`;
 
             modalContentHtml = `
                 <div class="ship-card p-4 flex flex-col space-y-3">
@@ -261,7 +260,6 @@ export class UIHangarControl {
             }
             const salePrice = Math.floor((shipStatic.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
 
-            // [[BUG FIX]]: Fetching correct tailwind gradient classes from the registry
             const statusEffectsHtml = (shipDynamic.statusEffects || []).map(effect => {
                 const daysLeft = effect.expiryDay - gameState.day;
                 const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
@@ -329,22 +327,6 @@ export class UIHangarControl {
         modalContentTarget.innerHTML = modalContentHtml;
 
         if (context === 'intro_shipyard') {
-            const purchaseBtn = modalContentTarget.querySelector('#intro-purchase-btn');
-            if (purchaseBtn) {
-                purchaseBtn.addEventListener('click', (e) => {
-                    if (purchaseBtn.dataset.confirmed !== 'true') {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        purchaseBtn.dataset.confirmed = 'true';
-                        purchaseBtn.textContent = 'Confirm Purchase?';
-                        purchaseBtn.classList.add('btn-confirm-purchase');
-                        purchaseBtn.setAttribute('data-action', ACTION_IDS.INTRO_BUY_SHIP);
-                    }
-                });
-            }
-        }
-
-        if (context === 'intro_shipyard') {
             const dismissHandler = (e) => {
                 if (e.target === modal || e.target.classList.contains('modal-backdrop')) {
                     this.manager.hideModal('ship-detail-modal');
@@ -361,7 +343,6 @@ export class UIHangarControl {
     }
 
     showUpgradeInstallationModal(upgradeId, hardwareCost, installationFee, shipState, onConfirm) {
-        // [Existing implementation remains the same...]
         const upgradeDef = GameAttributes.getDefinition(upgradeId);
         if (!upgradeDef) return;
 
@@ -505,12 +486,12 @@ export class UIHangarControl {
         });
     }
 
-    // [Rest of class identical...]
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
         const elementToAnimate = this._getActiveShipTerminalElement();
         if (!elementToAnimate) return; 
         await playBlockingAnimation(elementToAnimate, animationClass);
     }
+    
     _getActiveShipTerminalElement() {
         const state = this.manager.lastKnownState; 
         if (!state) return null;
@@ -524,6 +505,7 @@ export class UIHangarControl {
         const activePage = pages[activeIndex];
         return activePage ? activePage.querySelector('#ship-terminal') : null;
     }
+
     _adjustColor(color, amount) {
         if (!color || !color.startsWith('#')) return '#94a3b8'; 
         const hex = color.replace('#', '');
@@ -535,6 +517,7 @@ export class UIHangarControl {
         const bb = b.toString(16).padStart(2, '0');
         return `#${rr}${gg}${bb}`;
     }
+
     async playUpgradeReveal(shipId) {
         const hangarScreenEl = this.manager.cache.hangarScreen;
         if (!hangarScreenEl) return;
