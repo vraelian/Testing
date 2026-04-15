@@ -878,6 +878,22 @@ export class MissionService {
                 this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
             }
         }
+        
+        // --- EXECUTE ON-COMPLETE ACTIONS ---
+        if (mission.onComplete && this.simulationService) {
+            mission.onComplete.forEach(action => {
+                if (action.type === 'END_SYSTEM_STATE') {
+                    if (this.simulationService.systemStateService) {
+                        this.simulationService.systemStateService.endCurrentState();
+                    }
+                } else if (action.type === 'reveal_tier') {
+                    const newTier = Math.max(this.gameState.player.revealedTier, action.value);
+                    if (newTier > this.gameState.player.revealedTier) {
+                        this.gameState.player.revealedTier = newTier;
+                    }
+                }
+            });
+        }
 
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
 

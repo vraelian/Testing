@@ -74,6 +74,9 @@ export const PHASE_ONE_MISSIONS = {
         onAccept: [
             { type: 'TRIGGER_SYSTEM_STATE', stateId: 'CORONAL_MASS_EJECTION' }
         ],
+        onComplete: [
+            { type: 'END_SYSTEM_STATE' }
+        ],
         objectives: [
             { "id": "deliver_ice", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "water_ice", "quantity": 25 }
         ],

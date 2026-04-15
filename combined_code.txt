@@ -3466,7 +3466,7 @@ card.
     top: 0;
     left: 0;
     width: 100vw;
-    height: var(--app-height, 100vh);
+    height: 100dvh;
     background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
@@ -12028,7 +12028,13 @@ export function renderFinanceScreen(gameState) {
         } else {
             // 1. GUILD FINANCING
             const guildAmount = Math.floor(shipNetWorth * 0.35);
-            const guildFee = Math.floor(guildAmount * 0.10);
+            let guildFee = Math.floor(guildAmount * 0.10);
+            
+            // Phase 1 Fix L: Guild Loan Forgiveness for destitute players
+            if (guildFee <= 5000) {
+                guildFee = 0;
+            }
+            
             const guildInterest = Math.floor(guildAmount * 0.04);
             const guildData = { amount: guildAmount, fee: guildFee, interest: guildInterest, type: 'guild', termDays: 1080 };
 
@@ -15821,6 +15827,9 @@ export const PHASE_ONE_MISSIONS = {
         onAccept: [
             { type: 'TRIGGER_SYSTEM_STATE', stateId: 'CORONAL_MASS_EJECTION' }
         ],
+        onComplete: [
+            { type: 'END_SYSTEM_STATE' }
+        ],
         objectives: [
             { "id": "deliver_ice", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "water_ice", "quantity": 25 }
         ],
@@ -18886,10 +18895,10 @@ export const EVENTS_TRAFFIC = [
         outcomes: {
             'out_buy': {
                 title: 'Data Acquired',
-                text: 'You transfer the credits. A packet of market data floods your computer.',
+                text: 'You transfer the credits. A packet of volatile, high-grade market data floods your computer.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                    { type: 'GRANT_HOT_INTEL', value: 1 }
                 ]
             },
             'out_barter': {
@@ -18897,7 +18906,7 @@ export const EVENTS_TRAFFIC = [
                 text: 'You trade a few high-end chips for the data. "Pleasure doing business."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 5 },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                    { type: 'GRANT_HOT_INTEL', value: 1 }
                 ]
             },
             'out_decline': {
@@ -18948,7 +18957,7 @@ export const EVENTS_TRAFFIC = [
                 text: 'You sell a portion of your cargo to the convoy crew. They pay a premium for the convenience.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.02 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 2500, scaleWith: 'SHIP_CLASS_SCALAR', factor: 1000 } }
                 ]
             },
             'out_pass': {
@@ -32367,6 +32376,22 @@ export class MissionService {
                 this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
             }
         }
+        
+        // --- EXECUTE ON-COMPLETE ACTIONS ---
+        if (mission.onComplete && this.simulationService) {
+            mission.onComplete.forEach(action => {
+                if (action.type === 'END_SYSTEM_STATE') {
+                    if (this.simulationService.systemStateService) {
+                        this.simulationService.systemStateService.endCurrentState();
+                    }
+                } else if (action.type === 'reveal_tier') {
+                    const newTier = Math.max(this.gameState.player.revealedTier, action.value);
+                    if (newTier > this.gameState.player.revealedTier) {
+                        this.gameState.player.revealedTier = newTier;
+                    }
+                }
+            });
+        }
 
         this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
 
@@ -39742,6 +39767,38 @@ const effectHandlers = {
 
         effect.intelLocation = locationName;
         effect.intelCommodity = commodityName;
+    },
+
+    ['GRANT_HOT_INTEL']: (gameState, simulationService, effect, outcome) => {
+        const revealedTier = gameState.player.revealedTier;
+        const unlockedCommodities = DB.COMMODITIES.filter(c => c.tier <= revealedTier).map(c => c.id);
+
+        if (unlockedCommodities.length === 0) return;
+
+        const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
+        
+        const playerUnlockedLocations = gameState.player.unlockedLocationIds || [];
+        const possibleDealLocations = DB.MARKETS.map(m => m.id).filter(id => playerUnlockedLocations.includes(id));
+
+        if (possibleDealLocations.length === 0) return;
+        const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
+
+        const discountPercent = 0.30 + Math.random() * 0.40; // 30% to 70% off
+        
+        gameState.activeHotIntel = {
+            locationId: dealLocationId,
+            commodityId: commodityId,
+            discountMultiplier: 1 - discountPercent,
+            startDay: gameState.day,
+            sourceSaleLocationId: gameState.currentLocationId
+        };
+
+        const commodityName = DB.COMMODITIES.find(c => c.id === commodityId)?.name || 'goods';
+        const locationName = DB.MARKETS.find(m => m.id === dealLocationId)?.name || 'a local market';
+
+        effect.intelLocation = locationName;
+        effect.intelCommodity = commodityName;
+        effect.discountPct = Math.round(discountPercent * 100);
     },
 
     [EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO]: (gameState, simulationService, effect) => {
