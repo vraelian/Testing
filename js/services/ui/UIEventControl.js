@@ -407,6 +407,23 @@ export class UIEventControl {
         const isCurrentLocation = state?.currentLocationId === locationId;
         const navigateBtnHtml = (isMapNavLocked || isCurrentLocation) ? '' : `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
 
+        // --- CONTEXTUAL STORY ACTIONS (HOOK PATTERN) ---
+        const storyFlags = state?.player?.storyFlags || {};
+        let storyActionsHtml = '';
+        
+        // Example implementation for contextual UI generation based on narrative state
+        if (locationId === 'loc_exchange' && storyFlags['has_syndicate_access'] === true) {
+            storyActionsHtml += `<div class="btn map-navigate-btn mt-2 !text-cost-orange !border-cost-orange hover:bg-cost-orange/20" data-action="trigger_story_event" data-event-id="evt_syndicate_boss">CONTACT SYNDICATE BOSS</div>`;
+        }
+        
+        if (storyActionsHtml !== '') {
+            storyActionsHtml = `
+                <div class="mt-4 pt-4 border-t border-gray-700/50">
+                    <h5 class="font-bold imprinted-text mb-2" style="color: ${theme.textColor};">Local Opportunities:</h5>
+                    ${storyActionsHtml}
+                </div>`;
+        }
+
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
@@ -435,6 +452,7 @@ export class UIEventControl {
                 </div>
                 <div class="mt-6 mb-2">
                     ${navigateBtnHtml}
+                    ${storyActionsHtml}
                 </div>
             </div>
         `;

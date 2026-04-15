@@ -435,6 +435,8 @@ export class GameState {
                 // --- VIRTUAL WORKBENCH ---
                 // Visual Seed: A counter that increments to drive the deterministic asset rotation.
                 visualSeed: 0,
+                // Story Flags: Map of primitive data types tracking narrative progress, faction rep, and world state.
+                storyFlags: {},
                 // --- PHASE 1: AGE ENGINE ---
                 statModifiers: {
                     profitBonus: 0.0,       // Era 1 (Age 25+)

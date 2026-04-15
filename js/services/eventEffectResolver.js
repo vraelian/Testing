@@ -17,6 +17,31 @@ const effectHandlers = {
     'SPACE_RACE': resolveSpaceRace,
     'ADRIFT_PASSENGER': resolveAdriftPassenger,
 
+    // --- STORY FLAGS MUTATORS ---
+    'SET_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        gameState.player.storyFlags[effect.flag] = effect.value;
+    },
+    'INCREMENT_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        const incVal = effect.amount || 1;
+        gameState.player.storyFlags[effect.flag] = (gameState.player.storyFlags[effect.flag] || 0) + incVal;
+    },
+    'DECREMENT_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        const decVal = effect.amount || 1;
+        gameState.player.storyFlags[effect.flag] = (gameState.player.storyFlags[effect.flag] || 0) - decVal;
+    },
+    'STAMP_DAY_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        gameState.player.storyFlags[effect.flag] = gameState.day;
+    },
+    'CLEAR_FLAG': (gameState, simulationService, effect) => {
+        if (gameState.player.storyFlags && gameState.player.storyFlags[effect.flag] !== undefined) {
+            delete gameState.player.storyFlags[effect.flag];
+        }
+    },
+
     'GRANT_OFFICER': (gameState, simulationService, effect, outcome) => {
         const officerId = effect.target;
         gameState.player.officerRoster = gameState.player.officerRoster || [];

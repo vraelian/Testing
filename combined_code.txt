@@ -14193,7 +14193,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.70';
+export const APP_VERSION = '37.73';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -22630,6 +22630,23 @@ export class UIEventControl {
         const isCurrentLocation = state?.currentLocationId === locationId;
         const navigateBtnHtml = (isMapNavLocked || isCurrentLocation) ? '' : `<div class="map-navigate-btn" data-action="navigate-to-poi" data-location-id="${locationId}">NAVIGATE ❯❯</div>`;
 
+        // --- CONTEXTUAL STORY ACTIONS (HOOK PATTERN) ---
+        const storyFlags = state?.player?.storyFlags || {};
+        let storyActionsHtml = '';
+        
+        // Example implementation for contextual UI generation based on narrative state
+        if (locationId === 'loc_exchange' && storyFlags['has_syndicate_access'] === true) {
+            storyActionsHtml += `<div class="btn map-navigate-btn mt-2 !text-cost-orange !border-cost-orange hover:bg-cost-orange/20" data-action="trigger_story_event" data-event-id="evt_syndicate_boss">CONTACT SYNDICATE BOSS</div>`;
+        }
+        
+        if (storyActionsHtml !== '') {
+            storyActionsHtml = `
+                <div class="mt-4 pt-4 border-t border-gray-700/50">
+                    <h5 class="font-bold imprinted-text mb-2" style="color: ${theme.textColor};">Local Opportunities:</h5>
+                    ${storyActionsHtml}
+                </div>`;
+        }
+
         const contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
@@ -22658,6 +22675,7 @@ export class UIEventControl {
                 </div>
                 <div class="mt-6 mb-2">
                     ${navigateBtnHtml}
+                    ${storyActionsHtml}
                 </div>
             </div>
         `;
@@ -30085,6 +30103,8 @@ export class GameState {
                 // --- VIRTUAL WORKBENCH ---
                 // Visual Seed: A counter that increments to drive the deterministic asset rotation.
                 visualSeed: 0,
+                // Story Flags: Map of primitive data types tracking narrative progress, faction rep, and world state.
+                storyFlags: {},
                 // --- PHASE 1: AGE ENGINE ---
                 statModifiers: {
                     profitBonus: 0.0,       // Era 1 (Age 25+)
@@ -34305,12 +34325,35 @@ export class SystemStateService {
         const allStates = Object.keys(DB.SYSTEM_STATES).filter(k => k !== 'NEUTRAL');
         let sysState = this.gameState.systemStates || this.gameState.systemState;
         
+        // --- STORY FLAGS OVERRIDE: FORCE SYSTEM STATE ---
+        const storyFlags = this.gameState.player?.storyFlags || {};
+        for (const [flagKey, flagValue] of Object.entries(storyFlags)) {
+            if (flagKey.startsWith('force_state_') && flagValue === true) {
+                const forcedStateId = flagKey.replace('force_state_', '').toUpperCase();
+                if (DB.SYSTEM_STATES[forcedStateId]) {
+                    if (this.logger && this.logger.info && this.logger.info.system) {
+                        this.logger.info.system('SystemState', this.gameState.day, 'STATE_FORCED', `Story flag ${flagKey} forced state ${forcedStateId}.`);
+                    }
+                    this.triggerState(forcedStateId);
+                    return; // Exit RNG roll to obey explicit narrative constraint
+                }
+            }
+        }
+
         const ledger = sysState?.historyLedger || [];
         const lastStateId = ledger.length > 0 ? ledger[ledger.length - 1] : null;
         const lastArchetype = lastStateId && DB.SYSTEM_STATES[lastStateId] ? DB.SYSTEM_STATES[lastStateId].archetype : null;
 
         // Ensure the new state belongs to a different Archetype than the previous one
-        const validStates = allStates.filter(id => DB.SYSTEM_STATES[id].archetype !== lastArchetype);
+        const validStates = allStates.filter(id => {
+            if (DB.SYSTEM_STATES[id].archetype === lastArchetype) return false;
+            
+            // --- STORY FLAGS OVERRIDE: PREVENT SYSTEM STATE ---
+            const preventFlag = `prevent_state_${id.toLowerCase()}`;
+            if (storyFlags[preventFlag] === true) return false;
+
+            return true;
+        });
 
         if (validStates.length === 0) {
             this.endCurrentState(); // Failsafe
@@ -34364,7 +34407,9 @@ export class SystemStateService {
             sysState.targetLocations = [];
         }
 
-        this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to ${stateId} for ${sysState.remainingDays} days.`);
+        if (this.logger && this.logger.info && this.logger.info.system) {
+             this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to ${stateId} for ${sysState.remainingDays} days.`);
+        }
     }
 
     /**
@@ -34395,7 +34440,9 @@ export class SystemStateService {
             sysState.neutralPauseDays = 7; // Fallback
         }
 
-        this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);
+        if (this.logger && this.logger.info && this.logger.info.system) {
+             this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);
+        }
     }
 
     /**
@@ -36706,6 +36753,33 @@ export class MissionTriggerEvaluator {
             case 'mission_not_completed':
                  return !gameState.missions.completedMissionIds.includes(trigger.missionId || trigger.value);
 
+            // --- STORY FLAGS ---
+            case 'flag_is_true':
+                return (gameState.player.storyFlags && gameState.player.storyFlags[trigger.flag]) === true;
+
+            case 'flag_is_false':
+                const isFalseVal = gameState.player.storyFlags ? gameState.player.storyFlags[trigger.flag] : undefined;
+                return isFalseVal === false || isFalseVal === undefined;
+
+            case 'flag_eq':
+                return (gameState.player.storyFlags && gameState.player.storyFlags[trigger.flag]) === trigger.value;
+
+            case 'flag_gt':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) > trigger.value;
+
+            case 'flag_gte':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) >= trigger.value;
+
+            case 'flag_lt':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) < trigger.value;
+
+            case 'flag_lte':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) <= trigger.value;
+
+            case 'flag_days_since':
+                const stampDay = gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0;
+                return (gameState.day - stampDay) >= trigger.value;
+
             // --- ATTRIBUTE CHECKS ---
             case 'revealed_tier':
                 return gameState.player.revealedTier >= (trigger.tier || trigger.value);
@@ -37315,6 +37389,37 @@ export class SimulationService {
         rewards.forEach(reward => {
             const rewardType = reward.type.toLowerCase();
             switch (rewardType) {
+                // --- STORY FLAGS MUTATORS ---
+                case 'set_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags[reward.flag] = reward.value;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_SET', `Flag ${reward.flag} set to ${reward.value}`);
+                    break;
+                case 'increment_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    const incVal = reward.amount || 1;
+                    this.gameState.player.storyFlags[reward.flag] = (this.gameState.player.storyFlags[reward.flag] || 0) + incVal;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_INC', `Flag ${reward.flag} incremented by ${incVal}`);
+                    break;
+                case 'decrement_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    const decVal = reward.amount || 1;
+                    this.gameState.player.storyFlags[reward.flag] = (this.gameState.player.storyFlags[reward.flag] || 0) - decVal;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_DEC', `Flag ${reward.flag} decremented by ${decVal}`);
+                    break;
+                case 'stamp_day_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags[reward.flag] = this.gameState.day;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_STAMP', `Flag ${reward.flag} stamped with day ${this.gameState.day}`);
+                    break;
+                case 'clear_flag':
+                    if (this.gameState.player.storyFlags && this.gameState.player.storyFlags[reward.flag] !== undefined) {
+                        delete this.gameState.player.storyFlags[reward.flag];
+                        this.logger.info.player(this.gameState.day, 'STORY_FLAG_CLEAR', `Flag ${reward.flag} cleared`);
+                    }
+                    break;
+
+                // --- EXISTING REWARDS ---
                 case 'credits':
                     this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
                     this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
@@ -37722,6 +37827,39 @@ export class ConditionEvaluator {
         let threshold = this.valueResolver.resolve(value, gameState);
 
         switch (type) {
+            // --- STORY FLAGS ---
+            case 'flag_is_true':
+                return (gameState.player.storyFlags && gameState.player.storyFlags[condition.flag]) === true;
+
+            case 'flag_is_false':
+                const flagVal = gameState.player.storyFlags ? gameState.player.storyFlags[condition.flag] : undefined;
+                return flagVal === false || flagVal === undefined;
+
+            case 'flag_eq':
+                currentValue = gameState.player.storyFlags ? gameState.player.storyFlags[condition.flag] : undefined;
+                return this.compare(currentValue, 'EQ', threshold);
+
+            case 'flag_gt':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'GT', threshold);
+
+            case 'flag_gte':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'GTE', threshold);
+
+            case 'flag_lt':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'LT', threshold);
+
+            case 'flag_lte':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'LTE', threshold);
+
+            case 'flag_days_since':
+                const stampVal = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                currentValue = gameState.day - stampVal;
+                return this.compare(currentValue, 'GTE', threshold);
+
             // --- RESOURCE CHECKS ---
             case EVENT_CONSTANTS.CONDITIONS.HAS_FUEL:
                 const shipId = gameState.player.activeShipId;
@@ -39243,6 +39381,31 @@ import { GameAttributes } from './GameAttributes.js';
 const effectHandlers = {
     'SPACE_RACE': resolveSpaceRace,
     'ADRIFT_PASSENGER': resolveAdriftPassenger,
+
+    // --- STORY FLAGS MUTATORS ---
+    'SET_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        gameState.player.storyFlags[effect.flag] = effect.value;
+    },
+    'INCREMENT_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        const incVal = effect.amount || 1;
+        gameState.player.storyFlags[effect.flag] = (gameState.player.storyFlags[effect.flag] || 0) + incVal;
+    },
+    'DECREMENT_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        const decVal = effect.amount || 1;
+        gameState.player.storyFlags[effect.flag] = (gameState.player.storyFlags[effect.flag] || 0) - decVal;
+    },
+    'STAMP_DAY_FLAG': (gameState, simulationService, effect) => {
+        if (!gameState.player.storyFlags) gameState.player.storyFlags = {};
+        gameState.player.storyFlags[effect.flag] = gameState.day;
+    },
+    'CLEAR_FLAG': (gameState, simulationService, effect) => {
+        if (gameState.player.storyFlags && gameState.player.storyFlags[effect.flag] !== undefined) {
+            delete gameState.player.storyFlags[effect.flag];
+        }
+    },
 
     'GRANT_OFFICER': (gameState, simulationService, effect, outcome) => {
         const officerId = effect.target;
@@ -46336,6 +46499,11 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [37.73] - 2026-4-14
+-  added mission flags
+-  added flag evaluators and mutators
+-  added flag cross-system integration
+
 # [37.70] - 2026-4-14
 -  spot refactoring
 -  fixed memory leaks
@@ -51424,6 +51592,7 @@ Contains all progression, assets, and statistics for the user.
 | `bankruptcy` | Object | Flags and trackers for insolvency status, grace periods, and active Repo Events. |
 | `revealedTier` | Number | Highest commodity tier visible (1-7). |
 | `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
+| **`storyFlags`** | **Object** | **Map of primitive data types tracking narrative progress, faction rep, and world state.** |
 | **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
 |   `profitBonus` | Number | % Bonus to trade profits (e.g., 0.01 = 1%). |
 |   `intelCost` | Number | % Discount on Intel purchases. |
