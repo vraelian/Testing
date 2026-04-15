@@ -163,10 +163,10 @@ export const EVENTS_TRAFFIC = [
         outcomes: {
             'out_buy': {
                 title: 'Data Acquired',
-                text: 'You transfer the credits. A packet of market data floods your computer.',
+                text: 'You transfer the credits. A packet of volatile, high-grade market data floods your computer.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: -0.02 } },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                    { type: 'GRANT_HOT_INTEL', value: 1 }
                 ]
             },
             'out_barter': {
@@ -174,7 +174,7 @@ export const EVENTS_TRAFFIC = [
                 text: 'You trade a few high-end chips for the data. "Pleasure doing business."',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PROCESSORS, value: 5 },
-                    { type: EVENT_CONSTANTS.EFFECTS.UNLOCK_INTEL, value: 1 }
+                    { type: 'GRANT_HOT_INTEL', value: 1 }
                 ]
             },
             'out_decline': {
@@ -225,7 +225,7 @@ export const EVENTS_TRAFFIC = [
                 text: 'You sell a portion of your cargo to the convoy crew. They pay a premium for the convenience.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO, value: 0.15 },
-                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { scaleWith: 'PLAYER_CREDITS', factor: 0.02 } }
+                    { type: EVENT_CONSTANTS.EFFECTS.MODIFY_CREDITS, value: { base: 2500, scaleWith: 'SHIP_CLASS_SCALAR', factor: 1000 } }
                 ]
             },
             'out_pass': {

@@ -379,6 +379,38 @@ const effectHandlers = {
         effect.intelCommodity = commodityName;
     },
 
+    ['GRANT_HOT_INTEL']: (gameState, simulationService, effect, outcome) => {
+        const revealedTier = gameState.player.revealedTier;
+        const unlockedCommodities = DB.COMMODITIES.filter(c => c.tier <= revealedTier).map(c => c.id);
+
+        if (unlockedCommodities.length === 0) return;
+
+        const commodityId = unlockedCommodities[Math.floor(Math.random() * unlockedCommodities.length)];
+        
+        const playerUnlockedLocations = gameState.player.unlockedLocationIds || [];
+        const possibleDealLocations = DB.MARKETS.map(m => m.id).filter(id => playerUnlockedLocations.includes(id));
+
+        if (possibleDealLocations.length === 0) return;
+        const dealLocationId = possibleDealLocations[Math.floor(Math.random() * possibleDealLocations.length)];
+
+        const discountPercent = 0.30 + Math.random() * 0.40; // 30% to 70% off
+        
+        gameState.activeHotIntel = {
+            locationId: dealLocationId,
+            commodityId: commodityId,
+            discountMultiplier: 1 - discountPercent,
+            startDay: gameState.day,
+            sourceSaleLocationId: gameState.currentLocationId
+        };
+
+        const commodityName = DB.COMMODITIES.find(c => c.id === commodityId)?.name || 'goods';
+        const locationName = DB.MARKETS.find(m => m.id === dealLocationId)?.name || 'a local market';
+
+        effect.intelLocation = locationName;
+        effect.intelCommodity = commodityName;
+        effect.discountPct = Math.round(discountPercent * 100);
+    },
+
     [EVENT_CONSTANTS.EFFECTS.LOSE_RANDOM_CARGO]: (gameState, simulationService, effect) => {
         const fleetInventory = {};
         for (const shipId of gameState.player.ownedShipIds) {

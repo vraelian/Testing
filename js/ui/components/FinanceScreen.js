@@ -174,7 +174,13 @@ export function renderFinanceScreen(gameState) {
         } else {
             // 1. GUILD FINANCING
             const guildAmount = Math.floor(shipNetWorth * 0.35);
-            const guildFee = Math.floor(guildAmount * 0.10);
+            let guildFee = Math.floor(guildAmount * 0.10);
+            
+            // Phase 1 Fix L: Guild Loan Forgiveness for destitute players
+            if (guildFee <= 5000) {
+                guildFee = 0;
+            }
+            
             const guildInterest = Math.floor(guildAmount * 0.04);
             const guildData = { amount: guildAmount, fee: guildFee, interest: guildInterest, type: 'guild', termDays: 1080 };
 
