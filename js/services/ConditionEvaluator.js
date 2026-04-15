@@ -42,6 +42,39 @@ export class ConditionEvaluator {
         let threshold = this.valueResolver.resolve(value, gameState);
 
         switch (type) {
+            // --- STORY FLAGS ---
+            case 'flag_is_true':
+                return (gameState.player.storyFlags && gameState.player.storyFlags[condition.flag]) === true;
+
+            case 'flag_is_false':
+                const flagVal = gameState.player.storyFlags ? gameState.player.storyFlags[condition.flag] : undefined;
+                return flagVal === false || flagVal === undefined;
+
+            case 'flag_eq':
+                currentValue = gameState.player.storyFlags ? gameState.player.storyFlags[condition.flag] : undefined;
+                return this.compare(currentValue, 'EQ', threshold);
+
+            case 'flag_gt':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'GT', threshold);
+
+            case 'flag_gte':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'GTE', threshold);
+
+            case 'flag_lt':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'LT', threshold);
+
+            case 'flag_lte':
+                currentValue = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                return this.compare(currentValue, 'LTE', threshold);
+
+            case 'flag_days_since':
+                const stampVal = gameState.player.storyFlags ? (gameState.player.storyFlags[condition.flag] || 0) : 0;
+                currentValue = gameState.day - stampVal;
+                return this.compare(currentValue, 'GTE', threshold);
+
             // --- RESOURCE CHECKS ---
             case EVENT_CONSTANTS.CONDITIONS.HAS_FUEL:
                 const shipId = gameState.player.activeShipId;

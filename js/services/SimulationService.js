@@ -567,6 +567,37 @@ export class SimulationService {
         rewards.forEach(reward => {
             const rewardType = reward.type.toLowerCase();
             switch (rewardType) {
+                // --- STORY FLAGS MUTATORS ---
+                case 'set_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags[reward.flag] = reward.value;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_SET', `Flag ${reward.flag} set to ${reward.value}`);
+                    break;
+                case 'increment_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    const incVal = reward.amount || 1;
+                    this.gameState.player.storyFlags[reward.flag] = (this.gameState.player.storyFlags[reward.flag] || 0) + incVal;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_INC', `Flag ${reward.flag} incremented by ${incVal}`);
+                    break;
+                case 'decrement_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    const decVal = reward.amount || 1;
+                    this.gameState.player.storyFlags[reward.flag] = (this.gameState.player.storyFlags[reward.flag] || 0) - decVal;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_DEC', `Flag ${reward.flag} decremented by ${decVal}`);
+                    break;
+                case 'stamp_day_flag':
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags[reward.flag] = this.gameState.day;
+                    this.logger.info.player(this.gameState.day, 'STORY_FLAG_STAMP', `Flag ${reward.flag} stamped with day ${this.gameState.day}`);
+                    break;
+                case 'clear_flag':
+                    if (this.gameState.player.storyFlags && this.gameState.player.storyFlags[reward.flag] !== undefined) {
+                        delete this.gameState.player.storyFlags[reward.flag];
+                        this.logger.info.player(this.gameState.day, 'STORY_FLAG_CLEAR', `Flag ${reward.flag} cleared`);
+                    }
+                    break;
+
+                // --- EXISTING REWARDS ---
                 case 'credits':
                     this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
                     this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);

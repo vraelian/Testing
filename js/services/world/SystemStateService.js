@@ -125,12 +125,35 @@ export class SystemStateService {
         const allStates = Object.keys(DB.SYSTEM_STATES).filter(k => k !== 'NEUTRAL');
         let sysState = this.gameState.systemStates || this.gameState.systemState;
         
+        // --- STORY FLAGS OVERRIDE: FORCE SYSTEM STATE ---
+        const storyFlags = this.gameState.player?.storyFlags || {};
+        for (const [flagKey, flagValue] of Object.entries(storyFlags)) {
+            if (flagKey.startsWith('force_state_') && flagValue === true) {
+                const forcedStateId = flagKey.replace('force_state_', '').toUpperCase();
+                if (DB.SYSTEM_STATES[forcedStateId]) {
+                    if (this.logger && this.logger.info && this.logger.info.system) {
+                        this.logger.info.system('SystemState', this.gameState.day, 'STATE_FORCED', `Story flag ${flagKey} forced state ${forcedStateId}.`);
+                    }
+                    this.triggerState(forcedStateId);
+                    return; // Exit RNG roll to obey explicit narrative constraint
+                }
+            }
+        }
+
         const ledger = sysState?.historyLedger || [];
         const lastStateId = ledger.length > 0 ? ledger[ledger.length - 1] : null;
         const lastArchetype = lastStateId && DB.SYSTEM_STATES[lastStateId] ? DB.SYSTEM_STATES[lastStateId].archetype : null;
 
         // Ensure the new state belongs to a different Archetype than the previous one
-        const validStates = allStates.filter(id => DB.SYSTEM_STATES[id].archetype !== lastArchetype);
+        const validStates = allStates.filter(id => {
+            if (DB.SYSTEM_STATES[id].archetype === lastArchetype) return false;
+            
+            // --- STORY FLAGS OVERRIDE: PREVENT SYSTEM STATE ---
+            const preventFlag = `prevent_state_${id.toLowerCase()}`;
+            if (storyFlags[preventFlag] === true) return false;
+
+            return true;
+        });
 
         if (validStates.length === 0) {
             this.endCurrentState(); // Failsafe
@@ -184,7 +207,9 @@ export class SystemStateService {
             sysState.targetLocations = [];
         }
 
-        this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to ${stateId} for ${sysState.remainingDays} days.`);
+        if (this.logger && this.logger.info && this.logger.info.system) {
+             this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to ${stateId} for ${sysState.remainingDays} days.`);
+        }
     }
 
     /**
@@ -215,7 +240,9 @@ export class SystemStateService {
             sysState.neutralPauseDays = 7; // Fallback
         }
 
-        this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);
+        if (this.logger && this.logger.info && this.logger.info.system) {
+             this.logger.info.system('SystemState', this.gameState.day, 'STATE_CHANGE', `Transitioned to NEUTRAL for ${sysState.neutralPauseDays} days.`);
+        }
     }
 
     /**

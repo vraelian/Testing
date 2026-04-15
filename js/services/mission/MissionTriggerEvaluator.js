@@ -20,6 +20,33 @@ export class MissionTriggerEvaluator {
             case 'mission_not_completed':
                  return !gameState.missions.completedMissionIds.includes(trigger.missionId || trigger.value);
 
+            // --- STORY FLAGS ---
+            case 'flag_is_true':
+                return (gameState.player.storyFlags && gameState.player.storyFlags[trigger.flag]) === true;
+
+            case 'flag_is_false':
+                const isFalseVal = gameState.player.storyFlags ? gameState.player.storyFlags[trigger.flag] : undefined;
+                return isFalseVal === false || isFalseVal === undefined;
+
+            case 'flag_eq':
+                return (gameState.player.storyFlags && gameState.player.storyFlags[trigger.flag]) === trigger.value;
+
+            case 'flag_gt':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) > trigger.value;
+
+            case 'flag_gte':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) >= trigger.value;
+
+            case 'flag_lt':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) < trigger.value;
+
+            case 'flag_lte':
+                return (gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0) <= trigger.value;
+
+            case 'flag_days_since':
+                const stampDay = gameState.player.storyFlags ? (gameState.player.storyFlags[trigger.flag] || 0) : 0;
+                return (gameState.day - stampDay) >= trigger.value;
+
             // --- ATTRIBUTE CHECKS ---
             case 'revealed_tier':
                 return gameState.player.revealedTier >= (trigger.tier || trigger.value);
