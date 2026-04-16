@@ -33,14 +33,16 @@ export class UIHelpManager {
     }
 
     _injectDOM() {
-        // Break free of the game-container and inject directly to document.body 
-        // to bypass local stacking contexts or opacity constraints.
-        // [FIX A] Initialized with display: none to prevent leaking onto the Start Screen.
+        const gameContainer = document.getElementById('game-container');
+        if (!gameContainer) return; // Failsafe
+
+        // [FIX B] Inject directly into game-container to inherit relative coordinate space
         if (!document.getElementById('global-help-anchor')) {
             const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help" style="display: none;">?</button>`;
-            document.body.insertAdjacentHTML('beforeend', anchorHTML);
+            gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
         }
 
+        // Overlay remains on body to ensure it spans the entire physical screen
         if (!document.getElementById('help-modal-overlay')) {
             const modalHTML = `
                 <div id="help-modal-overlay" class="help-modal-overlay hidden">
