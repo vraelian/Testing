@@ -342,6 +342,14 @@ export class UIEventControl {
                 });
             }
             
+            // [FIX C] Fade out sticky bar smoothly when launch modal opens
+            const stickyBar = document.getElementById('mission-sticky-bar');
+            if (stickyBar) {
+                stickyBar.style.transition = 'opacity 0.3s ease';
+                stickyBar.style.opacity = '0';
+                stickyBar.style.pointerEvents = 'none';
+            }
+
             starfieldService.mount(document.body);
             starfieldService.triggerEntry();
         });
@@ -352,10 +360,29 @@ export class UIEventControl {
                 
                 starfieldService.triggerQuickExit();
                 
+                // [FIX C] Restore the sticky bar if they cancel the launch
+                const stickyBar = document.getElementById('mission-sticky-bar');
+                if (stickyBar) {
+                    stickyBar.style.opacity = '1';
+                    stickyBar.style.pointerEvents = 'auto';
+                }
+
                 modal.removeEventListener('click', closeHandler);
             }
         };
         modal.addEventListener('click', closeHandler);
+        
+        // Also restore the sticky bar implicitly when the actual launch button is clicked
+        const launchBtn = modal.querySelector('#btn-launch-travel');
+        if (launchBtn) {
+            launchBtn.addEventListener('click', () => {
+                const stickyBar = document.getElementById('mission-sticky-bar');
+                if (stickyBar) {
+                    stickyBar.style.opacity = '1';
+                    stickyBar.style.pointerEvents = 'auto';
+                }
+            });
+        }
     }
 
     showMapDetailModal(locationId) {
@@ -680,6 +707,9 @@ export class UIEventControl {
                         } else {
                             effectText = `<span class="${baseStyle} text-gray-500">Encrypted Data Unreadable</span>`;
                         }
+                        break;
+                    case 'GRANT_HOT_INTEL':
+                        effectText = `<span class="${baseStyle} text-req-yellow">Hot Intel: ${eff.discountPct}% off ${eff.intelCommodity} at ${eff.intelLocation}</span>`;
                         break;
                     case 'GRANT_OFFICER':
                         if (eff.installedOfficer) {

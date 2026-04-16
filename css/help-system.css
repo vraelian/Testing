@@ -1,7 +1,7 @@
 /* css/help-system.css */
 
 .global-help-anchor {
-    position: fixed; /* Phase 4 Fix: Decoupled from #game-container relative context */
+    position: absolute; /* Phase 4 Fix: Decoupled from window relative context */
     bottom: 112px;
     right: 0;
     width: 44px; 
@@ -46,7 +46,10 @@
 
 .help-modal-overlay {
     position: fixed; /* Phase 4 Fix */
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     background-color: rgba(0, 0, 0, 0.6);
     z-index: 10001; /* Phase 4 Fix */
     display: flex;
