@@ -88,7 +88,7 @@ COMPONENT-SPECIFIC STYLING
     /* VIRTUAL WORKBENCH: Top padding 0, Right 0.5rem, Bottom 4rem, Left 0.5rem. Shifting card UP. */
     padding: 0 0.5rem 4rem 0.5rem; 
     contain: paint layout style; 
-    content-visibility: auto; 
+    /* VIRTUAL WORKBENCH: Removed content-visibility: auto; to prevent vanishing bug on Safari PWA when stationary */
 }
 
 /* Dynamic Class Overlay Gradients & Scoped CSS Variables */

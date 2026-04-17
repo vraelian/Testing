@@ -48,18 +48,18 @@ export class UIMissionControl {
     }
 
     /**
-     * Hides the sticky bar with a 1s fade-out animation to prevent sudden popping.
+     * Hides the sticky bar with a 0.6s fade-out animation to prevent sudden popping.
      */
     _hideStickyBarWithFade(el) {
         if (el.style.display !== 'none' && el.style.opacity !== '0') {
-            el.style.transition = 'opacity 1s ease-out';
+            el.style.transition = 'opacity 0.6s ease-out';
             el.style.opacity = '0';
             setTimeout(() => {
                 if (el.style.opacity === '0') {
                     el.style.display = 'none';
                     el.style.transition = 'none';
                 }
-            }, 1000);
+            }, 600);
         }
     }
 
@@ -73,8 +73,8 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Hide if traveling or on hangar screen
-        if (gameState.isTraveling || gameState.activeScreen === SCREEN_IDS.HANGAR) {
+        // Hide if a travel sequence is active or on hangar screen
+        if (gameState.pendingTravel || gameState.activeScreen === SCREEN_IDS.HANGAR) {
             this._hideStickyBarWithFade(stickyBarEl);
             return;
         }
