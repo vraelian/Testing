@@ -377,7 +377,6 @@
         </div>
     </div>
 
-    <script type="module" src="./js/services/BankruptcyService.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
@@ -3464,9 +3463,9 @@ card.
 .modal-backdrop {
     position: fixed;
     top: 0;
+    bottom: 0;
     left: 0;
-    width: 100vw;
-    height: 100dvh;
+    right: 0;
     background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
@@ -9000,7 +8999,7 @@ COMPONENT-SPECIFIC STYLING
     /* VIRTUAL WORKBENCH: Top padding 0, Right 0.5rem, Bottom 4rem, Left 0.5rem. Shifting card UP. */
     padding: 0 0.5rem 4rem 0.5rem; 
     contain: paint layout style; 
-    content-visibility: auto; 
+    /* VIRTUAL WORKBENCH: Removed content-visibility: auto; to prevent vanishing bug on Safari PWA when stationary */
 }
 
 /* Dynamic Class Overlay Gradients & Scoped CSS Variables */
@@ -10005,7 +10004,7 @@ BULKHEAD NAVIGATION STYLES
 /* css/help-system.css */
 
 .global-help-anchor {
-    position: fixed; /* Phase 4 Fix: Decoupled from #game-container relative context */
+    position: absolute; /* Phase 4 Fix: Decoupled from window relative context */
     bottom: 112px;
     right: 0;
     width: 44px; 
@@ -10050,7 +10049,10 @@ BULKHEAD NAVIGATION STYLES
 
 .help-modal-overlay {
     position: fixed; /* Phase 4 Fix */
-    inset: 0;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
     background-color: rgba(0, 0, 0, 0.6);
     z-index: 10001; /* Phase 4 Fix */
     display: flex;
@@ -20949,18 +20951,18 @@ export class UIMissionControl {
     }
 
     /**
-     * Hides the sticky bar with a 1s fade-out animation to prevent sudden popping.
+     * Hides the sticky bar with a 0.6s fade-out animation to prevent sudden popping.
      */
     _hideStickyBarWithFade(el) {
         if (el.style.display !== 'none' && el.style.opacity !== '0') {
-            el.style.transition = 'opacity 1s ease-out';
+            el.style.transition = 'opacity 0.6s ease-out';
             el.style.opacity = '0';
             setTimeout(() => {
                 if (el.style.opacity === '0') {
                     el.style.display = 'none';
                     el.style.transition = 'none';
                 }
-            }, 1000);
+            }, 600);
         }
     }
 
@@ -20974,8 +20976,8 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Hide if traveling or on hangar screen
-        if (gameState.isTraveling || gameState.activeScreen === SCREEN_IDS.HANGAR) {
+        // Hide if a travel sequence is active or on hangar screen
+        if (gameState.pendingTravel || gameState.activeScreen === SCREEN_IDS.HANGAR) {
             this._hideStickyBarWithFade(stickyBarEl);
             return;
         }
@@ -22574,6 +22576,14 @@ export class UIEventControl {
                 });
             }
             
+            // [FIX C] Fade out sticky bar smoothly when launch modal opens (1.5x faster)
+            const stickyBar = document.getElementById('mission-sticky-bar');
+            if (stickyBar) {
+                stickyBar.style.transition = 'opacity 0.2s ease';
+                stickyBar.style.opacity = '0';
+                stickyBar.style.pointerEvents = 'none';
+            }
+
             starfieldService.mount(document.body);
             starfieldService.triggerEntry();
         });
@@ -22584,6 +22594,14 @@ export class UIEventControl {
                 
                 starfieldService.triggerQuickExit();
                 
+                // [FIX C] Restore the sticky bar ONLY if they cancel the launch (1.5x faster)
+                const stickyBar = document.getElementById('mission-sticky-bar');
+                if (stickyBar) {
+                    stickyBar.style.transition = 'opacity 0.2s ease';
+                    stickyBar.style.opacity = '1';
+                    stickyBar.style.pointerEvents = 'auto';
+                }
+
                 modal.removeEventListener('click', closeHandler);
             }
         };
@@ -22912,6 +22930,9 @@ export class UIEventControl {
                         } else {
                             effectText = `<span class="${baseStyle} text-gray-500">Encrypted Data Unreadable</span>`;
                         }
+                        break;
+                    case 'GRANT_HOT_INTEL':
+                        effectText = `<span class="${baseStyle} text-req-yellow">Hot Intel: ${eff.discountPct}% off ${eff.intelCommodity} at ${eff.intelLocation}</span>`;
                         break;
                     case 'GRANT_OFFICER':
                         if (eff.installedOfficer) {
@@ -23745,14 +23766,16 @@ export class UIHelpManager {
     }
 
     _injectDOM() {
-        // Break free of the game-container and inject directly to document.body 
-        // to bypass local stacking contexts or opacity constraints.
-        // [FIX A] Initialized with display: none to prevent leaking onto the Start Screen.
+        const gameContainer = document.getElementById('game-container');
+        if (!gameContainer) return; // Failsafe
+
+        // [FIX B] Inject directly into game-container to inherit relative coordinate space
         if (!document.getElementById('global-help-anchor')) {
             const anchorHTML = `<button type="button" id="global-help-anchor" class="global-help-anchor" data-action="toggle-help" style="display: none;">?</button>`;
-            document.body.insertAdjacentHTML('beforeend', anchorHTML);
+            gameContainer.insertAdjacentHTML('beforeend', anchorHTML);
         }
 
+        // Overlay remains on body to ensure it spans the entire physical screen
         if (!document.getElementById('help-modal-overlay')) {
             const modalHTML = `
                 <div id="help-modal-overlay" class="help-modal-overlay hidden">
@@ -37505,13 +37528,33 @@ export class SimulationService {
                     break;
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
-                     if (shipState && shipState.upgrades) {
+                     if (shipState) {
+                         shipState.upgrades = shipState.upgrades || [];
                          if (shipState.upgrades.length < 3) {
                              shipState.upgrades.push(reward.target || reward.id);
                          } else {
-                             shipState.upgrades[2] = reward.target || reward.id; 
+                             // Route to replacement UI
+                             if (this.uiManager && this.uiManager.hangarControl) {
+                                 this.uiManager.hangarControl.showUpgradeInstallationModal(
+                                     reward.target || reward.id, 
+                                     0, 
+                                     0, 
+                                     shipState, 
+                                     (idxToRemove) => {
+                                         if (idxToRemove !== -1) {
+                                             shipState.upgrades.splice(idxToRemove, 1);
+                                             shipState.upgrades.push(reward.target || reward.id);
+                                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed overwrite upgrade: ${reward.target || reward.id}`);
+                                             this.gameState.setState({});
+                                         }
+                                     }
+                                 );
+                             } else {
+                                 // Fallback if modal is somehow unavailable
+                                 shipState.upgrades[2] = reward.target || reward.id; 
+                                 this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
+                             }
                          }
-                         this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target || reward.id}`);
                      }
                      break;
                 case 'officer':
@@ -40551,11 +40594,16 @@ export class UIManager {
                 });
                 break;
             case SCREEN_IDS.HANGAR:
+                const prevUpgrades = previousState?.player?.shipStates[gameState.player.activeShipId]?.upgrades || [];
+                const currUpgrades = gameState.player.shipStates[gameState.player.activeShipId]?.upgrades || [];
+                const upgradesChanged = prevUpgrades.length !== currUpgrades.length;
+
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
                     previousState.player.activeShipId !== gameState.player.activeShipId || 
-                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length;
+                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length ||
+                    upgradesChanged;
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);

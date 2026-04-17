@@ -342,10 +342,10 @@ export class UIEventControl {
                 });
             }
             
-            // [FIX C] Fade out sticky bar smoothly when launch modal opens
+            // [FIX C] Fade out sticky bar smoothly when launch modal opens (1.5x faster)
             const stickyBar = document.getElementById('mission-sticky-bar');
             if (stickyBar) {
-                stickyBar.style.transition = 'opacity 0.3s ease';
+                stickyBar.style.transition = 'opacity 0.2s ease';
                 stickyBar.style.opacity = '0';
                 stickyBar.style.pointerEvents = 'none';
             }
@@ -360,9 +360,10 @@ export class UIEventControl {
                 
                 starfieldService.triggerQuickExit();
                 
-                // [FIX C] Restore the sticky bar if they cancel the launch
+                // [FIX C] Restore the sticky bar ONLY if they cancel the launch (1.5x faster)
                 const stickyBar = document.getElementById('mission-sticky-bar');
                 if (stickyBar) {
+                    stickyBar.style.transition = 'opacity 0.2s ease';
                     stickyBar.style.opacity = '1';
                     stickyBar.style.pointerEvents = 'auto';
                 }
@@ -371,18 +372,6 @@ export class UIEventControl {
             }
         };
         modal.addEventListener('click', closeHandler);
-        
-        // Also restore the sticky bar implicitly when the actual launch button is clicked
-        const launchBtn = modal.querySelector('#btn-launch-travel');
-        if (launchBtn) {
-            launchBtn.addEventListener('click', () => {
-                const stickyBar = document.getElementById('mission-sticky-bar');
-                if (stickyBar) {
-                    stickyBar.style.opacity = '1';
-                    stickyBar.style.pointerEvents = 'auto';
-                }
-            });
-        }
     }
 
     showMapDetailModal(locationId) {

@@ -658,13 +658,33 @@ export class SimulationService {
                     break;
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
-                     if (shipState && shipState.upgrades) {
+                     if (shipState) {
+                         shipState.upgrades = shipState.upgrades || [];
                          if (shipState.upgrades.length < 3) {
                              shipState.upgrades.push(reward.target || reward.id);
                          } else {
-                             shipState.upgrades[2] = reward.target || reward.id; 
+                             // Route to replacement UI
+                             if (this.uiManager && this.uiManager.hangarControl) {
+                                 this.uiManager.hangarControl.showUpgradeInstallationModal(
+                                     reward.target || reward.id, 
+                                     0, 
+                                     0, 
+                                     shipState, 
+                                     (idxToRemove) => {
+                                         if (idxToRemove !== -1) {
+                                             shipState.upgrades.splice(idxToRemove, 1);
+                                             shipState.upgrades.push(reward.target || reward.id);
+                                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed overwrite upgrade: ${reward.target || reward.id}`);
+                                             this.gameState.setState({});
+                                         }
+                                     }
+                                 );
+                             } else {
+                                 // Fallback if modal is somehow unavailable
+                                 shipState.upgrades[2] = reward.target || reward.id; 
+                                 this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
+                             }
                          }
-                         this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed upgrade: ${reward.target || reward.id}`);
                      }
                      break;
                 case 'officer':

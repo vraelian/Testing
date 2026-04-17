@@ -516,11 +516,16 @@ export class UIManager {
                 });
                 break;
             case SCREEN_IDS.HANGAR:
+                const prevUpgrades = previousState?.player?.shipStates[gameState.player.activeShipId]?.upgrades || [];
+                const currUpgrades = gameState.player.shipStates[gameState.player.activeShipId]?.upgrades || [];
+                const upgradesChanged = prevUpgrades.length !== currUpgrades.length;
+
                 const needsFullRender = !previousState || 
                     previousState.activeScreen !== SCREEN_IDS.HANGAR || 
                     previousState.uiState.hangarShipyardToggleState !== gameState.uiState.hangarShipyardToggleState ||
                     previousState.player.activeShipId !== gameState.player.activeShipId || 
-                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length;
+                    previousState.player.ownedShipIds.length !== gameState.player.ownedShipIds.length ||
+                    upgradesChanged;
 
                 if (needsFullRender) {
                     this.cache.hangarScreen.innerHTML = renderHangarScreen(gameState, this.simulationService);
