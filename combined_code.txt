@@ -10982,73 +10982,73 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                 </div>
             `;
         }
+    }
 
-        // Render Upgrades (Bottom)
-        const allAttributes = [
-            ...(shipStatic.mechanicIds || []),
-            ...(shipDynamic.upgrades || [])
-        ];
+    // Render Upgrades (Bottom)
+    const allAttributes = [
+        ...(shipStatic.mechanicIds || []),
+        ...(shipDynamic?.upgrades || [])
+    ];
 
-        if (allAttributes.length > 0) {
-            const sortedUpgrades = [...allAttributes].sort((a, b) => {
-                const getTier = (id) => {
-                    const def = GameAttributes.getDefinition(id);
-                    if (def && def.tier) return def.tier;
-                    if (def && def.isAlien) return 5;
-                    if (id.endsWith('_V') || id.endsWith('_5')) return 5;
-                    if (id.endsWith('_IV') || id.endsWith('_4')) return 4;
-                    if (id.endsWith('_III') || id.endsWith('_3')) return 3;
-                    if (id.endsWith('_II') || id.endsWith('_2')) return 2;
-                    return 1; 
-                };
-                const tierA = getTier(a);
-                const tierB = getTier(b);
-                if (tierA !== tierB) return tierA - tierB; 
-                return a.localeCompare(b);
-            });
+    if (allAttributes.length > 0) {
+        const sortedUpgrades = [...allAttributes].sort((a, b) => {
+            const getTier = (id) => {
+                const def = GameAttributes.getDefinition(id);
+                if (def && def.tier) return def.tier;
+                if (def && def.isAlien) return 5;
+                if (id.endsWith('_V') || id.endsWith('_5')) return 5;
+                if (id.endsWith('_IV') || id.endsWith('_4')) return 4;
+                if (id.endsWith('_III') || id.endsWith('_3')) return 3;
+                if (id.endsWith('_II') || id.endsWith('_2')) return 2;
+                return 1; 
+            };
+            const tierA = getTier(a);
+            const tierB = getTier(b);
+            if (tierA !== tierB) return tierA - tierB; 
+            return a.localeCompare(b);
+        });
 
-            const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
-            const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
-            const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
+        const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
+        const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
+        const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
 
-            const upgradesHtmlStr = sortedUpgrades.map((upgradeId, idx) => {
-                const definition = upgradeDefinitions[idx];
-                let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
-                const tooltipText = definition ? definition.description : '';
-                
-                if (useAbbreviation) {
-                    label = _getAbbreviatedLabel(label);
-                }
+        const upgradesHtmlStr = sortedUpgrades.map((upgradeId, idx) => {
+            const definition = upgradeDefinitions[idx];
+            let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
+            const tooltipText = definition ? definition.description : '';
+            
+            if (useAbbreviation) {
+                label = _getAbbreviatedLabel(label);
+            }
 
-                const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
-                let tier = definition?.tier || 1;
-                if (!definition?.tier) {
-                    if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
-                    else if (upgradeId.endsWith('_IV') || upgradeId.endsWith('_4')) tier = 4;
-                    else if (upgradeId.endsWith('_III') || upgradeId.endsWith('_3')) tier = 3;
-                    else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
-                }
-                if (definition && definition.isAlien) tier = 5;
+            const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+            let tier = definition?.tier || 1;
+            if (!definition?.tier) {
+                if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
+                else if (upgradeId.endsWith('_IV') || upgradeId.endsWith('_4')) tier = 4;
+                else if (upgradeId.endsWith('_III') || upgradeId.endsWith('_3')) tier = 3;
+                else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
+            }
+            if (definition && definition.isAlien) tier = 5;
 
-                const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
+            const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
 
-                return `
-                    <button class="attribute-pill ${styleData.className}" 
-                        data-action="show-generic-tooltip" 
-                        data-attribute-id="${upgradeId}"
-                        data-tooltip="${tooltipText}"
-                        style="${styleData.styleVars} touch-action: manipulation; pointer-events: auto;">
-                        ${label}
-                    </button>
-                `;
-            }).join('');
-
-            attributesHtml = `
-                <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap justify-center pointer-events-none px-1 w-full" style="gap: 4px;">
-                    ${upgradesHtmlStr}
-                </div>
+            return `
+                <button class="attribute-pill ${styleData.className}" 
+                    data-action="show-generic-tooltip" 
+                    data-attribute-id="${upgradeId}"
+                    data-tooltip="${tooltipText}"
+                    style="${styleData.styleVars} touch-action: manipulation; pointer-events: auto;">
+                    ${label}
+                </button>
             `;
-        }
+        }).join('');
+
+        attributesHtml = `
+            <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap justify-center pointer-events-none px-1 w-full z-20" style="gap: 4px;">
+                ${upgradesHtmlStr}
+            </div>
+        `;
     }
 
     const distance = Math.abs(itemIndex - activeIndex);
@@ -11265,7 +11265,6 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         </div>
     `;
 }
-
 --- END OF FILE: ./js/ui/components/HangarScreen.js ---
 
 --- START OF FILE: ./js/ui/components/IntelScreen.js ---
@@ -14205,7 +14204,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.73';
+export const APP_VERSION = '37.78';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -39542,7 +39541,7 @@ import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js';
-import { EVENT_CONSTANTS, ORBITAL_ORDER, STATUS_EFFECTS } from '../data/constants.js';
+import { EVENT_CONSTANTS, ORBITAL_ORDER, STATUS_EFFECTS, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
 const effectHandlers = {
@@ -44707,7 +44706,7 @@ export class ActionClickHandler {
                         if (replaceIndex !== -1) {
                             shipState.upgrades.splice(replaceIndex, 1);
                         }
-                        this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
+                        this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId, totalCost);
                         
                         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                         const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
@@ -46471,8 +46470,8 @@ export class PlayerActionService {
             unitCost *= 2.0;
         }
 
-        if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-             unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+        if (state.player.activePerks[PERK_IDS.VENUSIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
+             unitCost *= (1 - DB.PERKS[PERK_IDS.VENUSIAN_SYNDICATE].fuelDiscount);
         }
         
         const attrMod = GameAttributes.getFuelPriceModifier(upgrades);
@@ -46565,8 +46564,8 @@ export class PlayerActionService {
             unitCost *= 2.0;
         }
 
-        if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-            unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+        if (state.player.activePerks[PERK_IDS.VENUSIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
+            unitCost *= (1 - DB.PERKS[PERK_IDS.VENUSIAN_SYNDICATE].repairDiscount);
         }
 
         const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
@@ -46648,20 +46647,22 @@ export class PlayerActionService {
     }
 
     executeInstallUpgrade(shipId, upgradeId, totalCost = 0) {
-        const state = this.gameState.getState();
-        if (!state.player.shipStates[shipId].upgrades) {
-             state.player.shipStates[shipId].upgrades = [];
+        const livePlayer = this.gameState.player;
+        const liveUiState = this.gameState.uiState;
+        
+        if (!livePlayer.shipStates[shipId].upgrades) {
+             livePlayer.shipStates[shipId].upgrades = [];
         }
         
-        state.player.shipStates[shipId].upgrades.push(upgradeId);
+        livePlayer.shipStates[shipId].upgrades.push(upgradeId);
         
         if (totalCost > 0) {
-            state.player.credits -= totalCost;
-            if (!state.uiState.purchasedUpgrades) state.uiState.purchasedUpgrades = [];
-            state.uiState.purchasedUpgrades.push(upgradeId);
+            livePlayer.credits -= totalCost;
+            if (!liveUiState.purchasedUpgrades) liveUiState.purchasedUpgrades = [];
+            liveUiState.purchasedUpgrades.push(upgradeId);
         }
         
-        this.logger.info.player(state.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
+        this.logger.info.player(this.gameState.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
         this.gameState.setState({});
     }
 }
@@ -46672,6 +46673,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.78] - 2026-4-14
+-  fixed event bugs
+-  fixed ship upgrade/status effect bugs
+-  ship card polish
+-  ship upgrade animation polish
+-  UI polish
 
 # [37.73] - 2026-4-14
 -  added mission flags

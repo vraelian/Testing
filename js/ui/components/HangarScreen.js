@@ -154,73 +154,73 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                 </div>
             `;
         }
+    }
 
-        // Render Upgrades (Bottom)
-        const allAttributes = [
-            ...(shipStatic.mechanicIds || []),
-            ...(shipDynamic.upgrades || [])
-        ];
+    // Render Upgrades (Bottom)
+    const allAttributes = [
+        ...(shipStatic.mechanicIds || []),
+        ...(shipDynamic?.upgrades || [])
+    ];
 
-        if (allAttributes.length > 0) {
-            const sortedUpgrades = [...allAttributes].sort((a, b) => {
-                const getTier = (id) => {
-                    const def = GameAttributes.getDefinition(id);
-                    if (def && def.tier) return def.tier;
-                    if (def && def.isAlien) return 5;
-                    if (id.endsWith('_V') || id.endsWith('_5')) return 5;
-                    if (id.endsWith('_IV') || id.endsWith('_4')) return 4;
-                    if (id.endsWith('_III') || id.endsWith('_3')) return 3;
-                    if (id.endsWith('_II') || id.endsWith('_2')) return 2;
-                    return 1; 
-                };
-                const tierA = getTier(a);
-                const tierB = getTier(b);
-                if (tierA !== tierB) return tierA - tierB; 
-                return a.localeCompare(b);
-            });
+    if (allAttributes.length > 0) {
+        const sortedUpgrades = [...allAttributes].sort((a, b) => {
+            const getTier = (id) => {
+                const def = GameAttributes.getDefinition(id);
+                if (def && def.tier) return def.tier;
+                if (def && def.isAlien) return 5;
+                if (id.endsWith('_V') || id.endsWith('_5')) return 5;
+                if (id.endsWith('_IV') || id.endsWith('_4')) return 4;
+                if (id.endsWith('_III') || id.endsWith('_3')) return 3;
+                if (id.endsWith('_II') || id.endsWith('_2')) return 2;
+                return 1; 
+            };
+            const tierA = getTier(a);
+            const tierB = getTier(b);
+            if (tierA !== tierB) return tierA - tierB; 
+            return a.localeCompare(b);
+        });
 
-            const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
-            const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
-            const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
+        const upgradeDefinitions = sortedUpgrades.map(uid => GameAttributes.getDefinition(uid));
+        const totalCharLength = upgradeDefinitions.reduce((sum, def) => sum + (def ? def.name.length : 0), 0);
+        const useAbbreviation = totalCharLength > PILL_CONTAINER_SAFE_CHARS;
 
-            const upgradesHtmlStr = sortedUpgrades.map((upgradeId, idx) => {
-                const definition = upgradeDefinitions[idx];
-                let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
-                const tooltipText = definition ? definition.description : '';
-                
-                if (useAbbreviation) {
-                    label = _getAbbreviatedLabel(label);
-                }
+        const upgradesHtmlStr = sortedUpgrades.map((upgradeId, idx) => {
+            const definition = upgradeDefinitions[idx];
+            let label = definition ? definition.name : DEFAULT_UPGRADE_STYLE.label;
+            const tooltipText = definition ? definition.description : '';
+            
+            if (useAbbreviation) {
+                label = _getAbbreviatedLabel(label);
+            }
 
-                const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
-                let tier = definition?.tier || 1;
-                if (!definition?.tier) {
-                    if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
-                    else if (upgradeId.endsWith('_IV') || upgradeId.endsWith('_4')) tier = 4;
-                    else if (upgradeId.endsWith('_III') || upgradeId.endsWith('_3')) tier = 3;
-                    else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
-                }
-                if (definition && definition.isAlien) tier = 5;
+            const baseColor = definition ? (definition.pillColor || definition.color || DEFAULT_UPGRADE_STYLE.color) : DEFAULT_UPGRADE_STYLE.color; 
+            let tier = definition?.tier || 1;
+            if (!definition?.tier) {
+                if (upgradeId.endsWith('_V') || upgradeId.endsWith('_5')) tier = 5;
+                else if (upgradeId.endsWith('_IV') || upgradeId.endsWith('_4')) tier = 4;
+                else if (upgradeId.endsWith('_III') || upgradeId.endsWith('_3')) tier = 3;
+                else if (upgradeId.endsWith('_II') || upgradeId.endsWith('_2')) tier = 2;
+            }
+            if (definition && definition.isAlien) tier = 5;
 
-                const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
+            const styleData = _getUpgradePillStyle(definition || {}, tier, baseColor);
 
-                return `
-                    <button class="attribute-pill ${styleData.className}" 
-                        data-action="show-generic-tooltip" 
-                        data-attribute-id="${upgradeId}"
-                        data-tooltip="${tooltipText}"
-                        style="${styleData.styleVars} touch-action: manipulation; pointer-events: auto;">
-                        ${label}
-                    </button>
-                `;
-            }).join('');
-
-            attributesHtml = `
-                <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap justify-center pointer-events-none px-1 w-full" style="gap: 4px;">
-                    ${upgradesHtmlStr}
-                </div>
+            return `
+                <button class="attribute-pill ${styleData.className}" 
+                    data-action="show-generic-tooltip" 
+                    data-attribute-id="${upgradeId}"
+                    data-tooltip="${tooltipText}"
+                    style="${styleData.styleVars} touch-action: manipulation; pointer-events: auto;">
+                    ${label}
+                </button>
             `;
-        }
+        }).join('');
+
+        attributesHtml = `
+            <div id="upgrade-pill-container-${shipId}" class="ship-attributes-overlay absolute bottom-3 left-1/2 transform -translate-x-1/2 flex flex-wrap justify-center pointer-events-none px-1 w-full z-20" style="gap: 4px;">
+                ${upgradesHtmlStr}
+            </div>
+        `;
     }
 
     const distance = Math.abs(itemIndex - activeIndex);

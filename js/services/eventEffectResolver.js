@@ -10,7 +10,7 @@ import { resolveAdriftPassenger } from './event-effects/effectAdriftPassenger.js
 import { calculateInventoryUsed } from '../utils.js';
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js';
-import { EVENT_CONSTANTS, ORBITAL_ORDER, STATUS_EFFECTS } from '../data/constants.js';
+import { EVENT_CONSTANTS, ORBITAL_ORDER, STATUS_EFFECTS, PERK_IDS, LOCATION_IDS } from '../data/constants.js';
 import { GameAttributes } from './GameAttributes.js';
 
 const effectHandlers = {

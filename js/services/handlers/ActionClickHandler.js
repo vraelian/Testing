@@ -302,7 +302,7 @@ export class ActionClickHandler {
                         if (replaceIndex !== -1) {
                             shipState.upgrades.splice(replaceIndex, 1);
                         }
-                        this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
+                        this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId, totalCost);
                         
                         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                         const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);

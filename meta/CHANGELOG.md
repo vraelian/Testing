@@ -3,6 +3,13 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [37.78] - 2026-4-14
+-  fixed event bugs
+-  fixed ship upgrade/status effect bugs
+-  ship card polish
+-  ship upgrade animation polish
+-  UI polish
+
 # [37.73] - 2026-4-14
 -  added mission flags
 -  added flag evaluators and mutators
