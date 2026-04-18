@@ -73,8 +73,11 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Hide if a travel sequence is active or on hangar screen
-        if (gameState.pendingTravel || gameState.activeScreen === SCREEN_IDS.HANGAR) {
+        // Hide if a travel sequence is active, launch modal is open, or on hangar screen
+        const launchModal = this.manager.cache.launchModal;
+        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
+
+        if (gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || gameState.activeScreen === SCREEN_IDS.HANGAR) {
             this._hideStickyBarWithFade(stickyBarEl);
             return;
         }
@@ -215,6 +218,7 @@ export class UIMissionControl {
             stickyBarEl.style.filter = 'none';
             stickyBarEl.style.webkitFilter = 'none';
             stickyBarEl.style.display = 'block';
+            stickyBarEl.style.pointerEvents = 'auto';
         } else {
             this._hideStickyBarWithFade(stickyBarEl);
         }
@@ -1018,15 +1022,10 @@ export class UIMissionControl {
                                stickyBarEl.style.webkitFilter = 'none';
                            }
                            
-                           this.manager.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                           
-                           const activeShipId = uiManager.lastKnownState.player.activeShipId;
-                           const shipIndex = uiManager.lastKnownState.player.ownedShipIds.indexOf(activeShipId);
-                           
-                           this.manager.simulationService.setHangarShipyardMode('hangar');
-                           this.manager.simulationService.setHangarCarouselIndex(shipIndex !== -1 ? shipIndex : 0, 'hangar');
-                           
-                           await uiManager.orchestrateUpgradeSequence(activeShipId);
+                           // Bypassed direct sequence orchestration. SimulationService._grantRewards handles it upon resolution.
+                           if (uiManager.lastKnownState) {
+                               uiManager.render(uiManager.lastKnownState);
+                           }
                        } else {
                            // Standard unblur and render loop
                            if (stickyBarEl) {

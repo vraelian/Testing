@@ -9147,7 +9147,7 @@ COMPONENT-SPECIFIC STYLING
 
 .status-badge {
     position: absolute;
-    bottom: -1px;
+    bottom: -3%;
     left: 50%;
     transform: translateX(-50%) translateY(50%);
     background-color: #1a2030;
@@ -11265,6 +11265,7 @@ function _renderParamBars(shipStatic, shipDynamic, player, isShipyard = false, s
         </div>
     `;
 }
+
 --- END OF FILE: ./js/ui/components/HangarScreen.js ---
 
 --- START OF FILE: ./js/ui/components/IntelScreen.js ---
@@ -12529,6 +12530,8 @@ function _getDailyStock(gameState) {
     const { day, currentLocationId, player } = gameState;
     const allIds = GameAttributes.getAllUpgradeIds();
 
+    const purchased = gameState.uiState.purchasedUpgrades || [];
+
     let candidates = allIds.filter(id => {
         if (!id.startsWith('UPG_')) return false;
 
@@ -12607,7 +12610,8 @@ function _getDailyStock(gameState) {
         }
     }
 
-    return selectedIds;
+    // Filter out already purchased upgrades after selection to maintain random seed consistency
+    return selectedIds.filter(id => !purchased.includes(id));
 }
 
 function _generatePseudoRandom(seedString) {
@@ -12675,8 +12679,8 @@ function _renderTuningView(gameState) {
                     </div>
 
                     <div class="flex flex-col items-end gap-2 min-w-[100px]">
-                        <div class="font-mono text-cyan-300 credits-text-pulsing text-xl">${formatCredits(totalCost, true)}</div>
-                        <button class="btn btn-sm w-full font-bold uppercase tracking-wider"
+                        <div class="font-mono text-cyan-300 credits-text-pulsing text-lg whitespace-nowrap">${formatCredits(totalCost, true)}</div>
+                        <button class="btn btn-sm w-full font-bold uppercase tracking-wider ${!canAfford ? 'opacity-50 pointer-events-none' : ''}"
                                 style="border: 1px solid var(--item-color); color: ${canAfford ? '#fff' : '#666'};"
                                 data-action="install_upgrade"
                                 data-upgrade-id="${id}"
@@ -20976,8 +20980,11 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Hide if a travel sequence is active or on hangar screen
-        if (gameState.pendingTravel || gameState.activeScreen === SCREEN_IDS.HANGAR) {
+        // Hide if a travel sequence is active, launch modal is open, or on hangar screen
+        const launchModal = this.manager.cache.launchModal;
+        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
+
+        if (gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || gameState.activeScreen === SCREEN_IDS.HANGAR) {
             this._hideStickyBarWithFade(stickyBarEl);
             return;
         }
@@ -21118,6 +21125,7 @@ export class UIMissionControl {
             stickyBarEl.style.filter = 'none';
             stickyBarEl.style.webkitFilter = 'none';
             stickyBarEl.style.display = 'block';
+            stickyBarEl.style.pointerEvents = 'auto';
         } else {
             this._hideStickyBarWithFade(stickyBarEl);
         }
@@ -21921,15 +21929,10 @@ export class UIMissionControl {
                                stickyBarEl.style.webkitFilter = 'none';
                            }
                            
-                           this.manager.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
-                           
-                           const activeShipId = uiManager.lastKnownState.player.activeShipId;
-                           const shipIndex = uiManager.lastKnownState.player.ownedShipIds.indexOf(activeShipId);
-                           
-                           this.manager.simulationService.setHangarShipyardMode('hangar');
-                           this.manager.simulationService.setHangarCarouselIndex(shipIndex !== -1 ? shipIndex : 0, 'hangar');
-                           
-                           await uiManager.orchestrateUpgradeSequence(activeShipId);
+                           // Bypassed direct sequence orchestration. SimulationService._grantRewards handles it upon resolution.
+                           if (uiManager.lastKnownState) {
+                               uiManager.render(uiManager.lastKnownState);
+                           }
                        } else {
                            // Standard unblur and render loop
                            if (stickyBarEl) {
@@ -22567,6 +22570,22 @@ export class UIEventControl {
             }
         }
 
+        const toggleBackgroundUI = (opacity, pointerEvents) => {
+            const elements = [
+                document.getElementById('mission-sticky-bar'),
+                document.getElementById('btn-econ-weather'),
+                document.getElementById('global-help-anchor'),
+                document.getElementById('btn-game-menu')
+            ];
+            elements.forEach(el => {
+                if (el) {
+                    el.style.transition = 'opacity 0.2s ease';
+                    el.style.opacity = opacity;
+                    el.style.pointerEvents = pointerEvents;
+                }
+            });
+        };
+
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
             const wrapper = modal.querySelector('.launch-modal-wrapper');
@@ -22576,13 +22595,7 @@ export class UIEventControl {
                 });
             }
             
-            // [FIX C] Fade out sticky bar smoothly when launch modal opens (1.5x faster)
-            const stickyBar = document.getElementById('mission-sticky-bar');
-            if (stickyBar) {
-                stickyBar.style.transition = 'opacity 0.2s ease';
-                stickyBar.style.opacity = '0';
-                stickyBar.style.pointerEvents = 'none';
-            }
+            toggleBackgroundUI('0', 'none');
 
             starfieldService.mount(document.body);
             starfieldService.triggerEntry();
@@ -22594,13 +22607,7 @@ export class UIEventControl {
                 
                 starfieldService.triggerQuickExit();
                 
-                // [FIX C] Restore the sticky bar ONLY if they cancel the launch (1.5x faster)
-                const stickyBar = document.getElementById('mission-sticky-bar');
-                if (stickyBar) {
-                    stickyBar.style.transition = 'opacity 0.2s ease';
-                    stickyBar.style.opacity = '1';
-                    stickyBar.style.pointerEvents = 'auto';
-                }
+                toggleBackgroundUI('1', 'auto');
 
                 modal.removeEventListener('click', closeHandler);
             }
@@ -22962,16 +22969,30 @@ export class UIEventControl {
                 const hangarCtrl = this.manager.hangarControl || this.manager.uiHangarControl;
                 
                 if (shipState && hangarCtrl) {
-                    hangarCtrl.showUpgradeInstallationModal(pendingOverwriteId, 0, 0, shipState, (idxToRemove) => {
-                        if (idxToRemove !== -1) {
-                            shipState.upgrades.splice(idxToRemove, 1);
+                    hangarCtrl.showUpgradeInstallationModal(
+                        pendingOverwriteId, 
+                        { source: 'mission' }, 
+                        shipState, 
+                        async (idxToRemove) => {
+                            if (idxToRemove !== -1) {
+                                shipState.upgrades.splice(idxToRemove, 1);
+                            }
                             shipState.upgrades.push(pendingOverwriteId);
                             this.manager.simulationService.logger.info.player(state.day, 'REWARD_UPGRADE', `Installed overwrite upgrade: ${pendingOverwriteId}`);
                             
+                            state.uiState.hangarShipyardToggleState = 'hangar';
+                            const shipIndex = state.player.ownedShipIds.indexOf(activeShip);
+                            state.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                            
+                            await this.manager.orchestrateUpgradeSequence(activeShip);
                             this.manager.simulationService.gameState.setState({});
+                            
+                            if (originalOnDismiss) originalOnDismiss();
+                        },
+                        () => {
+                            if (originalOnDismiss) originalOnDismiss();
                         }
-                        if (originalOnDismiss) originalOnDismiss();
-                    });
+                    );
                 } else {
                     if (originalOnDismiss) originalOnDismiss();
                 }
@@ -24481,7 +24502,6 @@ export class UIHangarControl {
             const titleColorClass = context === 'intro_shipyard' ? 'text-white' : 'text-cyan-300';
             const valBoldClass = context === 'intro_shipyard' ? 'font-bold' : '';
 
-            // Natively assigned data-action replaces the rogue UIHangarControl listener
             const btnHtml = `<button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`;
 
             modalContentHtml = `
@@ -24537,7 +24557,6 @@ export class UIHangarControl {
                 const tooltipText = def ? def.description : '';
                 const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
-                // Refactored: Dynamically extract tier using the central Registry pattern
                 const tier = GameAttributes.extractTier(id);
 
                 const borderColor = this._adjustColor(baseColor, -40);
@@ -24601,9 +24620,13 @@ export class UIHangarControl {
         modal.classList.add('modal-visible');
     }
 
-    showUpgradeInstallationModal(upgradeId, hardwareCost, installationFee, shipState, onConfirm) {
+    showUpgradeInstallationModal(upgradeId, options, shipState, onConfirm, onReject) {
         const upgradeDef = GameAttributes.getDefinition(upgradeId);
         if (!upgradeDef) return;
+
+        const { source = 'shop', eventX, eventY } = options;
+        let hardwareCost = options.hardwareCost || 0;
+        let installationFee = options.installationFee || 0;
 
         const currentUpgrades = shipState.upgrades || [];
         const isFull = currentUpgrades.length >= 3;
@@ -24622,127 +24645,193 @@ export class UIHangarControl {
         }
 
         const totalCost = hardwareCost + installationFee;
-        let title = totalCost > 0 ? "Purchase Upgrade" : "Install Upgrade";
         const nameColor = upgradeDef.pillColor || upgradeDef.color || '#fff';
-        let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
-        
-        if (totalCost > 0) {
-            desc += `<p class="text-base text-gray-400">Total Cost: <span class="credits-text-pulsing">${formatCredits(totalCost, true)}</span></p>`;
-            if (installationFee > 0) {
-                desc += `<p class="text-xs text-gray-500 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
+
+        const handleDeductionAndInstall = (indexToRemove, closeHandler) => {
+            if (source === 'shop' && totalCost > 0) {
+                const state = this.manager.lastKnownState;
+                state.player.credits -= totalCost;
+                if (eventX && eventY) {
+                    this.manager.createFloatingText(`-${formatCredits(totalCost, false)}`, eventX, eventY, '#f87171');
+                }
+                if (!state.uiState.purchasedUpgrades) state.uiState.purchasedUpgrades = [];
+                state.uiState.purchasedUpgrades.push(upgradeId);
+                this.manager.render(state);
             }
-        }
-        
-        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+            
+            setTimeout(() => {
+                closeHandler();
+                if (onConfirm) onConfirm(indexToRemove);
+            }, 500);
+        };
 
-        this.manager.queueModal('event-modal', title, desc, null, {
-            dismissOutside: true,
-            customSetup: (modal, closeHandler) => {
-                const btnContainer = modal.querySelector('#event-button-container');
-                const contentEl = modal.querySelector('#event-description'); 
+        const renderFinalConfirmation = (indexToRemove, closeHandler) => {
+            const idToRemove = currentUpgrades[indexToRemove];
+            const defToRemove = GameAttributes.getDefinition(idToRemove);
+            
+            const modal = document.getElementById('event-modal');
+            const modalTitle = modal.querySelector('#event-title');
+            const contentEl = modal.querySelector('#event-description');
+            const btnContainer = modal.querySelector('#event-button-container');
 
-                const renderStandardButtons = () => {
-                    btnContainer.className = "flex justify-center gap-4 w-full mt-4";
-                    btnContainer.innerHTML = `
-                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
-                        <button id="cancel-install-btn" class="btn">Cancel</button>
-                    `;
+            modalTitle.textContent = "Confirm Replacement";
+            
+            const removeNameColor = defToRemove ? (defToRemove.pillColor || defToRemove.color || '#fff') : '#fff';
+            const removeName = defToRemove ? defToRemove.name : idToRemove;
+
+            contentEl.innerHTML = `
+                <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
+                <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
+                <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+            `;
+            
+            btnContainer.className = "flex flex-col w-full mt-4 gap-2";
+            btnContainer.innerHTML = `
+                <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]">Dismantle & Install</button>
+                <button id="final-cancel-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>
+            `;
+            
+            modal.querySelector('#final-confirm-btn').onclick = () => {
+                modal.querySelector('#final-confirm-btn').disabled = true;
+                handleDeductionAndInstall(indexToRemove, closeHandler);
+            };
+            modal.querySelector('#final-cancel-btn').onclick = () => {
+                renderReplacementUI(closeHandler);
+            };
+        };
+
+        const renderReplacementUI = (closeHandler) => {
+            const modal = document.getElementById('event-modal');
+            const modalTitle = modal.querySelector('#event-title');
+            const contentEl = modal.querySelector('#event-description');
+            const btnContainer = modal.querySelector('#event-button-container');
+
+            modalTitle.textContent = "Upgrade Capacity Full";
+            
+            const activeShipId = this.manager.lastKnownState?.player?.activeShipId;
+            const activeShipStatic = activeShipId ? DB.SHIPS[activeShipId] : null;
+            const shipBasePrice = activeShipStatic ? activeShipStatic.price : 0;
+            
+            const upgradesList = currentUpgrades.map((uId, idx) => {
+                const def = GameAttributes.getDefinition(uId);
+                const pColor = def ? (def.pillColor || def.color || '#fff') : '#fff';
+                const uName = def ? def.name : uId;
+                const statText = def ? (def.description || 'Unknown Effect') : 'Unknown Effect';
+                
+                const hwCost = def ? GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice) : 0;
+                const valText = formatCredits(hwCost, true);
+
+                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center mb-2" data-idx="${idx}">
+                            <div class="flex flex-col overflow-hidden">
+                                <span class="font-bold" style="color: ${pColor}">${uName}</span>
+                                <div class="marquee-container text-xs text-gray-400 mt-1">
+                                    <span class="marquee-content">${statText}</span>
+                                </div>
+                            </div>
+                            <div class="text-right flex-shrink-0 ml-4">
+                                <span class="text-xs text-gray-500 block">Value</span>
+                                <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
+                            </div>
+                        </button>`;
+            }).join('');
+
+            contentEl.innerHTML = `
+                <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
+                <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace with <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>:</p>
+                <div class="flex flex-col w-full max-w-sm mx-auto">
+                    ${upgradesList}
+                </div>
+            `;
+            
+            btnContainer.className = "flex flex-col w-full mt-4";
+            if (source === 'mission') {
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400">Reject</button>`;
+                const cancelBtn = modal.querySelector('#cancel-replace-btn');
+                cancelBtn.onclick = () => {
+                    if (cancelBtn.dataset.phase === '1') {
+                        closeHandler();
+                        if (onReject) onReject();
+                    } else {
+                        cancelBtn.dataset.phase = '1';
+                        cancelBtn.textContent = 'Confirm Reject?';
+                        cancelBtn.classList.remove('border-gray-600', 'text-gray-400');
+                        cancelBtn.classList.add('border-white', 'text-white', 'bg-red-900/40');
+                    }
+                };
+            } else {
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>`;
+                modal.querySelector('#cancel-replace-btn').onclick = () => {
+                    closeHandler();
+                };
+            }
+
+            contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = parseInt(btn.dataset.idx, 10);
+                    renderFinalConfirmation(idx, closeHandler);
+                };
+            });
+        };
+
+        const renderInitialModal = () => {
+            let title = source === 'shop' ? "Install Upgrade" : "Reward Available";
+            let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
+            
+            if (source === 'shop' && totalCost > 0) {
+                desc += `<p class="text-base text-gray-400">Total Cost: <span class="credits-text-pulsing">${formatCredits(totalCost, true)}</span></p>`;
+                if (installationFee > 0) {
+                    desc += `<p class="text-xs text-gray-500 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
+                }
+            }
+            
+            desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+
+            this.manager.queueModal('event-modal', title, desc, null, {
+                dismissOutside: false, 
+                customSetup: (modal, closeHandler) => {
+                    const btnContainer = modal.querySelector('#event-button-container');
+                    btnContainer.className = "flex flex-col w-full mt-4";
                     
+                    let confirmBtnHtml = '';
+                    if (source === 'shop') {
+                        const canAfford = this.manager.lastKnownState.player.credits >= totalCost;
+                        confirmBtnHtml = `
+                            <button id="confirm-install-btn" class="btn w-full btn-pulse-cyan text-cyan-300 font-bold mb-2" ${!canAfford ? 'disabled' : ''}>
+                                Purchase [⌬ ${formatCredits(totalCost, true)}]
+                            </button>
+                        `;
+                    } else {
+                        confirmBtnHtml = `
+                            <button id="confirm-install-btn" class="btn w-full btn-pulse-green text-green-400 font-bold mb-2">
+                                Accept Upgrade
+                            </button>
+                        `;
+                    }
+
+                    btnContainer.innerHTML = `
+                        ${confirmBtnHtml}
+                        <button id="cancel-install-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Reject</button>
+                    `;
+
                     const confirmBtn = modal.querySelector('#confirm-install-btn');
                     confirmBtn.onclick = () => {
                         if (isFull) {
-                            renderReplacementUI();
+                            renderReplacementUI(closeHandler);
                         } else {
-                            closeHandler();
-                            onConfirm(-1); 
+                            confirmBtn.disabled = true;
+                            handleDeductionAndInstall(-1, closeHandler);
                         }
                     };
-                    
-                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
-                };
 
-                const renderReplacementUI = () => {
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Upgrade Capacity Full";
-                    
-                    const activeShipId = this.manager.lastKnownState?.player?.activeShipId;
-                    const activeShipStatic = activeShipId ? DB.SHIPS[activeShipId] : null;
-                    const shipBasePrice = activeShipStatic ? activeShipStatic.price : 0;
-                    
-                    const upgradesList = currentUpgrades.map((uId, idx) => {
-                        const def = GameAttributes.getDefinition(uId);
-                        const pColor = def ? (def.pillColor || def.color || '#fff') : '#fff';
-                        const uName = def ? def.name : uId;
-                        const statText = def ? (def.description || 'Unknown Effect') : 'Unknown Effect';
-                        
-                        const hwCost = def ? GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice) : 0;
-                        const valText = formatCredits(hwCost, true);
-
-                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center" data-idx="${idx}">
-                                    <div class="flex flex-col overflow-hidden">
-                                        <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                        <div class="marquee-container text-xs text-gray-400 mt-1">
-                                            <span class="marquee-content">${statText}</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-right flex-shrink-0 ml-4">
-                                        <span class="text-xs text-gray-500 block">Value</span>
-                                        <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
-                                    </div>
-                                </button>`;
-                    }).join('');
-
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
-                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
-                        <div class="flex flex-col gap-2 w-full max-w-sm mx-auto">
-                            ${upgradesList}
-                        </div>
-                    `;
-                    
-                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
-                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
-
-                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
-                        btn.onclick = () => {
-                            const idx = parseInt(btn.dataset.idx, 10);
-                            renderFinalConfirmation(idx);
-                        };
-                    });
-                };
-
-                const renderFinalConfirmation = (indexToRemove) => {
-                    const idToRemove = currentUpgrades[indexToRemove];
-                    const defToRemove = GameAttributes.getDefinition(idToRemove);
-                    
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Confirm Replacement";
-                    
-                    const removeNameColor = defToRemove ? (defToRemove.pillColor || defToRemove.color || '#fff') : '#fff';
-                    const removeName = defToRemove ? defToRemove.name : idToRemove;
-
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                        <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
-                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
-                    `;
-                    
-                    btnContainer.className = "flex gap-4 w-full mt-4";
-                    btnContainer.innerHTML = `
-                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white flex-1">Dismantle & Install</button>
-                        <button id="final-cancel-btn" class="btn flex-1">Cancel</button>
-                    `;
-                    
-                    modal.querySelector('#final-confirm-btn').onclick = () => {
+                    modal.querySelector('#cancel-install-btn').onclick = () => {
                         closeHandler();
-                        onConfirm(indexToRemove);
+                        if (onReject) onReject();
                     };
-                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
-                };
+                }
+            });
+        };
 
-                renderStandardButtons();
-            }
-        });
+        renderInitialModal();
     }
 
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
@@ -37386,6 +37475,8 @@ export class SimulationService {
         this.gameState.day++;
         this.logger.info.system(this.gameState.day, 'DAY_START', `Day ${this.gameState.day} started.`);
 
+        this.gameState.uiState.purchasedUpgrades = [];
+
         const activeShip = this._getActiveShip();
         if (activeShip && activeShip.statusEffects) {
             this.gameState.player.shipStates[activeShip.id].statusEffects = activeShip.statusEffects.filter(effect => this.gameState.day < effect.expiryDay);
@@ -37529,31 +37620,39 @@ export class SimulationService {
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState) {
-                         shipState.upgrades = shipState.upgrades || [];
-                         if (shipState.upgrades.length < 3) {
-                             shipState.upgrades.push(reward.target || reward.id);
-                         } else {
-                             // Route to replacement UI
-                             if (this.uiManager && this.uiManager.hangarControl) {
-                                 this.uiManager.hangarControl.showUpgradeInstallationModal(
-                                     reward.target || reward.id, 
-                                     0, 
-                                     0, 
-                                     shipState, 
-                                     (idxToRemove) => {
-                                         if (idxToRemove !== -1) {
-                                             shipState.upgrades.splice(idxToRemove, 1);
-                                             shipState.upgrades.push(reward.target || reward.id);
-                                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed overwrite upgrade: ${reward.target || reward.id}`);
-                                             this.gameState.setState({});
-                                         }
+                         if (this.uiManager && this.uiManager.hangarControl) {
+                             this.uiManager.hangarControl.showUpgradeInstallationModal(
+                                 reward.target || reward.id, 
+                                 { source: 'mission' }, 
+                                 shipState, 
+                                 async (idxToRemove) => {
+                                     if (idxToRemove !== -1) {
+                                         shipState.upgrades.splice(idxToRemove, 1);
                                      }
-                                 );
+                                     shipState.upgrades.push(reward.target || reward.id);
+                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${reward.target || reward.id}`);
+                                     
+                                     this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                                     const shipIndex = this.gameState.player.ownedShipIds.indexOf(this.gameState.player.activeShipId);
+                                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                                     
+                                     await this.uiManager.orchestrateUpgradeSequence(this.gameState.player.activeShipId);
+                                     this.gameState.setState({});
+                                 },
+                                 () => {
+                                     this.logger.info.player(this.gameState.day, 'REWARD_REJECTED', 'Discarded reward upgrade.');
+                                     this.gameState.setState({});
+                                 }
+                             );
+                         } else {
+                             // Fallback
+                             shipState.upgrades = shipState.upgrades || [];
+                             if (shipState.upgrades.length < 3) {
+                                 shipState.upgrades.push(reward.target || reward.id);
                              } else {
-                                 // Fallback if modal is somehow unavailable
                                  shipState.upgrades[2] = reward.target || reward.id; 
-                                 this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
                              }
+                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
                          }
                      }
                      break;
@@ -40118,7 +40217,7 @@ export class UIManager {
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.lastSeenSystemStateId = null; 
-        this.hasTraveledThisSession = false; // Phase 3: Gate for Economic Weather Modal
+        this.hasTraveledThisSession = false; 
         
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
@@ -40236,8 +40335,6 @@ export class UIManager {
 
         const previousState = this.lastKnownState;
         
-        // --- PHASE 3: LIVE STATS TRACKING ---
-        // Instantly force news ticker to re-render its internal payload if ship stats mutated
         if (previousState && previousState.player.activeShipId === gameState.player.activeShipId) {
             const shipId = gameState.player.activeShipId;
             if (shipId) {
@@ -40267,16 +40364,25 @@ export class UIManager {
 
         this.lastKnownState = gameState;
 
+        const launchModal = this.cache.launchModal;
+        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
+        const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen;
+
         if (gameState.introSequenceActive) {
-            // [FIX] Force inline style display: none to override CSS ID specificity
             if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
+            const gameMenuBtn = document.getElementById('btn-game-menu');
+            if (gameMenuBtn) gameMenuBtn.style.display = 'none';
             return;
         } else {
-            // [FIX] Clear inline style so it reverts to the default display: flex in the CSS
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = '';
-            // Un-hide the help anchor strictly for normal gameplay loops
+            if (this.cache.econWeatherBtn) {
+                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : '';
+            }
             if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
-                this.helpManager.anchorBtn.style.display = 'flex';
+                this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';
+            }
+            const gameMenuBtn = document.getElementById('btn-game-menu');
+            if (gameMenuBtn) {
+                gameMenuBtn.style.display = isTravelLocked ? 'none' : '';
             }
         }
 
@@ -40337,17 +40443,13 @@ export class UIManager {
             return;
         }
 
-        // --- PHASE 3: SEAMLESS UPDATE ---
-        // Fetch the existing content container to avoid nuking the running CSS animation
         const existingContent = this.cache.newsTickerBar.querySelector('.news-ticker-content');
         if (existingContent) {
             const blocks = existingContent.querySelectorAll('.ticker-block');
             if (blocks.length === 2) {
-                // Update the internal spans without touching the wrapper or its transform matrix
                 blocks[0].innerHTML = singleContentHtml;
                 blocks[1].innerHTML = singleContentHtml;
                 
-                // Recalculate duration in case text length changed drastically (e.g. wide story prompt)
                 const rect = blocks[0].getBoundingClientRect();
                 const blockWidth = rect.width;
                 const PIXELS_PER_SECOND = 50;
@@ -40359,7 +40461,6 @@ export class UIManager {
             }
         }
 
-        // --- FALLBACK: INITIAL RENDER ---
         const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
         this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}${wrappedContent}</div>`;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
@@ -40408,7 +40509,6 @@ export class UIManager {
             const isDisabled = introSequenceActive;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
             
-            // Apply Guardrail Lock/Glow Classes (Multi-Path Support)
             let guideClass = '';
             if (navGuide.active) {
                 if ((navGuide.navIds || []).includes(navId)) {
@@ -40463,7 +40563,6 @@ export class UIManager {
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  const action = ACTION_IDS.SET_SCREEN;
 
-                 // Apply Guardrail Lock/Glow Classes (Multi-Path Support)
                  let guideClass = '';
                  if (navGuide.active) {
                      if ((navGuide.screenIds || []).includes(screenId)) {
@@ -40549,7 +40648,6 @@ export class UIManager {
         const currentSystemStateId = gameState.systemStates?.activeId;
         if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
             this.lastSeenSystemStateId = currentSystemStateId;
-            // Phase 3: Gate Economic Weather Modal Behind Travel Session
             if (previousState && !gameState.introSequenceActive && this.hasTraveledThisSession) {
                 if (gameState.activeScreen === SCREEN_IDS.MARKET || 
                     gameState.activeScreen === SCREEN_IDS.SERVICES || 
@@ -40616,7 +40714,6 @@ export class UIManager {
                 });
                 break;
             case SCREEN_IDS.FINANCE:
-                // FIX: Bypassed _preserveScrollAndRender to force synchronous DOM update for the transaction log
                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
@@ -40660,7 +40757,6 @@ export class UIManager {
     getCurrentHelpContextId(gameState) {
         if (!gameState || !gameState.player) return null;
         
-        // Isolate Help Context during Intro Sequence
         if (gameState.introSequenceActive) return 'intro-ship-selection';
 
         const { activeNav, activeScreen, solStation } = gameState;
@@ -40901,7 +40997,7 @@ export class UIManager {
     }
 
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
-        this.hasTraveledThisSession = true; // Phase 3: Gate trigger
+        this.hasTraveledThisSession = true; 
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
     
@@ -41091,12 +41187,7 @@ export class UIManager {
         });
     }
 
-    /**
-     * Executes the "New Game" intro cinematic sequence natively via iOS or as a web fallback.
-     * @param {function} callback Executes when the video fully completes and the DOM is cleaned.
-     */
     playIntroCinematic(callback) {
-        // 1. Native iOS execution via WKWebView Bridge
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
             console.log('[UIManager] Triggering native iOS cinematic playback.');
             
@@ -41109,10 +41200,8 @@ export class UIManager {
             return;
         }
 
-        // 2. Web Fallback Execution (The "Theater Curtain" with Skip UI)
         console.log('[UIManager] Triggering web fallback cinematic playback.');
         
-        // The Master Container
         const container = document.createElement('div');
         container.id = 'intro-cinematic-container';
         Object.assign(container.style, {
@@ -41120,11 +41209,9 @@ export class UIManager {
             zIndex: '9999', backgroundColor: '#000'
         });
 
-        // The Video Element
         const videoEl = document.createElement('video');
         videoEl.id = 'intro-cinematic-video';
         
-        // --- PATH FIX ---
         videoEl.src = 'assets/images/video/intro_cinematic.mp4';
         
         videoEl.autoplay = true;
@@ -41135,13 +41222,11 @@ export class UIManager {
             width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none'
         });
 
-        // The Invisible Tap Catcher
         const tapCatcher = document.createElement('div');
         Object.assign(tapCatcher.style, {
             position: 'absolute', inset: '0', zIndex: '10'
         });
 
-        // The Skip Button (Orbital Trading Theme)
         const skipBtn = document.createElement('button');
         skipBtn.innerHTML = 'SKIP ⏭';
         skipBtn.className = 'btn'; 
@@ -41153,7 +41238,6 @@ export class UIManager {
             textTransform: 'uppercase'
         });
 
-        // --- Interaction Logic ---
         let skipVisible = false;
         let skipTimeout;
 
@@ -41178,7 +41262,6 @@ export class UIManager {
             isFinished = true;
             clearTimeout(skipTimeout);
             
-            // Aggressive memory demolition
             videoEl.pause();
             videoEl.removeAttribute('src');
             videoEl.load();
@@ -41195,11 +41278,8 @@ export class UIManager {
         videoEl.addEventListener('ended', finishCinematic);
         videoEl.addEventListener('error', finishCinematic);
         
-        // --- TIMEOUT FIX --- 
-        // Extended failsafe to 110,000ms (110 seconds) to allow the 1m40s video to finish naturally.
         setTimeout(finishCinematic, 110000); 
 
-        // Assemble and Inject
         container.appendChild(videoEl);
         container.appendChild(tapCatcher);
         container.appendChild(skipBtn);
@@ -41211,50 +41291,32 @@ export class UIManager {
         });
     }
 
-    /**
-     * Master orchestration for the Ship Upgrade Cinematic Sequence (Phases 3/4).
-     * Connects DOM hiding, screen routing, and sequential promise resolution.
-     * @param {string} shipId - Target ship receiving the upgrade.
-     */
     async orchestrateUpgradeSequence(shipId) {
         try {
-            // Step 1: Wait for localized modal fill (2000ms)
             await this.modalEngine.showUpgradeProgressModal();
 
-            // Step 2: Inject Global White-Out Overlay
             let overlay = document.createElement('div');
             overlay.className = 'white-out-overlay';
             document.body.appendChild(overlay);
 
-            // Step 3: Wait for peak opacity (1000ms into the 2000ms white-out)
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // DOM Swap 1: Destroy modal invisibly behind white-out
             this.modalEngine.destroyModalInstant('upgrade-progress-modal');
             
-            // DOM Swap 2: Route screen natively using UIManager's routing.
-            // ActionClickHandler pre-set the GameState indices prior to calling this orchestrator.
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
 
-            // Step 4: Wait for White-Out to finish fading out (Remaining 1000ms)
             await new Promise(resolve => setTimeout(resolve, 1000));
             if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
 
-            // Step 5: Execute Localized Reveal on the Target Ship Node
             await this.hangarControl.playUpgradeReveal(shipId);
 
         } catch (e) {
             this.logger.error('UIManager', `Upgrade sequence failed: ${e}`);
         } finally {
-            // Safety Release: Ensure lock is always cleared
             document.body.classList.remove('ui-locked');
         }
     }
     
-    /**
-     * Instantiates and runs the Officer Recruitment Cinematic directly via the UIModalEngine.
-     * @param {string} officerId 
-     */
     queueOfficerRecruitmentModal(officerId) {
         const modalContainer = this.modalEngine.buildOfficerRecruitmentDOM(officerId);
         if (modalContainer) {
@@ -44627,7 +44689,8 @@ export class ActionClickHandler {
                 const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
-                const hardwareCost = upgradeDef.value;
+                // FIX F & C: Calculate hardwareCost correctly so totalCost is not NaN
+                const hardwareCost = GameAttributes.getUpgradeHardwareCost(upgradeDef.tier || 1, activeShipStatic ? activeShipStatic.price : 0);
                 const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
                 const totalCost = hardwareCost + laborFee;
 
@@ -44636,26 +44699,26 @@ export class ActionClickHandler {
                     return;
                 }
 
-                this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, async (replaceIndex) => {
-                    if (totalCost > 0) {
-                        this.gameState.player.credits -= totalCost;
+                this.uiManager.hangarControl.showUpgradeInstallationModal(
+                    upgradeId, 
+                    { source: 'shop', hardwareCost, installationFee: laborFee, eventX: e.clientX, eventY: e.clientY }, 
+                    shipState, 
+                    async (replaceIndex) => {
+                        if (replaceIndex !== -1) {
+                            shipState.upgrades.splice(replaceIndex, 1);
+                        }
+                        this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
+                        
+                        this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                        const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
+                        this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+
+                        await this.uiManager.orchestrateUpgradeSequence(activeShipId);
+                    },
+                    () => {
+                        this.uiManager.render(this.gameState.getState());
                     }
-
-                    if (replaceIndex !== -1) {
-                        shipState.upgrades.splice(replaceIndex, 1);
-                    }
-
-                    // Execute logic mutation
-                    this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
-                    
-                    // Prep target navigation state
-                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
-                    const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
-                    this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
-
-                    // Trigger the overarching Cinematic Sequence via UIManager Facade
-                    await this.uiManager.orchestrateUpgradeSequence(activeShipId);
-                });
+                );
                 break;
             }
             
@@ -46584,13 +46647,19 @@ export class PlayerActionService {
         return { success: true };
     }
 
-    executeInstallUpgrade(shipId, upgradeId) {
-        const state = this.gameState;
+    executeInstallUpgrade(shipId, upgradeId, totalCost = 0) {
+        const state = this.gameState.getState();
         if (!state.player.shipStates[shipId].upgrades) {
              state.player.shipStates[shipId].upgrades = [];
         }
         
         state.player.shipStates[shipId].upgrades.push(upgradeId);
+        
+        if (totalCost > 0) {
+            state.player.credits -= totalCost;
+            if (!state.uiState.purchasedUpgrades) state.uiState.purchasedUpgrades = [];
+            state.uiState.purchasedUpgrades.push(upgradeId);
+        }
         
         this.logger.info.player(state.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
         this.gameState.setState({});

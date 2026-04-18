@@ -284,7 +284,8 @@ export class ActionClickHandler {
                 const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
-                const hardwareCost = upgradeDef.value;
+                // FIX F & C: Calculate hardwareCost correctly so totalCost is not NaN
+                const hardwareCost = GameAttributes.getUpgradeHardwareCost(upgradeDef.tier || 1, activeShipStatic ? activeShipStatic.price : 0);
                 const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
                 const totalCost = hardwareCost + laborFee;
 
@@ -293,26 +294,26 @@ export class ActionClickHandler {
                     return;
                 }
 
-                this.uiManager.showUpgradeInstallationModal(upgradeId, hardwareCost, laborFee, shipState, async (replaceIndex) => {
-                    if (totalCost > 0) {
-                        this.gameState.player.credits -= totalCost;
+                this.uiManager.hangarControl.showUpgradeInstallationModal(
+                    upgradeId, 
+                    { source: 'shop', hardwareCost, installationFee: laborFee, eventX: e.clientX, eventY: e.clientY }, 
+                    shipState, 
+                    async (replaceIndex) => {
+                        if (replaceIndex !== -1) {
+                            shipState.upgrades.splice(replaceIndex, 1);
+                        }
+                        this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
+                        
+                        this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                        const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
+                        this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+
+                        await this.uiManager.orchestrateUpgradeSequence(activeShipId);
+                    },
+                    () => {
+                        this.uiManager.render(this.gameState.getState());
                     }
-
-                    if (replaceIndex !== -1) {
-                        shipState.upgrades.splice(replaceIndex, 1);
-                    }
-
-                    // Execute logic mutation
-                    this.simulationService.playerActionService.executeInstallUpgrade(activeShipId, upgradeId);
-                    
-                    // Prep target navigation state
-                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
-                    const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
-                    this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
-
-                    // Trigger the overarching Cinematic Sequence via UIManager Facade
-                    await this.uiManager.orchestrateUpgradeSequence(activeShipId);
-                });
+                );
                 break;
             }
             

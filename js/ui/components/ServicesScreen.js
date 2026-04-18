@@ -367,6 +367,8 @@ function _getDailyStock(gameState) {
     const { day, currentLocationId, player } = gameState;
     const allIds = GameAttributes.getAllUpgradeIds();
 
+    const purchased = gameState.uiState.purchasedUpgrades || [];
+
     let candidates = allIds.filter(id => {
         if (!id.startsWith('UPG_')) return false;
 
@@ -445,7 +447,8 @@ function _getDailyStock(gameState) {
         }
     }
 
-    return selectedIds;
+    // Filter out already purchased upgrades after selection to maintain random seed consistency
+    return selectedIds.filter(id => !purchased.includes(id));
 }
 
 function _generatePseudoRandom(seedString) {
@@ -513,8 +516,8 @@ function _renderTuningView(gameState) {
                     </div>
 
                     <div class="flex flex-col items-end gap-2 min-w-[100px]">
-                        <div class="font-mono text-cyan-300 credits-text-pulsing text-xl">${formatCredits(totalCost, true)}</div>
-                        <button class="btn btn-sm w-full font-bold uppercase tracking-wider"
+                        <div class="font-mono text-cyan-300 credits-text-pulsing text-lg whitespace-nowrap">${formatCredits(totalCost, true)}</div>
+                        <button class="btn btn-sm w-full font-bold uppercase tracking-wider ${!canAfford ? 'opacity-50 pointer-events-none' : ''}"
                                 style="border: 1px solid var(--item-color); color: ${canAfford ? '#fff' : '#666'};"
                                 data-action="install_upgrade"
                                 data-upgrade-id="${id}"

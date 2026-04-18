@@ -219,7 +219,6 @@ export class UIHangarControl {
             const titleColorClass = context === 'intro_shipyard' ? 'text-white' : 'text-cyan-300';
             const valBoldClass = context === 'intro_shipyard' ? 'font-bold' : '';
 
-            // Natively assigned data-action replaces the rogue UIHangarControl listener
             const btnHtml = `<button class="btn w-full mt-2" data-action="${actionId}" data-ship-id="${shipId}" ${isDisabled ? 'disabled' : ''}>Purchase</button>`;
 
             modalContentHtml = `
@@ -275,7 +274,6 @@ export class UIHangarControl {
                 const tooltipText = def ? def.description : '';
                 const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
-                // Refactored: Dynamically extract tier using the central Registry pattern
                 const tier = GameAttributes.extractTier(id);
 
                 const borderColor = this._adjustColor(baseColor, -40);
@@ -339,9 +337,13 @@ export class UIHangarControl {
         modal.classList.add('modal-visible');
     }
 
-    showUpgradeInstallationModal(upgradeId, hardwareCost, installationFee, shipState, onConfirm) {
+    showUpgradeInstallationModal(upgradeId, options, shipState, onConfirm, onReject) {
         const upgradeDef = GameAttributes.getDefinition(upgradeId);
         if (!upgradeDef) return;
+
+        const { source = 'shop', eventX, eventY } = options;
+        let hardwareCost = options.hardwareCost || 0;
+        let installationFee = options.installationFee || 0;
 
         const currentUpgrades = shipState.upgrades || [];
         const isFull = currentUpgrades.length >= 3;
@@ -360,127 +362,193 @@ export class UIHangarControl {
         }
 
         const totalCost = hardwareCost + installationFee;
-        let title = totalCost > 0 ? "Purchase Upgrade" : "Install Upgrade";
         const nameColor = upgradeDef.pillColor || upgradeDef.color || '#fff';
-        let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
-        
-        if (totalCost > 0) {
-            desc += `<p class="text-base text-gray-400">Total Cost: <span class="credits-text-pulsing">${formatCredits(totalCost, true)}</span></p>`;
-            if (installationFee > 0) {
-                desc += `<p class="text-xs text-gray-500 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
+
+        const handleDeductionAndInstall = (indexToRemove, closeHandler) => {
+            if (source === 'shop' && totalCost > 0) {
+                const state = this.manager.lastKnownState;
+                state.player.credits -= totalCost;
+                if (eventX && eventY) {
+                    this.manager.createFloatingText(`-${formatCredits(totalCost, false)}`, eventX, eventY, '#f87171');
+                }
+                if (!state.uiState.purchasedUpgrades) state.uiState.purchasedUpgrades = [];
+                state.uiState.purchasedUpgrades.push(upgradeId);
+                this.manager.render(state);
             }
-        }
-        
-        desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+            
+            setTimeout(() => {
+                closeHandler();
+                if (onConfirm) onConfirm(indexToRemove);
+            }, 500);
+        };
 
-        this.manager.queueModal('event-modal', title, desc, null, {
-            dismissOutside: true,
-            customSetup: (modal, closeHandler) => {
-                const btnContainer = modal.querySelector('#event-button-container');
-                const contentEl = modal.querySelector('#event-description'); 
+        const renderFinalConfirmation = (indexToRemove, closeHandler) => {
+            const idToRemove = currentUpgrades[indexToRemove];
+            const defToRemove = GameAttributes.getDefinition(idToRemove);
+            
+            const modal = document.getElementById('event-modal');
+            const modalTitle = modal.querySelector('#event-title');
+            const contentEl = modal.querySelector('#event-description');
+            const btnContainer = modal.querySelector('#event-button-container');
 
-                const renderStandardButtons = () => {
-                    btnContainer.className = "flex justify-center gap-4 w-full mt-4";
-                    btnContainer.innerHTML = `
-                        <button id="confirm-install-btn" class="btn btn-pulse-green">Confirm</button>
-                        <button id="cancel-install-btn" class="btn">Cancel</button>
-                    `;
+            modalTitle.textContent = "Confirm Replacement";
+            
+            const removeNameColor = defToRemove ? (defToRemove.pillColor || defToRemove.color || '#fff') : '#fff';
+            const removeName = defToRemove ? defToRemove.name : idToRemove;
+
+            contentEl.innerHTML = `
+                <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
+                <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
+                <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+            `;
+            
+            btnContainer.className = "flex flex-col w-full mt-4 gap-2";
+            btnContainer.innerHTML = `
+                <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]">Dismantle & Install</button>
+                <button id="final-cancel-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>
+            `;
+            
+            modal.querySelector('#final-confirm-btn').onclick = () => {
+                modal.querySelector('#final-confirm-btn').disabled = true;
+                handleDeductionAndInstall(indexToRemove, closeHandler);
+            };
+            modal.querySelector('#final-cancel-btn').onclick = () => {
+                renderReplacementUI(closeHandler);
+            };
+        };
+
+        const renderReplacementUI = (closeHandler) => {
+            const modal = document.getElementById('event-modal');
+            const modalTitle = modal.querySelector('#event-title');
+            const contentEl = modal.querySelector('#event-description');
+            const btnContainer = modal.querySelector('#event-button-container');
+
+            modalTitle.textContent = "Upgrade Capacity Full";
+            
+            const activeShipId = this.manager.lastKnownState?.player?.activeShipId;
+            const activeShipStatic = activeShipId ? DB.SHIPS[activeShipId] : null;
+            const shipBasePrice = activeShipStatic ? activeShipStatic.price : 0;
+            
+            const upgradesList = currentUpgrades.map((uId, idx) => {
+                const def = GameAttributes.getDefinition(uId);
+                const pColor = def ? (def.pillColor || def.color || '#fff') : '#fff';
+                const uName = def ? def.name : uId;
+                const statText = def ? (def.description || 'Unknown Effect') : 'Unknown Effect';
+                
+                const hwCost = def ? GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice) : 0;
+                const valText = formatCredits(hwCost, true);
+
+                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center mb-2" data-idx="${idx}">
+                            <div class="flex flex-col overflow-hidden">
+                                <span class="font-bold" style="color: ${pColor}">${uName}</span>
+                                <div class="marquee-container text-xs text-gray-400 mt-1">
+                                    <span class="marquee-content">${statText}</span>
+                                </div>
+                            </div>
+                            <div class="text-right flex-shrink-0 ml-4">
+                                <span class="text-xs text-gray-500 block">Value</span>
+                                <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
+                            </div>
+                        </button>`;
+            }).join('');
+
+            contentEl.innerHTML = `
+                <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
+                <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace with <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>:</p>
+                <div class="flex flex-col w-full max-w-sm mx-auto">
+                    ${upgradesList}
+                </div>
+            `;
+            
+            btnContainer.className = "flex flex-col w-full mt-4";
+            if (source === 'mission') {
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400">Reject</button>`;
+                const cancelBtn = modal.querySelector('#cancel-replace-btn');
+                cancelBtn.onclick = () => {
+                    if (cancelBtn.dataset.phase === '1') {
+                        closeHandler();
+                        if (onReject) onReject();
+                    } else {
+                        cancelBtn.dataset.phase = '1';
+                        cancelBtn.textContent = 'Confirm Reject?';
+                        cancelBtn.classList.remove('border-gray-600', 'text-gray-400');
+                        cancelBtn.classList.add('border-white', 'text-white', 'bg-red-900/40');
+                    }
+                };
+            } else {
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>`;
+                modal.querySelector('#cancel-replace-btn').onclick = () => {
+                    closeHandler();
+                };
+            }
+
+            contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
+                btn.onclick = () => {
+                    const idx = parseInt(btn.dataset.idx, 10);
+                    renderFinalConfirmation(idx, closeHandler);
+                };
+            });
+        };
+
+        const renderInitialModal = () => {
+            let title = source === 'shop' ? "Install Upgrade" : "Reward Available";
+            let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
+            
+            if (source === 'shop' && totalCost > 0) {
+                desc += `<p class="text-base text-gray-400">Total Cost: <span class="credits-text-pulsing">${formatCredits(totalCost, true)}</span></p>`;
+                if (installationFee > 0) {
+                    desc += `<p class="text-xs text-gray-500 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
+                }
+            }
+            
+            desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+
+            this.manager.queueModal('event-modal', title, desc, null, {
+                dismissOutside: false, 
+                customSetup: (modal, closeHandler) => {
+                    const btnContainer = modal.querySelector('#event-button-container');
+                    btnContainer.className = "flex flex-col w-full mt-4";
                     
+                    let confirmBtnHtml = '';
+                    if (source === 'shop') {
+                        const canAfford = this.manager.lastKnownState.player.credits >= totalCost;
+                        confirmBtnHtml = `
+                            <button id="confirm-install-btn" class="btn w-full btn-pulse-cyan text-cyan-300 font-bold mb-2" ${!canAfford ? 'disabled' : ''}>
+                                Purchase [⌬ ${formatCredits(totalCost, true)}]
+                            </button>
+                        `;
+                    } else {
+                        confirmBtnHtml = `
+                            <button id="confirm-install-btn" class="btn w-full btn-pulse-green text-green-400 font-bold mb-2">
+                                Accept Upgrade
+                            </button>
+                        `;
+                    }
+
+                    btnContainer.innerHTML = `
+                        ${confirmBtnHtml}
+                        <button id="cancel-install-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Reject</button>
+                    `;
+
                     const confirmBtn = modal.querySelector('#confirm-install-btn');
                     confirmBtn.onclick = () => {
                         if (isFull) {
-                            renderReplacementUI();
+                            renderReplacementUI(closeHandler);
                         } else {
-                            closeHandler();
-                            onConfirm(-1); 
+                            confirmBtn.disabled = true;
+                            handleDeductionAndInstall(-1, closeHandler);
                         }
                     };
-                    
-                    modal.querySelector('#cancel-install-btn').onclick = closeHandler;
-                };
 
-                const renderReplacementUI = () => {
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Upgrade Capacity Full";
-                    
-                    const activeShipId = this.manager.lastKnownState?.player?.activeShipId;
-                    const activeShipStatic = activeShipId ? DB.SHIPS[activeShipId] : null;
-                    const shipBasePrice = activeShipStatic ? activeShipStatic.price : 0;
-                    
-                    const upgradesList = currentUpgrades.map((uId, idx) => {
-                        const def = GameAttributes.getDefinition(uId);
-                        const pColor = def ? (def.pillColor || def.color || '#fff') : '#fff';
-                        const uName = def ? def.name : uId;
-                        const statText = def ? (def.description || 'Unknown Effect') : 'Unknown Effect';
-                        
-                        const hwCost = def ? GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice) : 0;
-                        const valText = formatCredits(hwCost, true);
-
-                        return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center" data-idx="${idx}">
-                                    <div class="flex flex-col overflow-hidden">
-                                        <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                        <div class="marquee-container text-xs text-gray-400 mt-1">
-                                            <span class="marquee-content">${statText}</span>
-                                        </div>
-                                    </div>
-                                    <div class="text-right flex-shrink-0 ml-4">
-                                        <span class="text-xs text-gray-500 block">Value</span>
-                                        <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
-                                    </div>
-                                </button>`;
-                    }).join('');
-
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
-                        <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace:</p>
-                        <div class="flex flex-col gap-2 w-full max-w-sm mx-auto">
-                            ${upgradesList}
-                        </div>
-                    `;
-                    
-                    btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full mt-2">Cancel</button>`;
-                    modal.querySelector('#cancel-replace-btn').onclick = closeHandler;
-
-                    contentEl.querySelectorAll('button[data-idx]').forEach(btn => {
-                        btn.onclick = () => {
-                            const idx = parseInt(btn.dataset.idx, 10);
-                            renderFinalConfirmation(idx);
-                        };
-                    });
-                };
-
-                const renderFinalConfirmation = (indexToRemove) => {
-                    const idToRemove = currentUpgrades[indexToRemove];
-                    const defToRemove = GameAttributes.getDefinition(idToRemove);
-                    
-                    const modalTitle = modal.querySelector('#event-title');
-                    modalTitle.textContent = "Confirm Replacement";
-                    
-                    const removeNameColor = defToRemove ? (defToRemove.pillColor || defToRemove.color || '#fff') : '#fff';
-                    const removeName = defToRemove ? defToRemove.name : idToRemove;
-
-                    contentEl.innerHTML = `
-                        <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                        <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
-                        <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
-                    `;
-                    
-                    btnContainer.className = "flex gap-4 w-full mt-4";
-                    btnContainer.innerHTML = `
-                        <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white flex-1">Dismantle & Install</button>
-                        <button id="final-cancel-btn" class="btn flex-1">Cancel</button>
-                    `;
-                    
-                    modal.querySelector('#final-confirm-btn').onclick = () => {
+                    modal.querySelector('#cancel-install-btn').onclick = () => {
                         closeHandler();
-                        onConfirm(indexToRemove);
+                        if (onReject) onReject();
                     };
-                    modal.querySelector('#final-cancel-btn').onclick = closeHandler;
-                };
+                }
+            });
+        };
 
-                renderStandardButtons();
-            }
-        });
+        renderInitialModal();
     }
 
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
