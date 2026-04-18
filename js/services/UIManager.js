@@ -40,7 +40,7 @@ export class UIManager {
         this.lastActiveScreenEl = null;
         this.lastKnownState = null;
         this.lastSeenSystemStateId = null; 
-        this.hasTraveledThisSession = false; // Phase 3: Gate for Economic Weather Modal
+        this.hasTraveledThisSession = false; 
         
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
@@ -158,8 +158,6 @@ export class UIManager {
 
         const previousState = this.lastKnownState;
         
-        // --- PHASE 3: LIVE STATS TRACKING ---
-        // Instantly force news ticker to re-render its internal payload if ship stats mutated
         if (previousState && previousState.player.activeShipId === gameState.player.activeShipId) {
             const shipId = gameState.player.activeShipId;
             if (shipId) {
@@ -189,16 +187,25 @@ export class UIManager {
 
         this.lastKnownState = gameState;
 
+        const launchModal = this.cache.launchModal;
+        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
+        const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen;
+
         if (gameState.introSequenceActive) {
-            // [FIX] Force inline style display: none to override CSS ID specificity
             if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
+            const gameMenuBtn = document.getElementById('btn-game-menu');
+            if (gameMenuBtn) gameMenuBtn.style.display = 'none';
             return;
         } else {
-            // [FIX] Clear inline style so it reverts to the default display: flex in the CSS
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = '';
-            // Un-hide the help anchor strictly for normal gameplay loops
+            if (this.cache.econWeatherBtn) {
+                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : '';
+            }
             if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
-                this.helpManager.anchorBtn.style.display = 'flex';
+                this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';
+            }
+            const gameMenuBtn = document.getElementById('btn-game-menu');
+            if (gameMenuBtn) {
+                gameMenuBtn.style.display = isTravelLocked ? 'none' : '';
             }
         }
 
@@ -259,17 +266,13 @@ export class UIManager {
             return;
         }
 
-        // --- PHASE 3: SEAMLESS UPDATE ---
-        // Fetch the existing content container to avoid nuking the running CSS animation
         const existingContent = this.cache.newsTickerBar.querySelector('.news-ticker-content');
         if (existingContent) {
             const blocks = existingContent.querySelectorAll('.ticker-block');
             if (blocks.length === 2) {
-                // Update the internal spans without touching the wrapper or its transform matrix
                 blocks[0].innerHTML = singleContentHtml;
                 blocks[1].innerHTML = singleContentHtml;
                 
-                // Recalculate duration in case text length changed drastically (e.g. wide story prompt)
                 const rect = blocks[0].getBoundingClientRect();
                 const blockWidth = rect.width;
                 const PIXELS_PER_SECOND = 50;
@@ -281,7 +284,6 @@ export class UIManager {
             }
         }
 
-        // --- FALLBACK: INITIAL RENDER ---
         const wrappedContent = `<div class="ticker-block">${singleContentHtml}</div>`;
         this.cache.newsTickerBar.innerHTML = `<div class="news-ticker-content">${wrappedContent}${wrappedContent}</div>`;
         const contentElement = this.cache.newsTickerBar.querySelector('.news-ticker-content');
@@ -330,7 +332,6 @@ export class UIManager {
             const isDisabled = introSequenceActive;
             const activeStyle = isActive ? `background: ${theme.gradient}; color: ${theme.textColor};` : '';
             
-            // Apply Guardrail Lock/Glow Classes (Multi-Path Support)
             let guideClass = '';
             if (navGuide.active) {
                 if ((navGuide.navIds || []).includes(navId)) {
@@ -385,7 +386,6 @@ export class UIManager {
                  const activeClass = isSubNavActive ? 'sub-nav-active' : '';
                  const action = ACTION_IDS.SET_SCREEN;
 
-                 // Apply Guardrail Lock/Glow Classes (Multi-Path Support)
                  let guideClass = '';
                  if (navGuide.active) {
                      if ((navGuide.screenIds || []).includes(screenId)) {
@@ -471,7 +471,6 @@ export class UIManager {
         const currentSystemStateId = gameState.systemStates?.activeId;
         if (currentSystemStateId && currentSystemStateId !== this.lastSeenSystemStateId) {
             this.lastSeenSystemStateId = currentSystemStateId;
-            // Phase 3: Gate Economic Weather Modal Behind Travel Session
             if (previousState && !gameState.introSequenceActive && this.hasTraveledThisSession) {
                 if (gameState.activeScreen === SCREEN_IDS.MARKET || 
                     gameState.activeScreen === SCREEN_IDS.SERVICES || 
@@ -538,7 +537,6 @@ export class UIManager {
                 });
                 break;
             case SCREEN_IDS.FINANCE:
-                // FIX: Bypassed _preserveScrollAndRender to force synchronous DOM update for the transaction log
                 this.cache.financeScreen.innerHTML = renderFinanceScreen(gameState);
                 break;
             case SCREEN_IDS.INTEL:
@@ -582,7 +580,6 @@ export class UIManager {
     getCurrentHelpContextId(gameState) {
         if (!gameState || !gameState.player) return null;
         
-        // Isolate Help Context during Intro Sequence
         if (gameState.introSequenceActive) return 'intro-ship-selection';
 
         const { activeNav, activeScreen, solStation } = gameState;
@@ -823,7 +820,7 @@ export class UIManager {
     }
 
     showTravelAnimation(from, to, travelInfo, totalHullDamagePercent, finalCallback) {
-        this.hasTraveledThisSession = true; // Phase 3: Gate trigger
+        this.hasTraveledThisSession = true; 
         this.travelAnimationService.play(from, to, travelInfo, totalHullDamagePercent, finalCallback);
     }
     
@@ -1013,12 +1010,7 @@ export class UIManager {
         });
     }
 
-    /**
-     * Executes the "New Game" intro cinematic sequence natively via iOS or as a web fallback.
-     * @param {function} callback Executes when the video fully completes and the DOM is cleaned.
-     */
     playIntroCinematic(callback) {
-        // 1. Native iOS execution via WKWebView Bridge
         if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
             console.log('[UIManager] Triggering native iOS cinematic playback.');
             
@@ -1031,10 +1023,8 @@ export class UIManager {
             return;
         }
 
-        // 2. Web Fallback Execution (The "Theater Curtain" with Skip UI)
         console.log('[UIManager] Triggering web fallback cinematic playback.');
         
-        // The Master Container
         const container = document.createElement('div');
         container.id = 'intro-cinematic-container';
         Object.assign(container.style, {
@@ -1042,11 +1032,9 @@ export class UIManager {
             zIndex: '9999', backgroundColor: '#000'
         });
 
-        // The Video Element
         const videoEl = document.createElement('video');
         videoEl.id = 'intro-cinematic-video';
         
-        // --- PATH FIX ---
         videoEl.src = 'assets/images/video/intro_cinematic.mp4';
         
         videoEl.autoplay = true;
@@ -1057,13 +1045,11 @@ export class UIManager {
             width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none'
         });
 
-        // The Invisible Tap Catcher
         const tapCatcher = document.createElement('div');
         Object.assign(tapCatcher.style, {
             position: 'absolute', inset: '0', zIndex: '10'
         });
 
-        // The Skip Button (Orbital Trading Theme)
         const skipBtn = document.createElement('button');
         skipBtn.innerHTML = 'SKIP ⏭';
         skipBtn.className = 'btn'; 
@@ -1075,7 +1061,6 @@ export class UIManager {
             textTransform: 'uppercase'
         });
 
-        // --- Interaction Logic ---
         let skipVisible = false;
         let skipTimeout;
 
@@ -1100,7 +1085,6 @@ export class UIManager {
             isFinished = true;
             clearTimeout(skipTimeout);
             
-            // Aggressive memory demolition
             videoEl.pause();
             videoEl.removeAttribute('src');
             videoEl.load();
@@ -1117,11 +1101,8 @@ export class UIManager {
         videoEl.addEventListener('ended', finishCinematic);
         videoEl.addEventListener('error', finishCinematic);
         
-        // --- TIMEOUT FIX --- 
-        // Extended failsafe to 110,000ms (110 seconds) to allow the 1m40s video to finish naturally.
         setTimeout(finishCinematic, 110000); 
 
-        // Assemble and Inject
         container.appendChild(videoEl);
         container.appendChild(tapCatcher);
         container.appendChild(skipBtn);
@@ -1133,50 +1114,32 @@ export class UIManager {
         });
     }
 
-    /**
-     * Master orchestration for the Ship Upgrade Cinematic Sequence (Phases 3/4).
-     * Connects DOM hiding, screen routing, and sequential promise resolution.
-     * @param {string} shipId - Target ship receiving the upgrade.
-     */
     async orchestrateUpgradeSequence(shipId) {
         try {
-            // Step 1: Wait for localized modal fill (2000ms)
             await this.modalEngine.showUpgradeProgressModal();
 
-            // Step 2: Inject Global White-Out Overlay
             let overlay = document.createElement('div');
             overlay.className = 'white-out-overlay';
             document.body.appendChild(overlay);
 
-            // Step 3: Wait for peak opacity (1000ms into the 2000ms white-out)
             await new Promise(resolve => setTimeout(resolve, 1000));
 
-            // DOM Swap 1: Destroy modal invisibly behind white-out
             this.modalEngine.destroyModalInstant('upgrade-progress-modal');
             
-            // DOM Swap 2: Route screen natively using UIManager's routing.
-            // ActionClickHandler pre-set the GameState indices prior to calling this orchestrator.
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
 
-            // Step 4: Wait for White-Out to finish fading out (Remaining 1000ms)
             await new Promise(resolve => setTimeout(resolve, 1000));
             if (overlay.parentNode) overlay.parentNode.removeChild(overlay);
 
-            // Step 5: Execute Localized Reveal on the Target Ship Node
             await this.hangarControl.playUpgradeReveal(shipId);
 
         } catch (e) {
             this.logger.error('UIManager', `Upgrade sequence failed: ${e}`);
         } finally {
-            // Safety Release: Ensure lock is always cleared
             document.body.classList.remove('ui-locked');
         }
     }
     
-    /**
-     * Instantiates and runs the Officer Recruitment Cinematic directly via the UIModalEngine.
-     * @param {string} officerId 
-     */
     queueOfficerRecruitmentModal(officerId) {
         const modalContainer = this.modalEngine.buildOfficerRecruitmentDOM(officerId);
         if (modalContainer) {

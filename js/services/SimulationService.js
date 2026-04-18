@@ -516,6 +516,8 @@ export class SimulationService {
         this.gameState.day++;
         this.logger.info.system(this.gameState.day, 'DAY_START', `Day ${this.gameState.day} started.`);
 
+        this.gameState.uiState.purchasedUpgrades = [];
+
         const activeShip = this._getActiveShip();
         if (activeShip && activeShip.statusEffects) {
             this.gameState.player.shipStates[activeShip.id].statusEffects = activeShip.statusEffects.filter(effect => this.gameState.day < effect.expiryDay);
@@ -659,31 +661,39 @@ export class SimulationService {
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState) {
-                         shipState.upgrades = shipState.upgrades || [];
-                         if (shipState.upgrades.length < 3) {
-                             shipState.upgrades.push(reward.target || reward.id);
-                         } else {
-                             // Route to replacement UI
-                             if (this.uiManager && this.uiManager.hangarControl) {
-                                 this.uiManager.hangarControl.showUpgradeInstallationModal(
-                                     reward.target || reward.id, 
-                                     0, 
-                                     0, 
-                                     shipState, 
-                                     (idxToRemove) => {
-                                         if (idxToRemove !== -1) {
-                                             shipState.upgrades.splice(idxToRemove, 1);
-                                             shipState.upgrades.push(reward.target || reward.id);
-                                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed overwrite upgrade: ${reward.target || reward.id}`);
-                                             this.gameState.setState({});
-                                         }
+                         if (this.uiManager && this.uiManager.hangarControl) {
+                             this.uiManager.hangarControl.showUpgradeInstallationModal(
+                                 reward.target || reward.id, 
+                                 { source: 'mission' }, 
+                                 shipState, 
+                                 async (idxToRemove) => {
+                                     if (idxToRemove !== -1) {
+                                         shipState.upgrades.splice(idxToRemove, 1);
                                      }
-                                 );
+                                     shipState.upgrades.push(reward.target || reward.id);
+                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${reward.target || reward.id}`);
+                                     
+                                     this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                                     const shipIndex = this.gameState.player.ownedShipIds.indexOf(this.gameState.player.activeShipId);
+                                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                                     
+                                     await this.uiManager.orchestrateUpgradeSequence(this.gameState.player.activeShipId);
+                                     this.gameState.setState({});
+                                 },
+                                 () => {
+                                     this.logger.info.player(this.gameState.day, 'REWARD_REJECTED', 'Discarded reward upgrade.');
+                                     this.gameState.setState({});
+                                 }
+                             );
+                         } else {
+                             // Fallback
+                             shipState.upgrades = shipState.upgrades || [];
+                             if (shipState.upgrades.length < 3) {
+                                 shipState.upgrades.push(reward.target || reward.id);
                              } else {
-                                 // Fallback if modal is somehow unavailable
                                  shipState.upgrades[2] = reward.target || reward.id; 
-                                 this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
                              }
+                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
                          }
                      }
                      break;

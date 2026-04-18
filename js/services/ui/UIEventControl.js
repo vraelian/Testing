@@ -333,6 +333,22 @@ export class UIEventControl {
             }
         }
 
+        const toggleBackgroundUI = (opacity, pointerEvents) => {
+            const elements = [
+                document.getElementById('mission-sticky-bar'),
+                document.getElementById('btn-econ-weather'),
+                document.getElementById('global-help-anchor'),
+                document.getElementById('btn-game-menu')
+            ];
+            elements.forEach(el => {
+                if (el) {
+                    el.style.transition = 'opacity 0.2s ease';
+                    el.style.opacity = opacity;
+                    el.style.pointerEvents = pointerEvents;
+                }
+            });
+        };
+
         requestAnimationFrame(() => {
             modal.classList.add('modal-visible');
             const wrapper = modal.querySelector('.launch-modal-wrapper');
@@ -342,13 +358,7 @@ export class UIEventControl {
                 });
             }
             
-            // [FIX C] Fade out sticky bar smoothly when launch modal opens (1.5x faster)
-            const stickyBar = document.getElementById('mission-sticky-bar');
-            if (stickyBar) {
-                stickyBar.style.transition = 'opacity 0.2s ease';
-                stickyBar.style.opacity = '0';
-                stickyBar.style.pointerEvents = 'none';
-            }
+            toggleBackgroundUI('0', 'none');
 
             starfieldService.mount(document.body);
             starfieldService.triggerEntry();
@@ -360,13 +370,7 @@ export class UIEventControl {
                 
                 starfieldService.triggerQuickExit();
                 
-                // [FIX C] Restore the sticky bar ONLY if they cancel the launch (1.5x faster)
-                const stickyBar = document.getElementById('mission-sticky-bar');
-                if (stickyBar) {
-                    stickyBar.style.transition = 'opacity 0.2s ease';
-                    stickyBar.style.opacity = '1';
-                    stickyBar.style.pointerEvents = 'auto';
-                }
+                toggleBackgroundUI('1', 'auto');
 
                 modal.removeEventListener('click', closeHandler);
             }
@@ -728,16 +732,30 @@ export class UIEventControl {
                 const hangarCtrl = this.manager.hangarControl || this.manager.uiHangarControl;
                 
                 if (shipState && hangarCtrl) {
-                    hangarCtrl.showUpgradeInstallationModal(pendingOverwriteId, 0, 0, shipState, (idxToRemove) => {
-                        if (idxToRemove !== -1) {
-                            shipState.upgrades.splice(idxToRemove, 1);
+                    hangarCtrl.showUpgradeInstallationModal(
+                        pendingOverwriteId, 
+                        { source: 'mission' }, 
+                        shipState, 
+                        async (idxToRemove) => {
+                            if (idxToRemove !== -1) {
+                                shipState.upgrades.splice(idxToRemove, 1);
+                            }
                             shipState.upgrades.push(pendingOverwriteId);
                             this.manager.simulationService.logger.info.player(state.day, 'REWARD_UPGRADE', `Installed overwrite upgrade: ${pendingOverwriteId}`);
                             
+                            state.uiState.hangarShipyardToggleState = 'hangar';
+                            const shipIndex = state.player.ownedShipIds.indexOf(activeShip);
+                            state.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                            
+                            await this.manager.orchestrateUpgradeSequence(activeShip);
                             this.manager.simulationService.gameState.setState({});
+                            
+                            if (originalOnDismiss) originalOnDismiss();
+                        },
+                        () => {
+                            if (originalOnDismiss) originalOnDismiss();
                         }
-                        if (originalOnDismiss) originalOnDismiss();
-                    });
+                    );
                 } else {
                     if (originalOnDismiss) originalOnDismiss();
                 }

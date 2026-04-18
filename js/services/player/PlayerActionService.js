@@ -943,13 +943,19 @@ export class PlayerActionService {
         return { success: true };
     }
 
-    executeInstallUpgrade(shipId, upgradeId) {
-        const state = this.gameState;
+    executeInstallUpgrade(shipId, upgradeId, totalCost = 0) {
+        const state = this.gameState.getState();
         if (!state.player.shipStates[shipId].upgrades) {
              state.player.shipStates[shipId].upgrades = [];
         }
         
         state.player.shipStates[shipId].upgrades.push(upgradeId);
+        
+        if (totalCost > 0) {
+            state.player.credits -= totalCost;
+            if (!state.uiState.purchasedUpgrades) state.uiState.purchasedUpgrades = [];
+            state.uiState.purchasedUpgrades.push(upgradeId);
+        }
         
         this.logger.info.player(state.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
         this.gameState.setState({});

@@ -236,7 +236,7 @@ COMPONENT-SPECIFIC STYLING
 
 .status-badge {
     position: absolute;
-    bottom: -1px;
+    bottom: -3%;
     left: 50%;
     transform: translateX(-50%) translateY(50%);
     background-color: #1a2030;
