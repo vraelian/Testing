@@ -767,8 +767,8 @@ export class PlayerActionService {
             unitCost *= 2.0;
         }
 
-        if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-             unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
+        if (state.player.activePerks[PERK_IDS.VENUSIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
+             unitCost *= (1 - DB.PERKS[PERK_IDS.VENUSIAN_SYNDICATE].fuelDiscount);
         }
         
         const attrMod = GameAttributes.getFuelPriceModifier(upgrades);
@@ -861,8 +861,8 @@ export class PlayerActionService {
             unitCost *= 2.0;
         }
 
-        if (state.player.activePerks[PERK_IDS.VENETIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
-            unitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
+        if (state.player.activePerks[PERK_IDS.VENUSIAN_SYNDICATE] && state.currentLocationId === LOCATION_IDS.VENUS) {
+            unitCost *= (1 - DB.PERKS[PERK_IDS.VENUSIAN_SYNDICATE].repairDiscount);
         }
 
         const attrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
@@ -944,20 +944,22 @@ export class PlayerActionService {
     }
 
     executeInstallUpgrade(shipId, upgradeId, totalCost = 0) {
-        const state = this.gameState.getState();
-        if (!state.player.shipStates[shipId].upgrades) {
-             state.player.shipStates[shipId].upgrades = [];
+        const livePlayer = this.gameState.player;
+        const liveUiState = this.gameState.uiState;
+        
+        if (!livePlayer.shipStates[shipId].upgrades) {
+             livePlayer.shipStates[shipId].upgrades = [];
         }
         
-        state.player.shipStates[shipId].upgrades.push(upgradeId);
+        livePlayer.shipStates[shipId].upgrades.push(upgradeId);
         
         if (totalCost > 0) {
-            state.player.credits -= totalCost;
-            if (!state.uiState.purchasedUpgrades) state.uiState.purchasedUpgrades = [];
-            state.uiState.purchasedUpgrades.push(upgradeId);
+            livePlayer.credits -= totalCost;
+            if (!liveUiState.purchasedUpgrades) liveUiState.purchasedUpgrades = [];
+            liveUiState.purchasedUpgrades.push(upgradeId);
         }
         
-        this.logger.info.player(state.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
+        this.logger.info.player(this.gameState.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
         this.gameState.setState({});
     }
 }
