@@ -69,6 +69,7 @@ export class UIManager {
         this.activeGraphAnchor = null;
         this.activeGenericTooltipAnchor = null;
         this.activeGenericTooltipPosition = 'right';
+        this.activePointerCoords = null;
 
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.MAP]: 'Map', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
@@ -893,9 +894,10 @@ export class UIManager {
         tooltip.style.top = `${topPos}px`;
     }
 
-    showGenericTooltip(anchorEl, content, preferredPosition = 'right') {
+    showGenericTooltip(anchorEl, content, preferredPosition = 'right', pointerCoords = null) {
         this.activeGenericTooltipAnchor = anchorEl;
         this.activeGenericTooltipPosition = preferredPosition;
+        this.activePointerCoords = pointerCoords;
         const tooltip = this.cache.genericTooltip;
         tooltip.innerHTML = content;
         
@@ -918,6 +920,7 @@ export class UIManager {
         if (this.activeGenericTooltipAnchor) {
             this.cache.genericTooltip.style.display = 'none';
             this.activeGenericTooltipAnchor = null;
+            this.activePointerCoords = null;
         }
     }
 
@@ -927,27 +930,54 @@ export class UIManager {
         
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        const anchorRect = this.activeGenericTooltipAnchor.getBoundingClientRect();
-        
         let leftPos, topPos;
 
-        if (this.activeGenericTooltipPosition === 'center') {
-            // Replicate the exact technology used by the working Price Graph
-            const card = this.activeGenericTooltipAnchor.closest('.ship-card, .carousel-page, #ship-detail-content');
-            const rect = card ? card.getBoundingClientRect() : anchorRect;
-            
-            // Standard centering math using the bounding rect directly
-            leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-            topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-            
-        } else if (this.activeGenericTooltipPosition === 'top') {
-            leftPos = anchorRect.left + (anchorRect.width / 2) - (tooltipWidth / 2);
-            topPos = anchorRect.top - tooltipHeight - 10;
-            if (topPos < 10) topPos = anchorRect.bottom + 10;
+        if (this.activePointerCoords && 
+            typeof this.activePointerCoords.x === 'number' && !isNaN(this.activePointerCoords.x) &&
+            typeof this.activePointerCoords.y === 'number' && !isNaN(this.activePointerCoords.y)) {
+            // Viewport-absolute coordinate anchoring
+            const { x, y, isArtFrame } = this.activePointerCoords;
+
+            if (this.activeGenericTooltipPosition === 'center') {
+                leftPos = x - (tooltipWidth / 2);
+                
+                if (isArtFrame) {
+                    // Lock dead-center over the calculated art frame coordinates
+                    topPos = y - (tooltipHeight / 2);
+                } else {
+                    // Standard pointer: Shift up slightly so finger doesn't obscure text
+                    topPos = y - tooltipHeight - 15; 
+                    if (topPos < 10) {
+                        topPos = y + 25;
+                    }
+                }
+            } else if (this.activeGenericTooltipPosition === 'top') {
+                leftPos = x - (tooltipWidth / 2);
+                topPos = y - tooltipHeight - 15;
+            } else {
+                leftPos = x + 15;
+                topPos = y - (tooltipHeight / 2);
+            }
         } else {
-            leftPos = anchorRect.right + 10;
-            topPos = anchorRect.top + (anchorRect.height / 2) - (tooltipHeight / 2);
-            if (topPos < 10) topPos = anchorRect.bottom + 10;
+            // Fallback: If no coords (e.g. forced trigger not originating from pointer event) or invalid coords
+            const anchorRect = this.activeGenericTooltipAnchor.getBoundingClientRect();
+
+            if (this.activeGenericTooltipPosition === 'center') {
+                const card = this.activeGenericTooltipAnchor.closest('.ship-card, .carousel-page, #ship-detail-content');
+                const rect = card ? card.getBoundingClientRect() : anchorRect;
+                
+                leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+                topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+                
+            } else if (this.activeGenericTooltipPosition === 'top') {
+                leftPos = anchorRect.left + (anchorRect.width / 2) - (tooltipWidth / 2);
+                topPos = anchorRect.top - tooltipHeight - 10;
+                if (topPos < 10) topPos = anchorRect.bottom + 10;
+            } else {
+                leftPos = anchorRect.right + 10;
+                topPos = anchorRect.top + (anchorRect.height / 2) - (tooltipHeight / 2);
+                if (topPos < 10) topPos = anchorRect.bottom + 10;
+            }
         }
 
         // Standard Screen Clamping Fallbacks
