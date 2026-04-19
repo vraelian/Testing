@@ -31,7 +31,7 @@ export class IntelMarketRenderer {
     render(containerElement, gameState) {
         this.currentGameState = gameState;
         const state = gameState;
-        const { currentLocationId, activeIntelDeal, intelMarket, missions } = state;
+        const { currentLocationId, activeIntelDeal, intelMarket, missions, player, day } = state;
         
         // --- VIRTUAL WORKBENCH: MODIFICATION (TUTORIAL RESTRICTION) ---
         // If mission_tutorial_03 is active, force the market to be empty
@@ -43,6 +43,24 @@ export class IntelMarketRenderer {
             return;
         }
         // --- END MODIFICATION ---
+
+        // --- VIRTUAL WORKBENCH: REVOKED CLEARANCE CHECK ---
+        const activeShipId = player?.activeShipId;
+        const activeShipState = activeShipId ? player.shipStates[activeShipId] : null;
+        const statusEffects = activeShipState?.statusEffects || [];
+        const revokedClearance = statusEffects.find(s => s.id === 'status_revoked_clearance');
+
+        if (revokedClearance) {
+            const daysLeft = revokedClearance.expiryDay - day;
+            containerElement.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 mt-12 border border-red-900/50 bg-red-900/10 rounded text-center">
+                    <h2 class="text-3xl font-bold mb-4 font-orbitron text-white tracking-wider" style="text-shadow: 0 0 15px rgba(239, 68, 68, 1), 0 2px 4px rgba(0,0,0,0.8);">REVOKED CLEARANCE</h2>
+                    <p class="text-gray-300 leading-relaxed">Your active ship has been banned from the network. Intel Market access disabled.<br><br>Time remaining: <span class="text-white font-bold">${daysLeft} days</span></p>
+                </div>
+            `;
+            return;
+        }
+        // --- END REVOKED CLEARANCE CHECK ---
 
         // 1. Get the *single* active purchased packet, if it exists
         const globalPurchasedPackets = [];

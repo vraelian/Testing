@@ -923,7 +923,7 @@ export class UIManager {
             topPos = rect.top - tooltipHeight - 10;
             if (topPos < 10) topPos = rect.bottom + 10;
         } else if (this.activeGenericTooltipPosition === 'center') {
-            const card = this.activeGenericTooltipAnchor.closest('.carousel-page, .item-card-container');
+            const card = this.activeGenericTooltipAnchor.closest('.carousel-page, .item-card-container, .ship-card');
             const referenceRect = card ? card.getBoundingClientRect() : rect;
             
             leftPos = referenceRect.left + (referenceRect.width / 2) - (tooltipWidth / 2);

@@ -10361,7 +10361,7 @@ export class IntelMarketRenderer {
     render(containerElement, gameState) {
         this.currentGameState = gameState;
         const state = gameState;
-        const { currentLocationId, activeIntelDeal, intelMarket, missions } = state;
+        const { currentLocationId, activeIntelDeal, intelMarket, missions, player, day } = state;
         
         // --- VIRTUAL WORKBENCH: MODIFICATION (TUTORIAL RESTRICTION) ---
         // If mission_tutorial_03 is active, force the market to be empty
@@ -10373,6 +10373,24 @@ export class IntelMarketRenderer {
             return;
         }
         // --- END MODIFICATION ---
+
+        // --- VIRTUAL WORKBENCH: REVOKED CLEARANCE CHECK ---
+        const activeShipId = player?.activeShipId;
+        const activeShipState = activeShipId ? player.shipStates[activeShipId] : null;
+        const statusEffects = activeShipState?.statusEffects || [];
+        const revokedClearance = statusEffects.find(s => s.id === 'status_revoked_clearance');
+
+        if (revokedClearance) {
+            const daysLeft = revokedClearance.expiryDay - day;
+            containerElement.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-8 mt-12 border border-red-900/50 bg-red-900/10 rounded text-center">
+                    <h2 class="text-3xl font-bold mb-4 font-orbitron text-white tracking-wider" style="text-shadow: 0 0 15px rgba(239, 68, 68, 1), 0 2px 4px rgba(0,0,0,0.8);">REVOKED CLEARANCE</h2>
+                    <p class="text-gray-300 leading-relaxed">Your active ship has been banned from the network. Intel Market access disabled.<br><br>Time remaining: <span class="text-white font-bold">${daysLeft} days</span></p>
+                </div>
+            `;
+            return;
+        }
+        // --- END REVOKED CLEARANCE CHECK ---
 
         // 1. Get the *single* active purchased packet, if it exists
         const globalPurchasedPackets = [];
@@ -24546,14 +24564,13 @@ export class UIHangarControl {
                 const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
                 if (!def) return '';
                 const cssClass = def.gradientClasses || 'bg-gray-500 border-gray-400 text-white';
-                return `<span class="status-effect-pill ${cssClass} cursor-help" data-tooltip="Expires in ${daysLeft} days">${def.name}</span>`;
+                return `<span class="status-effect-pill ${cssClass} cursor-help" data-action="show-lore-tooltip" data-tooltip="${def.name}: Expires in ${daysLeft} days">${def.name}</span>`;
             }).join('');
 
             const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
                 const def = GameAttributes.getDefinition(id);
                 
                 const label = def ? def.name : id; 
-                const tooltipText = def ? def.description : '';
                 const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
                 const tier = GameAttributes.extractTier(id);
@@ -24573,7 +24590,7 @@ export class UIHangarControl {
                 }
 
                 return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
-                              title="${tooltipText}"
+                              data-action="show-attribute-tooltip" data-attribute-id="${id}"
                               style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5);">
                             ${label}
                         </span>`;
@@ -24873,15 +24890,23 @@ export class UIHangarControl {
         const terminalCard = targetPage.querySelector('#ship-terminal');
         const pillContainer = targetPage.querySelector(`#upgrade-pill-container-${shipId}`);
         if (!terminalCard) return;
+
+        const helpBtn = document.getElementById('global-help-anchor');
+        if (helpBtn) helpBtn.style.display = 'none';
+
         terminalCard.classList.add('card-scanline-active');
         await new Promise(resolve => setTimeout(resolve, 1000));
         terminalCard.classList.remove('card-scanline-active');
-        if (pillContainer) {
+
+        if (pillContainer && pillContainer.children.length > 0) {
             Array.from(pillContainer.children).forEach(pill => {
                 pill.classList.add('pill-instantiate');
                 setTimeout(() => { pill.classList.remove('pill-instantiate'); }, 500); 
             });
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
+
+        if (helpBtn) helpBtn.style.display = '';
     }
 }
 --- END OF FILE: ./js/services/ui/UIHangarControl.js ---
@@ -41099,7 +41124,7 @@ export class UIManager {
             topPos = rect.top - tooltipHeight - 10;
             if (topPos < 10) topPos = rect.bottom + 10;
         } else if (this.activeGenericTooltipPosition === 'center') {
-            const card = this.activeGenericTooltipAnchor.closest('.carousel-page, .item-card-container');
+            const card = this.activeGenericTooltipAnchor.closest('.carousel-page, .item-card-container, .ship-card');
             const referenceRect = card ? card.getBoundingClientRect() : rect;
             
             leftPos = referenceRect.left + (referenceRect.width / 2) - (tooltipWidth / 2);
@@ -45382,7 +45407,7 @@ export class TooltipHandler {
                         const definition = GameAttributes.getDefinition(attrId);
                         if (definition) {
                             const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
-                            this.uiManager.showGenericTooltip(actionTarget, content, 'top');
+                            this.uiManager.showGenericTooltip(actionTarget, content, 'center');
                             this.activeTooltipTarget = actionTarget;
                         }
                     }
