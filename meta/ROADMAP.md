@@ -1,21 +1,24 @@
 # ROADMAP
-
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
 ## Immediate
-Office Acquisition Pipeline
-A. Animation
-B. Sequence
-C. Acquisition
+
+Act XX black screen intermissions
+
+News Ticker anomalies
+- story related
+- event related
+
 
 Officers
 A. Perks - economic stimulus: increase available commodities at given location
-B Balance officer perks
+B. Balance officer perks
 
 —————————————————
 
 ## Ongoing, WIP Efforts
--  How to increase scaling  risk and difficulty mid-game through to end game?
+-  How to increase scaling risk and difficulty mid-game through to end game?
 -  Build Mission Maker V3
 -  More UI CSS keyframes animations
 
@@ -30,7 +33,6 @@ B Balance officer perks
 - Design cononical missions
 - * Mango Plasteel Statue mission
 - Missions/contacts reference in-game ships, etc.
-- System states influencing market performance
 - Add more events: reward type, story type, voucher type
 
 DEFERRED

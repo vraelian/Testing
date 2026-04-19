@@ -189,7 +189,7 @@ export class UIManager {
 
         const launchModal = this.cache.launchModal;
         const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
-        const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen;
+        const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || document.body.classList.contains('ui-cinematic-lock');
 
         if (gameState.introSequenceActive) {
             if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
@@ -898,8 +898,20 @@ export class UIManager {
         this.activeGenericTooltipPosition = preferredPosition;
         const tooltip = this.cache.genericTooltip;
         tooltip.innerHTML = content;
+        
+        // Reset legacy styles that might interfere with calculations
+        tooltip.style.transform = '';
+        tooltip.style.right = 'auto';
+        tooltip.style.bottom = 'auto';
         tooltip.style.display = 'block';
-        this.updateGenericTooltipPosition();
+        
+        // Force the browser to render the tooltip's text block on the next frame 
+        // before attempting to extract offsetWidth, completely bypassing WKWebView race conditions.
+        requestAnimationFrame(() => {
+            if (this.activeGenericTooltipAnchor === anchorEl) {
+                this.updateGenericTooltipPosition();
+            }
+        });
     }
 
     hideGenericTooltip() {
@@ -912,35 +924,40 @@ export class UIManager {
     updateGenericTooltipPosition() {
         if (!this.activeGenericTooltipAnchor) return;
         const tooltip = this.cache.genericTooltip;
-        const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
+        
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
+        const anchorRect = this.activeGenericTooltipAnchor.getBoundingClientRect();
         
         let leftPos, topPos;
 
-        if (this.activeGenericTooltipPosition === 'top') {
+        if (this.activeGenericTooltipPosition === 'center') {
+            // Replicate the exact technology used by the working Price Graph
+            const card = this.activeGenericTooltipAnchor.closest('.ship-card, .carousel-page, #ship-detail-content');
+            const rect = card ? card.getBoundingClientRect() : anchorRect;
+            
+            // Standard centering math using the bounding rect directly
             leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-            topPos = rect.top - tooltipHeight - 10;
-            if (topPos < 10) topPos = rect.bottom + 10;
-        } else if (this.activeGenericTooltipPosition === 'center') {
-            const card = this.activeGenericTooltipAnchor.closest('.carousel-page, .item-card-container, .ship-card');
-            const referenceRect = card ? card.getBoundingClientRect() : rect;
-            
-            leftPos = referenceRect.left + (referenceRect.width / 2) - (tooltipWidth / 2);
-            topPos = rect.bottom + 10;
-            
-            if (topPos + tooltipHeight > window.innerHeight - 10) {
-                topPos = rect.top - tooltipHeight - 10; 
-            }
-        } else {
-            leftPos = rect.right + 10;
             topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-            if (topPos < 10) topPos = rect.bottom + 10;
+            
+        } else if (this.activeGenericTooltipPosition === 'top') {
+            leftPos = anchorRect.left + (anchorRect.width / 2) - (tooltipWidth / 2);
+            topPos = anchorRect.top - tooltipHeight - 10;
+            if (topPos < 10) topPos = anchorRect.bottom + 10;
+        } else {
+            leftPos = anchorRect.right + 10;
+            topPos = anchorRect.top + (anchorRect.height / 2) - (tooltipHeight / 2);
+            if (topPos < 10) topPos = anchorRect.bottom + 10;
         }
 
+        // Standard Screen Clamping Fallbacks
         if (leftPos < 10) leftPos = 10;
         if (leftPos + tooltipWidth > window.innerWidth - 10) {
             leftPos = window.innerWidth - tooltipWidth - 10;
+        }
+        if (topPos < 10) topPos = 10;
+        if (topPos + tooltipHeight > window.innerHeight - 10) {
+            topPos = window.innerHeight - tooltipHeight - 10;
         }
 
         tooltip.style.left = `${leftPos}px`;
@@ -1116,6 +1133,9 @@ export class UIManager {
 
     async orchestrateUpgradeSequence(shipId) {
         try {
+            document.body.classList.add('ui-cinematic-lock');
+            this.render(this.lastKnownState);
+
             await this.modalEngine.showUpgradeProgressModal();
 
             let overlay = document.createElement('div');
@@ -1137,6 +1157,8 @@ export class UIManager {
             this.logger.error('UIManager', `Upgrade sequence failed: ${e}`);
         } finally {
             document.body.classList.remove('ui-locked');
+            document.body.classList.remove('ui-cinematic-lock');
+            this.render(this.lastKnownState);
         }
     }
     
