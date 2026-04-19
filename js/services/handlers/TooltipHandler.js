@@ -60,7 +60,8 @@ export class TooltipHandler {
                         const definition = GameAttributes.getDefinition(attrId);
                         if (definition) {
                             const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
-                            this.uiManager.showGenericTooltip(actionTarget, content, 'center');
+                            const coords = this._getArtFrameCenter(actionTarget, e);
+                            this.uiManager.showGenericTooltip(actionTarget, content, 'center', coords);
                             this.activeTooltipTarget = actionTarget;
                         }
                     }
@@ -76,7 +77,8 @@ export class TooltipHandler {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
                     } else {
-                        this.uiManager.showGenericTooltip(actionTarget, actionTarget.dataset.tooltip, 'center');
+                        const coords = this._getArtFrameCenter(actionTarget, e);
+                        this.uiManager.showGenericTooltip(actionTarget, actionTarget.dataset.tooltip, 'center', coords);
                         this.activeTooltipTarget = actionTarget;
                     }
                     return;
@@ -135,6 +137,72 @@ export class TooltipHandler {
         }
     }
 
+    /**
+     * Traverses the DOM to find the primary ship art image and synthesizes its exact absolute center.
+     * Bypasses the parent container relative coordinates to guarantee centered tooltips over the 1:1 frame.
+     * @private
+     */
+    _getArtFrameCenter(anchorTarget, e) {
+        let shipImage = null;
+
+        // 1. Check if the anchor itself is in a container with the image (carousel page, or intro modal)
+        const localContainer = anchorTarget.closest('.carousel-page, #ship-detail-content');
+        if (localContainer) {
+            shipImage = localContainer.querySelector('img');
+        }
+
+        // 2. If no image found locally (e.g., standard ship detail modal), hunt for the background carousel page
+        if (!shipImage && anchorTarget.closest('#ship-detail-modal')) {
+            const targetBtn = document.querySelector('#ship-detail-content [data-ship-id]');
+            if (targetBtn && targetBtn.dataset.shipId) {
+                const carouselPage = document.querySelector(`.carousel-page[data-ship-id="${targetBtn.dataset.shipId}"]`);
+                if (carouselPage) {
+                    shipImage = carouselPage.querySelector('img');
+                }
+            }
+        }
+
+        if (shipImage) {
+            // The image is static relative to the viewport during the interaction,
+            // making its bounding rect perfectly stable.
+            const rect = shipImage.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                return { 
+                    x: rect.left + (rect.width / 2), 
+                    y: rect.top + (rect.height / 2),
+                    isArtFrame: true // Flag for UIManager absolute centering math
+                };
+            }
+        }
+        
+        // 3. Fallback to explicit pointer coordinates if the art frame cannot be isolated
+        const coords = this._getEventCoordinates(e, anchorTarget);
+        if (coords) coords.isArtFrame = false;
+        return coords;
+    }
+
+    /**
+     * Extracts precise pointer coordinates across Touch, Pointer, and Mouse events.
+     * Falls back to the physical center of the target element if all pointers are stripped.
+     * @private
+     */
+    _getEventCoordinates(e, anchorTarget) {
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+        }
+        if (e.touches && e.touches.length > 0) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+        if (e.clientX !== undefined) {
+            return { x: e.clientX, y: e.clientY };
+        }
+        if (anchorTarget) {
+            const rect = anchorTarget.getBoundingClientRect();
+            return { x: rect.left + (rect.width / 2), y: rect.top + (rect.height / 2) };
+        }
+        return null;
+    }
+
     _toggleStatusTooltip(target) {
         const tooltip = target.querySelector('.status-tooltip');
         if (!tooltip) return;
@@ -159,7 +227,16 @@ export class TooltipHandler {
                 this.uiManager.hideGenericTooltip();
                 this.activeTooltipTarget = null;
             } else {
-                this.uiManager.showGenericTooltip(tooltipTarget, tooltipTarget.dataset.tooltip);
+                let position = 'right';
+                let coords = this._getEventCoordinates(e, tooltipTarget);
+                
+                // Route all standard ( i ) tooltips inside the ship card/modal to the art frame centering logic
+                if (tooltipTarget.closest('.carousel-page, #ship-detail-modal')) {
+                    position = 'center';
+                    coords = this._getArtFrameCenter(tooltipTarget, e);
+                }
+
+                this.uiManager.showGenericTooltip(tooltipTarget, tooltipTarget.dataset.tooltip, position, coords);
                 this.activeTooltipTarget = tooltipTarget;
             }
         }
