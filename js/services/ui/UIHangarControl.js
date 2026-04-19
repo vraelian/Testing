@@ -264,14 +264,13 @@ export class UIHangarControl {
                 const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
                 if (!def) return '';
                 const cssClass = def.gradientClasses || 'bg-gray-500 border-gray-400 text-white';
-                return `<span class="status-effect-pill ${cssClass} cursor-help" data-tooltip="Expires in ${daysLeft} days">${def.name}</span>`;
+                return `<span class="status-effect-pill ${cssClass} cursor-help" data-action="show-lore-tooltip" data-tooltip="${def.name}: Expires in ${daysLeft} days">${def.name}</span>`;
             }).join('');
 
             const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
                 const def = GameAttributes.getDefinition(id);
                 
                 const label = def ? def.name : id; 
-                const tooltipText = def ? def.description : '';
                 const baseColor = def ? (def.pillColor || def.color || '#94a3b8') : '#94a3b8'; 
                 
                 const tier = GameAttributes.extractTier(id);
@@ -291,7 +290,7 @@ export class UIHangarControl {
                 }
 
                 return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
-                              title="${tooltipText}"
+                              data-action="show-attribute-tooltip" data-attribute-id="${id}"
                               style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5);">
                             ${label}
                         </span>`;
@@ -591,14 +590,22 @@ export class UIHangarControl {
         const terminalCard = targetPage.querySelector('#ship-terminal');
         const pillContainer = targetPage.querySelector(`#upgrade-pill-container-${shipId}`);
         if (!terminalCard) return;
+
+        const helpBtn = document.getElementById('global-help-anchor');
+        if (helpBtn) helpBtn.style.display = 'none';
+
         terminalCard.classList.add('card-scanline-active');
         await new Promise(resolve => setTimeout(resolve, 1000));
         terminalCard.classList.remove('card-scanline-active');
-        if (pillContainer) {
+
+        if (pillContainer && pillContainer.children.length > 0) {
             Array.from(pillContainer.children).forEach(pill => {
                 pill.classList.add('pill-instantiate');
                 setTimeout(() => { pill.classList.remove('pill-instantiate'); }, 500); 
             });
+            await new Promise(resolve => setTimeout(resolve, 500));
         }
+
+        if (helpBtn) helpBtn.style.display = '';
     }
 }

@@ -59,7 +59,7 @@ export class TooltipHandler {
                         const definition = GameAttributes.getDefinition(attrId);
                         if (definition) {
                             const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
-                            this.uiManager.showGenericTooltip(actionTarget, content, 'top');
+                            this.uiManager.showGenericTooltip(actionTarget, content, 'center');
                             this.activeTooltipTarget = actionTarget;
                         }
                     }
