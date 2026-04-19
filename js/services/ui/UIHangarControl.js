@@ -591,9 +591,6 @@ export class UIHangarControl {
         const pillContainer = targetPage.querySelector(`#upgrade-pill-container-${shipId}`);
         if (!terminalCard) return;
 
-        const helpBtn = document.getElementById('global-help-anchor');
-        if (helpBtn) helpBtn.style.display = 'none';
-
         terminalCard.classList.add('card-scanline-active');
         await new Promise(resolve => setTimeout(resolve, 1000));
         terminalCard.classList.remove('card-scanline-active');
@@ -605,7 +602,5 @@ export class UIHangarControl {
             });
             await new Promise(resolve => setTimeout(resolve, 500));
         }
-
-        if (helpBtn) helpBtn.style.display = '';
     }
 }

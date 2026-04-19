@@ -50,7 +50,8 @@ export class TooltipHandler {
                     e.preventDefault();
 
                     // Stateful Toggle Logic
-                    const isGenericVisible = document.getElementById('generic-tooltip')?.classList.contains('visible');
+                    const tooltipEl = document.getElementById('generic-tooltip');
+                    const isGenericVisible = tooltipEl && tooltipEl.style.display === 'block';
                     if (this.activeTooltipTarget === actionTarget && isGenericVisible) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
@@ -68,7 +69,9 @@ export class TooltipHandler {
                 case 'show-lore-tooltip':
                     e.stopPropagation();
                     e.preventDefault();
-                    const isVisibleLore = document.getElementById('generic-tooltip')?.classList.contains('visible');
+                    
+                    const loreTooltipEl = document.getElementById('generic-tooltip');
+                    const isVisibleLore = loreTooltipEl && loreTooltipEl.style.display === 'block';
                     if (this.activeTooltipTarget === actionTarget && isVisibleLore) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
@@ -150,7 +153,7 @@ export class TooltipHandler {
 
     _handleMobileTooltip(e) {
         const tooltipTarget = e.target.closest('[data-tooltip]');
-        if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"]')) {
+        if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"], [data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]')) {
             this.uiManager.hideGraph();
             if (this.activeTooltipTarget === tooltipTarget) {
                 this.uiManager.hideGenericTooltip();
