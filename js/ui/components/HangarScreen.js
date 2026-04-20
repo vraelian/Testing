@@ -88,7 +88,14 @@ export function renderHangarScreen(gameState, simulationService) {
 
                 <div class="carousel-container flex-grow overflow-hidden relative z-0">
                     <div id="hangar-carousel" class="flex h-full w-full" style="transform: translateX(-${displayIndex * 100}%)">
-                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                        ${shipList.map((shipId, index) => {
+                            const distance = Math.abs(index - displayIndex);
+                            if (distance > 1) {
+                                const shipStatic = DB.SHIPS[shipId];
+                                return `<div class="carousel-page virtualized-placeholder" data-ship-id="${shipId}" data-index="${index}" data-ship-class="${shipStatic.class}"></div>`;
+                            }
+                            return _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService);
+                        }).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
@@ -114,6 +121,15 @@ function _renderEmptyCarouselPage(isHangarMode) {
 }
 
 function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService) {
+    const shipStatic = DB.SHIPS[shipId];
+    return `
+        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}" data-ship-class="${shipStatic.class}">
+            ${renderShipCarouselPageContent(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService)}
+        </div>
+    `;
+}
+
+export function renderShipCarouselPageContent(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; 
@@ -229,8 +245,12 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     const fallbackPath = AssetService.getFallbackImage(shipId);
     const src = inBuffer ? realPath : AssetService.PLACEHOLDER;
     const isVariantA = realPath.endsWith('_A.jpeg');
-    const imgStyle = isActive ? 'opacity: 1;' : 'opacity: 0; transition: opacity 0.3s ease-in;';
-    const placeholderStyle = isActive ? 'display: none;' : '';
+    
+    // VIRTUAL WORKBENCH: Clean, unified fade logic.
+    // The image starts at opacity 0. When loaded, it transitions to 1 exactly once.
+    // Thanks to the Hydration Lock, swiping no longer resets this.
+    const imgStyle = 'opacity: 0; transition: opacity 0.2s ease-in;';
+    const placeholderStyle = '';
 
     const shipImageHtml = `
         <div class="relative w-full h-full">
@@ -288,13 +308,11 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     `;
 
     return `
-        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}" data-ship-class="${shipStatic.class}">
-            <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
-                ${activeGlowLayer}
-                <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
-                    <div class="ship-card-content-wrapper h-full p-2">
-                        ${isHangarMode ? hangarLayout : shipyardLayout}
-                    </div>
+        <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+            ${activeGlowLayer}
+            <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
+                <div class="ship-card-content-wrapper h-full p-2">
+                    ${isHangarMode ? hangarLayout : shipyardLayout}
                 </div>
             </div>
         </div>

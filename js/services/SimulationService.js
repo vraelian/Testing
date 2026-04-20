@@ -6,7 +6,6 @@
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS, APP_VERSION } from '../data/constants.js';
-import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 import { saveStorageService } from './SaveStorageService.js';
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
@@ -200,72 +199,31 @@ export class SimulationService {
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
     
-    async buyShip(shipId, event) {
+    async buyShip(shipId) {
         const validation = this.playerActionService.validateBuyShip(shipId);
         if (!validation.success) {
-            this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
             return null;
         }
-
-        const purchaseButton = event.target.closest('.action-button');
-        if (purchaseButton) {
-            await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
-        }
-        await new Promise(resolve => requestAnimationFrame(resolve));
-
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId);
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
-
-        return this.playerActionService.executeBuyShip(shipId, event);
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_BUY_LOGIC', `Executing pure buy logic for ${shipId}.`);
+        return this.playerActionService.executeBuyShip(shipId);
     }
 
-    async sellShip(shipId, event) {
+    async sellShip(shipId) {
         const validation = this.playerActionService.validateSellShip(shipId);
         if (!validation.success) {
-            this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
             return false;
         }
-
-        const sellButton = event.target.closest('.action-button');
-        if (sellButton) {
-            await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
-        }
-        await new Promise(resolve => requestAnimationFrame(resolve));
-
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId);
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
-
-        return this.playerActionService.executeSellShip(shipId, event);
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_SELL_LOGIC', `Executing pure sell logic for ${shipId}.`);
+        return this.playerActionService.executeSellShip(shipId);
     }
 
-    async boardShip(shipId, event) {
+    async boardShip(shipId) {
         const validation = this.playerActionService.validateSetActiveShip(shipId);
         if (!validation.success) {
-            if (validation.errorTitle !== "Action Redundant") {
-                 this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
-            }
             return false;
         }
-
-        const boardButton = event.target.closest('.action-button');
-        if (boardButton) {
-            const sellButton = boardButton.closest('.grid').querySelector('[data-action="sell-ship"]');
-            if (sellButton) {
-                sellButton.disabled = true;
-            }
-            await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
-        }
-
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_BOARD_LOGIC', `Executing pure board logic for ${shipId}.`);
         this.playerActionService.executeSetActiveShip(shipId);
-           
-        await new Promise(resolve => requestAnimationFrame(resolve));
-        
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
-        
         return true;
     }
 

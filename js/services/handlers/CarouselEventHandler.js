@@ -41,21 +41,39 @@ export class CarouselEventHandler {
 
         let direction = e.deltaY > 0 ? 'next' : 'prev';
         
-        // Predictive Preload
         const currentState = this.gameState.getState();
         const currentMode = currentState.uiState.hangarShipyardToggleState;
-        const currentIdx = currentMode === 'hangar' 
+        const isHangarMode = currentMode === 'hangar';
+        
+        const shipListCount = isHangarMode 
+            ? currentState.player.ownedShipIds.length 
+            : (this.simulationService._getShipyardInventory ? this.simulationService._getShipyardInventory().length : 0);
+            
+        const currentIdx = isHangarMode 
             ? (currentState.uiState.hangarActiveIndex || 0) 
             : (currentState.uiState.shipyardActiveIndex || 0);
         
-        const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+        let targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+        targetIdx = Math.max(0, Math.min(targetIdx, shipListCount - 1));
         
+        // Predictive Preload
         // Defer heavy IndexedDB lookups until after the CSS animation completes
         setTimeout(() => {
             this._preloadForTarget(targetIdx, currentMode);
         }, 450);
 
-        this.simulationService.cycleHangarCarousel(direction);
+        // --- VIRTUAL WORKBENCH: PHASE 2 DECOUPLING ---
+        // Silently mutate the active index and explicitly call the localized UI update,
+        // preventing a global GameState.setState() render wipe.
+        if (isHangarMode) {
+            this.gameState.uiState.hangarActiveIndex = targetIdx;
+        } else {
+            this.gameState.uiState.shipyardActiveIndex = targetIdx;
+        }
+        
+        if (this.simulationService.uiManager && this.simulationService.uiManager.hangarControl) {
+            this.simulationService.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
+        }
 
         this.isScrolling = true;
         clearTimeout(this.scrollTimeout);
@@ -159,7 +177,18 @@ export class CarouselEventHandler {
             this._preloadForTarget(newIndex, mode);
         }, 450);
 
-        this.simulationService.setHangarCarouselIndex(newIndex, mode);
+        // --- VIRTUAL WORKBENCH: PHASE 2 DECOUPLING ---
+        // Silently mutate the active index and explicitly call the localized UI update,
+        // preventing a global GameState.setState() render wipe.
+        if (mode === 'hangar') {
+            this.gameState.uiState.hangarActiveIndex = newIndex;
+        } else {
+            this.gameState.uiState.shipyardActiveIndex = newIndex;
+        }
+        
+        if (this.simulationService.uiManager && this.simulationService.uiManager.hangarControl) {
+            this.simulationService.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
+        }
 
         setTimeout(() => {
             this.state.moved = false;

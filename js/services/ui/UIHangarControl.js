@@ -5,6 +5,7 @@ import { DB } from '../../data/database.js';
 import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS } from '../../data/constants.js'; 
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 import { playBlockingAnimation } from './AnimationService.js'; 
+import { renderShipCarouselPageContent } from '../../ui/components/HangarScreen.js';
 
 /**
  * Domain Controller responsible for Ship assets. 
@@ -16,14 +17,12 @@ export class UIHangarControl {
      */
     constructor(manager) {
         this.manager = manager;
-        this._deferredHangarUpdate = null;
     }
 
     /**
      * Updates the visual state of the Hangar/Shipyard carousel.
-     * Implements Phase 5 Immutable Animation Runway: strictly compartmentalizes DOM updates 
-     * by immediately executing transforms and external pagination, but hard-locking internal 
-     * card mutations (like img.src injections) behind a 400ms timeout.
+     * With DOM virtualization in place, updates and HTML hydration occur instantly 
+     * without thrashing the main thread.
      * @param {import('../GameState.js').GameState} gameState The current game state.
      */
     updateHangarScreen(gameState) {
@@ -59,37 +58,31 @@ export class UIHangarControl {
             });
         }
 
-        // --- THE IMMUTABLE ANIMATION RUNWAY ---
-        // Clear any previously pending internal mutations
-        if (this._deferredHangarUpdate) clearTimeout(this._deferredHangarUpdate);
+        // --- VIRTUAL WORKBENCH: DYNAMIC HYDRATION LOCK ---
+        // Dynamically hydrate and dehydrate the carousel pages based on their distance.
+        const pages = carousel.querySelectorAll('.carousel-page');
 
-        // Defer internal DOM mutations (img.src injections) into a hard 400ms lock.
-        // This guarantees the GPU has an untouched DOM layer during the CSS transition,
-        // entirely eliminating texture invalidation freezes.
-        this._deferredHangarUpdate = setTimeout(() => {
-            const SAFE_DISTANCE = 2;
-            const pages = carousel.querySelectorAll('.carousel-page');
-
-            pages.forEach((page, index) => {
-                const distance = Math.abs(activeIndex - index);
-                const img = page.querySelector('img');
-                const placeholder = page.querySelector('span'); 
-
-                if (!img) return;
-
-                if (distance <= SAFE_DISTANCE) {
+        pages.forEach((page, index) => {
+            const distance = Math.abs(index - activeIndex);
+            
+            if (distance <= 1) {
+                // HYDRATE: The card is within the active view window
+                // FIX: Only inject HTML if it is currently an empty placeholder!
+                // This prevents destroying the DOM of already-visible cards during a swipe,
+                // completely eliminating the image "blink" and forced reload sequence.
+                if (page.classList.contains('virtualized-placeholder')) {
                     const shipId = page.dataset.shipId;
-                    if (shipId) {
-                        const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
-                        if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
-                            img.src = newSrc;
-                            img.onload = () => { img.style.opacity = '1'; };
-                            if (placeholder) placeholder.style.display = 'none';
-                        }
-                    }
+                    page.classList.remove('virtualized-placeholder');
+                    page.innerHTML = renderShipCarouselPageContent(gameState, shipId, index, activeIndex, isHangarMode, this.manager.simulationService);
                 }
-            });
-        }, 400);
+            } else {
+                // DEHYDRATE: The card is off-screen. Strip it to save memory.
+                if (!page.classList.contains('virtualized-placeholder')) {
+                    page.classList.add('virtualized-placeholder');
+                    page.innerHTML = '';
+                }
+            }
+        });
     }
 
     /**
