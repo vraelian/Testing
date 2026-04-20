@@ -16,12 +16,14 @@ export class UIHangarControl {
      */
     constructor(manager) {
         this.manager = manager;
+        this._deferredHangarUpdate = null;
     }
 
     /**
-     * Updates the visual state of the Hangar/Shipyard carousel without triggering a full re-render.
-     * Handles additive lazy loading of ship images based on carousel proximity, with a micro-deferral
-     * on image source assignment to prevent main thread rendering collisions during swipe animations.
+     * Updates the visual state of the Hangar/Shipyard carousel.
+     * Implements Phase 5 Immutable Animation Runway: strictly compartmentalizes DOM updates 
+     * by immediately executing transforms and external pagination, but hard-locking internal 
+     * card mutations (like img.src injections) behind a 400ms timeout.
      * @param {import('../GameState.js').GameState} gameState The current game state.
      */
     updateHangarScreen(gameState) {
@@ -35,36 +37,10 @@ export class UIHangarControl {
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
+        // 1. Instantly apply the transform for the CSS animation
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
-
-        const SAFE_DISTANCE = 2;
-        const pages = carousel.querySelectorAll('.carousel-page');
-
-        pages.forEach((page, index) => {
-            const distance = Math.abs(activeIndex - index);
-            const img = page.querySelector('img');
-            const placeholder = page.querySelector('span'); 
-
-            if (!img) return;
-
-            // Additive lazy loading: only load images within the safe distance.
-            if (distance <= SAFE_DISTANCE) {
-                const shipId = page.dataset.shipId;
-                if (shipId) {
-                    const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
-                    if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
-                        // Micro-defer the image source injection to allow the browser's 
-                        // GPU-accelerated transform to start without main-thread collision.
-                        setTimeout(() => {
-                            img.src = newSrc;
-                            img.onload = () => { img.style.opacity = '1'; };
-                            if (placeholder) placeholder.style.display = 'none';
-                        }, 50);
-                    }
-                }
-            }
-        });
-
+        
+        // 2. Instantly update the pagination dots external to the carousel
         this._renderHangarPagination(gameState);
         
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
@@ -82,6 +58,38 @@ export class UIHangarControl {
                 behavior: 'smooth'
             });
         }
+
+        // --- THE IMMUTABLE ANIMATION RUNWAY ---
+        // Clear any previously pending internal mutations
+        if (this._deferredHangarUpdate) clearTimeout(this._deferredHangarUpdate);
+
+        // Defer internal DOM mutations (img.src injections) into a hard 400ms lock.
+        // This guarantees the GPU has an untouched DOM layer during the CSS transition,
+        // entirely eliminating texture invalidation freezes.
+        this._deferredHangarUpdate = setTimeout(() => {
+            const SAFE_DISTANCE = 2;
+            const pages = carousel.querySelectorAll('.carousel-page');
+
+            pages.forEach((page, index) => {
+                const distance = Math.abs(activeIndex - index);
+                const img = page.querySelector('img');
+                const placeholder = page.querySelector('span'); 
+
+                if (!img) return;
+
+                if (distance <= SAFE_DISTANCE) {
+                    const shipId = page.dataset.shipId;
+                    if (shipId) {
+                        const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
+                        if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
+                            img.src = newSrc;
+                            img.onload = () => { img.style.opacity = '1'; };
+                            if (placeholder) placeholder.style.display = 'none';
+                        }
+                    }
+                }
+            });
+        }, 400);
     }
 
     /**
