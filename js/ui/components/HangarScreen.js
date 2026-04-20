@@ -240,6 +240,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                  class="w-full h-full object-cover rounded-lg relative z-10" 
                  alt="${shipStatic.name}"
                  loading="${inBuffer ? 'eager' : 'lazy'}" 
+                 decoding="async"
                  data-fallback-src="${fallbackPath}"
                  data-is-a="${isVariantA}"
                  style="${imgStyle}"

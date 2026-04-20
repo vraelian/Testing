@@ -11086,6 +11086,7 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
                  class="w-full h-full object-cover rounded-lg relative z-10" 
                  alt="${shipStatic.name}"
                  loading="${inBuffer ? 'eager' : 'lazy'}" 
+                 decoding="async"
                  data-fallback-src="${fallbackPath}"
                  data-is-a="${isVariantA}"
                  style="${imgStyle}"
@@ -24306,11 +24307,24 @@ import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS } from '../../data/constants.js'
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 import { playBlockingAnimation } from './AnimationService.js'; 
 
+/**
+ * Domain Controller responsible for Ship assets. 
+ * Manages the Hangar/Shipyard carousel, pagination, and the Upgrade Installation flow.
+ */
 export class UIHangarControl {
+    /**
+     * @param {import('../UIManager.js').UIManager} manager The master UIManager facade.
+     */
     constructor(manager) {
         this.manager = manager;
     }
 
+    /**
+     * Updates the visual state of the Hangar/Shipyard carousel without triggering a full re-render.
+     * Handles additive lazy loading of ship images based on carousel proximity, with a micro-deferral
+     * on image source assignment to prevent main thread rendering collisions during swipe animations.
+     * @param {import('../GameState.js').GameState} gameState The current game state.
+     */
     updateHangarScreen(gameState) {
         const { uiState, player } = gameState;
         const hangarScreenEl = this.manager.cache.hangarScreen;
@@ -24334,27 +24348,26 @@ export class UIHangarControl {
 
             if (!img) return;
 
-            if (distance > SAFE_DISTANCE) {
-                if (img.hasAttribute('src')) {
-                    img.removeAttribute('src');
-                    img.style.opacity = '0';
-                    img.removeAttribute('data-tried-fallback'); 
-                    if (placeholder) placeholder.style.display = 'flex';
-                }
-            } else {
+            // Additive lazy loading: only load images within the safe distance.
+            if (distance <= SAFE_DISTANCE) {
                 const shipId = page.dataset.shipId;
                 if (shipId) {
                     const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
                     if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
-                        img.src = newSrc;
-                        img.onload = () => { img.style.opacity = '1'; };
-                        if (placeholder) placeholder.style.display = 'none';
+                        // Micro-defer the image source injection to allow the browser's 
+                        // GPU-accelerated transform to start without main-thread collision.
+                        setTimeout(() => {
+                            img.src = newSrc;
+                            img.onload = () => { img.style.opacity = '1'; };
+                            if (placeholder) placeholder.style.display = 'none';
+                        }, 50);
                     }
                 }
             }
         });
 
         this._renderHangarPagination(gameState);
+        
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
         const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
 
@@ -24372,6 +24385,11 @@ export class UIHangarControl {
         }
     }
 
+    /**
+     * Renders the micro-pagination dots beneath the hangar carousel.
+     * @param {import('../GameState.js').GameState} gameState The current game state.
+     * @private
+     */
     _renderHangarPagination(gameState) {
         const { uiState, player, currentLocationId } = gameState;
         const hangarScreenEl = this.manager.cache.hangarScreen;
@@ -24461,6 +24479,13 @@ export class UIHangarControl {
         paginationContainer.innerHTML = dotsHtml;
     }
 
+    /**
+     * Instantiates and displays the detailed modal for a specific ship.
+     * Context-aware routing between standard shipyard, intro sequence, and owned hangar views.
+     * @param {import('../GameState.js').GameState} gameState The current game state.
+     * @param {string} shipId The target ship identifier.
+     * @param {string} context The origin context string (e.g., 'shipyard', 'intro_shipyard').
+     */
     showShipDetailModal(gameState, shipId, context) {
         const { player, tutorials } = gameState;
         const shipStatic = DB.SHIPS[shipId];
@@ -24636,6 +24661,15 @@ export class UIHangarControl {
         modal.classList.add('modal-visible');
     }
 
+    /**
+     * Orchestrates the triple-confirmation flow required for installing or replacing ship upgrades.
+     * Evaluates active system state modifiers impacting installation costs.
+     * @param {string} upgradeId The target upgrade identifier.
+     * @param {object} options Configuration object including source, hardwareCost, and installationFee.
+     * @param {object} shipState The current dynamic state of the target ship.
+     * @param {function} onConfirm Callback executed upon confirmed installation.
+     * @param {function} onReject Callback executed upon cancellation or rejection.
+     */
     showUpgradeInstallationModal(upgradeId, options, shipState, onConfirm, onReject) {
         const upgradeDef = GameAttributes.getDefinition(upgradeId);
         if (!upgradeDef) return;
@@ -24850,12 +24884,23 @@ export class UIHangarControl {
         renderInitialModal();
     }
 
+    /**
+     * Executes the visual transition (dematerialize/board) for a ship transaction.
+     * @param {string} shipId The target ship identifier.
+     * @param {string} [animationClass='is-dematerializing'] The CSS animation class to apply.
+     * @returns {Promise<void>} Resolves when the animation completes.
+     */
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
         const elementToAnimate = this._getActiveShipTerminalElement();
         if (!elementToAnimate) return; 
         await playBlockingAnimation(elementToAnimate, animationClass);
     }
     
+    /**
+     * Locates the active ship terminal DOM element within the current carousel view.
+     * @returns {HTMLElement|null} The terminal element, or null if not found.
+     * @private
+     */
     _getActiveShipTerminalElement() {
         const state = this.manager.lastKnownState; 
         if (!state) return null;
@@ -24870,6 +24915,13 @@ export class UIHangarControl {
         return activePage ? activePage.querySelector('#ship-terminal') : null;
     }
 
+    /**
+     * Adjusts the brightness of a hex color for dynamic gradient generation.
+     * @param {string} color Hex color string (e.g., '#ffffff').
+     * @param {number} amount Adjustment amount (-255 to 255).
+     * @returns {string} The adjusted hex color string.
+     * @private
+     */
     _adjustColor(color, amount) {
         if (!color || !color.startsWith('#')) return '#94a3b8'; 
         const hex = color.replace('#', '');
@@ -24882,6 +24934,11 @@ export class UIHangarControl {
         return `#${rr}${gg}${bb}`;
     }
 
+    /**
+     * Plays the visual reveal sequence after a new upgrade is installed onto a ship.
+     * @param {string} shipId The target ship identifier.
+     * @returns {Promise<void>} Resolves when the animation sequence completes.
+     */
     async playUpgradeReveal(shipId) {
         const hangarScreenEl = this.manager.cache.hangarScreen;
         if (!hangarScreenEl) return;
@@ -24890,9 +24947,6 @@ export class UIHangarControl {
         const terminalCard = targetPage.querySelector('#ship-terminal');
         const pillContainer = targetPage.querySelector(`#upgrade-pill-container-${shipId}`);
         if (!terminalCard) return;
-
-        const helpBtn = document.getElementById('global-help-anchor');
-        if (helpBtn) helpBtn.style.display = 'none';
 
         terminalCard.classList.add('card-scanline-active');
         await new Promise(resolve => setTimeout(resolve, 1000));
@@ -24905,8 +24959,6 @@ export class UIHangarControl {
             });
             await new Promise(resolve => setTimeout(resolve, 500));
         }
-
-        if (helpBtn) helpBtn.style.display = '';
     }
 }
 --- END OF FILE: ./js/services/ui/UIHangarControl.js ---
@@ -37308,7 +37360,10 @@ export class SimulationService {
         } else {
             this.gameState.uiState.shipyardActiveIndex = index;
         }
-        this.gameState.setState({});
+        
+        if (this.uiManager && this.uiManager.hangarControl) {
+            this.uiManager.hangarControl.updateHangarScreen(this.gameState);
+        }
     }
 
     cycleHangarCarousel(direction) {
@@ -40270,6 +40325,7 @@ export class UIManager {
         this.activeGraphAnchor = null;
         this.activeGenericTooltipAnchor = null;
         this.activeGenericTooltipPosition = 'right';
+        this.activePointerCoords = null;
 
         this.navStructure = {
             [NAV_IDS.SHIP]: { label: 'Ship', screens: { [SCREEN_IDS.MAP]: 'Map', [SCREEN_IDS.NAVIGATION]: 'Navigation', [SCREEN_IDS.CARGO]: 'Cargo' } },
@@ -40390,7 +40446,7 @@ export class UIManager {
 
         const launchModal = this.cache.launchModal;
         const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
-        const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen;
+        const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || document.body.classList.contains('ui-cinematic-lock');
 
         if (gameState.introSequenceActive) {
             if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
@@ -41094,54 +41150,100 @@ export class UIManager {
         tooltip.style.top = `${topPos}px`;
     }
 
-    showGenericTooltip(anchorEl, content, preferredPosition = 'right') {
+    showGenericTooltip(anchorEl, content, preferredPosition = 'right', pointerCoords = null) {
         this.activeGenericTooltipAnchor = anchorEl;
         this.activeGenericTooltipPosition = preferredPosition;
+        this.activePointerCoords = pointerCoords;
         const tooltip = this.cache.genericTooltip;
         tooltip.innerHTML = content;
+        
+        // Reset legacy styles that might interfere with calculations
+        tooltip.style.transform = '';
+        tooltip.style.right = 'auto';
+        tooltip.style.bottom = 'auto';
         tooltip.style.display = 'block';
-        this.updateGenericTooltipPosition();
+        
+        // Force the browser to render the tooltip's text block on the next frame 
+        // before attempting to extract offsetWidth, completely bypassing WKWebView race conditions.
+        requestAnimationFrame(() => {
+            if (this.activeGenericTooltipAnchor === anchorEl) {
+                this.updateGenericTooltipPosition();
+            }
+        });
     }
 
     hideGenericTooltip() {
         if (this.activeGenericTooltipAnchor) {
             this.cache.genericTooltip.style.display = 'none';
             this.activeGenericTooltipAnchor = null;
+            this.activePointerCoords = null;
         }
     }
 
     updateGenericTooltipPosition() {
         if (!this.activeGenericTooltipAnchor) return;
         const tooltip = this.cache.genericTooltip;
-        const rect = this.activeGenericTooltipAnchor.getBoundingClientRect();
+        
         const tooltipWidth = tooltip.offsetWidth;
         const tooltipHeight = tooltip.offsetHeight;
-        
         let leftPos, topPos;
 
-        if (this.activeGenericTooltipPosition === 'top') {
-            leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
-            topPos = rect.top - tooltipHeight - 10;
-            if (topPos < 10) topPos = rect.bottom + 10;
-        } else if (this.activeGenericTooltipPosition === 'center') {
-            const card = this.activeGenericTooltipAnchor.closest('.carousel-page, .item-card-container, .ship-card');
-            const referenceRect = card ? card.getBoundingClientRect() : rect;
-            
-            leftPos = referenceRect.left + (referenceRect.width / 2) - (tooltipWidth / 2);
-            topPos = rect.bottom + 10;
-            
-            if (topPos + tooltipHeight > window.innerHeight - 10) {
-                topPos = rect.top - tooltipHeight - 10; 
+        if (this.activePointerCoords && 
+            typeof this.activePointerCoords.x === 'number' && !isNaN(this.activePointerCoords.x) &&
+            typeof this.activePointerCoords.y === 'number' && !isNaN(this.activePointerCoords.y)) {
+            // Viewport-absolute coordinate anchoring
+            const { x, y, isArtFrame } = this.activePointerCoords;
+
+            if (this.activeGenericTooltipPosition === 'center') {
+                leftPos = x - (tooltipWidth / 2);
+                
+                if (isArtFrame) {
+                    // Lock dead-center over the calculated art frame coordinates
+                    topPos = y - (tooltipHeight / 2);
+                } else {
+                    // Standard pointer: Shift up slightly so finger doesn't obscure text
+                    topPos = y - tooltipHeight - 15; 
+                    if (topPos < 10) {
+                        topPos = y + 25;
+                    }
+                }
+            } else if (this.activeGenericTooltipPosition === 'top') {
+                leftPos = x - (tooltipWidth / 2);
+                topPos = y - tooltipHeight - 15;
+            } else {
+                leftPos = x + 15;
+                topPos = y - (tooltipHeight / 2);
             }
         } else {
-            leftPos = rect.right + 10;
-            topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
-            if (topPos < 10) topPos = rect.bottom + 10;
+            // Fallback: If no coords (e.g. forced trigger not originating from pointer event) or invalid coords
+            const anchorRect = this.activeGenericTooltipAnchor.getBoundingClientRect();
+
+            if (this.activeGenericTooltipPosition === 'center') {
+                const card = this.activeGenericTooltipAnchor.closest('.ship-card, .carousel-page, #ship-detail-content');
+                const rect = card ? card.getBoundingClientRect() : anchorRect;
+                
+                leftPos = rect.left + (rect.width / 2) - (tooltipWidth / 2);
+                topPos = rect.top + (rect.height / 2) - (tooltipHeight / 2);
+                
+            } else if (this.activeGenericTooltipPosition === 'top') {
+                leftPos = anchorRect.left + (anchorRect.width / 2) - (tooltipWidth / 2);
+                topPos = anchorRect.top - tooltipHeight - 10;
+                if (topPos < 10) topPos = anchorRect.bottom + 10;
+            } else {
+                leftPos = anchorRect.right + 10;
+                topPos = anchorRect.top + (anchorRect.height / 2) - (tooltipHeight / 2);
+                if (topPos < 10) topPos = anchorRect.bottom + 10;
+            }
         }
 
+        // Standard Screen Clamping Fallbacks
         if (leftPos < 10) leftPos = 10;
         if (leftPos + tooltipWidth > window.innerWidth - 10) {
             leftPos = window.innerWidth - tooltipWidth - 10;
+        }
+        if (topPos < 10) topPos = 10;
+        if (topPos + tooltipHeight > window.innerHeight - 10) {
+            topPos = window.innerHeight - tooltipHeight - 10;
         }
 
         tooltip.style.left = `${leftPos}px`;
@@ -41317,6 +41419,9 @@ export class UIManager {
 
     async orchestrateUpgradeSequence(shipId) {
         try {
+            document.body.classList.add('ui-cinematic-lock');
+            this.render(this.lastKnownState);
+
             await this.modalEngine.showUpgradeProgressModal();
 
             let overlay = document.createElement('div');
@@ -41338,6 +41443,8 @@ export class UIManager {
             this.logger.error('UIManager', `Upgrade sequence failed: ${e}`);
         } finally {
             document.body.classList.remove('ui-locked');
+            document.body.classList.remove('ui-cinematic-lock');
+            this.render(this.lastKnownState);
         }
     }
     
@@ -45398,7 +45505,8 @@ export class TooltipHandler {
                     e.preventDefault();
 
                     // Stateful Toggle Logic
-                    const isGenericVisible = document.getElementById('generic-tooltip')?.classList.contains('visible');
+                    const tooltipEl = document.getElementById('generic-tooltip');
+                    const isGenericVisible = tooltipEl && tooltipEl.style.display === 'block';
                     if (this.activeTooltipTarget === actionTarget && isGenericVisible) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
@@ -45407,7 +45515,8 @@ export class TooltipHandler {
                         const definition = GameAttributes.getDefinition(attrId);
                         if (definition) {
                             const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
-                            this.uiManager.showGenericTooltip(actionTarget, content, 'center');
+                            const coords = this._getArtFrameCenter(actionTarget, e);
+                            this.uiManager.showGenericTooltip(actionTarget, content, 'center', coords);
                             this.activeTooltipTarget = actionTarget;
                         }
                     }
@@ -45416,12 +45525,15 @@ export class TooltipHandler {
                 case 'show-lore-tooltip':
                     e.stopPropagation();
                     e.preventDefault();
-                    const isVisibleLore = document.getElementById('generic-tooltip')?.classList.contains('visible');
+                    
+                    const loreTooltipEl = document.getElementById('generic-tooltip');
+                    const isVisibleLore = loreTooltipEl && loreTooltipEl.style.display === 'block';
                     if (this.activeTooltipTarget === actionTarget && isVisibleLore) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
                     } else {
-                        this.uiManager.showGenericTooltip(actionTarget, actionTarget.dataset.tooltip, 'center');
+                        const coords = this._getArtFrameCenter(actionTarget, e);
+                        this.uiManager.showGenericTooltip(actionTarget, actionTarget.dataset.tooltip, 'center', coords);
                         this.activeTooltipTarget = actionTarget;
                     }
                     return;
@@ -45480,6 +45592,72 @@ export class TooltipHandler {
         }
     }
 
+    /**
+     * Traverses the DOM to find the primary ship art image and synthesizes its exact absolute center.
+     * Bypasses the parent container relative coordinates to guarantee centered tooltips over the 1:1 frame.
+     * @private
+     */
+    _getArtFrameCenter(anchorTarget, e) {
+        let shipImage = null;
+
+        // 1. Check if the anchor itself is in a container with the image (carousel page, or intro modal)
+        const localContainer = anchorTarget.closest('.carousel-page, #ship-detail-content');
+        if (localContainer) {
+            shipImage = localContainer.querySelector('img');
+        }
+
+        // 2. If no image found locally (e.g., standard ship detail modal), hunt for the background carousel page
+        if (!shipImage && anchorTarget.closest('#ship-detail-modal')) {
+            const targetBtn = document.querySelector('#ship-detail-content [data-ship-id]');
+            if (targetBtn && targetBtn.dataset.shipId) {
+                const carouselPage = document.querySelector(`.carousel-page[data-ship-id="${targetBtn.dataset.shipId}"]`);
+                if (carouselPage) {
+                    shipImage = carouselPage.querySelector('img');
+                }
+            }
+        }
+
+        if (shipImage) {
+            // The image is static relative to the viewport during the interaction,
+            // making its bounding rect perfectly stable.
+            const rect = shipImage.getBoundingClientRect();
+            if (rect.width > 0 && rect.height > 0) {
+                return { 
+                    x: rect.left + (rect.width / 2), 
+                    y: rect.top + (rect.height / 2),
+                    isArtFrame: true // Flag for UIManager absolute centering math
+                };
+            }
+        }
+        
+        // 3. Fallback to explicit pointer coordinates if the art frame cannot be isolated
+        const coords = this._getEventCoordinates(e, anchorTarget);
+        if (coords) coords.isArtFrame = false;
+        return coords;
+    }
+
+    /**
+     * Extracts precise pointer coordinates across Touch, Pointer, and Mouse events.
+     * Falls back to the physical center of the target element if all pointers are stripped.
+     * @private
+     */
+    _getEventCoordinates(e, anchorTarget) {
+        if (e.changedTouches && e.changedTouches.length > 0) {
+            return { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY };
+        }
+        if (e.touches && e.touches.length > 0) {
+            return { x: e.touches[0].clientX, y: e.touches[0].clientY };
+        }
+        if (e.clientX !== undefined) {
+            return { x: e.clientX, y: e.clientY };
+        }
+        if (anchorTarget) {
+            const rect = anchorTarget.getBoundingClientRect();
+            return { x: rect.left + (rect.width / 2), y: rect.top + (rect.height / 2) };
+        }
+        return null;
+    }
+
     _toggleStatusTooltip(target) {
         const tooltip = target.querySelector('.status-tooltip');
         if (!tooltip) return;
@@ -45498,13 +45676,22 @@ export class TooltipHandler {
 
     _handleMobileTooltip(e) {
         const tooltipTarget = e.target.closest('[data-tooltip]');
-        if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"]')) {
+        if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"], [data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]')) {
             this.uiManager.hideGraph();
             if (this.activeTooltipTarget === tooltipTarget) {
                 this.uiManager.hideGenericTooltip();
                 this.activeTooltipTarget = null;
             } else {
-                this.uiManager.showGenericTooltip(tooltipTarget, tooltipTarget.dataset.tooltip);
+                let position = 'right';
+                let coords = this._getEventCoordinates(e, tooltipTarget);
+                
+                // Route all standard ( i ) tooltips inside the ship card/modal to the art frame centering logic
+                if (tooltipTarget.closest('.carousel-page, #ship-detail-modal')) {
+                    position = 'center';
+                    coords = this._getArtFrameCenter(tooltipTarget, e);
+                }
+
+                this.uiManager.showGenericTooltip(tooltipTarget, tooltipTarget.dataset.tooltip, position, coords);
                 this.activeTooltipTarget = tooltipTarget;
             }
         }
@@ -45585,7 +45772,11 @@ export class CarouselEventHandler {
             : (currentState.uiState.shipyardActiveIndex || 0);
         
         const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
-        this._preloadForTarget(targetIdx, currentMode);
+        
+        // Defer heavy IndexedDB lookups until after the CSS animation completes
+        setTimeout(() => {
+            this._preloadForTarget(targetIdx, currentMode);
+        }, 450);
 
         this.simulationService.cycleHangarCarousel(direction);
 
@@ -45686,8 +45877,10 @@ export class CarouselEventHandler {
 
         const mode = this.gameState.uiState.hangarShipyardToggleState;
         
-        // Predictive Preload
-        this._preloadForTarget(newIndex, mode);
+        // Predictive Preload: Defer heavy IndexedDB lookups until after the CSS animation completes
+        setTimeout(() => {
+            this._preloadForTarget(newIndex, mode);
+        }, 450);
 
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 
@@ -46698,6 +46891,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.80] - 2026-4-19
+-  ship card tooltip polish
+-  ship upgrade animation polish
 
 # [37.78] - 2026-4-14
 -  fixed event bugs
@@ -49946,23 +50143,26 @@ All progression math is reverse-engineered from Mihaly Csikszentmihalyi’s conc
 
 --- START OF FILE: ./meta/ROADMAP.md ---
 # ROADMAP
-
 All notable plans and desirables for the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
 ## Immediate
-Office Acquisition Pipeline
-A. Animation
-B. Sequence
-C. Acquisition
+
+Act XX black screen intermissions
+
+News Ticker anomalies
+- story related
+- event related
+
 
 Officers
 A. Perks - economic stimulus: increase available commodities at given location
-B Balance officer perks
+B. Balance officer perks
 
 —————————————————
 
 ## Ongoing, WIP Efforts
--  How to increase scaling  risk and difficulty mid-game through to end game?
+-  How to increase scaling risk and difficulty mid-game through to end game?
 -  Build Mission Maker V3
 -  More UI CSS keyframes animations
 
@@ -49977,7 +50177,6 @@ B Balance officer perks
 - Design cononical missions
 - * Mango Plasteel Statue mission
 - Missions/contacts reference in-game ships, etc.
-- System states influencing market performance
 - Add more events: reward type, story type, voucher type
 
 DEFERRED

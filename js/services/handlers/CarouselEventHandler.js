@@ -49,7 +49,11 @@ export class CarouselEventHandler {
             : (currentState.uiState.shipyardActiveIndex || 0);
         
         const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
-        this._preloadForTarget(targetIdx, currentMode);
+        
+        // Defer heavy IndexedDB lookups until after the CSS animation completes
+        setTimeout(() => {
+            this._preloadForTarget(targetIdx, currentMode);
+        }, 450);
 
         this.simulationService.cycleHangarCarousel(direction);
 
@@ -150,8 +154,10 @@ export class CarouselEventHandler {
 
         const mode = this.gameState.uiState.hangarShipyardToggleState;
         
-        // Predictive Preload
-        this._preloadForTarget(newIndex, mode);
+        // Predictive Preload: Defer heavy IndexedDB lookups until after the CSS animation completes
+        setTimeout(() => {
+            this._preloadForTarget(newIndex, mode);
+        }, 450);
 
         this.simulationService.setHangarCarouselIndex(newIndex, mode);
 

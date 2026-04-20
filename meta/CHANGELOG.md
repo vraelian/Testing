@@ -3,6 +3,10 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [37.80] - 2026-4-19
+-  ship card tooltip polish
+-  ship upgrade animation polish
+
 # [37.78] - 2026-4-14
 -  fixed event bugs
 -  fixed ship upgrade/status effect bugs

@@ -6,11 +6,24 @@ import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS } from '../../data/constants.js'
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 import { playBlockingAnimation } from './AnimationService.js'; 
 
+/**
+ * Domain Controller responsible for Ship assets. 
+ * Manages the Hangar/Shipyard carousel, pagination, and the Upgrade Installation flow.
+ */
 export class UIHangarControl {
+    /**
+     * @param {import('../UIManager.js').UIManager} manager The master UIManager facade.
+     */
     constructor(manager) {
         this.manager = manager;
     }
 
+    /**
+     * Updates the visual state of the Hangar/Shipyard carousel without triggering a full re-render.
+     * Handles additive lazy loading of ship images based on carousel proximity, with a micro-deferral
+     * on image source assignment to prevent main thread rendering collisions during swipe animations.
+     * @param {import('../GameState.js').GameState} gameState The current game state.
+     */
     updateHangarScreen(gameState) {
         const { uiState, player } = gameState;
         const hangarScreenEl = this.manager.cache.hangarScreen;
@@ -34,27 +47,26 @@ export class UIHangarControl {
 
             if (!img) return;
 
-            if (distance > SAFE_DISTANCE) {
-                if (img.hasAttribute('src')) {
-                    img.removeAttribute('src');
-                    img.style.opacity = '0';
-                    img.removeAttribute('data-tried-fallback'); 
-                    if (placeholder) placeholder.style.display = 'flex';
-                }
-            } else {
+            // Additive lazy loading: only load images within the safe distance.
+            if (distance <= SAFE_DISTANCE) {
                 const shipId = page.dataset.shipId;
                 if (shipId) {
                     const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
                     if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
-                        img.src = newSrc;
-                        img.onload = () => { img.style.opacity = '1'; };
-                        if (placeholder) placeholder.style.display = 'none';
+                        // Micro-defer the image source injection to allow the browser's 
+                        // GPU-accelerated transform to start without main-thread collision.
+                        setTimeout(() => {
+                            img.src = newSrc;
+                            img.onload = () => { img.style.opacity = '1'; };
+                            if (placeholder) placeholder.style.display = 'none';
+                        }, 50);
                     }
                 }
             }
         });
 
         this._renderHangarPagination(gameState);
+        
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
         const activeDot = hangarScreenEl.querySelector('.pagination-dot.active');
 
@@ -72,6 +84,11 @@ export class UIHangarControl {
         }
     }
 
+    /**
+     * Renders the micro-pagination dots beneath the hangar carousel.
+     * @param {import('../GameState.js').GameState} gameState The current game state.
+     * @private
+     */
     _renderHangarPagination(gameState) {
         const { uiState, player, currentLocationId } = gameState;
         const hangarScreenEl = this.manager.cache.hangarScreen;
@@ -161,6 +178,13 @@ export class UIHangarControl {
         paginationContainer.innerHTML = dotsHtml;
     }
 
+    /**
+     * Instantiates and displays the detailed modal for a specific ship.
+     * Context-aware routing between standard shipyard, intro sequence, and owned hangar views.
+     * @param {import('../GameState.js').GameState} gameState The current game state.
+     * @param {string} shipId The target ship identifier.
+     * @param {string} context The origin context string (e.g., 'shipyard', 'intro_shipyard').
+     */
     showShipDetailModal(gameState, shipId, context) {
         const { player, tutorials } = gameState;
         const shipStatic = DB.SHIPS[shipId];
@@ -336,6 +360,15 @@ export class UIHangarControl {
         modal.classList.add('modal-visible');
     }
 
+    /**
+     * Orchestrates the triple-confirmation flow required for installing or replacing ship upgrades.
+     * Evaluates active system state modifiers impacting installation costs.
+     * @param {string} upgradeId The target upgrade identifier.
+     * @param {object} options Configuration object including source, hardwareCost, and installationFee.
+     * @param {object} shipState The current dynamic state of the target ship.
+     * @param {function} onConfirm Callback executed upon confirmed installation.
+     * @param {function} onReject Callback executed upon cancellation or rejection.
+     */
     showUpgradeInstallationModal(upgradeId, options, shipState, onConfirm, onReject) {
         const upgradeDef = GameAttributes.getDefinition(upgradeId);
         if (!upgradeDef) return;
@@ -550,12 +583,23 @@ export class UIHangarControl {
         renderInitialModal();
     }
 
+    /**
+     * Executes the visual transition (dematerialize/board) for a ship transaction.
+     * @param {string} shipId The target ship identifier.
+     * @param {string} [animationClass='is-dematerializing'] The CSS animation class to apply.
+     * @returns {Promise<void>} Resolves when the animation completes.
+     */
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
         const elementToAnimate = this._getActiveShipTerminalElement();
         if (!elementToAnimate) return; 
         await playBlockingAnimation(elementToAnimate, animationClass);
     }
     
+    /**
+     * Locates the active ship terminal DOM element within the current carousel view.
+     * @returns {HTMLElement|null} The terminal element, or null if not found.
+     * @private
+     */
     _getActiveShipTerminalElement() {
         const state = this.manager.lastKnownState; 
         if (!state) return null;
@@ -570,6 +614,13 @@ export class UIHangarControl {
         return activePage ? activePage.querySelector('#ship-terminal') : null;
     }
 
+    /**
+     * Adjusts the brightness of a hex color for dynamic gradient generation.
+     * @param {string} color Hex color string (e.g., '#ffffff').
+     * @param {number} amount Adjustment amount (-255 to 255).
+     * @returns {string} The adjusted hex color string.
+     * @private
+     */
     _adjustColor(color, amount) {
         if (!color || !color.startsWith('#')) return '#94a3b8'; 
         const hex = color.replace('#', '');
@@ -582,6 +633,11 @@ export class UIHangarControl {
         return `#${rr}${gg}${bb}`;
     }
 
+    /**
+     * Plays the visual reveal sequence after a new upgrade is installed onto a ship.
+     * @param {string} shipId The target ship identifier.
+     * @returns {Promise<void>} Resolves when the animation sequence completes.
+     */
     async playUpgradeReveal(shipId) {
         const hangarScreenEl = this.manager.cache.hangarScreen;
         if (!hangarScreenEl) return;

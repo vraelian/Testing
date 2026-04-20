@@ -325,7 +325,10 @@ export class SimulationService {
         } else {
             this.gameState.uiState.shipyardActiveIndex = index;
         }
-        this.gameState.setState({});
+        
+        if (this.uiManager && this.uiManager.hangarControl) {
+            this.uiManager.hangarControl.updateHangarScreen(this.gameState);
+        }
     }
 
     cycleHangarCarousel(direction) {
