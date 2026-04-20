@@ -75,6 +75,8 @@ COMPONENT-SPECIFIC STYLING
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    /* VIRTUAL WORKBENCH: Phase 4 Hardware Promotion */
+    transform: translateZ(0); 
 }
 
 .carousel-page {
@@ -89,6 +91,10 @@ COMPONENT-SPECIFIC STYLING
     padding: 0 0.5rem 4rem 0.5rem; 
     contain: paint layout style; 
     /* VIRTUAL WORKBENCH: Removed content-visibility: auto; to prevent vanishing bug on Safari PWA when stationary */
+    
+    /* VIRTUAL WORKBENCH: Phase 4 Hardware Promotion */
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 /* Dynamic Class Overlay Gradients & Scoped CSS Variables */

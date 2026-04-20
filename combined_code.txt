@@ -8986,6 +8986,8 @@ COMPONENT-SPECIFIC STYLING
     will-change: transform;
     backface-visibility: hidden;
     -webkit-backface-visibility: hidden;
+    /* VIRTUAL WORKBENCH: Phase 4 Hardware Promotion */
+    transform: translateZ(0); 
 }
 
 .carousel-page {
@@ -9000,6 +9002,10 @@ COMPONENT-SPECIFIC STYLING
     padding: 0 0.5rem 4rem 0.5rem; 
     contain: paint layout style; 
     /* VIRTUAL WORKBENCH: Removed content-visibility: auto; to prevent vanishing bug on Safari PWA when stationary */
+    
+    /* VIRTUAL WORKBENCH: Phase 4 Hardware Promotion */
+    will-change: transform;
+    transform: translateZ(0);
 }
 
 /* Dynamic Class Overlay Gradients & Scoped CSS Variables */
@@ -10934,7 +10940,14 @@ export function renderHangarScreen(gameState, simulationService) {
 
                 <div class="carousel-container flex-grow overflow-hidden relative z-0">
                     <div id="hangar-carousel" class="flex h-full w-full" style="transform: translateX(-${displayIndex * 100}%)">
-                        ${shipList.map((shipId, index) => _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService)).join('') || _renderEmptyCarouselPage(isHangarMode)}
+                        ${shipList.map((shipId, index) => {
+                            const distance = Math.abs(index - displayIndex);
+                            if (distance > 1) {
+                                const shipStatic = DB.SHIPS[shipId];
+                                return `<div class="carousel-page virtualized-placeholder" data-ship-id="${shipId}" data-index="${index}" data-ship-class="${shipStatic.class}"></div>`;
+                            }
+                            return _renderShipCarouselPage(gameState, shipId, index, activeCarouselIndex, isHangarMode, simulationService);
+                        }).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
             </div>
@@ -10960,6 +10973,15 @@ function _renderEmptyCarouselPage(isHangarMode) {
 }
 
 function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService) {
+    const shipStatic = DB.SHIPS[shipId];
+    return `
+        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}" data-ship-class="${shipStatic.class}">
+            ${renderShipCarouselPageContent(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService)}
+        </div>
+    `;
+}
+
+export function renderShipCarouselPageContent(gameState, shipId, itemIndex, activeIndex, isHangarMode, simulationService) {
     const shipStatic = DB.SHIPS[shipId];
     const shipDynamic = isHangarMode ? gameState.player.shipStates[shipId] : null;
     const { player } = gameState; 
@@ -11075,8 +11097,12 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     const fallbackPath = AssetService.getFallbackImage(shipId);
     const src = inBuffer ? realPath : AssetService.PLACEHOLDER;
     const isVariantA = realPath.endsWith('_A.jpeg');
-    const imgStyle = isActive ? 'opacity: 1;' : 'opacity: 0; transition: opacity 0.3s ease-in;';
-    const placeholderStyle = isActive ? 'display: none;' : '';
+    
+    // VIRTUAL WORKBENCH: Clean, unified fade logic.
+    // The image starts at opacity 0. When loaded, it transitions to 1 exactly once.
+    // Thanks to the Hydration Lock, swiping no longer resets this.
+    const imgStyle = 'opacity: 0; transition: opacity 0.2s ease-in;';
+    const placeholderStyle = '';
 
     const shipImageHtml = `
         <div class="relative w-full h-full">
@@ -11134,13 +11160,11 @@ function _renderShipCarouselPage(gameState, shipId, itemIndex, activeIndex, isHa
     `;
 
     return `
-        <div class="carousel-page" data-ship-id="${shipId}" data-index="${itemIndex}" data-ship-class="${shipStatic.class}">
-            <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
-                ${activeGlowLayer}
-                <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
-                    <div class="ship-card-content-wrapper h-full p-2">
-                        ${isHangarMode ? hangarLayout : shipyardLayout}
-                    </div>
+        <div id="ship-terminal" class="relative w-full rounded-lg border-2" style="border-color: var(--frame-border-color);">
+            ${activeGlowLayer}
+            <div id="ship-card-main-content" class="h-full relative z-10 flex flex-col">
+                <div class="ship-card-content-wrapper h-full p-2">
+                    ${isHangarMode ? hangarLayout : shipyardLayout}
                 </div>
             </div>
         </div>
@@ -14223,7 +14247,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.78';
+export const APP_VERSION = '37.82';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -24306,6 +24330,7 @@ import { DB } from '../../data/database.js';
 import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS } from '../../data/constants.js'; 
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 import { playBlockingAnimation } from './AnimationService.js'; 
+import { renderShipCarouselPageContent } from '../../ui/components/HangarScreen.js';
 
 /**
  * Domain Controller responsible for Ship assets. 
@@ -24320,9 +24345,9 @@ export class UIHangarControl {
     }
 
     /**
-     * Updates the visual state of the Hangar/Shipyard carousel without triggering a full re-render.
-     * Handles additive lazy loading of ship images based on carousel proximity, with a micro-deferral
-     * on image source assignment to prevent main thread rendering collisions during swipe animations.
+     * Updates the visual state of the Hangar/Shipyard carousel.
+     * With DOM virtualization in place, updates and HTML hydration occur instantly 
+     * without thrashing the main thread.
      * @param {import('../GameState.js').GameState} gameState The current game state.
      */
     updateHangarScreen(gameState) {
@@ -24336,36 +24361,10 @@ export class UIHangarControl {
         const isHangarMode = uiState.hangarShipyardToggleState === 'hangar';
         const activeIndex = isHangarMode ? (uiState.hangarActiveIndex || 0) : (uiState.shipyardActiveIndex || 0);
 
+        // 1. Instantly apply the transform for the CSS animation
         carousel.style.transform = `translateX(-${activeIndex * 100}%)`;
-
-        const SAFE_DISTANCE = 2;
-        const pages = carousel.querySelectorAll('.carousel-page');
-
-        pages.forEach((page, index) => {
-            const distance = Math.abs(activeIndex - index);
-            const img = page.querySelector('img');
-            const placeholder = page.querySelector('span'); 
-
-            if (!img) return;
-
-            // Additive lazy loading: only load images within the safe distance.
-            if (distance <= SAFE_DISTANCE) {
-                const shipId = page.dataset.shipId;
-                if (shipId) {
-                    const newSrc = AssetService.getShipImage(shipId, player.visualSeed);
-                    if (!img.hasAttribute('src') || !img.src.includes(newSrc)) {
-                        // Micro-defer the image source injection to allow the browser's 
-                        // GPU-accelerated transform to start without main-thread collision.
-                        setTimeout(() => {
-                            img.src = newSrc;
-                            img.onload = () => { img.style.opacity = '1'; };
-                            if (placeholder) placeholder.style.display = 'none';
-                        }, 50);
-                    }
-                }
-            }
-        });
-
+        
+        // 2. Instantly update the pagination dots external to the carousel
         this._renderHangarPagination(gameState);
         
         const paginationWrapper = hangarScreenEl.querySelector('#hangar-pagination-wrapper');
@@ -24383,6 +24382,32 @@ export class UIHangarControl {
                 behavior: 'smooth'
             });
         }
+
+        // --- VIRTUAL WORKBENCH: DYNAMIC HYDRATION LOCK ---
+        // Dynamically hydrate and dehydrate the carousel pages based on their distance.
+        const pages = carousel.querySelectorAll('.carousel-page');
+
+        pages.forEach((page, index) => {
+            const distance = Math.abs(index - activeIndex);
+            
+            if (distance <= 1) {
+                // HYDRATE: The card is within the active view window
+                // FIX: Only inject HTML if it is currently an empty placeholder!
+                // This prevents destroying the DOM of already-visible cards during a swipe,
+                // completely eliminating the image "blink" and forced reload sequence.
+                if (page.classList.contains('virtualized-placeholder')) {
+                    const shipId = page.dataset.shipId;
+                    page.classList.remove('virtualized-placeholder');
+                    page.innerHTML = renderShipCarouselPageContent(gameState, shipId, index, activeIndex, isHangarMode, this.manager.simulationService);
+                }
+            } else {
+                // DEHYDRATE: The card is off-screen. Strip it to save memory.
+                if (!page.classList.contains('virtualized-placeholder')) {
+                    page.classList.add('virtualized-placeholder');
+                    page.innerHTML = '';
+                }
+            }
+        });
     }
 
     /**
@@ -37041,7 +37066,6 @@ export class MissionTriggerEvaluator {
 import { DB } from '../data/database.js';
 import { calculateInventoryUsed, formatCredits } from '../utils.js';
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, PERK_IDS, ACTION_IDS, LOCATION_IDS, APP_VERSION } from '../data/constants.js';
-import { playBlockingAnimation, playBlockingAnimationAndRemove } from './ui/AnimationService.js';
 import { saveStorageService } from './SaveStorageService.js';
 import { MarketService } from './simulation/MarketService.js';
 import { IntroService } from './game/IntroService.js';
@@ -37235,72 +37259,31 @@ export class SimulationService {
     buyItem(goodId, quantity) { return this.playerActionService.buyItem(goodId, quantity); }
     sellItem(goodId, quantity) { return this.playerActionService.sellItem(goodId, quantity); }
     
-    async buyShip(shipId, event) {
+    async buyShip(shipId) {
         const validation = this.playerActionService.validateBuyShip(shipId);
         if (!validation.success) {
-            this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
             return null;
         }
-
-        const purchaseButton = event.target.closest('.action-button');
-        if (purchaseButton) {
-            await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
-        }
-        await new Promise(resolve => requestAnimationFrame(resolve));
-
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting buy animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId);
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Buy animation complete. Executing logic.`);
-
-        return this.playerActionService.executeBuyShip(shipId, event);
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_BUY_LOGIC', `Executing pure buy logic for ${shipId}.`);
+        return this.playerActionService.executeBuyShip(shipId);
     }
 
-    async sellShip(shipId, event) {
+    async sellShip(shipId) {
         const validation = this.playerActionService.validateSellShip(shipId);
         if (!validation.success) {
-            this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
             return false;
         }
-
-        const sellButton = event.target.closest('.action-button');
-        if (sellButton) {
-            await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
-        }
-        await new Promise(resolve => requestAnimationFrame(resolve));
-
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting sell animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId);
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Sell animation complete. Executing logic.`);
-
-        return this.playerActionService.executeSellShip(shipId, event);
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_SELL_LOGIC', `Executing pure sell logic for ${shipId}.`);
+        return this.playerActionService.executeSellShip(shipId);
     }
 
-    async boardShip(shipId, event) {
+    async boardShip(shipId) {
         const validation = this.playerActionService.validateSetActiveShip(shipId);
         if (!validation.success) {
-            if (validation.errorTitle !== "Action Redundant") {
-                 this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
-            }
             return false;
         }
-
-        const boardButton = event.target.closest('.action-button');
-        if (boardButton) {
-            const sellButton = boardButton.closest('.grid').querySelector('[data-action="sell-ship"]');
-            if (sellButton) {
-                sellButton.disabled = true;
-            }
-            await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
-        }
-
+        this.logger.info.system('SimService', this.gameState.day, 'SHIP_BOARD_LOGIC', `Executing pure board logic for ${shipId}.`);
         this.playerActionService.executeSetActiveShip(shipId);
-           
-        await new Promise(resolve => requestAnimationFrame(resolve));
-        
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_START', `Starting board animation for ${shipId}.`);
-        await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
-        this.logger.info.system('SimService', this.gameState.day, 'SHIP_ANIMATION_END', `Board animation complete.`);
-        
         return true;
     }
 
@@ -44545,7 +44528,7 @@ import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS, APP_FEEDBACK_URL } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
-import { startLicenseAnimation, endLicenseAnimation } from '../ui/AnimationService.js';
+import { startLicenseAnimation, endLicenseAnimation, playBlockingAnimationAndRemove } from '../ui/AnimationService.js';
 
 export class ActionClickHandler {
     /**
@@ -44675,10 +44658,20 @@ export class ActionClickHandler {
                 e.stopPropagation();
                 
                 const target = e.target; 
+                
+                const validation = this.simulationService.playerActionService.validateBuyShip(shipId);
+                if (!validation.success) {
+                    this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+                    return;
+                }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
+                    const purchaseButton = target.closest('.action-button');
+                    if (purchaseButton) {
+                        await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
+                    }
                     await this.uiManager.runShipTransactionAnimation(shipId);
-                    await this.simulationService.buyShip(shipId, { target });
+                    await this.simulationService.buyShip(shipId);
                 });
                 break;
             }
@@ -44749,17 +44742,19 @@ export class ActionClickHandler {
 
                 const target = e.target;
 
-                // Pre-validate to check for cargo forfeit warnings
                 const validation = this.simulationService.playerActionService.validateSellShip(shipId);
                 if (!validation.success) {
                     this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
                     return;
                 }
 
-                // Pass the optional forfeit message to the confirmation modal
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
+                    const sellButton = target.closest('.action-button');
+                    if (sellButton) {
+                        await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
+                    }
                     await this.uiManager.runShipTransactionAnimation(shipId);
-                    await this.simulationService.sellShip(shipId, { target });
+                    await this.simulationService.sellShip(shipId);
                 });
                 break;
             }
@@ -44767,7 +44762,28 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation(); 
-                await this.simulationService.boardShip(shipId, e); 
+
+                const validation = this.simulationService.playerActionService.validateSetActiveShip(shipId);
+                if (!validation.success) {
+                    if (validation.errorTitle !== "Action Redundant") {
+                         this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+                    }
+                    return;
+                }
+
+                const boardButton = e.target.closest('.action-button');
+                if (boardButton) {
+                    const sellButton = boardButton.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
+                    if (sellButton) sellButton.disabled = true;
+                    await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
+                }
+
+                await this.simulationService.boardShip(shipId); 
+                
+                // After state mutation, wait for DOM render before executing the board 'entrance' animation
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
+                
                 break;
             }
 
@@ -44896,6 +44912,7 @@ export class ActionClickHandler {
                     this.gameState.setState({});
                 }
                 break;
+
             case ACTION_IDS.SET_HANGAR_PAGE: {
                 const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
                 const currentIndex = isHangarMode ? this.gameState.uiState.hangarActiveIndex : this.gameState.uiState.shipyardActiveIndex;
@@ -44918,18 +44935,28 @@ export class ActionClickHandler {
                 if (isNaN(newIndex)) return;
 
                 const carousel = document.getElementById('hangar-carousel');
+                
+                // --- VIRTUAL WORKBENCH: PHASE 2 DECOUPLING ---
+                // Silently mutate the active index and call localized update
+                // Completely bypasses SimulationService.setHangarCarouselIndex global render wipe
+                if (isHangarMode) {
+                    this.gameState.uiState.hangarActiveIndex = newIndex;
+                } else {
+                    this.gameState.uiState.shipyardActiveIndex = newIndex;
+                }
+
                 if (carousel) {
                     const pagesToSkip = Math.abs(newIndex - currentIndex);
                     const duration = Math.min(0.8, 0.2 + pagesToSkip * 0.1);
                     carousel.style.transitionDuration = `${duration}s`;
 
-                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
+                    this.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
 
                     setTimeout(() => {
                         if (carousel) carousel.style.transitionDuration = '';
                     }, duration * 1000);
                 } else {
-                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
+                    this.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
                 }
                 break;
             }
@@ -45764,21 +45791,39 @@ export class CarouselEventHandler {
 
         let direction = e.deltaY > 0 ? 'next' : 'prev';
         
-        // Predictive Preload
         const currentState = this.gameState.getState();
         const currentMode = currentState.uiState.hangarShipyardToggleState;
-        const currentIdx = currentMode === 'hangar' 
+        const isHangarMode = currentMode === 'hangar';
+        
+        const shipListCount = isHangarMode 
+            ? currentState.player.ownedShipIds.length 
+            : (this.simulationService._getShipyardInventory ? this.simulationService._getShipyardInventory().length : 0);
+            
+        const currentIdx = isHangarMode 
             ? (currentState.uiState.hangarActiveIndex || 0) 
             : (currentState.uiState.shipyardActiveIndex || 0);
         
-        const targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+        let targetIdx = direction === 'next' ? currentIdx + 1 : currentIdx - 1;
+        targetIdx = Math.max(0, Math.min(targetIdx, shipListCount - 1));
         
+        // Predictive Preload
         // Defer heavy IndexedDB lookups until after the CSS animation completes
         setTimeout(() => {
             this._preloadForTarget(targetIdx, currentMode);
         }, 450);
 
-        this.simulationService.cycleHangarCarousel(direction);
+        // --- VIRTUAL WORKBENCH: PHASE 2 DECOUPLING ---
+        // Silently mutate the active index and explicitly call the localized UI update,
+        // preventing a global GameState.setState() render wipe.
+        if (isHangarMode) {
+            this.gameState.uiState.hangarActiveIndex = targetIdx;
+        } else {
+            this.gameState.uiState.shipyardActiveIndex = targetIdx;
+        }
+        
+        if (this.simulationService.uiManager && this.simulationService.uiManager.hangarControl) {
+            this.simulationService.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
+        }
 
         this.isScrolling = true;
         clearTimeout(this.scrollTimeout);
@@ -45882,7 +45927,18 @@ export class CarouselEventHandler {
             this._preloadForTarget(newIndex, mode);
         }, 450);
 
-        this.simulationService.setHangarCarouselIndex(newIndex, mode);
+        // --- VIRTUAL WORKBENCH: PHASE 2 DECOUPLING ---
+        // Silently mutate the active index and explicitly call the localized UI update,
+        // preventing a global GameState.setState() render wipe.
+        if (mode === 'hangar') {
+            this.gameState.uiState.hangarActiveIndex = newIndex;
+        } else {
+            this.gameState.uiState.shipyardActiveIndex = newIndex;
+        }
+        
+        if (this.simulationService.uiManager && this.simulationService.uiManager.hangarControl) {
+            this.simulationService.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
+        }
 
         setTimeout(() => {
             this.state.moved = false;
@@ -46892,9 +46948,11 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [37.80] - 2026-4-19
+# [37.82] - 2026-4-20
 -  ship card tooltip polish
 -  ship upgrade animation polish
+-  ship card performance improvement
+-  shipyard carousel performance improvement
 
 # [37.78] - 2026-4-14
 -  fixed event bugs

@@ -9,7 +9,7 @@ import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS, APP_FEEDBACK_URL } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
-import { startLicenseAnimation, endLicenseAnimation } from '../ui/AnimationService.js';
+import { startLicenseAnimation, endLicenseAnimation, playBlockingAnimationAndRemove } from '../ui/AnimationService.js';
 
 export class ActionClickHandler {
     /**
@@ -139,10 +139,20 @@ export class ActionClickHandler {
                 e.stopPropagation();
                 
                 const target = e.target; 
+                
+                const validation = this.simulationService.playerActionService.validateBuyShip(shipId);
+                if (!validation.success) {
+                    this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+                    return;
+                }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
+                    const purchaseButton = target.closest('.action-button');
+                    if (purchaseButton) {
+                        await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
+                    }
                     await this.uiManager.runShipTransactionAnimation(shipId);
-                    await this.simulationService.buyShip(shipId, { target });
+                    await this.simulationService.buyShip(shipId);
                 });
                 break;
             }
@@ -213,17 +223,19 @@ export class ActionClickHandler {
 
                 const target = e.target;
 
-                // Pre-validate to check for cargo forfeit warnings
                 const validation = this.simulationService.playerActionService.validateSellShip(shipId);
                 if (!validation.success) {
                     this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
                     return;
                 }
 
-                // Pass the optional forfeit message to the confirmation modal
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
+                    const sellButton = target.closest('.action-button');
+                    if (sellButton) {
+                        await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
+                    }
                     await this.uiManager.runShipTransactionAnimation(shipId);
-                    await this.simulationService.sellShip(shipId, { target });
+                    await this.simulationService.sellShip(shipId);
                 });
                 break;
             }
@@ -231,7 +243,28 @@ export class ActionClickHandler {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation(); 
-                await this.simulationService.boardShip(shipId, e); 
+
+                const validation = this.simulationService.playerActionService.validateSetActiveShip(shipId);
+                if (!validation.success) {
+                    if (validation.errorTitle !== "Action Redundant") {
+                         this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
+                    }
+                    return;
+                }
+
+                const boardButton = e.target.closest('.action-button');
+                if (boardButton) {
+                    const sellButton = boardButton.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
+                    if (sellButton) sellButton.disabled = true;
+                    await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
+                }
+
+                await this.simulationService.boardShip(shipId); 
+                
+                // After state mutation, wait for DOM render before executing the board 'entrance' animation
+                await new Promise(resolve => requestAnimationFrame(resolve));
+                await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
+                
                 break;
             }
 
@@ -360,6 +393,7 @@ export class ActionClickHandler {
                     this.gameState.setState({});
                 }
                 break;
+
             case ACTION_IDS.SET_HANGAR_PAGE: {
                 const isHangarMode = this.gameState.uiState.hangarShipyardToggleState === 'hangar';
                 const currentIndex = isHangarMode ? this.gameState.uiState.hangarActiveIndex : this.gameState.uiState.shipyardActiveIndex;
@@ -382,18 +416,28 @@ export class ActionClickHandler {
                 if (isNaN(newIndex)) return;
 
                 const carousel = document.getElementById('hangar-carousel');
+                
+                // --- VIRTUAL WORKBENCH: PHASE 2 DECOUPLING ---
+                // Silently mutate the active index and call localized update
+                // Completely bypasses SimulationService.setHangarCarouselIndex global render wipe
+                if (isHangarMode) {
+                    this.gameState.uiState.hangarActiveIndex = newIndex;
+                } else {
+                    this.gameState.uiState.shipyardActiveIndex = newIndex;
+                }
+
                 if (carousel) {
                     const pagesToSkip = Math.abs(newIndex - currentIndex);
                     const duration = Math.min(0.8, 0.2 + pagesToSkip * 0.1);
                     carousel.style.transitionDuration = `${duration}s`;
 
-                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
+                    this.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
 
                     setTimeout(() => {
                         if (carousel) carousel.style.transitionDuration = '';
                     }, duration * 1000);
                 } else {
-                    this.simulationService.setHangarCarouselIndex(newIndex, isHangarMode ? 'hangar' : 'shipyard');
+                    this.uiManager.hangarControl.updateHangarScreen(this.gameState.getState());
                 }
                 break;
             }
