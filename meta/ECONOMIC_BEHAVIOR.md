@@ -2,7 +2,7 @@
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 4/10/26, ver. [37.58]
+Last Edit: 4/20/26, ver. [37.84]
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
@@ -138,3 +138,8 @@ The officers slotted into the Sol Station Engineering Interface act as dynamic m
 
 IX. Detached Commodity Progression
 Commodity tiers are no longer unlocked by passive Wealth Milestones. Access to higher-tier trade goods is explicitly gated by the player's active progression through the License Acquisition sequence and targeted mission completion, shifting the economic unlock phase from a passive accumulation check to an active gameplay objective.
+
+X. Story Events & Narrative Economics
+The economy can be permanently or temporarily disrupted by explicit narrative event-chains.
+1. Flag-Driven Lockouts: Mission flags can dynamically override standard procedural replenishment or pricing mechanics (e.g., permanently shifting Mars to an exporter of a new resource post-story completion).
+2. Transitory Modifiers: Active event-chains can forcefully inject hidden parameters into the `MarketService`, establishing specific local gluts or famines that circumvent the `SystemStateService` weather generation logic until the narrative arc is resolved.

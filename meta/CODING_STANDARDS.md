@@ -80,3 +80,15 @@ Correction: Define these as constants in js/data/constants.js and import them.
 **Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence) or localized inline component sequences (like the Ship Upgrade Animation) must not rely on standard CSS `.hidden` class toggling to handle complex fades, as this creates race conditions and visible flashing when the `UIManager` executes aggressive DOM wiping and state re-renders.
 **Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. The actual `GameState` mutations and `UIManager.render()` calls should be executed *during* the blackout/hold phase of the animation. 
 **Strict Cleanup Mandate:** You MUST explicitly ensure all inline styling injected by the API (e.g., `opacity`, `filter`, `transform`) is fully stripped or reset to its baseline state within the `.onfinish` callback. Failure to clean up injected Web Animations API styles will permanently break subsequent UI rendering behavior for those elements.
+
+3.7 Safe Flag Mutation (Cross-System Integrity)
+**Stability:** Direct, localized mutation of narrative flags bypasses cross-system evaluators and breaks Event-Chain progression loops.
+**Correction:** All narrative flags and state variables within `state.player.storyFlags` MUST only be modified via explicit `FlagMutator` service methods or the central `StoryEventService`. Never mutate these properties directly from the UI layer or generic travel/market event handlers.
+
+3.8 Event-Chain State Extraction
+**Stability:** Event-chains rely on sequential validation to prevent sequence breaking or soft-locks.
+**Correction:** When building event-chains, state extraction for subsequent triggers must be explicitly defined in the prior event's outcome resolver. Do not rely on implicit or timing-based global state evaluations to trigger the next sequential link in an isolated Event-Chain.
+
+3.9 Story Event Debugging
+**Visibility:** Bespoke story events and mission flags require granular tracking to ensure narrative continuity and prevent logic loop collisions.
+**Correction:** All story event triggers, flag mutations, and chain resolutions must utilize the `LoggingService` with a specific `[STORY]` prefix format. Example: `this.logger.info('[STORY] Event [Evt_ID] triggered, flag [Flag_ID] mutated to True.')`.

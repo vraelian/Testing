@@ -1,4 +1,3 @@
-
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -16,7 +15,9 @@
       "fleet_trading",
       "bankruptcy",
       "system_states",
-      "synthesis_pipeline"
+      "synthesis_pipeline",
+      "story_events",
+      "ship_status_effects"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
@@ -30,11 +31,15 @@
     "Wealth_Milestones": "Specific credit thresholds that previously gated progression. Now replaced functionally by the active License Acquisition sequence, ensuring commodity tiers and mission types unlock based on explicit gameplay achievements rather than passive wealth accumulation.",
     "Random_Events": "Procedurally triggered events that can occur during travel, presenting the player with choices that have various risks and rewards.",
     "Blockade_Events": "A specific class of dynamic events that restrict access to locations or severely penalize travel routes, altering standard arbitrage pathways.",
+    "Story_Event_System": "A narrative-driven framework that triggers bespoke, consequential events based on specific gamestate conditions, distinct from standard random travel events.",
+    "Event-Chains": "Sequential narrative or mechanical events where the resolution or outcome of one event explicitly triggers or unlocks a subsequent event in the chain.",
+    "Mission_Flags": "Primitive data trackers (booleans, integers) attached to the player's storyFlags state, utilized to map narrative progress, faction reputations, and complex cross-system gating via evaluators and mutators.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
     "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
     "Hot_Intel": "Highly volatile market intelligence packets that generate transient, extreme price overrides. They expire immediately upon the player initiating travel to any new location.",
     "One-Deal_Lock": "A core mechanic where the player can only have one active intel deal at a time, forcing a strategic choice.",
     "Ship_Upgrade": "A modular enhancement (e.g., 'Hyper-Combustor') that can be installed into a ship's slot. Unlike the deprecated 'Attributes', upgrades have a credit value that increases the ship's resale price.",
+    "Ship_Status_Effects": "Temporary or semi-permanent modifiers applied directly to a ship's state, dynamically altering its performance, fuel burn, or service costs independently of installed hardware upgrades.",
     "Upgrade_Capacity": "The hard limit of three (3) upgrade slots available on every ship. This constraint forces strategic choices via 'Destructive Replacement'.",
     "Destructive_Replacement": "The mechanic where installing a new upgrade into a full ship requires the permanent destruction (dismantling) of an existing upgrade. The old upgrade provides no refund.",
     "Station_Quirk": "A unique, static economic rule applied to a specific location (e.g., 'Venus Data Haven'). These quirks provide permanent bonuses or penalties to prices, services, or mechanics at that station.",

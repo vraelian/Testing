@@ -449,7 +449,7 @@ Decision: Implemented Fleet Trading and Storage with an associated "Convoy Tax".
 * A "Convoy Tax" is assessed during travel, dynamically increasing resource burn based on the total number of ships traversing the route.
 
 Consequences:
-* **Pro:** ExpExpands player progression, allowing for specialized ship collections.
+* **Pro:** Expands player progression, allowing for specialized ship collections.
 * **Pro:** The Convoy Tax naturally balances the economy by imposing scaling resource costs.
 
 ADR-031: Balance v2 - Parametric Pacing & Volumetric Sinks
@@ -612,3 +612,31 @@ Decision: Implemented an explicit recruitment pipeline architecture.
 Consequences:
 * Pro: Clean separation of static lore/stats from the mutable save file.
 * Pro: Highly extensible for future officer generation or procedural traits.
+
+ADR-045: Story Event System & Event-Chains
+Status: Accepted (2026-04-13)
+
+Context: Random events were procedurally generated but lacked narrative continuity. A framework was needed for establishing sequential narrative arcs.
+Decision: Implemented the `StoryEventService` and a bespoke registry for Story Events.
+Consequences:
+Pro: Enables complex, multi-step narrative content.
+Pro: Isolates story progression from standard traffic algorithms.
+Con: Requires meticulous flag management to prevent dead-ends.
+
+ADR-046: Mission Flag & Evaluator Architecture
+Status: Accepted (2026-04-14)
+
+Context: Cross-system dependencies (e.g., completing a mission explicitly unlocking a specific dialogue option or station quirk) were difficult to track securely.
+Decision: Implemented a centralized `storyFlags` primitive map within the `GameState`, manipulated exclusively by a dedicated `FlagMutator` and checked system-wide by a `FlagEvaluator`.
+Consequences:
+Pro: Establishes a universal boolean/integer state machine for narrative control.
+Pro: Prevents race conditions during state mutation sequences.
+
+ADR-047: Ship Status Effects (Volatile Modifiers)
+Status: Accepted (2026-04-14)
+
+Context: Hardware upgrades were entirely permanent and monopolized fixed slots. Temporary operational conditions (e.g., "Hull Breach", "Engine Overcharge") lacked a systemic way to dynamically modify ship performance without tampering with hardware arrays.
+Decision: Implemented a volatile `statusEffects` array within the localized `shipStates` object. Modifiers are stacked dynamically on top of hardware parameters and expire automatically based on tracked travel ticks or contextual triggers.
+Consequences:
+Pro: Significantly expands mechanical depth for random and story events.
+Pro: Separates transient buffs/debuffs from the ship's persistent asset resale value.
