@@ -1,10 +1,10 @@
-
 // js/services/RandomEventService.js
 /**
  * @fileoverview
  * The central engine for Event System 2.0.
  * UPDATED: Includes logic to pre-evaluate choices and disable them if requirements are not met.
  * UPDATED: Automatically formats choice text to replace raw "Scale" strings with actual calculated values.
+ * UPDATED: Expanded resolution hooks to support direct parsing of DB.STORY_EVENTS.
  */
 
 import { RANDOM_EVENTS } from '../data/events.js';
@@ -89,18 +89,30 @@ export class RandomEventService {
 
     /**
      * Forces a specific event to trigger by ID, bypassing standard checks.
+     * Supports both core RANDOM_EVENTS and new STORY_EVENTS.
      */
     getEventById(eventId) {
-        // [[UPDATED]]: Clone here as well to be safe
-        const template = RANDOM_EVENTS.find(e => e.id === eventId);
+        let template = RANDOM_EVENTS.find(e => e.id === eventId);
+        
+        if (!template && DB.STORY_EVENTS) {
+            template = DB.STORY_EVENTS[eventId];
+        }
+        
         return template ? JSON.parse(JSON.stringify(template)) : null;
     }
 
     /**
      * Processes a player's decision during an event.
+     * Updated to support fetching the root definition from either RANDOM_EVENTS or DB.STORY_EVENTS.
      */
     resolveChoice(eventId, choiceId, gameState, simulationService, uiManager = null) {
-        const eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
+        let eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
+        
+        // Phase 3 Support: Story Event parsing via Facade
+        if (!eventDef && DB.STORY_EVENTS) {
+            eventDef = DB.STORY_EVENTS[eventId];
+        }
+
         if (!eventDef) throw new Error(`Event not found: ${eventId}`);
 
         const choiceDef = eventDef.choices.find(c => c.id === choiceId);
