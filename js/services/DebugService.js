@@ -106,6 +106,7 @@ export class DebugService {
             targetAge: 25, 
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
+            selectedStoryEvent: DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS)[0] || '' : '',
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
             selectedMission: 'debug_kitchen_sink',
             selectedSystemState: 'NEUTRAL', 
@@ -115,7 +116,7 @@ export class DebugService {
             logLevel: 'INFO',
             
             selectedUpgrade: null, 
-            selectedStatusEffect: null, // NEW: Status Effect Selection
+            selectedStatusEffect: null,
             selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
             quantityToAdd: 10,
             alwaysTriggerEvents: false,
@@ -908,6 +909,18 @@ ${logHistory}
                 }
             }},
 
+            forceQueueStoryEvent: { name: 'Force Queue Story Event', type: 'button', handler: () => {
+                if (this.debugState.selectedStoryEvent && this.simulationService) {
+                    // Temporarily flag as repeatable to allow infinite manual iterations
+                    const eventDef = DB.STORY_EVENTS[this.debugState.selectedStoryEvent];
+                    if (eventDef) eventDef.repeatable = true;
+                    
+                    // Force flag set to TRUE to bypass seen restrictions for manual debug testing
+                    this.simulationService.queueStoryEvent(this.debugState.selectedStoryEvent, true);
+                    this.uiManager.createFloatingText('Story Event Queued', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                }
+            }},
+
             forceAddTerminalMission: { name: 'Force to Terminal', type: 'button', handler: () => {
                 if (this.debugState.selectedMission && this.simulationService && this.simulationService.missionService) {
                     this.simulationService.missionService.forceToTerminal(this.debugState.selectedMission);
@@ -1116,7 +1129,6 @@ ${logHistory}
         bankFolder.add(this.actions.forceDestituteBankruptcy, 'handler').name(this.actions.forceDestituteBankruptcy.name);
         bankFolder.add(this.actions.clearLoanLockoutTimer, 'handler').name(this.actions.clearLoanLockoutTimer.name);
 
-        // --- NEW: UI Guides Folder ---
         const uiFolder = this.gui.addFolder('UI Guides');
         
         const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
@@ -1127,7 +1139,6 @@ ${logHistory}
         
         uiFolder.add(this.actions.applyNavLock, 'handler').name(this.actions.applyNavLock.name);
         uiFolder.add(this.actions.clearNavLock, 'handler').name(this.actions.clearNavLock.name);
-        // ------------------------------
 
         const solFolder = this.gui.addFolder('Sol Station');
         solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
@@ -1224,6 +1235,10 @@ ${logHistory}
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
+        const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
+        triggerFolder.add(this.debugState, 'selectedStoryEvent', storyEventOptions).name('Story Event');
+        triggerFolder.add(this.actions.forceQueueStoryEvent, 'handler').name('Queue Story Event');
+
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');

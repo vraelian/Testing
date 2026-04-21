@@ -12,6 +12,7 @@ export class UIModalEngine {
         this.modalQueue = [];
         this._injectBankruptcyModals();
         this._injectUpgradeProgressModal();
+        this._injectStoryEventModal();
     }
 
     /**
@@ -101,6 +102,29 @@ export class UIModalEngine {
                     <div class="upgrade-progress-bar">
                         <div id="upgrade-progress-fill" class="upgrade-progress-fill"></div>
                     </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Injects the static DOM template for Story Events.
+     * @private
+     */
+    _injectStoryEventModal() {
+        if (document.getElementById('story-event-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="story-event-modal" class="modal-backdrop hidden z-[85]">
+                <div class="modal-content flex flex-col justify-between">
+                    <div>
+                        <h3 id="story-event-title" class="text-2xl font-orbitron mb-4 text-center"></h3>
+                        <div id="story-event-description" class="text-lg text-gray-300 text-center"></div>
+                        <div id="story-event-choices-container" class="flex flex-col gap-3 mt-6"></div>
+                    </div>
+                    <div id="story-event-button-container" class="mt-auto pt-6 pb-0 mb-0 flex justify-center gap-4"></div>
                 </div>
             </div>
         `;
@@ -250,7 +274,7 @@ export class UIModalEngine {
             if (pStyle) {
                 const parsedName = options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 
-                if (modalId === 'mission-modal') {
+                if (modalId === 'mission-modal' || modalId === 'story-event-modal') {
                     titleEl.style.textAlign = 'center';
                     
                     const wrapperDiv = document.createElement('div');
@@ -313,7 +337,7 @@ export class UIModalEngine {
                 descEl.classList.add('mb-6', 'text-lg');
             }
 
-            if (modalId === 'event-modal' || modalId === 'random-event-modal' || modalId === 'event-result-modal') {
+            if (modalId === 'event-modal' || modalId === 'random-event-modal' || modalId === 'event-result-modal' || modalId === 'story-event-modal') {
                 descEl.classList.add('text-center');
             }
 
@@ -389,7 +413,14 @@ export class UIModalEngine {
 
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
-        modal.classList.add('modal-visible');
+
+        // CRITICAL FIX: Bypass standard modal-visible class entirely if requested
+        if (options.noModalVisible) {
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+        } else {
+            modal.classList.add('modal-visible');
+        }
 
         this._bindScrollIndicator(modal);
     }
@@ -520,6 +551,9 @@ export class UIModalEngine {
                 modal.classList.add('hidden');
                 modal.classList.remove(exitClass, 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s');
 
+                modal.style.opacity = '';
+                modal.style.pointerEvents = '';
+
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
@@ -543,6 +577,9 @@ export class UIModalEngine {
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
             modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s', 'intro-blur-fade-out-3s');
+            
+            modal.style.opacity = '';
+            modal.style.pointerEvents = '';
             
             delete modal.dataset.theme;
             delete modal.dataset.dismissInside;

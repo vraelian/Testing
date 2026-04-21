@@ -4,7 +4,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 ## Immediate
 
-Act XX black screen intermissions
+- Act XX black screen intermissions
 
 News Ticker anomalies
 - story related

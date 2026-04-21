@@ -3,6 +3,7 @@
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
  * UPDATED: Re-routes modal resolution specifically to UIEventControl intercept hook.
+ * UPDATED: Cleaned up Starfield handling to allow persistence during Story Events.
  */
 import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
@@ -148,12 +149,76 @@ export class TravelService {
 
         const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
         if (!isFirstTutorialFlight && !useFoldedDrive) { 
-            if (this._checkForRandomEvent(locationId)) {
-                return;
-            }
+            this._processStoryEvents(locationId, useFoldedDrive, 0);
+            return;
         }
 
         this.initiateTravel(locationId, { useFoldedDrive });
+    }
+
+    /**
+     * Recursively processes the pending story events queue up to a limit of 2 per trip.
+     * Persists the starfield background and overrides standard random events.
+     * @private
+     */
+    _processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount = 0) {
+        if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
+        
+        if (eventsResolvedCount >= 2 || this.gameState.pendingStoryEvents.length === 0) {
+            // Processing complete. Hand off to actual travel sequence.
+            if (eventsResolvedCount > 0) {
+                this.initiateTravel(locationId, { useFoldedDrive });
+            } else {
+                if (!this._checkForRandomEvent(locationId)) {
+                    this.initiateTravel(locationId, { useFoldedDrive });
+                }
+            }
+            return;
+        }
+
+        const eventId = this.gameState.pendingStoryEvents.shift();
+        const eventDef = DB.STORY_EVENTS[eventId];
+        
+        if (!eventDef) {
+            this.logger.error('TravelService', `Story event ${eventId} not found in registry.`);
+            this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount);
+            return;
+        }
+
+        this.logger.info.system('Event', this.gameState.day, 'STORY_EVENT_TRIGGER', `Triggered story event: ${eventDef.title}`);
+        
+        // Secure state to protect against hard closures during modal rendering
+        const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[locationId]?.time || 7;
+        this.gameState.setState({ pendingTravel: { destinationId: locationId, days: baseTime } });
+
+        this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+            if (choiceId && eventDef.choices) {
+                const choiceDef = eventDef.choices.find(c => c.id === choiceId);
+                if (choiceDef && choiceDef.resolution) {
+                    const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
+                    if (result && result.effects && result.effects.length > 0) {
+                        if (this.uiManager.eventControl && this.uiManager.eventControl.showEventResultModal) {
+                            this.uiManager.eventControl.showEventResultModal(
+                                result.title,
+                                result.text,
+                                result.effects,
+                                () => this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1)
+                            );
+                        } else if (this.uiManager.showEventResultModal) {
+                            this.uiManager.showEventResultModal(
+                                result.title,
+                                result.text,
+                                result.effects,
+                                () => this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1)
+                            );
+                        }
+                        return; // Halt recursion until result modal resolves
+                    }
+                }
+            }
+            // If linear event (no choices) or effectless choice, immediately recurse
+            this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1);
+        });
     }
 
     initiateTravel(locationId, eventMods = {}) {
@@ -340,13 +405,6 @@ export class TravelService {
             return;
         }
 
-        // VIRTUAL WORKBENCH MODIFICATION: Phase 1 (Event Blocks)
-        if (eventMods.forceEvent && !eventMods.useFoldedDrive) {
-            if (this._checkForRandomEvent(locationId, true)) {
-                return;
-            }
-        }
-
         const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
         let travelHullDamage = Math.ceil(baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod * 0.8);
         
@@ -467,7 +525,6 @@ export class TravelService {
         const finalCallback = () => {
             this.gameState.isTraveling = false;
 
-            // VIRTUAL WORKBENCH MODIFICATION: Phase 1 (Event Blocks)
             if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                 this.gameState.pendingEventChains.forEach(chain => {
                     chain.tripsRemaining--;

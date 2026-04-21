@@ -114,6 +114,30 @@ export class SimulationService {
         }
     }
 
+    /**
+     * Queues a Story Event into the GameState. Ensures one-shot events do not duplicate.
+     * @param {string} eventId 
+     * @param {boolean} force - If true, bypasses the seenStoryEvents restriction.
+     */
+    queueStoryEvent(eventId, force = false) {
+        if (!DB.STORY_EVENTS || !DB.STORY_EVENTS[eventId]) {
+            this.logger.error('SimulationService', `Story event ${eventId} not found.`);
+            return;
+        }
+        const eventDef = DB.STORY_EVENTS[eventId];
+        
+        if (!this.gameState.player.seenStoryEvents) this.gameState.player.seenStoryEvents = [];
+        if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
+
+        if (force || !this.gameState.player.seenStoryEvents.includes(eventId) || eventDef.repeatable) {
+            this.gameState.pendingStoryEvents.push(eventId);
+            if (!eventDef.repeatable && !this.gameState.player.seenStoryEvents.includes(eventId)) {
+                this.gameState.player.seenStoryEvents.push(eventId);
+            }
+            this.logger.info.system('SimulationService', this.gameState.day, 'STORY_EVENT_QUEUED', `Queued story event: ${eventId}`);
+        }
+    }
+
     forceTriggerEvent(eventId) {
         const rawEventDef = this.randomEventService.getEventById(eventId);
         if (!rawEventDef) {
@@ -121,7 +145,7 @@ export class SimulationService {
             return;
         }
 
-        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${rawEventDef.template.title}`);
+        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${rawEventDef.template?.title || rawEventDef.title}`);
         
         const eventDef = { ...rawEventDef };
         if (eventDef.choices) {
@@ -135,9 +159,15 @@ export class SimulationService {
             });
         }
         
-        this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
-            this.resolveEventChoice(eventId, choiceId);
-        });
+        if (DB.STORY_EVENTS && DB.STORY_EVENTS[eventId]) {
+            this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+                if (choiceId) this.resolveEventChoice(eventId, choiceId);
+            });
+        } else {
+            this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
+                this.resolveEventChoice(eventId, choiceId);
+            });
+        }
     }
 
     resolveEventChoice(eventId, choiceId) {

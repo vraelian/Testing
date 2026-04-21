@@ -14247,7 +14247,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.82';
+export const APP_VERSION = '37.84';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -14726,6 +14726,7 @@ import { CONSUMABLES } from './items.js';
 // --- SYSTEM STATES V3 ---
 import { SYSTEM_STATE_REGISTRY } from './systemStateRegistry.js';
 // --- END SYSTEM STATES V3 ---
+import { STORY_EVENTS } from './events/storyEventsRegistry.js';
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -14857,6 +14858,9 @@ export const DB = {
 
     // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: RANDOM_EVENTS,
+
+    // --- Story Events ---
+    STORY_EVENTS: STORY_EVENTS,
 
     // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
     SHIPS: SHIP_DATABASE,
@@ -19695,6 +19699,32 @@ export const EVENTS_OPPORTUNITY = [
 ];
 --- END OF FILE: ./js/data/events/events_opportunity.js ---
 
+--- START OF FILE: ./js/data/events/storyEventsRegistry.js ---
+// js/data/events/storyEventsRegistry.js
+/**
+ * @fileoverview
+ * Registry for deterministic, narrative-driven Story Events.
+ * These events bypass the probabilistic random event pool and are 
+ * manually queued via game state triggers.
+ */
+
+import { EVENT_CONSTANTS, COMMODITY_IDS, PERK_IDS } from '../constants.js';
+
+export const STORY_EVENTS = {
+    // Example Payload
+    'evt_story_example': {
+        id: 'evt_story_example',
+        theme: 'license-t2',
+        portraitId: 'Kintsugi_3',
+        repeatable: false,
+        title: 'Incoming Transmission',
+        text: 'TEST TEST TEST',
+        confirmText: 'Log Transmission',
+        choices: [] 
+    }
+};
+--- END OF FILE: ./js/data/events/storyEventsRegistry.js ---
+
 --- START OF FILE: ./js/data/events/events_salvage.js ---
 // js/data/events/events_salvage.js
 /**
@@ -22378,9 +22408,133 @@ export class UIEventControl {
         });
     }
 
+    /**
+     * Executes the CRT instantiation and resolution sequence for Story Events.
+     * Maps faction themes, injects character portraits, and supports both branching 
+     * choice menus and simple linear dismissals.
+     * @param {Object} eventDef - The definition object from STORY_EVENTS.
+     * @param {Function} choicesCallback - Resolution hook passing the selected choice.id (or null if none).
+     */
+    showStoryEventModal(eventDef, choicesCallback) {
+        const title = eventDef.title || 'Incoming Transmission';
+        const description = eventDef.text || '';
+
+        // Ensure backdrop is completely transparent to reveal starfield
+        const targetModal = document.getElementById('story-event-modal');
+        if (targetModal) {
+            targetModal.style.transition = 'none';
+            targetModal.style.backgroundColor = 'transparent';
+            targetModal.style.backdropFilter = 'none';
+        }
+
+        this.manager.queueModal('story-event-modal', title, description, null, {
+            nonDismissible: true,
+            theme: eventDef.theme || 'default',
+            portraitId: eventDef.portraitId,
+            contentClass: 'text-center',
+            noModalVisible: true, // Bypass standard CSS fade-in
+            customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('.modal-content');
+                
+                // Clean instantiation
+                modalContent.classList.remove('sev-crt-shutdown');
+                modalContent.classList.add('sev-crt-turn-on');
+                modalContent.style.animationDuration = '0.4s';
+                
+                if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+                modalContent._crtTimeout = setTimeout(() => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.style.animationDuration = '';
+                }, 400);
+
+                const choicesContainer = modal.querySelector('#story-event-choices-container');
+                const btnContainer = modal.querySelector('#story-event-button-container');
+                
+                choicesContainer.innerHTML = '';
+                btnContainer.innerHTML = '';
+
+                const crtCloseHandler = (choiceId = null) => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.classList.add('sev-crt-shutdown');
+                    modalContent.style.animationDuration = '0.35s';
+                    
+                    setTimeout(() => {
+                        if (this.manager.modalEngine && this.manager.modalEngine.destroyModalInstant) {
+                            this.manager.modalEngine.destroyModalInstant('story-event-modal');
+                        } else {
+                            modal.classList.add('hidden');
+                        }
+                        choicesCallback(choiceId);
+                    }, 340);
+                };
+
+                // Generate Choice Buttons (Branching Event)
+                if (eventDef.choices && eventDef.choices.length > 0) {
+                    btnContainer.classList.add('hidden');
+                    choicesContainer.classList.remove('hidden');
+
+                    eventDef.choices.forEach((choice) => {
+                        const button = document.createElement('button');
+                        button.className = 'btn w-full p-4 hover:bg-slate-700 mb-2 event-choice-btn';
+                        if (choice.disabled) {
+                            button.disabled = true;
+                            button.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                        
+                        const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
+                        const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
+                        const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
+
+                        let colorClass = 'text-gray-400'; 
+                        if (subText) {
+                            const lower = subText.toLowerCase();
+                            if (lower.includes('space')) {
+                                colorClass = 'text-req-yellow';
+                            } else if (lower.includes('delay')) {
+                                colorClass = 'text-delay-blue';
+                            } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium', 'damage', 'drain', 'stress'].some(k => lower.includes(k))) {
+                                colorClass = 'text-cost-orange';
+                            }
+                        }
+
+                        button.innerHTML = `
+                            <span class="choice-header">${headerText}</span>
+                            ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
+                        `;
+                        
+                        if (choice.tooltip) button.setAttribute('title', choice.tooltip);
+
+                        button.onclick = () => crtCloseHandler(choice.id);
+                        choicesContainer.appendChild(button);
+                    });
+                } 
+                // Generate Single Dismissal Button (Linear Event)
+                else {
+                    choicesContainer.classList.add('hidden');
+                    btnContainer.classList.remove('hidden');
+                    
+                    const confirmBtn = document.createElement('button');
+                    confirmBtn.className = 'btn px-6 py-2 w-full max-w-xs';
+                    confirmBtn.innerHTML = eventDef.confirmText || 'Confirm';
+                    confirmBtn.onclick = () => crtCloseHandler(null);
+                    
+                    btnContainer.appendChild(confirmBtn);
+                }
+            }
+        });
+    }
+
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
          const description = event.template?.description || event.scenario || 'No description available.';
+
+         // Strip standard darkening to persist the starfield
+         const targetModal = document.getElementById('random-event-modal');
+         if (targetModal) {
+             targetModal.style.transition = 'none';
+             targetModal.style.backgroundColor = 'transparent';
+             targetModal.style.backdropFilter = 'none';
+         }
 
          this.manager.queueModal('random-event-modal', title, description, null, {
             nonDismissible: true,
@@ -22878,6 +23032,14 @@ export class UIEventControl {
              title = 'System Alert'; 
              text = '';
              effects = [];
+        }
+
+        // Strip standard darkening to persist the starfield
+        const targetModal = document.getElementById('event-result-modal');
+        if (targetModal) {
+            targetModal.style.transition = 'none';
+            targetModal.style.backgroundColor = 'transparent';
+            targetModal.style.backdropFilter = 'none';
         }
 
         let pendingOverwriteId = null;
@@ -26692,6 +26854,7 @@ export class UIModalEngine {
         this.modalQueue = [];
         this._injectBankruptcyModals();
         this._injectUpgradeProgressModal();
+        this._injectStoryEventModal();
     }
 
     /**
@@ -26781,6 +26944,29 @@ export class UIModalEngine {
                     <div class="upgrade-progress-bar">
                         <div id="upgrade-progress-fill" class="upgrade-progress-fill"></div>
                     </div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Injects the static DOM template for Story Events.
+     * @private
+     */
+    _injectStoryEventModal() {
+        if (document.getElementById('story-event-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="story-event-modal" class="modal-backdrop hidden z-[85]">
+                <div class="modal-content flex flex-col justify-between">
+                    <div>
+                        <h3 id="story-event-title" class="text-2xl font-orbitron mb-4 text-center"></h3>
+                        <div id="story-event-description" class="text-lg text-gray-300 text-center"></div>
+                        <div id="story-event-choices-container" class="flex flex-col gap-3 mt-6"></div>
+                    </div>
+                    <div id="story-event-button-container" class="mt-auto pt-6 pb-0 mb-0 flex justify-center gap-4"></div>
                 </div>
             </div>
         `;
@@ -26930,7 +27116,7 @@ export class UIModalEngine {
             if (pStyle) {
                 const parsedName = options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 
-                if (modalId === 'mission-modal') {
+                if (modalId === 'mission-modal' || modalId === 'story-event-modal') {
                     titleEl.style.textAlign = 'center';
                     
                     const wrapperDiv = document.createElement('div');
@@ -26993,7 +27179,7 @@ export class UIModalEngine {
                 descEl.classList.add('mb-6', 'text-lg');
             }
 
-            if (modalId === 'event-modal' || modalId === 'random-event-modal' || modalId === 'event-result-modal') {
+            if (modalId === 'event-modal' || modalId === 'random-event-modal' || modalId === 'event-result-modal' || modalId === 'story-event-modal') {
                 descEl.classList.add('text-center');
             }
 
@@ -27069,7 +27255,14 @@ export class UIModalEngine {
 
         modal.classList.remove('hidden');
         modal.classList.remove('modal-hiding'); 
-        modal.classList.add('modal-visible');
+
+        // CRITICAL FIX: Bypass standard modal-visible class entirely if requested
+        if (options.noModalVisible) {
+            modal.style.opacity = '1';
+            modal.style.pointerEvents = 'auto';
+        } else {
+            modal.classList.add('modal-visible');
+        }
 
         this._bindScrollIndicator(modal);
     }
@@ -27200,6 +27393,9 @@ export class UIModalEngine {
                 modal.classList.add('hidden');
                 modal.classList.remove(exitClass, 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s');
 
+                modal.style.opacity = '';
+                modal.style.pointerEvents = '';
+
                 delete modal.dataset.theme;
                 delete modal.dataset.dismissInside;
                 delete modal.dataset.dismissOutside;
@@ -27223,6 +27419,9 @@ export class UIModalEngine {
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
             modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s', 'intro-blur-fade-out-3s');
+            
+            modal.style.opacity = '';
+            modal.style.pointerEvents = '';
             
             delete modal.dataset.theme;
             delete modal.dataset.dismissInside;
@@ -28207,6 +28406,7 @@ export class DebugService {
             targetAge: 25, 
             selectedLocation: this.gameState.currentLocationId,
             daysToAdvance: 7,
+            selectedStoryEvent: DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS)[0] || '' : '',
             selectedRandomEvent: DB.RANDOM_EVENTS[0]?.id || '', 
             selectedMission: 'debug_kitchen_sink',
             selectedSystemState: 'NEUTRAL', 
@@ -28216,7 +28416,7 @@ export class DebugService {
             logLevel: 'INFO',
             
             selectedUpgrade: null, 
-            selectedStatusEffect: null, // NEW: Status Effect Selection
+            selectedStatusEffect: null,
             selectedCommodityToAdd: COMMODITY_IDS.WATER_ICE,
             quantityToAdd: 10,
             alwaysTriggerEvents: false,
@@ -29009,6 +29209,18 @@ ${logHistory}
                 }
             }},
 
+            forceQueueStoryEvent: { name: 'Force Queue Story Event', type: 'button', handler: () => {
+                if (this.debugState.selectedStoryEvent && this.simulationService) {
+                    // Temporarily flag as repeatable to allow infinite manual iterations
+                    const eventDef = DB.STORY_EVENTS[this.debugState.selectedStoryEvent];
+                    if (eventDef) eventDef.repeatable = true;
+                    
+                    // Force flag set to TRUE to bypass seen restrictions for manual debug testing
+                    this.simulationService.queueStoryEvent(this.debugState.selectedStoryEvent, true);
+                    this.uiManager.createFloatingText('Story Event Queued', window.innerWidth/2, window.innerHeight/2, '#facc15');
+                }
+            }},
+
             forceAddTerminalMission: { name: 'Force to Terminal', type: 'button', handler: () => {
                 if (this.debugState.selectedMission && this.simulationService && this.simulationService.missionService) {
                     this.simulationService.missionService.forceToTerminal(this.debugState.selectedMission);
@@ -29217,7 +29429,6 @@ ${logHistory}
         bankFolder.add(this.actions.forceDestituteBankruptcy, 'handler').name(this.actions.forceDestituteBankruptcy.name);
         bankFolder.add(this.actions.clearLoanLockoutTimer, 'handler').name(this.actions.clearLoanLockoutTimer.name);
 
-        // --- NEW: UI Guides Folder ---
         const uiFolder = this.gui.addFolder('UI Guides');
         
         const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
@@ -29228,7 +29439,6 @@ ${logHistory}
         
         uiFolder.add(this.actions.applyNavLock, 'handler').name(this.actions.applyNavLock.name);
         uiFolder.add(this.actions.clearNavLock, 'handler').name(this.actions.clearNavLock.name);
-        // ------------------------------
 
         const solFolder = this.gui.addFolder('Sol Station');
         solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
@@ -29325,6 +29535,10 @@ ${logHistory}
 
         const triggerFolder = this.gui.addFolder('Triggers');
         
+        const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
+        triggerFolder.add(this.debugState, 'selectedStoryEvent', storyEventOptions).name('Story Event');
+        triggerFolder.add(this.actions.forceQueueStoryEvent, 'handler').name('Queue Story Event');
+
         const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
         triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
         triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
@@ -29624,13 +29838,13 @@ export class ToastService {
 --- END OF FILE: ./js/services/ToastService.js ---
 
 --- START OF FILE: ./js/services/RandomEventService.js ---
-
 // js/services/RandomEventService.js
 /**
  * @fileoverview
  * The central engine for Event System 2.0.
  * UPDATED: Includes logic to pre-evaluate choices and disable them if requirements are not met.
  * UPDATED: Automatically formats choice text to replace raw "Scale" strings with actual calculated values.
+ * UPDATED: Expanded resolution hooks to support direct parsing of DB.STORY_EVENTS.
  */
 
 import { RANDOM_EVENTS } from '../data/events.js';
@@ -29715,18 +29929,30 @@ export class RandomEventService {
 
     /**
      * Forces a specific event to trigger by ID, bypassing standard checks.
+     * Supports both core RANDOM_EVENTS and new STORY_EVENTS.
      */
     getEventById(eventId) {
-        // [[UPDATED]]: Clone here as well to be safe
-        const template = RANDOM_EVENTS.find(e => e.id === eventId);
+        let template = RANDOM_EVENTS.find(e => e.id === eventId);
+        
+        if (!template && DB.STORY_EVENTS) {
+            template = DB.STORY_EVENTS[eventId];
+        }
+        
         return template ? JSON.parse(JSON.stringify(template)) : null;
     }
 
     /**
      * Processes a player's decision during an event.
+     * Updated to support fetching the root definition from either RANDOM_EVENTS or DB.STORY_EVENTS.
      */
     resolveChoice(eventId, choiceId, gameState, simulationService, uiManager = null) {
-        const eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
+        let eventDef = RANDOM_EVENTS.find(e => e.id === eventId);
+        
+        // Phase 3 Support: Story Event parsing via Facade
+        if (!eventDef && DB.STORY_EVENTS) {
+            eventDef = DB.STORY_EVENTS[eventId];
+        }
+
         if (!eventDef) throw new Error(`Event not found: ${eventId}`);
 
         const choiceDef = eventDef.choices.find(c => c.id === choiceId);
@@ -30281,6 +30507,7 @@ export class GameState {
             },
             pendingTravel: null,
             pendingEventChains: [], // Event System 3.0: Array of FIFO queued objects
+            pendingStoryEvents: [], // Story Events queue
             
             // --- SYSTEM STATES V3 ---
             systemStates: { // Schema Alignment
@@ -30312,7 +30539,7 @@ export class GameState {
                 ),
                 seenCommodityMilestones: [], financeLog: [],
                 seenAutoSaveNotice: false, // V4 SYSTEM: Notification flag
-                activePerks: {}, seenEvents: [], activeShipId: SHIP_IDS.WANDERER, 
+                activePerks: {}, seenEvents: [], seenStoryEvents: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
                 unlockedOfficerIds: [], // Added for Officer Acquisition Pipeline
@@ -31713,6 +31940,7 @@ export class SolStationService {
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
+ * UPDATED: Includes new QUEUE_STORY_EVENT action hooks during accept/complete.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -31944,6 +32172,10 @@ export class MissionService {
                     this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ⌬ ${formatCredits(action.amount)} upon mission acceptance.`);
                     
                     this.gameState.setState({});
+                } else if (action.type === 'QUEUE_STORY_EVENT') {
+                    if (this.simulationService) {
+                        this.simulationService.queueStoryEvent(action.eventId);
+                    }
                 }
             });
         }
@@ -32602,6 +32834,8 @@ export class MissionService {
                     if (newTier > this.gameState.player.revealedTier) {
                         this.gameState.player.revealedTier = newTier;
                     }
+                } else if (action.type === 'QUEUE_STORY_EVENT') {
+                    this.simulationService.queueStoryEvent(action.eventId);
                 }
             });
         }
@@ -34719,6 +34953,7 @@ export class SystemStateService {
  * @fileoverview Handles all aspects of interstellar travel, including
  * initiating trips, calculating costs, and managing the random event system.
  * UPDATED: Re-routes modal resolution specifically to UIEventControl intercept hook.
+ * UPDATED: Cleaned up Starfield handling to allow persistence during Story Events.
  */
 import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
@@ -34864,12 +35099,76 @@ export class TravelService {
 
         const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
         if (!isFirstTutorialFlight && !useFoldedDrive) { 
-            if (this._checkForRandomEvent(locationId)) {
-                return;
-            }
+            this._processStoryEvents(locationId, useFoldedDrive, 0);
+            return;
         }
 
         this.initiateTravel(locationId, { useFoldedDrive });
+    }
+
+    /**
+     * Recursively processes the pending story events queue up to a limit of 2 per trip.
+     * Persists the starfield background and overrides standard random events.
+     * @private
+     */
+    _processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount = 0) {
+        if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
+        
+        if (eventsResolvedCount >= 2 || this.gameState.pendingStoryEvents.length === 0) {
+            // Processing complete. Hand off to actual travel sequence.
+            if (eventsResolvedCount > 0) {
+                this.initiateTravel(locationId, { useFoldedDrive });
+            } else {
+                if (!this._checkForRandomEvent(locationId)) {
+                    this.initiateTravel(locationId, { useFoldedDrive });
+                }
+            }
+            return;
+        }
+
+        const eventId = this.gameState.pendingStoryEvents.shift();
+        const eventDef = DB.STORY_EVENTS[eventId];
+        
+        if (!eventDef) {
+            this.logger.error('TravelService', `Story event ${eventId} not found in registry.`);
+            this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount);
+            return;
+        }
+
+        this.logger.info.system('Event', this.gameState.day, 'STORY_EVENT_TRIGGER', `Triggered story event: ${eventDef.title}`);
+        
+        // Secure state to protect against hard closures during modal rendering
+        const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[locationId]?.time || 7;
+        this.gameState.setState({ pendingTravel: { destinationId: locationId, days: baseTime } });
+
+        this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+            if (choiceId && eventDef.choices) {
+                const choiceDef = eventDef.choices.find(c => c.id === choiceId);
+                if (choiceDef && choiceDef.resolution) {
+                    const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
+                    if (result && result.effects && result.effects.length > 0) {
+                        if (this.uiManager.eventControl && this.uiManager.eventControl.showEventResultModal) {
+                            this.uiManager.eventControl.showEventResultModal(
+                                result.title,
+                                result.text,
+                                result.effects,
+                                () => this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1)
+                            );
+                        } else if (this.uiManager.showEventResultModal) {
+                            this.uiManager.showEventResultModal(
+                                result.title,
+                                result.text,
+                                result.effects,
+                                () => this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1)
+                            );
+                        }
+                        return; // Halt recursion until result modal resolves
+                    }
+                }
+            }
+            // If linear event (no choices) or effectless choice, immediately recurse
+            this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1);
+        });
     }
 
     initiateTravel(locationId, eventMods = {}) {
@@ -35056,13 +35355,6 @@ export class TravelService {
             return;
         }
 
-        // VIRTUAL WORKBENCH MODIFICATION: Phase 1 (Event Blocks)
-        if (eventMods.forceEvent && !eventMods.useFoldedDrive) {
-            if (this._checkForRandomEvent(locationId, true)) {
-                return;
-            }
-        }
-
         const hullStressMod = GameAttributes.getHullStressModifier(upgrades);
         let travelHullDamage = Math.ceil(baseTravelTime * GAME_RULES.HULL_DECAY_PER_TRAVEL_DAY * hullStressMod * 0.8);
         
@@ -35183,7 +35475,6 @@ export class TravelService {
         const finalCallback = () => {
             this.gameState.isTraveling = false;
 
-            // VIRTUAL WORKBENCH MODIFICATION: Phase 1 (Event Blocks)
             if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                 this.gameState.pendingEventChains.forEach(chain => {
                     chain.tripsRemaining--;
@@ -37174,6 +37465,30 @@ export class SimulationService {
         }
     }
 
+    /**
+     * Queues a Story Event into the GameState. Ensures one-shot events do not duplicate.
+     * @param {string} eventId 
+     * @param {boolean} force - If true, bypasses the seenStoryEvents restriction.
+     */
+    queueStoryEvent(eventId, force = false) {
+        if (!DB.STORY_EVENTS || !DB.STORY_EVENTS[eventId]) {
+            this.logger.error('SimulationService', `Story event ${eventId} not found.`);
+            return;
+        }
+        const eventDef = DB.STORY_EVENTS[eventId];
+        
+        if (!this.gameState.player.seenStoryEvents) this.gameState.player.seenStoryEvents = [];
+        if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
+
+        if (force || !this.gameState.player.seenStoryEvents.includes(eventId) || eventDef.repeatable) {
+            this.gameState.pendingStoryEvents.push(eventId);
+            if (!eventDef.repeatable && !this.gameState.player.seenStoryEvents.includes(eventId)) {
+                this.gameState.player.seenStoryEvents.push(eventId);
+            }
+            this.logger.info.system('SimulationService', this.gameState.day, 'STORY_EVENT_QUEUED', `Queued story event: ${eventId}`);
+        }
+    }
+
     forceTriggerEvent(eventId) {
         const rawEventDef = this.randomEventService.getEventById(eventId);
         if (!rawEventDef) {
@@ -37181,7 +37496,7 @@ export class SimulationService {
             return;
         }
 
-        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${rawEventDef.template.title}`);
+        this.logger.info.system('SimulationService', this.gameState.day, 'EVENT_FORCE', `Debug forcing event: ${rawEventDef.template?.title || rawEventDef.title}`);
         
         const eventDef = { ...rawEventDef };
         if (eventDef.choices) {
@@ -37195,9 +37510,15 @@ export class SimulationService {
             });
         }
         
-        this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
-            this.resolveEventChoice(eventId, choiceId);
-        });
+        if (DB.STORY_EVENTS && DB.STORY_EVENTS[eventId]) {
+            this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+                if (choiceId) this.resolveEventChoice(eventId, choiceId);
+            });
+        } else {
+            this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
+                this.resolveEventChoice(eventId, choiceId);
+            });
+        }
     }
 
     resolveEventChoice(eventId, choiceId) {
@@ -46948,6 +47269,10 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [37.84] - 2026-4-20
+-  added story event system
+-  added story event debug
+
 # [37.82] - 2026-4-20
 -  ship card tooltip polish
 -  ship upgrade animation polish
@@ -50206,7 +50531,7 @@ All notable plans and desirables for the Orbital Trading project will be documen
 
 ## Immediate
 
-Act XX black screen intermissions
+- Act XX black screen intermissions
 
 News Ticker anomalies
 - story related

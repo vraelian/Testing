@@ -2,6 +2,7 @@
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
+ * UPDATED: Includes new QUEUE_STORY_EVENT action hooks during accept/complete.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -233,6 +234,10 @@ export class MissionService {
                     this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ⌬ ${formatCredits(action.amount)} upon mission acceptance.`);
                     
                     this.gameState.setState({});
+                } else if (action.type === 'QUEUE_STORY_EVENT') {
+                    if (this.simulationService) {
+                        this.simulationService.queueStoryEvent(action.eventId);
+                    }
                 }
             });
         }
@@ -891,6 +896,8 @@ export class MissionService {
                     if (newTier > this.gameState.player.revealedTier) {
                         this.gameState.player.revealedTier = newTier;
                     }
+                } else if (action.type === 'QUEUE_STORY_EVENT') {
+                    this.simulationService.queueStoryEvent(action.eventId);
                 }
             });
         }

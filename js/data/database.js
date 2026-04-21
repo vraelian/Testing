@@ -11,6 +11,7 @@ import { CONSUMABLES } from './items.js';
 // --- SYSTEM STATES V3 ---
 import { SYSTEM_STATE_REGISTRY } from './systemStateRegistry.js';
 // --- END SYSTEM STATES V3 ---
+import { STORY_EVENTS } from './events/storyEventsRegistry.js';
 
 // --- In-Game Date Configuration ---
 export const DATE_CONFIG = {
@@ -142,6 +143,9 @@ export const DB = {
 
     // --- Random Events Encountered During Travel ---
     RANDOM_EVENTS: RANDOM_EVENTS,
+
+    // --- Story Events ---
+    STORY_EVENTS: STORY_EVENTS,
 
     // --- [[START]] VIRTUAL WORKBENCH (Phase 3) ---
     SHIPS: SHIP_DATABASE,

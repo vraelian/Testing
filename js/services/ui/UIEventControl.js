@@ -99,9 +99,133 @@ export class UIEventControl {
         });
     }
 
+    /**
+     * Executes the CRT instantiation and resolution sequence for Story Events.
+     * Maps faction themes, injects character portraits, and supports both branching 
+     * choice menus and simple linear dismissals.
+     * @param {Object} eventDef - The definition object from STORY_EVENTS.
+     * @param {Function} choicesCallback - Resolution hook passing the selected choice.id (or null if none).
+     */
+    showStoryEventModal(eventDef, choicesCallback) {
+        const title = eventDef.title || 'Incoming Transmission';
+        const description = eventDef.text || '';
+
+        // Ensure backdrop is completely transparent to reveal starfield
+        const targetModal = document.getElementById('story-event-modal');
+        if (targetModal) {
+            targetModal.style.transition = 'none';
+            targetModal.style.backgroundColor = 'transparent';
+            targetModal.style.backdropFilter = 'none';
+        }
+
+        this.manager.queueModal('story-event-modal', title, description, null, {
+            nonDismissible: true,
+            theme: eventDef.theme || 'default',
+            portraitId: eventDef.portraitId,
+            contentClass: 'text-center',
+            noModalVisible: true, // Bypass standard CSS fade-in
+            customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('.modal-content');
+                
+                // Clean instantiation
+                modalContent.classList.remove('sev-crt-shutdown');
+                modalContent.classList.add('sev-crt-turn-on');
+                modalContent.style.animationDuration = '0.4s';
+                
+                if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+                modalContent._crtTimeout = setTimeout(() => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.style.animationDuration = '';
+                }, 400);
+
+                const choicesContainer = modal.querySelector('#story-event-choices-container');
+                const btnContainer = modal.querySelector('#story-event-button-container');
+                
+                choicesContainer.innerHTML = '';
+                btnContainer.innerHTML = '';
+
+                const crtCloseHandler = (choiceId = null) => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.classList.add('sev-crt-shutdown');
+                    modalContent.style.animationDuration = '0.35s';
+                    
+                    setTimeout(() => {
+                        if (this.manager.modalEngine && this.manager.modalEngine.destroyModalInstant) {
+                            this.manager.modalEngine.destroyModalInstant('story-event-modal');
+                        } else {
+                            modal.classList.add('hidden');
+                        }
+                        choicesCallback(choiceId);
+                    }, 340);
+                };
+
+                // Generate Choice Buttons (Branching Event)
+                if (eventDef.choices && eventDef.choices.length > 0) {
+                    btnContainer.classList.add('hidden');
+                    choicesContainer.classList.remove('hidden');
+
+                    eventDef.choices.forEach((choice) => {
+                        const button = document.createElement('button');
+                        button.className = 'btn w-full p-4 hover:bg-slate-700 mb-2 event-choice-btn';
+                        if (choice.disabled) {
+                            button.disabled = true;
+                            button.classList.add('opacity-50', 'cursor-not-allowed');
+                        }
+                        
+                        const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
+                        const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
+                        const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
+
+                        let colorClass = 'text-gray-400'; 
+                        if (subText) {
+                            const lower = subText.toLowerCase();
+                            if (lower.includes('space')) {
+                                colorClass = 'text-req-yellow';
+                            } else if (lower.includes('delay')) {
+                                colorClass = 'text-delay-blue';
+                            } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium', 'damage', 'drain', 'stress'].some(k => lower.includes(k))) {
+                                colorClass = 'text-cost-orange';
+                            }
+                        }
+
+                        button.innerHTML = `
+                            <span class="choice-header">${headerText}</span>
+                            ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
+                        `;
+                        
+                        if (choice.tooltip) button.setAttribute('title', choice.tooltip);
+
+                        button.onclick = () => crtCloseHandler(choice.id);
+                        choicesContainer.appendChild(button);
+                    });
+                } 
+                // Generate Single Dismissal Button (Linear Event)
+                else {
+                    choicesContainer.classList.add('hidden');
+                    btnContainer.classList.remove('hidden');
+                    
+                    const confirmBtn = document.createElement('button');
+                    confirmBtn.className = 'btn px-6 py-2 w-full max-w-xs';
+                    confirmBtn.innerHTML = eventDef.confirmText || 'Confirm';
+                    confirmBtn.onclick = () => crtCloseHandler(null);
+                    
+                    btnContainer.appendChild(confirmBtn);
+                }
+            }
+        });
+    }
+
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
          const description = event.template?.description || event.scenario || 'No description available.';
+
+         // Strip standard darkening to persist the starfield
+         const targetModal = document.getElementById('random-event-modal');
+         if (targetModal) {
+             targetModal.style.transition = 'none';
+             targetModal.style.backgroundColor = 'transparent';
+             targetModal.style.backdropFilter = 'none';
+         }
 
          this.manager.queueModal('random-event-modal', title, description, null, {
             nonDismissible: true,
@@ -599,6 +723,14 @@ export class UIEventControl {
              title = 'System Alert'; 
              text = '';
              effects = [];
+        }
+
+        // Strip standard darkening to persist the starfield
+        const targetModal = document.getElementById('event-result-modal');
+        if (targetModal) {
+            targetModal.style.transition = 'none';
+            targetModal.style.backgroundColor = 'transparent';
+            targetModal.style.backdropFilter = 'none';
         }
 
         let pendingOverwriteId = null;
