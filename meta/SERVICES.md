@@ -31,7 +31,8 @@ Dependencies: None.
 
 TravelService (F036)
 Responsibility: Manages the travel loop. Calculates fuel/time costs, applies Convoy Taxes, and triggers random events.
-Dependencies: GameState, TimeService, RandomEventService.
+Key Behavior: Directly oversees the orchestration of the Ship Destruction and Towing flows (utilizing the Web Animations API for cinematic presentation), aggressively terminates ephemeral `activeHotIntel` loops upon initiation, and acts as the lifecycle manager for Ship Status Effects (calculating duration ticks and triggering expirations per travel leg).
+Dependencies: GameState, TimeService, RandomEventService, StoryEventService.
 
 MarketService (F010)
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
@@ -48,8 +49,9 @@ Key Behavior: Triggers daily/weekly simulation ticks (Market, News, Weather). Ma
 Dependencies: GameState, MarketService, BankruptcyService, SystemStateService, SolStationService.
 
 MissionService (F018)
-Responsibility: Coordinators the Mission System 2.0 lifecycle. Delegates logic to evaluators.
-Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator.
+Responsibility: Coordinates the Mission System 2.0 lifecycle.
+Key Behavior: Delegates logic to evaluators (`MissionTriggerEvaluator`, `MissionObjectiveEvaluator`, and `FlagEvaluator`). Facilitates massive bulk objectives by handling localized `depositMissionCargo` loops. Validates two-step progression, explicit license unlocks, and executes cross-system integration via `FlagMutators`.
+Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator, FlagEvaluator, FlagMutator.
 
 SolStationService (F098)
 Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
@@ -70,17 +72,21 @@ Responsibility: Manages procedural Economic Weather and systemic states across t
 Key Behavior: Rolls conditions weekly that apply temporary, global modifiers to baseline market math and event generation.
 Dependencies: GameState, TimeService, Logger.
 
-3. Event System Services (Event 2.0)
+3. Event System Services (Event 2.0 & Story Events)
 RandomEventService
-Responsibility: The high-level coordinator for the random event system. Determines if an event occurs and which event is selected based on contextual weight and active System States.
+Responsibility: The high-level coordinator for the procedural random event system. Determines if an event occurs and which event is selected based on contextual weight and active System States.
 Dependencies: GameState, ConditionEvaluator.
 
-ConditionEvaluator
-Responsibility: A stateless utility service that validates requirements.
+StoryEventService
+Responsibility: The coordinator for the bespoke Story Event System. Evaluates explicit narrative conditions, triggers Event-Chains, and synchronizes with Mission Flags.
+Dependencies: GameState, FlagEvaluator, FlagMutator.
+
+ConditionEvaluator & FlagEvaluator
+Responsibility: Stateless utility services that validate requirements. `ConditionEvaluator` handles inventory and standard state; `FlagEvaluator` specifically parses `storyFlags` for narrative triggers.
 Dependencies: GameState (Read-only).
 
-OutcomeResolver
-Responsibility: Handles the logic of the player's choice.
+OutcomeResolver & FlagMutator
+Responsibility: Handles the logic of the player's choice. `FlagMutator` explicitly guarantees safe, tracked mutation of cross-system narrative flags.
 Dependencies: GameState, eventEffectResolver.
 
 DynamicValueResolver
@@ -88,13 +94,13 @@ Responsibility: Calculates dynamic integer values for event effects based on gam
 Dependencies: GameState (Read-only), DB.
 
 eventEffectResolver
-Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome.
+Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome, including appending new Ship Status Effects to the active vessel.
 Dependencies: GameState, SimulationService, DynamicValueResolver.
 
 4. UI & Presentation Services
 UIManager (F017) [FACADE]
-Responsibility: The master "Switchboard". Instantiates and coordinates the Domain Controllers. Handles the main render loop.
-Dependencies: UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
+Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`). Responsible for the main render loop and proxying logic to delegates.
+Dependencies: Logger, EffectsManager, TravelAnimationService, UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
 
 Controllers (Delegates):
 * UIModalEngine: Manages the modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads to restructure modal headers and inject CSS sprite portraits via the global `PortraitRegistry`.
@@ -102,8 +108,8 @@ Controllers (Delegates):
 * UIToastManager: Manages Universal Toast notifications, DOM injection, and animation timing.
 * UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
 * UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel interactions.
-* UIHangarControl: Manages Hangar carousels, ship details, and the Upgrade Installation flow.
-* UIEventControl: "World" interactions (Maps, Lore, Random Events, EULA, Launch Modals).
+* UIHangarControl: Manages Hangar carousels, ship card tooltips (including Ship Status Effects), and the Upgrade Installation flow.
+* UIEventControl: "World" interactions (Maps, Lore, Procedural Events, Story Events, EULA, Launch Modals).
 * UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
 
 IntelMarketRenderer (F058)
@@ -123,7 +129,7 @@ Responsibility: Manages the high-fidelity visual transition during travel via Ca
 Dependencies: DB (Travel Visuals).
 
 AnimationService (F060)
-Responsibility: Provides a generic, promise-based utility (`playBlockingAnimation`) to run CSS animations and block further execution until completion.
+Responsibility: Provides a generic, promise-based utility (`playBlockingAnimation`) to run CSS animations and block further execution until completion. Expanded to support dynamic Ship Upgrade animations and Status Effect visualizations.
 Dependencies: None.
 
 5. Persistence Services

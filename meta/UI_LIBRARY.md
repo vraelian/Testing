@@ -43,9 +43,9 @@ Cursor9999Custom hardware cursors (if applicable).
 2. Component Blueprints
 
 2.1 Standard Card (.card)
-Used for Commodities, Ships, and Missions.
+Used for Commodities, Ships, and Missions. Includes pre-hydration background rendering for textured implementations.
 HTML
-<div class="card" data-id="{id}">
+<div class="card card-textured" data-id="{id}" style="background-image: var(--ui-texture-base);">
     <div class="card-header">
         <span class="card-title">{Title}</span>
         <span class="badge">{Status}</span>
@@ -243,9 +243,28 @@ HTML
 
 2.18 Textured Elements (.textured-bg, .card-textured)
 Core structural classes enabling the high-fidelity UI overhaul. Relies on `AssetStorageService` blob URLs dynamically injected as CSS variables (`--ui-texture-base`) to avoid HTTP request blocking.
+
+2.19 Ship Status Effect Indicator (.status-effect-icon)
+A localized visual icon overlaid on the ship card in the Hangar/Shipyard views. Employs conditional CSS classes based on the effect's polarity (buff/debuff) to pulse or glow, while attaching detailed lifecycle descriptions to the tooltip pipeline.
 HTML
-<div class="card card-textured" style="background-image: var(--ui-texture-base);">
-    ...
+<div class="status-effect-indicator">
+    <button class="status-effect-icon buff" type="button" data-tooltip="{Effect Details}">
+        [ICON]
+    </button>
+</div>
+
+2.20 Enhanced Ship Card Tooltips (.ship-card-tooltip)
+Polished tooltip structures specifically for Ship Cards, dynamically calculating and displaying the net result of base stats + hardware upgrades + volatile status effects in a highly legible nested layout to prevent UI clutter on the primary card face.
+
+2.21 Story Event Modal (.story-event-modal)
+A distinct modal configuration utilized exclusively for bespoke narrative events. Extends the standard modal with enhanced text rendering constraints and specific layout properties designed for reading larger blocks of lore, distinguishing it visually from procedural traffic events.
+HTML
+<div class="modal story-event-modal">
+    <div class="modal-header"><h2>{Narrative Title}</h2></div>
+    <div class="modal-content narrative-scroll">...</div>
+    <div class="modal-footer flex-col">
+        <button class="btn btn-primary" type="button" data-action="resolve-story">{Choice A}</button>
+    </div>
 </div>
 
 3. CSS Utilities

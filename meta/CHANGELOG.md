@@ -6,6 +6,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [37.84] - 2026-4-20
 -  added story event system
 -  added story event debug
+-  updated meta files
 
 # [37.82] - 2026-4-20
 -  ship card tooltip polish

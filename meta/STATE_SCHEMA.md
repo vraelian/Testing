@@ -57,7 +57,7 @@ Contains all progression, assets, and statistics for the user.
 | `bankruptcy` | Object | Flags and trackers for insolvency status, grace periods, and active Repo Events. |
 | `revealedTier` | Number | Highest commodity tier visible (1-7). |
 | `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
-| **`storyFlags`** | **Object** | **Map of primitive data types tracking narrative progress, faction rep, and world state.** |
+| **`storyFlags`** | **Object** | **Map of primitive data types tracking narrative progress, faction rep, event-chain links, and world state. Strictly manipulated by FlagMutators.** |
 | **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
 |   `profitBonus` | Number | % Bonus to trade profits (e.g., 0.01 = 1%). |
 |   `intelCost` | Number | % Discount on Intel purchases. |
@@ -77,7 +77,7 @@ Contains all progression, assets, and statistics for the user.
 | `ownedShipIds` | Array<String> | List of all ship IDs owned by the player. |
 | `fleet` | Object | Map of stored `shipId`s to their status, docked location, and specific cargo configurations. |
 | `officerRoster` | Array<String> | List of recruited officer IDs. |
-| `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[] }`. |
+| `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[], statusEffects[] }`. |
 | `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
 | `unlockedLicenseIds` | Array<String> | List of trade licenses owned. |
 | `unlockedLocationIds` | Array<String> | List of locations visited/unlocked. |
