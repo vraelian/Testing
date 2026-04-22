@@ -12,9 +12,10 @@ export class MissionObjectiveEvaluator {
      * @param {import('../GameState.js').GameState} gameState - The current state of the game.
      * @param {import('../SimulationService.js').SimulationService} [simulationService] - Optional access to derived stats.
      * @param {object} [objProgress={}] - The existing progress object of the objective (contains current, target, deposited).
+     * @param {object} [missionProgress={}] - The existing progress object for the entire mission.
      * @returns {object} { current: number, target: number, isMet: boolean }
      */
-    evaluate(objective, gameState, simulationService, objProgress = {}) {
+    evaluate(objective, gameState, simulationService, objProgress = {}, missionProgress = {}) {
         let current = 0;
         
         const currentProgress = objProgress.current || 0;
@@ -39,7 +40,8 @@ export class MissionObjectiveEvaluator {
         switch (objective.type) {
             // --- RESOURCE / INVENTORY CHECKS ---
             case 'have_item':
-            case 'DELIVER_ITEM': {
+            case 'DELIVER_ITEM':
+            case 'HAVE_ITEM': {
                 const itemId = objective.goodId || objective.target;
                 let totalQty = 0;
                 // --- FLEET OVERFLOW SYSTEM: Aggregate across entire fleet ---
@@ -54,6 +56,7 @@ export class MissionObjectiveEvaluator {
             }
 
             case 'have_credits':
+            case 'HAVE_CREDITS':
             case 'WEALTH_CHECK':
                 current = gameState.player.credits;
                 break;
@@ -88,27 +91,36 @@ export class MissionObjectiveEvaluator {
             case 'TRADE_ITEM': {
                 const itemId = objective.goodId || objective.target;
                 const tradeType = objective.tradeType; 
+                const targetLoc = objective.target; 
                 let tradeCount = 0;
                 
                 const log = gameState.player.financeLog || [];
                 const commodity = DB.COMMODITIES ? DB.COMMODITIES.find(c => c.id === itemId) : null;
                 const searchName = commodity ? commodity.name : itemId;
                 
+                const acceptDay = missionProgress.acceptDay || 0;
+                
                 log.forEach(entry => {
-                    if (entry.type === 'trade' && entry.description.includes(searchName)) {
-                        const isBuy = entry.description.startsWith('Bought');
-                        const isSell = entry.description.startsWith('Sold');
+                    // Only count trades that occurred AFTER the mission was accepted
+                    if (entry.day >= acceptDay) {
+                        // Enforce location matching if the objective specifically requires it
+                        if (targetLoc && entry.locationId && entry.locationId !== targetLoc) return;
                         
-                        const matchesType = !tradeType || 
-                                            (tradeType.toLowerCase() === 'buy' && isBuy) || 
-                                            (tradeType.toLowerCase() === 'sell' && isSell);
-                        
-                        if (matchesType) {
-                            const match = entry.description.match(/\s(\d+)x\s/);
-                            if (match) {
-                                tradeCount += parseInt(match[1], 10);
-                            } else {
-                                tradeCount += 1;
+                        if (entry.type === 'trade' && entry.description.includes(searchName)) {
+                            const isBuy = entry.description.startsWith('Bought');
+                            const isSell = entry.description.startsWith('Sold');
+                            
+                            const matchesType = !tradeType || 
+                                                (tradeType.toLowerCase() === 'buy' && isBuy) || 
+                                                (tradeType.toLowerCase() === 'sell' && isSell);
+                            
+                            if (matchesType) {
+                                const match = entry.description.match(/\s(\d+)x\s/);
+                                if (match) {
+                                    tradeCount += parseInt(match[1], 10);
+                                } else {
+                                    tradeCount += 1;
+                                }
                             }
                         }
                     }

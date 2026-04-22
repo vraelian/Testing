@@ -42,6 +42,11 @@ export class ConditionEvaluator {
         let threshold = this.valueResolver.resolve(value, gameState);
 
         switch (type) {
+            case 'ACTIVE_MISSION':
+                currentValue = gameState.missions.activeMissionIds.includes(target) ? 1 : 0;
+                threshold = 1; // Equates to a boolean check (1 >= 1)
+                break;
+
             // --- STORY FLAGS ---
             case 'flag_is_true':
                 return (gameState.player.storyFlags && gameState.player.storyFlags[condition.flag]) === true;

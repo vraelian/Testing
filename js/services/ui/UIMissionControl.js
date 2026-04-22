@@ -18,6 +18,13 @@ function getOfficerRarityHex(rarity) {
     }
 }
 
+function formatShortCredits(num) {
+    if (num >= 1000) {
+        return (num / 1000).toFixed(0) + 'k';
+    }
+    return num.toString();
+}
+
 export class UIMissionControl {
     /**
      * @param {import('../UIManager.js').UIManager} manager
@@ -175,6 +182,10 @@ export class UIMissionControl {
                     displayStr = `[${current}/${target}]`;
                     percent = Math.min(100, (current / (target || 100)) * 100);
                 }
+                else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(firstObj.type)) {
+                    displayStr = `[ <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(current)} / ${formatShortCredits(target)}</span> ]`;
+                    percent = Math.min(100, (current / target) * 100);
+                }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
                     displayStr = `[${current}/${target}]`;
@@ -198,10 +209,11 @@ export class UIMissionControl {
                 }
             }
 
-            objectiveTextEl.textContent = `${objectiveLabel}`;
-            objectiveProgressEl.textContent = displayStr;
+            // Inject as HTML to support the cyan credit styling
+            objectiveTextEl.innerHTML = `${objectiveLabel}`;
+            objectiveProgressEl.innerHTML = displayStr;
 
-            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
+            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
             
             const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
             const isReady = progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase;
@@ -226,13 +238,17 @@ export class UIMissionControl {
 
     _getObjectiveLabel(obj) {
         if (!obj) return 'Objective';
-        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             return `Deliver ${name}`;
+             return `Procure ${name}`;
         }
         if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
              const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
+             if (obj.target) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
+                 return `${action} ${name} on ${locName}`;
+             }
              return `${action} ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
@@ -240,7 +256,9 @@ export class UIMissionControl {
              return `Travel to ${name}`;
         }
         if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'Clear All Debt';
-        if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
+        if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+             return `Amass <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
+        }
         
         if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Refuel Ship';
         if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Repair Hull';
@@ -391,6 +409,8 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'license') {
                                 const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
                                 content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
+                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -423,7 +443,7 @@ export class UIMissionControl {
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
-                        if (['have_item', 'DELIVER_ITEM', 'travel_to', 'TRAVEL_TO'].includes(obj.type)) {
+                        if (['have_item', 'DELIVER_ITEM', 'HAVE_ITEM', 'travel_to', 'TRAVEL_TO'].includes(obj.type)) {
                             if (obj.target) uniqueDestinations.add(obj.target);
                         }
                     });
@@ -434,11 +454,14 @@ export class UIMissionControl {
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
-                        let text = this._getObjectiveDescription(obj, hasSingleDestination).toUpperCase();
+                        let text = this._getObjectiveDescription(obj, hasSingleDestination);
                         
-                        text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                        // Prevent \d+ replacement from breaking HTML classes generated for HAVE_CREDITS
+                        if (!['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+                            text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                        }
                         
-                        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                             const objKey = obj.id || obj.goodId || obj.target;
                             const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
                             const targetQty = obj.quantity || obj.value || 1;
@@ -552,7 +575,7 @@ export class UIMissionControl {
                         let canDeposit = false;
                         if (mission.objectives) {
                             mission.objectives.forEach(obj => {
-                                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                                     const itemId = obj.goodId || obj.target;
                                     const objKey = obj.id || obj.goodId || obj.target;
                                     const targetQty = obj.quantity || obj.value || 1;
@@ -645,40 +668,44 @@ export class UIMissionControl {
     }
     
     _getObjectiveDescription(obj, omitLocation = false) {
-        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             let text = `Deliver ${obj.quantity || 1}x ${name}`;
+             let text = `DELIVER ${obj.quantity || 1}x ${name.toUpperCase()}`;
              if (obj.target && !omitLocation) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
-                 text += ` to ${locName}`;
+                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'UNKNOWN';
+                 text += ` TO ${locName.toUpperCase()}`;
              }
              return text;
         }
         if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
-             const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
-             return `${action} ${obj.quantity || 1}x ${name}`;
+             const action = obj.tradeType === 'buy' ? 'BUY' : 'SELL';
+             if (obj.target && !omitLocation) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'UNKNOWN';
+                 return `${action} ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
+             }
+             return `${action} ${obj.quantity || 1}x ${name.toUpperCase()}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-             if (omitLocation) return `Establish Presence`;
+             if (omitLocation) return `ESTABLISH PRESENCE`;
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
-             return `Travel to ${name}`;
+             return `TRAVEL TO ${name.toUpperCase()}`;
         }
-        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'Clear All Debt';
-        if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
-             return `Amass ${formatCredits(obj.value)} Credits`;
+        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'CLEAR ALL DEBT';
+        if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+             return `AMASS <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
         }
         if (obj.type === 'have_fuel_tank' || obj.type === 'HAVE_FUEL_TANK') {
-            return `Refuel Ship`;
+            return `REFUEL SHIP`;
         }
         if (obj.type === 'have_hull_pct' || obj.type === 'HAVE_HULL_PCT') {
-            return `Repair Hull`;
+            return `REPAIR HULL`;
         }
         if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
-            return `Visit the ${screenTarget} Screen`;
+            return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
         }
-        return `Complete Objective`;
+        return `COMPLETE OBJECTIVE`;
     }
 
     _showMissionCompletionModal(mission) {
@@ -776,6 +803,8 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'license') {
                                 const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
                                 content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
+                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }

@@ -124,6 +124,9 @@ export function renderMissionsScreen(gameState, missionService) {
                     const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
                     rewardTextParts.push(upgName.toUpperCase());
                 }
+                else if(r.type.toLowerCase() === 'fill_fleet_fuel') {
+                    rewardTextParts.push(`<span class="text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`);
+                }
                 else rewardTextParts.push(r.type.toUpperCase());
             });
         }

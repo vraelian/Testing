@@ -186,6 +186,15 @@ export class TravelService {
         }
 
         this.logger.info.system('Event', this.gameState.day, 'STORY_EVENT_TRIGGER', `Triggered story event: ${eventDef.title}`);
+
+        // --- PHASE 4: Initiate Warp Background early for Story Events ---
+        if (eventsResolvedCount === 0) {
+            if (useFoldedDrive) {
+                starfieldService.setFoldedSpaceWarp();
+            } else {
+                starfieldService.setEngageWarp();
+            }
+        }
         
         // Secure state to protect against hard closures during modal rendering
         const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[locationId]?.time || 7;
@@ -587,6 +596,9 @@ export class TravelService {
                     const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[destinationId]?.time || 7;
                     this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
                     
+                    // --- PHASE 4: Initiate Warp Background early ---
+                    starfieldService.setEngageWarp();
+
                     this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
                     return true;
                 }
@@ -646,6 +658,9 @@ export class TravelService {
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         
         this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
+
+        // --- PHASE 4: Initiate Warp Background early ---
+        starfieldService.setEngageWarp();
         
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;
