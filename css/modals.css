@@ -2289,3 +2289,47 @@
         -1px  1px 0 #000, 1px  1px 0 #000, 
          0 4px 8px rgba(0, 0, 0, 0.8);
 }
+
+/* ========================================================================= */
+/* --- ANOMALY THEME (Story Events & Kintsugi) ---                           */
+/* ========================================================================= */
+
+.modal-theme-anomaly {
+    --comm-color: #eab308;
+    --comm-color-bright: #fef08a;
+    --comm-color-glow-low: rgba(234, 179, 8, 0.4);
+    --comm-color-glow-mid: rgba(234, 179, 8, 0.5);
+    --comm-color-glow-high: rgba(234, 179, 8, 0.8);
+    --nameplate-bg: rgba(0, 0, 0, 0.9);
+    --nameplate-border: #eab308;
+    --nameplate-text: #fef08a;
+    
+    background: linear-gradient(145deg, #000000 0%, #374151 60%, #ca8a04 100%) !important;
+    border: 2px solid #eab308 !important; /* Yellow 500 */
+    box-shadow: 0 0 30px rgba(234, 179, 8, 0.4), inset 0 0 20px rgba(234, 179, 8, 0.2) !important;
+    color: #f3f4f6 !important;
+}
+
+.modal-theme-anomaly * {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.modal-theme-anomaly h3, .modal-theme-anomaly #event-title {
+    color: #fef08a !important; /* Yellow 200 */
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.6) !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.modal-theme-anomaly .btn {
+    border-color: #eab308 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: #fef08a !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-theme-anomaly .btn:hover:not(:disabled) {
+    background: rgba(234, 179, 8, 0.2) !important;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.4) !important;
+    transform: translateY(-2px);
+}

@@ -451,7 +451,8 @@ export class SimulationService {
             type: type, 
             amount: amount,
             balance: this.gameState.player.credits,
-            description: description
+            description: description,
+            locationId: this.gameState.currentLocationId
         });
         while (this.gameState.player.financeLog.length > GAME_RULES.FINANCE_HISTORY_LENGTH) {
             this.gameState.player.financeLog.shift();
@@ -647,6 +648,26 @@ export class SimulationService {
                     const currentShip = this.gameState.player.activeShipId;
                     if (this.gameState.player.shipStates[currentShip]) {
                         this.gameState.player.shipStates[currentShip].fuel = DB.SHIPS[currentShip].maxFuel;
+                    }
+                    break;
+                case 'fill_fleet_fuel':
+                    let totalFuelRestored = 0;
+                    this.gameState.player.ownedShipIds.forEach(shipId => {
+                        if (this.gameState.player.shipStates[shipId]) {
+                            const stats = this.getEffectiveShipStats(shipId) || DB.SHIPS[shipId];
+                            if (stats) {
+                                const currentFuel = this.gameState.player.shipStates[shipId].fuel;
+                                const maxFuel = stats.maxFuel;
+                                if (currentFuel < maxFuel) {
+                                    totalFuelRestored += (maxFuel - currentFuel);
+                                    this.gameState.player.shipStates[shipId].fuel = maxFuel;
+                                }
+                            }
+                        }
+                    });
+                    this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REFUEL', `Fully refueled all ships in the fleet. Restored ${Math.round(totalFuelRestored)} fuel.`);
+                    if (totalFuelRestored > 0 && this.uiManager) {
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', 2000);
                     }
                     break;
                 case 'upgrade':

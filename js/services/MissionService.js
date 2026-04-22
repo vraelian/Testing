@@ -160,10 +160,11 @@ export class MissionService {
             this._forcedTerminalMissions.delete(missionId);
         }
         
-        // Initialize progress with isCompletable flag
+        // Initialize progress with isCompletable flag AND acceptDay timestamp
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {},
-            isCompletable: false
+            isCompletable: false,
+            acceptDay: this.gameState.day
         };
 
         // Initialize deferred cargo state for Logistics missions
@@ -202,7 +203,15 @@ export class MissionService {
                  commodityId: 'water_ice',
                  dealLocationId: 'loc_earth',
                  discountPercent: 0.80, // Heavy markup to ensure it stands out
-                 durationDays: 120 // Long runway for the player to figure out navigation
+                 durationDays: 120, // Long runway for the player to figure out navigation
+                 messageKey: 'STORY_HOOK_01'
+             });
+        } else if (missionId === 'mission_18' && this.simulationService && this.simulationService.intelService) {
+             this.simulationService.intelService.grantNarrativeIntel({
+                 commodityId: 'cybernetics', 
+                 dealLocationId: 'loc_pluto', 
+                 discountPercent: 0.70, 
+                 durationDays: 120 
              });
         }
 
@@ -312,7 +321,7 @@ export class MissionService {
                     let deposited = 0;
                     if (mission.objectives) {
                         mission.objectives.forEach(obj => {
-                            if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item') && (obj.goodId === goodId || obj.target === goodId)) {
+                            if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item' || obj.type === 'HAVE_ITEM') && (obj.goodId === goodId || obj.target === goodId)) {
                                 const objKey = obj.id || obj.goodId || obj.target;
                                 deposited += (progress.objectives[objKey]?.deposited || 0);
                             }
@@ -601,7 +610,7 @@ export class MissionService {
             let progressChanged = false;
             
             if (!this.gameState.missions.missionProgress[missionId]) {
-                this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false };
+                this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
             }
             const progress = this.gameState.missions.missionProgress[missionId];
 
@@ -614,7 +623,7 @@ export class MissionService {
                     }
                     
                     const currentObjProgress = progress.objectives[objKey];
-                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService, currentObjProgress);
+                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService, currentObjProgress, progress);
                     
                     if (progress.objectives[objKey].current !== result.current || progress.objectives[objKey].target !== result.target) {
                         progress.objectives[objKey].current = result.current;
@@ -667,7 +676,7 @@ export class MissionService {
         // --- PRE-CHECK: Build Drain Plan ---
         const drainPlan = {};
         mission.objectives.forEach(obj => {
-            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                 const itemId = obj.goodId || obj.target;
                 const targetQty = obj.quantity || obj.value || 1;
                 const objKey = obj.id || obj.goodId || obj.target;
@@ -739,7 +748,7 @@ export class MissionService {
         let totalDepositedThisCall = 0;
 
         mission.objectives.forEach(obj => {
-            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                 const itemId = obj.goodId || obj.target;
                 const targetQty = obj.quantity || obj.value || 1;
                 const objKey = obj.id || obj.goodId || obj.target;
@@ -827,7 +836,7 @@ export class MissionService {
         // 1. Deduct objective items
         if (mission.objectives) {
             mission.objectives.forEach(obj => {
-                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                     const itemId = obj.goodId || obj.target;
                     const objKey = obj.id || obj.goodId || obj.target;
                     const deposited = progress?.objectives?.[objKey]?.deposited || 0;

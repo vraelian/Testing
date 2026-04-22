@@ -127,6 +127,11 @@ export class UIEventControl {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 
+                // FORCE THEME APPLICATION (Overrides default engine if missed)
+                if (eventDef.theme) {
+                    modalContent.classList.add(`modal-theme-${eventDef.theme}`);
+                }
+                
                 // Clean instantiation
                 modalContent.classList.remove('sev-crt-shutdown');
                 modalContent.classList.add('sev-crt-turn-on');
@@ -138,11 +143,68 @@ export class UIEventControl {
                     modalContent.style.animationDuration = '';
                 }, 400);
 
-                const choicesContainer = modal.querySelector('#story-event-choices-container');
-                const btnContainer = modal.querySelector('#story-event-button-container');
+                // --- SCROLLABILITY WRAPPER FOR STORY TEXT ---
+                const descEl = modal.querySelector('[id$="-description"]');
+                if (descEl) {
+                    descEl.classList.add('text-[0.9rem]'); // Make text 1 point smaller
+                    descEl.style.marginBottom = '0';
+                    descEl.style.paddingBottom = '0';
+
+                    let outerWrapper = modal.querySelector('.mission-scroll-outer');
+                    if (!outerWrapper) {
+                        outerWrapper = document.createElement('div');
+                        outerWrapper.className = 'mission-scroll-outer w-full relative mt-2 mb-2';
+                        
+                        let wrapper = document.createElement('div');
+                        wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto overflow-x-hidden custom-scrollbar px-1 mb-0';
+                        wrapper.style.maxHeight = '240px'; 
+                        
+                        descEl.parentNode.insertBefore(outerWrapper, descEl);
+                        outerWrapper.appendChild(wrapper);
+                        wrapper.appendChild(descEl);
+                        
+                        let indicator = document.createElement('div');
+                        indicator.className = 'scroll-indicator-arrow';
+                        indicator.innerHTML = '&#8964;';
+                        indicator.style.transition = 'opacity 0.2s ease-in-out';
+                        outerWrapper.appendChild(indicator);
+
+                        wrapper.onscroll = () => {
+                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                            indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                        };
+                        
+                        setTimeout(() => {
+                            wrapper.scrollTop = 0;
+                            if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                                indicator.style.display = 'block';
+                                const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                                indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                            } else {
+                                indicator.style.display = 'none';
+                                indicator.style.opacity = '0';
+                            }
+                        }, 150);
+                    }
+                }
+
+                // Locate containers using wildcard selector in case UIModalEngine appends IDs
+                const choicesContainer = modal.querySelector('[id$="-choices-container"]');
+                const btnContainer = modal.querySelector('[id$="-button-container"]');
                 
-                choicesContainer.innerHTML = '';
-                btnContainer.innerHTML = '';
+                // Strip default heavy margins to tighten bottom padding
+                if (btnContainer) {
+                    btnContainer.classList.remove('mt-6', 'my-4', 'mb-6', 'mt-4');
+                    btnContainer.classList.add('mt-2', 'mb-1');
+                    btnContainer.style.paddingBottom = '0.25rem';
+                }
+                if (choicesContainer) {
+                    choicesContainer.classList.remove('mt-6', 'my-4', 'mb-6', 'mt-4');
+                    choicesContainer.classList.add('mt-2', 'mb-1');
+                }
+                
+                if (choicesContainer) choicesContainer.innerHTML = '';
+                if (btnContainer) btnContainer.innerHTML = '';
 
                 const crtCloseHandler = (choiceId = null) => {
                     modalContent.classList.remove('sev-crt-turn-on');
@@ -160,7 +222,7 @@ export class UIEventControl {
                 };
 
                 // Generate Choice Buttons (Branching Event)
-                if (eventDef.choices && eventDef.choices.length > 0) {
+                if (eventDef.choices && eventDef.choices.length > 0 && choicesContainer && btnContainer) {
                     btnContainer.classList.add('hidden');
                     choicesContainer.classList.remove('hidden');
 
@@ -200,7 +262,7 @@ export class UIEventControl {
                     });
                 } 
                 // Generate Single Dismissal Button (Linear Event)
-                else {
+                else if (choicesContainer && btnContainer) {
                     choicesContainer.classList.add('hidden');
                     btnContainer.classList.remove('hidden');
                     

@@ -5748,6 +5748,50 @@ card.
         -1px  1px 0 #000, 1px  1px 0 #000, 
          0 4px 8px rgba(0, 0, 0, 0.8);
 }
+
+/* ========================================================================= */
+/* --- ANOMALY THEME (Story Events & Kintsugi) ---                           */
+/* ========================================================================= */
+
+.modal-theme-anomaly {
+    --comm-color: #eab308;
+    --comm-color-bright: #fef08a;
+    --comm-color-glow-low: rgba(234, 179, 8, 0.4);
+    --comm-color-glow-mid: rgba(234, 179, 8, 0.5);
+    --comm-color-glow-high: rgba(234, 179, 8, 0.8);
+    --nameplate-bg: rgba(0, 0, 0, 0.9);
+    --nameplate-border: #eab308;
+    --nameplate-text: #fef08a;
+    
+    background: linear-gradient(145deg, #000000 0%, #374151 60%, #ca8a04 100%) !important;
+    border: 2px solid #eab308 !important; /* Yellow 500 */
+    box-shadow: 0 0 30px rgba(234, 179, 8, 0.4), inset 0 0 20px rgba(234, 179, 8, 0.2) !important;
+    color: #f3f4f6 !important;
+}
+
+.modal-theme-anomaly * {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.modal-theme-anomaly h3, .modal-theme-anomaly #event-title {
+    color: #fef08a !important; /* Yellow 200 */
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.6) !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.modal-theme-anomaly .btn {
+    border-color: #eab308 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: #fef08a !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-theme-anomaly .btn:hover:not(:disabled) {
+    background: rgba(234, 179, 8, 0.2) !important;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.4) !important;
+    transform: translateY(-2px);
+}
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -11610,6 +11654,9 @@ export function renderMissionsScreen(gameState, missionService) {
                     const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
                     rewardTextParts.push(upgName.toUpperCase());
                 }
+                else if(r.type.toLowerCase() === 'fill_fleet_fuel') {
+                    rewardTextParts.push(`<span class="text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`);
+                }
                 else rewardTextParts.push(r.type.toUpperCase());
             });
         }
@@ -15793,11 +15840,13 @@ export const LICENSE_MISSIONS = {
 import { TUTORIAL_MISSIONS } from './tutorial_missions.js';
 import { LICENSE_MISSIONS } from './license_missions.js';
 import { PHASE_ONE_MISSIONS } from './phase_one.js';
+import { PHASE_TWO_MISSIONS } from './phase_two.js';
 
 export const MISSION_REGISTRY = {
     ...TUTORIAL_MISSIONS,
     ...LICENSE_MISSIONS,
-    ...PHASE_ONE_MISSIONS
+    ...PHASE_ONE_MISSIONS,
+    ...PHASE_TWO_MISSIONS
     // Future mission packs (e.g. story_act_2, side_quests) will be spread here.
 };
 --- END OF FILE: ./js/data/missions/missionRegistry.js ---
@@ -16037,6 +16086,78 @@ export const PHASE_ONE_MISSIONS = {
     }
 };
 --- END OF FILE: ./js/data/missions/phase_one.js ---
+
+--- START OF FILE: ./js/data/missions/phase_two.js ---
+// js/data/missions/phase_two.js
+export const PHASE_TWO_MISSIONS = {
+    'mission_18': {
+        id: "mission_18",
+        name: "The Seed Capital",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain. I am Kiern, Research Director for the Venusian Syndicate. I have noted your recent logistical vectors. The Syndicate has highly lucrative work available for an aspiring operator who isn't paralyzed by Guild regulations.<br><br>But first, you must prove you are more than a debtor. <b>Amass a net worth of ⌬ 60,000</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel to assist you.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_17" } ],
+        grantedIntel: [ { name: "Syndicate Tip", location: "loc_venus" } ],
+        objectives: [
+            { "id": "have_60k", "type": "HAVE_CREDITS", "value": 60000 },
+            { "id": "travel_venus", "type": "TRAVEL_TO", "target": "loc_venus" }
+        ],
+        completion: {
+            locationId: "loc_venus",
+            title: "Welcome to Venus",
+            text: "Captain. Your accounts reflect the requested liquidity. You have proven yourself capable of surviving the market; now let us see if you can manipulate it.",
+            buttonText: "View Contracts"
+        },
+        rewards: []
+    },
+    'mission_19': {
+        id: "mission_19",
+        name: "The Synthetic Smuggle",
+        type: "FACTION",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "The Guild relies on organic indentured labor to extract ice from Pluto. It is slow and agonizingly stable. Let's break their monopoly.<br><br><b>Purchase 15 Cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap, automated augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_18" } ],
+        objectives: [
+            { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15 },
+            { "id": "travel_pluto", "type": "TRAVEL_TO", "target": "loc_pluto" },
+            { "id": "sell_cybernetics", "type": "TRADE_ITEM", "goodId": "cybernetics", "tradeType": "sell", "quantity": 15, "target": "loc_pluto" }
+        ],
+        completion: {
+            locationId: "loc_pluto",
+            title: "A Calculated Fracture",
+            text: "Excellent work. The labor camps on Pluto are already in localized revolt. You have helped us introduce a necessary chaos.",
+            buttonText: "Accept Payment"
+        },
+        rewards: [ { "type": "credits", "amount": 35000 } ]
+    },
+    'mission_20': {
+        id: "mission_20",
+        name: "Promotional Stipend",
+        type: "PROMOTIONAL",
+        host: "STATION",
+        portraitId: "Business_11",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "<b>ATTENTION NEW CAPTAINS:</b><br><br>Jupiter Atmo Refineries welcomes you to the trade network! To celebrate our Q3 production surplus, we are offering a one-time <b>COMPLIMENTARY FLEET REFUEL</b> to newly licensed logistics operators.<br><br>Dock at any authorized Jovian orbital tether to claim your stipend.<br><br><i>Jupiter Atmo Refineries: Powering the Long Watch.</i>",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
+        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_story_kintsugi_1" } ],
+        objectives: [ { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" } ],
+        completion: {
+            locationId: "loc_jupiter",
+            title: "Voucher Accepted",
+            text: "Automated docking clamps secured.<br><br>Thank you for visiting Jupiter Atmo Refineries. Your fleet has been fully resupplied at no cost to you.",
+            buttonText: "Disengage"
+        },
+        rewards: [ { "type": "fill_fleet_fuel" } ]
+    }
+};
+--- END OF FILE: ./js/data/missions/phase_two.js ---
 
 --- START OF FILE: ./js/data/officers.js ---
 // js/data/officers.js
@@ -19721,6 +19842,25 @@ export const STORY_EVENTS = {
         text: 'TEST TEST TEST',
         confirmText: 'Log Transmission',
         choices: [] 
+    },
+    'evt_story_kintsugi_1': {
+        id: 'evt_story_kintsugi_1',
+        theme: 'anomaly',
+        portraitId: 'Kintsugi_3',
+        repeatable: false,
+        title: 'Anomalous Telemetry Intercept',
+        text: `<span style="font-family: 'Orbitron', sans-serif;">
+TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
+[query.origin == null]<br><br>
+> 01100001_01101000... <br>
+> { ! ? * — } <br>
+> %%%///&&&---*** <br>
+> 0... 0... 0... <br>
+> //.._ ..//_ <br>
+> { . . . }<br><br>
+</span>`,
+        confirmText: 'Archive Message',
+        choices: [] 
     }
 };
 --- END OF FILE: ./js/data/events/storyEventsRegistry.js ---
@@ -20997,6 +21137,13 @@ function getOfficerRarityHex(rarity) {
     }
 }
 
+function formatShortCredits(num) {
+    if (num >= 1000) {
+        return (num / 1000).toFixed(0) + 'k';
+    }
+    return num.toString();
+}
+
 export class UIMissionControl {
     /**
      * @param {import('../UIManager.js').UIManager} manager
@@ -21154,6 +21301,10 @@ export class UIMissionControl {
                     displayStr = `[${current}/${target}]`;
                     percent = Math.min(100, (current / (target || 100)) * 100);
                 }
+                else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(firstObj.type)) {
+                    displayStr = `[ <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(current)} / ${formatShortCredits(target)}</span> ]`;
+                    percent = Math.min(100, (current / target) * 100);
+                }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
                     displayStr = `[${current}/${target}]`;
@@ -21177,10 +21328,11 @@ export class UIMissionControl {
                 }
             }
 
-            objectiveTextEl.textContent = `${objectiveLabel}`;
-            objectiveProgressEl.textContent = displayStr;
+            // Inject as HTML to support the cyan credit styling
+            objectiveTextEl.innerHTML = `${objectiveLabel}`;
+            objectiveProgressEl.innerHTML = displayStr;
 
-            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
+            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
             
             const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
             const isReady = progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase;
@@ -21205,13 +21357,17 @@ export class UIMissionControl {
 
     _getObjectiveLabel(obj) {
         if (!obj) return 'Objective';
-        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             return `Deliver ${name}`;
+             return `Procure ${name}`;
         }
         if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
              const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
+             if (obj.target) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
+                 return `${action} ${name} on ${locName}`;
+             }
              return `${action} ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
@@ -21219,7 +21375,9 @@ export class UIMissionControl {
              return `Travel to ${name}`;
         }
         if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'Clear All Debt';
-        if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') return `Earn Credits`;
+        if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+             return `Amass <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
+        }
         
         if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Refuel Ship';
         if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Repair Hull';
@@ -21370,6 +21528,8 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'license') {
                                 const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
                                 content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
+                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -21402,7 +21562,7 @@ export class UIMissionControl {
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
-                        if (['have_item', 'DELIVER_ITEM', 'travel_to', 'TRAVEL_TO'].includes(obj.type)) {
+                        if (['have_item', 'DELIVER_ITEM', 'HAVE_ITEM', 'travel_to', 'TRAVEL_TO'].includes(obj.type)) {
                             if (obj.target) uniqueDestinations.add(obj.target);
                         }
                     });
@@ -21413,11 +21573,14 @@ export class UIMissionControl {
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
-                        let text = this._getObjectiveDescription(obj, hasSingleDestination).toUpperCase();
+                        let text = this._getObjectiveDescription(obj, hasSingleDestination);
                         
-                        text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                        // Prevent \d+ replacement from breaking HTML classes generated for HAVE_CREDITS
+                        if (!['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+                            text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                        }
                         
-                        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                             const objKey = obj.id || obj.goodId || obj.target;
                             const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
                             const targetQty = obj.quantity || obj.value || 1;
@@ -21531,7 +21694,7 @@ export class UIMissionControl {
                         let canDeposit = false;
                         if (mission.objectives) {
                             mission.objectives.forEach(obj => {
-                                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                                     const itemId = obj.goodId || obj.target;
                                     const objKey = obj.id || obj.goodId || obj.target;
                                     const targetQty = obj.quantity || obj.value || 1;
@@ -21624,40 +21787,44 @@ export class UIMissionControl {
     }
     
     _getObjectiveDescription(obj, omitLocation = false) {
-        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             let text = `Deliver ${obj.quantity || 1}x ${name}`;
+             let text = `DELIVER ${obj.quantity || 1}x ${name.toUpperCase()}`;
              if (obj.target && !omitLocation) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
-                 text += ` to ${locName}`;
+                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'UNKNOWN';
+                 text += ` TO ${locName.toUpperCase()}`;
              }
              return text;
         }
         if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
-             const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
-             return `${action} ${obj.quantity || 1}x ${name}`;
+             const action = obj.tradeType === 'buy' ? 'BUY' : 'SELL';
+             if (obj.target && !omitLocation) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'UNKNOWN';
+                 return `${action} ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
+             }
+             return `${action} ${obj.quantity || 1}x ${name.toUpperCase()}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-             if (omitLocation) return `Establish Presence`;
+             if (omitLocation) return `ESTABLISH PRESENCE`;
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
-             return `Travel to ${name}`;
+             return `TRAVEL TO ${name.toUpperCase()}`;
         }
-        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'Clear All Debt';
-        if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
-             return `Amass ${formatCredits(obj.value)} Credits`;
+        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'CLEAR ALL DEBT';
+        if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+             return `AMASS <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
         }
         if (obj.type === 'have_fuel_tank' || obj.type === 'HAVE_FUEL_TANK') {
-            return `Refuel Ship`;
+            return `REFUEL SHIP`;
         }
         if (obj.type === 'have_hull_pct' || obj.type === 'HAVE_HULL_PCT') {
-            return `Repair Hull`;
+            return `REPAIR HULL`;
         }
         if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
-            return `Visit the ${screenTarget} Screen`;
+            return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
         }
-        return `Complete Objective`;
+        return `COMPLETE OBJECTIVE`;
     }
 
     _showMissionCompletionModal(mission) {
@@ -21755,6 +21922,8 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'license') {
                                 const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
                                 content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
+                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -22436,6 +22605,11 @@ export class UIEventControl {
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
                 
+                // FORCE THEME APPLICATION (Overrides default engine if missed)
+                if (eventDef.theme) {
+                    modalContent.classList.add(`modal-theme-${eventDef.theme}`);
+                }
+                
                 // Clean instantiation
                 modalContent.classList.remove('sev-crt-shutdown');
                 modalContent.classList.add('sev-crt-turn-on');
@@ -22447,11 +22621,68 @@ export class UIEventControl {
                     modalContent.style.animationDuration = '';
                 }, 400);
 
-                const choicesContainer = modal.querySelector('#story-event-choices-container');
-                const btnContainer = modal.querySelector('#story-event-button-container');
+                // --- SCROLLABILITY WRAPPER FOR STORY TEXT ---
+                const descEl = modal.querySelector('[id$="-description"]');
+                if (descEl) {
+                    descEl.classList.add('text-[0.9rem]'); // Make text 1 point smaller
+                    descEl.style.marginBottom = '0';
+                    descEl.style.paddingBottom = '0';
+
+                    let outerWrapper = modal.querySelector('.mission-scroll-outer');
+                    if (!outerWrapper) {
+                        outerWrapper = document.createElement('div');
+                        outerWrapper.className = 'mission-scroll-outer w-full relative mt-2 mb-2';
+                        
+                        let wrapper = document.createElement('div');
+                        wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto overflow-x-hidden custom-scrollbar px-1 mb-0';
+                        wrapper.style.maxHeight = '240px'; 
+                        
+                        descEl.parentNode.insertBefore(outerWrapper, descEl);
+                        outerWrapper.appendChild(wrapper);
+                        wrapper.appendChild(descEl);
+                        
+                        let indicator = document.createElement('div');
+                        indicator.className = 'scroll-indicator-arrow';
+                        indicator.innerHTML = '&#8964;';
+                        indicator.style.transition = 'opacity 0.2s ease-in-out';
+                        outerWrapper.appendChild(indicator);
+
+                        wrapper.onscroll = () => {
+                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                            indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                        };
+                        
+                        setTimeout(() => {
+                            wrapper.scrollTop = 0;
+                            if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                                indicator.style.display = 'block';
+                                const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                                indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                            } else {
+                                indicator.style.display = 'none';
+                                indicator.style.opacity = '0';
+                            }
+                        }, 150);
+                    }
+                }
+
+                // Locate containers using wildcard selector in case UIModalEngine appends IDs
+                const choicesContainer = modal.querySelector('[id$="-choices-container"]');
+                const btnContainer = modal.querySelector('[id$="-button-container"]');
                 
-                choicesContainer.innerHTML = '';
-                btnContainer.innerHTML = '';
+                // Strip default heavy margins to tighten bottom padding
+                if (btnContainer) {
+                    btnContainer.classList.remove('mt-6', 'my-4', 'mb-6', 'mt-4');
+                    btnContainer.classList.add('mt-2', 'mb-1');
+                    btnContainer.style.paddingBottom = '0.25rem';
+                }
+                if (choicesContainer) {
+                    choicesContainer.classList.remove('mt-6', 'my-4', 'mb-6', 'mt-4');
+                    choicesContainer.classList.add('mt-2', 'mb-1');
+                }
+                
+                if (choicesContainer) choicesContainer.innerHTML = '';
+                if (btnContainer) btnContainer.innerHTML = '';
 
                 const crtCloseHandler = (choiceId = null) => {
                     modalContent.classList.remove('sev-crt-turn-on');
@@ -22469,7 +22700,7 @@ export class UIEventControl {
                 };
 
                 // Generate Choice Buttons (Branching Event)
-                if (eventDef.choices && eventDef.choices.length > 0) {
+                if (eventDef.choices && eventDef.choices.length > 0 && choicesContainer && btnContainer) {
                     btnContainer.classList.add('hidden');
                     choicesContainer.classList.remove('hidden');
 
@@ -22509,7 +22740,7 @@ export class UIEventControl {
                     });
                 } 
                 // Generate Single Dismissal Button (Linear Event)
-                else {
+                else if (choicesContainer && btnContainer) {
                     choicesContainer.classList.add('hidden');
                     btnContainer.classList.remove('hidden');
                     
@@ -32098,10 +32329,11 @@ export class MissionService {
             this._forcedTerminalMissions.delete(missionId);
         }
         
-        // Initialize progress with isCompletable flag
+        // Initialize progress with isCompletable flag AND acceptDay timestamp
         this.gameState.missions.missionProgress[missionId] = {
             objectives: {},
-            isCompletable: false
+            isCompletable: false,
+            acceptDay: this.gameState.day
         };
 
         // Initialize deferred cargo state for Logistics missions
@@ -32140,7 +32372,15 @@ export class MissionService {
                  commodityId: 'water_ice',
                  dealLocationId: 'loc_earth',
                  discountPercent: 0.80, // Heavy markup to ensure it stands out
-                 durationDays: 120 // Long runway for the player to figure out navigation
+                 durationDays: 120, // Long runway for the player to figure out navigation
+                 messageKey: 'STORY_HOOK_01'
+             });
+        } else if (missionId === 'mission_18' && this.simulationService && this.simulationService.intelService) {
+             this.simulationService.intelService.grantNarrativeIntel({
+                 commodityId: 'cybernetics', 
+                 dealLocationId: 'loc_pluto', 
+                 discountPercent: 0.70, 
+                 durationDays: 120 
              });
         }
 
@@ -32250,7 +32490,7 @@ export class MissionService {
                     let deposited = 0;
                     if (mission.objectives) {
                         mission.objectives.forEach(obj => {
-                            if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item') && (obj.goodId === goodId || obj.target === goodId)) {
+                            if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item' || obj.type === 'HAVE_ITEM') && (obj.goodId === goodId || obj.target === goodId)) {
                                 const objKey = obj.id || obj.goodId || obj.target;
                                 deposited += (progress.objectives[objKey]?.deposited || 0);
                             }
@@ -32539,7 +32779,7 @@ export class MissionService {
             let progressChanged = false;
             
             if (!this.gameState.missions.missionProgress[missionId]) {
-                this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false };
+                this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
             }
             const progress = this.gameState.missions.missionProgress[missionId];
 
@@ -32552,7 +32792,7 @@ export class MissionService {
                     }
                     
                     const currentObjProgress = progress.objectives[objKey];
-                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService, currentObjProgress);
+                    const result = this.objectiveEvaluator.evaluate(obj, this.gameState, this.simulationService, currentObjProgress, progress);
                     
                     if (progress.objectives[objKey].current !== result.current || progress.objectives[objKey].target !== result.target) {
                         progress.objectives[objKey].current = result.current;
@@ -32605,7 +32845,7 @@ export class MissionService {
         // --- PRE-CHECK: Build Drain Plan ---
         const drainPlan = {};
         mission.objectives.forEach(obj => {
-            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                 const itemId = obj.goodId || obj.target;
                 const targetQty = obj.quantity || obj.value || 1;
                 const objKey = obj.id || obj.goodId || obj.target;
@@ -32677,7 +32917,7 @@ export class MissionService {
         let totalDepositedThisCall = 0;
 
         mission.objectives.forEach(obj => {
-            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+            if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                 const itemId = obj.goodId || obj.target;
                 const targetQty = obj.quantity || obj.value || 1;
                 const objKey = obj.id || obj.goodId || obj.target;
@@ -32765,7 +33005,7 @@ export class MissionService {
         // 1. Deduct objective items
         if (mission.objectives) {
             mission.objectives.forEach(obj => {
-                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                     const itemId = obj.goodId || obj.target;
                     const objKey = obj.id || obj.goodId || obj.target;
                     const deposited = progress?.objectives?.[objKey]?.deposited || 0;
@@ -35136,6 +35376,15 @@ export class TravelService {
         }
 
         this.logger.info.system('Event', this.gameState.day, 'STORY_EVENT_TRIGGER', `Triggered story event: ${eventDef.title}`);
+
+        // --- PHASE 4: Initiate Warp Background early for Story Events ---
+        if (eventsResolvedCount === 0) {
+            if (useFoldedDrive) {
+                starfieldService.setFoldedSpaceWarp();
+            } else {
+                starfieldService.setEngageWarp();
+            }
+        }
         
         // Secure state to protect against hard closures during modal rendering
         const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[locationId]?.time || 7;
@@ -35537,6 +35786,9 @@ export class TravelService {
                     const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[destinationId]?.time || 7;
                     this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
                     
+                    // --- PHASE 4: Initiate Warp Background early ---
+                    starfieldService.setEngageWarp();
+
                     this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
                     return true;
                 }
@@ -35596,6 +35848,9 @@ export class TravelService {
         this.logger.info.system('Event', this.gameState.day, 'EVENT_TRIGGER', `Triggered random event: ${event.title}`);
         
         this.gameState.setState({ pendingTravel: { destinationId, days: baseTime } });
+
+        // --- PHASE 4: Initiate Warp Background early ---
+        starfieldService.setEngageWarp();
         
         this.uiManager.showRandomEventModal(event, (choiceId) => this._resolveEventChoice(event.id, choiceId));
         return true;
@@ -37039,9 +37294,10 @@ export class MissionObjectiveEvaluator {
      * @param {import('../GameState.js').GameState} gameState - The current state of the game.
      * @param {import('../SimulationService.js').SimulationService} [simulationService] - Optional access to derived stats.
      * @param {object} [objProgress={}] - The existing progress object of the objective (contains current, target, deposited).
+     * @param {object} [missionProgress={}] - The existing progress object for the entire mission.
      * @returns {object} { current: number, target: number, isMet: boolean }
      */
-    evaluate(objective, gameState, simulationService, objProgress = {}) {
+    evaluate(objective, gameState, simulationService, objProgress = {}, missionProgress = {}) {
         let current = 0;
         
         const currentProgress = objProgress.current || 0;
@@ -37066,7 +37322,8 @@ export class MissionObjectiveEvaluator {
         switch (objective.type) {
             // --- RESOURCE / INVENTORY CHECKS ---
             case 'have_item':
-            case 'DELIVER_ITEM': {
+            case 'DELIVER_ITEM':
+            case 'HAVE_ITEM': {
                 const itemId = objective.goodId || objective.target;
                 let totalQty = 0;
                 // --- FLEET OVERFLOW SYSTEM: Aggregate across entire fleet ---
@@ -37081,6 +37338,7 @@ export class MissionObjectiveEvaluator {
             }
 
             case 'have_credits':
+            case 'HAVE_CREDITS':
             case 'WEALTH_CHECK':
                 current = gameState.player.credits;
                 break;
@@ -37115,27 +37373,36 @@ export class MissionObjectiveEvaluator {
             case 'TRADE_ITEM': {
                 const itemId = objective.goodId || objective.target;
                 const tradeType = objective.tradeType; 
+                const targetLoc = objective.target; 
                 let tradeCount = 0;
                 
                 const log = gameState.player.financeLog || [];
                 const commodity = DB.COMMODITIES ? DB.COMMODITIES.find(c => c.id === itemId) : null;
                 const searchName = commodity ? commodity.name : itemId;
                 
+                const acceptDay = missionProgress.acceptDay || 0;
+                
                 log.forEach(entry => {
-                    if (entry.type === 'trade' && entry.description.includes(searchName)) {
-                        const isBuy = entry.description.startsWith('Bought');
-                        const isSell = entry.description.startsWith('Sold');
+                    // Only count trades that occurred AFTER the mission was accepted
+                    if (entry.day >= acceptDay) {
+                        // Enforce location matching if the objective specifically requires it
+                        if (targetLoc && entry.locationId && entry.locationId !== targetLoc) return;
                         
-                        const matchesType = !tradeType || 
-                                            (tradeType.toLowerCase() === 'buy' && isBuy) || 
-                                            (tradeType.toLowerCase() === 'sell' && isSell);
-                        
-                        if (matchesType) {
-                            const match = entry.description.match(/\s(\d+)x\s/);
-                            if (match) {
-                                tradeCount += parseInt(match[1], 10);
-                            } else {
-                                tradeCount += 1;
+                        if (entry.type === 'trade' && entry.description.includes(searchName)) {
+                            const isBuy = entry.description.startsWith('Bought');
+                            const isSell = entry.description.startsWith('Sold');
+                            
+                            const matchesType = !tradeType || 
+                                                (tradeType.toLowerCase() === 'buy' && isBuy) || 
+                                                (tradeType.toLowerCase() === 'sell' && isSell);
+                            
+                            if (matchesType) {
+                                const match = entry.description.match(/\s(\d+)x\s/);
+                                if (match) {
+                                    tradeCount += parseInt(match[1], 10);
+                                } else {
+                                    tradeCount += 1;
+                                }
                             }
                         }
                     }
@@ -37802,7 +38069,8 @@ export class SimulationService {
             type: type, 
             amount: amount,
             balance: this.gameState.player.credits,
-            description: description
+            description: description,
+            locationId: this.gameState.currentLocationId
         });
         while (this.gameState.player.financeLog.length > GAME_RULES.FINANCE_HISTORY_LENGTH) {
             this.gameState.player.financeLog.shift();
@@ -37998,6 +38266,26 @@ export class SimulationService {
                     const currentShip = this.gameState.player.activeShipId;
                     if (this.gameState.player.shipStates[currentShip]) {
                         this.gameState.player.shipStates[currentShip].fuel = DB.SHIPS[currentShip].maxFuel;
+                    }
+                    break;
+                case 'fill_fleet_fuel':
+                    let totalFuelRestored = 0;
+                    this.gameState.player.ownedShipIds.forEach(shipId => {
+                        if (this.gameState.player.shipStates[shipId]) {
+                            const stats = this.getEffectiveShipStats(shipId) || DB.SHIPS[shipId];
+                            if (stats) {
+                                const currentFuel = this.gameState.player.shipStates[shipId].fuel;
+                                const maxFuel = stats.maxFuel;
+                                if (currentFuel < maxFuel) {
+                                    totalFuelRestored += (maxFuel - currentFuel);
+                                    this.gameState.player.shipStates[shipId].fuel = maxFuel;
+                                }
+                            }
+                        }
+                    });
+                    this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REFUEL', `Fully refueled all ships in the fleet. Restored ${Math.round(totalFuelRestored)} fuel.`);
+                    if (totalFuelRestored > 0 && this.uiManager) {
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', 2000);
                     }
                     break;
                 case 'upgrade':
@@ -38377,6 +38665,11 @@ export class ConditionEvaluator {
         let threshold = this.valueResolver.resolve(value, gameState);
 
         switch (type) {
+            case 'ACTIVE_MISSION':
+                currentValue = gameState.missions.activeMissionIds.includes(target) ? 1 : 0;
+                threshold = 1; // Equates to a boolean check (1 >= 1)
+                break;
+
             // --- STORY FLAGS ---
             case 'flag_is_true':
                 return (gameState.player.storyFlags && gameState.player.storyFlags[condition.flag]) === true;
@@ -43803,6 +44096,7 @@ export class IntelService {
      * @param {string} intelParams.dealLocationId - The location where the deal is active.
      * @param {number} intelParams.discountPercent - The percentage discount (e.g., 0.80 for 80%).
      * @param {number} intelParams.durationDays - How many days the deal should last.
+     * @param {string} [intelParams.messageKey] - Optional explicit messageKey to use.
      * @JSDoc
      */
     grantNarrativeIntel(intelParams) {
@@ -43810,6 +44104,12 @@ export class IntelService {
         
         const overridePrice = Math.floor(this.getGalacticAverage(intelParams.commodityId) * (1 - (intelParams.discountPercent || 0.5)));
         const expiryDay = this.timeService.getCurrentDay() + (intelParams.durationDays || 60);
+
+        let msgKey = intelParams.messageKey;
+        if (!msgKey) {
+             const keys = Object.keys(INTEL_CONTENT).filter(k => k !== 'STORY_HOOK_01');
+             msgKey = keys[Math.floor(Math.random() * keys.length)] || 'SUPPLY_CHAIN_SHOCK';
+        }
 
         const newActiveDeal = {
             locationId: intelParams.dealLocationId,
@@ -43827,7 +44127,7 @@ export class IntelService {
             commodityId: intelParams.commodityId,
             discountPercent: intelParams.discountPercent || 0.5,
             durationDays: intelParams.durationDays || 60,
-            messageKey: 'STORY_HOOK_01', // Changed to bespoke narrative registry entry
+            messageKey: msgKey, 
             isPurchased: true,
             pricePaid: 0,
             expiryDay: expiryDay

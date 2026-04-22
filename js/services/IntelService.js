@@ -353,6 +353,7 @@ export class IntelService {
      * @param {string} intelParams.dealLocationId - The location where the deal is active.
      * @param {number} intelParams.discountPercent - The percentage discount (e.g., 0.80 for 80%).
      * @param {number} intelParams.durationDays - How many days the deal should last.
+     * @param {string} [intelParams.messageKey] - Optional explicit messageKey to use.
      * @JSDoc
      */
     grantNarrativeIntel(intelParams) {
@@ -360,6 +361,12 @@ export class IntelService {
         
         const overridePrice = Math.floor(this.getGalacticAverage(intelParams.commodityId) * (1 - (intelParams.discountPercent || 0.5)));
         const expiryDay = this.timeService.getCurrentDay() + (intelParams.durationDays || 60);
+
+        let msgKey = intelParams.messageKey;
+        if (!msgKey) {
+             const keys = Object.keys(INTEL_CONTENT).filter(k => k !== 'STORY_HOOK_01');
+             msgKey = keys[Math.floor(Math.random() * keys.length)] || 'SUPPLY_CHAIN_SHOCK';
+        }
 
         const newActiveDeal = {
             locationId: intelParams.dealLocationId,
@@ -377,7 +384,7 @@ export class IntelService {
             commodityId: intelParams.commodityId,
             discountPercent: intelParams.discountPercent || 0.5,
             durationDays: intelParams.durationDays || 60,
-            messageKey: 'STORY_HOOK_01', // Changed to bespoke narrative registry entry
+            messageKey: msgKey, 
             isPurchased: true,
             pricePaid: 0,
             expiryDay: expiryDay
