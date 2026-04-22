@@ -34,7 +34,7 @@ export const PHASE_TWO_MISSIONS = {
         description: "The Guild relies on organic indentured labor to extract ice from Pluto. It is slow and agonizingly stable. Let's break their monopoly.<br><br><b>Purchase 15 Cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap, automated augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_18" } ],
         objectives: [
-            { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15 },
+            { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15, "latch": true },
             { "id": "travel_pluto", "type": "TRAVEL_TO", "target": "loc_pluto" },
             { "id": "sell_cybernetics", "type": "TRADE_ITEM", "goodId": "cybernetics", "tradeType": "sell", "quantity": 15, "target": "loc_pluto" }
         ],
@@ -56,7 +56,7 @@ export const PHASE_TWO_MISSIONS = {
         isAbandonable: false,
         description: "<b>ATTENTION NEW CAPTAINS:</b><br><br>Jupiter Atmo Refineries welcomes you to the trade network! To celebrate our Q3 production surplus, we are offering a one-time <b>COMPLIMENTARY FLEET REFUEL</b> to newly licensed logistics operators.<br><br>Dock at any authorized Jovian orbital tether to claim your stipend.<br><br><i>Jupiter Atmo Refineries: Powering the Long Watch.</i>",
         triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
-        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_story_kintsugi_1" } ],
+        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_story_1" } ],
         objectives: [ { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" } ],
         completion: {
             locationId: "loc_jupiter",

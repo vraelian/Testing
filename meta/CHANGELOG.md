@@ -3,6 +3,13 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [37.89] - 2026-4-22
+-  added mission 18, 19, and 20
+-  added story event 1
+-  mission logic updates
+-  mission card polish
+-  debug menu updates and polish
+
 # [37.84] - 2026-4-20
 -  added story event system
 -  added story event debug

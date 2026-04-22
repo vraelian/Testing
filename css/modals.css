@@ -2333,3 +2333,20 @@
     box-shadow: 0 0 10px rgba(234, 179, 8, 0.4) !important;
     transform: translateY(-2px);
 }
+
+
+/* ========================================================================= */
+/* --- STORY EVENTS ---                                 */
+/* ========================================================================= */
+
+#story-event-title {
+    font-size: 23px !important; /* Reduced by 1 point from standard text-2xl */
+}
+
+#story-event-modal .modal-content,
+#story-event-description {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto; /* Ensure continuous strings (like ERR_CODES) do not bleed out of the modal boundaries */
+}

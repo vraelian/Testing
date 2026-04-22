@@ -1308,8 +1308,7 @@ export class UIMissionControl {
         const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'an unknown location';
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
-        const priceStr = price ? formatCredits(-price, true) : '???';
-
+        
         const currentDay = this.manager.intelService.getCurrentDay();
         const remainingDays = Math.max(0, (packet.expiryDay || 0) - currentDay);
         
@@ -1330,8 +1329,21 @@ export class UIMissionControl {
         result = result.replace(/\[durationDays\]\s*days/g, durationStr); 
         result = result.replace(/\[durationDays\]/g, durationStr); 
         
-        result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
-        result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
+        if (!price || price === 0) {
+            // Gracefully replace pricing statements with "nothing" narratives.
+            result = result.replace(/You paid <span class="credits-text-pulsing">⌬ \[credit price\]<\/span> for this intel\./g, "You paid nothing for this intel.");
+            result = result.replace(/This intel was secured for \[⌬ credit price\]\./g, "This intel was secured for nothing.");
+            result = result.replace(/This access was \[⌬ credit price\]\./g, "This access was granted.");
+            
+            // Standard tag replacements just in case
+            result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, 'nothing');
+            result = result.replace(/\[⌬ credit price\]/g, 'nothing');
+        } else {
+            // Normal pricing string handling
+            const priceStr = formatCredits(-price, true);
+            result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
+            result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
+        }
 
          return result;
     }

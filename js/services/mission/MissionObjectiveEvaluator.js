@@ -52,6 +52,11 @@ export class MissionObjectiveEvaluator {
                     }
                 }
                 current = totalQty + deposited;
+                
+                // [FIX] Latch progress for accumulation objectives (like Procurement)
+                if (objective.latch) {
+                    current = Math.max(currentProgress, current);
+                }
                 break;
             }
 
@@ -104,18 +109,20 @@ export class MissionObjectiveEvaluator {
                     // Only count trades that occurred AFTER the mission was accepted
                     if (entry.day >= acceptDay) {
                         // Enforce location matching if the objective specifically requires it
-                        if (targetLoc && entry.locationId && entry.locationId !== targetLoc) return;
+                        if (targetLoc && entry.locationId !== targetLoc) return;
                         
-                        if (entry.type === 'trade' && entry.description.includes(searchName)) {
-                            const isBuy = entry.description.startsWith('Bought');
-                            const isSell = entry.description.startsWith('Sold');
+                        // [FIX] Case-insensitive matching to prevent log variations from failing validation
+                        if (entry.type === 'trade' && entry.description.toLowerCase().includes(searchName.toLowerCase())) {
+                            const isBuy = entry.description.toLowerCase().startsWith('bought');
+                            const isSell = entry.description.toLowerCase().startsWith('sold');
                             
                             const matchesType = !tradeType || 
                                                 (tradeType.toLowerCase() === 'buy' && isBuy) || 
                                                 (tradeType.toLowerCase() === 'sell' && isSell);
                             
                             if (matchesType) {
-                                const match = entry.description.match(/\s(\d+)x\s/);
+                                // [FIX] Robust Regex to catch "Sold 15x" or "Sold 15"
+                                const match = entry.description.match(/(?:bought|sold)\s+(\d+)/i) || entry.description.match(/\s(\d+)x\s/i);
                                 if (match) {
                                     tradeCount += parseInt(match[1], 10);
                                 } else {
