@@ -5,7 +5,7 @@
  * Phase 3 Update: Atmosphere, Animation, and Polish.
  */
 import { DB } from '../../data/database.js';
-import { formatCredits } from '../../utils.js';
+import { formatCredits, formatAbbreviatedNumber } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
 
@@ -244,17 +244,17 @@ export function renderMissionsScreen(gameState, missionService) {
                 const comparator = obj.comparator || '>=';
 
                 let desc = 'OBJECTIVE';
-                let displayStr = `${current}/${target}`;
+                let displayStr = `${current} / ${target}`;
                 let percent = 0;
 
                 // Handle specific types
-                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                     const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase() || 'ITEM';
                     if (obj.target) {
                         const locName = DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase() || 'UNKNOWN';
                         desc = `DELIVER ${commName} TO ${locName}`;
                     } else {
-                        desc = `DELIVER ${commName}`;
+                        desc = `PROCURE ${commName}`;
                     }
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
@@ -267,9 +267,10 @@ export function renderMissionsScreen(gameState, missionService) {
                     displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
                     percent = current * 100;
                 }
-                else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
-                    desc = 'EARN CREDITS';
-                    percent = Math.min(100, Math.floor((current / target) * 100));
+                else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+                    desc = 'AMASS CREDITS';
+                    displayStr = `<span class="text-cyan-400 font-bold">⌬ ${formatAbbreviatedNumber(current)} / ${formatAbbreviatedNumber(target)}</span>`;
+                    percent = Math.min(100, (current / target) * 100);
                 }
                 else if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) {
                     desc = 'CLEAR ALL DEBT';
@@ -278,12 +279,12 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
                     desc = 'REFUEL SHIP';
-                    displayStr = `${current}/${target}`;
+                    displayStr = `${current} / ${target}`;
                     percent = Math.min(100, Math.floor((current / (target || 1)) * 100)); 
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
                     desc = 'REPAIR HULL';
-                    displayStr = `${current}/${target}`;
+                    displayStr = `${current} / ${target}`;
                     if (comparator === '<=') {
                         percent = current <= target ? 100 : 0;
                     } else {

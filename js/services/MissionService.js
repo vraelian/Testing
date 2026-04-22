@@ -207,9 +207,11 @@ export class MissionService {
                  messageKey: 'STORY_HOOK_01'
              });
         } else if (missionId === 'mission_18' && this.simulationService && this.simulationService.intelService) {
+             const allowedLocs = this.gameState.player.unlockedLocationIds.filter(loc => loc !== 'loc_pluto');
+             const dealLocationId = allowedLocs.length > 0 ? allowedLocs[Math.floor(Math.random() * allowedLocs.length)] : 'loc_earth';
              this.simulationService.intelService.grantNarrativeIntel({
                  commodityId: 'cybernetics', 
-                 dealLocationId: 'loc_pluto', 
+                 dealLocationId: dealLocationId, 
                  discountPercent: 0.70, 
                  durationDays: 120 
              });

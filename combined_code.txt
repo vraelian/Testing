@@ -5792,6 +5792,23 @@ card.
     box-shadow: 0 0 10px rgba(234, 179, 8, 0.4) !important;
     transform: translateY(-2px);
 }
+
+
+/* ========================================================================= */
+/* --- STORY EVENTS ---                                 */
+/* ========================================================================= */
+
+#story-event-title {
+    font-size: 23px !important; /* Reduced by 1 point from standard text-2xl */
+}
+
+#story-event-modal .modal-content,
+#story-event-description {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto; /* Ensure continuous strings (like ERR_CODES) do not bleed out of the modal boundaries */
+}
 --- END OF FILE: ./css/modals.css ---
 
 --- START OF FILE: ./css/news-ticker.css ---
@@ -11535,7 +11552,7 @@ export function renderNavigationScreen(gameState) {
  * Phase 3 Update: Atmosphere, Animation, and Polish.
  */
 import { DB } from '../../data/database.js';
-import { formatCredits } from '../../utils.js';
+import { formatCredits, formatAbbreviatedNumber } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
 
@@ -11774,17 +11791,17 @@ export function renderMissionsScreen(gameState, missionService) {
                 const comparator = obj.comparator || '>=';
 
                 let desc = 'OBJECTIVE';
-                let displayStr = `${current}/${target}`;
+                let displayStr = `${current} / ${target}`;
                 let percent = 0;
 
                 // Handle specific types
-                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM') {
+                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                     const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase() || 'ITEM';
                     if (obj.target) {
                         const locName = DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase() || 'UNKNOWN';
                         desc = `DELIVER ${commName} TO ${locName}`;
                     } else {
-                        desc = `DELIVER ${commName}`;
+                        desc = `PROCURE ${commName}`;
                     }
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
@@ -11797,9 +11814,10 @@ export function renderMissionsScreen(gameState, missionService) {
                     displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
                     percent = current * 100;
                 }
-                else if (obj.type === 'wealth_gt' || obj.type === 'WEALTH_CHECK') {
-                    desc = 'EARN CREDITS';
-                    percent = Math.min(100, Math.floor((current / target) * 100));
+                else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
+                    desc = 'AMASS CREDITS';
+                    displayStr = `<span class="text-cyan-400 font-bold">⌬ ${formatAbbreviatedNumber(current)} / ${formatAbbreviatedNumber(target)}</span>`;
+                    percent = Math.min(100, (current / target) * 100);
                 }
                 else if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) {
                     desc = 'CLEAR ALL DEBT';
@@ -11808,12 +11826,12 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
                 else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) {
                     desc = 'REFUEL SHIP';
-                    displayStr = `${current}/${target}`;
+                    displayStr = `${current} / ${target}`;
                     percent = Math.min(100, Math.floor((current / (target || 1)) * 100)); 
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) {
                     desc = 'REPAIR HULL';
-                    displayStr = `${current}/${target}`;
+                    displayStr = `${current} / ${target}`;
                     if (comparator === '<=') {
                         percent = current <= target ? 100 : 0;
                     } else {
@@ -14294,7 +14312,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.84';
+export const APP_VERSION = '37.89';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -16124,7 +16142,7 @@ export const PHASE_TWO_MISSIONS = {
         description: "The Guild relies on organic indentured labor to extract ice from Pluto. It is slow and agonizingly stable. Let's break their monopoly.<br><br><b>Purchase 15 Cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap, automated augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_18" } ],
         objectives: [
-            { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15 },
+            { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15, "latch": true },
             { "id": "travel_pluto", "type": "TRAVEL_TO", "target": "loc_pluto" },
             { "id": "sell_cybernetics", "type": "TRADE_ITEM", "goodId": "cybernetics", "tradeType": "sell", "quantity": 15, "target": "loc_pluto" }
         ],
@@ -16146,7 +16164,7 @@ export const PHASE_TWO_MISSIONS = {
         isAbandonable: false,
         description: "<b>ATTENTION NEW CAPTAINS:</b><br><br>Jupiter Atmo Refineries welcomes you to the trade network! To celebrate our Q3 production surplus, we are offering a one-time <b>COMPLIMENTARY FLEET REFUEL</b> to newly licensed logistics operators.<br><br>Dock at any authorized Jovian orbital tether to claim your stipend.<br><br><i>Jupiter Atmo Refineries: Powering the Long Watch.</i>",
         triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
-        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_story_kintsugi_1" } ],
+        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_story_1" } ],
         objectives: [ { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" } ],
         completion: {
             locationId: "loc_jupiter",
@@ -19843,8 +19861,8 @@ export const STORY_EVENTS = {
         confirmText: 'Log Transmission',
         choices: [] 
     },
-    'evt_story_kintsugi_1': {
-        id: 'evt_story_kintsugi_1',
+    'evt_story_1': {
+        id: 'evt_story_1',
         theme: 'anomaly',
         portraitId: 'Kintsugi_3',
         repeatable: false,
@@ -22427,8 +22445,7 @@ export class UIMissionControl {
         const locationName = DB.MARKETS.find(m => m.id === packet.dealLocationId)?.name || 'an unknown location';
         const commodityName = DB.COMMODITIES.find(c => c.id === packet.commodityId)?.name || 'a mystery commodity';
         const discountStr = `${Math.floor(packet.discountPercent * 100)}%`;
-        const priceStr = price ? formatCredits(-price, true) : '???';
-
+        
         const currentDay = this.manager.intelService.getCurrentDay();
         const remainingDays = Math.max(0, (packet.expiryDay || 0) - currentDay);
         
@@ -22449,8 +22466,21 @@ export class UIMissionControl {
         result = result.replace(/\[durationDays\]\s*days/g, durationStr); 
         result = result.replace(/\[durationDays\]/g, durationStr); 
         
-        result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
-        result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
+        if (!price || price === 0) {
+            // Gracefully replace pricing statements with "nothing" narratives.
+            result = result.replace(/You paid <span class="credits-text-pulsing">⌬ \[credit price\]<\/span> for this intel\./g, "You paid nothing for this intel.");
+            result = result.replace(/This intel was secured for \[⌬ credit price\]\./g, "This intel was secured for nothing.");
+            result = result.replace(/This access was \[⌬ credit price\]\./g, "This access was granted.");
+            
+            // Standard tag replacements just in case
+            result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, 'nothing');
+            result = result.replace(/\[⌬ credit price\]/g, 'nothing');
+        } else {
+            // Normal pricing string handling
+            const priceStr = formatCredits(-price, true);
+            result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
+            result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
+        }
 
          return result;
     }
@@ -32376,9 +32406,11 @@ export class MissionService {
                  messageKey: 'STORY_HOOK_01'
              });
         } else if (missionId === 'mission_18' && this.simulationService && this.simulationService.intelService) {
+             const allowedLocs = this.gameState.player.unlockedLocationIds.filter(loc => loc !== 'loc_pluto');
+             const dealLocationId = allowedLocs.length > 0 ? allowedLocs[Math.floor(Math.random() * allowedLocs.length)] : 'loc_earth';
              this.simulationService.intelService.grantNarrativeIntel({
                  commodityId: 'cybernetics', 
-                 dealLocationId: 'loc_pluto', 
+                 dealLocationId: dealLocationId, 
                  discountPercent: 0.70, 
                  durationDays: 120 
              });
@@ -37334,6 +37366,11 @@ export class MissionObjectiveEvaluator {
                     }
                 }
                 current = totalQty + deposited;
+                
+                // [FIX] Latch progress for accumulation objectives (like Procurement)
+                if (objective.latch) {
+                    current = Math.max(currentProgress, current);
+                }
                 break;
             }
 
@@ -37386,18 +37423,20 @@ export class MissionObjectiveEvaluator {
                     // Only count trades that occurred AFTER the mission was accepted
                     if (entry.day >= acceptDay) {
                         // Enforce location matching if the objective specifically requires it
-                        if (targetLoc && entry.locationId && entry.locationId !== targetLoc) return;
+                        if (targetLoc && entry.locationId !== targetLoc) return;
                         
-                        if (entry.type === 'trade' && entry.description.includes(searchName)) {
-                            const isBuy = entry.description.startsWith('Bought');
-                            const isSell = entry.description.startsWith('Sold');
+                        // [FIX] Case-insensitive matching to prevent log variations from failing validation
+                        if (entry.type === 'trade' && entry.description.toLowerCase().includes(searchName.toLowerCase())) {
+                            const isBuy = entry.description.toLowerCase().startsWith('bought');
+                            const isSell = entry.description.toLowerCase().startsWith('sold');
                             
                             const matchesType = !tradeType || 
                                                 (tradeType.toLowerCase() === 'buy' && isBuy) || 
                                                 (tradeType.toLowerCase() === 'sell' && isSell);
                             
                             if (matchesType) {
-                                const match = entry.description.match(/\s(\d+)x\s/);
+                                // [FIX] Robust Regex to catch "Sold 15x" or "Sold 15"
+                                const match = entry.description.match(/(?:bought|sold)\s+(\d+)/i) || entry.description.match(/\s(\d+)x\s/i);
                                 if (match) {
                                     tradeCount += parseInt(match[1], 10);
                                 } else {
@@ -46730,6 +46769,13 @@ export class PlayerActionService {
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
+        
+        // Patch to force inject locationId
+        const logBuy = this.gameState.player.financeLog;
+        if (logBuy && logBuy.length > 0) {
+            logBuy[logBuy.length - 1].locationId = state.currentLocationId;
+        }
+        
         this.missionService.checkTriggers();
 
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
@@ -46847,6 +46893,12 @@ export class PlayerActionService {
 
         this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
+
+        // Patch to force inject locationId
+        const logSell = this.gameState.player.financeLog;
+        if (logSell && logSell.length > 0) {
+            logSell[logSell.length - 1].locationId = state.currentLocationId;
+        }
 
         this.missionService.checkTriggers();
 
@@ -47568,6 +47620,13 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [37.89] - 2026-4-22
+-  added mission 18, 19, and 20
+-  added story event 1
+-  mission logic updates
+-  mission card polish
+-  debug menu updates and polish
 
 # [37.84] - 2026-4-20
 -  added story event system

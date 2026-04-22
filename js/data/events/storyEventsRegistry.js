@@ -20,8 +20,8 @@ export const STORY_EVENTS = {
         confirmText: 'Log Transmission',
         choices: [] 
     },
-    'evt_story_kintsugi_1': {
-        id: 'evt_story_kintsugi_1',
+    'evt_story_1': {
+        id: 'evt_story_1',
         theme: 'anomaly',
         portraitId: 'Kintsugi_3',
         repeatable: false,
