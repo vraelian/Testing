@@ -87,7 +87,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Water Ice"
         },
         rewards: [
-            { "type": "credits", "amount": 8500 }
+            { "type": "credits", "amount": 10500 }
         ]
     },
     'mission_13': {
@@ -112,7 +112,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 9500 }
+            { "type": "credits", "amount": 11000 }
         ]
     },
     'mission_14': {
@@ -167,7 +167,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Freight"
         },
         rewards: [
-            { "type": "credits", "amount": 14000 }
+            { "type": "credits", "amount": 13000 }
         ]
     },
     'mission_16': {

@@ -241,4 +241,49 @@ export async function endLicenseAnimation(tierNum = 2) {
         whiteFlash.parentNode.removeChild(whiteFlash);
     }
 }
+
+/**
+ * Executes the 'Act' screen narrative cinematic sequence.
+ * Provides a highly controlled, blocking narrative transition overlay.
+ * @param {string} actText - The text to display (e.g., "Act I - The Trade")
+ * @returns {Promise<void>}
+ */
+export async function playActCinematic(actText) {
+    // 1. Construct Overlay
+    const overlay = document.createElement('div');
+    overlay.className = 'fixed inset-0 z-[9999] flex items-center justify-center bg-black pointer-events-auto opacity-0';
+    
+    const text = document.createElement('h1');
+    text.className = 'text-3xl md:text-5xl text-white tracking-widest opacity-0 text-center';
+    text.style.fontFamily = '"Bruno Ace SC", sans-serif';
+    text.textContent = actText;
+    
+    overlay.appendChild(text);
+    document.body.appendChild(overlay);
+
+    // 2. Fade to Black Screen (3s)
+    const fadeIn = overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 3000, fill: 'forwards', easing: 'ease-in-out' });
+    await fadeIn.finished;
+
+    // 3. Fade Text In (3s)
+    const textIn = text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 3000, fill: 'forwards', easing: 'ease-out' });
+    await textIn.finished;
+
+    // 4. Hold Text (3s)
+    await new Promise(r => setTimeout(r, 3000));
+
+    // 5. Blur-Fade Out Text (3s)
+    const textOut = text.animate([
+        { opacity: 1, filter: 'blur(0px)' }, 
+        { opacity: 0, filter: 'blur(10px)' }
+    ], { duration: 3000, fill: 'forwards', easing: 'ease-in' });
+    await textOut.finished;
+
+    // 6. Fade out Overlay back to UI (3s)
+    const fadeOut = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 3000, fill: 'forwards', easing: 'ease-in-out' });
+    await fadeOut.finished;
+
+    // 7. Cleanup
+    overlay.remove();
+}
 // --- [[END]] VIRTUAL WORKBENCH ---

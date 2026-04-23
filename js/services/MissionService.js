@@ -217,6 +217,17 @@ export class MissionService {
              });
         }
 
+        // --- NEW: Act Screen Cinematic Triggers ---
+        if (missionId === 'mission_10') {
+            if (this.uiManager && typeof this.uiManager.playActSequence === 'function') {
+                this.uiManager.playActSequence('Act I - The Trade');
+            }
+        } else if (missionId === 'mission_18') {
+            if (this.uiManager && typeof this.uiManager.playActSequence === 'function') {
+                this.uiManager.playActSequence('Act II - The Intel');
+            }
+        }
+
         // --- NEW: ON ACCEPT ACTIONS (System State Triggers & Credit Grants) ---
         if (mission.onAccept) {
             mission.onAccept.forEach(action => {
