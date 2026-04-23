@@ -16110,7 +16110,7 @@ export const PHASE_ONE_MISSIONS = {
 export const PHASE_TWO_MISSIONS = {
     'mission_18': {
         id: "mission_18",
-        name: "The Seed Capital",
+        name: "Seed Capital",
         type: "STORY",
         host: "SYNDICATE",
         portraitId: "Venusian_Syndicate_4",
@@ -16125,7 +16125,7 @@ export const PHASE_TWO_MISSIONS = {
         ],
         completion: {
             locationId: "loc_venus",
-            title: "Welcome to Venus",
+            title: "The Venusian Syndicate",
             text: "Captain. Your accounts reflect a respectable liquidity. You have proven yourself capable of surviving in this market; now let us see if you can manipulate it.",
             buttonText: "View Contracts"
         },
@@ -16133,7 +16133,7 @@ export const PHASE_TWO_MISSIONS = {
     },
     'mission_19': {
         id: "mission_19",
-        name: "The Synthetic Smuggle",
+        name: "A Synthetic Disruption",
         type: "FACTION",
         host: "SYNDICATE",
         portraitId: "Venusian_Syndicate_4",
@@ -16156,7 +16156,7 @@ export const PHASE_TWO_MISSIONS = {
     },
     'mission_20': {
         id: "mission_20",
-        name: "Promotional Stipend",
+        name: "Jovian Promotion",
         type: "PROMOTIONAL",
         host: "STATION",
         portraitId: "Business_11",
@@ -16169,8 +16169,8 @@ export const PHASE_TWO_MISSIONS = {
         completion: {
             locationId: "loc_jupiter",
             title: "Voucher Accepted",
-            text: "Automated docking clamps secured.<br><br>Thank you for visiting Jupiter Atmo Refineries. Your fleet has been fully resupplied at no cost to you.",
-            buttonText: "Disengage"
+            text: "Thank you for visiting the famous Jovian Atmo industrial station. Your fleet will be fully refueled at no cost to you. Have a safe flight!",
+            buttonText: "Accept Offer"
         },
         rewards: [ { "type": "fill_fleet_fuel" } ]
     }
