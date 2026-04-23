@@ -16116,7 +16116,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain. I am Kiern, Research Director for the Venusian Syndicate. I have noted your recent logistical vectors. The Syndicate has highly lucrative work available for an aspiring operator who isn't paralyzed by Guild regulations.<br><br>But first, you must prove you are more than a debtor. <b>Amass a net worth of ⌬ 60,000</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel to assist you.",
+        description: "Hello, Captain. I am Kiern, Research Director for the Venusian Syndicate. I have noted your recent logistical endeavors. The Syndicate has highly lucrative work available for an aspiring operator such as yourself, provided you aren't owned by the Merchant's Guild.<br><br>But first, you must prove you are more than a debtor. <b>Amass a net worth of ⌬ 60,000</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel as an act of good faith.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_17" } ],
         grantedIntel: [ { name: "Syndicate Tip", location: "loc_venus" } ],
         objectives: [
@@ -16126,7 +16126,7 @@ export const PHASE_TWO_MISSIONS = {
         completion: {
             locationId: "loc_venus",
             title: "Welcome to Venus",
-            text: "Captain. Your accounts reflect the requested liquidity. You have proven yourself capable of surviving the market; now let us see if you can manipulate it.",
+            text: "Captain. Your accounts reflect a respectable liquidity. You have proven yourself capable of surviving in this market; now let us see if you can manipulate it.",
             buttonText: "View Contracts"
         },
         rewards: []
@@ -16139,7 +16139,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Guild relies on organic indentured labor to extract ice from Pluto. It is slow and agonizingly stable. Let's break their monopoly.<br><br><b>Purchase 15 Cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap, automated augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
+        description: "The Guild relies on organic indentured labor to extract ice from Pluto. It is slow and agonizingly stable. I want to see you disrupt their monopoly.<br><br><b>Procure Cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap, automated augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_18" } ],
         objectives: [
             { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15, "latch": true },
@@ -16149,7 +16149,7 @@ export const PHASE_TWO_MISSIONS = {
         completion: {
             locationId: "loc_pluto",
             title: "A Calculated Fracture",
-            text: "Excellent work. The labor camps on Pluto are already in localized revolt. You have helped us introduce a necessary chaos.",
+            text: "Excellent work. The labor camps on Pluto are already in localized revolt; the workforce paradigm is shifting rapidly. You have helped to introduce a necessary chaos.",
             buttonText: "Accept Payment"
         },
         rewards: [ { "type": "credits", "amount": 35000 } ]
@@ -29681,121 +29681,9 @@ ${logHistory}
         flowFolder.add(this.actions.skipToStarterSelection, 'handler').name(this.actions.skipToStarterSelection.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
-        flowFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
         flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
-        
-        const bankFolder = this.gui.addFolder('Bankruptcy Events');
-        bankFolder.add(this.actions.forceGuildBankruptcy, 'handler').name(this.actions.forceGuildBankruptcy.name);
-        bankFolder.add(this.actions.forceSyndicateBankruptcy, 'handler').name(this.actions.forceSyndicateBankruptcy.name);
-        bankFolder.add(this.actions.forceDestituteBankruptcy, 'handler').name(this.actions.forceDestituteBankruptcy.name);
-        bankFolder.add(this.actions.clearLoanLockoutTimer, 'handler').name(this.actions.clearLoanLockoutTimer.name);
-
-        const uiFolder = this.gui.addFolder('UI Guides');
-        
-        const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
-        Object.values(NAV_IDS).forEach(id => mainNavFolder.add(this.debugState.navLockMain, id).name(id));
-        
-        const subNavFolder = uiFolder.addFolder('Allowed Sub Navs');
-        Object.values(SCREEN_IDS).forEach(id => subNavFolder.add(this.debugState.navLockSub, id).name(id));
-        
-        uiFolder.add(this.actions.applyNavLock, 'handler').name(this.actions.applyNavLock.name);
-        uiFolder.add(this.actions.clearNavLock, 'handler').name(this.actions.clearNavLock.name);
-
-        const solFolder = this.gui.addFolder('Sol Station');
-        solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
-        solFolder.add(this.actions.addAllOfficers, 'handler').name(this.actions.addAllOfficers.name);
-        solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
-        solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
-        solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
-        solFolder.add(this.actions.testRecruitOfficer, 'handler').name(this.actions.testRecruitOfficer.name);
-
-        const playerFolder = this.gui.addFolder('Player');
-        playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
-        playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
-        playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
-        playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
-        playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
-        playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
-        playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
-        
-        const licensesFolder = this.gui.addFolder('Grant Licenses');
-        licensesFolder.add(this.actions.grantLicenseT2, 'handler').name(this.actions.grantLicenseT2.name);
-        licensesFolder.add(this.actions.grantLicenseT3, 'handler').name(this.actions.grantLicenseT3.name);
-        licensesFolder.add(this.actions.grantLicenseT4, 'handler').name(this.actions.grantLicenseT4.name);
-        licensesFolder.add(this.actions.grantLicenseT5, 'handler').name(this.actions.grantLicenseT5.name);
-        licensesFolder.add(this.actions.grantLicenseT6, 'handler').name(this.actions.grantLicenseT6.name);
-        licensesFolder.add(this.actions.grantLicenseT7, 'handler').name(this.actions.grantLicenseT7.name);
-
-        const shipFolder = this.gui.addFolder('Ship');
-        shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
-        
-        const commodityOptions = DB.COMMODITIES.reduce((acc, c) => ({...acc, [c.name]: c.id}), {});
-        shipFolder.add(this.debugState, 'selectedCommodityToAdd', commodityOptions).name('Item Type');
-        shipFolder.add(this.debugState, 'quantityToAdd', 1, 1000, 1).name('Quantity');
-        shipFolder.add(this.actions.giveItemToShip, 'handler').name(this.actions.giveItemToShip.name);
-
-        const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
-        shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
-        shipFolder.add(this.actions.teleport, 'handler').name('Teleport');
-        shipFolder.add(this.actions.deductHull20, 'handler').name(this.actions.deductHull20.name);
-        shipFolder.add(this.actions.restoreHull, 'handler').name(this.actions.restoreHull.name);
-        shipFolder.add(this.actions.destroyShip, 'handler').name(this.actions.destroyShip.name);
-        shipFolder.add(this.actions.deductFuel20, 'handler').name(this.actions.deductFuel20.name);
-        shipFolder.add(this.actions.restoreFuel, 'handler').name(this.actions.restoreFuel.name);
-        shipFolder.add(this.actions.removeAllCargo, 'handler').name(this.actions.removeAllCargo.name);
-        shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
-        shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
-
-        const attributesFolder = this.gui.addFolder('Game Attributes');
-        
-        const upgradeIds = GameAttributes.getAllUpgradeIds();
-        const upgradeOptions = upgradeIds.reduce((acc, id) => {
-            const def = GameAttributes.getDefinition(id);
-            acc[def ? def.name : id] = id;
-            return acc;
-        }, {});
-
-        attributesFolder.add(this.debugState, 'selectedUpgrade', upgradeOptions)
-            .name('Install Upgrade')
-            .onChange((id) => this.installSelectedUpgrade(id));
-            
-        attributesFolder.add(this.actions.applyRandomUpgrades, 'handler').name('Apply 3 Random');
-        attributesFolder.add(this.actions.removeAllUpgrades, 'handler').name('Remove All');
-
-        const statusFolder = this.gui.addFolder('Status Effects');
-        const statusOptions = Object.values(STATUS_EFFECTS).reduce((acc, effect) => {
-            acc[effect.name] = effect.id;
-            return acc;
-        }, {});
-
-        statusFolder.add(this.debugState, 'selectedStatusEffect', statusOptions)
-            .name('Apply Status')
-            .onChange((id) => this.applySelectedStatusEffect(id));
-            
-        statusFolder.add(this.actions.removeAllStatusEffects, 'handler').name('Remove All');
-
-        const worldFolder = this.gui.addFolder('World & Time');
-        worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
-        worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
-
-        this.economyFolder = this.gui.addFolder('Economy'); 
-        this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
-        this.economyFolder.add(this.actions.resetEconomyMemory, 'handler').name(this.actions.resetEconomyMemory.name);
-        this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
-        this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
-        this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
-
-        const sysStateFolder = this.gui.addFolder('System States');
-        const stateOptions = Object.keys(DB.SYSTEM_STATES).reduce((acc, key) => {
-            acc[DB.SYSTEM_STATES[key].name] = key;
-            return acc;
-        }, {});
-        sysStateFolder.add(this.debugState, 'selectedSystemState', stateOptions).name('Select State');
-        sysStateFolder.add(this.actions.triggerSystemState, 'handler').name(this.actions.triggerSystemState.name);
-        sysStateFolder.add(this.actions.showEconWeatherUI, 'handler').name(this.actions.showEconWeatherUI.name);
 
         const triggerFolder = this.gui.addFolder('Triggers');
-        
         const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
         triggerFolder.add(this.debugState, 'selectedStoryEvent', storyEventOptions).name('Story Event');
         triggerFolder.add(this.actions.forceQueueStoryEvent, 'handler').name('Queue Story Event');
@@ -29827,11 +29715,117 @@ ${logHistory}
         triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
         triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
 
-        triggerFolder.add(this.actions.triggerSystemToast, 'handler').name(this.actions.triggerSystemToast.name);
-        triggerFolder.add(this.actions.triggerFinanceToast, 'handler').name(this.actions.triggerFinanceToast.name);
-        triggerFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
-        triggerFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
-        triggerFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
+        const toastFolder = triggerFolder.addFolder('Toasts');
+        toastFolder.add(this.actions.triggerSystemToast, 'handler').name(this.actions.triggerSystemToast.name);
+        toastFolder.add(this.actions.triggerFinanceToast, 'handler').name(this.actions.triggerFinanceToast.name);
+        toastFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
+        toastFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
+        toastFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
+
+        const uiFolder = this.gui.addFolder('UI Guides');
+        const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
+        Object.values(NAV_IDS).forEach(id => mainNavFolder.add(this.debugState.navLockMain, id).name(id));
+        const subNavFolder = uiFolder.addFolder('Allowed Sub Navs');
+        Object.values(SCREEN_IDS).forEach(id => subNavFolder.add(this.debugState.navLockSub, id).name(id));
+        uiFolder.add(this.actions.applyNavLock, 'handler').name(this.actions.applyNavLock.name);
+        uiFolder.add(this.actions.clearNavLock, 'handler').name(this.actions.clearNavLock.name);
+
+        const solFolder = this.gui.addFolder('Sol Station');
+        solFolder.add(this.actions.solTesting, 'handler').name('Sol Testing');
+        solFolder.add(this.actions.levelUpSolStation, 'handler').name(this.actions.levelUpSolStation.name);
+        solFolder.add(this.actions.addAllOfficers, 'handler').name(this.actions.addAllOfficers.name);
+        solFolder.add(this.actions.unlockAllOfficerSlots, 'handler').name(this.actions.unlockAllOfficerSlots.name);
+        solFolder.add(this.actions.add1000AllItems, 'handler').name(this.actions.add1000AllItems.name);
+        solFolder.add(this.actions.fillSolCaches, 'handler').name(this.actions.fillSolCaches.name);
+        solFolder.add(this.actions.testRecruitOfficer, 'handler').name(this.actions.testRecruitOfficer.name);
+
+        const playerFolder = this.gui.addFolder('Player');
+        playerFolder.add(this.debugState, 'creditsToAdd').name('Credits Amount');
+        playerFolder.add(this.actions.addCredits, 'handler').name('Add Credits');
+        playerFolder.add(this.debugState, 'creditsToReduce', 100, 1000000, 100).name('Credits to Reduce');
+        playerFolder.add(this.actions.reduceCredits, 'handler').name('Reduce Credits');
+        playerFolder.add(this.actions.payDebt, 'handler').name(this.actions.payDebt.name);
+        playerFolder.add(this.debugState, 'targetAge', 18, 1000, 1).name('Target Age');
+        playerFolder.add(this.actions.setAge, 'handler').name('Set Age');
+        
+        const licensesFolder = playerFolder.addFolder('Grant Licenses');
+        licensesFolder.add(this.actions.grantLicenseT2, 'handler').name(this.actions.grantLicenseT2.name);
+        licensesFolder.add(this.actions.grantLicenseT3, 'handler').name(this.actions.grantLicenseT3.name);
+        licensesFolder.add(this.actions.grantLicenseT4, 'handler').name(this.actions.grantLicenseT4.name);
+        licensesFolder.add(this.actions.grantLicenseT5, 'handler').name(this.actions.grantLicenseT5.name);
+        licensesFolder.add(this.actions.grantLicenseT6, 'handler').name(this.actions.grantLicenseT6.name);
+        licensesFolder.add(this.actions.grantLicenseT7, 'handler').name(this.actions.grantLicenseT7.name);
+
+        const shipFolder = this.gui.addFolder('Ship');
+        shipFolder.add(this.actions.cycleShipPics, 'handler').name(this.actions.cycleShipPics.name);
+        
+        const commodityOptions = DB.COMMODITIES.reduce((acc, c) => ({...acc, [c.name]: c.id}), {});
+        shipFolder.add(this.debugState, 'selectedCommodityToAdd', commodityOptions).name('Item Type');
+        shipFolder.add(this.debugState, 'quantityToAdd', 1, 1000, 1).name('Quantity');
+        shipFolder.add(this.actions.giveItemToShip, 'handler').name(this.actions.giveItemToShip.name);
+
+        const locationOptions = DB.MARKETS.reduce((acc, loc) => ({...acc, [loc.name]: loc.id }), {});
+        shipFolder.add(this.debugState, 'selectedLocation', locationOptions).name('Location');
+        shipFolder.add(this.actions.teleport, 'handler').name('Teleport');
+        shipFolder.add(this.actions.fillShipyard, 'handler').name(this.actions.fillShipyard.name);
+        shipFolder.add(this.actions.grantAllShips, 'handler').name('Grant All Ships');
+
+        const vitalsFolder = shipFolder.addFolder('Vitals & Cargo');
+        vitalsFolder.add(this.actions.deductHull20, 'handler').name(this.actions.deductHull20.name);
+        vitalsFolder.add(this.actions.restoreHull, 'handler').name(this.actions.restoreHull.name);
+        vitalsFolder.add(this.actions.destroyShip, 'handler').name(this.actions.destroyShip.name);
+        vitalsFolder.add(this.actions.deductFuel20, 'handler').name(this.actions.deductFuel20.name);
+        vitalsFolder.add(this.actions.restoreFuel, 'handler').name(this.actions.restoreFuel.name);
+        vitalsFolder.add(this.actions.removeAllCargo, 'handler').name(this.actions.removeAllCargo.name);
+
+        const attributesFolder = shipFolder.addFolder('Game Attributes');
+        const upgradeIds = GameAttributes.getAllUpgradeIds();
+        const upgradeOptions = upgradeIds.reduce((acc, id) => {
+            const def = GameAttributes.getDefinition(id);
+            acc[def ? def.name : id] = id;
+            return acc;
+        }, {});
+        attributesFolder.add(this.debugState, 'selectedUpgrade', upgradeOptions)
+            .name('Install Upgrade')
+            .onChange((id) => this.installSelectedUpgrade(id));
+        attributesFolder.add(this.actions.applyRandomUpgrades, 'handler').name('Apply 3 Random');
+        attributesFolder.add(this.actions.removeAllUpgrades, 'handler').name('Remove All');
+
+        const statusFolder = shipFolder.addFolder('Status Effects');
+        const statusOptions = Object.values(STATUS_EFFECTS).reduce((acc, effect) => {
+            acc[effect.name] = effect.id;
+            return acc;
+        }, {});
+        statusFolder.add(this.debugState, 'selectedStatusEffect', statusOptions)
+            .name('Apply Status')
+            .onChange((id) => this.applySelectedStatusEffect(id));
+        statusFolder.add(this.actions.removeAllStatusEffects, 'handler').name('Remove All');
+
+        const worldFolder = this.gui.addFolder('World & Time');
+        worldFolder.add(this.debugState, 'daysToAdvance', 1, 365, 1).name('Days to Advance');
+        worldFolder.add(this.actions.advanceTime, 'handler').name('Advance Time');
+
+        this.economyFolder = this.gui.addFolder('Economy'); 
+        this.economyFolder.add(this.actions.replenishStock, 'handler').name(this.actions.replenishStock.name);
+        this.economyFolder.add(this.actions.resetEconomyMemory, 'handler').name(this.actions.resetEconomyMemory.name);
+        this.economyFolder.add(this.actions.sootheEconomy, 'handler').name(this.actions.sootheEconomy.name);
+        this.economyFolder.add(this.actions.riotEconomy, 'handler').name(this.actions.riotEconomy.name);
+        this.economyFolder.add(this.actions.injectStock, 'handler').name(this.actions.injectStock.name);
+
+        const bankFolder = this.economyFolder.addFolder('Bankruptcy Events');
+        bankFolder.add(this.actions.forceGuildBankruptcy, 'handler').name(this.actions.forceGuildBankruptcy.name);
+        bankFolder.add(this.actions.forceSyndicateBankruptcy, 'handler').name(this.actions.forceSyndicateBankruptcy.name);
+        bankFolder.add(this.actions.forceDestituteBankruptcy, 'handler').name(this.actions.forceDestituteBankruptcy.name);
+        bankFolder.add(this.actions.clearLoanLockoutTimer, 'handler').name(this.actions.clearLoanLockoutTimer.name);
+
+        const sysStateFolder = this.economyFolder.addFolder('System States');
+        const stateOptions = Object.keys(DB.SYSTEM_STATES).reduce((acc, key) => {
+            acc[DB.SYSTEM_STATES[key].name] = key;
+            return acc;
+        }, {});
+        sysStateFolder.add(this.debugState, 'selectedSystemState', stateOptions).name('Select State');
+        sysStateFolder.add(this.actions.triggerSystemState, 'handler').name(this.actions.triggerSystemState.name);
+        sysStateFolder.add(this.actions.showEconWeatherUI, 'handler').name(this.actions.showEconWeatherUI.name);
 
         const automationFolder = this.gui.addFolder('Automation & Logging');
         automationFolder.add(this, 'toggleDiagnosticOverlay').name('Toggle HUD Diagnostics');
