@@ -19,6 +19,7 @@ import { IntelMarketRenderer } from '../ui/renderers/IntelMarketRenderer.js';
 import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
+import { playActCinematic } from './ui/AnimationService.js';
 
 // --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
@@ -1198,6 +1199,17 @@ export class UIManager {
             this.modalEngine.playRecruitmentCinematic(modalContainer).then(() => {
                 modalContainer.remove();
             });
+        }
+    }
+
+    async playActSequence(actText) {
+        try {
+            document.body.classList.add('ui-cinematic-lock');
+            await playActCinematic(actText);
+        } catch (e) {
+            this.logger.error('UIManager', `Act sequence failed: ${e}`);
+        } finally {
+            document.body.classList.remove('ui-cinematic-lock');
         }
     }
 }
