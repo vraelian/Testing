@@ -392,7 +392,7 @@ document.addEventListener('DOMContentLoaded', () => {
         showSplashView('options');
     });
 
-    // --- BASE64 HELPER UTILITIES (Prevents payload truncation & handles Unicode backwards-compatibility) ---
+    // --- BASE64 HELPER UTILITIES ---
     function utf8ToBase64(str) {
         return window.btoa(unescape(encodeURIComponent(str)));
     }
@@ -410,7 +410,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // --- PHASE 3: BACKUP & RESTORE PIPELINE ---
+    // --- PHASE 3: BACKUP & RESTORE PIPELINE (CLIPBOARD REVERSION) ---
     function showOptionsStatus(message, isError = false) {
         optionsStatusMessage.textContent = message;
         optionsStatusMessage.className = `h-6 text-sm font-roboto-mono transition-opacity opacity-100 ${isError ? 'text-red-400' : 'text-cyan-300'} m-0`;
@@ -434,6 +434,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             const jsonString = JSON.stringify(allSaves);
+            // V4 FIX: Revert to Base64 to ensure integrity when moving through clipboard layers
             cachedExportCode = utf8ToBase64(jsonString);
         } catch (error) {
             console.error("[Backup] Pre-generation failed:", error);
@@ -459,6 +460,10 @@ document.addEventListener('DOMContentLoaded', () => {
             }, 2000);
         };
 
+        // Failsafe: Dump code into the textarea immediately so it is physically accessible
+        // in case the programmatic copy is intercepted by WKWebView or Safari.
+        importDataTextarea.value = cachedExportCode;
+
         try {
             if (navigator.clipboard && navigator.clipboard.writeText) {
                 navigator.clipboard.writeText(cachedExportCode).then(() => {
@@ -471,7 +476,8 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         } catch (error) {
             console.error("[Backup] Copy failed:", error);
-            showOptionsStatus('Copy failed. Try manually copying the text.', true);
+            showOptionsStatus('Automated copy failed. Please manually copy the code below.', true);
+            importDataTextarea.select();
         }
     });
 
@@ -490,10 +496,12 @@ document.addEventListener('DOMContentLoaded', () => {
             if (successful && successCallback) {
                 successCallback();
             } else {
-                showOptionsStatus('Copy failed. Try manually copying the text.', true);
+                showOptionsStatus('Automated copy failed. Please manually copy the code below.', true);
+                importDataTextarea.select();
             }
         } catch (err) {
-            showOptionsStatus('Copy failed. Try manually copying the text.', true);
+            showOptionsStatus('Automated copy failed. Please manually copy the code below.', true);
+            importDataTextarea.select();
         }
         document.body.removeChild(tempTextArea);
     }
@@ -622,6 +630,48 @@ document.addEventListener('DOMContentLoaded', () => {
         if (debugService) {
             debugService.toggleVisibility();
         }
+    });
+
+    // --- PHASE 4: DEFENSIVE HOOKS (The Web-Only Death Gasp) ---
+    const executeEmergencySave = () => {
+        if (gameState && gameState.slotId && !gameState.introSequenceActive) {
+            try {
+                const strippedPayload = gameState.getStrippedState();
+                
+                const shipId = strippedPayload.player?.activeShipId || 'ship_wanderer';
+                const shipName = DB.SHIPS[shipId]?.name || 'Unknown Ship';
+                const credits = strippedPayload.player?.credits || 0;
+                const locId = strippedPayload.currentLocationId || 'loc_mars';
+
+                const fullSavePayload = {
+                    version: APP_VERSION,
+                    metadata: {
+                        timestamp: Date.now(),
+                        credits: credits,
+                        creditsFormatted: formatCredits(credits, true),
+                        shipId: shipId,
+                        shipName: shipName,
+                        locationId: locId,
+                        playerName: strippedPayload.player?.name || 'Captain'
+                    },
+                    state: strippedPayload
+                };
+
+                saveStorageService._emergencySynchronousCommit(gameState.slotId, fullSavePayload);
+            } catch (e) {
+                console.error("[Defensive Hook] Failed to execute death gasp:", e);
+            }
+        }
+    };
+
+    window.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+            executeEmergencySave();
+        }
+    });
+
+    window.addEventListener('pagehide', () => {
+        executeEmergencySave();
     });
 
     // --- V4 SAVE SYSTEM: Execution Pipeline ---

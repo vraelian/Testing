@@ -201,10 +201,15 @@ export class MarketService {
      * Prices fluctuate based on individual volatility, a tendency to revert to a baseline average,
      * and player-driven market pressure.
      */
-    evolveMarketPrices() {
+    evolveMarketPrices(economySeed = null) {
         DB.MARKETS.forEach(location => {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
+
+                // Deterministic seed generator for this specific commodity iteration
+                const seedStr = economySeed !== null ? `${location.id}-${commodity.id}-${economySeed}` : null;
+                const seedHash = seedStr ? this._hashString(seedStr) : null;
+                const randomVal = () => seedHash !== null ? this._seededRandom(seedHash) : Math.random();
 
                 // Enforce Intel Price Lock
                 const activeDeal = this.gameState.activeIntelDeal;
@@ -217,7 +222,7 @@ export class MarketService {
                     const minPrice = basePrice * (1 - fluctuation);
                     const maxPrice = basePrice * (1 + fluctuation);
                     
-                    const fluctuatedPrice = Math.random() * (maxPrice - minPrice) + minPrice;
+                    const fluctuatedPrice = randomVal() * (maxPrice - minPrice) + minPrice;
                     
                     this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
                     return; 
@@ -272,7 +277,7 @@ export class MarketService {
                 }
 
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
-                let randomFluctuation = (Math.random() - 0.5) * priceRange * volatility;
+                let randomFluctuation = (randomVal() - 0.5) * priceRange * volatility;
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 

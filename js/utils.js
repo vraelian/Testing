@@ -250,3 +250,45 @@ export function deepMerge(target, source) {
     }
     return target;
 }
+
+/**
+ * Recursively strips null, undefined, and empty string values from an object,
+ * explicitly preserving deterministic mutators like 0 and false.
+ * @param {Object} obj - The object to strip.
+ * @returns {Object} The stripped object.
+ */
+export function safeSchemaStrip(obj) {
+    if (obj === null || typeof obj !== 'object') {
+        return obj;
+    }
+
+    if (Array.isArray(obj)) {
+        return obj.map(item => safeSchemaStrip(item));
+    }
+
+    const stripped = {};
+    for (const key in obj) {
+        if (Object.prototype.hasOwnProperty.call(obj, key)) {
+            const val = obj[key];
+            if (val !== null && val !== undefined && val !== "") {
+                if (typeof val === 'object') {
+                    stripped[key] = safeSchemaStrip(val);
+                } else {
+                    stripped[key] = val;
+                }
+            }
+        }
+    }
+    return stripped;
+}
+
+/**
+ * Hydrates a stripped payload by safely merging it over a default structural template.
+ * @param {Object} target - The stripped payload from storage.
+ * @param {Object} defaultTemplate - The complete, fresh state schema.
+ * @returns {Object} The hydrated object.
+ */
+export function schemaHydrate(target, defaultTemplate) {
+    const clonedTemplate = JSON.parse(JSON.stringify(defaultTemplate));
+    return deepMerge(clonedTemplate, target);
+}

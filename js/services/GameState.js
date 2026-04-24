@@ -2,7 +2,7 @@
 import { GAME_RULES, SAVE_KEY, SHIP_IDS, LOCATION_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS } from '../data/constants.js';
 import { DB } from '../data/database.js';
 import { OFFICERS } from '../data/officers.js';
-import { skewedRandom, deepMerge } from '../utils.js';
+import { skewedRandom, deepMerge, safeSchemaStrip } from '../utils.js';
 
 /**
  * Procedurally generates the travel data matrix, calculating the time and fuel cost
@@ -189,6 +189,16 @@ export class GameState {
         };
 
         return stateCopy;
+    }
+
+    /**
+     * V4 SAVE SYSTEM: Returns the pre-processed, safely stripped state 
+     * for payload minimization. Utilized exclusively by the background save pipeline.
+     * @returns {object} The minimized state object.
+     */
+    getStrippedState() {
+        const fullState = this.exportState();
+        return safeSchemaStrip(fullState);
     }
 
     /**
