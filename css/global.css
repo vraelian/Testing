@@ -54,6 +54,23 @@ definitions,
     --color-profit: #34d399; /* Emerald 400 */
     --color-loss: #f87171;   /* Red 400 */
     --color-text-muted: #9ca3af; /* Gray 400 */
+
+    /* --- V1 OPTIMIZATION: CSS Variable Manifest --- */
+    --ui-bg-base: #0c101d;
+    --ui-text-primary: #d0d8e8;
+    --ui-border-primary: #3a4a6a;
+    --ui-shadow-primary: rgba(58, 74, 106, 0.4);
+    --ui-button-bg: #22304a;
+    --ui-button-border: #4a6a8a;
+    --ui-button-hover-bg: #32405a;
+    --ui-button-text: #c0d0f0;
+    --ui-button-hover-text: #e0f0ff;
+    --ui-panel-border: #7a9ac0;
+    --ui-card-bg: rgba(12, 16, 29, 0.7);
+    --ui-card-header-gradient: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
+    --ui-gradient-header: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
+    --ui-modal-bg: #111827;
+    --ui-modal-border: #374151;
 }
 
 html {
@@ -63,25 +80,21 @@ html {
 }
 
 body {
-    /* height: 100vh; */ /* REMOVED */
-    /* Fallback */
-    /* height: var(--app-height); */ /* REMOVED: This was the JS override */
- 
-   height: 100dvh; /* MODIFIED: Make body fill 100% of dynamic viewport */
+    height: 100dvh; /* MODIFIED: Make body fill 100% of dynamic viewport */
     overflow: hidden;
     margin: 0;
     /* MODIFIED: Re-enabled flex properties for scaling */
-  
-  display: flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'Exo 2', sans-serif;
-    background-color: #0c101d;
-    color: #d0d8e8;
+    
+    /* V1 OPTIMIZATION: Must be background, not background-color, to support gradients */
+    background: var(--ui-bg-base, #0c101d); 
+    color: var(--ui-text-primary);
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    /* *** MODIFIED: REMOVED position: fixed and width: 100% *** */
 }
 
 *:focus {
@@ -124,15 +137,18 @@ a *, button *, [data-action] *, .tab * {
 }
 
 .game-container {
-   
     max-width: 1200px;
     width: 100%;
     height: 100dvh; /* MODIFIED: Use dynamic viewport height */
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
-    border: 2px solid #3a4a6a;
+    
+    /* V1 OPTIMIZATION: Assign variable to structural container */
+    background: var(--ui-bg-base, #0c101d);
+    border: 2px solid var(--ui-border-primary);
+    
     border-radius: 55px;
     transition: background 0.5s ease-out, opacity 1s ease-in-out;
-    box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
+    box-shadow: 0 0 30px var(--ui-shadow-primary);
     display: flex;
     flex-direction: column;
     /* MODIFIED: Corrected safe-area-inset padding */
@@ -185,13 +201,13 @@ display: flex;
 
 .btn {
     transition: all 0.1s ease; /* Reduced to 0.1s for snappy feedback */
-    border: 1px solid #4a6a8a;
+    border: 1px solid var(--ui-button-border);
     border-radius: 8px;
-    background-color: #22304a;
+    background-color: var(--ui-button-bg);
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 1px;
     padding: 0.5rem 0.75rem;
-    color: #c0d0f0;
+    color: var(--ui-button-text);
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
@@ -283,11 +299,10 @@ display: flex;
 }
 
 .btn:hover:not(:disabled) {
-    
-background-color: #32405a;
+    background-color: var(--ui-button-hover-bg);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    color: #e0f0ff;
+    color: var(--ui-button-hover-text);
 }
 
 .btn:disabled,
@@ -768,7 +783,7 @@ transform: translateY(-50%);
     position: absolute;
     width: 15px;
     height: 15px;
-    border-color: var(--theme-border-color, #7a9ac0);
+    border-color: var(--theme-border-color, var(--ui-panel-border));
     border-style: solid;
 }
 
@@ -901,8 +916,8 @@ transform: translateY(-50%);
     width: 
 100vw;
     height: 100dvh;
-    background-color: #0c101d;
-    color: #d0d8e8;
+    background-color: var(--ui-bg-base);
+    color: var(--ui-text-primary);
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -1317,11 +1332,11 @@ card.
 
 /* 4. Typographic Shielding */
 .card-header {
-    background: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
+    background: var(--ui-card-header-gradient);
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 .card-content {
-    background-color: rgba(12, 16, 29, 0.7);
+    background-color: var(--ui-card-bg);
     border-radius: 6px;
     padding: 0.5rem;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.5);

@@ -20,7 +20,7 @@ const CYBORG_EVENTS = {
     150: { title: "Spectral Eye Analyzer", bonus: "upgradeSpawnRate", val: 0.02, desc: "Your right eye has been replaced with a spectral analyzer that sees radiation leaks and energy signatures. You can look at a pile of scrap and see the glowing aura of a military-grade capacitor hidden within. The mundane world is grey, but power shines like a beacon to your upgraded vision. You pick the diamonds from the dust." },
     155: { title: "Sub-Cortex Coprocessor", bonus: "intelDuration", val: 0.02, desc: "You installed a secondary co-processor at the base of your skull to handle background data crunching. While you negotiate, this sub-mind analyzes market trends and cross-references rumors, validating intel in real-time. It holds onto data streams long after the source has disconnected, keeping the signal alive. You are a walking server farm." },
     160: { title: "Nutrient-Brick Reactor", bonus: "commoditySupply", val: 0.02, desc: "The digestive system was a waste of space/energy, replaced by a dense nutrient-brick reactor. You no longer feel hunger, only a 'fuel low' warning, freeing your mind to obsess over logistical volume. You calculate cargo space with the precision of a machine that essentially is cargo itself. You understand 'capacity' on a spiritual level." },
-    165: { title: "Pheromone Emitter Glands", bonus: "shipPrice", val: 0.01, desc: "You’ve replaced your pheromone glands with synthetic emitters that subtly flood the room with 'calm' and 'familiarity' agents. Sellers feel an inexplicable kinship with you, a chemical compulsion to give you the 'friend price.' It’s not mind control, but it’s frighteningly close. You simply smell like their best deal." },
+    165: { title: "Pheromone Emitter Glands", bonus: "shipPrice", val: 0.01, desc: "You’ve replaced your pheromone glands with synthetic emitters that subtly flood the room with 'calm' and 'familiarity' agents. Sellers feel an inexplicable kinship with you, a chemical compulsion to give you the 'friend price.' It’s not mind control, but it’s frighteningly close. You smell like their best deal." },
     170: { title: "Carbon-Nanotube Skeleton", bonus: "travelSpeed", val: 0.01, desc: "Your bone marrow has been swapped for a carbon-nanotube lattice, making your skeleton virtually unbreakable. You can slam the ship into maneuvers that would shatter a human frame, ignoring the inertial dampeners for raw speed. You are the structure that holds the ship together. Physics is just a suggestion to a body built of steel." },
     175: { title: "Deep-Void Radar Cortex", bonus: "shipSpawnRate", val: 0.02, desc: "You’ve integrated a deep-range void-radar directly into your visual cortex. You don't look at a screen; you close your eyes and see the system's traffic as floating motes of light in the darkness. You spot the faint glimmer of a rare hull signature drifting in from the belt before the station sensors do. You are the radar." },
     180: { title: "Magnetic Resonance Palms", bonus: "upgradeSpawnRate", val: 0.02, desc: "Your hands are now fully mechanical, fitted with magnetic resonance scanners. You can wave your hand over a crate of parts and feel the magnetic pull of high-end alloys. The cheap plasteel feels dead, but the mil-spec components sing to your servos. You sort the wheat from the chaff without opening the box." },
@@ -162,6 +162,13 @@ export class TimeService {
                 }
                 
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
+            }
+
+            // --- V1 OPTIMIZATION: Telemetry Garbage Collection ---
+            if (this.gameState.day % 7 === 0) {
+                if (this.simulationService && this.simulationService.telemetryService) {
+                    this.simulationService.telemetryService.flushRoutine();
+                }
             }
 
             // Intel Expiration

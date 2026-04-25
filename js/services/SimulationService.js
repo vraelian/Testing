@@ -19,6 +19,7 @@ import { SolStationService } from './SolStationService.js';
 import { BankruptcyService } from './BankruptcyService.js';
 import { OFFICERS } from '../data/officers.js'; 
 import { ToastService } from './ToastService.js';
+import { TelemetryService } from './bot/TelemetryService.js';
 
 export class SimulationService {
     constructor(gameState, uiManager, logger, newsTickerService) { 
@@ -28,6 +29,9 @@ export class SimulationService {
         this.newsTickerService = newsTickerService; 
         this.missionService = null;  
         this.intelService = null; 
+
+        // V1 OPTIMIZATION: Instantiate Telemetry Orchestrator
+        this.telemetryService = new TelemetryService(gameState);
 
         this.marketService = new MarketService(gameState);
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 

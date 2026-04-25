@@ -190,7 +190,9 @@ export class UIManager {
         this.lastKnownState = gameState;
 
         const launchModal = this.cache.launchModal;
-        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
+        
+        // VIRTUAL WORKBENCH FIX: Treat 'modal-hiding' as closed to bypass dropped animationend events
+        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden') && !launchModal.classList.contains('modal-hiding');
         const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || document.body.classList.contains('ui-cinematic-lock');
 
         if (gameState.introSequenceActive) {
@@ -222,39 +224,14 @@ export class UIManager {
     }
 
     _applyTheme(gameState) {
-        const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
-        if (location) {
-            this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
-            this.cache.gameContainer.className = `game-container ${location.bg}`;
-            if (location.navTheme && location.navTheme.borderColor) {
-                document.documentElement.style.setProperty('--theme-border-color', location.navTheme.borderColor);
-                document.documentElement.style.setProperty('--theme-gradient', location.navTheme.gradient);
-                document.documentElement.style.setProperty('--theme-text-color', location.navTheme.textColor);
-
-                if (this.cache.newsTickerBar) {
-                    this.cache.newsTickerBar.style.backgroundImage = location.navTheme.gradient;
-                    this.cache.newsTickerBar.style.borderTopColor = location.navTheme.borderColor;
-                    this.cache.newsTickerBar.style.borderBottomColor = location.navTheme.borderColor;
-                    this.cache.newsTickerBar.style.backgroundColor = 'transparent';
-                }
-            } else {
-                this._resetTheme();
-            }
-        } else {
-            this._resetTheme();
-        }
-    }
-
-    _resetTheme() {
-        document.documentElement.style.removeProperty('--theme-border-color');
-        document.documentElement.style.removeProperty('--theme-gradient');
-        document.documentElement.style.removeProperty('--theme-text-color');
-        if (this.cache.newsTickerBar) {
-            this.cache.newsTickerBar.style.backgroundImage = '';
-            this.cache.newsTickerBar.style.borderTopColor = '';
-            this.cache.newsTickerBar.style.borderBottomColor = '';
-            this.cache.newsTickerBar.style.backgroundColor = '';
-        }
+        // V1 OPTIMIZATION: Phase 5 - JavaScript Theme Engine Routing
+        // Delegates entirely to AssetService for root-level CSS variable mutation.
+        // Abandons legacy granular DOM manipulation and .theme-x class swapping.
+        
+        // Ensure the base class structure remains intact for the container
+        this.cache.gameContainer.className = 'game-container';
+        
+        AssetService.applyLocationTheme(gameState.currentLocationId);
     }
 
     _renderNewsTicker() {
