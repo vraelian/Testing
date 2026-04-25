@@ -2,7 +2,7 @@
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 4/20/26, ver. [37.84]
+Last Edit: 4/25/26, ver. [40.00]
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
@@ -12,7 +12,7 @@ Galactic Average: This is the foundational, system-wide average price for a comm
 Local Price Target: This is the new price baseline that each location's market thinks it should have. It's calculated by taking the Galactic Average and pulling it 50% of the way toward its "ideal" import/export price.
 An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
 An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
-Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize.
+Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize. To address unrealistic price floors during extreme market sell-offs across the 14 distinct commodities, recovery logic has been updated to feature dynamic elasticity, aggressively pulling prices up when they hit the system's hard floor limit.
 
 II. Local Price Influences by Location
 This is the full list of price influences for every market.
@@ -98,7 +98,7 @@ Effect: Applies a 1.5x priceHikeMultiplier continuously until the market natural
 4. Force: Asymmetric Saturation (The Glut)
 A punitive mechanic preventing players from dumping massive fleet-sized inventories onto a single market.
 Trigger: A player's sale pushes a market's inventory above 300% (3.0x) of its targetStock.
-Effect: Applies a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion. Recovery only happens when the inventory sheds below 200%.
+Effect: Applies a massive 0.25x multiplier to the commodity's price (a 75% crash) that persists regardless of standard Mean Reversion. Recovery only happens when the inventory sheds below 200%, aided by the updated economic recovery logic to prevent permanent stagnation.
 
 5. Force: Inventory Replenishment (The Bottleneck)
 The market slowly restocks (or sheds) its inventory to move back toward its targetStock by 10% each week. MARKET_PRESSURE_DECAY aggressively decays artificial margins by the 4th consecutive trip.

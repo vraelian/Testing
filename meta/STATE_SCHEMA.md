@@ -1,6 +1,7 @@
 // meta/STATE_SCHEMA.md
 
 # Orbital Trading: State Schema Definition
+Last Edit: 4/25/26, ver. [40.00]
 
 ## 1. Root State Object
 
@@ -57,7 +58,7 @@ Contains all progression, assets, and statistics for the user.
 | `bankruptcy` | Object | Flags and trackers for insolvency status, grace periods, and active Repo Events. |
 | `revealedTier` | Number | Highest commodity tier visible (1-7). |
 | `visualSeed` | Number | Incrementing integer used to seed procedural asset variations. |
-| **`storyFlags`** | **Object** | **Map of primitive data types tracking narrative progress, faction rep, event-chain links, and world state. Strictly manipulated by FlagMutators.** |
+| **`storyFlags`** | **Object** | **Map of primitive data types tracking narrative progress, faction rep, event-chain links, Act chapter thresholds, and world state. Strictly manipulated by FlagMutators.** |
 | **`statModifiers`** | **Object** | **Accumulated passive bonuses from Age/Era System.** |
 |   `profitBonus` | Number | % Bonus to trade profits (e.g., 0.01 = 1%). |
 |   `intelCost` | Number | % Discount on Intel purchases. |
@@ -198,7 +199,7 @@ Manages the active concurrent missions and their granular progress.
 
 ## 9. Serialized Save Structure
 
-When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge.
+When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge. The payload object is carefully serialized to manage massive blob sizes safely without causing mobile RAM crashes.
 
 | Property | Type | Description |
 | --- | --- | --- |
@@ -208,6 +209,7 @@ When the game is saved via `SaveStorageService`, the core `GameState` is wrapped
 |   `day` | Number | The game day the save occurred. |
 |   `credits` | Number | The player's wealth at the time of saving. |
 |   `locationId` | String | The player's location. |
+|   `currentAct` | Number | The narrative Act currently active in the session, parsed from storyFlags. |
 |   `timestamp` | Number | Standard UNIX epoch timestamp of the save event. |
 | `...payload` | Object | The full, stringified (or direct, depending on bridge) `GameState` root object unpacked into the save object. |
 

@@ -37,13 +37,14 @@ Modal Mask900The generic modal-overlay background.
 Modal1000Active Modal Dialogs, Help Modals.
 Toast2000Notifications, Floating Battle Text.
 Cinematic Skip2500Floating skip buttons during overlays.
+Act Intermission2800Full-screen Act transition overlays.
 Game Menu3000Global Pause/Game Menu Overlay.
 Cursor9999Custom hardware cursors (if applicable).
 
 2. Component Blueprints
 
 2.1 Standard Card (.card)
-Used for Commodities, Ships, and Missions. Includes pre-hydration background rendering for textured implementations.
+Used for Commodities, Ships, and Missions. Includes pre-hydration background rendering for textured implementations. Mission cards and Ship cards utilize specific dynamic classing for thematic textures.
 HTML
 <div class="card card-textured" data-id="{id}" style="background-image: var(--ui-texture-base);">
     <div class="card-header">
@@ -166,9 +167,6 @@ HTML
 
 2.9 Cinematic Overlays (.intro-starfield-bg)
 Used for bespoke sequences (like Starter Ship Selection, Travel, Ship Destruction) that bypass the main UIManager render cycle to execute asynchronous crossfades via the native Web Animations API. Rendered outside the core `#game-container`. Includes variant configurations like the "Folded-Space Gold Starfield" for specific consumable usage states.
-HTML
-<div id="cinematic-overlay" class="intro-starfield-bg">
-    </div>
 
 2.10 Officer Roster Grid (.officer-grid)
 Used within the Sol Station Sub-view to display recruitable/active officers in a dense CSS grid utilizing the global sprite sheet.
@@ -182,23 +180,9 @@ HTML
 
 2.11 Options & Save Management Modal (.options-modal)
 A specialized modal layout for the systems menu incorporating destructive action warnings and file I/O triggers.
-HTML
-<div class="modal options-modal">
-    <div class="modal-header"><h2>SYSTEM OPTIONS</h2></div>
-    <div class="modal-content flex-col">
-        <button class="btn btn-secondary" type="button" data-action="export-save">EXPORT SAVE</button>
-        <button class="btn btn-secondary" type="button" data-action="trigger-import">IMPORT SAVE</button>
-        <div class="spacer"></div>
-        <button class="btn btn-danger" type="button" data-action="delete-save">WIPE DATA</button>
-    </div>
-</div>
 
 2.12 Cinematic Skip Interface (.cinematic-skip-container)
 A floating action button overlaid on top of blocking animations (Intros, Ship Upgrades) allowing the player to safely bypass the visual sequence while ensuring the underlying state promises resolve correctly.
-HTML
-<div class="cinematic-skip-container">
-    <button class="btn btn-skip" type="button" data-action="skip-cinematic">SKIP >></button>
-</div>
 
 2.13 Player Footprint Indicator (Graph Overlay)
 An SVG rendering component plotted directly onto the market price graph to contextualize a player's recent buy/sell interactions against historical price trends. Utilizes dynamic coordinate mapping based on transaction timestamps compared to the visible graph window.
@@ -211,60 +195,28 @@ A contextual UI enhancement on the Services screen. As the active ship's hull dr
 
 2.16 Game Menu Overlay (.game-menu-overlay)
 The top-level pause/system menu overlay sitting at Z-Index 3000. Houses execution paths for manual persistence, settings, and session termination.
-HTML
-<div class="game-menu-overlay hidden">
-    <div class="menu-container">
-        <h2>GAME MENU</h2>
-        <button class="btn btn-menu" type="button" data-action="resume-game">RESUME</button>
-        <button class="btn btn-menu" type="button" data-action="save-game">MANUAL SAVE</button>
-        <button class="btn btn-danger" type="button" data-action="exit-game">EXIT TO TITLE</button>
-    </div>
-</div>
 
 2.17 Officer Recruitment Modal (.officer-recruit-modal)
 A specialized modal designed for the recruitment pipeline. Integrates stat previews, UI portraits, and transactional confirmation buttons into a distinct flow.
-HTML
-<div class="modal officer-recruit-modal">
-    <div class="modal-header-flex">
-        <div class="portrait-thumbnail" style="background-image: url('...'); background-position: -Xpx -Ypx;"></div>
-        <h2 class="modal-title-group">{Officer Name}</h2>
-    </div>
-    <div class="modal-content">
-        <p class="officer-lore">{Flavor Text}</p>
-        <div class="stat-block">
-            <span>Engineering Buffs:</span>
-            <span>{Buff 1}, {Buff 2}</span>
-        </div>
-    </div>
-    <div class="modal-footer">
-        <button class="btn btn-primary" type="button" data-action="confirm-recruit">RECRUIT ({Cost})</button>
-    </div>
-</div>
 
 2.18 Textured Elements (.textured-bg, .card-textured)
 Core structural classes enabling the high-fidelity UI overhaul. Relies on `AssetStorageService` blob URLs dynamically injected as CSS variables (`--ui-texture-base`) to avoid HTTP request blocking.
 
 2.19 Ship Status Effect Indicator (.status-effect-icon)
 A localized visual icon overlaid on the ship card in the Hangar/Shipyard views. Employs conditional CSS classes based on the effect's polarity (buff/debuff) to pulse or glow, while attaching detailed lifecycle descriptions to the tooltip pipeline.
-HTML
-<div class="status-effect-indicator">
-    <button class="status-effect-icon buff" type="button" data-tooltip="{Effect Details}">
-        [ICON]
-    </button>
-</div>
 
 2.20 Enhanced Ship Card Tooltips (.ship-card-tooltip)
 Polished tooltip structures specifically for Ship Cards, dynamically calculating and displaying the net result of base stats + hardware upgrades + volatile status effects in a highly legible nested layout to prevent UI clutter on the primary card face.
 
 2.21 Story Event Modal (.story-event-modal)
 A distinct modal configuration utilized exclusively for bespoke narrative events. Extends the standard modal with enhanced text rendering constraints and specific layout properties designed for reading larger blocks of lore, distinguishing it visually from procedural traffic events.
+
+2.22 Act Screen Intermission (.act-intermission-overlay)
+A full-screen cinematic overlay used to block the UI and formally declare major narrative chapter transitions (e.g., ACT II). These execute via the Web Animations API, fully pausing the game loop before dissolving back to standard routing.
 HTML
-<div class="modal story-event-modal">
-    <div class="modal-header"><h2>{Narrative Title}</h2></div>
-    <div class="modal-content narrative-scroll">...</div>
-    <div class="modal-footer flex-col">
-        <button class="btn btn-primary" type="button" data-action="resolve-story">{Choice A}</button>
-    </div>
+<div id="act-intermission-overlay" class="act-intermission-container">
+    <div class="act-title-text">ACT II</div>
+    <div class="act-subtitle-text">{Chapter Title}</div>
 </div>
 
 3. CSS Utilities

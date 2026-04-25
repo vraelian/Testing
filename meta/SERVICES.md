@@ -78,7 +78,7 @@ Responsibility: The high-level coordinator for the procedural random event syste
 Dependencies: GameState, ConditionEvaluator.
 
 StoryEventService
-Responsibility: The coordinator for the bespoke Story Event System. Evaluates explicit narrative conditions, triggers Event-Chains, and synchronizes with Mission Flags.
+Responsibility: The coordinator for the bespoke Story Event System. Evaluates explicit narrative conditions, triggers Event-Chains, and synchronizes with Mission Flags. Coordinates with animation services to trigger Act Screen intermissions upon narrative chapter thresholds.
 Dependencies: GameState, FlagEvaluator, FlagMutator.
 
 ConditionEvaluator & FlagEvaluator
@@ -109,7 +109,7 @@ Controllers (Delegates):
 * UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
 * UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel interactions.
 * UIHangarControl: Manages Hangar carousels, ship card tooltips (including Ship Status Effects), and the Upgrade Installation flow.
-* UIEventControl: "World" interactions (Maps, Lore, Procedural Events, Story Events, EULA, Launch Modals).
+* UIEventControl: "World" interactions (Maps, Lore, Procedural Events, Story Events, Act Screen intermissions, EULA, Launch Modals).
 * UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
 
 IntelMarketRenderer (F058)
@@ -135,7 +135,7 @@ Dependencies: None.
 5. Persistence Services
 SaveStorageService (F101)
 Responsibility: Manages game saves using a dual-write architecture and local file I/O operations.
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation.
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation, including optimized serialization and export handling for large save blobs to prevent memory crashes on mobile.
 Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
 AssetStorageService (F070)

@@ -1,7 +1,7 @@
 // meta/MATH_REGISTRY.md
 
 Orbital Trading: Math Registry
-Last Edit: 4/20/26, ver. [37.84]
+Last Edit: 4/25/26, ver. [40.00]
 
 1. Market Simulation Formulas
 1.1 Target Price Calculation
@@ -30,7 +30,11 @@ Result: If Ratio is 0.5 (Half stock), Price increases by 25%.
 
 1.4 Final Price Calculation
 JavaScript
-FinalPrice = TargetPrice * AvailabilityEffect * RandomFluctuation * SystemStateModifier * StatusEffectPriceMod
+CalculatedPrice = TargetPrice * AvailabilityEffect * RandomFluctuation * SystemStateModifier * StatusEffectPriceMod
+PriceFloor = TargetPrice * 0.10
+FinalPrice = Math.max(PriceFloor, CalculatedPrice)
+
+PriceFloor: Hard lower limit implemented to address unrealistic price floors during severe market sell-offs and dumping events.
 RandomFluctuation: ±5-10% daily noise.
 MEAN_REVERSION_STRENGTH: 0.025 (2.5% daily pull toward TargetPrice).
 MARKET_PRESSURE_DECAY: 0.65 (Decay rate for player-driven availability margins).
