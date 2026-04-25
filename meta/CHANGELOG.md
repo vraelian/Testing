@@ -12,6 +12,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  improved memory
 -  updated economy calculations
 -  updated economic recovery logic
+-  updated meta files
 
 # [37.91] - 2026-4-22
 -  added Act Screen intermission animation

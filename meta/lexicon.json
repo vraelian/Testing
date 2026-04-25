@@ -1,3 +1,5 @@
+
+
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -34,6 +36,7 @@
     "Story_Event_System": "A narrative-driven framework that triggers bespoke, consequential events based on specific gamestate conditions, distinct from standard random travel events.",
     "Event-Chains": "Sequential narrative or mechanical events where the resolution or outcome of one event explicitly triggers or unlocks a subsequent event in the chain.",
     "Mission_Flags": "Primitive data trackers (booleans, integers) attached to the player's storyFlags state, utilized to map narrative progress, faction reputations, and complex cross-system gating via evaluators and mutators.",
+    "Act_Screen_Intermission": "A full-screen cinematic overlay managed via the Web Animations API that intercepts the standard game loop to visually signify major narrative chapter transitions.",
     "Local_Data_Broker": "The 'Intel Market' tab on the Intel screen. A location-gated 'shop' where players can purchase Intel Packets.",
     "Intel_Packet": "A purchasable data object that creates a temporary, guaranteed market deal (e.g., a commodity at 40% off).",
     "Hot_Intel": "Highly volatile market intelligence packets that generate transient, extreme price overrides. They expire immediately upon the player initiating travel to any new location.",
@@ -49,8 +52,10 @@
     "Maintenance_Cache": "A specific storage container for a commodity (e.g., Water Ice, Plasteel) at the Sol Station. These decay daily and must be replenished by player donations to maintain Station Integrity.",
     "Fleet_Trading": "The ability to manage, cycle through, and coordinate multiple stored ships simultaneously. Facilitates massive arbitrage hauls at the cost of elevated logistical demands.",
     "Convoy_Tax": "A linear percentage offset applied to fuel burn and hull decay during travel to balance the advantages of multi-ship fleets without creating a hard stranding barrier.",
+    "Economic_Recovery_Logic": "Dynamic elasticity applied to market Mean Reversion that aggressively pulls commodity prices up when they hit the system's hard price floor during extreme sell-offs.",
     "Just-In-Time_Commits": "A performance strategy ensuring high-frequency math calculations at the Sol Station are only written to the main persistent GameState at optimal junctures, preventing DOM thrashing.",
     "View-Model_Interpolation": "The mechanism paired with JIT Commits that renders smoothed visual updates for players based on deferred numerical states.",
+    "Save_File_Export": "The optimized process of serializing the massive GameState blob for external download, utilizing memory-safe stringification to prevent RAM crashes on mobile devices.",
     "Dual-Write_Native_Bridge": "The persistence strategy that concurrently saves data to the browser's IndexedDB and the iOS native layer via WebKit message handlers, preventing save loss from cache eviction.",
     "Save_Hydration": "The process of restoring the game state from persistent storage, prioritizing indestructible iOS native saves and using them to silently heal wiped IndexedDB data.",
     "Contextual_Help_Modal": "A strictly containerized, fixed-aspect-ratio modal that sits above the UI, providing context-sensitive assistance based on the player's current screen and sub-tab. Replaces legacy Popper.js tutorials.",
@@ -474,11 +479,12 @@
       }
     },
     "UIEventControl": {
-      "description": "Domain Controller responsible for 'World' interactions. Handles Random Events, Map Details, Lore, and Launch modals.",
+      "description": "Domain Controller responsible for 'World' interactions. Handles Random Events, Map Details, Lore, and Launch modals. Orchestrates full-screen Act intermissions.",
       "dependencies": ["UIManager (Facade)"],
       "key_functions": {
         "showRandomEventModal": "Renders an event choice.",
-        "showMapDetailModal": "Shows location details."
+        "showMapDetailModal": "Shows location details.",
+        "showActIntermission": "Hooks into the Web Animations API to sequence chapter transitions."
       }
     },
     "UISolStationControl": {

@@ -640,3 +640,21 @@ Decision: Implemented a volatile `statusEffects` array within the localized `shi
 Consequences:
 Pro: Significantly expands mechanical depth for random and story events.
 Pro: Separates transient buffs/debuffs from the ship's persistent asset resale value.
+
+ADR-048: Memory Optimization and State De-Duplication
+Status: Accepted (2026-04-25)
+
+Context: As session length extended, the game suffered from severe memory leaks and RAM bloat, eventually leading to crashes on mobile browsers. This was tracked down to inefficient deep-copying of massive save states, telemetry logs, and unoptimized high-frequency DOM event bindings.
+Decision: Implemented aggressive garbage collection strategies, event listener deduplication, and optimized state diffing across core UI and data services to stabilize the footprint.
+Consequences:
+Pro: Stabilized RAM usage, allowing indefinitely sustained mobile sessions.
+Con: Imposes stricter architectural rules regarding object references and event binding lifecycles.
+
+ADR-049: Act Screen Intermissions
+Status: Accepted (2026-04-25)
+
+Context: A method was required to distinctly separate the game's major narrative chapters (e.g., transitioning from Act 1 into Act 2) without relying solely on standard story modals, ensuring a cinematic pacing for milestone completions.
+Decision: Implemented full-screen cinematic intermission overlays managed via the Web Animations API, pausing the core simulation loop to display sequential act cards and narrative chapter titles.
+Consequences:
+Pro: Vastly improves the narrative weight of major story transitions.
+Pro: Fully decouples cinematic blocking from the standard UI render loop.

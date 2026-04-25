@@ -48,12 +48,14 @@ JavaScript
  * @returns {Type} Description of the return value.
  */
 
-2.4 Logging
-Prohibited: console.log, console.warn, console.error.
+2.4 Memory-Safe Logging
+Prohibited: `console.log`, `console.warn`, `console.error`.
 Required: Use the LoggingService (injected as logger).
 this.logger.info(...)
 this.logger.warn(...)
 this.logger.error(...)
+
+**Crucial Memory Constraint:** Never pass the entire `GameState`, massive nested arrays, or heavy fleet objects directly into the logger. This causes severe memory leaks as the logger retains stringified deep copies of cyclical objects. Always extract and log primitive values, explicit IDs, or shallow copies of the specific data point you need to track.
 
 3. Forbidden Patterns
 3.1 No innerHTML for User Input
@@ -77,7 +79,7 @@ Correction: Define these as constants in js/data/constants.js and import them.
 **Correction:** Explicitly call `event.preventDefault()` at the start of the handler case.
 
 3.6 Cinematic Transitions and Web Animations API
-**Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence) or localized inline component sequences (like the Ship Upgrade Animation) must not rely on standard CSS `.hidden` class toggling to handle complex fades, as this creates race conditions and visible flashing when the `UIManager` executes aggressive DOM wiping and state re-renders.
+**Stability:** Bespoke, full-screen cinematic transitions (like the Intro sequence or Act intermissions) or localized inline component sequences must not rely on standard CSS `.hidden` class toggling to handle complex fades, as this creates race conditions and visible flashing.
 **Correction:** Use the native Web Animations API (`Element.animate()`) for independent cinematic blocking. The actual `GameState` mutations and `UIManager.render()` calls should be executed *during* the blackout/hold phase of the animation. 
 **Strict Cleanup Mandate:** You MUST explicitly ensure all inline styling injected by the API (e.g., `opacity`, `filter`, `transform`) is fully stripped or reset to its baseline state within the `.onfinish` callback. Failure to clean up injected Web Animations API styles will permanently break subsequent UI rendering behavior for those elements.
 
@@ -92,3 +94,7 @@ Correction: Define these as constants in js/data/constants.js and import them.
 3.9 Story Event Debugging
 **Visibility:** Bespoke story events and mission flags require granular tracking to ensure narrative continuity and prevent logic loop collisions.
 **Correction:** All story event triggers, flag mutations, and chain resolutions must utilize the `LoggingService` with a specific `[STORY]` prefix format. Example: `this.logger.info('[STORY] Event [Evt_ID] triggered, flag [Flag_ID] mutated to True.')`.
+
+3.10 Memory Management & DOM Event Cleanup
+**Stability:** Binding anonymous functions or un-tracked event listeners to dynamic DOM elements during high-frequency UI updates causes RAM bloat and eventual application crashes on mobile devices.
+**Correction:** If dynamic elements require specific listeners outside of the global delegated `EventManager` (e.g., drag/swipe tracks in carousels), you must store the bound function reference and explicitly call `removeEventListener` during the component teardown/re-render phase.
