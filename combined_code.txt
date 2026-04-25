@@ -2138,6 +2138,23 @@ definitions,
     --color-profit: #34d399; /* Emerald 400 */
     --color-loss: #f87171;   /* Red 400 */
     --color-text-muted: #9ca3af; /* Gray 400 */
+
+    /* --- V1 OPTIMIZATION: CSS Variable Manifest --- */
+    --ui-bg-base: #0c101d;
+    --ui-text-primary: #d0d8e8;
+    --ui-border-primary: #3a4a6a;
+    --ui-shadow-primary: rgba(58, 74, 106, 0.4);
+    --ui-button-bg: #22304a;
+    --ui-button-border: #4a6a8a;
+    --ui-button-hover-bg: #32405a;
+    --ui-button-text: #c0d0f0;
+    --ui-button-hover-text: #e0f0ff;
+    --ui-panel-border: #7a9ac0;
+    --ui-card-bg: rgba(12, 16, 29, 0.7);
+    --ui-card-header-gradient: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
+    --ui-gradient-header: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
+    --ui-modal-bg: #111827;
+    --ui-modal-border: #374151;
 }
 
 html {
@@ -2147,25 +2164,21 @@ html {
 }
 
 body {
-    /* height: 100vh; */ /* REMOVED */
-    /* Fallback */
-    /* height: var(--app-height); */ /* REMOVED: This was the JS override */
- 
-   height: 100dvh; /* MODIFIED: Make body fill 100% of dynamic viewport */
+    height: 100dvh; /* MODIFIED: Make body fill 100% of dynamic viewport */
     overflow: hidden;
     margin: 0;
     /* MODIFIED: Re-enabled flex properties for scaling */
-  
-  display: flex;
+    display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'Exo 2', sans-serif;
-    background-color: #0c101d;
-    color: #d0d8e8;
+    
+    /* V1 OPTIMIZATION: Must be background, not background-color, to support gradients */
+    background: var(--ui-bg-base, #0c101d); 
+    color: var(--ui-text-primary);
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    /* *** MODIFIED: REMOVED position: fixed and width: 100% *** */
 }
 
 *:focus {
@@ -2208,15 +2221,18 @@ a *, button *, [data-action] *, .tab * {
 }
 
 .game-container {
-   
     max-width: 1200px;
     width: 100%;
     height: 100dvh; /* MODIFIED: Use dynamic viewport height */
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
-    border: 2px solid #3a4a6a;
+    
+    /* V1 OPTIMIZATION: Assign variable to structural container */
+    background: var(--ui-bg-base, #0c101d);
+    border: 2px solid var(--ui-border-primary);
+    
     border-radius: 55px;
     transition: background 0.5s ease-out, opacity 1s ease-in-out;
-    box-shadow: 0 0 30px rgba(58, 74, 106, 0.4);
+    box-shadow: 0 0 30px var(--ui-shadow-primary);
     display: flex;
     flex-direction: column;
     /* MODIFIED: Corrected safe-area-inset padding */
@@ -2269,13 +2285,13 @@ display: flex;
 
 .btn {
     transition: all 0.1s ease; /* Reduced to 0.1s for snappy feedback */
-    border: 1px solid #4a6a8a;
+    border: 1px solid var(--ui-button-border);
     border-radius: 8px;
-    background-color: #22304a;
+    background-color: var(--ui-button-bg);
     font-family: 'Orbitron', sans-serif;
     letter-spacing: 1px;
     padding: 0.5rem 0.75rem;
-    color: #c0d0f0;
+    color: var(--ui-button-text);
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
@@ -2367,11 +2383,10 @@ display: flex;
 }
 
 .btn:hover:not(:disabled) {
-    
-background-color: #32405a;
+    background-color: var(--ui-button-hover-bg);
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
-    color: #e0f0ff;
+    color: var(--ui-button-hover-text);
 }
 
 .btn:disabled,
@@ -2852,7 +2867,7 @@ transform: translateY(-50%);
     position: absolute;
     width: 15px;
     height: 15px;
-    border-color: var(--theme-border-color, #7a9ac0);
+    border-color: var(--theme-border-color, var(--ui-panel-border));
     border-style: solid;
 }
 
@@ -2985,8 +3000,8 @@ transform: translateY(-50%);
     width: 
 100vw;
     height: 100dvh;
-    background-color: #0c101d;
-    color: #d0d8e8;
+    background-color: var(--ui-bg-base);
+    color: var(--ui-text-primary);
     z-index: 9999;
     display: flex;
     justify-content: center;
@@ -3401,11 +3416,11 @@ card.
 
 /* 4. Typographic Shielding */
 .card-header {
-    background: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
+    background: var(--ui-card-header-gradient);
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 .card-content {
-    background-color: rgba(12, 16, 29, 0.7);
+    background-color: var(--ui-card-bg);
     border-radius: 6px;
     padding: 0.5rem;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
@@ -5817,17 +5832,21 @@ card.
 #news-ticker-bar {
     width: 100%;
     height: 24px; /* Vertically thin, as requested */
-    background-color: rgba(0, 0, 0, 0.3);
-    border-top: 1px solid #2a3a5a;
-    border-bottom: 1px solid #2a3a5a;
+    
+    /* V1 OPTIMIZATION: Migrate from static colors to Root Manifest */
+    background: var(--ui-gradient-header); 
+    border-top: 1px solid var(--ui-border-primary);
+    border-bottom: 1px solid var(--ui-border-primary);
+    
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
     overflow: hidden; /* This is crucial */
     position: relative;
     display: flex;
     align-items: center;
-    /* Added transition for smooth theme changes */
-    transition: background-image 0.5s ease, border-color 0.5s ease, background-color 0.5s ease;
-    /* Added rounded bottom corners */
+    
+    /* Transition supports new variable bindings */
+    transition: background 0.5s ease, border-color 0.5s ease;
+    
     border-bottom-left-radius: 17px;
     border-bottom-right-radius: 17px;
 }
@@ -14513,7 +14532,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '37.92';
+export const APP_VERSION = '37.94';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -28815,6 +28834,7 @@ import { GameAttributes } from './GameAttributes.js';
 import { AssetService } from './AssetService.js'; 
 import { OFFICERS } from '../data/officers.js';
 import { HELP_REGISTRY } from '../data/helpRegistry.js';
+import { TelemetryStorageService } from './TelemetryStorageService.js';
 
 // --- EPHEMERAL DEBUG MISSIONS ---
 const DEBUG_MISSIONS = {
@@ -29002,9 +29022,47 @@ ${logHistory}
             });
     }
 
-    exportTelemetry(type) {
-        const telemetry = this.gameState.telemetry?.[type];
-        if (!telemetry || telemetry.length === 0) {
+    async exportTelemetry(type) {
+        let mergedTelemetry = [];
+
+        // 1. Fetch from the IDB Vault (Garbage Collected historical data)
+        try {
+            const storageService = new TelemetryStorageService();
+            const db = await storageService._initDB();
+            
+            await new Promise((resolve) => {
+                const transaction = db.transaction([storageService.storeName], 'readonly');
+                const store = transaction.objectStore(storageService.storeName);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const results = event.target.result;
+                    if (results && results.length > 0) {
+                        results.forEach(entry => {
+                            if (entry.data && entry.data[type]) {
+                                mergedTelemetry = mergedTelemetry.concat(entry.data[type]);
+                            }
+                        });
+                    }
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.warn("DebugService: Failed to fetch IDB telemetry.", event.target.error);
+                    resolve(); 
+                };
+            });
+        } catch (error) {
+            console.warn("DebugService: Telemetry DB read error.", error);
+        }
+
+        // 2. Append the Live Buffer from GameState (Current week's data before flush)
+        if (this.gameState.telemetry && this.gameState.telemetry[type]) {
+            mergedTelemetry = mergedTelemetry.concat(this.gameState.telemetry[type]);
+        }
+
+        // 3. Abort if absolutely nothing exists
+        if (mergedTelemetry.length === 0) {
             this.uiManager.createFloatingText(`No ${type.toUpperCase()} Data`, window.innerWidth/2, window.innerHeight/2, '#ef4444');
             if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Attempted to export ${type}, but no data exists.`);
             return;
@@ -29022,7 +29080,7 @@ ${logHistory}
         const csvRows = [];
         csvRows.push(headers.join(','));
 
-        telemetry.forEach(entry => {
+        mergedTelemetry.forEach(entry => {
             const values = headers.map(header => {
                 let val = entry[header];
                 
@@ -29056,7 +29114,7 @@ ${logHistory}
         document.body.removeChild(link);
 
         this.uiManager.createFloatingText(`${type.toUpperCase()} Exported`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
-        if(this.logger && this.logger.info) this.logger.info.system('DebugService', `Exported ${telemetry.length} rows of ${type} telemetry.`);
+        if(this.logger && this.logger.info) this.logger.info.system(this.gameState.day, 'DEBUG_EXPORT', `Exported ${mergedTelemetry.length} rows of ${type} telemetry.`);
     }
 
     _markAllTutorialsSeen() {
@@ -29070,7 +29128,7 @@ ${logHistory}
         }
         
         if (this.logger && this.logger.info && this.logger.info.system) {
-            this.logger.info.system('DebugService', 'All help modal contexts injected into seen state.');
+            this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', 'All help modal contexts injected into seen state.');
         }
     }
 
@@ -29319,7 +29377,7 @@ ${logHistory}
         
         if (shipState.upgrades.length < 3) {
             shipState.upgrades.push(upgradeId);
-            if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
+            if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Installed ${upgradeId} on ${activeShip.name}`);
             this.gameState.setState({}); 
         } else {
             if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
@@ -29341,7 +29399,7 @@ ${logHistory}
             shipState.upgrades.push(randomId);
         }
 
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Applied 3 random upgrades to ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Applied 3 random upgrades to ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -29351,7 +29409,7 @@ ${logHistory}
         const shipState = this.gameState.player.shipStates[activeShip.id];
         
         shipState.upgrades = [];
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Removed all upgrades from ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Removed all upgrades from ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -29373,7 +29431,7 @@ ${logHistory}
             shipState.statusEffects.push({ id: statusId, expiryDay });
         }
 
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Applied ${statusId} on ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Applied ${statusId} on ${activeShip.name}`);
         this.uiManager.createFloatingText('Status Effect Applied', window.innerWidth/2, window.innerHeight/2, '#ef4444');
         this.gameState.setState({}); 
     }
@@ -29384,7 +29442,7 @@ ${logHistory}
         const shipState = this.gameState.player.shipStates[activeShip.id];
         
         shipState.statusEffects = [];
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Removed all status effects from ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Removed all status effects from ${activeShip.name}`);
         this.uiManager.createFloatingText('Statuses Cleared', window.innerWidth/2, window.innerHeight/2, '#4ade80');
         this.gameState.setState({});
     }
@@ -29697,7 +29755,7 @@ ${logHistory}
             cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
                 this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
                 this.gameState.setState({}); 
-                if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
+                if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
             
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {
@@ -30806,6 +30864,26 @@ export class GameState {
         };
 
         return stateCopy;
+    }
+
+    /**
+     * V1 OPTIMIZATION: Telemetry Buffer Garbage Collection
+     * Safely clones the current telemetry object, immediately overwrites the live arrays
+     * to free main thread RAM, and returns the cloned payload for IDB storage.
+     * @returns {object|null} The cloned telemetry payload or null if none exists.
+     */
+    extractAndFlushTelemetry() {
+        if (!this.telemetry) return null;
+        
+        // Deep clone the existing data
+        const payload = JSON.parse(JSON.stringify(this.telemetry));
+        
+        // Aggressively flush the live arrays to free memory
+        this.telemetry.ticks = [];
+        this.telemetry.trades = [];
+        this.telemetry.impacts = [];
+        
+        return payload;
     }
 
     /**
@@ -33926,6 +34004,36 @@ export class AssetService {
         return `assets/images/modals/${category}/${imageId}.webp`;
     }
 
+    /**
+     * V1 OPTIMIZATION: Phase 5 - JavaScript Theme Engine Routing
+     * Centralizes theme logic to map location themes directly to DOM root CSS variables.
+     * Executes hardware-accelerated visual updates without node-level DOM manipulation.
+     * @param {string} locationId - The ID of the current location.
+     */
+    static applyLocationTheme(locationId) {
+        const location = DB.MARKETS.find(l => l.id === locationId);
+        
+        // Establish fallback defaults
+        const theme = location?.navTheme || { 
+            gradient: 'linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%)', 
+            borderColor: '#3a4a6a', 
+            textColor: '#d0d8e8' 
+        };
+
+        const rootStyle = document.documentElement.style;
+
+        // Map to the :root CSS custom property manifest
+        rootStyle.setProperty('--ui-bg-base', theme.gradient);
+        rootStyle.setProperty('--ui-gradient-header', theme.gradient);
+        rootStyle.setProperty('--ui-border-primary', theme.borderColor);
+        rootStyle.setProperty('--ui-text-highlight', theme.textColor);
+        
+        // Maintain legacy bindings for existing modules until fully deprecated
+        rootStyle.setProperty('--theme-border-color', theme.borderColor);
+        rootStyle.setProperty('--theme-gradient', theme.gradient);
+        rootStyle.setProperty('--theme-text-color', theme.textColor);
+    }
+
     // --- Public API ---
 
     /**
@@ -34477,7 +34585,15 @@ export class MarketService {
             price = price * activeHotIntel.discountMultiplier;
         }
 
-        return Math.max(1, Math.round(price));
+        // --- PHASE 1: Tier-Scaled Intrinsic Support (Absolute Retail Floor) ---
+        const commodityDef = DB.COMMODITIES.find(c => c.id === commodityId);
+        let absoluteFloor = 1;
+        if (commodityDef) {
+            const baseMin = commodityDef.basePriceRange[0];
+            absoluteFloor = Math.floor(baseMin * (0.05 + (commodityDef.tier * 0.05)));
+        }
+
+        return Math.max(absoluteFloor, Math.round(price));
     }
 
     /**
@@ -34617,7 +34733,11 @@ export class MarketService {
 
                 // Calculate the true simulation baseline price
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
-                const finalRoundedPrice = Math.max(1, Math.round(newPrice));
+                
+                // --- PHASE 1: Tier-Scaled Intrinsic Support (Evolution Floor) ---
+                const baseMin = commodity.basePriceRange[0];
+                const intrinsicFloor = Math.floor(baseMin * (0.05 + (commodity.tier * 0.05)));
+                const finalRoundedPrice = Math.max(intrinsicFloor, Math.round(newPrice));
                 
                 this.gameState.market.prices[location.id][commodity.id] = finalRoundedPrice;
 
@@ -34715,7 +34835,9 @@ export class MarketService {
                     if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
                 }
 
-                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 365) {
+                // --- PHASE 3: 8-Month Hard Reset Enforcer ---
+                // Replaced > 365 with > 240
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 240) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
@@ -34865,6 +34987,9 @@ export class MarketService {
                 }
             }
         }
+        
+        // --- PHASE 2: Asymptotic Market Pressure Limit ---
+        inventoryItem.marketPressure = Math.max(-2.5, Math.min(4.0, inventoryItem.marketPressure));
 
         const baseLock = 60;
         const distanceBonus = (market?.distance || 0) * 0.20;
@@ -35134,6 +35259,11 @@ export class MarketService {
         // DAMPENING: Halve the volatility scalar for the projection so the visual signal isn't completely lost to noise.
         const volatility = GAME_RULES.DAILY_PRICE_VOLATILITY * 0.5;
         
+        // --- PHASE 1: Tier-Scaled Intrinsic Support ---
+        const baseMin = commodity ? commodity.basePriceRange[0] : 1;
+        const tier = commodity ? commodity.tier : 1;
+        const intrinsicFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
+        
         // Procedurally generate future points using current decay/reversion math
         for (let i = 1; i <= projectedDays; i++) {
             const projDay = currentDay + i;
@@ -35165,7 +35295,7 @@ export class MarketService {
             
             projection.push({
                 day: projDay,
-                price: Math.max(1, Math.round(currentProjPrice)),
+                price: Math.max(intrinsicFloor, Math.round(currentProjPrice)),
                 isLocked: isLocked
             });
             
@@ -36351,7 +36481,7 @@ const CYBORG_EVENTS = {
     150: { title: "Spectral Eye Analyzer", bonus: "upgradeSpawnRate", val: 0.02, desc: "Your right eye has been replaced with a spectral analyzer that sees radiation leaks and energy signatures. You can look at a pile of scrap and see the glowing aura of a military-grade capacitor hidden within. The mundane world is grey, but power shines like a beacon to your upgraded vision. You pick the diamonds from the dust." },
     155: { title: "Sub-Cortex Coprocessor", bonus: "intelDuration", val: 0.02, desc: "You installed a secondary co-processor at the base of your skull to handle background data crunching. While you negotiate, this sub-mind analyzes market trends and cross-references rumors, validating intel in real-time. It holds onto data streams long after the source has disconnected, keeping the signal alive. You are a walking server farm." },
     160: { title: "Nutrient-Brick Reactor", bonus: "commoditySupply", val: 0.02, desc: "The digestive system was a waste of space/energy, replaced by a dense nutrient-brick reactor. You no longer feel hunger, only a 'fuel low' warning, freeing your mind to obsess over logistical volume. You calculate cargo space with the precision of a machine that essentially is cargo itself. You understand 'capacity' on a spiritual level." },
-    165: { title: "Pheromone Emitter Glands", bonus: "shipPrice", val: 0.01, desc: "You’ve replaced your pheromone glands with synthetic emitters that subtly flood the room with 'calm' and 'familiarity' agents. Sellers feel an inexplicable kinship with you, a chemical compulsion to give you the 'friend price.' It’s not mind control, but it’s frighteningly close. You simply smell like their best deal." },
+    165: { title: "Pheromone Emitter Glands", bonus: "shipPrice", val: 0.01, desc: "You’ve replaced your pheromone glands with synthetic emitters that subtly flood the room with 'calm' and 'familiarity' agents. Sellers feel an inexplicable kinship with you, a chemical compulsion to give you the 'friend price.' It’s not mind control, but it’s frighteningly close. You smell like their best deal." },
     170: { title: "Carbon-Nanotube Skeleton", bonus: "travelSpeed", val: 0.01, desc: "Your bone marrow has been swapped for a carbon-nanotube lattice, making your skeleton virtually unbreakable. You can slam the ship into maneuvers that would shatter a human frame, ignoring the inertial dampeners for raw speed. You are the structure that holds the ship together. Physics is just a suggestion to a body built of steel." },
     175: { title: "Deep-Void Radar Cortex", bonus: "shipSpawnRate", val: 0.02, desc: "You’ve integrated a deep-range void-radar directly into your visual cortex. You don't look at a screen; you close your eyes and see the system's traffic as floating motes of light in the darkness. You spot the faint glimmer of a rare hull signature drifting in from the belt before the station sensors do. You are the radar." },
     180: { title: "Magnetic Resonance Palms", bonus: "upgradeSpawnRate", val: 0.02, desc: "Your hands are now fully mechanical, fitted with magnetic resonance scanners. You can wave your hand over a crate of parts and feel the magnetic pull of high-end alloys. The cheap plasteel feels dead, but the mil-spec components sing to your servos. You sort the wheat from the chaff without opening the box." },
@@ -36493,6 +36623,13 @@ export class TimeService {
                 }
                 
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
+            }
+
+            // --- V1 OPTIMIZATION: Telemetry Garbage Collection ---
+            if (this.gameState.day % 7 === 0) {
+                if (this.simulationService && this.simulationService.telemetryService) {
+                    this.simulationService.telemetryService.flushRoutine();
+                }
             }
 
             // Intel Expiration
@@ -37942,6 +38079,7 @@ import { SolStationService } from './SolStationService.js';
 import { BankruptcyService } from './BankruptcyService.js';
 import { OFFICERS } from '../data/officers.js'; 
 import { ToastService } from './ToastService.js';
+import { TelemetryService } from './bot/TelemetryService.js';
 
 export class SimulationService {
     constructor(gameState, uiManager, logger, newsTickerService) { 
@@ -37951,6 +38089,9 @@ export class SimulationService {
         this.newsTickerService = newsTickerService; 
         this.missionService = null;  
         this.intelService = null; 
+
+        // V1 OPTIMIZATION: Instantiate Telemetry Orchestrator
+        this.telemetryService = new TelemetryService(gameState);
 
         this.marketService = new MarketService(gameState);
         this.timeService = new TimeService(gameState, this.marketService, uiManager, logger, newsTickerService); 
@@ -41348,7 +41489,9 @@ export class UIManager {
         this.lastKnownState = gameState;
 
         const launchModal = this.cache.launchModal;
-        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
+        
+        // VIRTUAL WORKBENCH FIX: Treat 'modal-hiding' as closed to bypass dropped animationend events
+        const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden') && !launchModal.classList.contains('modal-hiding');
         const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || document.body.classList.contains('ui-cinematic-lock');
 
         if (gameState.introSequenceActive) {
@@ -41380,39 +41523,14 @@ export class UIManager {
     }
 
     _applyTheme(gameState) {
-        const location = DB.MARKETS.find(l => l.id === gameState.currentLocationId);
-        if (location) {
-            this.cache.topBarContainer.setAttribute('data-location-theme', location.id);
-            this.cache.gameContainer.className = `game-container ${location.bg}`;
-            if (location.navTheme && location.navTheme.borderColor) {
-                document.documentElement.style.setProperty('--theme-border-color', location.navTheme.borderColor);
-                document.documentElement.style.setProperty('--theme-gradient', location.navTheme.gradient);
-                document.documentElement.style.setProperty('--theme-text-color', location.navTheme.textColor);
-
-                if (this.cache.newsTickerBar) {
-                    this.cache.newsTickerBar.style.backgroundImage = location.navTheme.gradient;
-                    this.cache.newsTickerBar.style.borderTopColor = location.navTheme.borderColor;
-                    this.cache.newsTickerBar.style.borderBottomColor = location.navTheme.borderColor;
-                    this.cache.newsTickerBar.style.backgroundColor = 'transparent';
-                }
-            } else {
-                this._resetTheme();
-            }
-        } else {
-            this._resetTheme();
-        }
-    }
-
-    _resetTheme() {
-        document.documentElement.style.removeProperty('--theme-border-color');
-        document.documentElement.style.removeProperty('--theme-gradient');
-        document.documentElement.style.removeProperty('--theme-text-color');
-        if (this.cache.newsTickerBar) {
-            this.cache.newsTickerBar.style.backgroundImage = '';
-            this.cache.newsTickerBar.style.borderTopColor = '';
-            this.cache.newsTickerBar.style.borderBottomColor = '';
-            this.cache.newsTickerBar.style.backgroundColor = '';
-        }
+        // V1 OPTIMIZATION: Phase 5 - JavaScript Theme Engine Routing
+        // Delegates entirely to AssetService for root-level CSS variable mutation.
+        // Abandons legacy granular DOM manipulation and .theme-x class swapping.
+        
+        // Ensure the base class structure remains intact for the container
+        this.cache.gameContainer.className = 'game-container';
+        
+        AssetService.applyLocationTheme(gameState.currentLocationId);
     }
 
     _renderNewsTicker() {
@@ -42372,6 +42490,43 @@ export class UIManager {
     }
 }
 --- END OF FILE: ./js/services/UIManager.js ---
+
+--- START OF FILE: ./js/services/bot/TelemetryService.js ---
+// js/services/bot/TelemetryService.js
+import { TelemetryStorageService } from '../TelemetryStorageService.js';
+
+/**
+ * @class TelemetryService
+ * @description Orchestrates the background extraction of active RAM bloat from the GameState 
+ * and offloads it to the isolated database vault.
+ */
+export class TelemetryService {
+    constructor(gameState) {
+        this.gameState = gameState;
+        this.storageService = new TelemetryStorageService();
+    }
+
+    /**
+     * The background orchestrator routine. Intercepts the arrays, offloads them, 
+     * and relies on the GameState to aggressively overwrite the live RAM.
+     */
+    async flushRoutine() {
+        try {
+            if (!this.gameState || !this.gameState.telemetry) return;
+
+            // Safely clone and destroy live arrays in the GameState
+            const payload = this.gameState.extractAndFlushTelemetry();
+            
+            // Validate payload before committing to IDB
+            if (payload && (payload.ticks.length > 0 || payload.trades.length > 0 || payload.impacts.length > 0)) {
+                await this.storageService.appendTelemetry(payload);
+            }
+        } catch (error) {
+            console.error("TelemetryService: Failed to execute automated flush routine.", error);
+        }
+    }
+}
+--- END OF FILE: ./js/services/bot/TelemetryService.js ---
 
 --- START OF FILE: ./js/services/bot/AutomatedPlayerService.js ---
 // js/services/bot/AutomatedPlayerService.js
@@ -44724,6 +44879,88 @@ export class IntelService {
     }
 }
 --- END OF FILE: ./js/services/IntelService.js ---
+
+--- START OF FILE: ./js/services/TelemetryStorageService.js ---
+// js/services/TelemetryStorageService.js
+
+/**
+ * @class TelemetryStorageService
+ * @description An isolated IndexedDB vault designed strictly for long-term diagnostic data, 
+ * ensuring zero I/O competition with the primary player save data loop.
+ */
+export class TelemetryStorageService {
+    constructor() {
+        this.dbName = 'OrbitalTelemetryDB';
+        this.dbVersion = 1;
+        this.storeName = 'telemetry_logs';
+        this.db = null;
+    }
+
+    /**
+     * Initializes the detached database connection.
+     * @returns {Promise<IDBDatabase>}
+     * @private
+     */
+    async _initDB() {
+        if (this.db) return this.db;
+
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open(this.dbName, this.dbVersion);
+
+            request.onerror = (event) => {
+                console.error("TelemetryStorageService: Database connection error:", event.target.errorCode);
+                reject(event.target.error);
+            };
+
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve(this.db);
+            };
+
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                if (!db.objectStoreNames.contains(this.storeName)) {
+                    db.createObjectStore(this.storeName, { autoIncrement: true });
+                }
+            };
+        });
+    }
+
+    /**
+     * Opens a readwrite transaction and pushes the payload asynchronously to prevent main-thread locking.
+     * @param {object} payload - The extracted telemetry arrays.
+     */
+    async appendTelemetry(payload) {
+        if (!payload) return;
+
+        try {
+            const db = await this._initDB();
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.storeName], 'readwrite');
+                const store = transaction.objectStore(this.storeName);
+                
+                const timestampedPayload = {
+                    timestamp: Date.now(),
+                    data: payload
+                };
+
+                const request = store.add(timestampedPayload);
+
+                request.onsuccess = () => {
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.error("TelemetryStorageService: Failed to append telemetry data.", event.target.error);
+                    reject(event.target.error);
+                };
+            });
+        } catch (error) {
+            console.error("TelemetryStorageService: DB Init failed during append operation.", error);
+        }
+    }
+}
+--- END OF FILE: ./js/services/TelemetryStorageService.js ---
 
 --- START OF FILE: ./js/services/handlers/MarketEventHandler.js ---
 // js/services/handlers/MarketEventHandler.js
@@ -48057,6 +48294,16 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [40.00] - 2026-4-25
+-  improved saving
+-  improved save file export
+-  major optimizations in RAM and UI
+-  fixed logging bugs
+-  fixed economic sim bugs
+-  improved memory
+-  updated economy calculations
+-  updated economic recovery logic
 
 # [37.91] - 2026-4-22
 -  added Act Screen intermission animation

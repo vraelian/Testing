@@ -288,7 +288,7 @@ ${logHistory}
         document.body.removeChild(link);
 
         this.uiManager.createFloatingText(`${type.toUpperCase()} Exported`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
-        if(this.logger && this.logger.info) this.logger.info.system('DebugService', `Exported ${mergedTelemetry.length} rows of ${type} telemetry.`);
+        if(this.logger && this.logger.info) this.logger.info.system(this.gameState.day, 'DEBUG_EXPORT', `Exported ${mergedTelemetry.length} rows of ${type} telemetry.`);
     }
 
     _markAllTutorialsSeen() {
@@ -302,7 +302,7 @@ ${logHistory}
         }
         
         if (this.logger && this.logger.info && this.logger.info.system) {
-            this.logger.info.system('DebugService', 'All help modal contexts injected into seen state.');
+            this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', 'All help modal contexts injected into seen state.');
         }
     }
 
@@ -551,7 +551,7 @@ ${logHistory}
         
         if (shipState.upgrades.length < 3) {
             shipState.upgrades.push(upgradeId);
-            if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Installed ${upgradeId} on ${activeShip.name}`);
+            if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Installed ${upgradeId} on ${activeShip.name}`);
             this.gameState.setState({}); 
         } else {
             if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Ship upgrade slots full (3/3). Remove one first.');
@@ -573,7 +573,7 @@ ${logHistory}
             shipState.upgrades.push(randomId);
         }
 
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Applied 3 random upgrades to ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Applied 3 random upgrades to ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -583,7 +583,7 @@ ${logHistory}
         const shipState = this.gameState.player.shipStates[activeShip.id];
         
         shipState.upgrades = [];
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Removed all upgrades from ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Removed all upgrades from ${activeShip.name}`);
         this.gameState.setState({});
     }
 
@@ -605,7 +605,7 @@ ${logHistory}
             shipState.statusEffects.push({ id: statusId, expiryDay });
         }
 
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Applied ${statusId} on ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Applied ${statusId} on ${activeShip.name}`);
         this.uiManager.createFloatingText('Status Effect Applied', window.innerWidth/2, window.innerHeight/2, '#ef4444');
         this.gameState.setState({}); 
     }
@@ -616,7 +616,7 @@ ${logHistory}
         const shipState = this.gameState.player.shipStates[activeShip.id];
         
         shipState.statusEffects = [];
-        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('DebugService', `Removed all status effects from ${activeShip.name}`);
+        if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Removed all status effects from ${activeShip.name}`);
         this.uiManager.createFloatingText('Statuses Cleared', window.innerWidth/2, window.innerHeight/2, '#4ade80');
         this.gameState.setState({});
     }
@@ -929,7 +929,7 @@ ${logHistory}
             cycleShipPics: { name: 'Cycle Ship Pics', type: 'button', handler: () => {
                 this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
                 this.gameState.setState({}); 
-                if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system('Debug', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
+                if(this.logger && this.logger.info && this.logger.info.system) this.logger.info.system(this.gameState.day, 'DEBUG_TOOL', `Cycled ship visual variant. New Seed: ${this.gameState.player.visualSeed}`);
             }},
             
             advanceTime: { name: 'Advance Days', type: 'button', handler: () => {

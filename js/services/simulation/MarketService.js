@@ -172,7 +172,15 @@ export class MarketService {
             price = price * activeHotIntel.discountMultiplier;
         }
 
-        return Math.max(1, Math.round(price));
+        // --- PHASE 1: Tier-Scaled Intrinsic Support (Absolute Retail Floor) ---
+        const commodityDef = DB.COMMODITIES.find(c => c.id === commodityId);
+        let absoluteFloor = 1;
+        if (commodityDef) {
+            const baseMin = commodityDef.basePriceRange[0];
+            absoluteFloor = Math.floor(baseMin * (0.05 + (commodityDef.tier * 0.05)));
+        }
+
+        return Math.max(absoluteFloor, Math.round(price));
     }
 
     /**
@@ -312,7 +320,11 @@ export class MarketService {
 
                 // Calculate the true simulation baseline price
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
-                const finalRoundedPrice = Math.max(1, Math.round(newPrice));
+                
+                // --- PHASE 1: Tier-Scaled Intrinsic Support (Evolution Floor) ---
+                const baseMin = commodity.basePriceRange[0];
+                const intrinsicFloor = Math.floor(baseMin * (0.05 + (commodity.tier * 0.05)));
+                const finalRoundedPrice = Math.max(intrinsicFloor, Math.round(newPrice));
                 
                 this.gameState.market.prices[location.id][commodity.id] = finalRoundedPrice;
 
@@ -410,7 +422,9 @@ export class MarketService {
                     if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
                 }
 
-                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 365) {
+                // --- PHASE 3: 8-Month Hard Reset Enforcer ---
+                // Replaced > 365 with > 240
+                if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 240) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
@@ -560,6 +574,9 @@ export class MarketService {
                 }
             }
         }
+        
+        // --- PHASE 2: Asymptotic Market Pressure Limit ---
+        inventoryItem.marketPressure = Math.max(-2.5, Math.min(4.0, inventoryItem.marketPressure));
 
         const baseLock = 60;
         const distanceBonus = (market?.distance || 0) * 0.20;
@@ -829,6 +846,11 @@ export class MarketService {
         // DAMPENING: Halve the volatility scalar for the projection so the visual signal isn't completely lost to noise.
         const volatility = GAME_RULES.DAILY_PRICE_VOLATILITY * 0.5;
         
+        // --- PHASE 1: Tier-Scaled Intrinsic Support ---
+        const baseMin = commodity ? commodity.basePriceRange[0] : 1;
+        const tier = commodity ? commodity.tier : 1;
+        const intrinsicFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
+        
         // Procedurally generate future points using current decay/reversion math
         for (let i = 1; i <= projectedDays; i++) {
             const projDay = currentDay + i;
@@ -860,7 +882,7 @@ export class MarketService {
             
             projection.push({
                 day: projDay,
-                price: Math.max(1, Math.round(currentProjPrice)),
+                price: Math.max(intrinsicFloor, Math.round(currentProjPrice)),
                 isLocked: isLocked
             });
             
