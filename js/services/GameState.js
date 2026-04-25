@@ -192,6 +192,26 @@ export class GameState {
     }
 
     /**
+     * V1 OPTIMIZATION: Telemetry Buffer Garbage Collection
+     * Safely clones the current telemetry object, immediately overwrites the live arrays
+     * to free main thread RAM, and returns the cloned payload for IDB storage.
+     * @returns {object|null} The cloned telemetry payload or null if none exists.
+     */
+    extractAndFlushTelemetry() {
+        if (!this.telemetry) return null;
+        
+        // Deep clone the existing data
+        const payload = JSON.parse(JSON.stringify(this.telemetry));
+        
+        // Aggressively flush the live arrays to free memory
+        this.telemetry.ticks = [];
+        this.telemetry.trades = [];
+        this.telemetry.impacts = [];
+        
+        return payload;
+    }
+
+    /**
      * V4 SAVE SYSTEM: Returns the pre-processed, safely stripped state 
      * for payload minimization. Utilized exclusively by the background save pipeline.
      * @returns {object} The minimized state object.

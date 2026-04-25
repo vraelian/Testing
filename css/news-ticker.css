@@ -3,17 +3,21 @@
 #news-ticker-bar {
     width: 100%;
     height: 24px; /* Vertically thin, as requested */
-    background-color: rgba(0, 0, 0, 0.3);
-    border-top: 1px solid #2a3a5a;
-    border-bottom: 1px solid #2a3a5a;
+    
+    /* V1 OPTIMIZATION: Migrate from static colors to Root Manifest */
+    background: var(--ui-gradient-header); 
+    border-top: 1px solid var(--ui-border-primary);
+    border-bottom: 1px solid var(--ui-border-primary);
+    
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
     overflow: hidden; /* This is crucial */
     position: relative;
     display: flex;
     align-items: center;
-    /* Added transition for smooth theme changes */
-    transition: background-image 0.5s ease, border-color 0.5s ease, background-color 0.5s ease;
-    /* Added rounded bottom corners */
+    
+    /* Transition supports new variable bindings */
+    transition: background 0.5s ease, border-color 0.5s ease;
+    
     border-bottom-left-radius: 17px;
     border-bottom-right-radius: 17px;
 }

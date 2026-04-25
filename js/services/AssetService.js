@@ -148,6 +148,36 @@ export class AssetService {
         return `assets/images/modals/${category}/${imageId}.webp`;
     }
 
+    /**
+     * V1 OPTIMIZATION: Phase 5 - JavaScript Theme Engine Routing
+     * Centralizes theme logic to map location themes directly to DOM root CSS variables.
+     * Executes hardware-accelerated visual updates without node-level DOM manipulation.
+     * @param {string} locationId - The ID of the current location.
+     */
+    static applyLocationTheme(locationId) {
+        const location = DB.MARKETS.find(l => l.id === locationId);
+        
+        // Establish fallback defaults
+        const theme = location?.navTheme || { 
+            gradient: 'linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%)', 
+            borderColor: '#3a4a6a', 
+            textColor: '#d0d8e8' 
+        };
+
+        const rootStyle = document.documentElement.style;
+
+        // Map to the :root CSS custom property manifest
+        rootStyle.setProperty('--ui-bg-base', theme.gradient);
+        rootStyle.setProperty('--ui-gradient-header', theme.gradient);
+        rootStyle.setProperty('--ui-border-primary', theme.borderColor);
+        rootStyle.setProperty('--ui-text-highlight', theme.textColor);
+        
+        // Maintain legacy bindings for existing modules until fully deprecated
+        rootStyle.setProperty('--theme-border-color', theme.borderColor);
+        rootStyle.setProperty('--theme-gradient', theme.gradient);
+        rootStyle.setProperty('--theme-text-color', theme.textColor);
+    }
+
     // --- Public API ---
 
     /**

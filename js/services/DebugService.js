@@ -8,6 +8,7 @@ import { GameAttributes } from './GameAttributes.js';
 import { AssetService } from './AssetService.js'; 
 import { OFFICERS } from '../data/officers.js';
 import { HELP_REGISTRY } from '../data/helpRegistry.js';
+import { TelemetryStorageService } from './TelemetryStorageService.js';
 
 // --- EPHEMERAL DEBUG MISSIONS ---
 const DEBUG_MISSIONS = {
@@ -195,9 +196,47 @@ ${logHistory}
             });
     }
 
-    exportTelemetry(type) {
-        const telemetry = this.gameState.telemetry?.[type];
-        if (!telemetry || telemetry.length === 0) {
+    async exportTelemetry(type) {
+        let mergedTelemetry = [];
+
+        // 1. Fetch from the IDB Vault (Garbage Collected historical data)
+        try {
+            const storageService = new TelemetryStorageService();
+            const db = await storageService._initDB();
+            
+            await new Promise((resolve) => {
+                const transaction = db.transaction([storageService.storeName], 'readonly');
+                const store = transaction.objectStore(storageService.storeName);
+                const request = store.getAll();
+
+                request.onsuccess = (event) => {
+                    const results = event.target.result;
+                    if (results && results.length > 0) {
+                        results.forEach(entry => {
+                            if (entry.data && entry.data[type]) {
+                                mergedTelemetry = mergedTelemetry.concat(entry.data[type]);
+                            }
+                        });
+                    }
+                    resolve();
+                };
+
+                request.onerror = (event) => {
+                    console.warn("DebugService: Failed to fetch IDB telemetry.", event.target.error);
+                    resolve(); 
+                };
+            });
+        } catch (error) {
+            console.warn("DebugService: Telemetry DB read error.", error);
+        }
+
+        // 2. Append the Live Buffer from GameState (Current week's data before flush)
+        if (this.gameState.telemetry && this.gameState.telemetry[type]) {
+            mergedTelemetry = mergedTelemetry.concat(this.gameState.telemetry[type]);
+        }
+
+        // 3. Abort if absolutely nothing exists
+        if (mergedTelemetry.length === 0) {
             this.uiManager.createFloatingText(`No ${type.toUpperCase()} Data`, window.innerWidth/2, window.innerHeight/2, '#ef4444');
             if(this.logger && this.logger.warn) this.logger.warn('DebugService', `Attempted to export ${type}, but no data exists.`);
             return;
@@ -215,7 +254,7 @@ ${logHistory}
         const csvRows = [];
         csvRows.push(headers.join(','));
 
-        telemetry.forEach(entry => {
+        mergedTelemetry.forEach(entry => {
             const values = headers.map(header => {
                 let val = entry[header];
                 
@@ -249,7 +288,7 @@ ${logHistory}
         document.body.removeChild(link);
 
         this.uiManager.createFloatingText(`${type.toUpperCase()} Exported`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
-        if(this.logger && this.logger.info) this.logger.info.system('DebugService', `Exported ${telemetry.length} rows of ${type} telemetry.`);
+        if(this.logger && this.logger.info) this.logger.info.system('DebugService', `Exported ${mergedTelemetry.length} rows of ${type} telemetry.`);
     }
 
     _markAllTutorialsSeen() {
