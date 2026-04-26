@@ -397,6 +397,22 @@
 }
 
 /* --- LORE MODAL --- */
+#lore-modal.modal-backdrop {
+    transition: opacity 0.4s ease-out;
+}
+
+#lore-modal.modal-visible .modal-content {
+    animation: fadeIn 0.4s ease-out;
+}
+
+#lore-modal.modal-hiding {
+    animation: fadeOut 0.4s ease-out forwards;
+}
+
+#lore-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.4s ease-out forwards;
+}
+
 #lore-modal .modal-content {
     width: 600px;
     max-width: 90vw;

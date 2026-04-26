@@ -140,7 +140,7 @@ export class IntelMarketRenderer {
             <button class="btn btn-intel btn-intel-purchased" style="${style}" data-action="show_intel_details" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${packet.locationId}"> 
-                ${dealLocationName} - View Intel
+                <span style="font-family: 'Bruno Ace SC', sans-serif;">${dealLocationName}</span> - View Intel
             </button>`;
     }
 
@@ -172,7 +172,7 @@ export class IntelMarketRenderer {
                     data-location-id="${packet.locationId}" data-price="${price}" 
                     title="${title}"
                     ${disabledAttr}>
-                ${dealLocationName} ${priceHtml}
+                <span style="font-family: 'Bruno Ace SC', sans-serif;">${dealLocationName}</span> - ${priceHtml}
             </button>`;
     }
 }

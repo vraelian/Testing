@@ -11,6 +11,9 @@ export function renderNavigationScreen(gameState) {
     const activeShipId = player.activeShipId;
     const shipState = player.shipStates[activeShipId];
     const upgrades = shipState ? (shipState.upgrades || []) : [];
+    
+    // Get Current Fuel for Range Indicator (Phase 4.5)
+    const currentFuel = shipState ? Math.floor(shipState.fuel) : 0;
 
     // 1. Fuel Modifiers (Perk * Upgrade)
     let fuelMod = 1.0;
@@ -105,22 +108,110 @@ export function renderNavigationScreen(gameState) {
                         if (isFreeFuel) displayFuel = 0;
                     }
 
+                    // Evaluate if Fuel Demand exceeds Fuel Supply
+                    const isFuelDimmed = !isCurrent && displayFuel > currentFuel;
+                    const dimmingClass = isFuelDimmed ? 'fuel-insufficient' : '';
+                    
+                    // CSS class and inline overrides for the dimming visual state
+                    const fuelIconClass = isFuelDimmed ? '' : 'text-sky-400 drop-shadow-md';
+                    const fuelTextClass = isFuelDimmed ? '' : 'text-sky-400';
+                    const fuelStyle = isFuelDimmed ? 'color: #915e5e;' : '';
+                    const fuelShadowStyle = isFuelDimmed ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.8); color: #915e5e;' : 'text-shadow: 0 1px 3px rgba(0,0,0,0.8);';
+
+                    // --- PHASE 4: TARGET INDICATORS ---
+                    let isMissionTarget = false;
+                    if (missions && missions.activeMissionIds) {
+                        for (const missionId of missions.activeMissionIds) {
+                            const mission = DB.MISSIONS[missionId];
+                            if (!mission) continue;
+                            
+                            const progress = missions.missionProgress[missionId] || {};
+                            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+                            
+                            if (isLogisticsPickupPhase && mission.pickupLocationId === location.id) {
+                                isMissionTarget = true;
+                                break;
+                            }
+                            
+                            if (!isLogisticsPickupPhase && mission.completion?.locationId === location.id) {
+                                isMissionTarget = true;
+                                break;
+                            }
+                            
+                            if (mission.objectives) {
+                                const hasObjectiveHere = mission.objectives.some(obj => {
+                                    if (obj.target !== location.id) return false;
+                                    const objKey = obj.id || obj.goodId || obj.target;
+                                    const pObj = progress.objectives?.[objKey];
+                                    const current = pObj ? pObj.current : 0;
+                                    const target = pObj ? pObj.target : (obj.quantity || obj.value || 1);
+                                    
+                                    return current < target;
+                                });
+                                if (hasObjectiveHere) {
+                                    isMissionTarget = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    let isIntelTarget = false;
+
+                    // Fallback for older schemas
+                    if (gameState.intel?.active?.targetMarketId === location.id ||
+                        gameState.activeIntelDeal?.targetMarketId === location.id ||
+                        gameState.activeHotIntel?.targetMarketId === location.id) {
+                        isIntelTarget = true;
+                    }
+
+                    // Check Intel 2.0 Schema
+                    if (!isIntelTarget && gameState.intelMarket) {
+                        for (const key in gameState.intelMarket) {
+                            const packets = gameState.intelMarket[key];
+                            if (Array.isArray(packets)) {
+                                // An intel packet is active for this location if it was purchased (pricePaid is set)
+                                // and points to this location, and hasn't expired.
+                                if (packets.some(p => p.dealLocationId === location.id && p.pricePaid !== undefined && (!p.expiryDay || p.expiryDay >= gameState.day))) {
+                                    isIntelTarget = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    let indicatorsHtml = '';
+                    if (isMissionTarget || isIntelTarget) {
+                        let leftLabel = isMissionTarget ? `<span class="text-amber-400" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 5px rgba(251,191,36,0.6);">MISSION TARGET</span>` : `<span></span>`;
+                        let rightLabel = isIntelTarget ? `<span class="text-sky-400" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 5px rgba(56,189,248,0.6);">INTEL TARGET</span>` : ``;
+                        
+                        // VIRTUAL WORKBENCH: Bypassing generic css boundaries with forced inline absolutes
+                        indicatorsHtml = `
+                            <div class="w-full flex justify-between px-3 pt-2 pointer-events-none text-[0.65rem] font-bold font-orbitron tracking-widest z-[15]" style="position: absolute !important; top: 0 !important; left: 0 !important; right: 0 !important;">
+                                ${leftLabel}
+                                ${rightLabel}
+                            </div>
+                        `;
+                    }
+                    // ----------------------------------
+
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-xl text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
+                    return `<div class="location-card p-6 rounded-xl text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass} ${dimmingClass}" 
                                      ${actionData} ${currentStyle}>
-                        <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
+                        ${indicatorsHtml}
+                        <h3 class="flex-grow flex items-center justify-center" style="font-size: calc(1.5rem + 4.5px); font-family: 'Bruno Ace SC', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
                             ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>' 
                             : `<div class="flex justify-around items-center text-center">
                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
-                                        <div><span class="font-bold font-roboto-mono text-lg">${displayTime}</span><span class="block text-xs text-gray-400">Days</span></div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
+                                        <div><span class="font-bold font-roboto-mono text-lg text-gray-400">${displayTime}</span><span class="block text-xs text-gray-500 font-bold tracking-wider">DAYS</span></div>
                                    </div>
                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                                        <div><span class="font-bold font-roboto-mono text-lg">${displayFuel}</span><span class="block text-xs text-gray-400">Fuel</span></div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ${fuelIconClass}" style="${fuelStyle}" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
+                                        <div><span class="font-bold font-roboto-mono text-lg ${fuelTextClass}" style="${fuelShadowStyle}">${displayFuel}</span><span class="block text-xs font-bold tracking-wider ${fuelTextClass}" style="${fuelShadowStyle}">FUEL</span></div>
                                    </div>
                                </div>`
                         }

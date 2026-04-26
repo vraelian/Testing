@@ -644,6 +644,8 @@ export class PlayerActionService {
             player.seenGarnishmentWarning = false;
         }
 
+        this.missionService.checkTriggers();
+
         this.gameState.setState({});
     }
 

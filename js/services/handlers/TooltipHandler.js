@@ -19,6 +19,19 @@ export class TooltipHandler {
     }
 
     /**
+     * Helper to verify if an element is genuinely visible on screen.
+     * @private
+     */
+    _isTooltipActuallyVisible(el) {
+        if (!el) return false;
+        if (el.classList.contains('hidden')) return false;
+        const styles = window.getComputedStyle(el);
+        if (styles.display === 'none' || styles.visibility === 'hidden') return false;
+        if (parseFloat(styles.opacity) === 0) return false;
+        return true;
+    }
+
+    /**
      * Handles click events to manage tooltips, primarily for mobile and special cases.
      * @param {Event} e The click event.
      */
@@ -49,9 +62,9 @@ export class TooltipHandler {
                     e.stopPropagation(); 
                     e.preventDefault();
 
-                    // Stateful Toggle Logic
                     const tooltipEl = document.getElementById('generic-tooltip');
-                    const isGenericVisible = tooltipEl && tooltipEl.style.display === 'block';
+                    const isGenericVisible = this._isTooltipActuallyVisible(tooltipEl);
+                                             
                     if (this.activeTooltipTarget === actionTarget && isGenericVisible) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
@@ -72,7 +85,8 @@ export class TooltipHandler {
                     e.preventDefault();
                     
                     const loreTooltipEl = document.getElementById('generic-tooltip');
-                    const isVisibleLore = loreTooltipEl && loreTooltipEl.style.display === 'block';
+                    const isVisibleLore = this._isTooltipActuallyVisible(loreTooltipEl);
+                                          
                     if (this.activeTooltipTarget === actionTarget && isVisibleLore) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
@@ -223,7 +237,11 @@ export class TooltipHandler {
         const tooltipTarget = e.target.closest('[data-tooltip]');
         if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"], [data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]')) {
             this.uiManager.hideGraph();
-            if (this.activeTooltipTarget === tooltipTarget) {
+            
+            const tooltipEl = document.getElementById('generic-tooltip');
+            const isVis = this._isTooltipActuallyVisible(tooltipEl);
+
+            if (this.activeTooltipTarget === tooltipTarget && isVis) {
                 this.uiManager.hideGenericTooltip();
                 this.activeTooltipTarget = null;
             } else {
