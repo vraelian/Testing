@@ -471,10 +471,15 @@ export class UIEventControl {
             `;
         }
 
+        const fuelRequired = travelInfo.fuelCost;
+        const currentFuel = Math.floor(shipState.fuel);
+        const isFuelInsufficient = currentFuel < fuelRequired;
+        const currentFuelHtml = isFuelInsufficient ? `<span style="color: #915e5e;">${currentFuel}</span>` : `${currentFuel}`;
+
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
-                    <h3 class="font-orbitron">${location.name}</h3>
+                    <h3 style="font-family: 'Bruno Ace SC', sans-serif; font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 0.5rem;">${location.name}</h3>
                      <p class="flavor-text italic text-base">${location.launchFlavor}</p>
                 </div>
 
@@ -484,8 +489,8 @@ export class UIEventControl {
                 </div>
 
                 <div class="travel-info-text" id="launch-travel-info">
-                     <p>Travel Time: ${travelInfo.time} Days</p>
-                    <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
+                     <p>Travel Time: <span class="text-gray-400">${travelInfo.time} Days</span></p>
+                    <p>Fuel: ${currentFuelHtml} / ${fuelRequired} required</p>
                 </div>
             </div>`;
 
@@ -511,8 +516,8 @@ export class UIEventControl {
                         `;
                     } else {
                         infoText.innerHTML = `
-                            <p>Travel Time: ${travelInfo.time} Days</p>
-                            <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
+                            <p>Travel Time: <span class="text-gray-400">${travelInfo.time} Days</span></p>
+                            <p>Fuel: ${currentFuelHtml} / ${fuelRequired} required</p>
                         `;
                     }
                 });

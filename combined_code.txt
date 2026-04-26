@@ -3871,6 +3871,22 @@ card.
 }
 
 /* --- LORE MODAL --- */
+#lore-modal.modal-backdrop {
+    transition: opacity 0.4s ease-out;
+}
+
+#lore-modal.modal-visible .modal-content {
+    animation: fadeIn 0.4s ease-out;
+}
+
+#lore-modal.modal-hiding {
+    animation: fadeOut 0.4s ease-out forwards;
+}
+
+#lore-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.4s ease-out forwards;
+}
+
 #lore-modal .modal-content {
     width: 600px;
     max-width: 90vw;
@@ -6904,7 +6920,7 @@ card.
 /* The POI text label parent wrapper */
 .poi-label {
     position: absolute; /* Relative to its group */
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Bruno Ace SC', sans-serif;
     color: #d0d8e8;
     /* Nudge to center it vertically */
     transform: translateY(-50%);
@@ -6925,7 +6941,7 @@ card.
 
 /* Core POI Name Text */
 .poi-name-text {
-    font-size: 0.9rem;
+    font-size: calc(0.9rem + 1pt); /* Bumped 1pt */
     /* Mimic the SVG stroke with text-shadow */
     text-shadow: 
         0 0 3px #0c101d,
@@ -9798,11 +9814,25 @@ COMPONENT-SPECIFIC STYLING
     display: flex;
     flex-direction: column;
     border-width: 2px;
-    transition: all 0.3s ease;
-    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.25);
+    border-radius: 12px;
+    transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     position: relative;
     background-color: #111827; 
     overflow: hidden; 
+    min-height: 12.6rem; /* Reduced by 10% from 14rem */
+    transform: translateZ(0); /* Hardware acceleration for smooth depth scaling */
+    
+    /* 3-Dimensional Depth & Lighting (Phase 4.5 Polish) */
+    box-shadow: 
+        0 10px 20px rgba(0, 0, 0, 0.6),             /* Primary drop shadow */
+        inset 0 2px 4px rgba(255, 255, 255, 0.15),  /* Top interior highlight edge */
+        inset 0 -4px 8px rgba(0, 0, 0, 0.6);        /* Bottom interior bevel shadow */
+}
+
+/* Dim the card cosmetically if Fuel Demands > Current Ship Fuel */
+.location-card.fuel-insufficient {
+    opacity: 0.75;
+    filter: saturate(0.8) brightness(0.9);
 }
 
 /* Base Texture Layers */
@@ -9856,7 +9886,16 @@ COMPONENT-SPECIFIC STYLING
     font-size: 0.875rem;
     line-height: 1.25rem;
 }
-.location-card:not(.highlight-current):hover { transform: scale(1.05); cursor: pointer; }
+
+/* Pronounced 3D Interactive Hover State */
+.location-card:not(.highlight-current):hover { 
+    transform: translateY(-4px) scale(1.02); 
+    box-shadow: 
+        0 15px 30px rgba(0, 0, 0, 0.8),             /* Deepened drop shadow when lifted */
+        inset 0 2px 5px rgba(255, 255, 255, 0.25),  /* Strengthened top highlight */
+        inset 0 -4px 8px rgba(0, 0, 0, 0.6);        /* Maintained bottom bevel */
+    cursor: pointer; 
+}
 .location-card.disabled-current { cursor: pointer; }
 
 .location-card.highlight-current {
@@ -10556,7 +10595,7 @@ export class IntelMarketRenderer {
             <button class="btn btn-intel btn-intel-purchased" style="${style}" data-action="show_intel_details" 
                     data-packet-id="${packet.id}" 
                     data-location-id="${packet.locationId}"> 
-                ${dealLocationName} - View Intel
+                <span style="font-family: 'Bruno Ace SC', sans-serif;">${dealLocationName}</span> - View Intel
             </button>`;
     }
 
@@ -10588,7 +10627,7 @@ export class IntelMarketRenderer {
                     data-location-id="${packet.locationId}" data-price="${price}" 
                     title="${title}"
                     ${disabledAttr}>
-                ${dealLocationName} ${priceHtml}
+                <span style="font-family: 'Bruno Ace SC', sans-serif;">${dealLocationName}</span> - ${priceHtml}
             </button>`;
     }
 }
@@ -11441,6 +11480,9 @@ export function renderNavigationScreen(gameState) {
     const activeShipId = player.activeShipId;
     const shipState = player.shipStates[activeShipId];
     const upgrades = shipState ? (shipState.upgrades || []) : [];
+    
+    // Get Current Fuel for Range Indicator (Phase 4.5)
+    const currentFuel = shipState ? Math.floor(shipState.fuel) : 0;
 
     // 1. Fuel Modifiers (Perk * Upgrade)
     let fuelMod = 1.0;
@@ -11535,22 +11577,110 @@ export function renderNavigationScreen(gameState) {
                         if (isFreeFuel) displayFuel = 0;
                     }
 
+                    // Evaluate if Fuel Demand exceeds Fuel Supply
+                    const isFuelDimmed = !isCurrent && displayFuel > currentFuel;
+                    const dimmingClass = isFuelDimmed ? 'fuel-insufficient' : '';
+                    
+                    // CSS class and inline overrides for the dimming visual state
+                    const fuelIconClass = isFuelDimmed ? '' : 'text-sky-400 drop-shadow-md';
+                    const fuelTextClass = isFuelDimmed ? '' : 'text-sky-400';
+                    const fuelStyle = isFuelDimmed ? 'color: #915e5e;' : '';
+                    const fuelShadowStyle = isFuelDimmed ? 'text-shadow: 0 1px 2px rgba(0,0,0,0.8); color: #915e5e;' : 'text-shadow: 0 1px 3px rgba(0,0,0,0.8);';
+
+                    // --- PHASE 4: TARGET INDICATORS ---
+                    let isMissionTarget = false;
+                    if (missions && missions.activeMissionIds) {
+                        for (const missionId of missions.activeMissionIds) {
+                            const mission = DB.MISSIONS[missionId];
+                            if (!mission) continue;
+                            
+                            const progress = missions.missionProgress[missionId] || {};
+                            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+                            
+                            if (isLogisticsPickupPhase && mission.pickupLocationId === location.id) {
+                                isMissionTarget = true;
+                                break;
+                            }
+                            
+                            if (!isLogisticsPickupPhase && mission.completion?.locationId === location.id) {
+                                isMissionTarget = true;
+                                break;
+                            }
+                            
+                            if (mission.objectives) {
+                                const hasObjectiveHere = mission.objectives.some(obj => {
+                                    if (obj.target !== location.id) return false;
+                                    const objKey = obj.id || obj.goodId || obj.target;
+                                    const pObj = progress.objectives?.[objKey];
+                                    const current = pObj ? pObj.current : 0;
+                                    const target = pObj ? pObj.target : (obj.quantity || obj.value || 1);
+                                    
+                                    return current < target;
+                                });
+                                if (hasObjectiveHere) {
+                                    isMissionTarget = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    let isIntelTarget = false;
+
+                    // Fallback for older schemas
+                    if (gameState.intel?.active?.targetMarketId === location.id ||
+                        gameState.activeIntelDeal?.targetMarketId === location.id ||
+                        gameState.activeHotIntel?.targetMarketId === location.id) {
+                        isIntelTarget = true;
+                    }
+
+                    // Check Intel 2.0 Schema
+                    if (!isIntelTarget && gameState.intelMarket) {
+                        for (const key in gameState.intelMarket) {
+                            const packets = gameState.intelMarket[key];
+                            if (Array.isArray(packets)) {
+                                // An intel packet is active for this location if it was purchased (pricePaid is set)
+                                // and points to this location, and hasn't expired.
+                                if (packets.some(p => p.dealLocationId === location.id && p.pricePaid !== undefined && (!p.expiryDay || p.expiryDay >= gameState.day))) {
+                                    isIntelTarget = true;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    let indicatorsHtml = '';
+                    if (isMissionTarget || isIntelTarget) {
+                        let leftLabel = isMissionTarget ? `<span class="text-amber-400" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 5px rgba(251,191,36,0.6);">MISSION TARGET</span>` : `<span></span>`;
+                        let rightLabel = isIntelTarget ? `<span class="text-sky-400" style="text-shadow: 0 2px 4px rgba(0,0,0,0.8), 0 0 5px rgba(56,189,248,0.6);">INTEL TARGET</span>` : ``;
+                        
+                        // VIRTUAL WORKBENCH: Bypassing generic css boundaries with forced inline absolutes
+                        indicatorsHtml = `
+                            <div class="w-full flex justify-between px-3 pt-2 pointer-events-none text-[0.65rem] font-bold font-orbitron tracking-widest z-[15]" style="position: absolute !important; top: 0 !important; left: 0 !important; right: 0 !important;">
+                                ${leftLabel}
+                                ${rightLabel}
+                            </div>
+                        `;
+                    }
+                    // ----------------------------------
+
                     const currentStyle = isCurrent ? `style="--theme-glow-color: ${currentLocation?.navTheme.borderColor};"` : '';
 
-                    return `<div class="location-card p-6 rounded-xl text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass}" 
+                    return `<div class="location-card p-6 rounded-xl text-center flex flex-col ${isCurrent ? 'highlight-current' : ''} ${location.color} ${location.bg} ${lockoutClass} ${dimmingClass}" 
                                      ${actionData} ${currentStyle}>
-                        <h3 class="text-2xl font-orbitron flex-grow">${location.name}</h3>
+                        ${indicatorsHtml}
+                        <h3 class="flex-grow flex items-center justify-center" style="font-size: calc(1.5rem + 4.5px); font-family: 'Bruno Ace SC', sans-serif; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">${location.name}</h3>
                         <div class="location-card-footer mt-auto pt-3 border-t border-cyan-100/10">
                         ${isCurrent 
                             ? '<p class="text-yellow-300 font-bold mt-2">(Currently Docked)</p>' 
                             : `<div class="flex justify-around items-center text-center">
                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
-                                        <div><span class="font-bold font-roboto-mono text-lg">${displayTime}</span><span class="block text-xs text-gray-400">Days</span></div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-13a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V5z" clip-rule="evenodd" /></svg>
+                                        <div><span class="font-bold font-roboto-mono text-lg text-gray-400">${displayTime}</span><span class="block text-xs text-gray-500 font-bold tracking-wider">DAYS</span></div>
                                    </div>
                                    <div class="flex items-center space-x-2">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-sky-400" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
-                                        <div><span class="font-bold font-roboto-mono text-lg">${displayFuel}</span><span class="block text-xs text-gray-400">Fuel</span></div>
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 ${fuelIconClass}" style="${fuelStyle}" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z" clip-rule="evenodd" /></svg>
+                                        <div><span class="font-bold font-roboto-mono text-lg ${fuelTextClass}" style="${fuelShadowStyle}">${displayFuel}</span><span class="block text-xs font-bold tracking-wider ${fuelTextClass}" style="${fuelShadowStyle}">FUEL</span></div>
                                    </div>
                                </div>`
                         }
@@ -14532,7 +14662,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '40.00';
+export const APP_VERSION = '38.04';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -23199,10 +23329,15 @@ export class UIEventControl {
             `;
         }
 
+        const fuelRequired = travelInfo.fuelCost;
+        const currentFuel = Math.floor(shipState.fuel);
+        const isFuelInsufficient = currentFuel < fuelRequired;
+        const currentFuelHtml = isFuelInsufficient ? `<span style="color: #915e5e;">${currentFuel}</span>` : `${currentFuel}`;
+
         const modalContentHtml = `
-            <div class="launch-modal-wrapper panel-border" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
+            <div class="launch-modal-wrapper" style="background: ${theme.gradient}; color: ${theme.textColor}; border-color: ${theme.borderColor}; --theme-glow-color: ${theme.borderColor};">
                 <div class="flex-shrink-0">
-                    <h3 class="font-orbitron">${location.name}</h3>
+                    <h3 style="font-family: 'Bruno Ace SC', sans-serif; font-size: 1.8rem; text-shadow: 0 2px 4px rgba(0,0,0,0.5); margin-bottom: 0.5rem;">${location.name}</h3>
                      <p class="flavor-text italic text-base">${location.launchFlavor}</p>
                 </div>
 
@@ -23212,8 +23347,8 @@ export class UIEventControl {
                 </div>
 
                 <div class="travel-info-text" id="launch-travel-info">
-                     <p>Travel Time: ${travelInfo.time} Days</p>
-                    <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
+                     <p>Travel Time: <span class="text-gray-400">${travelInfo.time} Days</span></p>
+                    <p>Fuel: ${currentFuelHtml} / ${fuelRequired} required</p>
                 </div>
             </div>`;
 
@@ -23239,8 +23374,8 @@ export class UIEventControl {
                         `;
                     } else {
                         infoText.innerHTML = `
-                            <p>Travel Time: ${travelInfo.time} Days</p>
-                            <p>Fuel: ${Math.floor(shipState.fuel)} / ${travelInfo.fuelCost} required</p>
+                            <p>Travel Time: <span class="text-gray-400">${travelInfo.time} Days</span></p>
+                            <p>Fuel: ${currentFuelHtml} / ${fuelRequired} required</p>
                         `;
                     }
                 });
@@ -46835,6 +46970,19 @@ export class TooltipHandler {
     }
 
     /**
+     * Helper to verify if an element is genuinely visible on screen.
+     * @private
+     */
+    _isTooltipActuallyVisible(el) {
+        if (!el) return false;
+        if (el.classList.contains('hidden')) return false;
+        const styles = window.getComputedStyle(el);
+        if (styles.display === 'none' || styles.visibility === 'hidden') return false;
+        if (parseFloat(styles.opacity) === 0) return false;
+        return true;
+    }
+
+    /**
      * Handles click events to manage tooltips, primarily for mobile and special cases.
      * @param {Event} e The click event.
      */
@@ -46865,9 +47013,9 @@ export class TooltipHandler {
                     e.stopPropagation(); 
                     e.preventDefault();
 
-                    // Stateful Toggle Logic
                     const tooltipEl = document.getElementById('generic-tooltip');
-                    const isGenericVisible = tooltipEl && tooltipEl.style.display === 'block';
+                    const isGenericVisible = this._isTooltipActuallyVisible(tooltipEl);
+                                             
                     if (this.activeTooltipTarget === actionTarget && isGenericVisible) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
@@ -46888,7 +47036,8 @@ export class TooltipHandler {
                     e.preventDefault();
                     
                     const loreTooltipEl = document.getElementById('generic-tooltip');
-                    const isVisibleLore = loreTooltipEl && loreTooltipEl.style.display === 'block';
+                    const isVisibleLore = this._isTooltipActuallyVisible(loreTooltipEl);
+                                          
                     if (this.activeTooltipTarget === actionTarget && isVisibleLore) {
                         this.uiManager.hideGenericTooltip();
                         this.activeTooltipTarget = null;
@@ -47039,7 +47188,11 @@ export class TooltipHandler {
         const tooltipTarget = e.target.closest('[data-tooltip]');
         if (tooltipTarget && !tooltipTarget.closest('[data-action="toggle-tooltip"], [data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]')) {
             this.uiManager.hideGraph();
-            if (this.activeTooltipTarget === tooltipTarget) {
+            
+            const tooltipEl = document.getElementById('generic-tooltip');
+            const isVis = this._isTooltipActuallyVisible(tooltipEl);
+
+            if (this.activeTooltipTarget === tooltipTarget && isVis) {
                 this.uiManager.hideGenericTooltip();
                 this.activeTooltipTarget = null;
             } else {
@@ -47955,6 +48108,8 @@ export class PlayerActionService {
             player.seenGarnishmentWarning = false;
         }
 
+        this.missionService.checkTriggers();
+
         this.gameState.setState({});
     }
 
@@ -48295,7 +48450,13 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [40.00] - 2026-4-25
+# [38.04] - 2026-4-26
+-  Navigation screen polish
+-  Map screen polish
+-  Launch modal polish
+-  Intel screen polish
+
+# [38.00] - 2026-4-25
 -  improved saving
 -  improved save file export
 -  major optimizations in RAM and UI

@@ -119,7 +119,7 @@
 /* The POI text label parent wrapper */
 .poi-label {
     position: absolute; /* Relative to its group */
-    font-family: 'Orbitron', sans-serif;
+    font-family: 'Bruno Ace SC', sans-serif;
     color: #d0d8e8;
     /* Nudge to center it vertically */
     transform: translateY(-50%);
@@ -140,7 +140,7 @@
 
 /* Core POI Name Text */
 .poi-name-text {
-    font-size: 0.9rem;
+    font-size: calc(0.9rem + 1pt); /* Bumped 1pt */
     /* Mimic the SVG stroke with text-shadow */
     text-shadow: 
         0 0 3px #0c101d,

@@ -3,6 +3,12 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [38.04] - 2026-4-26
+-  Navigation screen polish
+-  Map screen polish
+-  Launch modal polish
+-  Intel screen polish
+
 # [38.00] - 2026-4-25
 -  improved saving
 -  improved save file export
