@@ -8,6 +8,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  Map screen polish
 -  Launch modal polish
 -  Intel screen polish
+-  updated public github push method
 
 # [38.00] - 2026-4-25
 -  improved saving
