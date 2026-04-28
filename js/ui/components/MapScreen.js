@@ -316,17 +316,23 @@ function _updateCurrentLocationHighlight(uiManager) {
     if (containerNode && poiNode) {
         // Handle Pluto edge case: scroll to bottom
         if (currentLocationId === LOCATION_IDS.PLUTO) {
-            containerNode.scrollTop = containerNode.scrollHeight;
+            containerNode.scrollTo({
+                top: containerNode.scrollHeight,
+                behavior: 'smooth'
+            });
         } else {
             // Main case: center the POI
             const containerHeight = containerNode.clientHeight;
             const poiTop = poiNode.offsetTop; // POI's Y position
             
-            // Calculate the scroll position to center the POI
-            const newScrollTop = poiTop - (containerHeight / 2);
+            // Calculate the scroll position to center the POI including its own height
+            const newScrollTop = poiTop - (containerHeight / 2) + (poiNode.clientHeight / 2);
             
-            // Set the scroll position
-            containerNode.scrollTop = newScrollTop;
+            // Set the scroll position with smooth behavior
+            containerNode.scrollTo({
+                top: newScrollTop,
+                behavior: 'smooth'
+            });
         }
     }
 }

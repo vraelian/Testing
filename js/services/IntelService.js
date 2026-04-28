@@ -140,7 +140,6 @@ export class IntelService {
 
         const commodityId = unlockedCommodityIds[Math.floor(Math.random() * unlockedCommodityIds.length)];
         
-        // --- VIRTUAL WORKBENCH: HIGH-VALUE INTEL BASELINE ---
         // Calculate Discount using Intel Profile parameters (clamped to baseline 40-60%)
         const profileMin = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.40;
         const profileMax = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.60;
@@ -148,7 +147,6 @@ export class IntelService {
         const minDiscount = Math.max(0.40, profileMin);
         const maxDiscount = Math.max(0.60, profileMax);
         const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
-        // --- END VIRTUAL WORKBENCH ---
 
         const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;
@@ -201,11 +199,6 @@ export class IntelService {
         const activeShip = state.player.activeShipId;
         
         let base = playerCredits * (0.10 + Math.random() * 0.10); 
-        
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
-        if (currentLocationId === LOCATION_IDS.VENUS) {
-            base *= 0.5; // 50% discount at Venus
-        }
 
         // Apply Local Eco Profile Cost Modifier
         const locationDef = this.db.MARKETS.find(m => m.id === currentLocationId);
@@ -215,19 +208,18 @@ export class IntelService {
 
         let finalPrice = base * packet.valueMultiplier;
         
-        // --- PHASE 2: AGE PERK (INTEL COST) ---
+        // AGE PERK (INTEL COST)
         const ageIntelDiscount = state.player.statModifiers?.intelCost || 0;
         if (ageIntelDiscount > 0) {
             finalPrice *= (1 - ageIntelDiscount);
         }
 
-        // --- Z-CLASS LOGIC ---
+        // Z-CLASS LOGIC
         // ATTR_WHISPER_NETWORK (The Listener): 50% Discount
         const shipAttributes = GameAttributes.getShipAttributes(activeShip);
         if (shipAttributes.includes('ATTR_WHISPER_NETWORK')) {
             finalPrice *= 0.5;
         }
-        // --- END Z-CLASS ---
 
         return Math.floor(finalPrice / 100) * 100;
     }
@@ -289,11 +281,7 @@ export class IntelService {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         let durationMultiplier = 1.9; // Base multiplier
-        if (state.currentLocationId === LOCATION_IDS.VENUS) {
-            durationMultiplier *= 2.0; // Double duration at Venus
-        }
 
         // Apply Local Eco Profile Duration Modifier
         const locationDef = this.db.MARKETS.find(m => m.id === state.currentLocationId);
@@ -301,7 +289,7 @@ export class IntelService {
              durationMultiplier *= locationDef.intelProfile.durationMod;
         }
 
-        // --- PHASE 2: AGE PERK (INTEL DURATION) ---
+        // AGE PERK (INTEL DURATION)
         const ageDurationBonus = state.player.statModifiers?.intelDuration || 0;
         if (ageDurationBonus > 0) {
             durationMultiplier *= (1 + ageDurationBonus);
