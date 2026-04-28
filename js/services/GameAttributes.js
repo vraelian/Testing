@@ -778,6 +778,48 @@ export class GameAttributes {
     }
 
     /**
+     * Rolls a random upgrade ID from the registry. Implements location-specific quirks.
+     * For Uranus, Tier 4 & 5 upgrades have a 5x weight multiplier and enforces a tier 3 floor limit.
+     * @param {string} [locationId] The current location ID to apply quirks.
+     * @returns {string} The selected upgrade ID.
+     */
+    static rollRandomUpgrade(locationId) {
+        const isUranus = locationId === LOCATION_IDS.URANUS;
+        const upgrades = Object.keys(ATTRIBUTE_DEFINITIONS).filter(k => {
+            if (!k.startsWith('UPG_')) return false;
+            if (isUranus) {
+                const tier = GameAttributes.extractTier(k);
+                if (tier < 3) return false;
+            }
+            return true;
+        });
+
+        if (upgrades.length === 0) return null;
+
+        let totalWeight = 0;
+        const weightedPool = upgrades.map(id => {
+            const def = ATTRIBUTE_DEFINITIONS[id];
+            let weight = 10; // Base weight
+            
+            // Uranus Quirk: 5x chance for T4/T5
+            if (isUranus && def && (def.tier === 4 || def.tier === 5)) {
+                weight *= 5;
+            }
+            
+            totalWeight += weight;
+            return { id, weight };
+        });
+
+        let random = Math.random() * totalWeight;
+        for (const item of weightedPool) {
+            if (random < item.weight) return item.id;
+            random -= item.weight;
+        }
+        
+        return weightedPool[weightedPool.length - 1].id;
+    }
+
+    /**
      * Extracts the numerical tier from an ID string, defaulting to 1 if not found.
      * Parses standard trailing numerics (e.g., '_3') and roman numerals (e.g., '_III').
      * @param {string} id 

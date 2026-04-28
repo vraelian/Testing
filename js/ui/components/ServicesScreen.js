@@ -368,6 +368,7 @@ function _getDailyStock(gameState) {
     const allIds = GameAttributes.getAllUpgradeIds();
 
     const purchased = gameState.uiState.purchasedUpgrades || [];
+    const isUranus = currentLocationId === LOCATION_IDS.URANUS;
 
     let candidates = allIds.filter(id => {
         if (!id.startsWith('UPG_')) return false;
@@ -378,6 +379,11 @@ function _getDailyStock(gameState) {
 
         if (id.endsWith('_4') || id.endsWith('_5')) {
             if (player.credits < 1000000) return false;
+        }
+        
+        if (isUranus) {
+            const tier = GameAttributes.extractTier(id);
+            if (tier < 3) return false;
         }
         
         return true;
@@ -395,7 +401,6 @@ function _getDailyStock(gameState) {
     else targetCount = 5;
 
     const ageMultiplier = 1 + (gameState.player.statModifiers?.upgradeSpawnRate || 0);
-    const isUranus = currentLocationId === LOCATION_IDS.URANUS;
     const preferredPrefixes = LOCATION_PREFERENCES[currentLocationId] || [];
 
     let weightedPool = candidates.map(id => {
@@ -409,8 +414,9 @@ function _getDailyStock(gameState) {
         
         weight *= ageMultiplier;
 
-        if (isUranus && (id.endsWith('_3') || id.endsWith('_4') || id.endsWith('_5'))) {
-            weight *= 2;
+        // Uranus Quirk: Massive 5x boost to Tier 4 and Tier 5 upgrades
+        if (isUranus && (id.endsWith('_4') || id.endsWith('_5') || id.endsWith('_IV') || id.endsWith('_V'))) {
+            weight *= 5;
         }
 
         const isPreferred = preferredPrefixes.some(prefix => id.startsWith(prefix));

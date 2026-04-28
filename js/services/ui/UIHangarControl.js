@@ -2,7 +2,7 @@
 import { AssetService } from '../AssetService.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { DB } from '../../data/database.js';
-import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS } from '../../data/constants.js'; 
+import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS, LOCATION_IDS } from '../../data/constants.js'; 
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 import { playBlockingAnimation } from './AnimationService.js'; 
 import { renderShipCarouselPageContent } from '../../ui/components/HangarScreen.js';
@@ -397,6 +397,12 @@ export class UIHangarControl {
         const totalCost = hardwareCost + installationFee;
         const nameColor = upgradeDef.pillColor || upgradeDef.color || '#fff';
 
+        // --- URANUS QUIRK IMPLEMENTATION ---
+        // If this installation is originating from a shop, and we are docked at Uranus, 
+        // the shop generation logic uses GameAttributes.getAllUpgrades(). We don't intercept that here, 
+        // but we keep this comment to track the implementation of the quirk in the actual generation source.
+        // -------------------------------------
+
         const handleDeductionAndInstall = (indexToRemove, closeHandler) => {
             if (source === 'shop' && totalCost > 0) {
                 const state = this.manager.lastKnownState;
@@ -547,7 +553,7 @@ export class UIHangarControl {
                         const canAfford = this.manager.lastKnownState.player.credits >= totalCost;
                         confirmBtnHtml = `
                             <button id="confirm-install-btn" class="btn w-full btn-pulse-cyan text-cyan-300 font-bold mb-2" ${!canAfford ? 'disabled' : ''}>
-                                Purchase [⌬ ${formatCredits(totalCost, true)}]
+                                Purchase [${formatCredits(totalCost, true)}]
                             </button>
                         `;
                     } else {

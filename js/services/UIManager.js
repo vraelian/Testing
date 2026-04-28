@@ -417,6 +417,31 @@ export class UIManager {
         }
         
         this.cache.subNavBar.innerHTML = subNavsHtml;
+
+        // Auto-center navigation card if applicable
+        if (activeScreen === SCREEN_IDS.NAVIGATION) {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const navScreenEl = this.cache.navigationScreen;
+                    if (!navScreenEl) return;
+                    
+                    const scrollPanel = navScreenEl.querySelector('.navigation-scroll-panel');
+                    const currentCard = navScreenEl.querySelector('.highlight-current');
+                    
+                    if (scrollPanel && currentCard) {
+                        const panelHeight = scrollPanel.clientHeight;
+                        const cardTop = currentCard.offsetTop;
+                        const cardHeight = currentCard.clientHeight;
+                        const newScrollTop = cardTop - (panelHeight / 2) + (cardHeight / 2);
+                        
+                        scrollPanel.scrollTo({
+                            top: newScrollTop,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 50);
+            });
+        }
     }
 
     _preserveScrollAndRender(screenEl, renderCallback) {
