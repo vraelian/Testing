@@ -161,7 +161,9 @@ export class ActionClickHandler {
                 
                 this.gameState.uiState.achievementsCollapsedCategories = collapsed;
                 if (this.uiManager.achievementControl) {
-                    this.uiManager.achievementControl.render(state);
+                    // Pass a fresh snapshot of the state to the render method, 
+                    // otherwise it uses the stale 'state' snapshot from the top of the event handler.
+                    this.uiManager.achievementControl.render(this.gameState.getState());
                 }
                 break;
             }

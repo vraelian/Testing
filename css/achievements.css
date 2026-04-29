@@ -1,5 +1,16 @@
 /* css/achievements.css */
 
+/* Add fade animations for the modal instantiation */
+@keyframes achFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes achFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
 /* Base Pill - Inert / Tracking State */
 .ach-pill {
     background-color: rgba(15, 23, 42, 0.8); 
@@ -61,7 +72,7 @@
 /* --- Achievements HUD Button --- */
 #btn-achievements {
     position: fixed;
-    bottom: 90px; /* 35px base + 44px button height + 11px gap */
+    bottom: 35px; /* Symmetrical alignment to the right-side game menu button */
     left: 0;
     width: 44px;
     height: 44px;
@@ -91,4 +102,5 @@
 #btn-achievements svg {
     width: 24px;
     height: 24px;
+    color: #ffffff !important; /* Force white icon instead of gold from inline HTML classes */
 }
