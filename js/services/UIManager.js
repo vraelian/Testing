@@ -205,11 +205,14 @@ export class UIManager {
             if (gameMenuBtn) gameMenuBtn.style.display = 'none';
             return;
         } else {
+            // FIX: Remove Tailwind hidden classes to allow JS layout management to take over
             if (this.cache.econWeatherBtn) {
-                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : '';
+                this.cache.econWeatherBtn.classList.remove('hidden');
+                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : 'flex';
             }
             if (this.cache.btnAchievements) {
-                this.cache.btnAchievements.style.display = isTravelLocked ? 'none' : '';
+                this.cache.btnAchievements.classList.remove('hidden');
+                this.cache.btnAchievements.style.display = isTravelLocked ? 'none' : 'flex';
             }
             if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
                 this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';
