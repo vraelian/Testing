@@ -20,6 +20,7 @@ import { BankruptcyService } from './BankruptcyService.js';
 import { OFFICERS } from '../data/officers.js'; 
 import { ToastService } from './ToastService.js';
 import { TelemetryService } from './bot/TelemetryService.js';
+import { AchievementService } from './AchievementService.js';
 
 export class SimulationService {
     constructor(gameState, uiManager, logger, newsTickerService) { 
@@ -48,6 +49,9 @@ export class SimulationService {
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         this.bankruptcyService = new BankruptcyService();
         this.toastService = new ToastService(gameState, uiManager, this);
+
+        // --- ACHIEVEMENTS SYSTEM CORE ---
+        this.achievementService = new AchievementService(gameState);
 
         this.timeService.intelService = this.intelService;
         this.uiManager.setIntelService(this.intelService); 
@@ -627,6 +631,9 @@ export class SimulationService {
                         this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                         const license = DB.LICENSES[reward.licenseId];
                         this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license ? license.name : reward.licenseId}.`);
+                        if (this.achievementService) {
+                            this.achievementService.increment('licensesOwned', this.gameState.player.unlockedLicenseIds.length, true);
+                        }
                     }
                     break;
                 case 'ship':

@@ -1,7 +1,7 @@
 // js/services/world/TimeService.js
 import { DB } from '../../data/database.js';
-import { GAME_RULES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
-import { formatCredits } from '../../utils.js';
+import { GAME_RULES, ATTRIBUTE_TYPES, LOCATION_IDS, SHIP_IDS } from '../../data/constants.js';
+import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { SystemStateService } from './SystemStateService.js';
 
@@ -103,6 +103,30 @@ export class TimeService {
                 return;
             }
             this.gameState.day++;
+
+            // --- ACHIEVEMENTS: DAILY TRACKING HOOKS ---
+            if (this.simulationService && this.simulationService.achievementService) {
+                const ach = this.simulationService.achievementService;
+                ach.increment('gameDaysPlayed', 1);
+
+                if (this.gameState.player.ownedShipIds.includes(SHIP_IDS.WANDERER)) {
+                    ach.increment('daysOwnedStartingShip', 1);
+                }
+
+                let totalQty = 0, totalCap = 0;
+                this.gameState.player.ownedShipIds.forEach(id => {
+                    const cap = this.simulationService.getEffectiveShipStats(id).cargoCapacity;
+                    const used = calculateInventoryUsed(this.gameState.player.inventories[id]);
+                    totalQty += used;
+                    totalCap += cap;
+                });
+                
+                if (totalCap > 0 && totalQty >= totalCap) {
+                    ach.increment('consecutiveDaysFullHold', 1);
+                } else {
+                    ach.increment('consecutiveDaysFullHold', 0, true);
+                }
+            }
 
             // --- SYSTEM STATES V3: Daily Evaluation Loop ---
             this.systemStateService.evaluateTick();
@@ -222,6 +246,11 @@ export class TimeService {
 
                 this.gameState.player.debt += finalInterest;
                 
+                // --- ACHIEVEMENTS: INTEREST TRACKING HOOK ---
+                if (this.simulationService && this.simulationService.achievementService && finalInterest > 0) {
+                    this.simulationService.achievementService.increment('lifetimeInterestPaid', finalInterest);
+                }
+
                 // Log the transaction
                 if (this.simulationService && finalInterest > 0) {
                     this.simulationService._logTransaction('loan', finalInterest, 'Monthly interest charge');
@@ -252,6 +281,11 @@ export class TimeService {
      * @private
      */
     _handleBirthday(age) {
+        // --- ACHIEVEMENTS: AGE TRACKING HOOK ---
+        if (this.simulationService && this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('peakAge', age, true);
+        }
+
         const stats = this.gameState.player.statModifiers;
         let title = `Happy Birthday!`;
         let desc = `You turned ${age}.`;

@@ -30,6 +30,7 @@ import { UIEventControl } from './ui/UIEventControl.js';
 import { UISolStationControl } from './ui/UISolStationControl.js';
 import { UIHelpManager } from './ui/UIHelpManager.js';
 import { UIToastManager } from './ui/UIToastManager.js';
+import { UIAchievementControl } from './ui/UIAchievementControl.js';
 
 export class UIManager {
     /**
@@ -65,6 +66,7 @@ export class UIManager {
         this.solStationControl = new UISolStationControl(this); 
         this.helpManager = new UIHelpManager(this);
         this.toastManager = new UIToastManager(this);
+        this.achievementControl = new UIAchievementControl(this);
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -140,7 +142,8 @@ export class UIManager {
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
             stickyObjectiveProgress: document.getElementById('sticky-objective-progress'),
 
-            econWeatherBtn: document.getElementById('btn-econ-weather')
+            econWeatherBtn: document.getElementById('btn-econ-weather'),
+            btnAchievements: document.getElementById('btn-achievements')
         };
 
         if (this.cache.econWeatherBtn) {
@@ -197,12 +200,16 @@ export class UIManager {
 
         if (gameState.introSequenceActive) {
             if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
+            if (this.cache.btnAchievements) this.cache.btnAchievements.style.display = 'none';
             const gameMenuBtn = document.getElementById('btn-game-menu');
             if (gameMenuBtn) gameMenuBtn.style.display = 'none';
             return;
         } else {
             if (this.cache.econWeatherBtn) {
                 this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : '';
+            }
+            if (this.cache.btnAchievements) {
+                this.cache.btnAchievements.style.display = isTravelLocked ? 'none' : '';
             }
             if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
                 this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';

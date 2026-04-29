@@ -149,8 +149,15 @@ export class SolStationService {
         const dt = daysMissed * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY;
         console.log(`Calculated delta-time (dt) in seconds: ${dt}`);
         
+        const oldAm = station.stockpile?.antimatter || 0;
         const projectedState = this._calculateExactState(station, dt);
         Object.assign(station, projectedState);
+        const newAm = station.stockpile?.antimatter || 0;
+
+        // --- ACHIEVEMENTS: SYNTHESIS YIELD HOOK ---
+        if (newAm > oldAm && this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+            this.timeService.simulationService.achievementService.increment('antimatterSynthesizedTotal', newAm - oldAm);
+        }
         
         station.lastProcessedDay = currentDay;
         this.logger.info.system('SolStation', currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
@@ -219,8 +226,15 @@ export class SolStationService {
         const station = this.gameState.solStation;
 
         if (station && station.unlocked) {
+            const oldAm = station.stockpile?.antimatter || 0;
             const newState = this._calculateExactState(station, dt);
             Object.assign(station, newState);
+            const newAm = station.stockpile?.antimatter || 0;
+
+            // --- ACHIEVEMENTS: SYNTHESIS YIELD HOOK ---
+            if (newAm > oldAm && this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+                this.timeService.simulationService.achievementService.increment('antimatterSynthesizedTotal', newAm - oldAm);
+            }
             
             this.localTimeAccumulator += dt;
             if (this.localTimeAccumulator >= LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY) {
@@ -666,6 +680,11 @@ export class SolStationService {
             this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         }
 
+        // --- ACHIEVEMENTS: DONATION HOOK ---
+        if (this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+            this.timeService.simulationService.achievementService.increment('solDonationsTotal', quantity);
+        }
+
         this.gameState.setState({});
         return { success: true, message: "Resources transferred." };
     }
@@ -819,6 +838,12 @@ export class SolStationService {
              while (station.officers.length < slotsToHave) {
                 station.officers.push({ slotId: station.officers.length + 1, assignedOfficerId: null });
              }
+        }
+
+        // --- ACHIEVEMENTS: SOL LEVEL PROGRESSION HOOKS ---
+        if (this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+            this.timeService.simulationService.achievementService.increment('peakSolLevel', station.level, true);
+            this.timeService.simulationService.achievementService.increment('peakSolLevel50', station.level, true);
         }
         
         this.logger.info.system('SolStation', this.gameState.day, 'LEVEL_UP', `Sol Station upgraded to Level ${station.level}!`);

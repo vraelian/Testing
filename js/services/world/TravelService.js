@@ -10,7 +10,7 @@ import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPE
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
-import { formatCredits } from '../../utils.js';
+import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { starfieldService } from '../ui/StarfieldService.js';
 
 export class TravelService {
@@ -387,6 +387,45 @@ export class TravelService {
         travelInfo.time = Math.max(0, Math.round(travelInfo.time)); 
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
+        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+
+        // --- ACHIEVEMENTS: NAVIGATION PRE-FLIGHT HOOKS ---
+        const ach = this.simulationService.achievementService;
+        if (ach) {
+            const destId = locationId;
+            const outerRim = ['loc_jupiter', 'loc_saturn', 'loc_uranus', 'loc_neptune', 'loc_kepler', 'loc_pluto'];
+            const innerRim = ['loc_mercury', 'loc_venus', 'loc_earth', 'loc_mars', 'loc_luna'];
+            
+            if (innerRim.includes(destId)) ach.increment('jumpsInnerSystem', 1);
+            if (outerRim.includes(destId)) ach.increment('jumpsOuterSystem', 1);
+            if (destId === 'loc_belt') ach.increment('jumpsBelt', 1);
+
+            const healthPct = activeShipState.health / effectiveStats.maxHealth;
+            if (healthPct <= 0.20) ach.increment('transitLowHull', 1);
+
+            ach.increment('totalTravelDays', travelInfo.time);
+            if (travelInfo.time <= 2 && travelInfo.time > 0) ach.increment('jumpsShort', 1);
+            if (travelInfo.time >= 100) ach.increment('jumpsLong', 1);
+
+            let totalQty = 0, totalCap = 0;
+            state.player.ownedShipIds.forEach(id => {
+                const cap = this.simulationService.getEffectiveShipStats(id).cargoCapacity;
+                const used = calculateInventoryUsed(state.player.inventories[id]);
+                totalQty += used;
+                totalCap += cap;
+            });
+            if (totalQty === 0) ach.increment('jumpsEmptyHold', 1);
+            if (totalCap > 0 && totalQty >= totalCap) ach.increment('jumpsMaxCapacity', 1);
+            
+            const mono = state.achievements.metrics.monoTradeId;
+            if (mono && mono !== 'FAILED') {
+                ach.increment('consecutiveMonoTrades', 1);
+            } else {
+                ach.increment('consecutiveMonoTrades', 0, true); 
+            }
+            state.achievements.metrics.monoTradeId = null; 
+        }
+
         if (activeShipState.fuel < travelInfo.fuelCost) {
             const originName = DB.MARKETS.find(m => m.id === fromId)?.name || "Origin";
             const lostDays = travelInfo.time;
@@ -435,8 +474,6 @@ export class TravelService {
         }
         
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
-        
-        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         
         activeShipState.health -= travelHullDamage;
         this.simulationService._checkHullWarnings(activeShip.id);
@@ -533,6 +570,18 @@ export class TravelService {
 
         const finalCallback = () => {
             this.gameState.isTraveling = false;
+
+            // --- ACHIEVEMENTS: POST-FLIGHT ARRIVAL HOOKS ---
+            if (this.simulationService.achievementService) {
+                const achievementService = this.simulationService.achievementService;
+                achievementService.increment('docked_' + locationId, 1);
+                
+                const fuelPct = activeShipState.fuel / effectiveStats.maxFuel;
+                if (fuelPct <= 0.05) achievementService.increment('arriveLowFuel', 1);
+                
+                const arrivalHealthPct = Math.round((activeShipState.health / effectiveStats.maxHealth) * 100);
+                if (arrivalHealthPct === 1) achievementService.increment('arriveCriticalHull', 1);
+            }
 
             if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                 this.gameState.pendingEventChains.forEach(chain => {
