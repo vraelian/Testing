@@ -132,6 +132,81 @@ export class ActionClickHandler {
             }
             // --- END GAME MENU ---
 
+            // --- ACHIEVEMENTS SYSTEM ROUTING (Phase 3 & 4) ---
+            case 'open-achievements':
+                e.stopPropagation();
+                if (this.uiManager.achievementControl) {
+                    this.uiManager.achievementControl.showModal(state);
+                }
+                break;
+
+            case 'close-achievements':
+                e.stopPropagation();
+                if (this.uiManager.achievementControl) {
+                    this.uiManager.achievementControl.hideModal();
+                }
+                break;
+
+            case 'toggle-ach-category': {
+                e.stopPropagation();
+                const catId = dataset.categoryId;
+                if (!catId) return;
+
+                let collapsed = state.uiState.achievementsCollapsedCategories || [];
+                if (collapsed.includes(catId)) {
+                    collapsed = collapsed.filter(c => c !== catId);
+                } else {
+                    collapsed.push(catId);
+                }
+                
+                this.gameState.uiState.achievementsCollapsedCategories = collapsed;
+                if (this.uiManager.achievementControl) {
+                    this.uiManager.achievementControl.render(state);
+                }
+                break;
+            }
+
+            case 'claim-achievement': {
+                e.stopPropagation();
+                const achId = dataset.id;
+                if (!achId) return;
+
+                const pill = actionTarget.closest('.ach-pill');
+                if (!pill || pill.classList.contains('ach-claiming')) return;
+
+                // Lock element against double-clicks
+                pill.classList.add('ach-claiming');
+                
+                // WAAPI-Style CSS Transition Initiation
+                pill.style.filter = 'blur(5px)';
+                pill.style.opacity = '0';
+                pill.style.transition = 'all 3s ease';
+
+                setTimeout(() => {
+                    const wrapper = pill.closest('.ach-pill-wrapper');
+                    if (wrapper) {
+                        wrapper.style.height = '0px';
+                        wrapper.style.margin = '0px';
+                        wrapper.style.opacity = '0';
+                        wrapper.style.transition = 'height 1s ease, margin 1s ease, opacity 1s ease';
+                    }
+
+                    setTimeout(() => {
+                        // Execute reward handoff and status mutation
+                        if (this.simulationService && this.simulationService.achievementService) {
+                            this.simulationService.achievementService.claim(achId);
+                        }
+                        
+                        // Hard render to redraw lists and place solid-gold pill at the bottom
+                        if (this.uiManager.achievementControl) {
+                            this.uiManager.achievementControl.render(this.gameState.getState());
+                        }
+                    }, 1000);
+                }, 3000);
+                break;
+            }
+            // --- END ACHIEVEMENTS SYSTEM ---
+
             // --- Ship Actions (Hangar/Shipyard) ---
             case ACTION_IDS.BUY_SHIP: {
                 const { shipId } = dataset;

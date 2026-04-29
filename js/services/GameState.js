@@ -176,7 +176,7 @@ export class GameState {
         stateCopy.activeNav = NAV_IDS.DATA;
         stateCopy.activeScreen = SCREEN_IDS.MISSIONS;
         
-        // Revert UI state to safe defaults
+        // Revert UI state to safe defaults (while preserving specific structural nodes like achievements arrays if present)
         stateCopy.uiState = {
             marketCardMinimized: {},
             hangarShipyardToggleState: 'shipyard',
@@ -185,7 +185,10 @@ export class GameState {
             activeIntelTab: 'intel-codex-content',
             servicesTab: 'supply',
             activeMissionTab: 'terminal',
-            enableEconomicTelemetry: false // Prevent telemetry from staying active accidentally across sessions
+            enableEconomicTelemetry: false,
+            achievementsScrollY: stateCopy.uiState?.achievementsScrollY || 0,
+            achievementsCollapsedCategories: stateCopy.uiState?.achievementsCollapsedCategories || [],
+            achievementsMinimizedPills: stateCopy.uiState?.achievementsMinimizedPills || []
         };
 
         return stateCopy;
@@ -435,7 +438,7 @@ export class GameState {
             // --- END SYSTEM STATES V3 ---
 
             player: {
-                name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
+                name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: 2200, birthdayProfitBonus: 0,
                 introStep: 0,
                 credits: 6000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
@@ -550,19 +553,26 @@ export class GameState {
                 trackedMissionId: null
                 // --- END MISSION SYSTEM 2.0 ---
             },
+
+            // --- ACHIEVEMENTS SYSTEM DATA LEDGER ---
+            achievements: {
+                metrics: {}, // Key-value pairs of raw integers for dynamic incrementing
+                status: {}   // Key-value pairs of completion states ('COMPLETED', 'CLAIMED')
+            },
+
             uiState: {
                 marketCardMinimized: {},
                 hangarShipyardToggleState: 'shipyard',
                 hangarActiveIndex: 0,
                 shipyardActiveIndex: 0,
-                // --- VIRTUAL WORKBENCH (A) ---
-                // Add state to track the active intel tab
-                activeIntelTab: 'intel-codex-content', // Matches DOM ID
-                servicesTab: 'supply', // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
-                // --- MISSION SYSTEM 2.0 (Phase 3) ---
-                activeMissionTab: 'terminal', // 'terminal' | 'log'
-                enableEconomicTelemetry: false // Telemetry execution gate
-                // --- END VIRTUAL WORKBENCH ---
+                activeIntelTab: 'intel-codex-content',
+                servicesTab: 'supply',
+                activeMissionTab: 'terminal',
+                enableEconomicTelemetry: false,
+                // --- ACHIEVEMENTS DOM MEMORY ---
+                achievementsScrollY: 0,
+                achievementsCollapsedCategories: [],
+                achievementsMinimizedPills: []
             },
             telemetry: {
                 ticks: [],

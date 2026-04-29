@@ -1,0 +1,59 @@
+/* css/achievements.css */
+
+/* Base Pill - Inert / Tracking State */
+.ach-pill {
+    background-color: rgba(15, 23, 42, 0.8); 
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    transition: all 0.3s ease;
+}
+
+/* Golden Progress Bar Fill */
+.ach-progress-fill {
+    background: linear-gradient(90deg, #ca8a04, #facc15);
+    box-shadow: 0 0 8px rgba(250, 204, 21, 0.6);
+    transition: width 0.5s ease-out;
+}
+
+/* Completed State - Pulsing */
+@keyframes achPulseGold {
+    0% { box-shadow: 0 0 5px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.5); }
+    50% { box-shadow: 0 0 15px rgba(250, 204, 21, 0.8); border-color: rgba(250, 204, 21, 1); }
+    100% { box-shadow: 0 0 5px rgba(250, 204, 21, 0.4); border-color: rgba(250, 204, 21, 0.5); }
+}
+
+.ach-completed {
+    border-color: #facc15;
+    background-color: rgba(30, 41, 59, 0.9);
+    animation: achPulseGold 2s infinite ease-in-out;
+}
+
+.ach-completed:hover {
+    background-color: rgba(51, 65, 85, 1);
+    transform: scale(1.02);
+}
+
+/* Claimed State - Solid Gold */
+.ach-claimed {
+    background: linear-gradient(135deg, #ca8a04, #eab308);
+    border-color: #fef08a;
+    box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Force dark text on the solid gold background for legibility */
+.ach-claimed .text-cyan-100,
+.ach-claimed .text-yellow-400 {
+    color: #1a202c !important; 
+}
+
+/* Claiming Animation State (WAAPI CSS Handoff) */
+.ach-claiming {
+    filter: blur(5px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 3s ease;
+}
+
+/* Wrapper for DOM Collapse Animation */
+.ach-pill-wrapper {
+    will-change: height, margin, opacity;
+}

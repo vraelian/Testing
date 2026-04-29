@@ -163,6 +163,26 @@ export class PlayerActionService {
             if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
         }
 
+        // --- ACHIEVEMENTS: BUY TRACKING HOOKS ---
+        if (this.simulationService.achievementService) {
+            const ach = this.simulationService.achievementService;
+            if (goodId === COMMODITY_IDS.ANTIMATTER) ach.increment('tradeAntimatter', 1);
+            if (state.currentLocationId === LOCATION_IDS.EARTH) ach.increment('tradesAt_loc_earth', 1);
+            if (state.currentLocationId === LOCATION_IDS.EXCHANGE) ach.increment('tradesAt_loc_exchange', 1);
+            ach.increment('totalTradesExecuted', 1);
+
+            if (state.activeIntelDeal && state.activeIntelDeal.commodityId === goodId && state.activeIntelDeal.dealLocationId === state.currentLocationId) {
+                ach.increment('intelDealsExecuted', 1);
+            }
+
+            const m = this.gameState.state.achievements.metrics.monoTradeId;
+            if (m === undefined || m === null || m === goodId) {
+                this.gameState.state.achievements.metrics.monoTradeId = goodId;
+            } else {
+                this.gameState.state.achievements.metrics.monoTradeId = 'FAILED';
+            }
+        }
+
         this.gameState.setState({});
         return true;
     }
@@ -287,6 +307,49 @@ export class PlayerActionService {
             if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
         }
 
+        // --- ACHIEVEMENTS: SELL TRACKING HOOKS ---
+        if (this.simulationService.achievementService) {
+            const ach = this.simulationService.achievementService;
+            if (goodId === COMMODITY_IDS.ANTIMATTER) ach.increment('tradeAntimatter', 1);
+            
+            const outerRim = ['loc_jupiter', 'loc_saturn', 'loc_uranus', 'loc_neptune', 'loc_kepler', 'loc_pluto'];
+            if (goodId === COMMODITY_IDS.WATER_ICE && outerRim.includes(state.currentLocationId)) {
+                ach.increment('soldWaterOuter', quantity);
+            }
+
+            if (state.currentLocationId === LOCATION_IDS.EARTH) ach.increment('tradesAt_loc_earth', 1);
+            if (state.currentLocationId === LOCATION_IDS.EXCHANGE) ach.increment('tradesAt_loc_exchange', 1);
+            ach.increment('totalTradesExecuted', 1);
+
+            if (profit > 0) {
+                const currentPeak = this.gameState.state.achievements.metrics.highestSingleTradeProfit || 0;
+                if (profit > currentPeak) ach.increment('highestSingleTradeProfit', Math.floor(profit), true);
+            }
+
+            if (state.activeIntelDeal && state.activeIntelDeal.commodityId === goodId && state.activeIntelDeal.dealLocationId === state.currentLocationId) {
+                ach.increment('intelDealsExecuted', 1);
+            }
+
+            const currentCredits = this.gameState.player.credits;
+            const prevTycoon = this.gameState.state.achievements.metrics.peakCredits_Tycoon || 0;
+            if (currentCredits > prevTycoon) ach.increment('peakCredits_Tycoon', currentCredits, true);
+            const prevBillion = this.gameState.state.achievements.metrics.peakCredits_Billion || 0;
+            if (currentCredits > prevBillion) ach.increment('peakCredits_Billion', currentCredits, true);
+
+            const galAvg = state.market.galacticAverages[goodId] || 0;
+            const avgCostBasis = totalCostBasis / quantity;
+            if (avgCostBasis <= (galAvg * 0.5) && (totalSaleValue / quantity) >= (galAvg * 1.5)) {
+                ach.increment('centuryDeals', 1);
+            }
+
+            const m = this.gameState.state.achievements.metrics.monoTradeId;
+            if (m === undefined || m === null || m === goodId) {
+                this.gameState.state.achievements.metrics.monoTradeId = goodId;
+            } else {
+                this.gameState.state.achievements.metrics.monoTradeId = 'FAILED';
+            }
+        }
+
         this.gameState.setState({});
 
         return totalSaleValue;
@@ -372,6 +435,18 @@ export class PlayerActionService {
 
             const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-effectivePrice, true)}</span>. This ship has been stored in your Hangar.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
+
+            // --- ACHIEVEMENTS: SHIP BUY HOOKS ---
+            if (this.simulationService.achievementService) {
+                const ach = this.simulationService.achievementService;
+                const fleetSize = this.gameState.player.ownedShipIds.length;
+                const prevMax = this.gameState.state.achievements.metrics.maxFleetSize || 0;
+                if (fleetSize > prevMax) ach.increment('maxFleetSize', fleetSize, true);
+
+                if (ship.class) {
+                    ach.increment(`ownedClass_${ship.class.toUpperCase()}`, 1, true);
+                }
+            }
 
             this.gameState.setState({
                 uiState: {
@@ -540,6 +615,11 @@ export class PlayerActionService {
 
             const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.${cargoOutcomeText}`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
+
+            // --- ACHIEVEMENTS: SHIP SELL HOOK ---
+            if (this.simulationService.achievementService) {
+                this.simulationService.achievementService.increment('shipsSold', 1);
+            }
 
             this.gameState.setState({
                 uiState: {
@@ -713,6 +793,11 @@ export class PlayerActionService {
         player.unlockedLicenseIds.push(licenseId);
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this.simulationService._logTransaction('license', -license.cost, `Purchased ${license.name}`);
+        
+        if (this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('licensesOwned', player.unlockedLicenseIds.length, true);
+        }
+
         this.gameState.setState({});
 
         return { success: true };
@@ -747,7 +832,12 @@ export class PlayerActionService {
             };
         }
   
-         this.gameState.setState({});
+        // --- ACHIEVEMENTS: INTEL PURCHASE HOOK ---
+        if (this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('intelDealsPurchased', 1);
+        }
+
+        this.gameState.setState({});
     }
 
     refuelTick() {
@@ -762,7 +852,7 @@ export class PlayerActionService {
 
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
-        const statusEffects = shipState.statusEffects || []; // Phase 4 hook
+        const statusEffects = shipState.statusEffects || []; 
         const shipDef = DB.SHIPS[ship.id];
 
         let fuelClassMod = 1;
@@ -934,6 +1024,11 @@ export class PlayerActionService {
             this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, x, y, '#f87171');
         }
 
+        // --- ACHIEVEMENTS: REPAIR HOOK ---
+        if (this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('spentOnRepairs', totalCost);
+        }
+
         this.gameState.setState({}); 
         return totalCost;
     }
@@ -975,6 +1070,17 @@ export class PlayerActionService {
         }
         
         this.logger.info.player(this.gameState.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
+
+        // --- ACHIEVEMENTS: UPGRADE TRACKING HOOKS ---
+        if (this.simulationService.achievementService) {
+            const ach = this.simulationService.achievementService;
+            ach.increment('spentOnUpgrades', totalCost);
+            
+            const len = livePlayer.shipStates[shipId].upgrades.length;
+            const maxU = this.gameState.state.achievements.metrics.maxUpgradesInstalled || 0;
+            if (len > maxU) ach.increment('maxUpgradesInstalled', len, true);
+        }
+
         this.gameState.setState({});
     }
 }
