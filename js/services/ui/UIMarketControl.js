@@ -205,37 +205,26 @@ export class UIMarketControl {
         } else { // 'sell' mode
             const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
 
-            // Phase 3 Glut Warning Logic
-            let isGlut = false;
             let currentMarketStock = 0;
             if (ms) {
                 currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
-                const glutThreshold = ms.getGlutThreshold(state.currentLocationId, goodId);
-                const parsedQty = parseInt(quantity, 10) || 0;
-                if ((parsedQty + currentMarketStock) > glutThreshold) {
-                    isGlut = true;
-                }
             }
 
-            // Swap Avail string for stylized Glut warning
+            // Swap Avail string for standard inventory
             const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
             if (availEl) {
-                if (isGlut) {
-                    availEl.innerHTML = `<span class="text-glut-warning font-bold" style="font-size: 0.9em; letter-spacing: 0.5px;">MKT SATURATED - 0.25% LOSS!</span>`;
-                } else {
-                    const ownQty = playerItem ? playerItem.quantity : 0;
-                    availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
-                }
+                const ownQty = playerItem ? playerItem.quantity : 0;
+                availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
             }
 
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
-                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'} ${isGlut ? 'text-glut-warning' : ''}`;
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
                 priceEl.textContent = '⌬ +0';
-                priceEl.className = `font-roboto-mono font-bold profit-text ${isGlut ? 'text-glut-warning' : ''}`;
+                priceEl.className = `font-roboto-mono font-bold profit-text`;
                 effectivePriceEl.textContent = '';
             }
 

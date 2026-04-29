@@ -188,7 +188,8 @@ export class GameState {
             enableEconomicTelemetry: false,
             achievementsScrollY: stateCopy.uiState?.achievementsScrollY || 0,
             achievementsCollapsedCategories: stateCopy.uiState?.achievementsCollapsedCategories || [],
-            achievementsMinimizedPills: stateCopy.uiState?.achievementsMinimizedPills || []
+            achievementsMinimizedPills: stateCopy.uiState?.achievementsMinimizedPills || [],
+            activeAchievementTab: stateCopy.uiState?.activeAchievementTab || 'Navigation'
         };
 
         return stateCopy;
@@ -572,7 +573,8 @@ export class GameState {
                 // --- ACHIEVEMENTS DOM MEMORY ---
                 achievementsScrollY: 0,
                 achievementsCollapsedCategories: [],
-                achievementsMinimizedPills: []
+                achievementsMinimizedPills: [],
+                activeAchievementTab: 'Navigation'
             },
             telemetry: {
                 ticks: [],
