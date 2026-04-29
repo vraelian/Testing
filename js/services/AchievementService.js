@@ -21,14 +21,14 @@ export class AchievementService {
      * @param {boolean} isAbsoluteOverwrite - If true, replaces the value rather than adding to it.
      */
     increment(metricKey, value = 1, isAbsoluteOverwrite = false) {
-        if (!this.gameState || !this.gameState.state.achievements) return;
+        if (!this.gameState || !this.gameState.achievements) return;
 
-        let currentVal = this.gameState.state.achievements.metrics[metricKey] || 0;
+        let currentVal = this.gameState.achievements.metrics[metricKey] || 0;
         
         if (isAbsoluteOverwrite) {
-            this.gameState.state.achievements.metrics[metricKey] = value;
+            this.gameState.achievements.metrics[metricKey] = value;
         } else {
-            this.gameState.state.achievements.metrics[metricKey] = currentVal + value;
+            this.gameState.achievements.metrics[metricKey] = currentVal + value;
         }
 
         // Silent mutation evaluation
@@ -41,15 +41,15 @@ export class AchievementService {
      * @param {string} metricKey 
      */
     evaluateCompletion(metricKey) {
-        const value = this.gameState.state.achievements.metrics[metricKey] || 0;
+        const value = this.gameState.achievements.metrics[metricKey] || 0;
         let requiresStateUpdate = false;
 
         ACHIEVEMENT_REGISTRY.forEach(ach => {
             if (ach.metricKey === metricKey) {
                 // Ensure it isn't already completed or claimed
-                if (!this.gameState.state.achievements.status[ach.id]) {
+                if (!this.gameState.achievements.status[ach.id]) {
                     if (value >= ach.targetValue) {
-                        this.gameState.state.achievements.status[ach.id] = 'COMPLETED';
+                        this.gameState.achievements.status[ach.id] = 'COMPLETED';
                         requiresStateUpdate = true;
                     }
                 }
@@ -60,7 +60,7 @@ export class AchievementService {
         if (requiresStateUpdate) {
             this._checkCompletionistTarget();
             // Force state broadcast to update UI or DOM variables if applicable
-            this.gameState.setState({ achievements: this.gameState.state.achievements });
+            this.gameState.setState({ achievements: this.gameState.achievements });
         }
     }
 
@@ -71,44 +71,44 @@ export class AchievementService {
      */
     claim(achievementId) {
         const ach = ACHIEVEMENT_REGISTRY.find(a => a.id === achievementId);
-        if (!ach || this.gameState.state.achievements.status[achievementId] !== 'COMPLETED') return;
+        if (!ach || this.gameState.achievements.status[achievementId] !== 'COMPLETED') return;
 
         // Apply Reward
         switch (ach.rewardType) {
             case REWARD_TYPES.CREDITS:
-                this.gameState.state.player.credits += ach.rewardPayload;
+                this.gameState.player.credits += ach.rewardPayload;
                 break;
             case REWARD_TYPES.VOUCHER_FUEL:
-                this.gameState.state.player.serviceTokens.fuel += ach.rewardPayload;
+                this.gameState.player.serviceTokens.fuel += ach.rewardPayload;
                 break;
             case REWARD_TYPES.VOUCHER_REPAIR:
-                this.gameState.state.player.serviceTokens.repair += ach.rewardPayload;
+                this.gameState.player.serviceTokens.repair += ach.rewardPayload;
                 break;
             case REWARD_TYPES.SHIP:
-                this.gameState.state.player.ownedShipIds.push(ach.rewardPayload);
+                this.gameState.player.ownedShipIds.push(ach.rewardPayload);
                 break;
             case REWARD_TYPES.LICENSE:
-                if (!this.gameState.state.player.unlockedLicenseIds.includes(ach.rewardPayload)) {
-                    this.gameState.state.player.unlockedLicenseIds.push(ach.rewardPayload);
+                if (!this.gameState.player.unlockedLicenseIds.includes(ach.rewardPayload)) {
+                    this.gameState.player.unlockedLicenseIds.push(ach.rewardPayload);
                 }
                 break;
             case REWARD_TYPES.UNLOCK_LOCATION:
-                if (!this.gameState.state.player.unlockedLocationIds.includes(ach.rewardPayload)) {
-                    this.gameState.state.player.unlockedLocationIds.push(ach.rewardPayload);
+                if (!this.gameState.player.unlockedLocationIds.includes(ach.rewardPayload)) {
+                    this.gameState.player.unlockedLocationIds.push(ach.rewardPayload);
                 }
                 break;
         }
 
         // Lock Status
-        this.gameState.state.achievements.status[achievementId] = 'CLAIMED';
+        this.gameState.achievements.status[achievementId] = 'CLAIMED';
 
         // Tally total claims for the 'Completionist' achievement evaluation
         this.increment('achievementsClaimed', 1, false);
 
         // Force Global Update
         this.gameState.setState({ 
-            player: this.gameState.state.player,
-            achievements: this.gameState.state.achievements 
+            player: this.gameState.player,
+            achievements: this.gameState.achievements 
         });
     }
 
@@ -117,7 +117,7 @@ export class AchievementService {
      * @private
      */
     _checkCompletionistTarget() {
-        const totalClaimed = Object.values(this.gameState.state.achievements.status).filter(val => val === 'CLAIMED').length;
+        const totalClaimed = Object.values(this.gameState.achievements.status).filter(val => val === 'CLAIMED').length;
         this.increment('achievementsClaimed', totalClaimed, true);
     }
 }
