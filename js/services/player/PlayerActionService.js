@@ -175,11 +175,11 @@ export class PlayerActionService {
                 ach.increment('intelDealsExecuted', 1);
             }
 
-            const m = this.gameState.state.achievements.metrics.monoTradeId;
+            const m = this.gameState.achievements.metrics.monoTradeId;
             if (m === undefined || m === null || m === goodId) {
-                this.gameState.state.achievements.metrics.monoTradeId = goodId;
+                this.gameState.achievements.metrics.monoTradeId = goodId;
             } else {
-                this.gameState.state.achievements.metrics.monoTradeId = 'FAILED';
+                this.gameState.achievements.metrics.monoTradeId = 'FAILED';
             }
         }
 
@@ -322,7 +322,7 @@ export class PlayerActionService {
             ach.increment('totalTradesExecuted', 1);
 
             if (profit > 0) {
-                const currentPeak = this.gameState.state.achievements.metrics.highestSingleTradeProfit || 0;
+                const currentPeak = this.gameState.achievements.metrics.highestSingleTradeProfit || 0;
                 if (profit > currentPeak) ach.increment('highestSingleTradeProfit', Math.floor(profit), true);
             }
 
@@ -331,9 +331,9 @@ export class PlayerActionService {
             }
 
             const currentCredits = this.gameState.player.credits;
-            const prevTycoon = this.gameState.state.achievements.metrics.peakCredits_Tycoon || 0;
+            const prevTycoon = this.gameState.achievements.metrics.peakCredits_Tycoon || 0;
             if (currentCredits > prevTycoon) ach.increment('peakCredits_Tycoon', currentCredits, true);
-            const prevBillion = this.gameState.state.achievements.metrics.peakCredits_Billion || 0;
+            const prevBillion = this.gameState.achievements.metrics.peakCredits_Billion || 0;
             if (currentCredits > prevBillion) ach.increment('peakCredits_Billion', currentCredits, true);
 
             const galAvg = state.market.galacticAverages[goodId] || 0;
@@ -342,11 +342,11 @@ export class PlayerActionService {
                 ach.increment('centuryDeals', 1);
             }
 
-            const m = this.gameState.state.achievements.metrics.monoTradeId;
+            const m = this.gameState.achievements.metrics.monoTradeId;
             if (m === undefined || m === null || m === goodId) {
-                this.gameState.state.achievements.metrics.monoTradeId = goodId;
+                this.gameState.achievements.metrics.monoTradeId = goodId;
             } else {
-                this.gameState.state.achievements.metrics.monoTradeId = 'FAILED';
+                this.gameState.achievements.metrics.monoTradeId = 'FAILED';
             }
         }
 
@@ -440,7 +440,7 @@ export class PlayerActionService {
             if (this.simulationService.achievementService) {
                 const ach = this.simulationService.achievementService;
                 const fleetSize = this.gameState.player.ownedShipIds.length;
-                const prevMax = this.gameState.state.achievements.metrics.maxFleetSize || 0;
+                const prevMax = this.gameState.achievements.metrics.maxFleetSize || 0;
                 if (fleetSize > prevMax) ach.increment('maxFleetSize', fleetSize, true);
 
                 if (ship.class) {
@@ -1077,7 +1077,7 @@ export class PlayerActionService {
             ach.increment('spentOnUpgrades', totalCost);
             
             const len = livePlayer.shipStates[shipId].upgrades.length;
-            const maxU = this.gameState.state.achievements.metrics.maxUpgradesInstalled || 0;
+            const maxU = this.gameState.achievements.metrics.maxUpgradesInstalled || 0;
             if (len > maxU) ach.increment('maxUpgradesInstalled', len, true);
         }
 

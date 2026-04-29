@@ -206,20 +206,37 @@ export class UIManager {
             return;
         } else {
             // FIX: Remove Tailwind hidden classes to allow JS layout management to take over
+            // Also forcefully reset opacity and pointer events after travel locking
             if (this.cache.econWeatherBtn) {
                 this.cache.econWeatherBtn.classList.remove('hidden');
                 this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : 'flex';
+                if (!isTravelLocked) {
+                    this.cache.econWeatherBtn.style.opacity = '1';
+                    this.cache.econWeatherBtn.style.pointerEvents = 'auto';
+                }
             }
             if (this.cache.btnAchievements) {
                 this.cache.btnAchievements.classList.remove('hidden');
                 this.cache.btnAchievements.style.display = isTravelLocked ? 'none' : 'flex';
+                if (!isTravelLocked) {
+                    this.cache.btnAchievements.style.opacity = '1';
+                    this.cache.btnAchievements.style.pointerEvents = 'auto';
+                }
             }
             if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
                 this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';
+                if (!isTravelLocked) {
+                    this.helpManager.anchorBtn.style.opacity = '1';
+                    this.helpManager.anchorBtn.style.pointerEvents = 'auto';
+                }
             }
             const gameMenuBtn = document.getElementById('btn-game-menu');
             if (gameMenuBtn) {
                 gameMenuBtn.style.display = isTravelLocked ? 'none' : '';
+                if (!isTravelLocked) {
+                    gameMenuBtn.style.opacity = '1';
+                    gameMenuBtn.style.pointerEvents = 'auto';
+                }
             }
         }
 

@@ -64,6 +64,18 @@ export function formatAbbreviatedNumber(amount) {
 }
 
 /**
+ * Formats a number into a localized compact representation (e.g., 1k, 1m, 1b).
+ * @param {number} num - The number to format.
+ * @returns {string} The compact formatted string.
+ */
+export function formatNumberCompact(num) {
+    return new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 1
+    }).format(num).toLowerCase();
+}
+
+/**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
  */
 export function formatCredits(amount, withSymbol = true) {

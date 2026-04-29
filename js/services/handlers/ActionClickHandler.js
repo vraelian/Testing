@@ -147,6 +147,18 @@ export class ActionClickHandler {
                 }
                 break;
 
+            case 'switch-achievement-tab': {
+                e.stopPropagation();
+                const tabId = dataset.tabId;
+                if (!tabId) return;
+
+                this.gameState.uiState.activeAchievementTab = tabId;
+                if (this.uiManager.achievementControl) {
+                    this.uiManager.achievementControl.render(this.gameState.getState());
+                }
+                break;
+            }
+
             case 'toggle-ach-category': {
                 e.stopPropagation();
                 const catId = dataset.categoryId;

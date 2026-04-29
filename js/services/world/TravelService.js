@@ -417,13 +417,13 @@ export class TravelService {
             if (totalQty === 0) ach.increment('jumpsEmptyHold', 1);
             if (totalCap > 0 && totalQty >= totalCap) ach.increment('jumpsMaxCapacity', 1);
             
-            const mono = state.achievements.metrics.monoTradeId;
+            const mono = this.gameState.achievements.metrics.monoTradeId;
             if (mono && mono !== 'FAILED') {
                 ach.increment('consecutiveMonoTrades', 1);
             } else {
                 ach.increment('consecutiveMonoTrades', 0, true); 
             }
-            state.achievements.metrics.monoTradeId = null; 
+            this.gameState.achievements.metrics.monoTradeId = null; 
         }
 
         if (activeShipState.fuel < travelInfo.fuelCost) {
