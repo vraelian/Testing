@@ -207,6 +207,16 @@ export class UIEventControl {
                 if (btnContainer) btnContainer.innerHTML = '';
 
                 const crtCloseHandler = (choiceId = null) => {
+                    // Lock inputs immediately
+                    if (choicesContainer) {
+                        const allBtns = choicesContainer.querySelectorAll('.event-choice-btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+                    }
+                    if (btnContainer) {
+                        const allBtns = btnContainer.querySelectorAll('.btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+                    }
+
                     modalContent.classList.remove('sev-crt-turn-on');
                     modalContent.classList.add('sev-crt-shutdown');
                     modalContent.style.animationDuration = '0.35s';
@@ -217,7 +227,15 @@ export class UIEventControl {
                         } else {
                             modal.classList.add('hidden');
                         }
-                        choicesCallback(choiceId);
+                        
+                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
+                        // to the next frame. This prevents the main thread from locking up 
+                        // and dropping frames in the Canvas-driven travel animation.
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                choicesCallback(choiceId);
+                            }, 10);
+                        });
                     }, 340);
                 };
 
@@ -332,8 +350,21 @@ export class UIEventControl {
                     }
 
                     button.onclick = () => {
-                        choicesCallback(choice.id);
-                        closeHandler();
+                        // Prevent multi-clicks and provide immediate tactile feedback
+                        button.style.transform = 'scale(0.98)';
+                        button.style.opacity = '0.7';
+                        const allBtns = choicesContainer.querySelectorAll('.event-choice-btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
+                        // to the next frame. This prevents the main thread from locking up 
+                        // and dropping frames in the Canvas-driven travel animation.
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                choicesCallback(choice.id);
+                                closeHandler();
+                            }, 10);
+                        });
                      };
                     choicesContainer.appendChild(button);
                 });
@@ -353,8 +384,15 @@ export class UIEventControl {
              button.className = 'perk-button';
             button.innerHTML = `<h4>${choice.title}</h4><p>${choice.description}</p>`;
             button.onclick = () => {
-                this.manager.hideModal('age-event-modal');
-                choiceCallback(choice);
+                const allBtns = btnContainer.querySelectorAll('.perk-button');
+                allBtns.forEach(b => b.style.pointerEvents = 'none');
+                
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        this.manager.hideModal('age-event-modal');
+                        choiceCallback(choice);
+                    }, 10);
+                });
             };
             btnContainer.appendChild(button);
         });
