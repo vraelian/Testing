@@ -117,3 +117,8 @@
         text-align: center;
     }
 }
+
+/* Phase 4.5 Typography Bump */
+.travel-info-mobile p, .travel-info-text {
+    font-size: 1.0rem !important;
+}

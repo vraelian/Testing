@@ -529,7 +529,8 @@ export class UIEventControl {
                 document.getElementById('mission-sticky-bar'),
                 document.getElementById('btn-econ-weather'),
                 document.getElementById('global-help-anchor'),
-                document.getElementById('btn-game-menu')
+                document.getElementById('btn-game-menu'),
+                document.getElementById('btn-achievements')
             ];
             elements.forEach(el => {
                 if (el) {
@@ -767,6 +768,7 @@ export class UIEventControl {
     showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined, callback) {
         let title, text, effects;
         let onDismiss = (typeof callback === 'function') ? callback : null;
+        let installedFreeUpgrade = false;
         
         if (Array.isArray(effectsOrUndefined)) {
             title = titleOrText || 'System Alert';
@@ -879,6 +881,7 @@ export class UIEventControl {
                         break;
                     case 'EFF_ADD_UPGRADE':
                         if (eff.installedUpgrade) {
+                             installedFreeUpgrade = true;
                              effectText = `<span class="${baseStyle} text-result-cargo">Installed: ${eff.installedUpgrade}</span>`;
                         } else if (eff.pendingOverwrite) {
                              pendingOverwriteId = eff.pendingOverwrite;
@@ -958,6 +961,14 @@ export class UIEventControl {
                 } else {
                     if (originalOnDismiss) originalOnDismiss();
                 }
+            } else if (installedFreeUpgrade) {
+                 if (this.manager.modalEngine && typeof this.manager.modalEngine.showUpgradeProgressModal === 'function') {
+                      this.manager.modalEngine.showUpgradeProgressModal().then(() => {
+                           if (originalOnDismiss) originalOnDismiss();
+                      });
+                 } else {
+                      if (originalOnDismiss) originalOnDismiss();
+                 }
             } else {
                 if (originalOnDismiss) originalOnDismiss();
             }

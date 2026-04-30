@@ -204,8 +204,9 @@ export const ACHIEVEMENT_REGISTRY = [
         id: 'ach_dock_sol',
         categoryId: 'Navigation',
         title: 'Sol Engineer',
-        description: (state) => state.player.unlockedLocationIds.includes('loc_sol') ? `Dock at Sol Station 50 times.` : `Dock at ${MASK} 50 times.`,
-        metricKey: 'docked_loc_sol',
+        // PHASE 3 FIX: Masking string references loc_sun rather than loc_sol to match ID
+        description: (state) => state.player.unlockedLocationIds.includes('loc_sun') ? `Dock at Sol Station 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_sun',
         targetValue: 50,
         rewardType: REWARD_TYPES.CREDITS,
         rewardPayload: 10000
@@ -500,7 +501,8 @@ export const ACHIEVEMENT_REGISTRY = [
         id: 'ach_prog_patron',
         categoryId: 'Progression',
         title: 'The Patron',
-        description: (state) => state.player.unlockedLocationIds.includes('loc_sol') ? `Donate a cumulative 10k resource units to Sol Station progression caches.` : `Donate a cumulative 10k resource units to ${MASK} progression caches.`,
+        // PHASE 3 FIX: Masking string references loc_sun rather than loc_sol to match ID
+        description: (state) => state.player.unlockedLocationIds.includes('loc_sun') ? `Donate a cumulative 10k resource units to Sol Station progression caches.` : `Donate a cumulative 10k resource units to ${MASK} progression caches.`,
         metricKey: 'solDonationsTotal',
         targetValue: 10000,
         rewardType: REWARD_TYPES.CREDITS,
@@ -542,7 +544,7 @@ export const ACHIEVEMENT_REGISTRY = [
         title: 'Fully Licensed',
         description: (state) => `Successfully unlock all official trade licenses.`,
         metricKey: 'licensesOwned',
-        targetValue: 7, // Based on assumed DB size
+        targetValue: 6, // FIX: Adjusted to exactly 6 to match T2 through T7 mathematical bounds
         rewardType: REWARD_TYPES.CREDITS,
         rewardPayload: 100000
     },

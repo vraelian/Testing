@@ -29,6 +29,7 @@
     <link rel="stylesheet" href="./css/help-system.css">
     <link rel="stylesheet" href="./css/modals.css">
     <link rel="stylesheet" href="./css/hud.css">
+    <link rel="stylesheet" href="./css/achievements.css">
     <link rel="stylesheet" href="./css/missions.css">
     <link rel="stylesheet" href="./css/debug.css">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
@@ -169,6 +170,12 @@
                 <div id="intel-screen" class="screen"></div>
             </div>
         </div>
+
+        <button id="btn-achievements" class="hidden" title="Achievements" data-action="open-achievements">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400">
+                <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+        </button>
 
         <button id="btn-econ-weather" class="hidden" title="Economic Weather" data-action="show_econ_weather">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -352,6 +359,15 @@
             <div class="mt-auto pt-4 w-full text-center">
                 <p id="pause-menu-version" class="text-sm text-slate-500 font-roboto-mono"></p>
             </div>
+        </div>
+    </div>
+
+    <div id="achievements-modal" class="modal-backdrop hidden z-[1050]">
+        <div class="modal-content relative flex flex-col p-4 md:p-6" style="height: 85vh; width: 95%; max-width: 600px;">
+            <button class="absolute top-2 right-4 text-gray-400 hover:text-white text-4xl font-bold leading-none cursor-pointer transition-colors" data-action="close-achievements" title="Close">&minus;</button>
+            <h2 class="text-3xl font-orbitron font-bold text-center text-cyan-300 mb-4 tracking-widest">AWARDS</h2>
+            <div id="achievements-scroll-container" class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
+                </div>
         </div>
     </div>
 
@@ -3470,6 +3486,135 @@ card.
 .status-service-surcharges { background: linear-gradient(to right, #ffffff, #bfdbfe); border-color: #60a5fa; color: #1e3a8a; text-shadow: none; } 
 .status-revoked-clearance { background: linear-gradient(to right, #dc2626, #1e293b); border-color: #ef4444; color: #ffffff; }
 --- END OF FILE: ./css/global.css ---
+
+--- START OF FILE: ./css/achievements.css ---
+/* css/achievements.css */
+
+/* Fade animations for the modal instantiation */
+@keyframes achFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes achFadeOut {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}
+
+/* Base Pill - Inert / Tracking State (3D Polished) */
+.ach-pill {
+    background: linear-gradient(145deg, rgba(30, 41, 59, 1) 0%, rgba(15, 23, 42, 1) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    /* 3D Effect: Outer drop shadow + inset highlight on top/left + inset shadow on bottom/right */
+    box-shadow: 
+        0 4px 6px rgba(0, 0, 0, 0.4), 
+        inset 1px 1px 2px rgba(255, 255, 255, 0.1), 
+        inset -1px -1px 4px rgba(0, 0, 0, 0.5);
+    transition: all 0.3s ease;
+}
+
+/* Golden Progress Bar Fill (3D) */
+.ach-progress-fill {
+    background: linear-gradient(90deg, #ca8a04, #fde047);
+    box-shadow: inset 0 -1px 2px rgba(0,0,0,0.3), 0 0 8px rgba(250, 204, 21, 0.6);
+    transition: width 0.5s ease-out;
+}
+
+/* Completed State - Pulsing 3D */
+@keyframes achPulseGold3D {
+    0% { 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 4px rgba(0,0,0,0.5), 0 0 5px rgba(250, 204, 21, 0.4); 
+        border-color: rgba(250, 204, 21, 0.5); 
+    }
+    50% { 
+        box-shadow: 0 4px 8px rgba(0,0,0,0.6), inset 1px 1px 2px rgba(255,255,255,0.2), inset -1px -1px 4px rgba(0,0,0,0.6), 0 0 15px rgba(250, 204, 21, 0.8); 
+        border-color: rgba(250, 204, 21, 1); 
+    }
+    100% { 
+        box-shadow: 0 4px 6px rgba(0,0,0,0.5), inset 1px 1px 2px rgba(255,255,255,0.1), inset -1px -1px 4px rgba(0,0,0,0.5), 0 0 5px rgba(250, 204, 21, 0.4); 
+        border-color: rgba(250, 204, 21, 0.5); 
+    }
+}
+
+.ach-completed {
+    background: linear-gradient(145deg, rgba(51, 65, 85, 1) 0%, rgba(30, 41, 59, 1) 100%);
+    border-color: #facc15;
+    animation: achPulseGold3D 2s infinite ease-in-out;
+}
+
+.ach-completed:hover {
+    background: linear-gradient(145deg, rgba(71, 85, 105, 1) 0%, rgba(51, 65, 85, 1) 100%);
+    transform: translateY(-2px); /* Slight lift on hover to enhance 3D feel */
+}
+
+/* Claimed State - Solid Gold 3D */
+.ach-claimed {
+    background: linear-gradient(145deg, #eab308 0%, #a16207 100%);
+    border-color: #fef08a;
+    /* Deep embossed look for the final gold state */
+    box-shadow: 
+        0 4px 8px rgba(0, 0, 0, 0.5),
+        inset 2px 2px 4px rgba(255, 255, 255, 0.4), 
+        inset -2px -2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Force dark text on the solid gold background for legibility */
+.ach-claimed .text-cyan-100,
+.ach-claimed .text-yellow-400 {
+    color: #1a202c !important; 
+    text-shadow: 0 1px 0 rgba(255,255,255,0.3); /* Subtle indent text effect */
+}
+
+/* Claiming Animation State (WAAPI CSS Handoff) */
+.ach-claiming {
+    filter: blur(5px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 3s ease;
+}
+
+/* Wrapper for DOM Collapse Animation */
+.ach-pill-wrapper {
+    will-change: height, margin, opacity;
+}
+
+/* --- Achievements HUD Button --- */
+#btn-achievements {
+    position: fixed;
+    /* Phase 4 HUD Alignment: Adjusted from 90px to 105px to sit above Econ Weather clearly */
+    bottom: 105px; 
+    left: 0;
+    width: 44px;
+    height: 44px;
+    border-radius: 0 44px 44px 0;
+    background-color: rgba(45, 55, 72, 0.6);
+    color: #fff;
+    border: 1px solid rgba(122, 154, 192, 0.5);
+    border-left: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    opacity: 0.5;
+    transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
+    cursor: pointer;
+    pointer-events: auto;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+#btn-achievements:active, #btn-achievements:hover {
+    opacity: 1;
+    background-color: rgba(45, 55, 72, 0.9);
+    transform: scale(0.98);
+}
+
+#btn-achievements svg {
+    width: 24px;
+    height: 24px;
+    color: #ffffff !important; /* Force white icon instead of gold from inline HTML classes */
+}
+--- END OF FILE: ./css/achievements.css ---
 
 --- START OF FILE: ./css/modals.css ---
 /* css/modals.css */
@@ -9913,6 +10058,11 @@ COMPONENT-SPECIFIC STYLING
         text-align: center;
     }
 }
+
+/* Phase 4.5 Typography Bump */
+.travel-info-mobile p, .travel-info-text {
+    font-size: 1.0rem !important;
+}
 --- END OF FILE: ./css/screens/navigation-screen.css ---
 
 --- START OF FILE: ./css/navigation.css ---
@@ -10144,7 +10294,7 @@ BULKHEAD NAVIGATION STYLES
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 10000; /* Phase 4 Fix: Enforced high z-index to overlay starfield */
+    z-index: 100; /* Phase 4.5 Fix: Elevated from 50 to 100 to sit atop colored UI border */
     opacity: 0.5;
     transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
@@ -10952,17 +11102,23 @@ function _updateCurrentLocationHighlight(uiManager) {
     if (containerNode && poiNode) {
         // Handle Pluto edge case: scroll to bottom
         if (currentLocationId === LOCATION_IDS.PLUTO) {
-            containerNode.scrollTop = containerNode.scrollHeight;
+            containerNode.scrollTo({
+                top: containerNode.scrollHeight,
+                behavior: 'smooth'
+            });
         } else {
             // Main case: center the POI
             const containerHeight = containerNode.clientHeight;
             const poiTop = poiNode.offsetTop; // POI's Y position
             
-            // Calculate the scroll position to center the POI
-            const newScrollTop = poiTop - (containerHeight / 2);
+            // Calculate the scroll position to center the POI including its own height
+            const newScrollTop = poiTop - (containerHeight / 2) + (poiNode.clientHeight / 2);
             
-            // Set the scroll position
-            containerNode.scrollTop = newScrollTop;
+            // Set the scroll position with smooth behavior
+            containerNode.scrollTo({
+                top: newScrollTop,
+                behavior: 'smooth'
+            });
         }
     }
 }
@@ -12787,6 +12943,7 @@ function _getDailyStock(gameState) {
     const allIds = GameAttributes.getAllUpgradeIds();
 
     const purchased = gameState.uiState.purchasedUpgrades || [];
+    const isUranus = currentLocationId === LOCATION_IDS.URANUS;
 
     let candidates = allIds.filter(id => {
         if (!id.startsWith('UPG_')) return false;
@@ -12797,6 +12954,11 @@ function _getDailyStock(gameState) {
 
         if (id.endsWith('_4') || id.endsWith('_5')) {
             if (player.credits < 1000000) return false;
+        }
+        
+        if (isUranus) {
+            const tier = GameAttributes.extractTier(id);
+            if (tier < 3) return false;
         }
         
         return true;
@@ -12814,7 +12976,6 @@ function _getDailyStock(gameState) {
     else targetCount = 5;
 
     const ageMultiplier = 1 + (gameState.player.statModifiers?.upgradeSpawnRate || 0);
-    const isUranus = currentLocationId === LOCATION_IDS.URANUS;
     const preferredPrefixes = LOCATION_PREFERENCES[currentLocationId] || [];
 
     let weightedPool = candidates.map(id => {
@@ -12828,8 +12989,9 @@ function _getDailyStock(gameState) {
         
         weight *= ageMultiplier;
 
-        if (isUranus && (id.endsWith('_3') || id.endsWith('_4') || id.endsWith('_5'))) {
-            weight *= 2;
+        // Uranus Quirk: Massive 5x boost to Tier 4 and Tier 5 upgrades
+        if (isUranus && (id.endsWith('_4') || id.endsWith('_5') || id.endsWith('_IV') || id.endsWith('_V'))) {
+            weight *= 5;
         }
 
         const isPreferred = preferredPrefixes.some(prefix => id.startsWith(prefix));
@@ -14283,6 +14445,18 @@ export function formatAbbreviatedNumber(amount) {
 }
 
 /**
+ * Formats a number into a localized compact representation (e.g., 1k, 1m, 1b).
+ * @param {number} num - The number to format.
+ * @returns {string} The compact formatted string.
+ */
+export function formatNumberCompact(num) {
+    return new Intl.NumberFormat('en-US', {
+        notation: 'compact',
+        maximumFractionDigits: 1
+    }).format(num).toLowerCase();
+}
+
+/**
  * Formats a number into a compact, human-readable credit string with appropriate suffixes (k, M, B, T).
  */
 export function formatCredits(amount, withSymbol = true) {
@@ -14662,7 +14836,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.04';
+export const APP_VERSION = '38.06';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -15392,7 +15566,7 @@ export const DB = {
                 "Opulent spires pierce the thick, corrosive fog, offering a stark contrast between the lethal environment and the syndicate's extravagance.",
                 "The golden haze of the cloud-deck parts to reveal sprawling, buoyant estates anchored securely above the planetary inferno."
             ], 
-            specialty: "• 50% Intel Discount & 30% Longer Duration<br>• Highly volatile Tech market<br>• Focused on Data & Tech Goods", 
+            specialty: "• 50% Intel Discount & Double Duration<br>• Highly volatile Tech market<br>• Focused on Data & Tech Goods", 
             availabilityModifier: { 
                 [COMMODITY_IDS.CLONED_ORGANS]: 2.0, 
                 [COMMODITY_IDS.PROCESSORS]: 2.0, 
@@ -15400,7 +15574,7 @@ export const DB = {
                 [COMMODITY_IDS.ATMO_PROCESSORS]: 0.5
             },
             ecoProfile: { pressureMod: 1.15 },
-            intelProfile: { costMod: 0.50, durationMod: 1.30, focusCats: ['TECH'] },
+            intelProfile: { costMod: 0.50, durationMod: 2.0, focusCats: ['TECH'] },
             quirks: ['QUIRK_VENUS_DATA']
         },
         { 
@@ -15733,6 +15907,600 @@ export const RANDOM_EVENTS = [
     ...EVENTS_STORY
 ];
 --- END OF FILE: ./js/data/events.js ---
+
+--- START OF FILE: ./js/data/achievementRegistry.js ---
+// js/data/achievementRegistry.js
+
+/**
+ * Procedural Master Registry for all 55 game session achievements.
+ * Evaluates completion logic natively via standard UI reads and binds rewards.
+ */
+
+export const REWARD_TYPES = {
+    CREDITS: 'CREDITS',
+    VOUCHER_FUEL: 'VOUCHER_FUEL',
+    VOUCHER_REPAIR: 'VOUCHER_REPAIR',
+    SHIP: 'SHIP',
+    LICENSE: 'LICENSE',
+    UNLOCK_LOCATION: 'UNLOCK_LOCATION'
+};
+
+const MASK = "[???]";
+
+export const ACHIEVEMENT_REGISTRY = [
+    // ---------------------------------------------------------
+    // CATEGORY I: NAVIGATION
+    // ---------------------------------------------------------
+    {
+        id: 'ach_nav_inner_skimmer',
+        categoryId: 'Navigation',
+        title: 'Inner-System Skimmer',
+        description: (state) => `Complete 150 jumps to Mercury, Venus, Earth, Mars, or Luna.`,
+        metricKey: 'jumpsInnerSystem',
+        targetValue: 150,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 15000
+    },
+    {
+        id: 'ach_nav_void_crawler',
+        categoryId: 'Navigation',
+        title: 'Deep Void Crawler',
+        description: (state) => `Complete 150 jumps to Jupiter, Saturn, Uranus, Neptune, Kepler's Eye, or Pluto.`,
+        metricKey: 'jumpsOuterSystem',
+        targetValue: 150,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 25000
+    },
+    {
+        id: 'ach_nav_fumes_rider',
+        categoryId: 'Navigation',
+        title: 'Fumes Rider',
+        description: (state) => `Arrive at a destination with less than 5% fuel remaining 35 times.`,
+        metricKey: 'arriveLowFuel',
+        targetValue: 35,
+        rewardType: REWARD_TYPES.VOUCHER_FUEL,
+        rewardPayload: 10
+    },
+    {
+        id: 'ach_nav_red_liner',
+        categoryId: 'Navigation',
+        title: 'Red-Liner',
+        description: (state) => `Initiate a transit with less than 20% hull integrity 35 times.`,
+        metricKey: 'transitLowHull',
+        targetValue: 35,
+        rewardType: REWARD_TYPES.VOUCHER_REPAIR,
+        rewardPayload: 5
+    },
+    {
+        id: 'ach_nav_asteroid_rat',
+        categoryId: 'Navigation',
+        title: 'Asteroid Rat',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_belt') ? `Travel to the Asteroid Belt 75 times.` : `Travel to the ${MASK} 75 times.`,
+        metricKey: 'jumpsBelt',
+        targetValue: 75,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 10000
+    },
+    {
+        id: 'ach_nav_sluggish_hauler',
+        categoryId: 'Navigation',
+        title: 'Sluggish Hauler',
+        description: (state) => `Perform 250 jumps while your active fleet cargo capacity is at 100%.`,
+        metricKey: 'jumpsMaxCapacity',
+        targetValue: 250,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 50000
+    },
+    {
+        id: 'ach_nav_lightweight',
+        categoryId: 'Navigation',
+        title: 'Lightweight Runner',
+        description: (state) => `Perform 30 jumps with entirely empty cargo holds across the fleet.`,
+        metricKey: 'jumpsEmptyHold',
+        targetValue: 30,
+        rewardType: REWARD_TYPES.VOUCHER_FUEL,
+        rewardPayload: 5
+    },
+    {
+        id: 'ach_nav_station_hopper',
+        categoryId: 'Navigation',
+        title: 'Station Hopper',
+        description: (state) => `Perform 30 short-range jumps taking 1-2 days.`,
+        metricKey: 'jumpsShort',
+        targetValue: 30,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_nav_long_hauler',
+        categoryId: 'Navigation',
+        title: 'The Long Hauler',
+        description: (state) => `Perform 30 long-range jumps taking 100+ days.`,
+        metricKey: 'jumpsLong',
+        targetValue: 30,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 30000
+    },
+    {
+        id: 'ach_nav_hull_survivor',
+        categoryId: 'Navigation',
+        title: 'Hull-Breach Survivor',
+        description: (state) => `Arrive at a destination with exactly 1% hull remaining.`,
+        metricKey: 'arriveCriticalHull',
+        targetValue: 1,
+        rewardType: REWARD_TYPES.VOUCHER_REPAIR,
+        rewardPayload: 2
+    },
+    {
+        id: 'ach_dock_jupiter',
+        categoryId: 'Navigation',
+        title: 'Jovian Siphoner',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_jupiter') ? `Dock at Jupiter 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_jupiter',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_saturn',
+        categoryId: 'Navigation',
+        title: 'Ring Skimmer',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_saturn') ? `Dock at Saturn 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_saturn',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_pluto',
+        categoryId: 'Navigation',
+        title: 'Plutonian Exile',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_pluto') ? `Dock at Pluto 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_pluto',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_kepler',
+        categoryId: 'Navigation',
+        title: 'Kepler’s Scholar',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_kepler') ? `Dock at Kepler's Eye 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_kepler',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_mercury',
+        categoryId: 'Navigation',
+        title: 'Mercurian Miner',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_mercury') ? `Dock at Mercury 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_mercury',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_venus',
+        categoryId: 'Navigation',
+        title: 'Venusian Socialite',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_venus') ? `Dock at Venus 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_venus',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_mars',
+        categoryId: 'Navigation',
+        title: 'Martian Dust-Off',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_mars') ? `Dock at Mars 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_mars',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_luna',
+        categoryId: 'Navigation',
+        title: 'Lunar Hopper',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_luna') ? `Dock at Luna 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_luna',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_sol',
+        categoryId: 'Navigation',
+        title: 'Sol Engineer',
+        // PHASE 3 FIX: Masking string references loc_sun rather than loc_sol to match ID
+        description: (state) => state.player.unlockedLocationIds.includes('loc_sun') ? `Dock at Sol Station 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_sun',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 10000
+    },
+    {
+        id: 'ach_dock_exchange',
+        categoryId: 'Navigation',
+        title: 'Illicit Trader',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_exchange') ? `Dock at The Exchange 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_exchange',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 10000
+    },
+    {
+        id: 'ach_dock_neptune',
+        categoryId: 'Navigation',
+        title: 'Militant Visitor',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_neptune') ? `Dock at Neptune 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_neptune',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+    {
+        id: 'ach_dock_uranus',
+        categoryId: 'Navigation',
+        title: 'Science Advocate',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_uranus') ? `Dock at Uranus 50 times.` : `Dock at ${MASK} 50 times.`,
+        metricKey: 'docked_loc_uranus',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000
+    },
+
+    // ---------------------------------------------------------
+    // CATEGORY II: TRADING
+    // ---------------------------------------------------------
+    {
+        id: 'ach_trade_antimatter',
+        categoryId: 'Trading',
+        title: 'Antimatter Addict',
+        description: (state) => `Execute a buy or sell order for Antimatter 30 times.`,
+        metricKey: 'tradeAntimatter',
+        targetValue: 30,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 150000
+    },
+    {
+        id: 'ach_trade_water_baron',
+        categoryId: 'Trading',
+        title: 'Water Baron',
+        description: (state) => `Sell 5k cumulative units of Water to Outer-Rim stations.`,
+        metricKey: 'soldWaterOuter',
+        targetValue: 5000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 20000
+    },
+    {
+        id: 'ach_trade_intel_broker',
+        categoryId: 'Trading',
+        title: 'Intel Broker',
+        description: (state) => `Execute 30 trades while a Local Data Broker Intel advantage is active.`,
+        metricKey: 'intelDealsExecuted',
+        targetValue: 30,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 50000
+    },
+    {
+        id: 'ach_trade_intelligent',
+        categoryId: 'Trading',
+        title: 'Intelligent',
+        description: (state) => `Purchase 20 distinct Intel packets from Data Brokers.`,
+        metricKey: 'intelDealsPurchased',
+        targetValue: 20,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 10000
+    },
+    {
+        id: 'ach_trade_monopolist',
+        categoryId: 'Trading',
+        title: 'Monopolist',
+        description: (state) => `Trade only 1 specific commodity type exclusively for 20 consecutive travel jumps.`,
+        metricKey: 'consecutiveMonoTrades',
+        targetValue: 20,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 30000
+    },
+    {
+        id: 'ach_trade_local_legend',
+        categoryId: 'Trading',
+        title: 'Local Legend',
+        description: (state) => `Execute 100 successful trades explicitly at Earth.`,
+        metricKey: 'tradesAt_loc_earth',
+        targetValue: 100,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 10000
+    },
+    {
+        id: 'ach_trade_black_market',
+        categoryId: 'Trading',
+        title: 'Black Market Regular',
+        description: (state) => state.player.unlockedLocationIds.includes('loc_exchange') ? `Execute 100 successful trades explicitly at The Exchange.` : `Execute 100 successful trades explicitly at ${MASK}.`,
+        metricKey: 'tradesAt_loc_exchange',
+        targetValue: 100,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 25000
+    },
+    {
+        id: 'ach_trade_hoarder',
+        categoryId: 'Trading',
+        title: 'Hoarder',
+        description: (state) => `Maintain a fleet cargo capacity at exactly 100% full for 365 consecutive in-game days.`,
+        metricKey: 'consecutiveDaysFullHold',
+        targetValue: 365,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 75000
+    },
+    {
+        id: 'ach_trade_master_arbitrage',
+        categoryId: 'Trading',
+        title: 'Master Arbitrage',
+        description: (state) => `Net over 100k Credits in profit from a single transaction.`,
+        metricKey: 'highestSingleTradeProfit',
+        targetValue: 100000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 50000
+    },
+
+    // ---------------------------------------------------------
+    // CATEGORY III: FINANCE
+    // ---------------------------------------------------------
+    {
+        id: 'ach_fin_interest_farmer',
+        categoryId: 'Finance',
+        title: 'Interest Farmer',
+        description: (state) => `Pay a cumulative total of 1m Credits in debt interest over your lifetime.`,
+        metricKey: 'lifetimeInterestPaid',
+        targetValue: 1000000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 500000
+    },
+    {
+        id: 'ach_fin_tycoon',
+        categoryId: 'Finance',
+        title: 'Credit Tycoon',
+        description: (state) => `Hoard a liquid balance of 100m Credits.`,
+        metricKey: 'peakCredits_Tycoon',
+        targetValue: 100000000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 1000000
+    },
+    {
+        id: 'ach_fin_billionaire',
+        categoryId: 'Finance',
+        title: 'The Billionaire Club',
+        description: (state) => `Hoard a liquid balance of 1b Credits.`,
+        metricKey: 'peakCredits_Billion',
+        targetValue: 1000000000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 5000000
+    },
+    {
+        id: 'ach_fin_century_deal',
+        categoryId: 'Finance',
+        title: 'Deal of the Century',
+        description: (state) => `Buy a commodity at 50% below Galactic Average, and sell it for 50% above.`,
+        metricKey: 'centuryDeals',
+        targetValue: 1,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 100000
+    },
+    {
+        id: 'ach_fin_arbitrageur',
+        categoryId: 'Finance',
+        title: 'The Arbitrageur',
+        description: (state) => `Execute 1k distinct commercial trades.`,
+        metricKey: 'totalTradesExecuted',
+        targetValue: 1000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 50000
+    },
+
+    // ---------------------------------------------------------
+    // CATEGORY IV: FLEET & ASSETS
+    // ---------------------------------------------------------
+    {
+        id: 'ach_fleet_liquidated',
+        categoryId: 'Fleet',
+        title: 'Liquidated',
+        description: (state) => `Sell 5 vessels to Shipyards.`,
+        metricKey: 'shipsSold',
+        targetValue: 5,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 50000
+    },
+    {
+        id: 'ach_fleet_armada',
+        categoryId: 'Fleet',
+        title: 'Armada Commander',
+        description: (state) => `Maintain a fleet of 10 concurrently owned vessels.`,
+        metricKey: 'maxFleetSize',
+        targetValue: 10,
+        rewardType: REWARD_TYPES.VOUCHER_REPAIR,
+        rewardPayload: 5
+    },
+    {
+        id: 'ach_fleet_class_s',
+        categoryId: 'Fleet',
+        title: 'Class S Certified',
+        description: (state) => `Acquire and command a Class S vessel.`,
+        metricKey: 'ownedClass_S',
+        targetValue: 1,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 20000
+    },
+    {
+        id: 'ach_fleet_class_o',
+        categoryId: 'Fleet',
+        title: 'Class O Commander',
+        description: (state) => `Acquire and command a Class O vessel.`,
+        metricKey: 'ownedClass_O',
+        targetValue: 1,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 40000
+    },
+    {
+        id: 'ach_fleet_class_z',
+        categoryId: 'Fleet',
+        title: 'Class Z Authority',
+        description: (state) => `Acquire and command a Class Z vessel.`,
+        metricKey: 'ownedClass_Z',
+        targetValue: 1,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 80000
+    },
+    {
+        id: 'ach_fleet_class_f',
+        categoryId: 'Fleet',
+        title: 'Class F Sovereign',
+        description: (state) => `Acquire and command a Class F Capital vessel.`,
+        metricKey: 'ownedClass_F',
+        targetValue: 1,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 250000
+    },
+    {
+        id: 'ach_fleet_fully_decked',
+        categoryId: 'Fleet',
+        title: 'Fully Decked',
+        description: (state) => `Successfully fill all 3 hardware upgrade slots on a single vessel.`,
+        metricKey: 'maxUpgradesInstalled',
+        targetValue: 3,
+        rewardType: REWARD_TYPES.VOUCHER_REPAIR,
+        rewardPayload: 2
+    },
+    {
+        id: 'ach_fleet_rustbucket',
+        categoryId: 'Fleet',
+        title: 'Loyal Rustbucket',
+        description: (state) => `Retain ownership of your starting vessel for 10 in-game years without selling it.`,
+        metricKey: 'daysOwnedStartingShip',
+        targetValue: 3650,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 100000
+    },
+    {
+        id: 'ach_fleet_tech_hoarder',
+        categoryId: 'Fleet',
+        title: 'Tech Hoarder',
+        description: (state) => `Spend 5m Credits exclusively on hardware upgrades.`,
+        metricKey: 'spentOnUpgrades',
+        targetValue: 5000000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 200000
+    },
+    {
+        id: 'ach_fleet_pristine',
+        categoryId: 'Fleet',
+        title: 'Pristine Condition',
+        description: (state) => `Spend 1m Credits purely on Starport hull repair services.`,
+        metricKey: 'spentOnRepairs',
+        targetValue: 1000000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 50000
+    },
+
+    // ---------------------------------------------------------
+    // CATEGORY V: WORLD & PROGRESSION
+    // ---------------------------------------------------------
+    {
+        id: 'ach_prog_patron',
+        categoryId: 'Progression',
+        title: 'The Patron',
+        // PHASE 3 FIX: Masking string references loc_sun rather than loc_sol to match ID
+        description: (state) => state.player.unlockedLocationIds.includes('loc_sun') ? `Donate a cumulative 10k resource units to Sol Station progression caches.` : `Donate a cumulative 10k resource units to ${MASK} progression caches.`,
+        metricKey: 'solDonationsTotal',
+        targetValue: 10000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 150000
+    },
+    {
+        id: 'ach_prog_spark',
+        categoryId: 'Progression',
+        title: 'First Spark',
+        description: (state) => `Successfully synthesize a unit of Antimatter via the Sol Station pipeline.`,
+        metricKey: 'antimatterSynthesizedTotal',
+        targetValue: 1,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 200000
+    },
+    {
+        id: 'ach_prog_sol_10',
+        categoryId: 'Progression',
+        title: 'Sol Station Lv. 10',
+        description: (state) => `Assist Sol Station in reaching Progression Level 10.`,
+        metricKey: 'peakSolLevel',
+        targetValue: 10,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 50000
+    },
+    {
+        id: 'ach_prog_sol_50',
+        categoryId: 'Progression',
+        title: 'Sol Station Lv. 50',
+        description: (state) => `Assist Sol Station in reaching maximum Progression Level 50.`,
+        metricKey: 'peakSolLevel50',
+        targetValue: 50,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 2500000
+    },
+    {
+        id: 'ach_prog_licensed',
+        categoryId: 'Progression',
+        title: 'Fully Licensed',
+        description: (state) => `Successfully unlock all official trade licenses.`,
+        metricKey: 'licensesOwned',
+        targetValue: 6, // FIX: Adjusted to exactly 6 to match T2 through T7 mathematical bounds
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 100000
+    },
+    {
+        id: 'ach_prog_centenarian',
+        categoryId: 'Progression',
+        title: 'Centenarian',
+        description: (state) => `Survive and trade into your 100th year of life.`,
+        metricKey: 'peakAge',
+        targetValue: 100,
+        rewardType: REWARD_TYPES.VOUCHER_FUEL,
+        rewardPayload: 20
+    },
+    {
+        id: 'ach_prog_long_watch',
+        categoryId: 'Progression',
+        title: 'The Long Watch',
+        description: (state) => `Play for a total of 50 in-game years (18.2k days).`,
+        metricKey: 'gameDaysPlayed',
+        targetValue: 18250,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 500000
+    },
+    {
+        id: 'ach_prog_traveler',
+        categoryId: 'Progression',
+        title: 'Traveler',
+        description: (state) => `Spend a cumulative total of 5k days in warp transit.`,
+        metricKey: 'totalTravelDays',
+        targetValue: 5000,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 10000
+    },
+    {
+        id: 'ach_prog_completionist',
+        categoryId: 'Progression',
+        title: 'The Completionist',
+        description: (state) => `Claim the rewards for all other 54 available game milestones.`,
+        metricKey: 'achievementsClaimed',
+        targetValue: 54,
+        rewardType: REWARD_TYPES.CREDITS,
+        rewardPayload: 10000000
+    }
+];
+--- END OF FILE: ./js/data/achievementRegistry.js ---
 
 --- START OF FILE: ./js/data/solProgressionRegistry.js ---
 // js/data/solProgressionRegistry.js
@@ -23387,7 +24155,8 @@ export class UIEventControl {
                 document.getElementById('mission-sticky-bar'),
                 document.getElementById('btn-econ-weather'),
                 document.getElementById('global-help-anchor'),
-                document.getElementById('btn-game-menu')
+                document.getElementById('btn-game-menu'),
+                document.getElementById('btn-achievements')
             ];
             elements.forEach(el => {
                 if (el) {
@@ -23625,6 +24394,7 @@ export class UIEventControl {
     showEventResultModal(titleOrText, textOrEffects, effectsOrUndefined, callback) {
         let title, text, effects;
         let onDismiss = (typeof callback === 'function') ? callback : null;
+        let installedFreeUpgrade = false;
         
         if (Array.isArray(effectsOrUndefined)) {
             title = titleOrText || 'System Alert';
@@ -23737,6 +24507,7 @@ export class UIEventControl {
                         break;
                     case 'EFF_ADD_UPGRADE':
                         if (eff.installedUpgrade) {
+                             installedFreeUpgrade = true;
                              effectText = `<span class="${baseStyle} text-result-cargo">Installed: ${eff.installedUpgrade}</span>`;
                         } else if (eff.pendingOverwrite) {
                              pendingOverwriteId = eff.pendingOverwrite;
@@ -23816,6 +24587,14 @@ export class UIEventControl {
                 } else {
                     if (originalOnDismiss) originalOnDismiss();
                 }
+            } else if (installedFreeUpgrade) {
+                 if (this.manager.modalEngine && typeof this.manager.modalEngine.showUpgradeProgressModal === 'function') {
+                      this.manager.modalEngine.showUpgradeProgressModal().then(() => {
+                           if (originalOnDismiss) originalOnDismiss();
+                      });
+                 } else {
+                      if (originalOnDismiss) originalOnDismiss();
+                 }
             } else {
                 if (originalOnDismiss) originalOnDismiss();
             }
@@ -23921,6 +24700,266 @@ export class UIEventControl {
     }
 }
 --- END OF FILE: ./js/services/ui/UIEventControl.js ---
+
+--- START OF FILE: ./js/services/ui/UIAchievementControl.js ---
+// js/services/ui/UIAchievementControl.js
+import { ACHIEVEMENT_REGISTRY } from '../../data/achievementRegistry.js';
+import { formatNumberCompact } from '../../utils.js';
+
+/**
+ * Domain Controller for the Achievements System presentation layer.
+ * Handles calculation, sorting, string masking, tab layout, and scroll DOM memory retention.
+ */
+export class UIAchievementControl {
+    /**
+     * @param {import('../UIManager.js').UIManager} uiManager 
+     */
+    constructor(uiManager) {
+        this.uiManager = uiManager;
+        this.modal = null;
+        this.scrollContainer = null;
+        this._backdropListenerBound = false;
+        this._closeBtnBound = false;
+    }
+
+    _lazyCacheDOM() {
+        if (!this.modal) {
+            this.modal = document.getElementById('achievements-modal');
+            this.scrollContainer = document.getElementById('achievements-scroll-container');
+            
+            // Attach DOM memory scroll listener
+            if (this.scrollContainer) {
+                this.scrollContainer.addEventListener('scroll', (e) => {
+                    // Direct mutation of the persistent GameState
+                    if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.gameState) {
+                        this.uiManager.simulationService.gameState.uiState.achievementsScrollY = e.target.scrollTop;
+                    }
+                }, { passive: true });
+            }
+
+            // Manually bind the close button to bypass event delegation drop issues
+            if (this.modal) {
+                const closeBtn = this.modal.querySelector('[data-action="close-achievements"]');
+                if (closeBtn && !this._closeBtnBound) {
+                    closeBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        this.hideModal();
+                    };
+                    this._closeBtnBound = true;
+                }
+            }
+        }
+    }
+
+    showModal(state) {
+        this._lazyCacheDOM();
+        if (this.modal) {
+            this.modal.classList.remove('hidden');
+            
+            // Apply 0.4s fade-in animation
+            this.modal.style.animation = 'achFadeIn 0.4s ease forwards';
+            
+            this.render(state);
+
+            // Bind dismissal when tapping outside the modal content
+            if (!this._backdropListenerBound) {
+                this.modal.addEventListener('click', (e) => {
+                    // Dismiss strictly if the click target is the backdrop div itself
+                    if (e.target === this.modal) {
+                        this.hideModal();
+                    }
+                });
+                this._backdropListenerBound = true;
+            }
+        }
+    }
+
+    hideModal() {
+        if (this.modal && !this.modal.classList.contains('hidden')) {
+            // Apply 0.4s fade-out animation
+            this.modal.style.animation = 'achFadeOut 0.4s ease forwards';
+            
+            // Wait for the animation to complete before snapping to hidden
+            this.modal.addEventListener('animationend', () => {
+                this.modal.classList.add('hidden');
+                this.modal.style.animation = ''; // Reset animation property
+            }, { once: true });
+        }
+    }
+
+    render(state) {
+        this._lazyCacheDOM();
+        if (!this.scrollContainer || !state.achievements) return;
+
+        const metrics = state.achievements.metrics || {};
+        const status = state.achievements.status || {};
+        const collapsedCats = state.uiState.achievementsCollapsedCategories || [];
+        const activeTab = state.uiState.activeAchievementTab || 'Navigation';
+
+        // Update Modal Title (from AWARDS to Achievements, size reduction, white glow)
+        const titleEl = this.modal.querySelector('h2');
+        if (titleEl) {
+            titleEl.textContent = 'Achievements';
+            titleEl.className = 'text-2xl font-orbitron font-bold text-center text-cyan-300 mb-2 tracking-widest drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]';
+        }
+
+        // 1. Group by Category & Calculate State
+        const grouped = {};
+        ACHIEVEMENT_REGISTRY.forEach(ach => {
+            const cat = ach.categoryId;
+            if (!grouped[cat]) grouped[cat] = [];
+            
+            let metricVal = metrics[ach.metricKey] || 0;
+            
+            // --- WEALTH TRACKING HARDENING (PHASE 3) ---
+            // Dynamically clamp to current wallet if it exceeds recorded metric
+            if (ach.metricKey === 'peakCredits_Tycoon' || ach.metricKey === 'peakCredits_Billion') {
+                metricVal = Math.max(metricVal, state.player.credits || 0);
+            }
+            
+            let pct = (metricVal / ach.targetValue) * 100;
+            pct = Math.min(100, Math.max(0, pct)); // Clamp between 0-100%
+            
+            const stat = status[ach.id] || 'INERT'; // 'INERT', 'COMPLETED', 'CLAIMED'
+            
+            grouped[cat].push({
+                ...ach,
+                percent: pct,
+                currentMetric: metricVal,
+                status: stat,
+                maskedDesc: ach.description(state) // Procedural Masking Evaluated JIT
+            });
+        });
+
+        const sortedCategories = Object.keys(grouped).sort();
+
+        // 2. Build or Update Horizontal Tabs Row
+        let tabsContainer = this.modal.querySelector('#achievements-tabs');
+        if (!tabsContainer) {
+            tabsContainer = document.createElement('div');
+            tabsContainer.id = 'achievements-tabs';
+            // Adjusted overflow-y and added pt-2 to prevent raised pills from being cropped at the top
+            tabsContainer.className = 'flex flex-row overflow-x-auto overflow-y-visible pt-2 gap-2 mb-4 pb-2 custom-scrollbar';
+            const modalContent = this.modal.querySelector('.modal-content');
+            modalContent.insertBefore(tabsContainer, this.scrollContainer);
+        }
+
+        let tabsHtml = '';
+        sortedCategories.forEach(cat => {
+            const isActive = cat === activeTab;
+            const tabClass = isActive 
+                ? 'bg-cyan-900 border-cyan-400 text-white shadow-[0_0_10px_rgba(34,211,238,0.5)] transform -translate-y-1' 
+                : 'bg-slate-800 border-slate-600 text-gray-400 hover:bg-slate-700';
+            tabsHtml += `<button class="btn flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm font-orbitron rounded-xl border ${tabClass} transition-all duration-200" data-action="switch-achievement-tab" data-tab-id="${cat}">${cat}</button>`;
+        });
+        tabsContainer.innerHTML = tabsHtml;
+
+        // 3. Generate and Sort HTML for Active Tab Only
+        let html = '';
+        
+        if (grouped[activeTab]) {
+            const cat = activeTab;
+            const isCollapsed = collapsedCats.includes(cat);
+            
+            // Sort inner achievements according to GDD Logic
+            grouped[cat].sort((a, b) => {
+                // CLAIMED always at the absolute bottom
+                if (a.status === 'CLAIMED' && b.status !== 'CLAIMED') return 1;
+                if (b.status === 'CLAIMED' && a.status !== 'CLAIMED') return -1;
+                
+                // COMPLETED pulses at the absolute top of the unclaimed pool
+                if (a.status === 'COMPLETED' && b.status !== 'COMPLETED') return -1;
+                if (b.status === 'COMPLETED' && a.status !== 'COMPLETED') return 1;
+                
+                // Otherwise, sort descending by how close the player is to finishing
+                return b.percent - a.percent;
+            });
+
+            const chevron = isCollapsed ? '+' : '−';
+            html += `
+                <div class="mb-4">
+                    <div class="flex justify-between items-center bg-slate-800 p-3 md:p-4 cursor-pointer border border-slate-700 rounded-t-xl ${isCollapsed ? 'rounded-b-xl' : ''} hover:bg-slate-700 transition-colors" data-action="toggle-ach-category" data-category-id="${cat}">
+                        <h3 class="text-xl md:text-2xl font-orbitron text-cyan-300 font-bold uppercase tracking-widest">${cat}</h3>
+                        <span class="text-cyan-500 font-bold text-5xl leading-none flex items-center justify-center">${chevron}</span>
+                    </div>
+                    <div class="${isCollapsed ? 'hidden' : 'flex flex-col gap-3 p-3 bg-slate-900/50 border border-t-0 border-slate-700 rounded-b-xl'}">
+            `;
+
+            if (!isCollapsed) {
+                grouped[cat].forEach(ach => {
+                    const isClaimed = ach.status === 'CLAIMED';
+                    const isCompleted = ach.status === 'COMPLETED';
+                    
+                    // Triple-State Visual Architecture mapping
+                    let pillClass = 'ach-pill bg-slate-800 border-slate-600';
+                    let textClass = 'text-cyan-100';
+                    let starHtml = '';
+                    let progressHtml = '';
+                    let actionAttr = '';
+                    
+                    if (isClaimed) {
+                        pillClass = 'ach-pill ach-claimed bg-yellow-500 border-yellow-400';
+                        textClass = 'text-black';
+                        // Increased star size and added bright white drop shadow
+                        starHtml = `<span class="text-white ml-2 text-5xl drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">★</span>`;
+                    } else if (isCompleted) {
+                        pillClass = 'ach-pill ach-completed border-yellow-400 bg-slate-800';
+                        textClass = 'text-yellow-400';
+                        // Removed action attr from wrapper, injected explicit redeem button
+                        progressHtml = `
+                            <div class="w-full mt-3 flex justify-center">
+                                <button class="btn bg-yellow-600 hover:bg-yellow-500 text-white border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)] px-8 py-2 font-bold tracking-widest animate-pulse" data-action="claim-achievement" data-id="${ach.id}">REDEEM</button>
+                            </div>
+                        `;
+                    } else {
+                        progressHtml = `
+                            <div class="w-full bg-slate-900 h-2 mt-3 rounded-full overflow-hidden shadow-inner">
+                                <div class="bg-yellow-500 h-full ach-progress-fill" style="width: ${ach.percent}%"></div>
+                            </div>
+                        `;
+                    }
+
+                    // Format numbers using the new compact display logic
+                    const formattedMetric = formatNumberCompact(Math.min(ach.currentMetric, ach.targetValue));
+                    const formattedTarget = formatNumberCompact(ach.targetValue);
+
+                    // CSS structural targets prepared for Web Animations API phase (.ach-pill-wrapper)
+                    html += `
+                        <div class="ach-pill-wrapper relative overflow-hidden transition-all duration-300" style="opacity: 1; height: auto;">
+                            <div class="${pillClass} p-4 rounded-xl border transition-all duration-300 relative overflow-hidden" ${actionAttr}>
+                                <div class="flex justify-between items-start relative z-10">
+                                    <div class="flex-1 pr-4">
+                                        <div class="text-base md:text-lg font-bold font-orbitron ${textClass}">${ach.title}</div>
+                                        <div class="text-sm ${isClaimed ? 'text-slate-800 font-semibold' : 'text-gray-400'} mt-1">${ach.maskedDesc}</div>
+                                    </div>
+                                    <div class="text-right whitespace-nowrap flex items-center">
+                                        ${isClaimed ? starHtml : `<span class="text-sm font-roboto-mono ${isCompleted ? 'text-yellow-400 font-bold' : 'text-gray-500'}">${formattedMetric} / ${formattedTarget}</span>`}
+                                    </div>
+                                </div>
+                                <div class="relative z-10">${progressHtml}</div>
+                            </div>
+                        </div>
+                    `;
+                });
+            }
+            html += `</div></div>`;
+        } else {
+            // Handle edge case where a category is empty or undefined
+            html = `<div class="text-center text-gray-500 py-8 font-orbitron">No achievements available in this category.</div>`;
+        }
+
+        this.scrollContainer.innerHTML = html;
+
+        // 4. Restore DOM Memory
+        // Ensure DOM has fully painted before attempting to restore scroll position
+        requestAnimationFrame(() => {
+            if (this.scrollContainer && state.uiState) {
+                this.scrollContainer.scrollTop = state.uiState.achievementsScrollY || 0;
+            }
+        });
+    }
+}
+--- END OF FILE: ./js/services/ui/UIAchievementControl.js ---
 
 --- START OF FILE: ./js/services/ui/UIMarketControl.js ---
 // js/services/ui/UIMarketControl.js
@@ -24130,37 +25169,26 @@ export class UIMarketControl {
         } else { // 'sell' mode
             const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
 
-            // Phase 3 Glut Warning Logic
-            let isGlut = false;
             let currentMarketStock = 0;
             if (ms) {
                 currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
-                const glutThreshold = ms.getGlutThreshold(state.currentLocationId, goodId);
-                const parsedQty = parseInt(quantity, 10) || 0;
-                if ((parsedQty + currentMarketStock) > glutThreshold) {
-                    isGlut = true;
-                }
             }
 
-            // Swap Avail string for stylized Glut warning
+            // Swap Avail string for standard inventory
             const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
             if (availEl) {
-                if (isGlut) {
-                    availEl.innerHTML = `<span class="text-glut-warning font-bold" style="font-size: 0.9em; letter-spacing: 0.5px;">MKT SATURATED - 0.25% LOSS!</span>`;
-                } else {
-                    const ownQty = playerItem ? playerItem.quantity : 0;
-                    availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
-                }
+                const ownQty = playerItem ? playerItem.quantity : 0;
+                availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
             }
 
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
                 effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
-                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'} ${isGlut ? 'text-glut-warning' : ''}`;
+                priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
                 priceEl.textContent = '⌬ +0';
-                priceEl.className = `font-roboto-mono font-bold profit-text ${isGlut ? 'text-glut-warning' : ''}`;
+                priceEl.className = `font-roboto-mono font-bold profit-text`;
                 effectivePriceEl.textContent = '';
             }
 
@@ -24745,7 +25773,9 @@ export class UIHelpManager {
         if (this.anchorBtn) {
             // Strip the pulse class upon explicit viewing
             this.anchorBtn.classList.remove('help-anchor-pulse');
-            this.anchorBtn.style.display = 'none';
+            // Dim and disable interaction to fall into the background
+            this.anchorBtn.style.opacity = '0.15';
+            this.anchorBtn.style.pointerEvents = 'none';
         }
 
         if (this.overlay) {
@@ -24781,7 +25811,8 @@ export class UIHelpManager {
                                                && this.uiManager?.lastKnownState?.introSequenceActive;
                     
                     if (this.anchorBtn && !isCinematicTransition) {
-                        this.anchorBtn.style.display = 'flex';
+                        this.anchorBtn.style.opacity = ''; // Restores CSS default
+                        this.anchorBtn.style.pointerEvents = 'auto';
                     }
 
                     if (typeof this.onCloseCallback === 'function') {
@@ -24795,7 +25826,8 @@ export class UIHelpManager {
             const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
                                        && this.uiManager?.lastKnownState?.introSequenceActive;
             if (this.anchorBtn && !isCinematicTransition) {
-                this.anchorBtn.style.display = 'flex';
+                this.anchorBtn.style.opacity = ''; 
+                this.anchorBtn.style.pointerEvents = 'auto';
             }
             if (typeof this.onCloseCallback === 'function') {
                 const callback = this.onCloseCallback;
@@ -25105,7 +26137,7 @@ export class TravelAnimationService {
 import { AssetService } from '../AssetService.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { DB } from '../../data/database.js';
-import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS } from '../../data/constants.js'; 
+import { ACTION_IDS, GAME_RULES, STATUS_EFFECTS, LOCATION_IDS } from '../../data/constants.js'; 
 import { calculateInventoryUsed, formatCredits } from '../../utils.js';
 import { playBlockingAnimation } from './AnimationService.js'; 
 import { renderShipCarouselPageContent } from '../../ui/components/HangarScreen.js';
@@ -25500,6 +26532,12 @@ export class UIHangarControl {
         const totalCost = hardwareCost + installationFee;
         const nameColor = upgradeDef.pillColor || upgradeDef.color || '#fff';
 
+        // --- URANUS QUIRK IMPLEMENTATION ---
+        // If this installation is originating from a shop, and we are docked at Uranus, 
+        // the shop generation logic uses GameAttributes.getAllUpgrades(). We don't intercept that here, 
+        // but we keep this comment to track the implementation of the quirk in the actual generation source.
+        // -------------------------------------
+
         const handleDeductionAndInstall = (indexToRemove, closeHandler) => {
             if (source === 'shop' && totalCost > 0) {
                 const state = this.manager.lastKnownState;
@@ -25650,7 +26688,7 @@ export class UIHangarControl {
                         const canAfford = this.manager.lastKnownState.player.credits >= totalCost;
                         confirmBtnHtml = `
                             <button id="confirm-install-btn" class="btn w-full btn-pulse-cyan text-cyan-300 font-bold mb-2" ${!canAfford ? 'disabled' : ''}>
-                                Purchase [⌬ ${formatCredits(totalCost, true)}]
+                                Purchase [${formatCredits(totalCost, true)}]
                             </button>
                         `;
                     } else {
@@ -29800,6 +30838,11 @@ ${logHistory}
                 
                 this._unlockEndgame();
 
+                // --- PHASE 3: LICENSE DEBUG TRACKING FIX ---
+                if (this.simulationService && this.simulationService.achievementService) {
+                    this.simulationService.achievementService.increment('licensesOwned', Object.keys(DB.LICENSES).length, true);
+                }
+
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Unlocked: Maps, Licenses, Tiers, Sol Station', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
@@ -29971,7 +31014,7 @@ ${logHistory}
                 };
                 
                 this.bot.runSimulation(config, (current, end) => {
-                    if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
+                    if(progressController) progressController.setValue(`${current} / end`).updateDisplay();
                 });
             }},
             stopBot: { name: 'Stop AUTOTRADER-01', type: 'button', handler: () => this.bot.stop() },
@@ -30986,7 +32029,7 @@ export class GameState {
         stateCopy.activeNav = NAV_IDS.DATA;
         stateCopy.activeScreen = SCREEN_IDS.MISSIONS;
         
-        // Revert UI state to safe defaults
+        // Revert UI state to safe defaults (while preserving specific structural nodes like achievements arrays if present)
         stateCopy.uiState = {
             marketCardMinimized: {},
             hangarShipyardToggleState: 'shipyard',
@@ -30995,7 +32038,11 @@ export class GameState {
             activeIntelTab: 'intel-codex-content',
             servicesTab: 'supply',
             activeMissionTab: 'terminal',
-            enableEconomicTelemetry: false // Prevent telemetry from staying active accidentally across sessions
+            enableEconomicTelemetry: false,
+            achievementsScrollY: stateCopy.uiState?.achievementsScrollY || 0,
+            achievementsCollapsedCategories: stateCopy.uiState?.achievementsCollapsedCategories || [],
+            achievementsMinimizedPills: stateCopy.uiState?.achievementsMinimizedPills || [],
+            activeAchievementTab: stateCopy.uiState?.activeAchievementTab || 'Navigation'
         };
 
         return stateCopy;
@@ -31245,7 +32292,7 @@ export class GameState {
             // --- END SYSTEM STATES V3 ---
 
             player: {
-                name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: DB.DATE_CONFIG.START_YEAR, birthdayProfitBonus: 0,
+                name: playerName, playerTitle: 'Captain', playerAge: 24, lastBirthdayYear: 2200, birthdayProfitBonus: 0,
                 introStep: 0,
                 credits: 6000, debt: 0, monthlyInterestAmount: 0,
                 loanStartDate: null, seenGarnishmentWarning: false,
@@ -31360,19 +32407,27 @@ export class GameState {
                 trackedMissionId: null
                 // --- END MISSION SYSTEM 2.0 ---
             },
+
+            // --- ACHIEVEMENTS SYSTEM DATA LEDGER ---
+            achievements: {
+                metrics: {}, // Key-value pairs of raw integers for dynamic incrementing
+                status: {}   // Key-value pairs of completion states ('COMPLETED', 'CLAIMED')
+            },
+
             uiState: {
                 marketCardMinimized: {},
                 hangarShipyardToggleState: 'shipyard',
                 hangarActiveIndex: 0,
                 shipyardActiveIndex: 0,
-                // --- VIRTUAL WORKBENCH (A) ---
-                // Add state to track the active intel tab
-                activeIntelTab: 'intel-codex-content', // Matches DOM ID
-                servicesTab: 'supply', // Added: Tracks Services Screen sub-nav ('supply' or 'tuning')
-                // --- MISSION SYSTEM 2.0 (Phase 3) ---
-                activeMissionTab: 'terminal', // 'terminal' | 'log'
-                enableEconomicTelemetry: false // Telemetry execution gate
-                // --- END VIRTUAL WORKBENCH ---
+                activeIntelTab: 'intel-codex-content',
+                servicesTab: 'supply',
+                activeMissionTab: 'terminal',
+                enableEconomicTelemetry: false,
+                // --- ACHIEVEMENTS DOM MEMORY ---
+                achievementsScrollY: 0,
+                achievementsCollapsedCategories: [],
+                achievementsMinimizedPills: [],
+                activeAchievementTab: 'Navigation'
             },
             telemetry: {
                 ticks: [],
@@ -31876,8 +32931,15 @@ export class SolStationService {
         const dt = daysMissed * LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY;
         console.log(`Calculated delta-time (dt) in seconds: ${dt}`);
         
+        const oldAm = station.stockpile?.antimatter || 0;
         const projectedState = this._calculateExactState(station, dt);
         Object.assign(station, projectedState);
+        const newAm = station.stockpile?.antimatter || 0;
+
+        // --- ACHIEVEMENTS: SYNTHESIS YIELD HOOK ---
+        if (newAm > oldAm && this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+            this.timeService.simulationService.achievementService.increment('antimatterSynthesizedTotal', newAm - oldAm);
+        }
         
         station.lastProcessedDay = currentDay;
         this.logger.info.system('SolStation', currentDay, 'SOL_BATCH', `Sol Station caught up ${daysMissed} missed days.`);
@@ -31946,8 +33008,15 @@ export class SolStationService {
         const station = this.gameState.solStation;
 
         if (station && station.unlocked) {
+            const oldAm = station.stockpile?.antimatter || 0;
             const newState = this._calculateExactState(station, dt);
             Object.assign(station, newState);
+            const newAm = station.stockpile?.antimatter || 0;
+
+            // --- ACHIEVEMENTS: SYNTHESIS YIELD HOOK ---
+            if (newAm > oldAm && this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+                this.timeService.simulationService.achievementService.increment('antimatterSynthesizedTotal', newAm - oldAm);
+            }
             
             this.localTimeAccumulator += dt;
             if (this.localTimeAccumulator >= LEVEL_1_BASELINE.REAL_TIME_SECONDS_PER_DAY) {
@@ -32393,6 +33462,11 @@ export class SolStationService {
             this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x ${commodityId} to cache.`);
         }
 
+        // --- ACHIEVEMENTS: DONATION HOOK ---
+        if (this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+            this.timeService.simulationService.achievementService.increment('solDonationsTotal', quantity);
+        }
+
         this.gameState.setState({});
         return { success: true, message: "Resources transferred." };
     }
@@ -32546,6 +33620,12 @@ export class SolStationService {
              while (station.officers.length < slotsToHave) {
                 station.officers.push({ slotId: station.officers.length + 1, assignedOfficerId: null });
              }
+        }
+
+        // --- ACHIEVEMENTS: SOL LEVEL PROGRESSION HOOKS ---
+        if (this.timeService && this.timeService.simulationService && this.timeService.simulationService.achievementService) {
+            this.timeService.simulationService.achievementService.increment('peakSolLevel', station.level, true);
+            this.timeService.simulationService.achievementService.increment('peakSolLevel50', station.level, true);
         }
         
         this.logger.info.system('SolStation', this.gameState.day, 'LEVEL_UP', `Sol Station upgraded to Level ${station.level}!`);
@@ -35763,7 +36843,7 @@ import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPE
 import { applyEffect } from '../eventEffectResolver.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
-import { formatCredits } from '../../utils.js';
+import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { starfieldService } from '../ui/StarfieldService.js';
 
 export class TravelService {
@@ -36140,6 +37220,45 @@ export class TravelService {
         travelInfo.time = Math.max(0, Math.round(travelInfo.time)); 
         travelInfo.fuelCost = Math.round(travelInfo.fuelCost);
 
+        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+
+        // --- ACHIEVEMENTS: NAVIGATION PRE-FLIGHT HOOKS ---
+        const ach = this.simulationService.achievementService;
+        if (ach) {
+            const destId = locationId;
+            const outerRim = ['loc_jupiter', 'loc_saturn', 'loc_uranus', 'loc_neptune', 'loc_kepler', 'loc_pluto'];
+            const innerRim = ['loc_mercury', 'loc_venus', 'loc_earth', 'loc_mars', 'loc_luna'];
+            
+            if (innerRim.includes(destId)) ach.increment('jumpsInnerSystem', 1);
+            if (outerRim.includes(destId)) ach.increment('jumpsOuterSystem', 1);
+            if (destId === 'loc_belt') ach.increment('jumpsBelt', 1);
+
+            const healthPct = activeShipState.health / effectiveStats.maxHealth;
+            if (healthPct <= 0.20) ach.increment('transitLowHull', 1);
+
+            ach.increment('totalTravelDays', travelInfo.time);
+            if (travelInfo.time <= 2 && travelInfo.time > 0) ach.increment('jumpsShort', 1);
+            if (travelInfo.time >= 100) ach.increment('jumpsLong', 1);
+
+            let totalQty = 0, totalCap = 0;
+            state.player.ownedShipIds.forEach(id => {
+                const cap = this.simulationService.getEffectiveShipStats(id).cargoCapacity;
+                const used = calculateInventoryUsed(state.player.inventories[id]);
+                totalQty += used;
+                totalCap += cap;
+            });
+            if (totalQty === 0) ach.increment('jumpsEmptyHold', 1);
+            if (totalCap > 0 && totalQty >= totalCap) ach.increment('jumpsMaxCapacity', 1);
+            
+            const mono = this.gameState.achievements.metrics.monoTradeId;
+            if (mono && mono !== 'FAILED') {
+                ach.increment('consecutiveMonoTrades', 1);
+            } else {
+                ach.increment('consecutiveMonoTrades', 0, true); 
+            }
+            this.gameState.achievements.metrics.monoTradeId = null; 
+        }
+
         if (activeShipState.fuel < travelInfo.fuelCost) {
             const originName = DB.MARKETS.find(m => m.id === fromId)?.name || "Origin";
             const lostDays = travelInfo.time;
@@ -36162,6 +37281,9 @@ export class TravelService {
                     ]
                 );
             }
+            
+            // FIX: Gracefully demount the starfield overlay instead of allowing it to hang indefinitely
+            starfieldService.triggerQuickExit();
             
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
@@ -36188,8 +37310,6 @@ export class TravelService {
         }
         
         if (state.player.activePerks[PERK_IDS.NAVIGATOR]) travelHullDamage *= DB.PERKS[PERK_IDS.NAVIGATOR].hullDecayMod;
-        
-        const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         
         activeShipState.health -= travelHullDamage;
         this.simulationService._checkHullWarnings(activeShip.id);
@@ -36286,6 +37406,18 @@ export class TravelService {
 
         const finalCallback = () => {
             this.gameState.isTraveling = false;
+
+            // --- ACHIEVEMENTS: POST-FLIGHT ARRIVAL HOOKS ---
+            if (this.simulationService.achievementService) {
+                const achievementService = this.simulationService.achievementService;
+                achievementService.increment('docked_' + locationId, 1);
+                
+                const fuelPct = activeShipState.fuel / effectiveStats.maxFuel;
+                if (fuelPct <= 0.05) achievementService.increment('arriveLowFuel', 1);
+                
+                const arrivalHealthPct = Math.round((activeShipState.health / effectiveStats.maxHealth) * 100);
+                if (arrivalHealthPct === 1) achievementService.increment('arriveCriticalHull', 1);
+            }
 
             if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                 this.gameState.pendingEventChains.forEach(chain => {
@@ -36596,8 +37728,8 @@ export class TravelService {
 --- START OF FILE: ./js/services/world/TimeService.js ---
 // js/services/world/TimeService.js
 import { DB } from '../../data/database.js';
-import { GAME_RULES, ATTRIBUTE_TYPES, LOCATION_IDS } from '../../data/constants.js';
-import { formatCredits } from '../../utils.js';
+import { GAME_RULES, ATTRIBUTE_TYPES, LOCATION_IDS, SHIP_IDS } from '../../data/constants.js';
+import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { SystemStateService } from './SystemStateService.js';
 
@@ -36699,6 +37831,30 @@ export class TimeService {
                 return;
             }
             this.gameState.day++;
+
+            // --- ACHIEVEMENTS: DAILY TRACKING HOOKS ---
+            if (this.simulationService && this.simulationService.achievementService) {
+                const ach = this.simulationService.achievementService;
+                ach.increment('gameDaysPlayed', 1);
+
+                if (this.gameState.player.ownedShipIds.includes(SHIP_IDS.WANDERER)) {
+                    ach.increment('daysOwnedStartingShip', 1);
+                }
+
+                let totalQty = 0, totalCap = 0;
+                this.gameState.player.ownedShipIds.forEach(id => {
+                    const cap = this.simulationService.getEffectiveShipStats(id).cargoCapacity;
+                    const used = calculateInventoryUsed(this.gameState.player.inventories[id]);
+                    totalQty += used;
+                    totalCap += cap;
+                });
+                
+                if (totalCap > 0 && totalQty >= totalCap) {
+                    ach.increment('consecutiveDaysFullHold', 1);
+                } else {
+                    ach.increment('consecutiveDaysFullHold', 0, true);
+                }
+            }
 
             // --- SYSTEM STATES V3: Daily Evaluation Loop ---
             this.systemStateService.evaluateTick();
@@ -36818,6 +37974,11 @@ export class TimeService {
 
                 this.gameState.player.debt += finalInterest;
                 
+                // --- ACHIEVEMENTS: INTEREST TRACKING HOOK ---
+                if (this.simulationService && this.simulationService.achievementService && finalInterest > 0) {
+                    this.simulationService.achievementService.increment('lifetimeInterestPaid', finalInterest);
+                }
+
                 // Log the transaction
                 if (this.simulationService && finalInterest > 0) {
                     this.simulationService._logTransaction('loan', finalInterest, 'Monthly interest charge');
@@ -36848,6 +38009,11 @@ export class TimeService {
      * @private
      */
     _handleBirthday(age) {
+        // --- ACHIEVEMENTS: AGE TRACKING HOOK ---
+        if (this.simulationService && this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('peakAge', age, true);
+        }
+
         const stats = this.gameState.player.statModifiers;
         let title = `Happy Birthday!`;
         let desc = `You turned ${age}.`;
@@ -38215,6 +39381,7 @@ import { BankruptcyService } from './BankruptcyService.js';
 import { OFFICERS } from '../data/officers.js'; 
 import { ToastService } from './ToastService.js';
 import { TelemetryService } from './bot/TelemetryService.js';
+import { AchievementService } from './AchievementService.js';
 
 export class SimulationService {
     constructor(gameState, uiManager, logger, newsTickerService) { 
@@ -38243,6 +39410,9 @@ export class SimulationService {
         this.intelService = new IntelService(gameState, this.timeService, this.marketService, this.newsTickerService, logger);
         this.bankruptcyService = new BankruptcyService();
         this.toastService = new ToastService(gameState, uiManager, this);
+
+        // --- ACHIEVEMENTS SYSTEM CORE ---
+        this.achievementService = new AchievementService(gameState);
 
         this.timeService.intelService = this.intelService;
         this.uiManager.setIntelService(this.intelService); 
@@ -38822,6 +39992,9 @@ export class SimulationService {
                         this.gameState.player.unlockedLicenseIds.push(reward.licenseId);
                         const license = DB.LICENSES[reward.licenseId];
                         this.logger.info.player(this.gameState.day, 'LICENSE_GRANTED', `Received ${license ? license.name : reward.licenseId}.`);
+                        if (this.achievementService) {
+                            this.achievementService.increment('licensesOwned', this.gameState.player.unlockedLicenseIds.length, true);
+                        }
                     }
                     break;
                 case 'ship':
@@ -40365,6 +41538,48 @@ export class GameAttributes {
     }
 
     /**
+     * Rolls a random upgrade ID from the registry. Implements location-specific quirks.
+     * For Uranus, Tier 4 & 5 upgrades have a 5x weight multiplier and enforces a tier 3 floor limit.
+     * @param {string} [locationId] The current location ID to apply quirks.
+     * @returns {string} The selected upgrade ID.
+     */
+    static rollRandomUpgrade(locationId) {
+        const isUranus = locationId === LOCATION_IDS.URANUS;
+        const upgrades = Object.keys(ATTRIBUTE_DEFINITIONS).filter(k => {
+            if (!k.startsWith('UPG_')) return false;
+            if (isUranus) {
+                const tier = GameAttributes.extractTier(k);
+                if (tier < 3) return false;
+            }
+            return true;
+        });
+
+        if (upgrades.length === 0) return null;
+
+        let totalWeight = 0;
+        const weightedPool = upgrades.map(id => {
+            const def = ATTRIBUTE_DEFINITIONS[id];
+            let weight = 10; // Base weight
+            
+            // Uranus Quirk: 5x chance for T4/T5
+            if (isUranus && def && (def.tier === 4 || def.tier === 5)) {
+                weight *= 5;
+            }
+            
+            totalWeight += weight;
+            return { id, weight };
+        });
+
+        let random = Math.random() * totalWeight;
+        for (const item of weightedPool) {
+            if (random < item.weight) return item.id;
+            random -= item.weight;
+        }
+        
+        return weightedPool[weightedPool.length - 1].id;
+    }
+
+    /**
      * Extracts the numerical tier from an ID string, defaulting to 1 if not found.
      * Parses standard trailing numerics (e.g., '_3') and roman numerals (e.g., '_III').
      * @param {string} id 
@@ -41464,6 +42679,7 @@ import { UIEventControl } from './ui/UIEventControl.js';
 import { UISolStationControl } from './ui/UISolStationControl.js';
 import { UIHelpManager } from './ui/UIHelpManager.js';
 import { UIToastManager } from './ui/UIToastManager.js';
+import { UIAchievementControl } from './ui/UIAchievementControl.js';
 
 export class UIManager {
     /**
@@ -41499,6 +42715,7 @@ export class UIManager {
         this.solStationControl = new UISolStationControl(this); 
         this.helpManager = new UIHelpManager(this);
         this.toastManager = new UIToastManager(this);
+        this.achievementControl = new UIAchievementControl(this);
 
         // --- Generic Tooltip State ---
         this.activeGraphAnchor = null;
@@ -41574,7 +42791,8 @@ export class UIManager {
             stickyObjectiveText: document.getElementById('sticky-objective-text'),
             stickyObjectiveProgress: document.getElementById('sticky-objective-progress'),
 
-            econWeatherBtn: document.getElementById('btn-econ-weather')
+            econWeatherBtn: document.getElementById('btn-econ-weather'),
+            btnAchievements: document.getElementById('btn-achievements')
         };
 
         if (this.cache.econWeatherBtn) {
@@ -41631,19 +42849,43 @@ export class UIManager {
 
         if (gameState.introSequenceActive) {
             if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
+            if (this.cache.btnAchievements) this.cache.btnAchievements.style.display = 'none';
             const gameMenuBtn = document.getElementById('btn-game-menu');
             if (gameMenuBtn) gameMenuBtn.style.display = 'none';
             return;
         } else {
+            // FIX: Remove Tailwind hidden classes to allow JS layout management to take over
+            // Also forcefully reset opacity and pointer events after travel locking
             if (this.cache.econWeatherBtn) {
-                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : '';
+                this.cache.econWeatherBtn.classList.remove('hidden');
+                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : 'flex';
+                if (!isTravelLocked) {
+                    this.cache.econWeatherBtn.style.opacity = '1';
+                    this.cache.econWeatherBtn.style.pointerEvents = 'auto';
+                }
+            }
+            if (this.cache.btnAchievements) {
+                this.cache.btnAchievements.classList.remove('hidden');
+                this.cache.btnAchievements.style.display = isTravelLocked ? 'none' : 'flex';
+                if (!isTravelLocked) {
+                    this.cache.btnAchievements.style.opacity = '1';
+                    this.cache.btnAchievements.style.pointerEvents = 'auto';
+                }
             }
             if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
                 this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';
+                if (!isTravelLocked) {
+                    this.helpManager.anchorBtn.style.opacity = '1';
+                    this.helpManager.anchorBtn.style.pointerEvents = 'auto';
+                }
             }
             const gameMenuBtn = document.getElementById('btn-game-menu');
             if (gameMenuBtn) {
                 gameMenuBtn.style.display = isTravelLocked ? 'none' : '';
+                if (!isTravelLocked) {
+                    gameMenuBtn.style.opacity = '1';
+                    gameMenuBtn.style.pointerEvents = 'auto';
+                }
             }
         }
 
@@ -41851,6 +43093,31 @@ export class UIManager {
         }
         
         this.cache.subNavBar.innerHTML = subNavsHtml;
+
+        // Auto-center navigation card if applicable
+        if (activeScreen === SCREEN_IDS.NAVIGATION) {
+            requestAnimationFrame(() => {
+                setTimeout(() => {
+                    const navScreenEl = this.cache.navigationScreen;
+                    if (!navScreenEl) return;
+                    
+                    const scrollPanel = navScreenEl.querySelector('.navigation-scroll-panel');
+                    const currentCard = navScreenEl.querySelector('.highlight-current');
+                    
+                    if (scrollPanel && currentCard) {
+                        const panelHeight = scrollPanel.clientHeight;
+                        const cardTop = currentCard.offsetTop;
+                        const cardHeight = currentCard.clientHeight;
+                        const newScrollTop = cardTop - (panelHeight / 2) + (cardHeight / 2);
+                        
+                        scrollPanel.scrollTo({
+                            top: newScrollTop,
+                            behavior: 'smooth'
+                        });
+                    }
+                }, 50);
+            });
+        }
     }
 
     _preserveScrollAndRender(screenEl, renderCallback) {
@@ -44649,7 +45916,6 @@ export class IntelService {
 
         const commodityId = unlockedCommodityIds[Math.floor(Math.random() * unlockedCommodityIds.length)];
         
-        // --- VIRTUAL WORKBENCH: HIGH-VALUE INTEL BASELINE ---
         // Calculate Discount using Intel Profile parameters (clamped to baseline 40-60%)
         const profileMin = intelProfile.minDiscount !== undefined ? intelProfile.minDiscount : 0.40;
         const profileMax = intelProfile.maxDiscount !== undefined ? intelProfile.maxDiscount : 0.60;
@@ -44657,7 +45923,6 @@ export class IntelService {
         const minDiscount = Math.max(0.40, profileMin);
         const maxDiscount = Math.max(0.60, profileMax);
         const discountPercent = minDiscount + Math.random() * (maxDiscount - minDiscount);
-        // --- END VIRTUAL WORKBENCH ---
 
         const durationDays = 30 + Math.floor(Math.random() * 61); // 30 - 90 days
         const durationMod = intelProfile.durationMod !== undefined ? intelProfile.durationMod : 1.0;
@@ -44710,11 +45975,6 @@ export class IntelService {
         const activeShip = state.player.activeShipId;
         
         let base = playerCredits * (0.10 + Math.random() * 0.10); 
-        
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
-        if (currentLocationId === LOCATION_IDS.VENUS) {
-            base *= 0.5; // 50% discount at Venus
-        }
 
         // Apply Local Eco Profile Cost Modifier
         const locationDef = this.db.MARKETS.find(m => m.id === currentLocationId);
@@ -44724,19 +45984,18 @@ export class IntelService {
 
         let finalPrice = base * packet.valueMultiplier;
         
-        // --- PHASE 2: AGE PERK (INTEL COST) ---
+        // AGE PERK (INTEL COST)
         const ageIntelDiscount = state.player.statModifiers?.intelCost || 0;
         if (ageIntelDiscount > 0) {
             finalPrice *= (1 - ageIntelDiscount);
         }
 
-        // --- Z-CLASS LOGIC ---
+        // Z-CLASS LOGIC
         // ATTR_WHISPER_NETWORK (The Listener): 50% Discount
         const shipAttributes = GameAttributes.getShipAttributes(activeShip);
         if (shipAttributes.includes('ATTR_WHISPER_NETWORK')) {
             finalPrice *= 0.5;
         }
-        // --- END Z-CLASS ---
 
         return Math.floor(finalPrice / 100) * 100;
     }
@@ -44798,11 +46057,7 @@ export class IntelService {
             travelTime = Math.round(travelTime * this.db.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod);
         }
         
-        // --- VIRTUAL WORKBENCH: VENUS QUIRK ---
         let durationMultiplier = 1.9; // Base multiplier
-        if (state.currentLocationId === LOCATION_IDS.VENUS) {
-            durationMultiplier *= 2.0; // Double duration at Venus
-        }
 
         // Apply Local Eco Profile Duration Modifier
         const locationDef = this.db.MARKETS.find(m => m.id === state.currentLocationId);
@@ -44810,7 +46065,7 @@ export class IntelService {
              durationMultiplier *= locationDef.intelProfile.durationMod;
         }
 
-        // --- PHASE 2: AGE PERK (INTEL DURATION) ---
+        // AGE PERK (INTEL DURATION)
         const ageDurationBonus = state.player.statModifiers?.intelDuration || 0;
         if (ageDurationBonus > 0) {
             durationMultiplier *= (1 + ageDurationBonus);
@@ -46120,13 +47375,100 @@ export class ActionClickHandler {
             }
             // --- END GAME MENU ---
 
+            // --- ACHIEVEMENTS SYSTEM ROUTING (Phase 3 & 4) ---
+            case 'open-achievements':
+                e.stopPropagation();
+                if (this.uiManager.achievementControl) {
+                    this.uiManager.achievementControl.showModal(state);
+                }
+                break;
+
+            case 'close-achievements':
+                e.stopPropagation();
+                if (this.uiManager.achievementControl) {
+                    this.uiManager.achievementControl.hideModal();
+                }
+                break;
+
+            case 'switch-achievement-tab': {
+                e.stopPropagation();
+                const tabId = dataset.tabId;
+                if (!tabId) return;
+
+                this.gameState.uiState.activeAchievementTab = tabId;
+                if (this.uiManager.achievementControl) {
+                    this.uiManager.achievementControl.render(this.gameState.getState());
+                }
+                break;
+            }
+
+            case 'toggle-ach-category': {
+                e.stopPropagation();
+                const catId = dataset.categoryId;
+                if (!catId) return;
+
+                let collapsed = state.uiState.achievementsCollapsedCategories || [];
+                if (collapsed.includes(catId)) {
+                    collapsed = collapsed.filter(c => c !== catId);
+                } else {
+                    collapsed.push(catId);
+                }
+                
+                this.gameState.uiState.achievementsCollapsedCategories = collapsed;
+                if (this.uiManager.achievementControl) {
+                    // Pass a fresh snapshot of the state to the render method, 
+                    // otherwise it uses the stale 'state' snapshot from the top of the event handler.
+                    this.uiManager.achievementControl.render(this.gameState.getState());
+                }
+                break;
+            }
+
+            case 'claim-achievement': {
+                e.stopPropagation();
+                const achId = dataset.id;
+                if (!achId) return;
+
+                const pill = actionTarget.closest('.ach-pill');
+                if (!pill || pill.classList.contains('ach-claiming')) return;
+
+                // Lock element against double-clicks
+                pill.classList.add('ach-claiming');
+                
+                // WAAPI-Style CSS Transition Initiation
+                pill.style.filter = 'blur(5px)';
+                pill.style.opacity = '0';
+                pill.style.transition = 'all 3s ease';
+
+                setTimeout(() => {
+                    const wrapper = pill.closest('.ach-pill-wrapper');
+                    if (wrapper) {
+                        wrapper.style.height = '0px';
+                        wrapper.style.margin = '0px';
+                        wrapper.style.opacity = '0';
+                        wrapper.style.transition = 'height 1s ease, margin 1s ease, opacity 1s ease';
+                    }
+
+                    setTimeout(() => {
+                        // Execute reward handoff and status mutation
+                        if (this.simulationService && this.simulationService.achievementService) {
+                            this.simulationService.achievementService.claim(achId);
+                        }
+                        
+                        // Hard render to redraw lists and place solid-gold pill at the bottom
+                        if (this.uiManager.achievementControl) {
+                            this.uiManager.achievementControl.render(this.gameState.getState());
+                        }
+                    }, 1000);
+                }, 3000);
+                break;
+            }
+            // --- END ACHIEVEMENTS SYSTEM ---
+
             // --- Ship Actions (Hangar/Shipyard) ---
             case ACTION_IDS.BUY_SHIP: {
                 const { shipId } = dataset;
                 if (!shipId) return;
                 e.stopPropagation();
-                
-                const target = e.target; 
                 
                 const validation = this.simulationService.playerActionService.validateBuyShip(shipId);
                 if (!validation.success) {
@@ -46135,9 +47477,9 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
-                    const purchaseButton = target.closest('.action-button');
-                    if (purchaseButton) {
-                        await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
+                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
+                    if (actionTarget) {
+                        playBlockingAnimationAndRemove(actionTarget, 'is-glowing-green');
                     }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.buyShip(shipId);
@@ -46209,8 +47551,6 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
 
-                const target = e.target;
-
                 const validation = this.simulationService.playerActionService.validateSellShip(shipId);
                 if (!validation.success) {
                     this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
@@ -46218,9 +47558,9 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
-                    const sellButton = target.closest('.action-button');
-                    if (sellButton) {
-                        await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
+                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
+                    if (actionTarget) {
+                        playBlockingAnimationAndRemove(actionTarget, 'is-glowing-red');
                     }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.sellShip(shipId);
@@ -46240,11 +47580,11 @@ export class ActionClickHandler {
                     return;
                 }
 
-                const boardButton = e.target.closest('.action-button');
-                if (boardButton) {
-                    const sellButton = boardButton.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
+                // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
+                if (actionTarget) {
+                    const sellButton = actionTarget.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
                     if (sellButton) sellButton.disabled = true;
-                    await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
+                    playBlockingAnimationAndRemove(actionTarget, 'is-glowing-button');
                 }
 
                 await this.simulationService.boardShip(shipId); 
@@ -47461,6 +48801,132 @@ export class CarouselEventHandler {
 }
 --- END OF FILE: ./js/services/handlers/CarouselEventHandler.js ---
 
+--- START OF FILE: ./js/services/AchievementService.js ---
+// js/services/AchievementService.js
+import { ACHIEVEMENT_REGISTRY, REWARD_TYPES } from '../data/achievementRegistry.js';
+
+/**
+ * Handles logic layer processing for the meta-progression achievements.
+ * Exposes methods to increment tracking ledgers and execute specific reward payloads.
+ */
+export class AchievementService {
+    /**
+     * @param {GameState} gameState 
+     */
+    constructor(gameState) {
+        this.gameState = gameState;
+    }
+
+    /**
+     * Injects or increments a specific tracking metric dynamically.
+     * Evaluates completion threshold automatically post-mutation.
+     * @param {string} metricKey - The specific key mapping to the registry definition.
+     * @param {number} value - The raw integer amount to increment.
+     * @param {boolean} isAbsoluteOverwrite - If true, replaces the value rather than adding to it.
+     */
+    increment(metricKey, value = 1, isAbsoluteOverwrite = false) {
+        if (!this.gameState || !this.gameState.achievements) return;
+
+        let currentVal = this.gameState.achievements.metrics[metricKey] || 0;
+        
+        if (isAbsoluteOverwrite) {
+            this.gameState.achievements.metrics[metricKey] = value;
+        } else {
+            this.gameState.achievements.metrics[metricKey] = currentVal + value;
+        }
+
+        // Silent mutation evaluation
+        this.evaluateCompletion(metricKey);
+    }
+
+    /**
+     * Scans the registry for targets tracking the supplied key and validates 
+     * if the required target has been met.
+     * @param {string} metricKey 
+     */
+    evaluateCompletion(metricKey) {
+        const value = this.gameState.achievements.metrics[metricKey] || 0;
+        let requiresStateUpdate = false;
+
+        ACHIEVEMENT_REGISTRY.forEach(ach => {
+            if (ach.metricKey === metricKey) {
+                // Ensure it isn't already completed or claimed
+                if (!this.gameState.achievements.status[ach.id]) {
+                    if (value >= ach.targetValue) {
+                        this.gameState.achievements.status[ach.id] = 'COMPLETED';
+                        requiresStateUpdate = true;
+                    }
+                }
+            }
+        });
+
+        // Trigger a localized check for the completionist tag
+        if (requiresStateUpdate) {
+            this._checkCompletionistTarget();
+            // Force state broadcast to update UI or DOM variables if applicable
+            this.gameState.setState({ achievements: this.gameState.achievements });
+        }
+    }
+
+    /**
+     * Executes the specific reward logic linked to a completed milestone 
+     * and forces the status to CLAIMED.
+     * @param {string} achievementId 
+     */
+    claim(achievementId) {
+        const ach = ACHIEVEMENT_REGISTRY.find(a => a.id === achievementId);
+        if (!ach || this.gameState.achievements.status[achievementId] !== 'COMPLETED') return;
+
+        // Apply Reward
+        switch (ach.rewardType) {
+            case REWARD_TYPES.CREDITS:
+                this.gameState.player.credits += ach.rewardPayload;
+                break;
+            case REWARD_TYPES.VOUCHER_FUEL:
+                this.gameState.player.serviceTokens.fuel += ach.rewardPayload;
+                break;
+            case REWARD_TYPES.VOUCHER_REPAIR:
+                this.gameState.player.serviceTokens.repair += ach.rewardPayload;
+                break;
+            case REWARD_TYPES.SHIP:
+                this.gameState.player.ownedShipIds.push(ach.rewardPayload);
+                break;
+            case REWARD_TYPES.LICENSE:
+                if (!this.gameState.player.unlockedLicenseIds.includes(ach.rewardPayload)) {
+                    this.gameState.player.unlockedLicenseIds.push(ach.rewardPayload);
+                }
+                break;
+            case REWARD_TYPES.UNLOCK_LOCATION:
+                if (!this.gameState.player.unlockedLocationIds.includes(ach.rewardPayload)) {
+                    this.gameState.player.unlockedLocationIds.push(ach.rewardPayload);
+                }
+                break;
+        }
+
+        // Lock Status
+        this.gameState.achievements.status[achievementId] = 'CLAIMED';
+
+        // Tally total claims for the 'Completionist' achievement evaluation
+        this.increment('achievementsClaimed', 1, false);
+
+        // Force Global Update
+        this.gameState.setState({ 
+            player: this.gameState.player,
+            achievements: this.gameState.achievements 
+        });
+    }
+
+    /**
+     * Helper evaluation to track and flag the meta-Completionist achievement.
+     * @private
+     */
+    _checkCompletionistTarget() {
+        const totalClaimed = Object.values(this.gameState.achievements.status).filter(val => val === 'CLAIMED').length;
+        this.increment('achievementsClaimed', totalClaimed, true);
+    }
+}
+--- END OF FILE: ./js/services/AchievementService.js ---
+
 --- START OF FILE: ./js/services/player/PlayerActionService.js ---
 // js/services/player/PlayerActionService.js
 /**
@@ -47627,6 +49093,26 @@ export class PlayerActionService {
             if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
         }
 
+        // --- ACHIEVEMENTS: BUY TRACKING HOOKS ---
+        if (this.simulationService.achievementService) {
+            const ach = this.simulationService.achievementService;
+            if (goodId === COMMODITY_IDS.ANTIMATTER) ach.increment('tradeAntimatter', 1);
+            if (state.currentLocationId === LOCATION_IDS.EARTH) ach.increment('tradesAt_loc_earth', 1);
+            if (state.currentLocationId === LOCATION_IDS.EXCHANGE) ach.increment('tradesAt_loc_exchange', 1);
+            ach.increment('totalTradesExecuted', 1);
+
+            if (state.activeIntelDeal && state.activeIntelDeal.commodityId === goodId && state.activeIntelDeal.dealLocationId === state.currentLocationId) {
+                ach.increment('intelDealsExecuted', 1);
+            }
+
+            const m = this.gameState.achievements.metrics.monoTradeId;
+            if (m === undefined || m === null || m === goodId) {
+                this.gameState.achievements.metrics.monoTradeId = goodId;
+            } else {
+                this.gameState.achievements.metrics.monoTradeId = 'FAILED';
+            }
+        }
+
         this.gameState.setState({});
         return true;
     }
@@ -47751,6 +49237,49 @@ export class PlayerActionService {
             if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
         }
 
+        // --- ACHIEVEMENTS: SELL TRACKING HOOKS ---
+        if (this.simulationService.achievementService) {
+            const ach = this.simulationService.achievementService;
+            if (goodId === COMMODITY_IDS.ANTIMATTER) ach.increment('tradeAntimatter', 1);
+            
+            const outerRim = ['loc_jupiter', 'loc_saturn', 'loc_uranus', 'loc_neptune', 'loc_kepler', 'loc_pluto'];
+            if (goodId === COMMODITY_IDS.WATER_ICE && outerRim.includes(state.currentLocationId)) {
+                ach.increment('soldWaterOuter', quantity);
+            }
+
+            if (state.currentLocationId === LOCATION_IDS.EARTH) ach.increment('tradesAt_loc_earth', 1);
+            if (state.currentLocationId === LOCATION_IDS.EXCHANGE) ach.increment('tradesAt_loc_exchange', 1);
+            ach.increment('totalTradesExecuted', 1);
+
+            if (profit > 0) {
+                const currentPeak = this.gameState.achievements.metrics.highestSingleTradeProfit || 0;
+                if (profit > currentPeak) ach.increment('highestSingleTradeProfit', Math.floor(profit), true);
+            }
+
+            if (state.activeIntelDeal && state.activeIntelDeal.commodityId === goodId && state.activeIntelDeal.dealLocationId === state.currentLocationId) {
+                ach.increment('intelDealsExecuted', 1);
+            }
+
+            const currentCredits = this.gameState.player.credits;
+            const prevTycoon = this.gameState.achievements.metrics.peakCredits_Tycoon || 0;
+            if (currentCredits > prevTycoon) ach.increment('peakCredits_Tycoon', currentCredits, true);
+            const prevBillion = this.gameState.achievements.metrics.peakCredits_Billion || 0;
+            if (currentCredits > prevBillion) ach.increment('peakCredits_Billion', currentCredits, true);
+
+            const galAvg = state.market.galacticAverages[goodId] || 0;
+            const avgCostBasis = totalCostBasis / quantity;
+            if (avgCostBasis <= (galAvg * 0.5) && (totalSaleValue / quantity) >= (galAvg * 1.5)) {
+                ach.increment('centuryDeals', 1);
+            }
+
+            const m = this.gameState.achievements.metrics.monoTradeId;
+            if (m === undefined || m === null || m === goodId) {
+                this.gameState.achievements.metrics.monoTradeId = goodId;
+            } else {
+                this.gameState.achievements.metrics.monoTradeId = 'FAILED';
+            }
+        }
+
         this.gameState.setState({});
 
         return totalSaleValue;
@@ -47836,6 +49365,18 @@ export class PlayerActionService {
 
             const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-effectivePrice, true)}</span>. This ship has been stored in your Hangar.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
+
+            // --- ACHIEVEMENTS: SHIP BUY HOOKS ---
+            if (this.simulationService.achievementService) {
+                const ach = this.simulationService.achievementService;
+                const fleetSize = this.gameState.player.ownedShipIds.length;
+                const prevMax = this.gameState.achievements.metrics.maxFleetSize || 0;
+                if (fleetSize > prevMax) ach.increment('maxFleetSize', fleetSize, true);
+
+                if (ship.class) {
+                    ach.increment(`ownedClass_${ship.class.toUpperCase()}`, 1, true);
+                }
+            }
 
             this.gameState.setState({
                 uiState: {
@@ -48004,6 +49545,11 @@ export class PlayerActionService {
 
             const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.${cargoOutcomeText}`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
+
+            // --- ACHIEVEMENTS: SHIP SELL HOOK ---
+            if (this.simulationService.achievementService) {
+                this.simulationService.achievementService.increment('shipsSold', 1);
+            }
 
             this.gameState.setState({
                 uiState: {
@@ -48177,6 +49723,11 @@ export class PlayerActionService {
         player.unlockedLicenseIds.push(licenseId);
         this.logger.info.player(day, 'LICENSE_PURCHASE', `Purchased ${license.name}.`);
         this.simulationService._logTransaction('license', -license.cost, `Purchased ${license.name}`);
+        
+        if (this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('licensesOwned', player.unlockedLicenseIds.length, true);
+        }
+
         this.gameState.setState({});
 
         return { success: true };
@@ -48211,7 +49762,12 @@ export class PlayerActionService {
             };
         }
   
-         this.gameState.setState({});
+        // --- ACHIEVEMENTS: INTEL PURCHASE HOOK ---
+        if (this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('intelDealsPurchased', 1);
+        }
+
+        this.gameState.setState({});
     }
 
     refuelTick() {
@@ -48226,7 +49782,7 @@ export class PlayerActionService {
 
         const shipState = state.player.shipStates[ship.id];
         const upgrades = shipState.upgrades || [];
-        const statusEffects = shipState.statusEffects || []; // Phase 4 hook
+        const statusEffects = shipState.statusEffects || []; 
         const shipDef = DB.SHIPS[ship.id];
 
         let fuelClassMod = 1;
@@ -48398,6 +49954,11 @@ export class PlayerActionService {
             this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, x, y, '#f87171');
         }
 
+        // --- ACHIEVEMENTS: REPAIR HOOK ---
+        if (this.simulationService.achievementService) {
+            this.simulationService.achievementService.increment('spentOnRepairs', totalCost);
+        }
+
         this.gameState.setState({}); 
         return totalCost;
     }
@@ -48439,6 +50000,17 @@ export class PlayerActionService {
         }
         
         this.logger.info.player(this.gameState.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
+
+        // --- ACHIEVEMENTS: UPGRADE TRACKING HOOKS ---
+        if (this.simulationService.achievementService) {
+            const ach = this.simulationService.achievementService;
+            ach.increment('spentOnUpgrades', totalCost);
+            
+            const len = livePlayer.shipStates[shipId].upgrades.length;
+            const maxU = this.gameState.achievements.metrics.maxUpgradesInstalled || 0;
+            if (len > maxU) ach.increment('maxUpgradesInstalled', len, true);
+        }
+
         this.gameState.setState({});
     }
 }
@@ -48450,11 +50022,16 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [38.06] - 2026-4-27
+-  fixed station quirk logic
+-  added scroll placement recall to map and navigation
+
 # [38.04] - 2026-4-26
 -  Navigation screen polish
 -  Map screen polish
 -  Launch modal polish
 -  Intel screen polish
+-  updated public github push method
 
 # [38.00] - 2026-4-25
 -  improved saving
@@ -53308,150 +54885,6 @@ graph TD
         H --> I[Restore standard UI render sequence];
     end
 
-```markdown
-// meta/SERVICES.md
-
-Service Responsibility & Dependency Matrix
-Core Architecture
-SimulationService acts as the central Facade. It is the only service that the EventManager talks to directly for complex game actions. It coordinates the specialized services below and acts as the bridge for the Event System 2.0, handling Debug Event injection and high-level resolution orchestration.
-
-1. State Management
-GameState (F009)
-Responsibility: Single source of truth. Holds all mutable data (player, market, day, ships).
-Key Behavior: Emits notifications to subscribers (UIManager) whenever setState is called.
-Dependencies: None (Leaf node).
-
-2. Game Logic Services
-SimulationService (F011) [FACADE]
-Responsibility: The core game engine Facade. Instantiates and coordinates all specialized services.
-Key Behavior: Receives calls from the EventManager and delegates them to the appropriate domain service. Orchestrates multi-step flows like ship purchasing.
-Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService, BankruptcyService, SystemStateService.
-
-IntroService (F033)
-Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
-Dependencies: GameState, UIManager, Logger, SimulationService.
-
-PlayerActionService (F034)
-Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
-Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
-
-GameAttributes (F069)
-Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
-Dependencies: None.
-
-TravelService (F036)
-Responsibility: Manages the travel loop. Calculates fuel/time costs, applies Convoy Taxes, and triggers random events.
-Key Behavior: Directly oversees the orchestration of the Ship Destruction and Towing flows (utilizing the Web Animations API for cinematic presentation), aggressively terminates ephemeral `activeHotIntel` loops upon initiation, and acts as the lifecycle manager for Ship Status Effects (calculating duration ticks and triggering expirations per travel leg).
-Dependencies: GameState, TimeService, RandomEventService, StoryEventService.
-
-MarketService (F010)
-Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Applies System State weather modifiers and Station Quirks dynamically.
-Dependencies: GameState, IntelService, AssetService, SystemStateService.
-
-IntelService (F057)
-Responsibility: Manages the "Local Data Broker" system. Generates, prices, and executes Intel Packets.
-Dependencies: GameState.
-
-TimeService (F035)
-Responsibility: Advances the calendar and manages long-term progression.
-Key Behavior: Triggers daily/weekly simulation ticks (Market, News, Weather). Manages the "3-Era Age Engine".
-Dependencies: GameState, MarketService, BankruptcyService, SystemStateService, SolStationService.
-
-MissionService (F018)
-Responsibility: Coordinates the Mission System 2.0 lifecycle.
-Key Behavior: Delegates logic to evaluators (`MissionTriggerEvaluator`, `MissionObjectiveEvaluator`, and `FlagEvaluator`). Facilitates massive bulk objectives by handling localized `depositMissionCargo` loops. Validates two-step progression, explicit license unlocks, and executes cross-system integration via `FlagMutators`.
-Dependencies: GameState, MissionTriggerEvaluator, MissionObjectiveEvaluator, FlagEvaluator, FlagMutator.
-
-SolStationService (F098)
-Responsibility: Manages the logic for the Sol Station endgame engine, progression mechanics, and mathematical integrity.
-Key Behavior: Manages progression from Level 1-50. Implements deferred universe calculations and view-model interpolation. Executes Just-In-Time (JIT) commits. Manages the Synthesis Pipeline for Antimatter conversion.
-Dependencies: GameState, Logger.
-
-ToastService (F106)
-Responsibility: Manages the volatile notification queue and evaluates thresholds upon location arrival.
-Dependencies: GameState, UIManager, SimulationService.
-
-BankruptcyService (F107)
-Responsibility: Evaluates financial health, manages distinct debt pools (Guild vs Syndicate), and executes punitive actions.
-Key Behavior: Triggers Repo Events forcibly liquidating player assets to cover outstanding Syndicate Debt.
-Dependencies: GameState, PlayerActionService, SimulationService, Logger.
-
-SystemStateService (F108)
-Responsibility: Manages procedural Economic Weather and systemic states across the solar system.
-Key Behavior: Rolls conditions weekly that apply temporary, global modifiers to baseline market math and event generation.
-Dependencies: GameState, TimeService, Logger.
-
-3. Event System Services (Event 2.0 & Story Events)
-RandomEventService
-Responsibility: The high-level coordinator for the procedural random event system. Determines if an event occurs and which event is selected based on contextual weight and active System States.
-Dependencies: GameState, ConditionEvaluator.
-
-StoryEventService
-Responsibility: The coordinator for the bespoke Story Event System. Evaluates explicit narrative conditions, triggers Event-Chains, and synchronizes with Mission Flags. Coordinates with animation services to trigger Act Screen intermissions upon narrative chapter thresholds.
-Dependencies: GameState, FlagEvaluator, FlagMutator.
-
-ConditionEvaluator & FlagEvaluator
-Responsibility: Stateless utility services that validate requirements. `ConditionEvaluator` handles inventory and standard state; `FlagEvaluator` specifically parses `storyFlags` for narrative triggers.
-Dependencies: GameState (Read-only).
-
-OutcomeResolver & FlagMutator
-Responsibility: Handles the logic of the player's choice. `FlagMutator` explicitly guarantees safe, tracked mutation of cross-system narrative flags.
-Dependencies: GameState, eventEffectResolver.
-
-DynamicValueResolver
-Responsibility: Calculates dynamic integer values for event effects based on game state context.
-Dependencies: GameState (Read-only), DB.
-
-eventEffectResolver
-Responsibility: The "Applicator". Applies the specific state mutations defined by an event's outcome, including appending new Ship Status Effects to the active vessel.
-Dependencies: GameState, SimulationService, DynamicValueResolver.
-
-4. UI & Presentation Services
-UIManager (F017) [FACADE]
-Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`). Responsible for the main render loop and proxying logic to delegates.
-Dependencies: Logger, EffectsManager, TravelAnimationService, UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
-
-Controllers (Delegates):
-* UIModalEngine: Manages the modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads to restructure modal headers and inject CSS sprite portraits via the global `PortraitRegistry`.
-* UIHelpManager: Manages the Contextual Help Modal system, micro-pagination tracks, and swipe threshold logic.
-* UIToastManager: Manages Universal Toast notifications, DOM injection, and animation timing.
-* UIMarketControl: Manages Market screen rendering, state retention, and graph generation.
-* UIMissionControl: Manages Mission data screens, sticky bar HUD, and Intel interactions.
-* UIHangarControl: Manages Hangar carousels, ship card tooltips (including Ship Status Effects), and the Upgrade Installation flow.
-* UIEventControl: "World" interactions (Maps, Lore, Procedural Events, Story Events, Act Screen intermissions, EULA, Launch Modals).
-* UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
-
-IntelMarketRenderer (F058)
-Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content.
-Dependencies: IntelService.
-
-NewsTickerService (F053)
-Responsibility: Manages the scrolling text bar content.
-Dependencies: GameState.
-
-AssetService (F065)
-Responsibility: Centralized path resolution and "Hydration" for visual assets.
-Dependencies: AssetStorageService, assets_config.js.
-
-TravelAnimationService (F044)
-Responsibility: Manages the high-fidelity visual transition during travel via Canvas.
-Dependencies: DB (Travel Visuals).
-
-AnimationService (F060)
-Responsibility: Provides a generic, promise-based utility (`playBlockingAnimation`) to run CSS animations and block further execution until completion. Expanded to support dynamic Ship Upgrade animations and Status Effect visualizations.
-Dependencies: None.
-
-5. Persistence Services
-SaveStorageService (F101)
-Responsibility: Manages game saves using a dual-write architecture and local file I/O operations.
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation, including optimized serialization and export handling for large save blobs to prevent memory crashes on mobile.
-Dependencies: Native IndexedDB API, WebKit Message Handlers.
-
-AssetStorageService (F070)
-Responsibility: Low-level IndexedDB wrapper.
-Dependencies: Native IndexedDB API.
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
@@ -53701,4 +55134,63 @@ Manages procedural Economic Weather modifiers impacting global behavior.
   ]
 }
 --- END OF FILE: ./manifest.json ---
+
+--- START OF FILE: ./sw.js ---
+/**
+ * @fileoverview Service Worker for Orbital Trading PWA.
+ * Handles local caching of core assets to enable offline playability and rapid subsequent load times.
+ */
+
+const CACHE_NAME = 'orbital-trading-v1';
+
+const ASSETS_TO_CACHE = [
+    '/',
+    '/index.html',
+    '/style.css',
+    '/bundle.min.js',
+    '/manifest.json',
+    '/favicon.svg'
+];
+
+/**
+ * Install Event
+ * Pre-caches the essential static assets when the Service Worker is first registered.
+ */
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME)
+            .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+    );
+});
+
+/**
+ * Fetch Event
+ * Intercepts network requests and serves them from the local cache if available, 
+ * falling back to the network if the resource is not cached.
+ */
+self.addEventListener('fetch', (event) => {
+    event.respondWith(
+        caches.match(event.request)
+            .then((response) => response || fetch(event.request))
+    );
+});
+
+/**
+ * Activate Event
+ * Cleans up old, obsolete caches when a new version of the Service Worker activates.
+ */
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((cacheNames) => {
+            return Promise.all(
+                cacheNames.map((cacheName) => {
+                    if (cacheName !== CACHE_NAME) {
+                        return caches.delete(cacheName);
+                    }
+                })
+            );
+        })
+    );
+});
+--- END OF FILE: ./sw.js ---
 
