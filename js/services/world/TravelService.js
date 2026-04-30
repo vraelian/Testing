@@ -449,6 +449,9 @@ export class TravelService {
                 );
             }
             
+            // FIX: Gracefully demount the starfield overlay instead of allowing it to hang indefinitely
+            starfieldService.triggerQuickExit();
+            
             this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }

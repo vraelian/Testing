@@ -171,7 +171,9 @@ export class UIHelpManager {
         if (this.anchorBtn) {
             // Strip the pulse class upon explicit viewing
             this.anchorBtn.classList.remove('help-anchor-pulse');
-            this.anchorBtn.style.display = 'none';
+            // Dim and disable interaction to fall into the background
+            this.anchorBtn.style.opacity = '0.15';
+            this.anchorBtn.style.pointerEvents = 'none';
         }
 
         if (this.overlay) {
@@ -207,7 +209,8 @@ export class UIHelpManager {
                                                && this.uiManager?.lastKnownState?.introSequenceActive;
                     
                     if (this.anchorBtn && !isCinematicTransition) {
-                        this.anchorBtn.style.display = 'flex';
+                        this.anchorBtn.style.opacity = ''; // Restores CSS default
+                        this.anchorBtn.style.pointerEvents = 'auto';
                     }
 
                     if (typeof this.onCloseCallback === 'function') {
@@ -221,7 +224,8 @@ export class UIHelpManager {
             const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
                                        && this.uiManager?.lastKnownState?.introSequenceActive;
             if (this.anchorBtn && !isCinematicTransition) {
-                this.anchorBtn.style.display = 'flex';
+                this.anchorBtn.style.opacity = ''; 
+                this.anchorBtn.style.pointerEvents = 'auto';
             }
             if (typeof this.onCloseCallback === 'function') {
                 const callback = this.onCloseCallback;

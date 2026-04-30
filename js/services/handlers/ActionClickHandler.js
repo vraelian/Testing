@@ -227,8 +227,6 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
                 
-                const target = e.target; 
-                
                 const validation = this.simulationService.playerActionService.validateBuyShip(shipId);
                 if (!validation.success) {
                     this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
@@ -236,9 +234,9 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
-                    const purchaseButton = target.closest('.action-button');
-                    if (purchaseButton) {
-                        await playBlockingAnimationAndRemove(purchaseButton, 'is-glowing-green');
+                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
+                    if (actionTarget) {
+                        playBlockingAnimationAndRemove(actionTarget, 'is-glowing-green');
                     }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.buyShip(shipId);
@@ -310,8 +308,6 @@ export class ActionClickHandler {
                 if (!shipId) return;
                 e.stopPropagation();
 
-                const target = e.target;
-
                 const validation = this.simulationService.playerActionService.validateSellShip(shipId);
                 if (!validation.success) {
                     this.uiManager.queueModal('event-modal', validation.errorTitle, validation.errorMessage);
@@ -319,9 +315,9 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
-                    const sellButton = target.closest('.action-button');
-                    if (sellButton) {
-                        await playBlockingAnimationAndRemove(sellButton, 'is-glowing-red');
+                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
+                    if (actionTarget) {
+                        playBlockingAnimationAndRemove(actionTarget, 'is-glowing-red');
                     }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.sellShip(shipId);
@@ -341,11 +337,11 @@ export class ActionClickHandler {
                     return;
                 }
 
-                const boardButton = e.target.closest('.action-button');
-                if (boardButton) {
-                    const sellButton = boardButton.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
+                // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
+                if (actionTarget) {
+                    const sellButton = actionTarget.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
                     if (sellButton) sellButton.disabled = true;
-                    await playBlockingAnimationAndRemove(boardButton, 'is-glowing-button');
+                    playBlockingAnimationAndRemove(actionTarget, 'is-glowing-button');
                 }
 
                 await this.simulationService.boardShip(shipId); 

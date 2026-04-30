@@ -105,7 +105,14 @@ export class UIAchievementControl {
             const cat = ach.categoryId;
             if (!grouped[cat]) grouped[cat] = [];
             
-            const metricVal = metrics[ach.metricKey] || 0;
+            let metricVal = metrics[ach.metricKey] || 0;
+            
+            // --- WEALTH TRACKING HARDENING (PHASE 3) ---
+            // Dynamically clamp to current wallet if it exceeds recorded metric
+            if (ach.metricKey === 'peakCredits_Tycoon' || ach.metricKey === 'peakCredits_Billion') {
+                metricVal = Math.max(metricVal, state.player.credits || 0);
+            }
+            
             let pct = (metricVal / ach.targetValue) * 100;
             pct = Math.min(100, Math.max(0, pct)); // Clamp between 0-100%
             
@@ -127,7 +134,8 @@ export class UIAchievementControl {
         if (!tabsContainer) {
             tabsContainer = document.createElement('div');
             tabsContainer.id = 'achievements-tabs';
-            tabsContainer.className = 'flex flex-row overflow-x-auto overflow-y-hidden gap-2 mb-4 pb-2 custom-scrollbar';
+            // Adjusted overflow-y and added pt-2 to prevent raised pills from being cropped at the top
+            tabsContainer.className = 'flex flex-row overflow-x-auto overflow-y-visible pt-2 gap-2 mb-4 pb-2 custom-scrollbar';
             const modalContent = this.modal.querySelector('.modal-content');
             modalContent.insertBefore(tabsContainer, this.scrollContainer);
         }
@@ -136,7 +144,7 @@ export class UIAchievementControl {
         sortedCategories.forEach(cat => {
             const isActive = cat === activeTab;
             const tabClass = isActive 
-                ? 'bg-cyan-900 border-cyan-400 text-white shadow-[0_0_10px_rgba(34,211,238,0.5)]' 
+                ? 'bg-cyan-900 border-cyan-400 text-white shadow-[0_0_10px_rgba(34,211,238,0.5)] transform -translate-y-1' 
                 : 'bg-slate-800 border-slate-600 text-gray-400 hover:bg-slate-700';
             tabsHtml += `<button class="btn flex-shrink-0 whitespace-nowrap px-4 py-2 text-sm font-orbitron rounded-xl border ${tabClass} transition-all duration-200" data-action="switch-achievement-tab" data-tab-id="${cat}">${cat}</button>`;
         });
@@ -188,11 +196,17 @@ export class UIAchievementControl {
                     if (isClaimed) {
                         pillClass = 'ach-pill ach-claimed bg-yellow-500 border-yellow-400';
                         textClass = 'text-black';
-                        starHtml = `<span class="text-white ml-2 text-xl">★</span>`;
+                        // Increased star size and added bright white drop shadow
+                        starHtml = `<span class="text-white ml-2 text-5xl drop-shadow-[0_0_8px_rgba(255,255,255,0.8)]">★</span>`;
                     } else if (isCompleted) {
-                        pillClass = 'ach-pill ach-completed border-yellow-400 bg-slate-800 cursor-pointer';
+                        pillClass = 'ach-pill ach-completed border-yellow-400 bg-slate-800';
                         textClass = 'text-yellow-400';
-                        actionAttr = `data-action="claim-achievement" data-id="${ach.id}"`;
+                        // Removed action attr from wrapper, injected explicit redeem button
+                        progressHtml = `
+                            <div class="w-full mt-3 flex justify-center">
+                                <button class="btn bg-yellow-600 hover:bg-yellow-500 text-white border-yellow-400 shadow-[0_0_15px_rgba(250,204,21,0.6)] px-8 py-2 font-bold tracking-widest animate-pulse" data-action="claim-achievement" data-id="${ach.id}">REDEEM</button>
+                            </div>
+                        `;
                     } else {
                         progressHtml = `
                             <div class="w-full bg-slate-900 h-2 mt-3 rounded-full overflow-hidden shadow-inner">

@@ -839,6 +839,11 @@ ${logHistory}
                 
                 this._unlockEndgame();
 
+                // --- PHASE 3: LICENSE DEBUG TRACKING FIX ---
+                if (this.simulationService && this.simulationService.achievementService) {
+                    this.simulationService.achievementService.increment('licensesOwned', Object.keys(DB.LICENSES).length, true);
+                }
+
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Unlocked: Maps, Licenses, Tiers, Sol Station', window.innerWidth/2, window.innerHeight/2, '#facc15');
             }},
@@ -1010,7 +1015,7 @@ ${logHistory}
                 };
                 
                 this.bot.runSimulation(config, (current, end) => {
-                    if(progressController) progressController.setValue(`${current} / ${end}`).updateDisplay();
+                    if(progressController) progressController.setValue(`${current} / end`).updateDisplay();
                 });
             }},
             stopBot: { name: 'Stop AUTOTRADER-01', type: 'button', handler: () => this.bot.stop() },
