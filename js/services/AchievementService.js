@@ -113,6 +113,25 @@ export class AchievementService {
     }
 
     /**
+     * JIT Synchronization for passive variables (like wealth bounds) that aren't strictly event-driven.
+     */
+    syncPassiveMetrics() {
+        if (!this.gameState || !this.gameState.achievements) return;
+        
+        const currentCredits = this.gameState.player.credits || 0;
+        
+        const peakTycoon = this.gameState.achievements.metrics['peakCredits_Tycoon'] || 0;
+        if (currentCredits > peakTycoon) {
+            this.increment('peakCredits_Tycoon', currentCredits, true);
+        }
+        
+        const peakBillion = this.gameState.achievements.metrics['peakCredits_Billion'] || 0;
+        if (currentCredits > peakBillion) {
+            this.increment('peakCredits_Billion', currentCredits, true);
+        }
+    }
+
+    /**
      * Helper evaluation to track and flag the meta-Completionist achievement.
      * @private
      */

@@ -171,9 +171,7 @@ export class UIHelpManager {
         if (this.anchorBtn) {
             // Strip the pulse class upon explicit viewing
             this.anchorBtn.classList.remove('help-anchor-pulse');
-            // Dim and disable interaction to fall into the background
-            this.anchorBtn.style.opacity = '0.15';
-            this.anchorBtn.style.pointerEvents = 'none';
+            // Phase 4 Fix: Do not drop opacity or kill pointer events, so it behaves as a normal toggle
         }
 
         if (this.overlay) {
@@ -203,15 +201,6 @@ export class UIHelpManager {
                 if (!this.isVisible) {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('help-anim-out');
-                    
-                    // Ensure we don't accidentally reveal the anchor during the cinematic handoff
-                    const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
-                                               && this.uiManager?.lastKnownState?.introSequenceActive;
-                    
-                    if (this.anchorBtn && !isCinematicTransition) {
-                        this.anchorBtn.style.opacity = ''; // Restores CSS default
-                        this.anchorBtn.style.pointerEvents = 'auto';
-                    }
 
                     if (typeof this.onCloseCallback === 'function') {
                         const callback = this.onCloseCallback;
@@ -221,12 +210,6 @@ export class UIHelpManager {
                 }
             }, 400); 
         } else {
-            const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
-                                       && this.uiManager?.lastKnownState?.introSequenceActive;
-            if (this.anchorBtn && !isCinematicTransition) {
-                this.anchorBtn.style.opacity = ''; 
-                this.anchorBtn.style.pointerEvents = 'auto';
-            }
             if (typeof this.onCloseCallback === 'function') {
                 const callback = this.onCloseCallback;
                 this.onCloseCallback = null;

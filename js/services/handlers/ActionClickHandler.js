@@ -199,10 +199,18 @@ export class ActionClickHandler {
                 setTimeout(() => {
                     const wrapper = pill.closest('.ach-pill-wrapper');
                     if (wrapper) {
+                        // Convert auto height to explicit px height to enable smooth CSS transition
+                        const currentHeight = wrapper.offsetHeight;
+                        wrapper.style.height = currentHeight + 'px';
+                        
+                        // Force reflow
+                        void wrapper.offsetHeight;
+                        
+                        // Apply transition and collapse
+                        wrapper.style.transition = 'height 1s ease, margin 1s ease, opacity 1s ease';
                         wrapper.style.height = '0px';
                         wrapper.style.margin = '0px';
                         wrapper.style.opacity = '0';
-                        wrapper.style.transition = 'height 1s ease, margin 1s ease, opacity 1s ease';
                     }
 
                     setTimeout(() => {
@@ -213,7 +221,9 @@ export class ActionClickHandler {
                         
                         // Hard render to redraw lists and place solid-gold pill at the bottom
                         if (this.uiManager.achievementControl) {
+                            this.uiManager.achievementControl._lastClaimedId = achId;
                             this.uiManager.achievementControl.render(this.gameState.getState());
+                            this.uiManager.achievementControl._lastClaimedId = null; // Reset
                         }
                     }, 1000);
                 }, 3000);
@@ -703,9 +713,14 @@ export class ActionClickHandler {
                     return;
                 }
                 
-                const contextId = this.uiManager.getCurrentHelpContextId(state);
-                if (contextId) {
-                    this.uiManager.showHelpModal(contextId);
+                // PHASE 4 FIX: Toggle logic for the help modal
+                if (this.uiManager.helpManager && this.uiManager.helpManager.isVisible) {
+                    this.uiManager.hideHelpModal();
+                } else {
+                    const contextId = this.uiManager.getCurrentHelpContextId(state);
+                    if (contextId) {
+                        this.uiManager.showHelpModal(contextId);
+                    }
                 }
                 break;
             }

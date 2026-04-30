@@ -15,7 +15,7 @@ export class UIAchievementControl {
         this.modal = null;
         this.scrollContainer = null;
         this._backdropListenerBound = false;
-        this._closeBtnBound = false;
+        this._lastClaimedId = null; // Tracks newly claimed item for fade-in animation
     }
 
     _lazyCacheDOM() {
@@ -31,18 +31,6 @@ export class UIAchievementControl {
                         this.uiManager.simulationService.gameState.uiState.achievementsScrollY = e.target.scrollTop;
                     }
                 }, { passive: true });
-            }
-
-            // Manually bind the close button to bypass event delegation drop issues
-            if (this.modal) {
-                const closeBtn = this.modal.querySelector('[data-action="close-achievements"]');
-                if (closeBtn && !this._closeBtnBound) {
-                    closeBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        this.hideModal();
-                    };
-                    this._closeBtnBound = true;
-                }
             }
         }
     }
@@ -87,6 +75,11 @@ export class UIAchievementControl {
         this._lazyCacheDOM();
         if (!this.scrollContainer || !state.achievements) return;
 
+        // Phase 4 Fix: Sync passive wealth milestones before rendering evaluation
+        if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.achievementService) {
+            this.uiManager.simulationService.achievementService.syncPassiveMetrics();
+        }
+
         const metrics = state.achievements.metrics || {};
         const status = state.achievements.status || {};
         const collapsedCats = state.uiState.achievementsCollapsedCategories || [];
@@ -106,12 +99,6 @@ export class UIAchievementControl {
             if (!grouped[cat]) grouped[cat] = [];
             
             let metricVal = metrics[ach.metricKey] || 0;
-            
-            // --- WEALTH TRACKING HARDENING (PHASE 3) ---
-            // Dynamically clamp to current wallet if it exceeds recorded metric
-            if (ach.metricKey === 'peakCredits_Tycoon' || ach.metricKey === 'peakCredits_Billion') {
-                metricVal = Math.max(metricVal, state.player.credits || 0);
-            }
             
             let pct = (metricVal / ach.targetValue) * 100;
             pct = Math.min(100, Math.max(0, pct)); // Clamp between 0-100%
@@ -219,9 +206,17 @@ export class UIAchievementControl {
                     const formattedMetric = formatNumberCompact(Math.min(ach.currentMetric, ach.targetValue));
                     const formattedTarget = formatNumberCompact(ach.targetValue);
 
+                    let wrapperClass = 'ach-pill-wrapper relative overflow-hidden transition-all duration-300';
+                    let wrapperStyle = 'opacity: 1; height: auto;';
+                    
+                    if (this._lastClaimedId === ach.id) {
+                        wrapperClass += ' ach-newly-claimed';
+                        wrapperStyle = ''; // Let animation handle opacity
+                    }
+
                     // CSS structural targets prepared for Web Animations API phase (.ach-pill-wrapper)
                     html += `
-                        <div class="ach-pill-wrapper relative overflow-hidden transition-all duration-300" style="opacity: 1; height: auto;">
+                        <div class="${wrapperClass}" style="${wrapperStyle}">
                             <div class="${pillClass} p-4 rounded-xl border transition-all duration-300 relative overflow-hidden" ${actionAttr}>
                                 <div class="flex justify-between items-start relative z-10">
                                     <div class="flex-1 pr-4">

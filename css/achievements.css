@@ -88,6 +88,16 @@
     will-change: height, margin, opacity;
 }
 
+@keyframes achSlideFadeIn {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.ach-newly-claimed {
+    animation: achSlideFadeIn 1s ease-out forwards;
+    opacity: 0;
+}
+
 /* --- Achievements HUD Button --- */
 #btn-achievements {
     position: fixed;

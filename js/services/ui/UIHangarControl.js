@@ -395,13 +395,55 @@ export class UIHangarControl {
         }
 
         const totalCost = hardwareCost + installationFee;
-        const nameColor = upgradeDef.pillColor || upgradeDef.color || '#fff';
+        
+        // --- PHASE 5: THEME EXTRACTION & OVERRIDE ---
+        const nameColor = upgradeDef.pillColor || upgradeDef.color || '#38bdf8';
+        const darkColor = this._adjustColor(nameColor, -80);
+        const btnHoverColor = this._adjustColor(nameColor, -40);
 
-        // --- URANUS QUIRK IMPLEMENTATION ---
-        // If this installation is originating from a shop, and we are docked at Uranus, 
-        // the shop generation logic uses GameAttributes.getAllUpgrades(). We don't intercept that here, 
-        // but we keep this comment to track the implementation of the quirk in the actual generation source.
-        // -------------------------------------
+        const applyThemeToModal = (modal) => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.background = `linear-gradient(145deg, ${darkColor} 0%, #000000 100%)`;
+                modalContent.style.borderColor = nameColor;
+                modalContent.style.boxShadow = `0 0 30px ${darkColor}, inset 0 0 15px ${darkColor}`;
+                modalContent.style.transition = 'all 0.3s ease';
+            }
+            const titleEl = modal.querySelector('#event-title');
+            if (titleEl) {
+                titleEl.style.color = nameColor;
+                titleEl.style.textShadow = `0 0 12px ${nameColor}`;
+                titleEl.style.fontSize = '1.8rem'; // +20%
+            }
+            const descEl = modal.querySelector('#event-description');
+            if (descEl) {
+                descEl.style.fontSize = '1.35rem'; // +20%
+                descEl.style.color = '#f3f4f6'; // Brighten slightly for contrast
+            }
+        };
+
+        const clearThemeFromModal = () => {
+            const modal = document.getElementById('event-modal');
+            if (!modal) return;
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.background = '';
+                modalContent.style.borderColor = '';
+                modalContent.style.boxShadow = '';
+                modalContent.style.transition = '';
+            }
+            const titleEl = modal.querySelector('#event-title');
+            if (titleEl) {
+                titleEl.style.color = '';
+                titleEl.style.textShadow = '';
+                titleEl.style.fontSize = '';
+            }
+            const descEl = modal.querySelector('#event-description');
+            if (descEl) {
+                descEl.style.fontSize = '';
+                descEl.style.color = '';
+            }
+        };
 
         const handleDeductionAndInstall = (indexToRemove, closeHandler) => {
             if (source === 'shop' && totalCost > 0) {
@@ -416,6 +458,7 @@ export class UIHangarControl {
             }
             
             setTimeout(() => {
+                clearThemeFromModal();
                 closeHandler();
                 if (onConfirm) onConfirm(indexToRemove);
             }, 500);
@@ -426,6 +469,8 @@ export class UIHangarControl {
             const defToRemove = GameAttributes.getDefinition(idToRemove);
             
             const modal = document.getElementById('event-modal');
+            applyThemeToModal(modal); // Re-apply just in case
+            
             const modalTitle = modal.querySelector('#event-title');
             const contentEl = modal.querySelector('#event-description');
             const btnContainer = modal.querySelector('#event-button-container');
@@ -436,15 +481,15 @@ export class UIHangarControl {
             const removeName = defToRemove ? defToRemove.name : idToRemove;
 
             contentEl.innerHTML = `
-                <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
-                <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+                <p class="mb-5 text-red-500 font-bold text-[1.1em] uppercase tracking-widest" style="text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);">WARNING: Destructive Action</p>
+                <p class="mb-3">Replacing <span class="font-bold text-[1.1em]" style="color: ${removeNameColor}; text-shadow: 0 0 8px ${removeNameColor};">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
+                <p class="text-[0.9em] text-gray-300">You will receive no credits for the dismantled part.</p>
             `;
             
-            btnContainer.className = "flex flex-col w-full mt-4 gap-2";
+            btnContainer.className = "flex flex-col w-full mt-5 gap-3";
             btnContainer.innerHTML = `
-                <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]">Dismantle & Install</button>
-                <button id="final-cancel-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>
+                <button id="final-confirm-btn" class="btn bg-red-800 hover:bg-red-700 text-white w-full border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] text-[1.2rem] py-3 uppercase tracking-widest">Dismantle & Install</button>
+                <button id="final-cancel-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Cancel</button>
             `;
             
             modal.querySelector('#final-confirm-btn').onclick = () => {
@@ -458,6 +503,8 @@ export class UIHangarControl {
 
         const renderReplacementUI = (closeHandler) => {
             const modal = document.getElementById('event-modal');
+            applyThemeToModal(modal); // Ensure theme is active
+            
             const modalTitle = modal.querySelector('#event-title');
             const contentEl = modal.querySelector('#event-description');
             const btnContainer = modal.querySelector('#event-button-container');
@@ -477,46 +524,48 @@ export class UIHangarControl {
                 const hwCost = def ? GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice) : 0;
                 const valText = formatCredits(hwCost, true);
 
-                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center mb-2" data-idx="${idx}">
+                return `<button class="btn btn-sm border hover:border-red-500 w-full text-left px-4 py-3 bg-gray-900/80 flex justify-between items-center mb-3" style="border-color: ${pColor}80; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);" data-idx="${idx}">
                             <div class="flex flex-col overflow-hidden">
-                                <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                <div class="marquee-container text-xs text-gray-400 mt-1">
+                                <span class="font-bold text-[1.1rem]" style="color: ${pColor}; text-shadow: 0 0 8px ${pColor};">${uName}</span>
+                                <div class="marquee-container text-[0.85rem] text-gray-300 mt-1">
                                     <span class="marquee-content">${statText}</span>
                                 </div>
                             </div>
                             <div class="text-right flex-shrink-0 ml-4">
-                                <span class="text-xs text-gray-500 block">Value</span>
-                                <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
+                                <span class="text-[0.8rem] text-gray-400 block">Value</span>
+                                <span class="font-mono font-bold text-cyan-300 text-[1rem]" style="text-shadow: 0 0 5px rgba(103, 232, 249, 0.5);">${valText}</span>
                             </div>
                         </button>`;
             }).join('');
 
             contentEl.innerHTML = `
-                <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
-                <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace with <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>:</p>
-                <div class="flex flex-col w-full max-w-sm mx-auto">
+                <p class="mb-5 text-orange-400 font-bold" style="font-size: 1.1em; text-shadow: 0 0 8px rgba(251, 146, 60, 0.6);">Ship systems are at maximum capacity (3/3).</p>
+                <p class="mb-4 text-gray-200">Select an existing upgrade to dismantle and replace with <span class="font-bold" style="color: ${nameColor}; text-shadow: 0 0 8px ${nameColor};">${upgradeDef.name}</span>:</p>
+                <div class="flex flex-col w-full max-w-md mx-auto">
                     ${upgradesList}
                 </div>
             `;
             
-            btnContainer.className = "flex flex-col w-full mt-4";
+            btnContainer.className = "flex flex-col w-full mt-5 gap-3";
             if (source === 'mission') {
-                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400">Reject</button>`;
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Reject</button>`;
                 const cancelBtn = modal.querySelector('#cancel-replace-btn');
                 cancelBtn.onclick = () => {
                     if (cancelBtn.dataset.phase === '1') {
+                        clearThemeFromModal();
                         closeHandler();
                         if (onReject) onReject();
                     } else {
                         cancelBtn.dataset.phase = '1';
                         cancelBtn.textContent = 'Confirm Reject?';
-                        cancelBtn.classList.remove('border-gray-600', 'text-gray-400');
-                        cancelBtn.classList.add('border-white', 'text-white', 'bg-red-900/40');
+                        cancelBtn.classList.remove('border-gray-500', 'text-gray-300');
+                        cancelBtn.classList.add('border-red-400', 'text-white', 'bg-red-900/60');
                     }
                 };
             } else {
-                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>`;
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Cancel</button>`;
                 modal.querySelector('#cancel-replace-btn').onclick = () => {
+                    clearThemeFromModal();
                     closeHandler();
                 };
             }
@@ -531,34 +580,36 @@ export class UIHangarControl {
 
         const renderInitialModal = () => {
             let title = source === 'shop' ? "Install Upgrade" : "Reward Available";
-            let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
+            let desc = `<p class="mb-4">Install <span class="font-bold text-[1.1em]" style="color: ${nameColor}; text-shadow: 0 0 8px ${nameColor};">${upgradeDef.name}</span>?</p>`;
             
             if (source === 'shop' && totalCost > 0) {
-                desc += `<p class="text-base text-gray-400">Total Cost: <span class="credits-text-pulsing">${formatCredits(totalCost, true)}</span></p>`;
+                desc += `<p class="text-[1.1em] text-gray-200 mb-1 font-semibold">Total Cost: <span class="credits-text-pulsing font-mono text-cyan-300 ml-2" style="text-shadow: 0 0 8px rgba(103, 232, 249, 0.8);">${formatCredits(totalCost, true)}</span></p>`;
                 if (installationFee > 0) {
-                    desc += `<p class="text-xs text-gray-500 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
+                    desc += `<p class="text-[0.85em] text-gray-400 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
                 }
             }
             
-            desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+            desc += `<p class="mt-5 italic text-[0.9em] text-gray-300 leading-relaxed">${upgradeDef.description}</p>`;
 
             this.manager.queueModal('event-modal', title, desc, null, {
                 dismissOutside: false, 
                 customSetup: (modal, closeHandler) => {
+                    applyThemeToModal(modal);
+
                     const btnContainer = modal.querySelector('#event-button-container');
-                    btnContainer.className = "flex flex-col w-full mt-4";
+                    btnContainer.className = "flex flex-col w-full mt-5 gap-3";
                     
                     let confirmBtnHtml = '';
                     if (source === 'shop') {
                         const canAfford = this.manager.lastKnownState.player.credits >= totalCost;
                         confirmBtnHtml = `
-                            <button id="confirm-install-btn" class="btn w-full btn-pulse-cyan text-cyan-300 font-bold mb-2" ${!canAfford ? 'disabled' : ''}>
-                                Purchase [${formatCredits(totalCost, true)}]
+                            <button id="confirm-install-btn" class="btn w-full font-bold text-[1.2rem] py-3 tracking-widest uppercase transition-all" style="background-color: ${darkColor}; border-color: ${nameColor}; color: #fff; box-shadow: 0 0 15px ${darkColor};" ${!canAfford ? 'disabled' : ''}>
+                                Purchase
                             </button>
                         `;
                     } else {
                         confirmBtnHtml = `
-                            <button id="confirm-install-btn" class="btn w-full btn-pulse-green text-green-400 font-bold mb-2">
+                            <button id="confirm-install-btn" class="btn w-full font-bold text-[1.2rem] py-3 tracking-widest uppercase transition-all" style="background-color: ${darkColor}; border-color: ${nameColor}; color: #fff; box-shadow: 0 0 15px ${darkColor};">
                                 Accept Upgrade
                             </button>
                         `;
@@ -566,10 +617,15 @@ export class UIHangarControl {
 
                     btnContainer.innerHTML = `
                         ${confirmBtnHtml}
-                        <button id="cancel-install-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Reject</button>
+                        <button id="cancel-install-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Reject</button>
                     `;
 
                     const confirmBtn = modal.querySelector('#confirm-install-btn');
+                    if (confirmBtn && !confirmBtn.disabled) {
+                        confirmBtn.addEventListener('mouseenter', () => confirmBtn.style.backgroundColor = btnHoverColor);
+                        confirmBtn.addEventListener('mouseleave', () => confirmBtn.style.backgroundColor = darkColor);
+                    }
+
                     confirmBtn.onclick = () => {
                         if (isFull) {
                             renderReplacementUI(closeHandler);
@@ -580,6 +636,7 @@ export class UIHangarControl {
                     };
 
                     modal.querySelector('#cancel-install-btn').onclick = () => {
+                        clearThemeFromModal();
                         closeHandler();
                         if (onReject) onReject();
                     };
@@ -597,28 +654,37 @@ export class UIHangarControl {
      * @returns {Promise<void>} Resolves when the animation completes.
      */
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
-        const elementToAnimate = this._getActiveShipTerminalElement();
-        if (!elementToAnimate) return; 
+        const elementToAnimate = this._getActiveShipTerminalElement(shipId);
+        if (!elementToAnimate) {
+            if (this.manager.logger) this.manager.logger.warn('UIHangarControl', `Target element for ship transaction animation missing. ID: ${shipId}`);
+            return; 
+        } 
         await playBlockingAnimation(elementToAnimate, animationClass);
     }
     
     /**
-     * Locates the active ship terminal DOM element within the current carousel view.
+     * Locates the active ship terminal DOM element explicitly by shipId to prevent UI masking race conditions.
+     * Checks open modals before falling back to the background carousel wrapper.
+     * @param {string} shipId
      * @returns {HTMLElement|null} The terminal element, or null if not found.
      * @private
      */
-    _getActiveShipTerminalElement() {
-        const state = this.manager.lastKnownState; 
-        if (!state) return null;
-        const hangarScreenEl = this.manager.cache.hangarScreen;
+    _getActiveShipTerminalElement(shipId) {
+        // First check if the ship detail modal is active and showing this ship
+        const detailModal = this.manager.cache?.shipDetailModal;
+        if (detailModal && !detailModal.classList.contains('hidden')) {
+            // If the detail modal is open, animate its card
+            const actionBtn = detailModal.querySelector(`[data-action="${ACTION_IDS.BUY_SHIP}"][data-ship-id="${shipId}"], [data-action="${ACTION_IDS.SELL_SHIP}"][data-ship-id="${shipId}"]`);
+            if (actionBtn) {
+                return detailModal.querySelector('.ship-card');
+            }
+        }
+
+        // Otherwise find it directly via data-attribute in the carousel DOM
+        const hangarScreenEl = this.manager.cache?.hangarScreen;
         if (!hangarScreenEl) return null;
-        const carousel = hangarScreenEl.querySelector('#hangar-carousel');
-        if (!carousel) return null;
-        const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
-        const activeIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
-        const pages = carousel.querySelectorAll('.carousel-page');
-        const activePage = pages[activeIndex];
-        return activePage ? activePage.querySelector('#ship-terminal') : null;
+        const targetPage = hangarScreenEl.querySelector(`.carousel-page[data-ship-id="${shipId}"]`);
+        return targetPage ? targetPage.querySelector('#ship-terminal') : null;
     }
 
     /**
