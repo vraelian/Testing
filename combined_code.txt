@@ -364,7 +364,7 @@
 
     <div id="achievements-modal" class="modal-backdrop hidden z-[1050]">
         <div class="modal-content relative flex flex-col p-4 md:p-6" style="height: 85vh; width: 95%; max-width: 600px;">
-            <button class="absolute top-2 right-4 text-gray-400 hover:text-white text-4xl font-bold leading-none cursor-pointer transition-colors" data-action="close-achievements" title="Close">&minus;</button>
+            <button type="button" id="achievements-dismiss-btn" class="absolute top-2 right-4 text-gray-400 hover:text-white text-4xl font-bold leading-none cursor-pointer transition-colors z-50 p-2 touch-manipulation" data-action="close-achievements" title="Close Modal">&minus;</button>
             <h2 class="text-3xl font-orbitron font-bold text-center text-cyan-300 mb-4 tracking-widest">AWARDS</h2>
             <div id="achievements-scroll-container" class="flex-1 overflow-y-auto pr-2 custom-scrollbar">
                 </div>
@@ -3576,6 +3576,16 @@ card.
 /* Wrapper for DOM Collapse Animation */
 .ach-pill-wrapper {
     will-change: height, margin, opacity;
+}
+
+@keyframes achSlideFadeIn {
+    0% { opacity: 0; transform: translateY(30px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+.ach-newly-claimed {
+    animation: achSlideFadeIn 1s ease-out forwards;
+    opacity: 0;
 }
 
 /* --- Achievements HUD Button --- */
@@ -23833,6 +23843,16 @@ export class UIEventControl {
                 if (btnContainer) btnContainer.innerHTML = '';
 
                 const crtCloseHandler = (choiceId = null) => {
+                    // Lock inputs immediately
+                    if (choicesContainer) {
+                        const allBtns = choicesContainer.querySelectorAll('.event-choice-btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+                    }
+                    if (btnContainer) {
+                        const allBtns = btnContainer.querySelectorAll('.btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+                    }
+
                     modalContent.classList.remove('sev-crt-turn-on');
                     modalContent.classList.add('sev-crt-shutdown');
                     modalContent.style.animationDuration = '0.35s';
@@ -23843,7 +23863,15 @@ export class UIEventControl {
                         } else {
                             modal.classList.add('hidden');
                         }
-                        choicesCallback(choiceId);
+                        
+                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
+                        // to the next frame. This prevents the main thread from locking up 
+                        // and dropping frames in the Canvas-driven travel animation.
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                choicesCallback(choiceId);
+                            }, 10);
+                        });
                     }, 340);
                 };
 
@@ -23958,8 +23986,21 @@ export class UIEventControl {
                     }
 
                     button.onclick = () => {
-                        choicesCallback(choice.id);
-                        closeHandler();
+                        // Prevent multi-clicks and provide immediate tactile feedback
+                        button.style.transform = 'scale(0.98)';
+                        button.style.opacity = '0.7';
+                        const allBtns = choicesContainer.querySelectorAll('.event-choice-btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
+                        // to the next frame. This prevents the main thread from locking up 
+                        // and dropping frames in the Canvas-driven travel animation.
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                choicesCallback(choice.id);
+                                closeHandler();
+                            }, 10);
+                        });
                      };
                     choicesContainer.appendChild(button);
                 });
@@ -23979,8 +24020,15 @@ export class UIEventControl {
              button.className = 'perk-button';
             button.innerHTML = `<h4>${choice.title}</h4><p>${choice.description}</p>`;
             button.onclick = () => {
-                this.manager.hideModal('age-event-modal');
-                choiceCallback(choice);
+                const allBtns = btnContainer.querySelectorAll('.perk-button');
+                allBtns.forEach(b => b.style.pointerEvents = 'none');
+                
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        this.manager.hideModal('age-event-modal');
+                        choiceCallback(choice);
+                    }, 10);
+                });
             };
             btnContainer.appendChild(button);
         });
@@ -24719,7 +24767,7 @@ export class UIAchievementControl {
         this.modal = null;
         this.scrollContainer = null;
         this._backdropListenerBound = false;
-        this._closeBtnBound = false;
+        this._lastClaimedId = null; // Tracks newly claimed item for fade-in animation
     }
 
     _lazyCacheDOM() {
@@ -24735,18 +24783,6 @@ export class UIAchievementControl {
                         this.uiManager.simulationService.gameState.uiState.achievementsScrollY = e.target.scrollTop;
                     }
                 }, { passive: true });
-            }
-
-            // Manually bind the close button to bypass event delegation drop issues
-            if (this.modal) {
-                const closeBtn = this.modal.querySelector('[data-action="close-achievements"]');
-                if (closeBtn && !this._closeBtnBound) {
-                    closeBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        this.hideModal();
-                    };
-                    this._closeBtnBound = true;
-                }
             }
         }
     }
@@ -24791,6 +24827,11 @@ export class UIAchievementControl {
         this._lazyCacheDOM();
         if (!this.scrollContainer || !state.achievements) return;
 
+        // Phase 4 Fix: Sync passive wealth milestones before rendering evaluation
+        if (this.uiManager && this.uiManager.simulationService && this.uiManager.simulationService.achievementService) {
+            this.uiManager.simulationService.achievementService.syncPassiveMetrics();
+        }
+
         const metrics = state.achievements.metrics || {};
         const status = state.achievements.status || {};
         const collapsedCats = state.uiState.achievementsCollapsedCategories || [];
@@ -24810,12 +24851,6 @@ export class UIAchievementControl {
             if (!grouped[cat]) grouped[cat] = [];
             
             let metricVal = metrics[ach.metricKey] || 0;
-            
-            // --- WEALTH TRACKING HARDENING (PHASE 3) ---
-            // Dynamically clamp to current wallet if it exceeds recorded metric
-            if (ach.metricKey === 'peakCredits_Tycoon' || ach.metricKey === 'peakCredits_Billion') {
-                metricVal = Math.max(metricVal, state.player.credits || 0);
-            }
             
             let pct = (metricVal / ach.targetValue) * 100;
             pct = Math.min(100, Math.max(0, pct)); // Clamp between 0-100%
@@ -24923,9 +24958,17 @@ export class UIAchievementControl {
                     const formattedMetric = formatNumberCompact(Math.min(ach.currentMetric, ach.targetValue));
                     const formattedTarget = formatNumberCompact(ach.targetValue);
 
+                    let wrapperClass = 'ach-pill-wrapper relative overflow-hidden transition-all duration-300';
+                    let wrapperStyle = 'opacity: 1; height: auto;';
+                    
+                    if (this._lastClaimedId === ach.id) {
+                        wrapperClass += ' ach-newly-claimed';
+                        wrapperStyle = ''; // Let animation handle opacity
+                    }
+
                     // CSS structural targets prepared for Web Animations API phase (.ach-pill-wrapper)
                     html += `
-                        <div class="ach-pill-wrapper relative overflow-hidden transition-all duration-300" style="opacity: 1; height: auto;">
+                        <div class="${wrapperClass}" style="${wrapperStyle}">
                             <div class="${pillClass} p-4 rounded-xl border transition-all duration-300 relative overflow-hidden" ${actionAttr}>
                                 <div class="flex justify-between items-start relative z-10">
                                     <div class="flex-1 pr-4">
@@ -25773,9 +25816,7 @@ export class UIHelpManager {
         if (this.anchorBtn) {
             // Strip the pulse class upon explicit viewing
             this.anchorBtn.classList.remove('help-anchor-pulse');
-            // Dim and disable interaction to fall into the background
-            this.anchorBtn.style.opacity = '0.15';
-            this.anchorBtn.style.pointerEvents = 'none';
+            // Phase 4 Fix: Do not drop opacity or kill pointer events, so it behaves as a normal toggle
         }
 
         if (this.overlay) {
@@ -25805,15 +25846,6 @@ export class UIHelpManager {
                 if (!this.isVisible) {
                     this.overlay.classList.add('hidden');
                     this.overlay.classList.remove('help-anim-out');
-                    
-                    // Ensure we don't accidentally reveal the anchor during the cinematic handoff
-                    const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
-                                               && this.uiManager?.lastKnownState?.introSequenceActive;
-                    
-                    if (this.anchorBtn && !isCinematicTransition) {
-                        this.anchorBtn.style.opacity = ''; // Restores CSS default
-                        this.anchorBtn.style.pointerEvents = 'auto';
-                    }
 
                     if (typeof this.onCloseCallback === 'function') {
                         const callback = this.onCloseCallback;
@@ -25823,12 +25855,6 @@ export class UIHelpManager {
                 }
             }, 400); 
         } else {
-            const isCinematicTransition = this.uiManager?.simulationService?.introService?._transitioning 
-                                       && this.uiManager?.lastKnownState?.introSequenceActive;
-            if (this.anchorBtn && !isCinematicTransition) {
-                this.anchorBtn.style.opacity = ''; 
-                this.anchorBtn.style.pointerEvents = 'auto';
-            }
             if (typeof this.onCloseCallback === 'function') {
                 const callback = this.onCloseCallback;
                 this.onCloseCallback = null;
@@ -26530,13 +26556,55 @@ export class UIHangarControl {
         }
 
         const totalCost = hardwareCost + installationFee;
-        const nameColor = upgradeDef.pillColor || upgradeDef.color || '#fff';
+        
+        // --- PHASE 5: THEME EXTRACTION & OVERRIDE ---
+        const nameColor = upgradeDef.pillColor || upgradeDef.color || '#38bdf8';
+        const darkColor = this._adjustColor(nameColor, -80);
+        const btnHoverColor = this._adjustColor(nameColor, -40);
 
-        // --- URANUS QUIRK IMPLEMENTATION ---
-        // If this installation is originating from a shop, and we are docked at Uranus, 
-        // the shop generation logic uses GameAttributes.getAllUpgrades(). We don't intercept that here, 
-        // but we keep this comment to track the implementation of the quirk in the actual generation source.
-        // -------------------------------------
+        const applyThemeToModal = (modal) => {
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.background = `linear-gradient(145deg, ${darkColor} 0%, #000000 100%)`;
+                modalContent.style.borderColor = nameColor;
+                modalContent.style.boxShadow = `0 0 30px ${darkColor}, inset 0 0 15px ${darkColor}`;
+                modalContent.style.transition = 'all 0.3s ease';
+            }
+            const titleEl = modal.querySelector('#event-title');
+            if (titleEl) {
+                titleEl.style.color = nameColor;
+                titleEl.style.textShadow = `0 0 12px ${nameColor}`;
+                titleEl.style.fontSize = '1.8rem'; // +20%
+            }
+            const descEl = modal.querySelector('#event-description');
+            if (descEl) {
+                descEl.style.fontSize = '1.35rem'; // +20%
+                descEl.style.color = '#f3f4f6'; // Brighten slightly for contrast
+            }
+        };
+
+        const clearThemeFromModal = () => {
+            const modal = document.getElementById('event-modal');
+            if (!modal) return;
+            const modalContent = modal.querySelector('.modal-content');
+            if (modalContent) {
+                modalContent.style.background = '';
+                modalContent.style.borderColor = '';
+                modalContent.style.boxShadow = '';
+                modalContent.style.transition = '';
+            }
+            const titleEl = modal.querySelector('#event-title');
+            if (titleEl) {
+                titleEl.style.color = '';
+                titleEl.style.textShadow = '';
+                titleEl.style.fontSize = '';
+            }
+            const descEl = modal.querySelector('#event-description');
+            if (descEl) {
+                descEl.style.fontSize = '';
+                descEl.style.color = '';
+            }
+        };
 
         const handleDeductionAndInstall = (indexToRemove, closeHandler) => {
             if (source === 'shop' && totalCost > 0) {
@@ -26551,6 +26619,7 @@ export class UIHangarControl {
             }
             
             setTimeout(() => {
+                clearThemeFromModal();
                 closeHandler();
                 if (onConfirm) onConfirm(indexToRemove);
             }, 500);
@@ -26561,6 +26630,8 @@ export class UIHangarControl {
             const defToRemove = GameAttributes.getDefinition(idToRemove);
             
             const modal = document.getElementById('event-modal');
+            applyThemeToModal(modal); // Re-apply just in case
+            
             const modalTitle = modal.querySelector('#event-title');
             const contentEl = modal.querySelector('#event-description');
             const btnContainer = modal.querySelector('#event-button-container');
@@ -26571,15 +26642,15 @@ export class UIHangarControl {
             const removeName = defToRemove ? defToRemove.name : idToRemove;
 
             contentEl.innerHTML = `
-                <p class="mb-4 text-red-400 font-bold">WARNING: Destructive Action</p>
-                <p class="mb-2">Replacing <span class="font-bold" style="color: ${removeNameColor}">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
-                <p class="text-sm text-gray-400">You will receive no credits for the dismantled part.</p>
+                <p class="mb-5 text-red-500 font-bold text-[1.1em] uppercase tracking-widest" style="text-shadow: 0 0 8px rgba(239, 68, 68, 0.6);">WARNING: Destructive Action</p>
+                <p class="mb-3">Replacing <span class="font-bold text-[1.1em]" style="color: ${removeNameColor}; text-shadow: 0 0 8px ${removeNameColor};">${removeName}</span> will <span class="font-bold text-red-500">permanently</span> destroy it.</p>
+                <p class="text-[0.9em] text-gray-300">You will receive no credits for the dismantled part.</p>
             `;
             
-            btnContainer.className = "flex flex-col w-full mt-4 gap-2";
+            btnContainer.className = "flex flex-col w-full mt-5 gap-3";
             btnContainer.innerHTML = `
-                <button id="final-confirm-btn" class="btn bg-red-600 hover:bg-red-500 text-white w-full border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.6)]">Dismantle & Install</button>
-                <button id="final-cancel-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>
+                <button id="final-confirm-btn" class="btn bg-red-800 hover:bg-red-700 text-white w-full border-red-500 shadow-[0_0_15px_rgba(239,68,68,0.8)] text-[1.2rem] py-3 uppercase tracking-widest">Dismantle & Install</button>
+                <button id="final-cancel-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Cancel</button>
             `;
             
             modal.querySelector('#final-confirm-btn').onclick = () => {
@@ -26593,6 +26664,8 @@ export class UIHangarControl {
 
         const renderReplacementUI = (closeHandler) => {
             const modal = document.getElementById('event-modal');
+            applyThemeToModal(modal); // Ensure theme is active
+            
             const modalTitle = modal.querySelector('#event-title');
             const contentEl = modal.querySelector('#event-description');
             const btnContainer = modal.querySelector('#event-button-container');
@@ -26612,46 +26685,48 @@ export class UIHangarControl {
                 const hwCost = def ? GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipBasePrice) : 0;
                 const valText = formatCredits(hwCost, true);
 
-                return `<button class="btn btn-sm border border-gray-600 hover:border-red-500 w-full text-left px-4 py-3 bg-gray-800 flex justify-between items-center mb-2" data-idx="${idx}">
+                return `<button class="btn btn-sm border hover:border-red-500 w-full text-left px-4 py-3 bg-gray-900/80 flex justify-between items-center mb-3" style="border-color: ${pColor}80; box-shadow: inset 0 0 10px rgba(0,0,0,0.5);" data-idx="${idx}">
                             <div class="flex flex-col overflow-hidden">
-                                <span class="font-bold" style="color: ${pColor}">${uName}</span>
-                                <div class="marquee-container text-xs text-gray-400 mt-1">
+                                <span class="font-bold text-[1.1rem]" style="color: ${pColor}; text-shadow: 0 0 8px ${pColor};">${uName}</span>
+                                <div class="marquee-container text-[0.85rem] text-gray-300 mt-1">
                                     <span class="marquee-content">${statText}</span>
                                 </div>
                             </div>
                             <div class="text-right flex-shrink-0 ml-4">
-                                <span class="text-xs text-gray-500 block">Value</span>
-                                <span class="font-mono font-bold text-cyan-300 text-glow-cyan text-sm">${valText}</span>
+                                <span class="text-[0.8rem] text-gray-400 block">Value</span>
+                                <span class="font-mono font-bold text-cyan-300 text-[1rem]" style="text-shadow: 0 0 5px rgba(103, 232, 249, 0.5);">${valText}</span>
                             </div>
                         </button>`;
             }).join('');
 
             contentEl.innerHTML = `
-                <p class="mb-4 text-orange-400">Ship systems are at maximum capacity (3/3).</p>
-                <p class="mb-4 text-sm text-gray-300">Select an existing upgrade to dismantle and replace with <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>:</p>
-                <div class="flex flex-col w-full max-w-sm mx-auto">
+                <p class="mb-5 text-orange-400 font-bold" style="font-size: 1.1em; text-shadow: 0 0 8px rgba(251, 146, 60, 0.6);">Ship systems are at maximum capacity (3/3).</p>
+                <p class="mb-4 text-gray-200">Select an existing upgrade to dismantle and replace with <span class="font-bold" style="color: ${nameColor}; text-shadow: 0 0 8px ${nameColor};">${upgradeDef.name}</span>:</p>
+                <div class="flex flex-col w-full max-w-md mx-auto">
                     ${upgradesList}
                 </div>
             `;
             
-            btnContainer.className = "flex flex-col w-full mt-4";
+            btnContainer.className = "flex flex-col w-full mt-5 gap-3";
             if (source === 'mission') {
-                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400">Reject</button>`;
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Reject</button>`;
                 const cancelBtn = modal.querySelector('#cancel-replace-btn');
                 cancelBtn.onclick = () => {
                     if (cancelBtn.dataset.phase === '1') {
+                        clearThemeFromModal();
                         closeHandler();
                         if (onReject) onReject();
                     } else {
                         cancelBtn.dataset.phase = '1';
                         cancelBtn.textContent = 'Confirm Reject?';
-                        cancelBtn.classList.remove('border-gray-600', 'text-gray-400');
-                        cancelBtn.classList.add('border-white', 'text-white', 'bg-red-900/40');
+                        cancelBtn.classList.remove('border-gray-500', 'text-gray-300');
+                        cancelBtn.classList.add('border-red-400', 'text-white', 'bg-red-900/60');
                     }
                 };
             } else {
-                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Cancel</button>`;
+                btnContainer.innerHTML = `<button id="cancel-replace-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Cancel</button>`;
                 modal.querySelector('#cancel-replace-btn').onclick = () => {
+                    clearThemeFromModal();
                     closeHandler();
                 };
             }
@@ -26666,34 +26741,36 @@ export class UIHangarControl {
 
         const renderInitialModal = () => {
             let title = source === 'shop' ? "Install Upgrade" : "Reward Available";
-            let desc = `<p class="mb-2">Install <span class="font-bold" style="color: ${nameColor}">${upgradeDef.name}</span>?</p>`;
+            let desc = `<p class="mb-4">Install <span class="font-bold text-[1.1em]" style="color: ${nameColor}; text-shadow: 0 0 8px ${nameColor};">${upgradeDef.name}</span>?</p>`;
             
             if (source === 'shop' && totalCost > 0) {
-                desc += `<p class="text-base text-gray-400">Total Cost: <span class="credits-text-pulsing">${formatCredits(totalCost, true)}</span></p>`;
+                desc += `<p class="text-[1.1em] text-gray-200 mb-1 font-semibold">Total Cost: <span class="credits-text-pulsing font-mono text-cyan-300 ml-2" style="text-shadow: 0 0 8px rgba(103, 232, 249, 0.8);">${formatCredits(totalCost, true)}</span></p>`;
                 if (installationFee > 0) {
-                    desc += `<p class="text-xs text-gray-500 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
+                    desc += `<p class="text-[0.85em] text-gray-400 font-mono">Installation Fee: ${formatCredits(installationFee)}</p>`;
                 }
             }
             
-            desc += `<p class="mt-4 italic text-sm text-gray-500">${upgradeDef.description}</p>`;
+            desc += `<p class="mt-5 italic text-[0.9em] text-gray-300 leading-relaxed">${upgradeDef.description}</p>`;
 
             this.manager.queueModal('event-modal', title, desc, null, {
                 dismissOutside: false, 
                 customSetup: (modal, closeHandler) => {
+                    applyThemeToModal(modal);
+
                     const btnContainer = modal.querySelector('#event-button-container');
-                    btnContainer.className = "flex flex-col w-full mt-4";
+                    btnContainer.className = "flex flex-col w-full mt-5 gap-3";
                     
                     let confirmBtnHtml = '';
                     if (source === 'shop') {
                         const canAfford = this.manager.lastKnownState.player.credits >= totalCost;
                         confirmBtnHtml = `
-                            <button id="confirm-install-btn" class="btn w-full btn-pulse-cyan text-cyan-300 font-bold mb-2" ${!canAfford ? 'disabled' : ''}>
-                                Purchase [${formatCredits(totalCost, true)}]
+                            <button id="confirm-install-btn" class="btn w-full font-bold text-[1.2rem] py-3 tracking-widest uppercase transition-all" style="background-color: ${darkColor}; border-color: ${nameColor}; color: #fff; box-shadow: 0 0 15px ${darkColor};" ${!canAfford ? 'disabled' : ''}>
+                                Purchase
                             </button>
                         `;
                     } else {
                         confirmBtnHtml = `
-                            <button id="confirm-install-btn" class="btn w-full btn-pulse-green text-green-400 font-bold mb-2">
+                            <button id="confirm-install-btn" class="btn w-full font-bold text-[1.2rem] py-3 tracking-widest uppercase transition-all" style="background-color: ${darkColor}; border-color: ${nameColor}; color: #fff; box-shadow: 0 0 15px ${darkColor};">
                                 Accept Upgrade
                             </button>
                         `;
@@ -26701,10 +26778,15 @@ export class UIHangarControl {
 
                     btnContainer.innerHTML = `
                         ${confirmBtnHtml}
-                        <button id="cancel-install-btn" class="btn w-full border-gray-600 text-gray-400 hover:text-white">Reject</button>
+                        <button id="cancel-install-btn" class="btn w-full border-gray-500 text-gray-300 hover:text-white text-[1.1rem] py-2">Reject</button>
                     `;
 
                     const confirmBtn = modal.querySelector('#confirm-install-btn');
+                    if (confirmBtn && !confirmBtn.disabled) {
+                        confirmBtn.addEventListener('mouseenter', () => confirmBtn.style.backgroundColor = btnHoverColor);
+                        confirmBtn.addEventListener('mouseleave', () => confirmBtn.style.backgroundColor = darkColor);
+                    }
+
                     confirmBtn.onclick = () => {
                         if (isFull) {
                             renderReplacementUI(closeHandler);
@@ -26715,6 +26797,7 @@ export class UIHangarControl {
                     };
 
                     modal.querySelector('#cancel-install-btn').onclick = () => {
+                        clearThemeFromModal();
                         closeHandler();
                         if (onReject) onReject();
                     };
@@ -26732,28 +26815,37 @@ export class UIHangarControl {
      * @returns {Promise<void>} Resolves when the animation completes.
      */
     async runShipTransactionAnimation(shipId, animationClass = 'is-dematerializing') {
-        const elementToAnimate = this._getActiveShipTerminalElement();
-        if (!elementToAnimate) return; 
+        const elementToAnimate = this._getActiveShipTerminalElement(shipId);
+        if (!elementToAnimate) {
+            if (this.manager.logger) this.manager.logger.warn('UIHangarControl', `Target element for ship transaction animation missing. ID: ${shipId}`);
+            return; 
+        } 
         await playBlockingAnimation(elementToAnimate, animationClass);
     }
     
     /**
-     * Locates the active ship terminal DOM element within the current carousel view.
+     * Locates the active ship terminal DOM element explicitly by shipId to prevent UI masking race conditions.
+     * Checks open modals before falling back to the background carousel wrapper.
+     * @param {string} shipId
      * @returns {HTMLElement|null} The terminal element, or null if not found.
      * @private
      */
-    _getActiveShipTerminalElement() {
-        const state = this.manager.lastKnownState; 
-        if (!state) return null;
-        const hangarScreenEl = this.manager.cache.hangarScreen;
+    _getActiveShipTerminalElement(shipId) {
+        // First check if the ship detail modal is active and showing this ship
+        const detailModal = this.manager.cache?.shipDetailModal;
+        if (detailModal && !detailModal.classList.contains('hidden')) {
+            // If the detail modal is open, animate its card
+            const actionBtn = detailModal.querySelector(`[data-action="${ACTION_IDS.BUY_SHIP}"][data-ship-id="${shipId}"], [data-action="${ACTION_IDS.SELL_SHIP}"][data-ship-id="${shipId}"]`);
+            if (actionBtn) {
+                return detailModal.querySelector('.ship-card');
+            }
+        }
+
+        // Otherwise find it directly via data-attribute in the carousel DOM
+        const hangarScreenEl = this.manager.cache?.hangarScreen;
         if (!hangarScreenEl) return null;
-        const carousel = hangarScreenEl.querySelector('#hangar-carousel');
-        if (!carousel) return null;
-        const isHangarMode = state.uiState.hangarShipyardToggleState === 'hangar';
-        const activeIndex = isHangarMode ? (state.uiState.hangarActiveIndex || 0) : (state.uiState.shipyardActiveIndex || 0);
-        const pages = carousel.querySelectorAll('.carousel-page');
-        const activePage = pages[activeIndex];
-        return activePage ? activePage.querySelector('#ship-terminal') : null;
+        const targetPage = hangarScreenEl.querySelector(`.carousel-page[data-ship-id="${shipId}"]`);
+        return targetPage ? targetPage.querySelector('#ship-terminal') : null;
     }
 
     /**
@@ -47442,10 +47534,18 @@ export class ActionClickHandler {
                 setTimeout(() => {
                     const wrapper = pill.closest('.ach-pill-wrapper');
                     if (wrapper) {
+                        // Convert auto height to explicit px height to enable smooth CSS transition
+                        const currentHeight = wrapper.offsetHeight;
+                        wrapper.style.height = currentHeight + 'px';
+                        
+                        // Force reflow
+                        void wrapper.offsetHeight;
+                        
+                        // Apply transition and collapse
+                        wrapper.style.transition = 'height 1s ease, margin 1s ease, opacity 1s ease';
                         wrapper.style.height = '0px';
                         wrapper.style.margin = '0px';
                         wrapper.style.opacity = '0';
-                        wrapper.style.transition = 'height 1s ease, margin 1s ease, opacity 1s ease';
                     }
 
                     setTimeout(() => {
@@ -47456,7 +47556,9 @@ export class ActionClickHandler {
                         
                         // Hard render to redraw lists and place solid-gold pill at the bottom
                         if (this.uiManager.achievementControl) {
+                            this.uiManager.achievementControl._lastClaimedId = achId;
                             this.uiManager.achievementControl.render(this.gameState.getState());
+                            this.uiManager.achievementControl._lastClaimedId = null; // Reset
                         }
                     }, 1000);
                 }, 3000);
@@ -47946,9 +48048,14 @@ export class ActionClickHandler {
                     return;
                 }
                 
-                const contextId = this.uiManager.getCurrentHelpContextId(state);
-                if (contextId) {
-                    this.uiManager.showHelpModal(contextId);
+                // PHASE 4 FIX: Toggle logic for the help modal
+                if (this.uiManager.helpManager && this.uiManager.helpManager.isVisible) {
+                    this.uiManager.hideHelpModal();
+                } else {
+                    const contextId = this.uiManager.getCurrentHelpContextId(state);
+                    if (contextId) {
+                        this.uiManager.showHelpModal(contextId);
+                    }
                 }
                 break;
             }
@@ -48914,6 +49021,25 @@ export class AchievementService {
             player: this.gameState.player,
             achievements: this.gameState.achievements 
         });
+    }
+
+    /**
+     * JIT Synchronization for passive variables (like wealth bounds) that aren't strictly event-driven.
+     */
+    syncPassiveMetrics() {
+        if (!this.gameState || !this.gameState.achievements) return;
+        
+        const currentCredits = this.gameState.player.credits || 0;
+        
+        const peakTycoon = this.gameState.achievements.metrics['peakCredits_Tycoon'] || 0;
+        if (currentCredits > peakTycoon) {
+            this.increment('peakCredits_Tycoon', currentCredits, true);
+        }
+        
+        const peakBillion = this.gameState.achievements.metrics['peakCredits_Billion'] || 0;
+        if (currentCredits > peakBillion) {
+            this.increment('peakCredits_Billion', currentCredits, true);
+        }
     }
 
     /**
