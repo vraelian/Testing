@@ -212,6 +212,7 @@
              </div>
         </div>
     </main>
+    
     <div id="mission-sticky-bar" class="bottom-sticky-bar cursor-pointer" data-action="set-screen" data-nav-id="data" data-screen-id="missions">
         <div class="sticky-content">
             <p id="sticky-objective-text"></p>
@@ -1884,50 +1885,51 @@
 .bottom-sticky-bar {
     display: none;
     position: fixed;
-    bottom: 2rem; /* Elevated by 20% to afford corner buttons clearance */
+    bottom: 2rem; 
     left: 50%;
     transform: translateX(-50%);
-    width: 100%;
-    max-width: 1200px;
-    padding: 0 4rem; /* Lateral layout padding */
-    pointer-events: none; /* Let clicks pass through the transparent layout padding */
+    /* The clickable area strictly constrained to the center 55% */
+    width: 55%; 
+    max-width: 600px;
+    /* Removed padding so the geometric bounding box does not block lateral UI buttons */
+    pointer-events: auto !important; 
     z-index: 50;
 }
+
 .sticky-content {
-    pointer-events: none; /* Let clicks pass through the visual frame */
-    position: relative; /* Required for absolute positioning of hitbox */
+    pointer-events: none !important; /* Visual overhang passes clicks through to the buttons below */
+    
+    /* Restore exact visual width by overflowing the parent */
+    width: calc(100vw - 8rem);
+    max-width: calc(1200px - 8rem);
+    
+    /* Magic centering trick for oversized child elements */
+    margin-left: 50%;
+    transform: translateX(-50%);
+
     background-color: rgba(12, 16, 29, 0.8);
     background-image: linear-gradient(rgba(12, 16, 29, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(12, 16, 29, 0.2) 1px, transparent 1px);
     background-size: 15px 15px;
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
     border-radius: 8px;
-    padding: 0.45rem 1rem; /* Marginally thinner base padding */
+    padding: 0.45rem 1rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     font-size: 0.85rem;
-    transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
-}
-
-/* Centralized Touch Target / Hitbox */
-.sticky-content::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    left: 12.5%; /* Shrink actionable width by 25% total (12.5% each side) */
-    right: 12.5%;
-    pointer-events: auto; /* Reactivate touches strictly in the center */
-    cursor: pointer;
-    z-index: 10; /* Ensure hitbox intercepts clicks above the text */
+    /* Removed transform from transition because transform is now handling structural layout */
+    transition: box-shadow 0.2s ease-out; 
 }
 
 .bottom-sticky-bar p {
+    pointer-events: none !important; /* Prevent text from independently stealing clicks */
     text-shadow: -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000;
 }
+
 .bottom-sticky-bar:hover .sticky-content {
-    transform: translateY(-3px);
+    /* Combined transform preserves the centering trick while adding the hover lift */
+    transform: translateX(-50%) translateY(-3px);
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
@@ -2070,7 +2072,7 @@
     justify-content: center;
     align-items: center;
     font-size: 1.6rem; /* Base fallback for emojis */
-    z-index: 50;
+    z-index: 800; /* Boosted to massively overpower any overlapping wrapper structures */
     opacity: 0.5;
     transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
@@ -50161,6 +50163,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [38.10] - 2026-5-1
+-  bug fixes
+-  UI polish
 
 # [38.10] - 2026-4-30
 -  UI polish
