@@ -219,6 +219,32 @@ HTML
     <div class="act-subtitle-text">{Chapter Title}</div>
 </div>
 
+2.23 Achievement Card (.achievement-card)
+Used in the Achievement tracking interface to display progression, milestones, and rewards. Features distinct visual states for Locked, Completable, and Redeemed. Utilizes abbreviated numbers for extremely high value targets to maintain mobile layout integrity.
+HTML
+<div class="achievement-card card-textured completable" data-id="{id}">
+    <div class="ach-header">
+        <h4>{Title}</h4>
+        <span class="ach-reward">{Reward Amount}</span>
+    </div>
+    <div class="ach-progress-row">
+        <span class="ach-current">{Abbreviated Current}</span> / <span class="ach-target">{Abbreviated Target}</span>
+    </div>
+    <button type="button" class="btn btn-claim" data-action="claim-achievement" data-id="{id}">CLAIM</button>
+</div>
+
+2.24 Categorized Tabbed Columns (.achievement-tabs-nav)
+A specific tab implementation designed for the achievement modal. Replaces horizontal scrolling lists with distinct category views (e.g., Finance, Exploration, Logistics) to optimize cognitive load and UI rendering speeds.
+
+2.25 Achievement Dismiss Button (.modal-dismiss-btn)
+A high-priority `<button>` element injected strictly into the footer or header of the achievement modal, engineered specifically to ensure safe z-index resolution and event capturing, guaranteeing the player can exit the dense UI loop without route collision.
+
+2.26 Abbreviated Data Values
+A UI utility constraint specifically enforced on the Achievement system. Any quantity over 999 must be parsed into an abbreviated string (e.g., 1.2k, 1M, 2.5B) prior to DOM insertion to prevent text-overflow and grid misalignment on narrow mobile viewports.
+
+2.27 Achievement Redemption Animations (.ach-redemption-fx)
+A sequence managed by the Web Animations API (or CSS transitions) triggered exclusively upon clicking 'CLAIM'. This visually confirms the state mutation (granting the reward) by dissolving or illuminating the card before locking its visual state to 'Redeemed'.
+
 3. CSS Utilities
 .hidden: display: none !important. Used for toggling visibility.
 .text-center: text-align: center.

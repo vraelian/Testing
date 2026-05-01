@@ -695,3 +695,28 @@ graph TD
         G --> H[Destroy overlay DOM nodes];
         H --> I[Restore standard UI render sequence];
     end
+2.29 Achievement Evaluation & Redemption Loop
+Flow for separating passive progression tracking from explicit active reward collection.
+
+Code snippet
+graph TD
+    subgraph Passive Evaluation
+        A[GameState Mutates] --> B[AchievementService.evaluateTriggers];
+        B --> C{Condition Met?};
+        C -- Yes --> D[Set isCompletable=true];
+        D --> E[Trigger UI Notification Badge];
+    end
+
+    subgraph UI Interaction
+        E --> F[Player Opens Achievements Modal];
+        F --> G[UIAchievementControl renders Categorized Columns];
+        G --> H[Player Clicks 'Claim' on completed card];
+    end
+
+    subgraph Redemption Loop
+        H --> I[UIAchievementControl.playRedemptionAnimation];
+        I -- Await Animation --> J[AchievementService.redeemAchievement];
+        J --> K[Grant Rewards & Set isRedeemed=true];
+        K --> L((Update GameState));
+        L --> M[Refresh UI];
+    end

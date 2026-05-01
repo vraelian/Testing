@@ -14,7 +14,7 @@ Dependencies: None (Leaf node).
 SimulationService (F011) [FACADE]
 Responsibility: The core game engine Facade. Instantiates and coordinates all specialized services.
 Key Behavior: Receives calls from the EventManager and delegates them to the appropriate domain service. Orchestrates multi-step flows like ship purchasing.
-Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService, BankruptcyService, SystemStateService.
+Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService, BankruptcyService, SystemStateService, AchievementService.
 
 IntroService (F033)
 Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
@@ -72,6 +72,11 @@ Responsibility: Manages procedural Economic Weather and systemic states across t
 Key Behavior: Rolls conditions weekly that apply temporary, global modifiers to baseline market math and event generation.
 Dependencies: GameState, TimeService, Logger.
 
+AchievementService (F113)
+Responsibility: Manages the logic for evaluating triggers, tracking progression, and granting rewards upon achievement redemption.
+Key Behavior: Passively evaluates state changes against the `achievementRegistry` requirements, managing progression bounds and preventing duplicate claims.
+Dependencies: GameState, Logger.
+
 3. Event System Services (Event 2.0 & Story Events)
 RandomEventService
 Responsibility: The high-level coordinator for the procedural random event system. Determines if an event occurs and which event is selected based on contextual weight and active System States.
@@ -99,8 +104,8 @@ Dependencies: GameState, SimulationService, DynamicValueResolver.
 
 4. UI & Presentation Services
 UIManager (F017) [FACADE]
-Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`). Responsible for the main render loop and proxying logic to delegates.
-Dependencies: Logger, EffectsManager, TravelAnimationService, UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
+Responsibility: The master "Switchboard". Instantiates and coordinates the 8 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`, `UIAchievementControl`). Responsible for the main render loop and proxying logic to delegates.
+Dependencies: Logger, EffectsManager, TravelAnimationService, UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager, UIAchievementControl.
 
 Controllers (Delegates):
 * UIModalEngine: Manages the modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads to restructure modal headers and inject CSS sprite portraits via the global `PortraitRegistry`.
@@ -111,6 +116,7 @@ Controllers (Delegates):
 * UIHangarControl: Manages Hangar carousels, ship card tooltips (including Ship Status Effects), and the Upgrade Installation flow.
 * UIEventControl: "World" interactions (Maps, Lore, Procedural Events, Story Events, Act Screen intermissions, EULA, Launch Modals).
 * UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
+* UIAchievementControl: Manages the categorized achievement tracking interface, data abbreviation for large volumes, and redemption animations.
 
 IntelMarketRenderer (F058)
 Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content.

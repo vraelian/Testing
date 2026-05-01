@@ -1,7 +1,7 @@
 // meta/STATE_SCHEMA.md
 
 # Orbital Trading: State Schema Definition
-Last Edit: 4/25/26, ver. [40.00]
+Last Edit: 4/30/26, ver. [40.00]
 
 ## 1. Root State Object
 
@@ -25,6 +25,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `tutorials` | Object | **(See Section 6)** State regarding the Contextual Help Modal system. |
 | `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
 | `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
+| `achievements` | Object | **(See Section 11)** State regarding progression, unlocks, and redemption of achievements. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
 | `telemetry` | Object | Debug/Analytics data tracking macro-economic trends and bot logs. |
 
@@ -224,3 +225,20 @@ Manages procedural Economic Weather modifiers impacting global behavior.
 | `activeWeatherId` | String | ID of the currently active macroeconomic modifier. |
 | `expirationDay` | Number | The game day the current weather naturally ends. |
 | `weatherModifiers` | Object | Current active stat weights affecting global pricing, event rates, and availability. |
+
+---
+
+## 11. Achievement State (`state.achievements`)
+
+Manages progression tracking, unlock statuses, and reward redemption for the Achievement System.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `unlockedIds` | Array<String> | List of achievement IDs that have been fully unlocked and redeemed. |
+| `progress` | Object | Map of `achievementId` -> `{ current, isCompletable, isRedeemed }`. |
+
+**AchievementProgress Structure:**
+
+* `current`: Current numerical progress towards the achievement's specific target.
+* `isCompletable`: Boolean flag indicating if the target has been met and the reward is ready for redemption.
+* `isRedeemed`: Boolean flag indicating if the player has actively claimed the reward, preventing duplicate grants.

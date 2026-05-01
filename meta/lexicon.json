@@ -1,5 +1,3 @@
-
-
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -19,7 +17,8 @@
       "system_states",
       "synthesis_pipeline",
       "story_events",
-      "ship_status_effects"
+      "ship_status_effects",
+      "achievement_system"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
@@ -80,7 +79,10 @@
     "Game_Menu": "The top-level application pause menu allowing players explicit control over system operations, manual persistence, and session termination.",
     "Manual_Save": "A user-driven state serialization commit that exists independently of the background, event-driven auto-save architecture, facilitating strict progression control.",
     "Texture_Pre-hydration": "The performance-critical boot sequence process of reading large UI texture blobs into memory and injecting them as CSS variables prior to the first render pass, preventing stutter.",
-    "Officer_Recruitment_Pipeline": "The mechanical bridge connecting static lore/stat profiles in the registry to the player's persistent active `officerRoster` through a transactional interface."
+    "Officer_Recruitment_Pipeline": "The mechanical bridge connecting static lore/stat profiles in the registry to the player's persistent active `officerRoster` through a transactional interface.",
+    "Achievement_System": "A comprehensive system tracking player milestones across categorized tabbed columns, utilizing explicit redemption loops and abbreviated numbers for quantities over 999.",
+    "Categorized_Tabbed_Columns": "The UI layout paradigm used for achievements to organize goals by domain (e.g., Finance, Exploration, Logistics) while maintaining mobile legibility.",
+    "Redemption_Animations": "Visual sequences executed when a player actively claims an achievement reward, bridging the gap between passive progression and active state mutation."
   },
   "service_summaries": {
     "SolStationService": {
@@ -334,7 +336,11 @@
     },
     "RandomEventService": {
       "description": "The high-level coordinator for Event System 2.0. Determines if an event occurs and selects one using the registry facade.",
-      "dependencies": ["GameState", "ConditionEvaluator", "js/data/events.js"],
+      "dependencies": [
+        "GameState",
+        "ConditionEvaluator",
+        "js/data/events.js"
+      ],
       "key_functions": {
         "tryTriggerEvent": "Evaluates context tags and conditions to select a valid event.",
         "resolveChoice": "Processes the player's decision via OutcomeResolver."
@@ -343,7 +349,9 @@
     },
     "ConditionEvaluator": {
       "description": "Stateless utility for Event System 2.0. Validates `requirements` arrays against GameState.",
-      "dependencies": ["GameState"],
+      "dependencies": [
+        "GameState"
+      ],
       "key_functions": {
         "checkAll": "Returns true if all conditions in a list are met."
       },
@@ -351,7 +359,9 @@
     },
     "OutcomeResolver": {
       "description": "Stateless utility for Event System 2.0. Determines the result of a choice (Deterministic vs. Weighted RNG).",
-      "dependencies": ["GameState"],
+      "dependencies": [
+        "GameState"
+      ],
       "key_functions": {
         "resolve": "Returns a specific outcome ID based on the resolution strategy."
       },
@@ -359,7 +369,10 @@
     },
     "DynamicValueResolver": {
       "description": "Stateless utility for Event System 2.0. Converts abstract value definitions (e.g., scaleWith: 'MAX_FUEL') into concrete integers.",
-      "dependencies": ["GameState", "DB"],
+      "dependencies": [
+        "GameState",
+        "DB"
+      ],
       "key_functions": {
         "resolve": "Calculates the final numeric value for an effect."
       },
@@ -400,6 +413,23 @@
       },
       "mutates_state": []
     },
+    "AchievementService": {
+      "description": "Manages the logic for evaluating triggers, tracking progression, and granting rewards upon achievement redemption.",
+      "dependencies": [
+        "GameState",
+        "Logger"
+      ],
+      "key_functions": {
+        "evaluateTriggers": "Passively checks state variables against achievement requirements.",
+        "redeemAchievement": "Mutates state to grant rewards and locks the claim flag."
+      },
+      "mutates_state": [
+        "achievements.unlockedIds",
+        "achievements.progress",
+        "player.credits",
+        "player.serviceTokens"
+      ]
+    },
     "UIManager": {
       "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`). Responsible for the main render loop and proxying logic to delegates.",
       "dependencies": [
@@ -413,7 +443,8 @@
         "UIHangarControl",
         "UIEventControl",
         "UISolStationControl",
-        "UIToastManager"
+        "UIToastManager",
+        "UIAchievementControl"
       ],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
@@ -427,7 +458,9 @@
     },
     "UIModalEngine": {
       "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "queueModal": "Adds a modal to the queue.",
         "processModalQueue": "Displays the next modal.",
@@ -436,7 +469,9 @@
     },
     "UIHelpManager": {
       "description": "Domain Controller responsible for the Contextual Help Modal system. Manages dynamic DOM injection, fixed-aspect ratio modal presentation, and horizontal micro-pagination swipe logic.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showModal": "Builds slide DOM elements and translates to the active slide.",
         "hideModal": "Dismisses the modal back to the hidden state.",
@@ -446,7 +481,9 @@
     },
     "UIToastManager": {
       "description": "Domain Controller responsible for the Universal Toast System DOM injection, CSS class application, and animation timing.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showToast": "Injects toast DOM and triggers slide-up animation.",
         "hideToast": "Triggers slide-down animation and removes DOM element.",
@@ -455,7 +492,9 @@
     },
     "UIMarketControl": {
       "description": "Domain Controller responsible for the Market screen. Manages high-frequency rendering, input state retention, and SVG graph generation.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "updateMarketScreen": "Renders the market list.",
         "renderPriceGraph": "Generates SVG for price history and player footprint indicators.",
@@ -464,7 +503,9 @@
     },
     "UIMissionControl": {
       "description": "Domain Controller responsible for the Data tab (Missions & Intel). Manages the sticky bar HUD and Intel Broker interactions.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "renderStickyBar": "Updates the mission HUD.",
         "handleBuyIntel": "Processes intel purchases."
@@ -472,7 +513,9 @@
     },
     "UIHangarControl": {
       "description": "Domain Controller responsible for Ship assets. Manages the Hangar/Shipyard carousel, pagination, and the Upgrade Installation flow.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "updateHangarScreen": "Updates carousel position and lazy loading.",
         "showUpgradeInstallationModal": "Manages the triple-confirmation flow for upgrades."
@@ -480,7 +523,9 @@
     },
     "UIEventControl": {
       "description": "Domain Controller responsible for 'World' interactions. Handles Random Events, Map Details, Lore, and Launch modals. Orchestrates full-screen Act intermissions.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showRandomEventModal": "Renders an event choice.",
         "showMapDetailModal": "Shows location details.",
@@ -489,11 +534,23 @@
     },
     "UISolStationControl": {
       "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, Officer Directorate UI, and Engineering Interface.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showDashboard": "Builds and displays the main Sol Station Dashboard modal.",
         "update": "Surgically updates the values in the existing dashboard without re-rendering.",
         "showOfficerRoster": "Renders the Officer Roster IN-PLACE (Sub-view)."
+      }
+    },
+    "UIAchievementControl": {
+      "description": "Domain Controller responsible for managing the achievement modal, categorized tabbed columns, and redemption interactions. Implements a working dismiss button and data abbreviation.",
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
+      "key_functions": {
+        "showModal": "Renders the categorized achievement tracking interface.",
+        "playRedemptionAnimation": "Executes the visual feedback loop upon reward claim."
       }
     },
     "AssetStorageService": {
@@ -1208,6 +1265,22 @@
     "F110": {
       "path": "./js/data/solProgressionRegistry.js",
       "role": "DATA_DEFINITION"
+    },
+    "F111": {
+      "path": "./js/data/achievementRegistry.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F112": {
+      "path": "./css/achievements.css",
+      "role": "STYLESHEET"
+    },
+    "F113": {
+      "path": "./js/services/AchievementService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F114": {
+      "path": "./js/services/ui/UIAchievementControl.js",
+      "role": "UI_CONTROLLER"
     }
   }
 }

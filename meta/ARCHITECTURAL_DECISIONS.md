@@ -143,7 +143,7 @@ Tool Borrowing: Temporarily moves obfuscation tools (build.js, package.json, etc
 Build Execution: Runs npm run build to generate the obfuscated dist folder.
 Sibling Deployment: Uses cp -R to overwrite the contents of the local sibling OrbitalTrading repository with the new dist files (preserving Xcode configuration files).
 Git Automation: Automatically stages, commits, and pushes the changes in the OrbitalTrading repo to GitHub.
-Cleanup: Moves the build tools and the generated dist folder back to their storage directory, restoring the source workspace to its clean state.
+Cleanup: Moves the build tools and the generated dist folder back to their storage directory, restoring the source workspace to clean state.
 
 Consequences:
 Pro: Bypasses GitHub web interface limits entirely, allowing for unlimited asset expansion.
@@ -658,3 +658,20 @@ Decision: Implemented full-screen cinematic intermission overlays managed via th
 Consequences:
 Pro: Vastly improves the narrative weight of major story transitions.
 Pro: Fully decouples cinematic blocking from the standard UI render loop.
+
+ADR-050: Achievement System V1 Architecture & Redemption Loop
+Status: Accepted (2026-04-30)
+
+Context: A systemic method was required for long-term progression milestones (e.g., amassing total wealth, completing specific event chains) without cluttering the primary UI or passively granting rewards in a way that players might miss. Furthermore, mobile viewport constraints made the display of astronomically large tracking numbers (e.g., "1,500,000") problematic within card layouts.
+
+Decision: Implemented the V1 Achievement System featuring a decoupled evaluation and explicit redemption loop.
+* Passive Evaluation: `AchievementService` passively checks the `GameState` and marks achievements as `isCompletable` without mutating immediate credit/token balances.
+* Explicit Redemption: Players must actively navigate to the modal and click 'CLAIM', triggering a `playRedemptionAnimation` before the state formally logs the reward and toggles `isRedeemed`.
+* Categorized Tabbed Columns: The UI was engineered with domain-specific tabs (e.g., Finance, Logistics, Exploration) to organize high volumes of milestones visually.
+* Abbreviated Number Utility: A mandatory visual constraint formatting tracked integers over 999 into abbreviated string outputs (e.g., 1k, 1M) exclusively for the DOM layer, preserving strict grid alignment on mobile targets.
+
+Consequences:
+* Pro: Maintains a clean UI via tabbed separation.
+* Pro: Guarantees player agency and explicit awareness of progression rewards via the redemption loop.
+* Pro: Abbreviated numbers completely prevent flexbox/grid ruptures on mobile viewports.
+* Con: Requires distinct state tracking for `isCompletable` versus `isRedeemed`.
