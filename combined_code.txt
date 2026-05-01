@@ -14846,7 +14846,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.06';
+export const APP_VERSION = '38.10';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -50148,6 +50148,13 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [38.10] - 2026-4-30
+-  UI polish
+-  event performance improvement
+-  added Achievements V1
+-  tuning screen polish
+-  updated meta files
+
 # [38.06] - 2026-4-27
 -  fixed station quirk logic
 -  added scroll placement recall to map and navigation
@@ -51887,6 +51894,32 @@ HTML
     <div class="act-subtitle-text">{Chapter Title}</div>
 </div>
 
+2.23 Achievement Card (.achievement-card)
+Used in the Achievement tracking interface to display progression, milestones, and rewards. Features distinct visual states for Locked, Completable, and Redeemed. Utilizes abbreviated numbers for extremely high value targets to maintain mobile layout integrity.
+HTML
+<div class="achievement-card card-textured completable" data-id="{id}">
+    <div class="ach-header">
+        <h4>{Title}</h4>
+        <span class="ach-reward">{Reward Amount}</span>
+    </div>
+    <div class="ach-progress-row">
+        <span class="ach-current">{Abbreviated Current}</span> / <span class="ach-target">{Abbreviated Target}</span>
+    </div>
+    <button type="button" class="btn btn-claim" data-action="claim-achievement" data-id="{id}">CLAIM</button>
+</div>
+
+2.24 Categorized Tabbed Columns (.achievement-tabs-nav)
+A specific tab implementation designed for the achievement modal. Replaces horizontal scrolling lists with distinct category views (e.g., Finance, Exploration, Logistics) to optimize cognitive load and UI rendering speeds.
+
+2.25 Achievement Dismiss Button (.modal-dismiss-btn)
+A high-priority `<button>` element injected strictly into the footer or header of the achievement modal, engineered specifically to ensure safe z-index resolution and event capturing, guaranteeing the player can exit the dense UI loop without route collision.
+
+2.26 Abbreviated Data Values
+A UI utility constraint specifically enforced on the Achievement system. Any quantity over 999 must be parsed into an abbreviated string (e.g., 1.2k, 1M, 2.5B) prior to DOM insertion to prevent text-overflow and grid misalignment on narrow mobile viewports.
+
+2.27 Achievement Redemption Animations (.ach-redemption-fx)
+A sequence managed by the Web Animations API (or CSS transitions) triggered exclusively upon clicking 'CLAIM'. This visually confirms the state mutation (granting the reward) by dissolving or illuminating the card before locking its visual state to 'Redeemed'.
+
 3. CSS Utilities
 .hidden: display: none !important. Used for toggling visibility.
 .text-center: text-align: center.
@@ -52164,8 +52197,6 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
 --- END OF FILE: ./meta/ECONOMIC_BEHAVIOR.md ---
 
 --- START OF FILE: ./meta/lexicon.json ---
-
-
 {
   "project_info": {
     "project_name": "Orbital Trading",
@@ -52185,7 +52216,8 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
       "system_states",
       "synthesis_pipeline",
       "story_events",
-      "ship_status_effects"
+      "ship_status_effects",
+      "achievement_system"
     ],
     "gameplay_loop": "Player travels between locations -> trades commodities based on market prices -> uses profits to upgrade ship and pay debt -> unlocks new locations/commodities -> repeats."
   },
@@ -52246,7 +52278,10 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     "Game_Menu": "The top-level application pause menu allowing players explicit control over system operations, manual persistence, and session termination.",
     "Manual_Save": "A user-driven state serialization commit that exists independently of the background, event-driven auto-save architecture, facilitating strict progression control.",
     "Texture_Pre-hydration": "The performance-critical boot sequence process of reading large UI texture blobs into memory and injecting them as CSS variables prior to the first render pass, preventing stutter.",
-    "Officer_Recruitment_Pipeline": "The mechanical bridge connecting static lore/stat profiles in the registry to the player's persistent active `officerRoster` through a transactional interface."
+    "Officer_Recruitment_Pipeline": "The mechanical bridge connecting static lore/stat profiles in the registry to the player's persistent active `officerRoster` through a transactional interface.",
+    "Achievement_System": "A comprehensive system tracking player milestones across categorized tabbed columns, utilizing explicit redemption loops and abbreviated numbers for quantities over 999.",
+    "Categorized_Tabbed_Columns": "The UI layout paradigm used for achievements to organize goals by domain (e.g., Finance, Exploration, Logistics) while maintaining mobile legibility.",
+    "Redemption_Animations": "Visual sequences executed when a player actively claims an achievement reward, bridging the gap between passive progression and active state mutation."
   },
   "service_summaries": {
     "SolStationService": {
@@ -52500,7 +52535,11 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "RandomEventService": {
       "description": "The high-level coordinator for Event System 2.0. Determines if an event occurs and selects one using the registry facade.",
-      "dependencies": ["GameState", "ConditionEvaluator", "js/data/events.js"],
+      "dependencies": [
+        "GameState",
+        "ConditionEvaluator",
+        "js/data/events.js"
+      ],
       "key_functions": {
         "tryTriggerEvent": "Evaluates context tags and conditions to select a valid event.",
         "resolveChoice": "Processes the player's decision via OutcomeResolver."
@@ -52509,7 +52548,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "ConditionEvaluator": {
       "description": "Stateless utility for Event System 2.0. Validates `requirements` arrays against GameState.",
-      "dependencies": ["GameState"],
+      "dependencies": [
+        "GameState"
+      ],
       "key_functions": {
         "checkAll": "Returns true if all conditions in a list are met."
       },
@@ -52517,7 +52558,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "OutcomeResolver": {
       "description": "Stateless utility for Event System 2.0. Determines the result of a choice (Deterministic vs. Weighted RNG).",
-      "dependencies": ["GameState"],
+      "dependencies": [
+        "GameState"
+      ],
       "key_functions": {
         "resolve": "Returns a specific outcome ID based on the resolution strategy."
       },
@@ -52525,7 +52568,10 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "DynamicValueResolver": {
       "description": "Stateless utility for Event System 2.0. Converts abstract value definitions (e.g., scaleWith: 'MAX_FUEL') into concrete integers.",
-      "dependencies": ["GameState", "DB"],
+      "dependencies": [
+        "GameState",
+        "DB"
+      ],
       "key_functions": {
         "resolve": "Calculates the final numeric value for an effect."
       },
@@ -52566,6 +52612,23 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
       },
       "mutates_state": []
     },
+    "AchievementService": {
+      "description": "Manages the logic for evaluating triggers, tracking progression, and granting rewards upon achievement redemption.",
+      "dependencies": [
+        "GameState",
+        "Logger"
+      ],
+      "key_functions": {
+        "evaluateTriggers": "Passively checks state variables against achievement requirements.",
+        "redeemAchievement": "Mutates state to grant rewards and locks the claim flag."
+      },
+      "mutates_state": [
+        "achievements.unlockedIds",
+        "achievements.progress",
+        "player.credits",
+        "player.serviceTokens"
+      ]
+    },
     "UIManager": {
       "description": "The master 'Switchboard' Facade. Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`). Responsible for the main render loop and proxying logic to delegates.",
       "dependencies": [
@@ -52579,7 +52642,8 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
         "UIHangarControl",
         "UIEventControl",
         "UISolStationControl",
-        "UIToastManager"
+        "UIToastManager",
+        "UIAchievementControl"
       ],
       "key_functions": {
         "render": "The main function that orchestrates the re-drawing of all UI components.",
@@ -52593,7 +52657,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UIModalEngine": {
       "description": "Domain Controller responsible for the modal lifecycle. Manages the global modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "queueModal": "Adds a modal to the queue.",
         "processModalQueue": "Displays the next modal.",
@@ -52602,7 +52668,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UIHelpManager": {
       "description": "Domain Controller responsible for the Contextual Help Modal system. Manages dynamic DOM injection, fixed-aspect ratio modal presentation, and horizontal micro-pagination swipe logic.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showModal": "Builds slide DOM elements and translates to the active slide.",
         "hideModal": "Dismisses the modal back to the hidden state.",
@@ -52612,7 +52680,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UIToastManager": {
       "description": "Domain Controller responsible for the Universal Toast System DOM injection, CSS class application, and animation timing.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showToast": "Injects toast DOM and triggers slide-up animation.",
         "hideToast": "Triggers slide-down animation and removes DOM element.",
@@ -52621,7 +52691,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UIMarketControl": {
       "description": "Domain Controller responsible for the Market screen. Manages high-frequency rendering, input state retention, and SVG graph generation.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "updateMarketScreen": "Renders the market list.",
         "renderPriceGraph": "Generates SVG for price history and player footprint indicators.",
@@ -52630,7 +52702,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UIMissionControl": {
       "description": "Domain Controller responsible for the Data tab (Missions & Intel). Manages the sticky bar HUD and Intel Broker interactions.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "renderStickyBar": "Updates the mission HUD.",
         "handleBuyIntel": "Processes intel purchases."
@@ -52638,7 +52712,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UIHangarControl": {
       "description": "Domain Controller responsible for Ship assets. Manages the Hangar/Shipyard carousel, pagination, and the Upgrade Installation flow.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "updateHangarScreen": "Updates carousel position and lazy loading.",
         "showUpgradeInstallationModal": "Manages the triple-confirmation flow for upgrades."
@@ -52646,7 +52722,9 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UIEventControl": {
       "description": "Domain Controller responsible for 'World' interactions. Handles Random Events, Map Details, Lore, and Launch modals. Orchestrates full-screen Act intermissions.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showRandomEventModal": "Renders an event choice.",
         "showMapDetailModal": "Shows location details.",
@@ -52655,11 +52733,23 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     },
     "UISolStationControl": {
       "description": "Domain Controller responsible for the Sol Station Dashboard, managing the Mode Lever, Cache Grid, Officer Directorate UI, and Engineering Interface.",
-      "dependencies": ["UIManager (Facade)"],
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
       "key_functions": {
         "showDashboard": "Builds and displays the main Sol Station Dashboard modal.",
         "update": "Surgically updates the values in the existing dashboard without re-rendering.",
         "showOfficerRoster": "Renders the Officer Roster IN-PLACE (Sub-view)."
+      }
+    },
+    "UIAchievementControl": {
+      "description": "Domain Controller responsible for managing the achievement modal, categorized tabbed columns, and redemption interactions. Implements a working dismiss button and data abbreviation.",
+      "dependencies": [
+        "UIManager (Facade)"
+      ],
+      "key_functions": {
+        "showModal": "Renders the categorized achievement tracking interface.",
+        "playRedemptionAnimation": "Executes the visual feedback loop upon reward claim."
       }
     },
     "AssetStorageService": {
@@ -53374,6 +53464,22 @@ The economy can be permanently or temporarily disrupted by explicit narrative ev
     "F110": {
       "path": "./js/data/solProgressionRegistry.js",
       "role": "DATA_DEFINITION"
+    },
+    "F111": {
+      "path": "./js/data/achievementRegistry.js",
+      "role": "DATA_DEFINITION"
+    },
+    "F112": {
+      "path": "./css/achievements.css",
+      "role": "STYLESHEET"
+    },
+    "F113": {
+      "path": "./js/services/AchievementService.js",
+      "role": "LOGIC_SERVICE"
+    },
+    "F114": {
+      "path": "./js/services/ui/UIAchievementControl.js",
+      "role": "UI_CONTROLLER"
     }
   }
 }
@@ -53520,7 +53626,7 @@ Dependencies: None (Leaf node).
 SimulationService (F011) [FACADE]
 Responsibility: The core game engine Facade. Instantiates and coordinates all specialized services.
 Key Behavior: Receives calls from the EventManager and delegates them to the appropriate domain service. Orchestrates multi-step flows like ship purchasing.
-Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService, BankruptcyService, SystemStateService.
+Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelService, IntroService, PlayerActionService, MissionService, NewsTickerService, IntelService, SolStationService, AnimationService, ToastService, BankruptcyService, SystemStateService, AchievementService.
 
 IntroService (F033)
 Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
@@ -53578,6 +53684,11 @@ Responsibility: Manages procedural Economic Weather and systemic states across t
 Key Behavior: Rolls conditions weekly that apply temporary, global modifiers to baseline market math and event generation.
 Dependencies: GameState, TimeService, Logger.
 
+AchievementService (F113)
+Responsibility: Manages the logic for evaluating triggers, tracking progression, and granting rewards upon achievement redemption.
+Key Behavior: Passively evaluates state changes against the `achievementRegistry` requirements, managing progression bounds and preventing duplicate claims.
+Dependencies: GameState, Logger.
+
 3. Event System Services (Event 2.0 & Story Events)
 RandomEventService
 Responsibility: The high-level coordinator for the procedural random event system. Determines if an event occurs and which event is selected based on contextual weight and active System States.
@@ -53605,8 +53716,8 @@ Dependencies: GameState, SimulationService, DynamicValueResolver.
 
 4. UI & Presentation Services
 UIManager (F017) [FACADE]
-Responsibility: The master "Switchboard". Instantiates and coordinates the 7 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`). Responsible for the main render loop and proxying logic to delegates.
-Dependencies: Logger, EffectsManager, TravelAnimationService, UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager.
+Responsibility: The master "Switchboard". Instantiates and coordinates the 8 Domain Controllers (`UIModalEngine`, `UIHelpManager`, `UIMarketControl`, `UIMissionControl`, `UIHangarControl`, `UIEventControl`, `UISolStationControl`, `UIToastManager`, `UIAchievementControl`). Responsible for the main render loop and proxying logic to delegates.
+Dependencies: Logger, EffectsManager, TravelAnimationService, UIModalEngine, UIHelpManager, UIMarketControl, UIMissionControl, UIHangarControl, UIEventControl, UISolStationControl, UIToastManager, UIAchievementControl.
 
 Controllers (Delegates):
 * UIModalEngine: Manages the modal queue, priority processing, and dismissal logic. Dynamically intercepts `options.portraitId` payloads to restructure modal headers and inject CSS sprite portraits via the global `PortraitRegistry`.
@@ -53617,6 +53728,7 @@ Controllers (Delegates):
 * UIHangarControl: Manages Hangar carousels, ship card tooltips (including Ship Status Effects), and the Upgrade Installation flow.
 * UIEventControl: "World" interactions (Maps, Lore, Procedural Events, Story Events, Act Screen intermissions, EULA, Launch Modals).
 * UISolStationControl: Manages the Sol Station Dashboard, operational modes, cache grids, and Engineering Interface.
+* UIAchievementControl: Manages the categorized achievement tracking interface, data abbreviation for large volumes, and redemption animations.
 
 IntelMarketRenderer (F058)
 Responsibility: Dedicated renderer for the dynamic "Intel Market" tab content.
@@ -53795,7 +53907,7 @@ Tool Borrowing: Temporarily moves obfuscation tools (build.js, package.json, etc
 Build Execution: Runs npm run build to generate the obfuscated dist folder.
 Sibling Deployment: Uses cp -R to overwrite the contents of the local sibling OrbitalTrading repository with the new dist files (preserving Xcode configuration files).
 Git Automation: Automatically stages, commits, and pushes the changes in the OrbitalTrading repo to GitHub.
-Cleanup: Moves the build tools and the generated dist folder back to their storage directory, restoring the source workspace to its clean state.
+Cleanup: Moves the build tools and the generated dist folder back to their storage directory, restoring the source workspace to clean state.
 
 Consequences:
 Pro: Bypasses GitHub web interface limits entirely, allowing for unlimited asset expansion.
@@ -54310,6 +54422,23 @@ Decision: Implemented full-screen cinematic intermission overlays managed via th
 Consequences:
 Pro: Vastly improves the narrative weight of major story transitions.
 Pro: Fully decouples cinematic blocking from the standard UI render loop.
+
+ADR-050: Achievement System V1 Architecture & Redemption Loop
+Status: Accepted (2026-04-30)
+
+Context: A systemic method was required for long-term progression milestones (e.g., amassing total wealth, completing specific event chains) without cluttering the primary UI or passively granting rewards in a way that players might miss. Furthermore, mobile viewport constraints made the display of astronomically large tracking numbers (e.g., "1,500,000") problematic within card layouts.
+
+Decision: Implemented the V1 Achievement System featuring a decoupled evaluation and explicit redemption loop.
+* Passive Evaluation: `AchievementService` passively checks the `GameState` and marks achievements as `isCompletable` without mutating immediate credit/token balances.
+* Explicit Redemption: Players must actively navigate to the modal and click 'CLAIM', triggering a `playRedemptionAnimation` before the state formally logs the reward and toggles `isRedeemed`.
+* Categorized Tabbed Columns: The UI was engineered with domain-specific tabs (e.g., Finance, Logistics, Exploration) to organize high volumes of milestones visually.
+* Abbreviated Number Utility: A mandatory visual constraint formatting tracked integers over 999 into abbreviated string outputs (e.g., 1k, 1M) exclusively for the DOM layer, preserving strict grid alignment on mobile targets.
+
+Consequences:
+* Pro: Maintains a clean UI via tabbed separation.
+* Pro: Guarantees player agency and explicit awareness of progression rewards via the redemption loop.
+* Pro: Abbreviated numbers completely prevent flexbox/grid ruptures on mobile viewports.
+* Con: Requires distinct state tracking for `isCompletable` versus `isRedeemed`.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
@@ -55010,14 +55139,38 @@ graph TD
         G --> H[Destroy overlay DOM nodes];
         H --> I[Restore standard UI render sequence];
     end
+2.29 Achievement Evaluation & Redemption Loop
+Flow for separating passive progression tracking from explicit active reward collection.
 
+Code snippet
+graph TD
+    subgraph Passive Evaluation
+        A[GameState Mutates] --> B[AchievementService.evaluateTriggers];
+        B --> C{Condition Met?};
+        C -- Yes --> D[Set isCompletable=true];
+        D --> E[Trigger UI Notification Badge];
+    end
+
+    subgraph UI Interaction
+        E --> F[Player Opens Achievements Modal];
+        F --> G[UIAchievementControl renders Categorized Columns];
+        G --> H[Player Clicks 'Claim' on completed card];
+    end
+
+    subgraph Redemption Loop
+        H --> I[UIAchievementControl.playRedemptionAnimation];
+        I -- Await Animation --> J[AchievementService.redeemAchievement];
+        J --> K[Grant Rewards & Set isRedeemed=true];
+        K --> L((Update GameState));
+        L --> M[Refresh UI];
+    end
 --- END OF FILE: ./meta/DATA_FLOW.md ---
 
 --- START OF FILE: ./meta/STATE_SCHEMA.md ---
 // meta/STATE_SCHEMA.md
 
 # Orbital Trading: State Schema Definition
-Last Edit: 4/25/26, ver. [40.00]
+Last Edit: 4/30/26, ver. [40.00]
 
 ## 1. Root State Object
 
@@ -55041,6 +55194,7 @@ The `GameState` class manages a monolithic state object. All properties below ar
 | `tutorials` | Object | **(See Section 6)** State regarding the Contextual Help Modal system. |
 | `missions` | Object | **(See Section 8)** State regarding active and completed missions. |
 | `solStation` | Object | **(See Section 7)** State for the Sol Station Endgame Engine. |
+| `achievements` | Object | **(See Section 11)** State regarding progression, unlocks, and redemption of achievements. |
 | `uiState` | Object | Ephemeral UI state (scroll positions, active tabs). |
 | `telemetry` | Object | Debug/Analytics data tracking macro-economic trends and bot logs. |
 
@@ -55240,6 +55394,23 @@ Manages procedural Economic Weather modifiers impacting global behavior.
 | `activeWeatherId` | String | ID of the currently active macroeconomic modifier. |
 | `expirationDay` | Number | The game day the current weather naturally ends. |
 | `weatherModifiers` | Object | Current active stat weights affecting global pricing, event rates, and availability. |
+
+---
+
+## 11. Achievement State (`state.achievements`)
+
+Manages progression tracking, unlock statuses, and reward redemption for the Achievement System.
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `unlockedIds` | Array<String> | List of achievement IDs that have been fully unlocked and redeemed. |
+| `progress` | Object | Map of `achievementId` -> `{ current, isCompletable, isRedeemed }`. |
+
+**AchievementProgress Structure:**
+
+* `current`: Current numerical progress towards the achievement's specific target.
+* `isCompletable`: Boolean flag indicating if the target has been met and the reward is ready for redemption.
+* `isRedeemed`: Boolean flag indicating if the player has actively claimed the reward, preventing duplicate grants.
 --- END OF FILE: ./meta/STATE_SCHEMA.md ---
 
 --- START OF FILE: ./manifest.json ---

@@ -8,6 +8,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  event performance improvement
 -  added Achievements V1
 -  tuning screen polish
+-  updated meta files
 
 # [38.06] - 2026-4-27
 -  fixed station quirk logic
