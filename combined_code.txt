@@ -1894,8 +1894,8 @@
     z-index: 50;
 }
 .sticky-content {
-    pointer-events: auto; /* Restrict the interactive 'hitbox' strictly to the visible visual frame */
-    cursor: pointer;
+    pointer-events: none; /* Let clicks pass through the visual frame */
+    position: relative; /* Required for absolute positioning of hitbox */
     background-color: rgba(12, 16, 29, 0.8);
     background-image: linear-gradient(rgba(12, 16, 29, 0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(12, 16, 29, 0.2) 1px, transparent 1px);
     background-size: 15px 15px;
@@ -1909,6 +1909,20 @@
     font-size: 0.85rem;
     transition: transform 0.2s ease-out, box-shadow 0.2s ease-out;
 }
+
+/* Centralized Touch Target / Hitbox */
+.sticky-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: 12.5%; /* Shrink actionable width by 25% total (12.5% each side) */
+    right: 12.5%;
+    pointer-events: auto; /* Reactivate touches strictly in the center */
+    cursor: pointer;
+    z-index: 10; /* Ensure hitbox intercepts clicks above the text */
+}
+
 .bottom-sticky-bar p {
     text-shadow: -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000;
 }
@@ -55433,6 +55447,7 @@ Manages progression tracking, unlock statuses, and reward redemption for the Ach
 --- END OF FILE: ./manifest.json ---
 
 --- START OF FILE: ./sw.js ---
+// sw.js
 /**
  * @fileoverview Service Worker for Orbital Trading PWA.
  * Handles local caching of core assets to enable offline playability and rapid subsequent load times.
@@ -55455,8 +55470,17 @@ const ASSETS_TO_CACHE = [
  */
 self.addEventListener('install', (event) => {
     event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then((cache) => cache.addAll(ASSETS_TO_CACHE))
+        caches.open(CACHE_NAME).then((cache) => {
+            // Use Promise.allSettled to gracefully install even if some dist/ assets are missing in dev environments
+            return Promise.allSettled(
+                ASSETS_TO_CACHE.map(asset => 
+                    fetch(asset).then(response => {
+                        if (!response.ok) throw new Error(`Failed to fetch ${asset}`);
+                        return cache.put(asset, response);
+                    })
+                )
+            );
+        })
     );
 });
 
