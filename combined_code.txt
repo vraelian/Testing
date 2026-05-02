@@ -16797,7 +16797,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, and I’ll be your liaison with the Merchant's Guild. I’ve been assigned to assist you in <b>repaying your ⌬ 25,000 credit loan</b> to the guild.<br><br>The easiest way to earn credits is by completing missions.<br><br>Begin by accepting this mission which will automatically be added to your mission log.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>Completing missions is the most reliable way to earn credits.<br><br>Accept this mission below to add it to your log and begin.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
@@ -16820,7 +16820,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Your financial obligations and transaction history are logged in the Finance tab. Note that your debt is due in exactly three years. The Guild does not grant extensions and your credits will be garnished eventually if you fail to pay in time.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
+        description: "Your financial obligations and transaction history are logged in the <b>Finance</b> tab. Note that your debt is due in exactly three years. The Guild does not grant extensions and your credits will be garnished eventually if you fail to pay in time.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
         ],
@@ -16834,7 +16834,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Debt",
-            text: "As long as you have debt interest will accrue monthly.<br><br>Pay off your debt <i>as soon as possible</i> to minimize the cost of borrowing credits!",
+            text: "As long as you have debt interest will accrue monthly.<br><br>Pay off your debts <i>as soon as possible</i> to minimize the cost of borrowing credits!",
             buttonText: "Understood"
         },
         rewards: []
@@ -16847,7 +16847,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The intel screen is home to both the codex and the intel market.<br><br>The codex tracks your progress and contains key story information, so remember to check it periodically for updates.<br><br>The intel market offers guaranteed opportunities at other locations, but these are time-sensitive and travel takes time. Carefully consider travel distances before committing to a purchase of information.<br><br>Take a tour of the intel screen and then return here.",
+        description: "The Intel screen houses your <b>Codex</b> and the <b>Intel Market<b>.<br><br>The Codex contains key story information. The Intel market sells time-sensitive, guaranteed trade opportunities.<br><br>Tour the Intel screen, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_02" }
         ],
@@ -16861,7 +16861,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Market Intelligence",
-            text: "You can only purchase one piece of market intelligence at a time. The benefits of intel vary and may reveal bargains or profit opportunities.<br><br>It is a good idea to have cargo space available to capitalize on the intel that you acquire.",
+            text: "You can only possess one piece of market intelligence at a time. Intel may reveal bargains or profit opportunities.",
             buttonText: "Understood"
         },
         rewards: []
@@ -16874,7 +16874,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Guild has authorized your access to a live iteration of the Solar System map. We expect you to utilize this map to identify profitable arbitrage routes between stations, each of which possess unique market dynamics, behaviors, and ships for sale.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
+        description: "The Guild has authorized your access to a live iteration of the Solar System <b>Map</b>. We expect you to utilize this map to identify profitable arbitrage routes between stations, each of which possess unique market dynamics, behaviors, and ships for sale.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_03" }
         ],
@@ -16901,7 +16901,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The navigation screen is where space flight begins. Visit the navigation screen and select <b>The Moon</b> to begin your journey.<br><br>This mission will be completed on the Moon.",
+        description: "The <b>Navigation</b> screen is where space flight begins. Select <b>The Moon</b> to begin your journey.<br><br>This mission will be completed on the Moon.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_04" }
         ],
@@ -16928,7 +16928,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The cargo screen is useful for reviewing the total cargo of your fleet, its cost basis, and its total value.<br><br>Visit the cargo screen now, then return here.",
+        description: "The <b>Cargo</b> screen tracks your fleet's current inventory, average cost basis, and total market value.<br><br>Inspect your hold now, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_05" }
         ],
@@ -16955,7 +16955,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Arbitrage involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for more than they cost and earning a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon Market on the <b>Starport</b> tab, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
+        description: "Arbitrage involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for more than they cost and earning a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon <b>Market</b> on the <b>Starport</b> tab, travel to Mars, and then <i>sell it at the Martian station</i>.<br><br>Profit is not the priority for this exercise.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_06" }
         ],
@@ -16984,7 +16984,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The shipyards at each station will offer different ships for purchase. The best ships are hard to find.<br><br>The hangar is your personal ship storage which is accessible from any station. Your currently boarded ship serves as your active, primary vessel and is the central point of contact for all fleet interactions.<br><br>Visit the shipyard screen here at the Martian starport, then return here.",
+        description: "Each station's <b>Shipyard</b> offers different vessels for purchase.<br><br>The hangar is your personal ship storage which is accessible from any station.<br><br>Tour the Martian Shipyard, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_07" }
         ],
@@ -16998,7 +16998,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Ship Attributes",
-            text: "Your ships are valuable assets, each with attributes like fuel capacity, hull integrity, and cargo volume that directly influence your trading. Upgrade your fleet to maximize your profit!",
+            text: "A ship's fuel capacity, hull integrity, and cargo capacity directly influences your trading. Upgrade your fleet with the best ships to maximize your profit!",
             buttonText: "Understood"
         },
         rewards: []
@@ -17011,7 +17011,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Stations offer fuel and repair services for a fee, and valuable ship upgrades can be purchased at the tuning shop.<br><br>Visit the services screen and fully refuel and repair your ship to complete this mission.<br><br>The guild has granted you a one-time service subsidy to cover your expenses.",
+        description: "Stations provide fueling, repairs, and permanent ship upgrades for a fee.<br><br>The Guild has issued a one-time subsidy to cover your expenses. Visit the <b>Services</b> screen to fully repair and refuel your ship.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_08" }
         ],
@@ -17030,7 +17030,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Ship Tuning",
-            text: "A ship can have up to three permanent upgrades at once. Once installed, these upgrades cannot be removed without being destroyed.<br><br>The installation cost for an upgrade is dependent on the overall value of the ship it is being applied to.",
+            text: "A ship can have up to three upgrades at once.<br><br>The installation cost for an upgrade is determined by a ship's class.",
             buttonText: "Complete Tutorial",
             clearNavLock: true // Unlocks navigation after finishing the whole tutorial block
         },
