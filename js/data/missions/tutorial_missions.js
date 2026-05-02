@@ -35,7 +35,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You may review your transaction history and manage your loan on the finance screen, which is accessible in the <b>Data</b> tab on the navigation bar at the top.<br><br><b>You have three years before your Guild debt is due</b>, after which your credits will be garnished to recover the amount you borrowed.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
+        description: "Your financial obligations and transaction history are logged in the Finance tab. Note that your debt is due in exactly three years. The Guild does not grant extensions and your credits will be garnished eventually if you fail to pay in time.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
         ],
@@ -89,7 +89,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The solar system map displays all of the stations you can trade at. Each station has unique market dynamics and behaviors. Purchaseable ships and their upgrades, supply & demand, commodity prices, and intel all vary by location.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station that is essential for successful arbitrage.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
+        description: "The Guild has authorized your access to a live iteration of the Solar System map. We expect you to utilize this map to identify profitable arbitrage routes between stations, each of which possess unique market dynamics, behaviors, and ships for sale.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_03" }
         ],
@@ -170,7 +170,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Arbitrage involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for less than they cost and earning a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon Market on the <b>Starport</b> tab, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
+        description: "Arbitrage involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for more than they cost and earning a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon Market on the <b>Starport</b> tab, travel to Mars, and then sell it at the Martian station.<br><br>Don’t worry about profit for now - this is only practice.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_06" }
         ],
