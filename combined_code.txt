@@ -15,7 +15,9 @@
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0c101d">
     <title id="app-title">Orbital Trading</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -184,8 +186,8 @@
             </svg>
         </button>
 
-        <button id="btn-game-menu" style="display: none;" data-action="open-pause-menu" title="Game Menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="btn-game-menu" class="fixed bottom-[35px] right-0 z-[800] w-11 h-11 flex items-center justify-center shadow-[0_0_10px_rgba(0,0,0,0.5)]" data-action="open-pause-menu" title="Game Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
@@ -405,6 +407,30 @@
                 });
             });
         }
+    </script>
+
+    <script>
+        // PWA Notch/Status Bar Sync (Ignored completely by Native iOS WKWebView)
+        // Keeps the browser's status bar and bottom home indicator synchronized with the active location theme
+        const syncThemeColor = () => {
+            const rootStyle = getComputedStyle(document.documentElement);
+            const bgBase = rootStyle.getPropertyValue('--ui-bg-base').trim() || 
+                           getComputedStyle(document.body).getPropertyValue('--ui-bg-base').trim() || '#0c101d';
+            
+            if (bgBase) {
+                let themeMeta = document.querySelector('meta[name="theme-color"]');
+                if (themeMeta && themeMeta.content !== bgBase) {
+                    themeMeta.setAttribute('content', bgBase);
+                }
+                document.documentElement.style.backgroundColor = bgBase;
+                document.body.style.backgroundColor = bgBase;
+            }
+        };
+
+        const themeObserver = new MutationObserver(syncThemeColor);
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+        themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
+        window.addEventListener('DOMContentLoaded', syncThemeColor);
     </script>
 </body>
 </html>
@@ -2217,22 +2243,30 @@ definitions,
 html {
     padding: 0;
     margin: 0;
+    width: 100%;
     height: 100%; /* MODIFIED: Ensure HTML fills the viewport */
+    background-color: var(--ui-bg-base, #0c101d); 
+    overscroll-behavior: none; /* Stops iOS rubber-banding exposing white canvas */
 }
 
 body {
-    height: 100dvh; /* MODIFIED: Make body fill 100% of dynamic viewport */
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100%;
+    height: 100%;
     overflow: hidden;
     margin: 0;
-    /* MODIFIED: Re-enabled flex properties for scaling */
     display: flex;
     justify-content: center;
     align-items: center;
     font-family: 'Exo 2', sans-serif;
     
-    /* V1 OPTIMIZATION: Must be background, not background-color, to support gradients */
-    background: var(--ui-bg-base, #0c101d); 
+    background-color: var(--ui-bg-base, #0c101d); 
     color: var(--ui-text-primary);
+    overscroll-behavior: none;
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
@@ -2280,7 +2314,7 @@ a *, button *, [data-action] *, .tab * {
 .game-container {
     max-width: 1200px;
     width: 100%;
-    height: 100dvh; /* MODIFIED: Use dynamic viewport height */
+    height: 100%; /* MODIFIED: Use dynamic viewport height via fixed body */
     margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
     
     /* V1 OPTIMIZATION: Assign variable to structural container */
@@ -3473,11 +3507,11 @@ card.
 
 /* 4. Typographic Shielding */
 .card-header {
-    background: var(--ui-card-header-gradient);
+    background: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
     text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 .card-content {
-    background-color: var(--ui-card-bg);
+    background-color: rgba(12, 16, 29, 0.7);
     border-radius: 6px;
     padding: 0.5rem;
     box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
@@ -17292,11 +17326,11 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hello, Captain. I am Kiern, Research Director for the Venusian Syndicate. I have noted your recent logistical endeavors. The Syndicate has highly lucrative work available for an aspiring operator such as yourself, provided you aren't owned by the Merchant's Guild.<br><br>But first, you must prove you are more than a debtor. <b>Amass a net worth of ⌬ 60,000</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel as an act of good faith.",
+        description: "Hello, Captain. I am Kiern, Research Director for the Venusian Syndicate. I have noted your recent logistical endeavors. The Syndicate has highly lucrative work available for an aspiring operator such as yourself, provided you aren't owned by the Merchant's Guild.<br><br>But first, you must prove you are more than a debtor. <b>Amass a larger net worth</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel as an act of good faith.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_17" } ],
         grantedIntel: [ { name: "Syndicate Tip", location: "loc_venus" } ],
         objectives: [
-            { "id": "have_60k", "type": "HAVE_CREDITS", "value": 60000 },
+            { "id": "have_50k", "type": "HAVE_CREDITS", "value": 50000 },
             { "id": "travel_venus", "type": "TRAVEL_TO", "target": "loc_venus" }
         ],
         completion: {
