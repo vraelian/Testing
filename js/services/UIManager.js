@@ -730,6 +730,17 @@ export class UIManager {
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
     showEconWeatherModal(gameState = this.lastKnownState) {
+        // --- PHASE 1 FIX: Toggle Logic & Duplicate Prevention ---
+        const existingModal = document.getElementById('econ-weather-modal');
+        if (existingModal && !existingModal.classList.contains('hidden')) {
+            this.hideModal('econ-weather-modal');
+            return;
+        }
+
+        // Prevent duplicate queuing if one is already waiting to be popped
+        const isQueued = this.modalEngine.modalQueue.some(m => m.modalId === 'econ-weather-modal');
+        if (isQueued) return;
+
         if (!gameState || !gameState.systemStates) return;
         
         const sysStateId = gameState.systemStates.activeId;
