@@ -14,7 +14,9 @@
     </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0c101d">
     <title id="app-title">Orbital Trading</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://d3js.org/d3.v7.min.js"></script>
@@ -183,8 +185,8 @@
             </svg>
         </button>
 
-        <button id="btn-game-menu" style="display: none;" data-action="open-pause-menu" title="Game Menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <button id="btn-game-menu" class="fixed bottom-[35px] right-0 z-[800] w-11 h-11 flex items-center justify-center shadow-[0_0_10px_rgba(0,0,0,0.5)]" data-action="open-pause-menu" title="Game Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
@@ -404,6 +406,30 @@
                 });
             });
         }
+    </script>
+
+    <script>
+        // PWA Notch/Status Bar Sync (Ignored completely by Native iOS WKWebView)
+        // Keeps the browser's status bar and bottom home indicator synchronized with the active location theme
+        const syncThemeColor = () => {
+            const rootStyle = getComputedStyle(document.documentElement);
+            const bgBase = rootStyle.getPropertyValue('--ui-bg-base').trim() || 
+                           getComputedStyle(document.body).getPropertyValue('--ui-bg-base').trim() || '#0c101d';
+            
+            if (bgBase) {
+                let themeMeta = document.querySelector('meta[name="theme-color"]');
+                if (themeMeta && themeMeta.content !== bgBase) {
+                    themeMeta.setAttribute('content', bgBase);
+                }
+                document.documentElement.style.backgroundColor = bgBase;
+                document.body.style.backgroundColor = bgBase;
+            }
+        };
+
+        const themeObserver = new MutationObserver(syncThemeColor);
+        themeObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'style'] });
+        themeObserver.observe(document.body, { attributes: true, attributeFilter: ['class', 'style'] });
+        window.addEventListener('DOMContentLoaded', syncThemeColor);
     </script>
 </body>
 </html>
