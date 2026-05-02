@@ -172,7 +172,7 @@
         </div>
 
         <button id="btn-achievements" class="hidden" title="Achievements" data-action="open-achievements">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="text-yellow-400">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
             </svg>
         </button>
@@ -184,8 +184,8 @@
             </svg>
         </button>
 
-        <button id="btn-game-menu" class="fixed bottom-[35px] right-0 z-[800] w-11 h-11 flex items-center justify-center shadow-[0_0_10px_rgba(0,0,0,0.5)]" data-action="open-pause-menu" title="Game Menu">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-6 h-6">
+        <button id="btn-game-menu" style="display: none;" data-action="open-pause-menu" title="Game Menu">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="12" r="3"></circle>
                 <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
             </svg>
@@ -2064,58 +2064,77 @@
 
 /* --- SYSTEM STATES V3: Econ Button --- */
 #btn-econ-weather {
-    position: fixed; /* Matches global help anchor */
+    position: absolute; 
     bottom: 35px;
-    left: 0; /* Symmetrical to the right-side help anchor */
+    left: 0; 
     width: 44px; 
     height: 44px; 
     border-radius: 0 44px 44px 0;
-    background-color: rgba(45, 55, 72, 0.6);
-    color: #fff;
-    border: 1px solid rgba(122, 154, 192, 0.5);
+    background: var(--theme-gradient);
+    color: var(--theme-text-color);
+    border: 1px solid var(--theme-border-color);
     border-left: none;
     display: flex;
     justify-content: center;
     align-items: center;
-    font-size: 1.6rem; /* Base fallback for emojis */
-    z-index: 800; /* Boosted to massively overpower any overlapping wrapper structures */
-    opacity: 0.5;
-    transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
+    font-size: 1.6rem; 
+    z-index: 100; 
+    opacity: 0.8;
+    transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
     pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
-#btn-econ-weather:active {
+#btn-econ-weather:active, #btn-econ-weather:hover {
     opacity: 1;
-    background-color: rgba(45, 55, 72, 0.9);
+    background: var(--theme-border-color);
+    color: #0c101d;
     transform: scale(0.98);
 }
 
 #btn-econ-weather svg {
-    width: 24px; /* Scaled proportionally for 44px container */
+    width: 24px; 
     height: 24px;
+    color: inherit !important;
 }
 
 /* --- Game Menu Cog Button --- */
 #btn-game-menu {
+    position: absolute;
+    bottom: 35px;
+    right: 0;
+    width: 44px;
+    height: 44px;
     border-radius: 44px 0 0 44px;
-    background-color: rgba(45, 55, 72, 0.6);
-    color: #fff;
-    border: 1px solid rgba(122, 154, 192, 0.5);
+    background: var(--theme-gradient);
+    color: var(--theme-text-color);
+    border: 1px solid var(--theme-border-color);
     border-right: none;
-    opacity: 0.5;
-    transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
+    pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
-#btn-game-menu:active {
+#btn-game-menu:active, #btn-game-menu:hover {
     opacity: 1;
-    background-color: rgba(45, 55, 72, 0.9);
+    background: var(--theme-border-color);
+    color: #0c101d;
     transform: scale(0.98);
+}
+
+#btn-game-menu svg {
+    width: 24px;
+    height: 24px;
+    color: inherit !important;
 }
 --- END OF FILE: ./css/hud.css ---
 
@@ -3612,23 +3631,22 @@ card.
 
 /* --- Achievements HUD Button --- */
 #btn-achievements {
-    position: fixed;
-    /* Phase 4 HUD Alignment: Adjusted from 90px to 105px to sit above Econ Weather clearly */
-    bottom: 105px; 
+    position: absolute;
+    bottom: 112px; 
     left: 0;
     width: 44px;
     height: 44px;
     border-radius: 0 44px 44px 0;
-    background-color: rgba(45, 55, 72, 0.6);
-    color: #fff;
-    border: 1px solid rgba(122, 154, 192, 0.5);
+    background: var(--theme-gradient);
+    color: var(--theme-text-color);
+    border: 1px solid var(--theme-border-color);
     border-left: none;
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 50;
-    opacity: 0.5;
-    transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
+    z-index: 100;
+    opacity: 0.8;
+    transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
     pointer-events: auto;
     -webkit-tap-highlight-color: transparent;
@@ -3637,14 +3655,15 @@ card.
 
 #btn-achievements:active, #btn-achievements:hover {
     opacity: 1;
-    background-color: rgba(45, 55, 72, 0.9);
+    background: var(--theme-border-color);
+    color: #0c101d;
     transform: scale(0.98);
 }
 
 #btn-achievements svg {
     width: 24px;
     height: 24px;
-    color: #ffffff !important; /* Force white icon instead of gold from inline HTML classes */
+    color: inherit !important; 
 }
 --- END OF FILE: ./css/achievements.css ---
 
@@ -10311,33 +10330,40 @@ BULKHEAD NAVIGATION STYLES
 /* css/help-system.css */
 
 .global-help-anchor {
-    position: absolute; /* Phase 4 Fix: Decoupled from window relative context */
+    position: absolute; 
     bottom: 112px;
     right: 0;
     width: 44px; 
     height: 44px; 
     border-radius: 44px 0 0 44px;
-    background-color: rgba(45, 55, 72, 0.6);
-    color: #fff;
-    border: 1px solid rgba(122, 154, 192, 0.5);
+    background: var(--theme-gradient);
+    color: var(--theme-text-color);
+    border: 1px solid var(--theme-border-color);
     border-right: none;
     font-family: 'Orbitron', sans-serif;
     font-size: 1.6rem; 
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 100; /* Phase 4.5 Fix: Elevated from 50 to 100 to sit atop colored UI border */
-    opacity: 0.5;
-    transition: opacity 0.2s ease, background-color 0.2s ease, transform 50ms ease-out;
+    z-index: 100; 
+    opacity: 0.8;
+    transition: opacity 0.2s ease, background 0.2s ease, color 0.2s ease, transform 50ms ease-out;
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
     touch-action: manipulation;
 }
 
-.global-help-anchor:active {
+.global-help-anchor:active, .global-help-anchor:hover {
     opacity: 1;
-    background-color: rgba(45, 55, 72, 0.9);
+    background: var(--theme-border-color);
+    color: #0c101d;
     transform: scale(0.98);
+}
+
+.global-help-anchor svg {
+    width: 24px;
+    height: 24px;
+    color: inherit !important;
 }
 
 /* Opt-In Pulse Animation */
@@ -14868,7 +14894,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.10';
+export const APP_VERSION = '38.13';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -50181,9 +50207,10 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [38.10] - 2026-5-1
+# [38.13] - 2026-5-1
 -  bug fixes
 -  UI polish
+-  added location themes to UI buttons
 
 # [38.10] - 2026-4-30
 -  UI polish
