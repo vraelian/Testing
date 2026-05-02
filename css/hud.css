@@ -187,6 +187,12 @@
     box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
 }
 
+.bottom-sticky-bar:active .sticky-content {
+    /* PHASE 2 FIX: Counteract hover lift and slightly compress to simulate physical button press */
+    transform: translateX(-50%) translateY(0) scale(0.98);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
 /* --- Universal Toast System --- */
 #toast-container {
     position: fixed;
