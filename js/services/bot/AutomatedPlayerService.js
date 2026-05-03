@@ -53,6 +53,10 @@ export class AutomatedPlayer {
         this.currentObjective = null;
         this.plannedObjectives = [];
         
+        // Phase 1: Buyback Blacklist session tracking
+        this._currentSessionSales = new Set();
+        this._lastDockedLocationId = null;
+        
         this.metrics = {
             totalTrades: 0,
             profitableTrades: 0,
@@ -84,6 +88,9 @@ export class AutomatedPlayer {
         const endDay = startDay + daysToRun;
         
         this.simulationStartDay = startDay;
+        this._currentSessionSales.clear();
+        this._lastDockedLocationId = this.gameState.currentLocationId;
+
         this.metrics = {
             totalTrades: 0, profitableTrades: 0, totalNetProfit: 0,
             totalFuelCost: 0, totalRepairCost: 0, daysSimulated: 0,
@@ -114,6 +121,11 @@ export class AutomatedPlayer {
 
     async _decideNextAction() {
         if (this._handleAgeEventChoice()) return; 
+        
+        if (this.gameState.currentLocationId !== this._lastDockedLocationId) {
+            this._lastDockedLocationId = this.gameState.currentLocationId;
+            this._currentSessionSales.clear();
+        }
 
         // --- FATAL ERROR CHECK: Fleet Destroyed ---
         const activeShipId = this.gameState.player.activeShipId;
@@ -171,6 +183,8 @@ export class AutomatedPlayer {
                         const avgCost = inventory[goodId].avgCost;
                         const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
                         const profit = saleValue - (avgCost * sellQty);
+                        
+                        this._currentSessionSales.add(goodId);
                         
                         this.metrics.totalTrades++;
                         this.metrics.totalNetProfit += profit;
@@ -407,6 +421,8 @@ export class AutomatedPlayer {
             const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
             const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
             const profit = saleValue - (avgCost * sellQty);
+            
+            this._currentSessionSales.add(goodId);
 
             if (profit < 0) {
                 this.metrics.volatilityLosses++;
@@ -429,6 +445,20 @@ export class AutomatedPlayer {
         this.botState = BotState.IDLE;
     }
 
+    _getExperientialVolatilityPenalty(locationId, commodityId) {
+        const sysState = this.gameState.systemStates || this.gameState.systemState;
+        if (!sysState || !sysState.economyFootprints) return 1.0;
+        
+        const recentTrade = sysState.economyFootprints.find(fp => 
+            fp.locationId === locationId && 
+            fp.commodityId === commodityId &&
+            fp.day >= this.gameState.day - 60 &&
+            (fp.type === 'BUY' || fp.type === 'SELL')
+        );
+        
+        return recentTrade ? 0.1 : 1.0;
+    }
+
     async _findCrashOpportunity(specificGoodId = null) {
         const state = this.gameState.getState();
         const activeShip = this.simulationService._getActiveShip();
@@ -446,6 +476,8 @@ export class AutomatedPlayer {
         let top5Plans = [];
 
         for (const good of availableCommodities) {
+            if (this._currentSessionSales.has(good.id)) continue;
+
             const stock = state.market.inventory[currentLoc][good.id].quantity;
             if (stock <= 0) continue; 
 
@@ -455,7 +487,8 @@ export class AutomatedPlayer {
             const crashLocation = this._findBestHeuristicCrashTarget(good.id, currentLoc, activeShip.maxFuel);
             if (!crashLocation) continue;
             
-            const potential = good.tier * (crashLocation.estimatedPrice - buyPrice);
+            const combinedPenalty = this._getExperientialVolatilityPenalty(currentLoc, good.id) * this._getExperientialVolatilityPenalty(crashLocation.id, good.id);
+            const potential = good.tier * (crashLocation.estimatedPrice - buyPrice) * combinedPenalty;
             
             if (potential > 0) {
                 top5Plans.push({
@@ -552,6 +585,8 @@ export class AutomatedPlayer {
             const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
             const profit = saleValue - (avgCost * sellQty);
             
+            this._currentSessionSales.add(goodId);
+            
             this.logger.info.system('Bot', state.day, 'CRASH_SELL', `CRASHED: Sold ${sellQty}x ${goodId}. Profit: ${formatCredits(profit)}`);
             this.metrics.totalTrades++;
             this.metrics.totalNetProfit += profit;
@@ -582,6 +617,16 @@ export class AutomatedPlayer {
 
     async _executeExploit() {
         const { goodId, exploitLocationId } = this.currentObjective;
+
+        // --- PHASE 4: Exploit State Interception ---
+        if (this._currentSessionSales.has(goodId)) {
+            this.logger.warn('Bot', `EXPLOIT_DENIED: Attempted to execute exploit buyback on ${goodId} within the same session. Aborting.`);
+            this.currentObjective = null;
+            this.botState = BotState.IDLE;
+            this.metrics.objectivesAborted++;
+            return;
+        }
+
         const state = this.gameState.getState();
         const activeShip = this.simulationService._getActiveShip();
 
@@ -663,6 +708,8 @@ export class AutomatedPlayer {
             const avgCost = this.simulationService._getActiveInventory()[goodId]?.avgCost || 0;
             const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
             const profit = saleValue - (avgCost * sellQty);
+
+            this._currentSessionSales.add(goodId);
 
             this.metrics.totalTrades++;
             this.metrics.totalNetProfit += profit;
@@ -752,6 +799,8 @@ export class AutomatedPlayer {
                 const saleValue = this.simulationService.playerActionService.sellItem(goodId, sellQty);
                 const actualProfit = saleValue - (avgCost * sellQty);
                 
+                this._currentSessionSales.add(goodId);
+
                 if (actualProfit < 0) {
                     this.metrics.volatilityLosses++;
                     this.logger.warn('Bot', `TRADE_VOLATILITY: Heuristic projected ${formatCredits(estimatedNetProfit)} net profit, but dynamic market shifts caused ${formatCredits(actualProfit)} loss.`);
@@ -1121,6 +1170,7 @@ export class AutomatedPlayer {
 
         for (const good of availableCommodities) {
             if (inventory[good.id] && inventory[good.id].quantity > 0) continue;
+            if (this._currentSessionSales.has(good.id)) continue;
 
             const buyStock = state.market.inventory[currentLocId][good.id].quantity;
             if (buyStock < 15) continue; 
@@ -1150,9 +1200,12 @@ export class AutomatedPlayer {
                     
                     const estimatedFuelCost = (travelInfo.fuelCost * 1.5) * localFuelPrice;
                     const estimatedNetProfit = grossProfit - estimatedFuelCost;
+                    
+                    const combinedPenalty = this._getExperientialVolatilityPenalty(currentLocId, good.id) * this._getExperientialVolatilityPenalty(sellLocation.id, good.id);
+                    const penalizedNetProfit = estimatedNetProfit * combinedPenalty;
 
-                    if (estimatedNetProfit > maxNetProfit && estimatedNetProfit > 0) {
-                        maxNetProfit = estimatedNetProfit;
+                    if (penalizedNetProfit > maxNetProfit && penalizedNetProfit > 0) {
+                        maxNetProfit = penalizedNetProfit;
                         bestTrade = {
                             goodId: good.id,
                             buyLocationId: currentLocId,
