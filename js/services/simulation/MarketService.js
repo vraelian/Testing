@@ -68,6 +68,8 @@ export class MarketService {
                     inventoryItem.depletionBonusDay = 0;
                     inventoryItem.hoverUntilDay = 0;
                     inventoryItem.rivalArbitrage = { isActive: false, endDay: 0 };
+                    inventoryItem.sessionInteractionDay = 0;
+                    inventoryItem.sessionNetVolume = 0;
                     
                     // Hard reset quantity to a neutral baseline
                     inventoryItem.quantity = this._calculateBaselineStock(market, c);
@@ -529,6 +531,16 @@ export class MarketService {
 
         const pressureChange = (((quantity / (good.canonicalAvailability[1] || 100)) * good.tier) / 10) * pressureMod;
         
+        // --- PHASE 3: Zero-Sum Session Volume Tracking ---
+        if (inventoryItem.sessionInteractionDay !== this.gameState.day) {
+            inventoryItem.sessionInteractionDay = this.gameState.day;
+            inventoryItem.sessionNetVolume = 0;
+            inventoryItem.preSessionPriceLockEndDay = inventoryItem.priceLockEndDay || 0;
+            inventoryItem.preSessionInteractionTimestamp = inventoryItem.lastPlayerInteractionTimestamp || 0;
+        }
+        
+        inventoryItem.sessionNetVolume += (transactionType === 'buy' ? -quantity : quantity);
+
         // --- FOOTPRINT LOGGING FIX: Universal Trade Tracking ---
         const sysState = this.gameState.systemStates || this.gameState.systemState;
         if (sysState) {
@@ -584,9 +596,20 @@ export class MarketService {
         const jitter = targetLock * 0.10; 
         
         const lockDuration = Math.floor(targetLock + (Math.random() * (jitter * 2) - jitter));
-        inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
+        
+        // --- PHASE 4: Fractional Volume Threshold ---
+        const maxAvailability = good.canonicalAvailability[1] || 100;
+        const fractionalShift = Math.abs(inventoryItem.sessionNetVolume) / maxAvailability;
 
-        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
+        if (fractionalShift < 0.05) {
+            // Treat as "Zero-Sum / Noise" - do not extend the price lock or reset the delay
+            inventoryItem.priceLockEndDay = inventoryItem.preSessionPriceLockEndDay;
+            inventoryItem.lastPlayerInteractionTimestamp = inventoryItem.preSessionInteractionTimestamp;
+        } else {
+            // Standard enforcement
+            inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
+            inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
+        }
 
         // TELEMETRY: Gated execution
         if (this.gameState.uiState?.enableEconomicTelemetry) {
