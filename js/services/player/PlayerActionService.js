@@ -31,47 +31,11 @@ export class PlayerActionService {
             return false;
         }
 
-        const basePrice = this.uiManager.getItemPrice(state, goodId);
-        const activeShipId = state.player.activeShipId;
-        const shipState = state.player.shipStates[activeShipId];
-        const upgrades = shipState.upgrades || [];
-        
-        const priceMod = GameAttributes.getPriceModifier(upgrades, 'buy');
-        let price = Math.max(1, Math.round(basePrice * priceMod));
-
-        let totalCost = price * quantity;
-
-        const agePurchaseDiscount = state.player.statModifiers?.purchaseCost || 0;
-        if (agePurchaseDiscount > 0) {
-            totalCost = Math.floor(totalCost * (1 - agePurchaseDiscount));
-        }
-
-        const systemState = state.systemState;
-        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-
-        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.survivalGoodsDiscountMod) {
-            if (activeStateDef.modifiers.affectedCommodities?.includes(goodId)) {
-                totalCost = Math.floor(totalCost * activeStateDef.modifiers.survivalGoodsDiscountMod);
-            }
-        }
-
-        if (state.currentLocationId === LOCATION_IDS.NEPTUNE && 
-            (goodId === COMMODITY_IDS.PROPELLANT || goodId === COMMODITY_IDS.PLASTEEL) &&
-            quantity > 50) {
-            
-            totalCost = Math.floor(totalCost * 0.90);
-            this.uiManager.createFloatingText("BULK DISCOUNT APPLIED", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
-        }
-
-        if (state.currentLocationId === LOCATION_IDS.BELT &&
-            (goodId === COMMODITY_IDS.WATER_ICE || goodId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
-            
-            totalCost = Math.floor(totalCost * 0.95);
-            this.uiManager.createFloatingText("MINER'S DISCOUNT", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
-        }
+        // PHASE 5: Fetch exact execution price considering Slippage and Tariffs
+        const execDetails = this.marketService.getExecutionPrice(state.currentLocationId, goodId, quantity, 'buy');
+        let totalCost = execDetails.totalPrice;
 
         const marketStock = state.market.inventory[state.currentLocationId][goodId].quantity;
-
         if (marketStock <= 0) { this.uiManager.queueModal('event-modal', "Sold Out", `This station has no more ${good.name} available.`); return false; }
         if (quantity > marketStock) { this.uiManager.queueModal('event-modal', "Limited Stock", `This station only has ${marketStock} units available.`); return false; }
 
@@ -91,7 +55,7 @@ export class PlayerActionService {
             return false;
         }
 
-         if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
+        if (state.player.credits < totalCost) { this.uiManager.queueModal('event-modal', "Insufficient Funds", "Your credit balance is too low."); return false; }
 
         const inventoryItem = this.gameState.market.inventory[state.currentLocationId][goodId];
         const stockBeforeBuy = inventoryItem.quantity; 
@@ -102,16 +66,24 @@ export class PlayerActionService {
         }
 
         let finalQuantity = quantity;
-        const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
+        const shipAttributes = GameAttributes.getShipAttributes(state.player.activeShipId);
         if (shipAttributes.includes('ATTR_TRADER') && Math.random() < 0.15) {
             finalQuantity += 1;
             this.uiManager.createFloatingText("+1 Bonus!", window.innerWidth/2, window.innerHeight/2, '#34d399');
             this.logger.info.player(state.day, 'ATTR_TRIGGER', `Trader perk triggered: +1 ${good.name}.`);
         }
+        
+        // Ensure Floating Text for discounts still fires!
+        if (state.currentLocationId === LOCATION_IDS.NEPTUNE && (goodId === COMMODITY_IDS.PROPELLANT || goodId === COMMODITY_IDS.PLASTEEL) && quantity > 50) {
+            this.uiManager.createFloatingText("BULK DISCOUNT APPLIED", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
+        }
+        if (state.currentLocationId === LOCATION_IDS.BELT && (goodId === COMMODITY_IDS.WATER_ICE || goodId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
+            this.uiManager.createFloatingText("MINER'S DISCOUNT", window.innerWidth / 2, window.innerHeight / 2 - 50, '#34d399');
+        }
 
         shipCapacities.sort((a, b) => {
-            if (a.shipId === activeShipId) return -1;
-            if (b.shipId === activeShipId) return 1;
+            if (a.shipId === state.player.activeShipId) return -1;
+            if (b.shipId === state.player.activeShipId) return 1;
             return b.maxCapacity - a.maxCapacity;
         });
 
@@ -133,16 +105,13 @@ export class PlayerActionService {
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
         
-        // Patch to force inject locationId
         const logBuy = this.gameState.player.financeLog;
         if (logBuy && logBuy.length > 0) {
             logBuy[logBuy.length - 1].locationId = state.currentLocationId;
         }
         
         this.missionService.checkTriggers();
-
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
-
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
 
         if (state.uiState?.enableEconomicTelemetry) {
@@ -155,7 +124,7 @@ export class PlayerActionService {
                 locationId: state.currentLocationId,
                 commodityId: goodId,
                 quantity: finalQuantity,
-                baseUnitCost: basePrice,
+                baseUnitCost: execDetails.unitPrice, 
                 executionUnitCost: Number((totalCost / finalQuantity).toFixed(2)),
                 totalTransactionValue: -totalCost
             });
@@ -163,7 +132,6 @@ export class PlayerActionService {
             if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
         }
 
-        // --- ACHIEVEMENTS: BUY TRACKING HOOKS ---
         if (this.simulationService.achievementService) {
             const ach = this.simulationService.achievementService;
             if (goodId === COMMODITY_IDS.ANTIMATTER) ach.increment('tradeAntimatter', 1);
@@ -215,29 +183,16 @@ export class PlayerActionService {
             return 0;
         }
 
-        const activeShipId = state.player.activeShipId;
-        const shipState = state.player.shipStates[activeShipId];
-        const upgrades = shipState.upgrades || [];
-
+        // PHASE 5: Leverage UIManager to calculate exact bounds ensuring UI matching
         const { totalPrice } = this.uiManager._calculateSaleDetails(goodId, quantity);
         let totalSaleValue = totalPrice;
-
-        const priceMod = GameAttributes.getPriceModifier(upgrades, 'sell');
-        totalSaleValue = Math.floor(totalSaleValue * priceMod);
-
-        const systemState = state.systemState;
-        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-
-        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.sellPriceBonusMod) {
-            totalSaleValue = Math.floor(totalSaleValue * activeStateDef.modifiers.sellPriceBonusMod);
-        }
-
+        
         if (state.currentLocationId === LOCATION_IDS.SUN &&
             (goodId === COMMODITY_IDS.GRAPHENE_LATTICES || goodId === COMMODITY_IDS.PLASTEEL)) {
-            totalSaleValue = Math.floor(totalSaleValue * 1.25);
             this.uiManager.createFloatingText("EXPORT YIELD BONUS", window.innerWidth / 2, window.innerHeight / 2 - 50, '#eab308');
         }
 
+        const activeShipId = state.player.activeShipId;
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
             if (b.shipId === activeShipId) return 1;
@@ -258,16 +213,9 @@ export class PlayerActionService {
                 remainingToSell -= toRemove;
             }
         }
-
-        const profit = totalSaleValue - totalCostBasis;
-        if (profit > 0) {
-            const ageProfitBonus = state.player.statModifiers?.profitBonus || 0;
-            let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + ageProfitBonus;
-            
-            totalSaleValue += profit * totalBonus;
-        }
-
+        
         totalSaleValue = Math.floor(totalSaleValue);
+        const profit = totalSaleValue - totalCostBasis;
         
         this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + totalSaleValue);
 
@@ -277,16 +225,13 @@ export class PlayerActionService {
         this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
         this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
 
-        // Patch to force inject locationId
         const logSell = this.gameState.player.financeLog;
         if (logSell && logSell.length > 0) {
             logSell[logSell.length - 1].locationId = state.currentLocationId;
         }
 
         this.missionService.checkTriggers();
-
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');
-
         this.gameState.uiState.lastTransactionTimestamp = Date.now();
 
         if (state.uiState?.enableEconomicTelemetry) {
@@ -299,7 +244,7 @@ export class PlayerActionService {
                 locationId: state.currentLocationId,
                 commodityId: goodId,
                 quantity: quantity,
-                baseUnitValue: Number((totalPrice / quantity).toFixed(2)),
+                baseUnitValue: Number((totalCostBasis / quantity).toFixed(2)), 
                 executionUnitValue: Number((totalSaleValue / quantity).toFixed(2)),
                 totalTransactionValue: totalSaleValue
             });
@@ -307,7 +252,6 @@ export class PlayerActionService {
             if (this.gameState.telemetry.trades.length > 1000) this.gameState.telemetry.trades.shift();
         }
 
-        // --- ACHIEVEMENTS: SELL TRACKING HOOKS ---
         if (this.simulationService.achievementService) {
             const ach = this.simulationService.achievementService;
             if (goodId === COMMODITY_IDS.ANTIMATTER) ach.increment('tradeAntimatter', 1);
@@ -436,7 +380,6 @@ export class PlayerActionService {
             const purchaseDescription = `You purchased the ${shipNameSpan} for <span class="text-glow-red">${formatCredits(-effectivePrice, true)}</span>. This ship has been stored in your Hangar.`;
             this.uiManager.queueModal('event-modal', "Vessel Purchased", purchaseDescription);
 
-            // --- ACHIEVEMENTS: SHIP BUY HOOKS ---
             if (this.simulationService.achievementService) {
                 const ach = this.simulationService.achievementService;
                 const fleetSize = this.gameState.player.ownedShipIds.length;
@@ -616,7 +559,6 @@ export class PlayerActionService {
             const saleDescription = `You sold the ${shipNameSpan} for <span class="credits-text-pulsing">+${formatCredits(salePrice, true)}</span>.${cargoOutcomeText}`;
             this.uiManager.queueModal('event-modal', "Vessel Sold", saleDescription);
 
-            // --- ACHIEVEMENTS: SHIP SELL HOOK ---
             if (this.simulationService.achievementService) {
                 this.simulationService.achievementService.increment('shipsSold', 1);
             }
@@ -832,7 +774,6 @@ export class PlayerActionService {
             };
         }
   
-        // --- ACHIEVEMENTS: INTEL PURCHASE HOOK ---
         if (this.simulationService.achievementService) {
             this.simulationService.achievementService.increment('intelDealsPurchased', 1);
         }
@@ -884,7 +825,6 @@ export class PlayerActionService {
             unitCost *= (1 - ageFuelDiscount);
         }
 
-        // --- PHASE 4: STATUS EFFECT SURCHARGE ---
         if (statusEffects.some(s => s.id === 'status_service_surcharges')) {
             unitCost *= 3;
         }
@@ -978,7 +918,6 @@ export class PlayerActionService {
             unitCost *= (1 - ageRepairDiscount);
         }
 
-        // --- PHASE 4: STATUS EFFECT SURCHARGE ---
         if (statusEffects.some(s => s.id === 'status_service_surcharges')) {
             unitCost *= 3;
         }
@@ -1024,7 +963,6 @@ export class PlayerActionService {
             this.uiManager.createFloatingText(`-${formatCredits(totalCost, false)}`, x, y, '#f87171');
         }
 
-        // --- ACHIEVEMENTS: REPAIR HOOK ---
         if (this.simulationService.achievementService) {
             this.simulationService.achievementService.increment('spentOnRepairs', totalCost);
         }
@@ -1071,7 +1009,6 @@ export class PlayerActionService {
         
         this.logger.info.player(this.gameState.day, 'UPGRADE_INSTALL', `Installed ${upgradeId} on ${shipId}.`);
 
-        // --- ACHIEVEMENTS: UPGRADE TRACKING HOOKS ---
         if (this.simulationService.achievementService) {
             const ach = this.simulationService.achievementService;
             ach.increment('spentOnUpgrades', totalCost);

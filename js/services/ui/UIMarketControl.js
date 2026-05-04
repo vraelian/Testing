@@ -82,7 +82,8 @@ export class UIMarketControl {
     }
 
     /**
-     * Calculates the display price for an item, accounting for modifiers.
+     * Calculates the base unit price for an item, accounting for ship upgrades.
+     * Used exclusively for rendering the default grid layout, NOT predictive transactions.
      * @param {object} gameState 
      * @param {string} goodId 
      * @param {boolean} isSelling 
@@ -92,7 +93,7 @@ export class UIMarketControl {
         if (!this.manager.simulationService || !this.manager.simulationService.marketService) {
             return gameState.market.prices[gameState.currentLocationId]?.[goodId] || 0;
         }
-        return this.manager.simulationService.marketService.getPrice(gameState.currentLocationId, goodId, true);
+        return this.manager.simulationService.marketService.getPrice(gameState.currentLocationId, goodId, true, isSelling ? 'sell' : 'buy');
     }
 
     _saveMarketTransactionState() {
@@ -151,7 +152,8 @@ export class UIMarketControl {
     }
 
     /**
-     * Updates the dynamic pricing display based on quantity input (Buy vs Sell mode).
+     * Updates the dynamic pricing display based on quantity input, injecting
+     * Phase 5 Slippage and Wash-Trade warnings.
      * @param {string} goodId 
      * @param {number} quantity 
      * @param {string} mode 
@@ -161,66 +163,72 @@ export class UIMarketControl {
         const effectivePriceEl = this.manager.cache.marketScreen.querySelector(`#effective-price-display-${goodId}`);
         const indicatorEl = this.manager.cache.marketScreen.querySelector(`#indicators-${goodId}`);
         const avgCostEl = this.manager.cache.marketScreen.querySelector(`#avg-cost-${goodId}`);
+        const availEl = priceEl?.closest('.item-card-container')?.querySelector('.avail-text');
 
         if (!priceEl || !effectivePriceEl || !indicatorEl || !this.manager.lastKnownState) return;
 
         const state = this.manager.lastKnownState;
-        const basePrice = parseInt(priceEl.dataset.basePrice, 10);
         const playerItem = this._getFleetItem(state, goodId);
-        
-        // Fetch the living local baseline directly from the Simulation Service
         const ms = this.manager.simulationService?.marketService;
+        
+        // Fetch Execution Details (Source of Truth)
+        const execDetails = ms 
+            ? ms.getExecutionPrice(state.currentLocationId, goodId, quantity > 0 ? quantity : 1, mode)
+            : { unitPrice: this.getItemPrice(state, goodId, mode === 'sell'), totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
+        
         const localTargetPrice = ms ? ms.getLocalTargetPrice(state.currentLocationId, goodId) : state.market.galacticAverages[goodId];
 
         if (avgCostEl) {
             avgCostEl.classList.toggle('visible', mode === 'sell');
         }
 
-        if (mode === 'buy') {
-            // Restore normal availability string when switching to buy mode
-            const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
-            if (availEl) {
-                const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
-                const ownQty = playerItem ? playerItem.quantity : 0;
-                availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
+        // --- PHASE 5: Dynamic Wash-Trade and Slippage Warning Injection ---
+        if (availEl) {
+            const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
+            const ownQty = playerItem ? playerItem.quantity : 0;
+            
+            let infoString = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
+            
+            if (quantity > 0) {
+                let warnings = [];
+                if (execDetails.slippagePct > 0) {
+                    warnings.push(`Slip: -${(execDetails.slippagePct * 100).toFixed(1)}%`);
+                }
+                if (execDetails.washPenaltyPct > 0) {
+                    warnings.push(`Fee: -${(execDetails.washPenaltyPct * 100).toFixed(0)}%`);
+                }
+                if (warnings.length > 0) {
+                    infoString += ` <span class="text-amber-400 font-bold ml-2">(${warnings.join(' | ')})</span>`;
+                }
             }
+            availEl.innerHTML = infoString;
+        }
 
-            const displayPrice = quantity > 0 ? basePrice * quantity : basePrice;
+        if (mode === 'buy') {
+            const displayPrice = quantity > 0 ? execDetails.totalPrice : execDetails.unitPrice;
             priceEl.textContent = formatCredits(displayPrice);
             priceEl.className = 'font-roboto-mono font-bold price-text';
             
             if (quantity > 1) {
-                effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
+                effectivePriceEl.textContent = `(${formatCredits(execDetails.unitPrice, false)}/unit)`;
             } else {
                 effectivePriceEl.textContent = '';
             }
             
             indicatorEl.innerHTML = renderIndicatorPills({
-                price: basePrice,
+                price: parseInt(priceEl.dataset.basePrice, 10),
                 sellPrice: this.getItemPrice(state, goodId, true),
-                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
+                galacticAvg: localTargetPrice, 
                 playerItem: playerItem
             });
 
         } else { // 'sell' mode
-            const { effectivePricePerUnit, netProfit } = this._calculateSaleDetails(goodId, quantity);
-
-            let currentMarketStock = 0;
-            if (ms) {
-                currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
-            }
-
-            // Swap Avail string for standard inventory
-            const availEl = priceEl.closest('.item-card-container').querySelector('.avail-text');
-            if (availEl) {
-                const ownQty = playerItem ? playerItem.quantity : 0;
-                availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
-            }
+            const { netProfit } = this._calculateSaleDetails(goodId, quantity);
 
             if (quantity > 0) {
                 let profitText = `⌬ ${netProfit >= 0 ? '+' : ''}${formatCredits(netProfit, false)}`;
                 priceEl.textContent = profitText;
-                effectivePriceEl.textContent = `(${formatCredits(basePrice, false)}/unit)`;
+                effectivePriceEl.textContent = `(${formatCredits(execDetails.unitPrice, false)}/unit)`;
                 priceEl.className = `font-roboto-mono font-bold ${netProfit >= 0 ? 'profit-text' : 'loss-text'}`;
             } else {
                 priceEl.textContent = '⌬ +0';
@@ -229,9 +237,9 @@ export class UIMarketControl {
             }
 
             indicatorEl.innerHTML = renderIndicatorPills({
-                price: basePrice,
-                sellPrice: effectivePricePerUnit || this.getItemPrice(state, goodId, true),
-                galacticAvg: localTargetPrice, // Overriding static system average with living local baseline
+                price: parseInt(priceEl.dataset.basePrice, 10),
+                sellPrice: execDetails.unitPrice || this.getItemPrice(state, goodId, true),
+                galacticAvg: localTargetPrice,
                 playerItem: playerItem
             });
         }
@@ -241,8 +249,13 @@ export class UIMarketControl {
         const state = this.manager.lastKnownState;
         if (!state) return { totalPrice: 0, effectivePricePerUnit: 0, netProfit: 0 };
 
-        const basePrice = this.getItemPrice(state, goodId, true);
-        const effectivePrice = basePrice; 
+        const ms = this.manager.simulationService?.marketService;
+        const execDetails = ms 
+            ? ms.getExecutionPrice(state.currentLocationId, goodId, quantity, 'sell')
+            : { totalPrice: 0, unitPrice: 0 };
+            
+        let totalSaleValue = execDetails.totalPrice;
+        const effectivePrice = execDetails.unitPrice; 
 
         // --- FLEET OVERFLOW SYSTEM: EXACT COST BASIS SIMULATION ---
         const activeShipId = state.player.activeShipId;
@@ -261,7 +274,6 @@ export class UIMarketControl {
         }
 
         const evaluableQty = Math.min(quantity, totalOwnedQty);
-        const totalPrice = Math.floor(effectivePrice * evaluableQty);
 
         shipInventories.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
@@ -282,16 +294,17 @@ export class UIMarketControl {
             }
         }
 
-        let netProfit = totalPrice - exactCostBasis;
-        if (netProfit > 0) {
+        let profit = totalSaleValue - exactCostBasis;
+        if (profit > 0) {
             let totalBonus = (state.player.activePerks[PERK_IDS.TRADEMASTER] ? DB.PERKS[PERK_IDS.TRADEMASTER].profitBonus : 0) + (state.player.statModifiers?.profitBonus || 0);
-            netProfit += netProfit * totalBonus;
+            totalSaleValue += Math.floor(profit * totalBonus);
+            profit = totalSaleValue - exactCostBasis; 
         }
 
         return {
-            totalPrice,
+            totalPrice: totalSaleValue,
             effectivePricePerUnit: effectivePrice, 
-            netProfit
+            netProfit: profit
         };
     }
 
