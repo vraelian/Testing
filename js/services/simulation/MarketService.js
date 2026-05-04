@@ -82,28 +82,32 @@ export class MarketService {
     }
 
     /**
-     * Gets the effective price for a commodity at a location.
-     * Checks for active intel deal overrides first.
-     * Optionally applies player-specific modifiers (e.g. Signal Hacker).
+     * Gets the base unit price for a commodity at a location without volumetric slippage.
+     * Checks for active intel deal overrides, applies delays to extreme states, 
+     * and optionally applies player-specific modifiers (e.g. Signal Hacker).
      * @param {string} locationId The ID of the location.
      * @param {string} commodityId The ID of the commodity.
-     * @param {boolean} [applyModifiers=false] If true, applies active ship upgrade modifiers (Buy Price).
-     * @returns {number} The effective price.
+     * @param {boolean} [applyModifiers=false] If true, applies active ship upgrade modifiers.
+     * @param {string} [tradeType='buy'] The transaction direction for applying upgrade modifiers.
+     * @returns {number} The effective base price.
      */
-    getPrice(locationId, commodityId, applyModifiers = false) {
+    getPrice(locationId, commodityId, applyModifiers = false, tradeType = 'buy') {
         const state = this.gameState.getState();
         const deal = state.activeIntelDeal;
         let basePrice = this.gameState.market.prices[locationId]?.[commodityId] || 0;
 
-        // Apply temporary massive multipliers dynamically here, NOT in state evolution
         const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
         if (inventoryItem) {
-            if (inventoryItem.isDepleted) {
+            // PHASE 5: No Same-Day Reactions (Delay extreme modifiers by 7 days to match pressure)
+            const daysSinceInteraction = this.gameState.day - (inventoryItem.lastPlayerInteractionTimestamp || 0);
+            const delayPassed = daysSinceInteraction >= 7;
+
+            if (inventoryItem.isDepleted && delayPassed) {
                 const location = DB.MARKETS.find(m => m.id === locationId);
                 const panicMult = location?.ecoProfile?.panicMult ?? 1.5;
                 basePrice *= panicMult;
             }
-            if (inventoryItem.isSaturated) {
+            if (inventoryItem.isSaturated && delayPassed) {
                 basePrice *= 0.25;
             }
         }
@@ -119,9 +123,6 @@ export class MarketService {
         if (deal &&
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
-            
-            // If a deal is active, use the price (which is being fluctuated daily in evolveMarketPrices 
-            // around the overridePrice).
             price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
         }
 
@@ -130,38 +131,33 @@ export class MarketService {
             (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
             price = price * 1.10;
         }
-
         if (locationId === LOCATION_IDS.MARS &&
             (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
             price = price * 1.10;
         }
-
         if (locationId === LOCATION_IDS.SATURN &&
             (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
             price = price * 1.20;
         }
-
         if (locationId === LOCATION_IDS.PLUTO &&
             (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
             price = price * 1.25;
         }
-
         if (locationId === LOCATION_IDS.MERCURY &&
             commodityId === COMMODITY_IDS.WATER_ICE) {
             price = price * 1.40;
         }
-
         if (locationId === LOCATION_IDS.SUN &&
             (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
             price = price * 1.25;
         }
 
-        // 2. Upgrade Modifiers (Signal Hacker)
+        // 2. Upgrade Modifiers (Signal Hacker, etc.)
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
                  const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
-                 const mod = GameAttributes.getPriceModifier(upgrades, 'buy');
+                 const mod = GameAttributes.getPriceModifier(upgrades, tradeType);
                  price = price * mod;
              }
         }
@@ -183,6 +179,94 @@ export class MarketService {
         }
 
         return Math.max(absoluteFloor, Math.round(price));
+    }
+
+    /**
+     * PHASE 5: Unified Execution Engine.
+     * Evaluates Slippage, Wash-Trade Tariffs, and Situational Modifiers to determine
+     * the absolute final transaction value. This ensures UI prediction matches logic execution exactly.
+     */
+    getExecutionPrice(locationId, commodityId, quantity, transactionType) {
+        let baseUnitPrice = this.getPrice(locationId, commodityId, true, transactionType);
+        if (quantity <= 0) return { unitPrice: baseUnitPrice, totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
+
+        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
+        const good = DB.COMMODITIES.find(c => c.id === commodityId);
+        const market = DB.MARKETS.find(m => m.id === locationId);
+        
+        // 1. Synchronous Slippage
+        const [minAvail, maxAvail] = good.canonicalAvailability;
+        const modifier = market.availabilityModifier?.[commodityId] ?? 1.0;
+        const targetStock = Math.max(1, ((minAvail + maxAvail) / 2) * modifier);
+
+        const volumeRatio = quantity / targetStock;
+        // Cap slippage at 20%. 1% slip for every 1.5% of target stock traded.
+        const slippagePct = Math.min(0.20, (volumeRatio / 0.015) * 0.01); 
+        
+        let executionUnitPrice = baseUnitPrice;
+        if (transactionType === 'buy') {
+            executionUnitPrice *= (1 + slippagePct);
+        } else {
+            executionUnitPrice *= (1 - slippagePct);
+        }
+
+        // 2. Wash Trade Penalty
+        let washPenaltyPct = 0;
+        const sessionVol = inventoryItem.sessionNetVolume || 0;
+        const sessionDay = inventoryItem.sessionInteractionDay || 0;
+
+        if (sessionDay === this.gameState.day) {
+            if (transactionType === 'buy' && sessionVol > 0) {
+                washPenaltyPct = 0.05; // 5% Wash Penalty
+                executionUnitPrice *= (1 + washPenaltyPct);
+            } else if (transactionType === 'sell' && sessionVol < 0) {
+                washPenaltyPct = 0.05; // 5% Wash Penalty
+                executionUnitPrice *= (1 - washPenaltyPct);
+            }
+        }
+
+        let totalPrice = executionUnitPrice * quantity;
+
+        // 3. Situational Modifiers (Applied holistically to the total)
+        const state = this.gameState.getState();
+        if (transactionType === 'buy') {
+            const agePurchaseDiscount = state.player.statModifiers?.purchaseCost || 0;
+            if (agePurchaseDiscount > 0) totalPrice *= (1 - agePurchaseDiscount);
+
+            const systemState = state.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+            if (activeStateDef?.modifiers?.survivalGoodsDiscountMod && activeStateDef.modifiers.affectedCommodities?.includes(commodityId)) {
+                totalPrice *= activeStateDef.modifiers.survivalGoodsDiscountMod;
+            }
+
+            if (locationId === LOCATION_IDS.NEPTUNE && (commodityId === COMMODITY_IDS.PROPELLANT || commodityId === COMMODITY_IDS.PLASTEEL) && quantity > 50) {
+                totalPrice *= 0.90;
+            }
+
+            if (locationId === LOCATION_IDS.BELT && (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
+                totalPrice *= 0.95;
+            }
+        } else if (transactionType === 'sell') {
+            const systemState = state.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+            if (activeStateDef?.modifiers?.sellPriceBonusMod) {
+                totalPrice *= activeStateDef.modifiers.sellPriceBonusMod;
+            }
+
+            if (locationId === LOCATION_IDS.SUN && (commodityId === COMMODITY_IDS.GRAPHENE_LATTICES || commodityId === COMMODITY_IDS.PLASTEEL)) {
+                totalPrice *= 1.25;
+            }
+        }
+
+        totalPrice = Math.max(1, Math.floor(totalPrice));
+        const finalUnitPrice = totalPrice / quantity;
+
+        return {
+            unitPrice: finalUnitPrice,
+            totalPrice: totalPrice,
+            slippagePct: slippagePct,
+            washPenaltyPct: washPenaltyPct
+        };
     }
 
     /**
@@ -216,24 +300,21 @@ export class MarketService {
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
-                // Deterministic seed generator for this specific commodity iteration
                 const seedStr = economySeed !== null ? `${location.id}-${commodity.id}-${economySeed}` : null;
                 const seedHash = seedStr ? this._hashString(seedStr) : null;
                 const randomVal = () => seedHash !== null ? this._seededRandom(seedHash) : Math.random();
 
-                // Enforce Intel Price Lock
                 const activeDeal = this.gameState.activeIntelDeal;
                 if (activeDeal &&
                      activeDeal.locationId === location.id &&
                      activeDeal.commodityId === commodity.id)
                 {
                     const basePrice = activeDeal.overridePrice;
-                    const fluctuation = 0.03; // 3%
+                    const fluctuation = 0.03; 
                     const minPrice = basePrice * (1 - fluctuation);
                     const maxPrice = basePrice * (1 + fluctuation);
                     
                     const fluctuatedPrice = randomVal() * (maxPrice - minPrice) + minPrice;
-                    
                     this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
                     return; 
                 }
@@ -241,10 +322,8 @@ export class MarketService {
                 const inventoryItem = this.gameState.market.inventory[location.id][commodity.id];
                 const price = this.gameState.market.prices[location.id][commodity.id];
                 const avg = this.gameState.market.galacticAverages[commodity.id];
-
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
 
-                // SYSTEM STATES V3 HOOKS (Prices)
                 const systemState = this.gameState.systemStates || this.gameState.systemState;
                 const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
                 const isTargetLocation = systemState && systemState.targetLocations?.includes(location.id);
@@ -269,16 +348,10 @@ export class MarketService {
                 const localBaseline = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
-                
-                if (location.id === LOCATION_IDS.EXCHANGE) {
-                    volatility *= 3.0; // 3x Price Volatility at The Exchange
-                }
+                if (location.id === LOCATION_IDS.EXCHANGE) volatility *= 3.0; 
 
                 let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH * activeStateMeanReversionMod;
-                
-                if (location.ecoProfile?.meanReversionMod) {
-                    meanReversion *= location.ecoProfile.meanReversionMod;
-                }
+                if (location.ecoProfile?.meanReversionMod) meanReversion *= location.ecoProfile.meanReversionMod;
 
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
@@ -291,11 +364,10 @@ export class MarketService {
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
 
-                // Variable Reversion Delay (Price Lock)
                 let isLocked = this.gameState.day < inventoryItem.priceLockEndDay;
                 if (isLocked) {
                     reversionEffect = 0;
-                    randomFluctuation = 0; // Strict enforcement of Price Lock prevents unconstrained jitter
+                    randomFluctuation = 0;
                 }
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
@@ -310,7 +382,6 @@ export class MarketService {
                     inventoryItem.hoverUntilDay = 0;
                 }
 
-                // Delayed Player Pressure (The Snap)
                 let pressureEffect = 0;
                 const PLAYER_PRESSURE_STRENGTH = 0.50; 
                 
@@ -320,10 +391,8 @@ export class MarketService {
                     }
                 }
 
-                // Calculate the true simulation baseline price
                 let newPrice = price + randomFluctuation + reversionEffect + pressureEffect;
                 
-                // --- PHASE 1: Tier-Scaled Intrinsic Support (Evolution Floor) ---
                 const baseMin = commodity.basePriceRange[0];
                 const intrinsicFloor = Math.floor(baseMin * (0.05 + (commodity.tier * 0.05)));
                 const finalRoundedPrice = Math.max(intrinsicFloor, Math.round(newPrice));
@@ -359,12 +428,6 @@ export class MarketService {
                     }
                 }
 
-                /**
-                 * @description The Hermetic Seal & Supply-Tethered Slow Burn.
-                 * Pressure is sealed at 100% for 7 days. Once the delay ends, the market shock "snaps" into effect.
-                 * The decay of this pressure is no longer an arbitrary daily drop; it is dynamically tethered to 
-                 * the market's physical daily restocking rate (supply and demand).
-                 */
                 if (inventoryItem.marketPressure !== 0) {
                     if (this.gameState.day >= inventoryItem.lastPlayerInteractionTimestamp + 7) {
                         let decayMod = 1.0;
@@ -372,13 +435,8 @@ export class MarketService {
                             decayMod = 1.0 / location.ecoProfile.recoveryMod;
                         }
 
-                        // Fetch the location's specific physical restock speed for this good
                         let replenishRate = location.ecoProfile?.commodityReplenishRates?.[commodity.id] ?? location.ecoProfile?.replenishRate ?? 0.10;
-                        
-                        // Convert weekly physical restock to daily percentage (e.g., 10% weekly = ~1.4% daily)
                         let dailyRestockPercent = replenishRate / 7;
-                        
-                        // Price pressure eases exactly as fast as new supply physically arrives
                         let dynamicDecayMultiplier = 1.0 - (dailyRestockPercent * decayMod);
 
                         inventoryItem.marketPressure *= dynamicDecayMultiplier;
@@ -403,13 +461,11 @@ export class MarketService {
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
 
-                // SYSTEM STATES V3 HOOKS (Replenishment)
                 const systemState = this.gameState.systemStates || this.gameState.systemState;
                 const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
                 const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
 
                 let targetStockMod = 1.0;
-                
                 let replenishRate = market.ecoProfile?.commodityReplenishRates?.[c.id] ?? market.ecoProfile?.replenishRate ?? 0.10;
 
                 if (activeStateDef && activeStateDef.modifiers) {
@@ -424,8 +480,6 @@ export class MarketService {
                     if (isTargetLocation && mods.localTargetStockMod) targetStockMod *= mods.localTargetStockMod;
                 }
 
-                // --- PHASE 3: 8-Month Hard Reset Enforcer ---
-                // Replaced > 365 with > 240
                 if (inventoryItem.lastPlayerInteractionTimestamp > 0 && (this.gameState.day - inventoryItem.lastPlayerInteractionTimestamp) > 240) {
                     inventoryItem.quantity = this._calculateBaselineStock(market, c) * targetStockMod;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
@@ -448,21 +502,12 @@ export class MarketService {
                     }
 
                     const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5); 
-                    
                     const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
-
                     const targetStock = baseMeanStock * marketAdaptationFactor * (1 + supplyBonus) * targetStockMod;
-
                     const difference = targetStock - inventoryItem.quantity;
 
-                    /** * @description Converts weekly replenish rate to daily fractional execution for a multi-week crawl.
-                     */
                     const dailyReplenishAmount = difference * (replenishRate / 7); 
                     
-                    /**
-                     * @description Tier-scaled, decaying emergency restock to prevent strict zero-stock lockouts 
-                     * without disrupting the macro-economic scarcity curve.
-                     */
                     let emergencyStock = 0;
                     if (inventoryItem.quantity <= 0 || inventoryItem.isDepleted) {
                         let daysSinceEvent = 1;
@@ -490,11 +535,6 @@ export class MarketService {
                     }
                 }
 
-                /**
-                 * @description Market fluctuation noise is decoupled from the current absolute inventory volume
-                 * and instead scales off the natural baseline capacity. This prevents geometric explosions 
-                 * or evaporations of stock when a player dumps anomalous cargo volumes (saturation).
-                 */
                 if (!market.ecoProfile?.disableFluctuation) {
                     const [minAvail, maxAvail] = c.canonicalAvailability;
                     const modifier = market.availabilityModifier?.[c.id] ?? 1.0;
@@ -558,9 +598,6 @@ export class MarketService {
         
         if (transactionType === 'buy') {
             inventoryItem.marketPressure -= pressureChange;
-            /**
-             * @description Synchronous depletion evaluation linked to the purchase volume.
-             */
             this.checkDepletion(good, inventoryItem, quantity, this.gameState.day);
         } else { 
             inventoryItem.marketPressure += pressureChange;
@@ -587,7 +624,6 @@ export class MarketService {
             }
         }
         
-        // --- PHASE 2: Asymptotic Market Pressure Limit ---
         inventoryItem.marketPressure = Math.max(-2.5, Math.min(4.0, inventoryItem.marketPressure));
 
         const baseLock = 60;
@@ -611,7 +647,6 @@ export class MarketService {
             inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
         }
 
-        // TELEMETRY: Gated execution
         if (this.gameState.uiState?.enableEconomicTelemetry) {
             if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
             
@@ -634,10 +669,6 @@ export class MarketService {
 
     /**
      * Checks if a purchase triggers a market depletion event.
-     * @param {object} good - The static commodity data (from DB).
-     * @param {object} inventoryItem - The dynamic inventory item from gameState.
-     * @param {number} purchaseQuantity - The volume of the player's purchase.
-     * @param {number} currentDay - The current game day.
      */
     checkDepletion(good, inventoryItem, purchaseQuantity, currentDay) {
         const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
@@ -654,10 +685,6 @@ export class MarketService {
         const depletionThreshold = targetStock * 0.08;
         const depletionBuyQuantity = purchaseQuantity; 
 
-        /**
-         * @description A market cannot trigger panic pricing unless the player actually 
-         * bought the final unit on the shelf, ensuring the scarcity curve behaves realistically.
-         */
         if (inventoryItem.quantity <= 0 && depletionBuyQuantity >= depletionThreshold && currentDay > (inventoryItem.depletionBonusDay + 365)) {
             inventoryItem.isDepleted = true; 
             inventoryItem.depletionDay = currentDay;
@@ -673,20 +700,12 @@ export class MarketService {
         }
     }
 
-    /**
-     * Calculates the baseline (initial or reset) stock for a commodity at a specific location.
-     * @private
-     */
     _calculateBaselineStock(market, commodity) {
         const [min, max] = commodity.canonicalAvailability;
         const modifier = market.availabilityModifier?.[commodity.id] ?? 1.0;
         return Math.floor(skewedRandom(min, max) * modifier);
     }
 
-    /**
-     * Records the current day's price for each commodity to its historical data log for graphing.
-     * @private
-     */
     _recordPriceHistory(marketId = null) {
         if (!this.gameState || !this.gameState.market) return;
         const targetMarketId = marketId || this.gameState.currentLocationId;
@@ -719,10 +738,6 @@ export class MarketService {
         });
     }
 
-    /**
-     * Updates the shipyard stock for all unlocked locations on a weekly basis.
-     * @private
-     */
     _updateShipyardStock() {
         const { player } = this.gameState;
         player.unlockedLocationIds.forEach(locationId => {
@@ -750,13 +765,6 @@ export class MarketService {
         });
     }
 
-    /**
-     * Calculates the baseline target price for a commodity at a location without daily fluctuations.
-     * Required for rendering procedural baselines on the UI graph.
-     * @param {string} locationId 
-     * @param {string} commodityId 
-     * @returns {number}
-     */
     getLocalTargetPrice(locationId, commodityId) {
         const location = DB.MARKETS.find(m => m.id === locationId);
         if (!location) return 0;
@@ -785,12 +793,6 @@ export class MarketService {
         return (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
     }
 
-    /**
-     * Evaluates when a market achieves Glut (oversaturation) for UI warnings.
-     * @param {string} locationId 
-     * @param {string} commodityId 
-     * @returns {number} The quantity threshold for market glut.
-     */
     getGlutThreshold(locationId, commodityId) {
         const location = DB.MARKETS.find(m => m.id === locationId);
         const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
@@ -803,28 +805,15 @@ export class MarketService {
         const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
         let pressureForAdaptation = inventoryItem ? inventoryItem.marketPressure : 0;
         
-        // Match the logic in applyMarketImpact
         if (pressureForAdaptation > 0) pressureForAdaptation = 0; 
         
         const marketAdaptationFactor = 1 - Math.min(0.5, pressureForAdaptation * 0.5);
         const supplyBonus = this.gameState.player.statModifiers?.commoditySupply || 0;
         
         const targetStock = Math.max(1, baseMeanStock * marketAdaptationFactor * (1 + supplyBonus));
-        
-        // 3.0x multiplier aligns with the saturation trigger in applyMarketImpact
         return targetStock * 3.0; 
     }
 
-    /**
-     * Extrapolates forward market trajectory and combines it with recent historical data.
-     * Required by UIMarketControl to render the market forecast graph.
-     * Now includes deterministic noise to ensure visual stability across UI renders.
-     * @param {string} locationId 
-     * @param {string} commodityId 
-     * @param {number} historyDays 
-     * @param {number} projectedDays 
-     * @returns {Object} { points: Array, footprints: Array }
-     */
     generateCurveData(locationId, commodityId, historyDays, projectedDays) {
         const currentDay = this.gameState.day;
         const history = this.gameState.market.priceHistory[locationId]?.[commodityId] || [];
@@ -833,14 +822,13 @@ export class MarketService {
         const historicalData = history.filter(entry => entry.day >= startDay).map(entry => ({
             day: entry.day,
             price: entry.price,
-            isLocked: false // History assumes standard fluctuation unless manually logged
+            isLocked: false 
         }));
 
         let lastPrice = historicalData.length > 0 
             ? historicalData[historicalData.length - 1].price 
             : (this.gameState.market.prices[locationId]?.[commodityId] || 0);
             
-        // --- RENDERING GAP FIX: Push current day if absent to anchor footprints instantly ---
         if (historicalData.length === 0 || historicalData[historicalData.length - 1].day < currentDay) {
             const livePrice = this.gameState.market.prices[locationId]?.[commodityId] || lastPrice;
             historicalData.push({ day: currentDay, price: livePrice, isLocked: false });
@@ -866,23 +854,18 @@ export class MarketService {
         const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
         const priceRange = commodity ? (commodity.basePriceRange[1] - commodity.basePriceRange[0]) : localBaseline * 0.5;
         
-        // DAMPENING: Halve the volatility scalar for the projection so the visual signal isn't completely lost to noise.
         const volatility = GAME_RULES.DAILY_PRICE_VOLATILITY * 0.5;
         
-        // --- PHASE 1: Tier-Scaled Intrinsic Support ---
         const baseMin = commodity ? commodity.basePriceRange[0] : 1;
         const tier = commodity ? commodity.tier : 1;
         const intrinsicFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
         
-        // Procedurally generate future points using current decay/reversion math
         for (let i = 1; i <= projectedDays; i++) {
             const projDay = currentDay + i;
             let isLocked = projDay < lockEndDay;
             
-            // Determine reversion pull towards local baseline (paused if locked)
             let reversionEffect = (localBaseline - currentProjPrice) * meanReversion;
             
-            // --- DETERMINISTIC NOISE INJECTION ---
             const seedStr = `${locationId}-${commodityId}-${projDay}`;
             const seedHash = this._hashString(seedStr);
             const pseudoRandom = this._seededRandom(seedHash);
@@ -891,10 +874,9 @@ export class MarketService {
 
             if (isLocked) {
                 reversionEffect = 0;
-                randomFluctuation = 0; // Curve must match strict lock enforcement
+                randomFluctuation = 0; 
             }
             
-            // Determine delayed supply pressure impact
             let pressureEffect = 0;
             daysSinceInteraction++;
             if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
@@ -909,7 +891,6 @@ export class MarketService {
                 isLocked: isLocked
             });
             
-            // Apply dynamic visual decay extrapolation for the graph curve
             if (activePressure !== 0 && daysSinceInteraction >= 7) {
                 let decayMod = 1.0;
                 if (activePressure > 0 && location?.ecoProfile?.recoveryMod) {
@@ -926,7 +907,6 @@ export class MarketService {
 
         const curveData = [...historicalData, ...projection];
 
-        // Extrapolate Footprints for UI marker rendering
         let footprints = [];
         const sysState = this.gameState.systemStates || this.gameState.systemState;
         
