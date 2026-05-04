@@ -14928,7 +14928,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.17';
+export const APP_VERSION = '38.19';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -17383,6 +17383,36 @@ export const PHASE_TWO_MISSIONS = {
             buttonText: "Accept Offer"
         },
         rewards: [ { "type": "fill_fleet_fuel" } ]
+    },
+    'mission_21': {
+        id: "mission_21",
+        name: "Lab Supply",
+        type: "PROCUREMENT",
+        host: "STATION",
+        portraitId: "AI_4",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain [playerName], the medical manufacturer I work for requires your logistical expertise once more. We have established a remote, sub-surface laboratory deep within a crater on Mercury to conduct highly sensitive biological research.<br><br>We urgently require a bulk delivery of Hydroponics to sustain the lab's operations.<br><br>The Guild is currently imposing an embargo, heavily complicating trade routes, but we will compensate you generously for navigating these artificial constraints.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_20" } ],
+        onAccept: [ 
+            { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
+            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "GUILD_EMBARGO" }
+        ],
+        onComplete: [ 
+            { "type": "END_SYSTEM_STATE" }
+        ],
+        objectives: [ 
+            { "id": "deliver_hydroponics", "type": "DELIVER_ITEM", "goodId": "hydroponics", "quantity": 15, "target": "loc_mercury" } 
+        ],
+        completion: {
+            host: "GUILD",
+            portraitId: "Audita_1",
+            locationId: "loc_mercury",
+            title: "A Syndicate Shell",
+            text: "Captain! Your recent delivery to Mercury has been flagged! That medical manufacturer you've been working with is a known Venusian Syndicate shell company.<br><br>A local mining whistleblower just exposed their sub-surface operation as an <b>illegal organ cloning lab</b>. Your naive assistance has equipped a criminal enterprise... I suggest you exercise better judgment in the future, lest the Guild hold you as an accomplice.",
+            buttonText: "Oops"
+        },
+        rewards: [ { "type": "credits", "amount": 35000 } ]
     }
 };
 --- END OF FILE: ./js/data/missions/phase_two.js ---
@@ -22432,7 +22462,7 @@ export class UIMissionControl {
                 modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
                 const typeEl = modal.querySelector('#mission-modal-type');
@@ -22605,13 +22635,13 @@ export class UIMissionControl {
                     objectivesEl.style.display = 'none';
                 }
 
-                // --- SCROLLABILITY WRAPPER ---
-                const descEl = modal.querySelector('#mission-modal-description');
-                let outerWrapper = modal.querySelector('.mission-scroll-outer');
-                let wrapper = modal.querySelector('.mission-scroll-wrapper');
-                let indicator = modal.querySelector('.scroll-indicator-arrow');
+               // --- SCROLLABILITY WRAPPER ---
+               const descEl = modal.querySelector('#mission-modal-description');
+               let outerWrapper = modal.querySelector('.mission-scroll-outer');
+               let wrapper = modal.querySelector('.mission-scroll-wrapper');
+               let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                if (!wrapper && descEl && objectivesEl) {
+               if (!wrapper && descEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
@@ -22621,35 +22651,38 @@ export class UIMissionControl {
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
-                    wrapper.appendChild(descEl);
-                    wrapper.appendChild(objectivesEl);
                     
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
                     indicator.innerHTML = '&#8964;';
                     indicator.style.transition = 'opacity 0.2s ease-in-out';
                     outerWrapper.appendChild(indicator);
-                }
+               }
 
-                if (wrapper && indicator) {
-                    wrapper.onscroll = () => {
-                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
-                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                    };
-                    
-                    wrapper.scrollTop = 0; 
-                    setTimeout(() => {
-                        wrapper.scrollTop = 0; 
-                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
-                            indicator.style.display = 'block';
-                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
-                            indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                        } else {
-                            indicator.style.display = 'none';
-                            indicator.style.opacity = '0';
-                        }
-                    }, 150); 
-                }
+               // Ensure elements are unconditionally inside the wrapper
+               if (wrapper) {
+                   if (descEl) wrapper.appendChild(descEl);
+                   if (objectivesEl) wrapper.appendChild(objectivesEl);
+                   if (rewardsEl) wrapper.appendChild(rewardsEl);
+                   
+                   wrapper.onscroll = () => {
+                       const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                       indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                   };
+                   
+                   wrapper.scrollTop = 0; 
+                   setTimeout(() => {
+                       wrapper.scrollTop = 0; 
+                       if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                           indicator.style.display = 'block';
+                           const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                           indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                       } else {
+                           indicator.style.display = 'none';
+                           indicator.style.opacity = '0';
+                       }
+                   }, 150); 
+               }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
@@ -22855,8 +22888,11 @@ export class UIMissionControl {
         const parsedTitle = this._parseMissionText(mission.completion.title, gameState);
         const parsedText = this._parseMissionText(mission.completion.text, gameState);
 
+        const activePortraitId = mission.completion.portraitId || mission.portraitId;
+        const activeHost = mission.completion.host || mission.host;
+
         const options = {
-           portraitId: mission.portraitId,
+           portraitId: activePortraitId,
            dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
@@ -22865,7 +22901,7 @@ export class UIMissionControl {
                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-               const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
+               const hostClass = `host-${activeHost.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                modalContent.classList.add(hostClass);
 
                modal.querySelector('#mission-modal-title').textContent = parsedTitle;
@@ -22937,7 +22973,7 @@ export class UIMissionControl {
                let wrapper = modal.querySelector('.mission-scroll-wrapper');
                let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-               if (!wrapper && descEl && rewardsEl) {
+               if (!wrapper && descEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
@@ -22947,9 +22983,6 @@ export class UIMissionControl {
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
-                    wrapper.appendChild(descEl);
-                    if(objectivesEl) wrapper.appendChild(objectivesEl);
-                    wrapper.appendChild(rewardsEl);
                     
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
@@ -22958,7 +22991,12 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                }
 
-               if (wrapper && indicator) {
+               // Ensure elements are unconditionally inside the wrapper
+               if (wrapper) {
+                   if (descEl) wrapper.appendChild(descEl);
+                   if (objectivesEl) wrapper.appendChild(objectivesEl);
+                   if (rewardsEl) wrapper.appendChild(rewardsEl);
+                   
                    wrapper.onscroll = () => {
                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
@@ -24990,7 +25028,7 @@ export class UIMarketControl {
 
     /**
      * Updates the dynamic pricing display based on quantity input, injecting
-     * Phase 5 Slippage and Wash-Trade warnings.
+     * Phase 5 Wash-Trade warnings. Slippage is applied mathematically but hidden from the UI.
      * @param {string} goodId 
      * @param {number} quantity 
      * @param {string} mode 
@@ -25019,7 +25057,7 @@ export class UIMarketControl {
             avgCostEl.classList.toggle('visible', mode === 'sell');
         }
 
-        // --- PHASE 5: Dynamic Wash-Trade and Slippage Warning Injection ---
+        // --- PHASE 5: Dynamic Wash-Trade Warning Injection (Slippage Hidden) ---
         if (availEl) {
             const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
             const ownQty = playerItem ? playerItem.quantity : 0;
@@ -25028,11 +25066,9 @@ export class UIMarketControl {
             
             if (quantity > 0) {
                 let warnings = [];
-                if (execDetails.slippagePct > 0) {
-                    warnings.push(`Slip: -${(execDetails.slippagePct * 100).toFixed(1)}%`);
-                }
+                // Slippage UI explicitly removed per instructions. Applied computationally under the hood.
                 if (execDetails.washPenaltyPct > 0) {
-                    warnings.push(`Fee: -${(execDetails.washPenaltyPct * 100).toFixed(0)}%`);
+                    warnings.push(`Restocking Fee: -${(execDetails.washPenaltyPct * 100).toFixed(0)}%`);
                 }
                 if (warnings.length > 0) {
                     infoString += ` <span class="text-amber-400 font-bold ml-2">(${warnings.join(' | ')})</span>`;
@@ -33679,7 +33715,7 @@ export class SolStationService {
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
- * UPDATED: Includes new QUEUE_STORY_EVENT action hooks during accept/complete.
+ * UPDATED: Includes new QUEUE_STORY_EVENT and UNLOCK_LOCATION action hooks during accept/complete.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -33936,6 +33972,12 @@ export class MissionService {
                 } else if (action.type === 'QUEUE_STORY_EVENT') {
                     if (this.simulationService) {
                         this.simulationService.queueStoryEvent(action.eventId);
+                    }
+                } else if (action.type === 'UNLOCK_LOCATION') {
+                    if (!this.gameState.player.unlockedLocationIds.includes(action.locationId)) {
+                        this.gameState.player.unlockedLocationIds.push(action.locationId);
+                        this.logger.info.player(this.gameState.day, 'LOCATION_UNLOCKED', `Unlocked location: ${action.locationId} via mission action.`);
+                        this.gameState.setState({});
                     }
                 }
             });
@@ -35754,17 +35796,19 @@ export class MarketService {
         if (quantity <= 0) return { unitPrice: baseUnitPrice, totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
 
         const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
-        const good = DB.COMMODITIES.find(c => c.id === commodityId);
-        const market = DB.MARKETS.find(m => m.id === locationId);
         
-        // 1. Synchronous Slippage
-        const [minAvail, maxAvail] = good.canonicalAvailability;
-        const modifier = market.availabilityModifier?.[commodityId] ?? 1.0;
-        const targetStock = Math.max(1, ((minAvail + maxAvail) / 2) * modifier);
-
-        const volumeRatio = quantity / targetStock;
-        // Cap slippage at 20%. 1% slip for every 1.5% of target stock traded.
-        const slippagePct = Math.min(0.20, (volumeRatio / 0.015) * 0.01); 
+        // 1. Synchronous Slippage (Under the hood)
+        const currentStock = Math.max(1, inventoryItem.quantity); // Fallback to 1 to prevent division by zero
+        let slippagePct = 0;
+        const slippageThreshold = currentStock * 0.65;
+        
+        if (quantity > slippageThreshold) {
+            const excessVolume = quantity - slippageThreshold;
+            const excessRatio = excessVolume / currentStock;
+            
+            // Slips by 0.5% for every 5% of excess volume traded beyond the 65% threshold, capped at 5%
+            slippagePct = Math.min(0.05, (excessRatio / 0.05) * 0.005); 
+        }
         
         let executionUnitPrice = baseUnitPrice;
         if (transactionType === 'buy') {
@@ -35780,10 +35824,10 @@ export class MarketService {
 
         if (sessionDay === this.gameState.day) {
             if (transactionType === 'buy' && sessionVol > 0) {
-                washPenaltyPct = 0.05; // 5% Wash Penalty
+                washPenaltyPct = 0.05; // 5% Restocking Fee
                 executionUnitPrice *= (1 + washPenaltyPct);
             } else if (transactionType === 'sell' && sessionVol < 0) {
-                washPenaltyPct = 0.05; // 5% Wash Penalty
+                washPenaltyPct = 0.05; // 5% Restocking Fee
                 executionUnitPrice *= (1 - washPenaltyPct);
             }
         }
@@ -49995,11 +50039,13 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [38.17] - 2026-5-3
+# [38.19] - 2026-5-4
 -  PWA view fixes (web version)
 -  updated tutorial writing
 -  updated market behaviors
 -  updated bot logic
+-  added mission 21
+-  updated mission logic
 
 # [38.13] - 2026-5-1
 -  bug fixes

@@ -153,7 +153,7 @@ export class UIMarketControl {
 
     /**
      * Updates the dynamic pricing display based on quantity input, injecting
-     * Phase 5 Slippage and Wash-Trade warnings.
+     * Phase 5 Wash-Trade warnings. Slippage is applied mathematically but hidden from the UI.
      * @param {string} goodId 
      * @param {number} quantity 
      * @param {string} mode 
@@ -182,7 +182,7 @@ export class UIMarketControl {
             avgCostEl.classList.toggle('visible', mode === 'sell');
         }
 
-        // --- PHASE 5: Dynamic Wash-Trade and Slippage Warning Injection ---
+        // --- PHASE 5: Dynamic Wash-Trade Warning Injection (Slippage Hidden) ---
         if (availEl) {
             const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
             const ownQty = playerItem ? playerItem.quantity : 0;
@@ -191,11 +191,9 @@ export class UIMarketControl {
             
             if (quantity > 0) {
                 let warnings = [];
-                if (execDetails.slippagePct > 0) {
-                    warnings.push(`Slip: -${(execDetails.slippagePct * 100).toFixed(1)}%`);
-                }
+                // Slippage UI explicitly removed per instructions. Applied computationally under the hood.
                 if (execDetails.washPenaltyPct > 0) {
-                    warnings.push(`Fee: -${(execDetails.washPenaltyPct * 100).toFixed(0)}%`);
+                    warnings.push(`Restocking Fee: -${(execDetails.washPenaltyPct * 100).toFixed(0)}%`);
                 }
                 if (warnings.length > 0) {
                     infoString += ` <span class="text-amber-400 font-bold ml-2">(${warnings.join(' | ')})</span>`;
