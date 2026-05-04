@@ -65,5 +65,35 @@ export const PHASE_TWO_MISSIONS = {
             buttonText: "Accept Offer"
         },
         rewards: [ { "type": "fill_fleet_fuel" } ]
+    },
+    'mission_21': {
+        id: "mission_21",
+        name: "Lab Supply",
+        type: "PROCUREMENT",
+        host: "STATION",
+        portraitId: "AI_4",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain [playerName], the medical manufacturer I work for requires your logistical expertise once more. We have established a remote, sub-surface laboratory deep within a crater on Mercury to conduct highly sensitive biological research.<br><br>We urgently require a bulk delivery of Hydroponics to sustain the lab's operations.<br><br>The Guild is currently imposing an embargo, heavily complicating trade routes, but we will compensate you generously for navigating these artificial constraints.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_20" } ],
+        onAccept: [ 
+            { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
+            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "GUILD_EMBARGO" }
+        ],
+        onComplete: [ 
+            { "type": "END_SYSTEM_STATE" }
+        ],
+        objectives: [ 
+            { "id": "deliver_hydroponics", "type": "DELIVER_ITEM", "goodId": "hydroponics", "quantity": 15, "target": "loc_mercury" } 
+        ],
+        completion: {
+            host: "GUILD",
+            portraitId: "Audita_1",
+            locationId: "loc_mercury",
+            title: "A Syndicate Shell",
+            text: "Captain! Your recent delivery to Mercury has been flagged! That medical manufacturer you've been working with is a known Venusian Syndicate shell company.<br><br>A local mining whistleblower just exposed their sub-surface operation as an <b>illegal organ cloning lab</b>. Your naive assistance has equipped a criminal enterprise... I suggest you exercise better judgment in the future, lest the Guild hold you as an accomplice.",
+            buttonText: "Oops"
+        },
+        rewards: [ { "type": "credits", "amount": 35000 } ]
     }
 };

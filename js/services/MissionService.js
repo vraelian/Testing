@@ -2,7 +2,7 @@
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
- * UPDATED: Includes new QUEUE_STORY_EVENT action hooks during accept/complete.
+ * UPDATED: Includes new QUEUE_STORY_EVENT and UNLOCK_LOCATION action hooks during accept/complete.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -259,6 +259,12 @@ export class MissionService {
                 } else if (action.type === 'QUEUE_STORY_EVENT') {
                     if (this.simulationService) {
                         this.simulationService.queueStoryEvent(action.eventId);
+                    }
+                } else if (action.type === 'UNLOCK_LOCATION') {
+                    if (!this.gameState.player.unlockedLocationIds.includes(action.locationId)) {
+                        this.gameState.player.unlockedLocationIds.push(action.locationId);
+                        this.logger.info.player(this.gameState.day, 'LOCATION_UNLOCKED', `Unlocked location: ${action.locationId} via mission action.`);
+                        this.gameState.setState({});
                     }
                 }
             });

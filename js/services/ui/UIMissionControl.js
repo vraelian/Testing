@@ -337,7 +337,7 @@ export class UIMissionControl {
                 modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                 modalContent.classList.add(hostClass);
 
                 const typeEl = modal.querySelector('#mission-modal-type');
@@ -510,13 +510,13 @@ export class UIMissionControl {
                     objectivesEl.style.display = 'none';
                 }
 
-                // --- SCROLLABILITY WRAPPER ---
-                const descEl = modal.querySelector('#mission-modal-description');
-                let outerWrapper = modal.querySelector('.mission-scroll-outer');
-                let wrapper = modal.querySelector('.mission-scroll-wrapper');
-                let indicator = modal.querySelector('.scroll-indicator-arrow');
+               // --- SCROLLABILITY WRAPPER ---
+               const descEl = modal.querySelector('#mission-modal-description');
+               let outerWrapper = modal.querySelector('.mission-scroll-outer');
+               let wrapper = modal.querySelector('.mission-scroll-wrapper');
+               let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                if (!wrapper && descEl && objectivesEl) {
+               if (!wrapper && descEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
@@ -526,35 +526,38 @@ export class UIMissionControl {
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
-                    wrapper.appendChild(descEl);
-                    wrapper.appendChild(objectivesEl);
                     
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
                     indicator.innerHTML = '&#8964;';
                     indicator.style.transition = 'opacity 0.2s ease-in-out';
                     outerWrapper.appendChild(indicator);
-                }
+               }
 
-                if (wrapper && indicator) {
-                    wrapper.onscroll = () => {
-                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
-                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                    };
-                    
-                    wrapper.scrollTop = 0; 
-                    setTimeout(() => {
-                        wrapper.scrollTop = 0; 
-                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
-                            indicator.style.display = 'block';
-                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
-                            indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                        } else {
-                            indicator.style.display = 'none';
-                            indicator.style.opacity = '0';
-                        }
-                    }, 150); 
-                }
+               // Ensure elements are unconditionally inside the wrapper
+               if (wrapper) {
+                   if (descEl) wrapper.appendChild(descEl);
+                   if (objectivesEl) wrapper.appendChild(objectivesEl);
+                   if (rewardsEl) wrapper.appendChild(rewardsEl);
+                   
+                   wrapper.onscroll = () => {
+                       const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                       indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                   };
+                   
+                   wrapper.scrollTop = 0; 
+                   setTimeout(() => {
+                       wrapper.scrollTop = 0; 
+                       if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                           indicator.style.display = 'block';
+                           const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                           indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                       } else {
+                           indicator.style.display = 'none';
+                           indicator.style.opacity = '0';
+                       }
+                   }, 150); 
+               }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
@@ -760,8 +763,11 @@ export class UIMissionControl {
         const parsedTitle = this._parseMissionText(mission.completion.title, gameState);
         const parsedText = this._parseMissionText(mission.completion.text, gameState);
 
+        const activePortraitId = mission.completion.portraitId || mission.portraitId;
+        const activeHost = mission.completion.host || mission.host;
+
         const options = {
-           portraitId: mission.portraitId,
+           portraitId: activePortraitId,
            dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
@@ -770,7 +776,7 @@ export class UIMissionControl {
                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-               const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-N]/g, '')}`;
+               const hostClass = `host-${activeHost.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                modalContent.classList.add(hostClass);
 
                modal.querySelector('#mission-modal-title').textContent = parsedTitle;
@@ -842,7 +848,7 @@ export class UIMissionControl {
                let wrapper = modal.querySelector('.mission-scroll-wrapper');
                let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-               if (!wrapper && descEl && rewardsEl) {
+               if (!wrapper && descEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
@@ -852,9 +858,6 @@ export class UIMissionControl {
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
-                    wrapper.appendChild(descEl);
-                    if(objectivesEl) wrapper.appendChild(objectivesEl);
-                    wrapper.appendChild(rewardsEl);
                     
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
@@ -863,7 +866,12 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                }
 
-               if (wrapper && indicator) {
+               // Ensure elements are unconditionally inside the wrapper
+               if (wrapper) {
+                   if (descEl) wrapper.appendChild(descEl);
+                   if (objectivesEl) wrapper.appendChild(objectivesEl);
+                   if (rewardsEl) wrapper.appendChild(rewardsEl);
+                   
                    wrapper.onscroll = () => {
                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';

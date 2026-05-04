@@ -191,17 +191,19 @@ export class MarketService {
         if (quantity <= 0) return { unitPrice: baseUnitPrice, totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
 
         const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
-        const good = DB.COMMODITIES.find(c => c.id === commodityId);
-        const market = DB.MARKETS.find(m => m.id === locationId);
         
-        // 1. Synchronous Slippage
-        const [minAvail, maxAvail] = good.canonicalAvailability;
-        const modifier = market.availabilityModifier?.[commodityId] ?? 1.0;
-        const targetStock = Math.max(1, ((minAvail + maxAvail) / 2) * modifier);
-
-        const volumeRatio = quantity / targetStock;
-        // Cap slippage at 20%. 1% slip for every 1.5% of target stock traded.
-        const slippagePct = Math.min(0.20, (volumeRatio / 0.015) * 0.01); 
+        // 1. Synchronous Slippage (Under the hood)
+        const currentStock = Math.max(1, inventoryItem.quantity); // Fallback to 1 to prevent division by zero
+        let slippagePct = 0;
+        const slippageThreshold = currentStock * 0.65;
+        
+        if (quantity > slippageThreshold) {
+            const excessVolume = quantity - slippageThreshold;
+            const excessRatio = excessVolume / currentStock;
+            
+            // Slips by 0.5% for every 5% of excess volume traded beyond the 65% threshold, capped at 5%
+            slippagePct = Math.min(0.05, (excessRatio / 0.05) * 0.005); 
+        }
         
         let executionUnitPrice = baseUnitPrice;
         if (transactionType === 'buy') {
@@ -217,10 +219,10 @@ export class MarketService {
 
         if (sessionDay === this.gameState.day) {
             if (transactionType === 'buy' && sessionVol > 0) {
-                washPenaltyPct = 0.05; // 5% Wash Penalty
+                washPenaltyPct = 0.05; // 5% Restocking Fee
                 executionUnitPrice *= (1 + washPenaltyPct);
             } else if (transactionType === 'sell' && sessionVol < 0) {
-                washPenaltyPct = 0.05; // 5% Wash Penalty
+                washPenaltyPct = 0.05; // 5% Restocking Fee
                 executionUnitPrice *= (1 - washPenaltyPct);
             }
         }
