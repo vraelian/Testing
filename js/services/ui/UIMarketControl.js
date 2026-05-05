@@ -152,8 +152,8 @@ export class UIMarketControl {
     }
 
     /**
-     * Updates the dynamic pricing display based on quantity input, injecting
-     * Phase 5 Wash-Trade warnings. Slippage is applied mathematically but hidden from the UI.
+     * Updates the dynamic pricing display based on quantity input.
+     * Cleaned of volume-elasticity and penalty warnings.
      * @param {string} goodId 
      * @param {number} quantity 
      * @param {string} mode 
@@ -171,7 +171,7 @@ export class UIMarketControl {
         const playerItem = this._getFleetItem(state, goodId);
         const ms = this.manager.simulationService?.marketService;
         
-        // Fetch Execution Details (Source of Truth)
+        // Fetch Execution Details (Source of Truth - Now stripped of dynamic elasticity)
         const execDetails = ms 
             ? ms.getExecutionPrice(state.currentLocationId, goodId, quantity > 0 ? quantity : 1, mode)
             : { unitPrice: this.getItemPrice(state, goodId, mode === 'sell'), totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
@@ -182,24 +182,11 @@ export class UIMarketControl {
             avgCostEl.classList.toggle('visible', mode === 'sell');
         }
 
-        // --- PHASE 5: Dynamic Wash-Trade Warning Injection (Slippage Hidden) ---
+        // --- CLEANUP: Removed Wash-Trade Warning Injections ---
         if (availEl) {
             const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
             const ownQty = playerItem ? playerItem.quantity : 0;
-            
-            let infoString = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
-            
-            if (quantity > 0) {
-                let warnings = [];
-                // Slippage UI explicitly removed per instructions. Applied computationally under the hood.
-                if (execDetails.washPenaltyPct > 0) {
-                    warnings.push(`Restocking Fee: -${(execDetails.washPenaltyPct * 100).toFixed(0)}%`);
-                }
-                if (warnings.length > 0) {
-                    infoString += ` <span class="text-amber-400 font-bold ml-2">(${warnings.join(' | ')})</span>`;
-                }
-            }
-            availEl.innerHTML = infoString;
+            availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
         }
 
         if (mode === 'buy') {
@@ -487,7 +474,6 @@ export class UIMarketControl {
 
         optimizedHistory.forEach((point) => {
             let y = vToY(point.price);
-            // Jitter: Ambient trading volume masking UI freezes during Price Lock states
             if (point.isLocked) {
                 y += (Math.random() * 2 - 1) * 2; 
             }
