@@ -69,12 +69,12 @@ export const PHASE_TWO_MISSIONS = {
     'mission_21': {
         id: "mission_21",
         name: "Lab Supply",
-        type: "PROCUREMENT",
+        type: "STORY",
         host: "STATION",
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], the medical manufacturer I work for requires your logistical expertise once more. We have established a remote, sub-surface laboratory deep within a crater on Mercury to conduct highly sensitive biological research.<br><br>We urgently require a bulk delivery of Hydroponics to sustain the lab's operations.<br><br>The Guild is currently imposing an embargo, heavily complicating trade routes, but we will compensate you generously for navigating these artificial constraints.",
+        description: "Captain, the nedical manufacturering collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on Mercury to conduct highly sensitive biological research.<br><br>We urgently require Hydroponics to sustain the lab's operations.<br><br>The Guild is currently imposing an embargo, heavily complicating trade routes, but we will compensate you generously for navigating these artificial constraints.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_20" } ],
         onAccept: [ 
             { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
@@ -91,9 +91,35 @@ export const PHASE_TWO_MISSIONS = {
             portraitId: "Audita_1",
             locationId: "loc_mercury",
             title: "A Syndicate Shell",
-            text: "Captain! Your recent delivery to Mercury has been flagged! That medical manufacturer you've been working with is a known Venusian Syndicate shell company.<br><br>A local mining whistleblower just exposed their sub-surface operation as an <b>illegal organ cloning lab</b>. Your naive assistance has equipped a criminal enterprise... I suggest you exercise better judgment in the future, lest the Guild hold you as an accomplice.",
+            text: "Captain! Your recent delivery to Mercury has been flagged! That medical manufacturer you've been working with is a <b>known Venusian Syndicate shell company</b>.<br><br>A local mining whistleblower just exposed their sub-surface operation as an <i>illegal organ cloning lab</i>. Your naive assistance has equipped a criminal enterprise... I suggest you exercise better judgment in the future, lest the Guild hold you as an accomplice.",
             buttonText: "Oops"
         },
         rewards: [ { "type": "credits", "amount": 35000 } ]
+    },
+    'mission_22': {
+        id: "mission_22",
+        name: "Mercurian Balance",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "A quota deficit has been detected in our strategic reserves of ice. The Guild requests that you travel to Mercury and purchase Water Ice in bulk.<br><br>I will remit payment following the requisition, captain.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_21" } ],
+        objectives: [
+            { "id": "buy_ice", "type": "TRADE_ITEM", "tradeType": "buy", "goodId": "water_ice", "quantity": 60, "target": "loc_mercury" },
+            { "id": "deliver_ice", "type": "DELIVER_ITEM", "goodId": "water_ice", "quantity": 60, "target": "loc_luna", "dependsOn": "buy_ice" }
+        ],
+        completion: {
+            host: "SYNDICATE",
+            portraitId: "Venusian_Syndicate_4",
+            locationId: "loc_luna",
+            title: "A Cold Calculation",
+            text: "Captain [playerName], hello again. I thought you should know the Guild cut local telemetry feeds so Mercurian markets wouldn't notice you siphoning their aquifers. They plan to ransom that ice back to the colony at triple the price to soak up the organ cloning money.<br><br>That's right, on behalf of the Guild you just stole Mercury's water. When the colony gets thirsty, which will be soon because the Sun is right next door, the Guild will sell it back at a premium to crush the planet's economy.<br><br>When they sent you on this mission, they didn't even mention the cloning lab, did they? You see, the Guild doesn't get mad. They just adjust the algorithm; they balance aggressively and chase a cold, contrived sense of order.",
+            buttonText: "Disconnect"
+        },
+        rewards: [ 
+            { "type": "credits", "amount": 25000 } 
+        ]
     }
 };

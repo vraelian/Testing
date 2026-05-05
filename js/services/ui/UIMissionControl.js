@@ -1,7 +1,7 @@
 // js/services/ui/UIMissionControl.js
 import { DB } from '../../data/database.js';
 import { INTEL_CONTENT } from '../../data/intelContent.js';
-import { formatCredits } from '../../utils.js';
+import { formatCredits, renderIndicatorPills } from '../../utils.js';
 import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
@@ -127,7 +127,7 @@ export class UIMissionControl {
                     target = 1;
                 }
             } else if (mission.objectives) {
-                // Find first uncompleted objective
+                // Find first uncompleted objective (Removed the dependsOn exclusion)
                 firstObj = mission.objectives.find(obj => {
                     const localKey = obj.id || obj.goodId || obj.target;
                     const pObj = progress.objectives[localKey];
@@ -450,7 +450,7 @@ export class UIMissionControl {
                 }
                 const hasSingleDestination = uniqueDestinations.size === 1;
 
-                // 3. DIRECTIVE
+                // 3. DIRECTIVE (Removed Visual Gating)
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
@@ -510,13 +510,13 @@ export class UIMissionControl {
                     objectivesEl.style.display = 'none';
                 }
 
-               // --- SCROLLABILITY WRAPPER ---
-               const descEl = modal.querySelector('#mission-modal-description');
-               let outerWrapper = modal.querySelector('.mission-scroll-outer');
-               let wrapper = modal.querySelector('.mission-scroll-wrapper');
-               let indicator = modal.querySelector('.scroll-indicator-arrow');
+                // --- SCROLLABILITY WRAPPER ---
+                const descEl = modal.querySelector('#mission-modal-description');
+                let outerWrapper = modal.querySelector('.mission-scroll-outer');
+                let wrapper = modal.querySelector('.mission-scroll-wrapper');
+                let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-               if (!wrapper && descEl) {
+                if (!wrapper && descEl && objectivesEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
@@ -526,38 +526,35 @@ export class UIMissionControl {
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
+                    wrapper.appendChild(descEl);
+                    wrapper.appendChild(objectivesEl);
                     
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
                     indicator.innerHTML = '&#8964;';
                     indicator.style.transition = 'opacity 0.2s ease-in-out';
                     outerWrapper.appendChild(indicator);
-               }
+                }
 
-               // Ensure elements are unconditionally inside the wrapper
-               if (wrapper) {
-                   if (descEl) wrapper.appendChild(descEl);
-                   if (objectivesEl) wrapper.appendChild(objectivesEl);
-                   if (rewardsEl) wrapper.appendChild(rewardsEl);
-                   
-                   wrapper.onscroll = () => {
-                       const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
-                       indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                   };
-                   
-                   wrapper.scrollTop = 0; 
-                   setTimeout(() => {
-                       wrapper.scrollTop = 0; 
-                       if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
-                           indicator.style.display = 'block';
-                           const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
-                           indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                       } else {
-                           indicator.style.display = 'none';
-                           indicator.style.opacity = '0';
-                       }
-                   }, 150); 
-               }
+                if (wrapper && indicator) {
+                    wrapper.onscroll = () => {
+                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                    };
+                    
+                    wrapper.scrollTop = 0; 
+                    setTimeout(() => {
+                        wrapper.scrollTop = 0; 
+                        if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                            indicator.style.display = 'block';
+                            const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                            indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                        } else {
+                            indicator.style.display = 'none';
+                            indicator.style.opacity = '0';
+                        }
+                    }, 150); 
+                }
 
                 const buttonsEl = modal.querySelector('#mission-modal-buttons');
                 const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
@@ -584,7 +581,14 @@ export class UIMissionControl {
                                     const targetQty = obj.quantity || obj.value || 1;
                                     const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
                                     
-                                    if (targetQty - depositedAmt > 0) {
+                                    // --- LOCATION GATING FOR BUTTON ---
+                                    const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                                    if (isObjLocationSpecific && obj.target !== gameState.currentLocationId) {
+                                        return; // We are not at the right place to deposit for this specific objective
+                                    }
+                                    // ----------------------------------
+                                    
+                                    if ((targetQty - depositedAmt > 0)) {
                                         for (const shipId of gameState.player.ownedShipIds) {
                                             if (gameState.player.inventories[shipId]?.[itemId]?.quantity > 0) {
                                                 canDeposit = true;
