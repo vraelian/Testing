@@ -248,18 +248,27 @@ export function renderMissionsScreen(gameState, missionService) {
                 let percent = 0;
 
                 // Handle specific types
-                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
+                if (obj.type === 'DELIVER_ITEM') {
                     const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase() || 'ITEM';
-                    if (obj.target) {
-                        const locName = DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase() || 'UNKNOWN';
+                    if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                        const locName = DB.MARKETS.find(m => m.id === obj.target).name.toUpperCase();
                         desc = `DELIVER ${commName} TO ${locName}`;
                     } else {
-                        desc = `PROCURE ${commName}`;
+                        desc = `DELIVER ${commName}`;
                     }
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
+                else if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
+                    const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase() || 'ITEM';
+                    desc = `PROCURE ${commName}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 } 
                 else if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
                     desc = `${(obj.tradeType || 'trade').toUpperCase()} ${DB.COMMODITIES.find(c => c.id === obj.goodId)?.name.toUpperCase()}`;
+                    if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                        const locName = DB.MARKETS.find(m => m.id === obj.target).name.toUpperCase();
+                        desc += ` ON ${locName}`;
+                    }
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
