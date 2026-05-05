@@ -127,8 +127,16 @@ export class UIMissionControl {
                     target = 1;
                 }
             } else if (mission.objectives) {
-                // Find first uncompleted objective (Removed the dependsOn exclusion)
+                // Find first uncompleted AND UNLOCKED objective
                 firstObj = mission.objectives.find(obj => {
+                    // Check for Sequential Dependency Gating
+                    if (obj.dependsOn) {
+                        const depProgress = progress.objectives[obj.dependsOn];
+                        if (!depProgress || depProgress.current < depProgress.target) {
+                            return false; // Objective is locked, skip rendering it to the sticky bar
+                        }
+                    }
+
                     const localKey = obj.id || obj.goodId || obj.target;
                     const pObj = progress.objectives[localKey];
                     const locCurrent = pObj ? pObj.current : 0;
@@ -238,15 +246,23 @@ export class UIMissionControl {
 
     _getObjectiveLabel(obj) {
         if (!obj) return 'Objective';
-        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
+        if (obj.type === 'DELIVER_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+             if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
+                 return `Deliver ${name} to ${locName}`;
+             }
+             return `Deliver ${name}`;
+        }
+        if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Procure ${name}`;
         }
         if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
              const action = obj.tradeType === 'buy' ? 'Buy' : 'Sell';
-             if (obj.target) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Unknown';
+             if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
                  return `${action} ${name} on ${locName}`;
              }
              return `${action} ${name}`;
@@ -439,29 +455,30 @@ export class UIMissionControl {
                 
                 if (payoutPanelHtml) flexColumns.push(payoutPanelHtml);
 
-                // Analyze Locations
+                // Analyze Locations for DESTINATION panel
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
-                        if (['have_item', 'DELIVER_ITEM', 'HAVE_ITEM', 'travel_to', 'TRAVEL_TO'].includes(obj.type)) {
-                            if (obj.target) uniqueDestinations.add(obj.target);
+                        if (['DELIVER_ITEM', 'travel_to', 'TRAVEL_TO', 'trade_item', 'TRADE_ITEM'].includes(obj.type)) {
+                            if (obj.target && DB.MARKETS.some(m => m.id === obj.target)) {
+                                uniqueDestinations.add(obj.target);
+                            }
                         }
                     });
                 }
-                const hasSingleDestination = uniqueDestinations.size === 1;
 
-                // 3. DIRECTIVE (Removed Visual Gating)
+                // 3. DIRECTIVE (Removed Visual Gating, locations are explicitly added)
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
-                        let text = this._getObjectiveDescription(obj, hasSingleDestination);
+                        let text = this._getObjectiveDescription(obj, false);
                         
                         // Prevent \d+ replacement from breaking HTML classes generated for HAVE_CREDITS
                         if (!['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
                             text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
                         }
                         
-                        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
+                        if (obj.type === 'DELIVER_ITEM') {
                             const objKey = obj.id || obj.goodId || obj.target;
                             const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
                             const targetQty = obj.quantity || obj.value || 1;
@@ -481,16 +498,15 @@ export class UIMissionControl {
                     `);
                 }
 
-                // 4. DESTINATION
-                if (hasSingleDestination) {
-                    const destId = Array.from(uniqueDestinations)[0];
-                    const destName = DB.MARKETS.find(m => m.id === destId)?.name || 'UNKNOWN';
+                // 4. DESTINATION (Shows all unique objective locations)
+                if (uniqueDestinations.size > 0) {
+                    const destNames = Array.from(uniqueDestinations).map(id => DB.MARKETS.find(m => m.id === id)?.name || 'UNKNOWN').join(', ');
                     const delay = animDelayIdx++ * 0.05;
                     flexColumns.push(`
                         <div class="telemetry-panel panel-destination">
                             <div class="telemetry-header">DESTINATION</div>
                             <div class="telemetry-content">
-                                <div class="telemetry-item" style="animation-delay: ${delay}s"><span class="t-subject">${destName.toUpperCase()}</span></div>
+                                <div class="telemetry-item" style="animation-delay: ${delay}s"><span class="t-subject">${destNames.toUpperCase()}</span></div>
                             </div>
                         </div>
                     `);
@@ -575,7 +591,7 @@ export class UIMissionControl {
                         let canDeposit = false;
                         if (mission.objectives) {
                             mission.objectives.forEach(obj => {
-                                if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
+                                if (obj.type === 'DELIVER_ITEM') {
                                     const itemId = obj.goodId || obj.target;
                                     const objKey = obj.id || obj.goodId || obj.target;
                                     const targetQty = obj.quantity || obj.value || 1;
@@ -675,20 +691,24 @@ export class UIMissionControl {
     }
     
     _getObjectiveDescription(obj, omitLocation = false) {
-        if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
+        if (obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              let text = `DELIVER ${obj.quantity || 1}x ${name.toUpperCase()}`;
-             if (obj.target && !omitLocation) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'UNKNOWN';
+             if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
                  text += ` TO ${locName.toUpperCase()}`;
              }
              return text;
         }
+        if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
+             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
+             return `PROCURE ${obj.quantity || 1}x ${name.toUpperCase()}`;
+        }
         if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
              const action = obj.tradeType === 'buy' ? 'BUY' : 'SELL';
-             if (obj.target && !omitLocation) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target)?.name || 'UNKNOWN';
+             if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
                  return `${action} ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
              }
              return `${action} ${obj.quantity || 1}x ${name.toUpperCase()}`;
