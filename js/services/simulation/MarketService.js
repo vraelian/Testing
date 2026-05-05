@@ -61,7 +61,6 @@ export class MarketService {
                 if (inventoryItem) {
                     inventoryItem.marketPressure = 0;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
-                    inventoryItem.priceLockEndDay = 0;
                     inventoryItem.isDepleted = false;
                     inventoryItem.isSaturated = false;
                     inventoryItem.depletionDay = 0;
@@ -82,6 +81,33 @@ export class MarketService {
     }
 
     /**
+     * Helper to apply Location/Station quirks uniformly to base prices.
+     * @private
+     */
+    _applyStationQuirks(price, locationId, commodityId) {
+        let modifiedPrice = price;
+        if (locationId === LOCATION_IDS.EARTH && (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
+            modifiedPrice *= 1.10;
+        }
+        if (locationId === LOCATION_IDS.MARS && (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
+            modifiedPrice *= 1.10;
+        }
+        if (locationId === LOCATION_IDS.SATURN && (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
+            modifiedPrice *= 1.20;
+        }
+        if (locationId === LOCATION_IDS.PLUTO && (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
+            modifiedPrice *= 1.25;
+        }
+        if (locationId === LOCATION_IDS.MERCURY && commodityId === COMMODITY_IDS.WATER_ICE) {
+            modifiedPrice *= 1.40;
+        }
+        if (locationId === LOCATION_IDS.SUN && (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
+            modifiedPrice *= 1.25;
+        }
+        return modifiedPrice;
+    }
+
+    /**
      * Gets the base unit price for a commodity at a location without volumetric slippage.
      * Checks for active intel deal overrides, applies delays to extreme states, 
      * and optionally applies player-specific modifiers (e.g. Signal Hacker).
@@ -98,7 +124,7 @@ export class MarketService {
 
         const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
         if (inventoryItem) {
-            // PHASE 5: No Same-Day Reactions (Delay extreme modifiers by 7 days to match pressure)
+            // No Same-Day Reactions (Delay extreme modifiers by 7 days to match pressure)
             const daysSinceInteraction = this.gameState.day - (inventoryItem.lastPlayerInteractionTimestamp || 0);
             const delayPassed = daysSinceInteraction >= 7;
 
@@ -127,30 +153,7 @@ export class MarketService {
         }
 
         // Station Quirks (Price Boosts)
-        if (locationId === LOCATION_IDS.EARTH && 
-            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
-            price = price * 1.10;
-        }
-        if (locationId === LOCATION_IDS.MARS &&
-            (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
-            price = price * 1.10;
-        }
-        if (locationId === LOCATION_IDS.SATURN &&
-            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
-            price = price * 1.20;
-        }
-        if (locationId === LOCATION_IDS.PLUTO &&
-            (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
-            price = price * 1.25;
-        }
-        if (locationId === LOCATION_IDS.MERCURY &&
-            commodityId === COMMODITY_IDS.WATER_ICE) {
-            price = price * 1.40;
-        }
-        if (locationId === LOCATION_IDS.SUN &&
-            (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
-            price = price * 1.25;
-        }
+        price = this._applyStationQuirks(price, locationId, commodityId);
 
         // 2. Upgrade Modifiers (Signal Hacker, etc.)
         if (applyModifiers) {
@@ -162,7 +165,7 @@ export class MarketService {
              }
         }
 
-        // PHASE 2: HOT INTEL INTEGRATION
+        // HOT INTEL INTEGRATION
         const activeHotIntel = state.activeHotIntel;
         if (activeHotIntel && 
             activeHotIntel.locationId === locationId && 
@@ -170,7 +173,7 @@ export class MarketService {
             price = price * activeHotIntel.discountMultiplier;
         }
 
-        // --- PHASE 1: Tier-Scaled Intrinsic Support (Absolute Retail Floor) ---
+        // Tier-Scaled Intrinsic Support (Absolute Retail Floor)
         const commodityDef = DB.COMMODITIES.find(c => c.id === commodityId);
         let absoluteFloor = 1;
         if (commodityDef) {
@@ -182,81 +185,50 @@ export class MarketService {
     }
 
     /**
-     * PHASE 5: Unified Execution Engine.
-     * Evaluates Slippage, Wash-Trade Tariffs, and Situational Modifiers to determine
-     * the absolute final transaction value. This ensures UI prediction matches logic execution exactly.
+     * Execution Engine.
+     * Evaluates Situational Modifiers to determine the absolute final transaction value. 
+     * Ensures UI prediction matches logic execution exactly, without volume-elasticity.
      */
     getExecutionPrice(locationId, commodityId, quantity, transactionType) {
         let baseUnitPrice = this.getPrice(locationId, commodityId, true, transactionType);
-        if (quantity <= 0) return { unitPrice: baseUnitPrice, totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
-
-        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
-        
-        // 1. Synchronous Slippage (Under the hood)
-        const currentStock = Math.max(1, inventoryItem.quantity); // Fallback to 1 to prevent division by zero
-        let slippagePct = 0;
-        const slippageThreshold = currentStock * 0.65;
-        
-        if (quantity > slippageThreshold) {
-            const excessVolume = quantity - slippageThreshold;
-            const excessRatio = excessVolume / currentStock;
-            
-            // Slips by 0.5% for every 5% of excess volume traded beyond the 65% threshold, capped at 5%
-            slippagePct = Math.min(0.05, (excessRatio / 0.05) * 0.005); 
-        }
-        
-        let executionUnitPrice = baseUnitPrice;
-        if (transactionType === 'buy') {
-            executionUnitPrice *= (1 + slippagePct);
-        } else {
-            executionUnitPrice *= (1 - slippagePct);
-        }
-
-        // 2. Wash Trade Penalty
-        let washPenaltyPct = 0;
-        const sessionVol = inventoryItem.sessionNetVolume || 0;
-        const sessionDay = inventoryItem.sessionInteractionDay || 0;
-
-        if (sessionDay === this.gameState.day) {
-            if (transactionType === 'buy' && sessionVol > 0) {
-                washPenaltyPct = 0.05; // 5% Restocking Fee
-                executionUnitPrice *= (1 + washPenaltyPct);
-            } else if (transactionType === 'sell' && sessionVol < 0) {
-                washPenaltyPct = 0.05; // 5% Restocking Fee
-                executionUnitPrice *= (1 - washPenaltyPct);
-            }
-        }
-
-        let totalPrice = executionUnitPrice * quantity;
-
-        // 3. Situational Modifiers (Applied holistically to the total)
         const state = this.gameState.getState();
+
+        // 1. Situational Modifiers (Applied holistically to the base unit price)
         if (transactionType === 'buy') {
             const agePurchaseDiscount = state.player.statModifiers?.purchaseCost || 0;
-            if (agePurchaseDiscount > 0) totalPrice *= (1 - agePurchaseDiscount);
+            if (agePurchaseDiscount > 0) baseUnitPrice *= (1 - agePurchaseDiscount);
 
             const systemState = state.systemState;
             const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
             if (activeStateDef?.modifiers?.survivalGoodsDiscountMod && activeStateDef.modifiers.affectedCommodities?.includes(commodityId)) {
-                totalPrice *= activeStateDef.modifiers.survivalGoodsDiscountMod;
-            }
-
-            if (locationId === LOCATION_IDS.NEPTUNE && (commodityId === COMMODITY_IDS.PROPELLANT || commodityId === COMMODITY_IDS.PLASTEEL) && quantity > 50) {
-                totalPrice *= 0.90;
+                baseUnitPrice *= activeStateDef.modifiers.survivalGoodsDiscountMod;
             }
 
             if (locationId === LOCATION_IDS.BELT && (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
-                totalPrice *= 0.95;
+                baseUnitPrice *= 0.95;
             }
         } else if (transactionType === 'sell') {
             const systemState = state.systemState;
             const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
             if (activeStateDef?.modifiers?.sellPriceBonusMod) {
-                totalPrice *= activeStateDef.modifiers.sellPriceBonusMod;
+                baseUnitPrice *= activeStateDef.modifiers.sellPriceBonusMod;
             }
 
             if (locationId === LOCATION_IDS.SUN && (commodityId === COMMODITY_IDS.GRAPHENE_LATTICES || commodityId === COMMODITY_IDS.PLASTEEL)) {
-                totalPrice *= 1.25;
+                baseUnitPrice *= 1.25;
+            }
+        }
+
+        baseUnitPrice = Math.max(1, baseUnitPrice);
+
+        if (quantity <= 0) return { unitPrice: baseUnitPrice, totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
+
+        let totalPrice = baseUnitPrice * quantity;
+
+        // 2. Conditional Bulk Modifiers (Applied to Total)
+        if (transactionType === 'buy') {
+            if (locationId === LOCATION_IDS.NEPTUNE && (commodityId === COMMODITY_IDS.PROPELLANT || commodityId === COMMODITY_IDS.PLASTEEL) && quantity > 50) {
+                totalPrice *= 0.90;
             }
         }
 
@@ -266,8 +238,8 @@ export class MarketService {
         return {
             unitPrice: finalUnitPrice,
             totalPrice: totalPrice,
-            slippagePct: slippagePct,
-            washPenaltyPct: washPenaltyPct
+            slippagePct: 0,
+            washPenaltyPct: 0
         };
     }
 
@@ -365,12 +337,6 @@ export class MarketService {
                 let randomFluctuation = (randomVal() - 0.5) * priceRange * volatility;
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
-
-                let isLocked = this.gameState.day < inventoryItem.priceLockEndDay;
-                if (isLocked) {
-                    reversionEffect = 0;
-                    randomFluctuation = 0;
-                }
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
                     reversionEffect = (localBaseline - price) * 0.20;
@@ -487,7 +453,6 @@ export class MarketService {
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
                     inventoryItem.depletionDay = 0; 
-                    inventoryItem.priceLockEndDay = 0; 
                     inventoryItem.isDepleted = false;
                     inventoryItem.isSaturated = false; 
                 } else {
@@ -577,8 +542,6 @@ export class MarketService {
         if (inventoryItem.sessionInteractionDay !== this.gameState.day) {
             inventoryItem.sessionInteractionDay = this.gameState.day;
             inventoryItem.sessionNetVolume = 0;
-            inventoryItem.preSessionPriceLockEndDay = inventoryItem.priceLockEndDay || 0;
-            inventoryItem.preSessionInteractionTimestamp = inventoryItem.lastPlayerInteractionTimestamp || 0;
         }
         
         inventoryItem.sessionNetVolume += (transactionType === 'buy' ? -quantity : quantity);
@@ -628,26 +591,8 @@ export class MarketService {
         
         inventoryItem.marketPressure = Math.max(-2.5, Math.min(4.0, inventoryItem.marketPressure));
 
-        const baseLock = 60;
-        const distanceBonus = (market?.distance || 0) * 0.20;
-        const targetLock = baseLock + distanceBonus;
-        const jitter = targetLock * 0.10; 
-        
-        const lockDuration = Math.floor(targetLock + (Math.random() * (jitter * 2) - jitter));
-        
-        // --- PHASE 4: Fractional Volume Threshold ---
-        const maxAvailability = good.canonicalAvailability[1] || 100;
-        const fractionalShift = Math.abs(inventoryItem.sessionNetVolume) / maxAvailability;
-
-        if (fractionalShift < 0.05) {
-            // Treat as "Zero-Sum / Noise" - do not extend the price lock or reset the delay
-            inventoryItem.priceLockEndDay = inventoryItem.preSessionPriceLockEndDay;
-            inventoryItem.lastPlayerInteractionTimestamp = inventoryItem.preSessionInteractionTimestamp;
-        } else {
-            // Standard enforcement
-            inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
-            inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
-        }
+        // Mark interaction time for the 7-day organic delay
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
         if (this.gameState.uiState?.enableEconomicTelemetry) {
             if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
@@ -661,7 +606,6 @@ export class MarketService {
                 quantityTraded: quantity,
                 pressureChange: Number(pressureChange.toFixed(4)),
                 resultingPressure: Number(inventoryItem.marketPressure.toFixed(4)),
-                lockDuration: lockDuration,
                 isSaturated: inventoryItem.isSaturated || false
             });
 
@@ -723,15 +667,17 @@ export class MarketService {
             }
 
             const history = this.gameState.market.priceHistory[targetMarketId][good.id];
-            const currentPrice = this.gameState.market.prices[targetMarketId][good.id];
+            
+            // Log the fully formed, modified price (accounting for local quirks)
+            const currentDisplayPrice = this.getPrice(targetMarketId, good.id, false);
 
             const lastEntry = history[history.length - 1];
             if (lastEntry && lastEntry.day === this.gameState.day) {
-                if (lastEntry.price !== currentPrice) {
-                    lastEntry.price = currentPrice;
+                if (lastEntry.price !== currentDisplayPrice) {
+                    lastEntry.price = currentDisplayPrice;
                 }
             } else {
-                history.push({ day: this.gameState.day, price: currentPrice });
+                history.push({ day: this.gameState.day, price: currentDisplayPrice });
             }
 
             while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
@@ -827,18 +773,17 @@ export class MarketService {
             isLocked: false 
         }));
 
-        let lastPrice = historicalData.length > 0 
+        let lastDisplayPrice = historicalData.length > 0 
             ? historicalData[historicalData.length - 1].price 
-            : (this.gameState.market.prices[locationId]?.[commodityId] || 0);
+            : this.getPrice(locationId, commodityId, false);
             
         if (historicalData.length === 0 || historicalData[historicalData.length - 1].day < currentDay) {
-            const livePrice = this.gameState.market.prices[locationId]?.[commodityId] || lastPrice;
-            historicalData.push({ day: currentDay, price: livePrice, isLocked: false });
+            const liveDisplayPrice = this.getPrice(locationId, commodityId, false) || lastDisplayPrice;
+            historicalData.push({ day: currentDay, price: liveDisplayPrice, isLocked: false });
         }
         
         const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
         const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
-        const lockEndDay = inventoryItem ? inventoryItem.priceLockEndDay : 0;
         
         let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
         const location = DB.MARKETS.find(m => m.id === locationId);
@@ -847,7 +792,7 @@ export class MarketService {
         }
 
         const projection = [];
-        let currentProjPrice = lastPrice;
+        let currentRawPrice = this.gameState.market.prices[locationId]?.[commodityId] || 0;
         
         let activePressure = inventoryItem ? inventoryItem.marketPressure : 0;
         const PLAYER_PRESSURE_STRENGTH = 0.50; 
@@ -864,20 +809,14 @@ export class MarketService {
         
         for (let i = 1; i <= projectedDays; i++) {
             const projDay = currentDay + i;
-            let isLocked = projDay < lockEndDay;
             
-            let reversionEffect = (localBaseline - currentProjPrice) * meanReversion;
+            let reversionEffect = (localBaseline - currentRawPrice) * meanReversion;
             
             const seedStr = `${locationId}-${commodityId}-${projDay}`;
             const seedHash = this._hashString(seedStr);
             const pseudoRandom = this._seededRandom(seedHash);
             
             let randomFluctuation = (pseudoRandom - 0.5) * priceRange * volatility;
-
-            if (isLocked) {
-                reversionEffect = 0;
-                randomFluctuation = 0; 
-            }
             
             let pressureEffect = 0;
             daysSinceInteraction++;
@@ -885,12 +824,15 @@ export class MarketService {
                  pressureEffect = (localBaseline * activePressure * -1) * PLAYER_PRESSURE_STRENGTH;
             }
 
-            currentProjPrice += (reversionEffect + pressureEffect + randomFluctuation);
+            currentRawPrice += (reversionEffect + pressureEffect + randomFluctuation);
+            
+            // Ensure the SVG projected data matches the visual quirk modifications
+            let displayProjPrice = this._applyStationQuirks(currentRawPrice, locationId, commodityId);
             
             projection.push({
                 day: projDay,
-                price: Math.max(intrinsicFloor, Math.round(currentProjPrice)),
-                isLocked: isLocked
+                price: Math.max(intrinsicFloor, Math.round(displayProjPrice)),
+                isLocked: false
             });
             
             if (activePressure !== 0 && daysSinceInteraction >= 7) {

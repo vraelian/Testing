@@ -118,7 +118,7 @@ export class PlayerActionService {
             const match = lastBuyEntry.description.match(/Bought (\d+)x/i) || lastBuyEntry.description.match(/Bought (\d+)/i);
             const oldQty = match ? parseInt(match[1], 10) : 0;
             lastBuyEntry.description = `Bought ${oldQty + quantity}x ${good.name}`;
-            lastBuyEntry.value -= totalCost;
+            lastBuyEntry.amount -= totalCost;
         } else {
             this.simulationService._logTransaction('trade', -totalCost, `Bought ${quantity}x ${good.name}`);
             if (this.gameState.player.financeLog && this.gameState.player.financeLog.length > 0) {
@@ -255,7 +255,7 @@ export class PlayerActionService {
             const match = lastSellEntry.description.match(/Sold (\d+)x/i) || lastSellEntry.description.match(/Sold (\d+)/i);
             const oldQty = match ? parseInt(match[1], 10) : 0;
             lastSellEntry.description = `Sold ${oldQty + quantity}x ${good.name}`;
-            lastSellEntry.value += totalSaleValue;
+            lastSellEntry.amount += totalSaleValue;
         } else {
             this.simulationService._logTransaction('trade', totalSaleValue, `Sold ${quantity}x ${good.name}`);
             if (this.gameState.player.financeLog && this.gameState.player.financeLog.length > 0) {
