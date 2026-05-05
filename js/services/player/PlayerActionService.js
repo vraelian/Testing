@@ -103,12 +103,29 @@ export class PlayerActionService {
 
         this.gameState.player.credits -= totalCost;
         this.logger.info.player(state.day, 'BUY', `Bought ${quantity}x ${good.name} for ${formatCredits(totalCost)}`);
-        this.simulationService._logConsolidatedTrade(good.name, quantity, -totalCost);
         
+        // --- LOCATION-AWARE LOG CONSOLIDATION FIX ---
         const logBuy = this.gameState.player.financeLog;
-        if (logBuy && logBuy.length > 0) {
-            logBuy[logBuy.length - 1].locationId = state.currentLocationId;
+        const lastBuyEntry = logBuy && logBuy.length > 0 ? logBuy[logBuy.length - 1] : null;
+        
+        if (lastBuyEntry && 
+            lastBuyEntry.day === state.day && 
+            lastBuyEntry.locationId === state.currentLocationId && 
+            lastBuyEntry.type === 'trade' && 
+            lastBuyEntry.description.includes(` ${good.name}`) && 
+            lastBuyEntry.description.startsWith('Bought')) {
+            
+            const match = lastBuyEntry.description.match(/Bought (\d+)x/i) || lastBuyEntry.description.match(/Bought (\d+)/i);
+            const oldQty = match ? parseInt(match[1], 10) : 0;
+            lastBuyEntry.description = `Bought ${oldQty + quantity}x ${good.name}`;
+            lastBuyEntry.value -= totalCost;
+        } else {
+            this.simulationService._logTransaction('trade', -totalCost, `Bought ${quantity}x ${good.name}`);
+            if (this.gameState.player.financeLog && this.gameState.player.financeLog.length > 0) {
+                this.gameState.player.financeLog[this.gameState.player.financeLog.length - 1].locationId = state.currentLocationId;
+            }
         }
+        // --------------------------------------------
         
         this.missionService.checkTriggers();
         this.marketService.applyMarketImpact(goodId, quantity, 'buy');
@@ -223,12 +240,29 @@ export class PlayerActionService {
         inventoryItem.quantity += quantity;
 
         this.logger.info.player(state.day, 'SELL', `Sold ${quantity}x ${good.name} for ${formatCredits(totalSaleValue)}`);
-        this.simulationService._logConsolidatedTrade(good.name, quantity, totalSaleValue);
-
+        
+        // --- LOCATION-AWARE LOG CONSOLIDATION FIX ---
         const logSell = this.gameState.player.financeLog;
-        if (logSell && logSell.length > 0) {
-            logSell[logSell.length - 1].locationId = state.currentLocationId;
+        const lastSellEntry = logSell && logSell.length > 0 ? logSell[logSell.length - 1] : null;
+        
+        if (lastSellEntry && 
+            lastSellEntry.day === state.day && 
+            lastSellEntry.locationId === state.currentLocationId && 
+            lastSellEntry.type === 'trade' && 
+            lastSellEntry.description.includes(` ${good.name}`) && 
+            lastSellEntry.description.startsWith('Sold')) {
+            
+            const match = lastSellEntry.description.match(/Sold (\d+)x/i) || lastSellEntry.description.match(/Sold (\d+)/i);
+            const oldQty = match ? parseInt(match[1], 10) : 0;
+            lastSellEntry.description = `Sold ${oldQty + quantity}x ${good.name}`;
+            lastSellEntry.value += totalSaleValue;
+        } else {
+            this.simulationService._logTransaction('trade', totalSaleValue, `Sold ${quantity}x ${good.name}`);
+            if (this.gameState.player.financeLog && this.gameState.player.financeLog.length > 0) {
+                this.gameState.player.financeLog[this.gameState.player.financeLog.length - 1].locationId = state.currentLocationId;
+            }
         }
+        // --------------------------------------------
 
         this.missionService.checkTriggers();
         this.marketService.applyMarketImpact(goodId, quantity, 'sell');

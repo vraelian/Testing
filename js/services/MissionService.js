@@ -2,7 +2,8 @@
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
- * UPDATED: Includes new QUEUE_STORY_EVENT and UNLOCK_LOCATION action hooks during accept/complete.
+ * UPDATED: Includes new QUEUE_STORY_EVENT and UNLOCK_LOCATION action hooks during accept/complete,
+ * and Provenance Allowance Capping for dependent objectives in depositMissionCargo.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -697,11 +698,29 @@ export class MissionService {
         mission.objectives.forEach(obj => {
             if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                 const itemId = obj.goodId || obj.target;
+                
+                // --- STRICT LOCATION GATING FOR DEPOSITS ---
+                const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                if (isObjLocationSpecific && obj.target !== this.gameState.currentLocationId) {
+                    return; // Skip this objective; we are not at its required location
+                }
+                // ------------------------------------------------
+
                 const targetQty = obj.quantity || obj.value || 1;
                 const objKey = obj.id || obj.goodId || obj.target;
                 const depositedSoFar = progress.objectives?.[objKey]?.deposited || 0;
                 
-                const remainingNeeded = Math.max(0, targetQty - depositedSoFar);
+                let remainingNeeded = Math.max(0, targetQty - depositedSoFar);
+
+                // --- PROVENANCE CAP: Restrict drain to what is authorized by the parent tracker
+                if (obj.dependsOn) {
+                    const depProgress = progress.objectives?.[obj.dependsOn];
+                    if (depProgress && typeof depProgress.current === 'number') {
+                        const maxAllowedNow = Math.max(0, depProgress.current - depositedSoFar);
+                        remainingNeeded = Math.min(remainingNeeded, maxAllowedNow);
+                    }
+                }
+                
                 if (remainingNeeded > 0) {
                     let fleetOwned = 0;
                     this.gameState.player.ownedShipIds.forEach(shipId => {
@@ -769,6 +788,14 @@ export class MissionService {
         mission.objectives.forEach(obj => {
             if (obj.type === 'have_item' || obj.type === 'DELIVER_ITEM' || obj.type === 'HAVE_ITEM') {
                 const itemId = obj.goodId || obj.target;
+                
+                // --- STRICT LOCATION GATING FOR DEPOSITS ---
+                const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                if (isObjLocationSpecific && obj.target !== this.gameState.currentLocationId) {
+                    return; // Skip this objective; we are not at its required location
+                }
+                // ------------------------------------------------
+
                 const targetQty = obj.quantity || obj.value || 1;
                 const objKey = obj.id || obj.goodId || obj.target;
                 
@@ -781,6 +808,15 @@ export class MissionService {
 
                 let depositedSoFar = progress.objectives[objKey].deposited;
                 let remainingNeeded = targetQty - depositedSoFar;
+
+                // --- PROVENANCE CAP: Execute cap during final inventory pull
+                if (obj.dependsOn) {
+                    const depProgress = progress.objectives?.[obj.dependsOn];
+                    if (depProgress && typeof depProgress.current === 'number') {
+                        const maxAllowedNow = Math.max(0, depProgress.current - depositedSoFar);
+                        remainingNeeded = Math.min(remainingNeeded, maxAllowedNow);
+                    }
+                }
 
                 if (remainingNeeded > 0) {
                     // Collect inventory across fleet

@@ -26,7 +26,6 @@ export class MissionObjectiveEvaluator {
         let target = val !== undefined ? val : 1; 
 
         let isMet = false;
-        
         let comparator = objective.comparator || '>='; 
 
         // Helper to get ship stats (Effective > Base)
@@ -40,7 +39,6 @@ export class MissionObjectiveEvaluator {
         switch (objective.type) {
             // --- RESOURCE / INVENTORY CHECKS ---
             case 'have_item':
-            case 'DELIVER_ITEM':
             case 'HAVE_ITEM': {
                 const itemId = objective.goodId || objective.target;
                 let totalQty = 0;
@@ -57,6 +55,15 @@ export class MissionObjectiveEvaluator {
                 if (objective.latch) {
                     current = Math.max(currentProgress, current);
                 }
+                break;
+            }
+
+            case 'deliver_item':
+            case 'DELIVER_ITEM': {
+                // STRICT DELIVERY TRACKING:
+                // Only tracks what the player has explicitly offloaded/deposited at the target location.
+                // Decouples fleet inventory from objective completion logic.
+                current = deposited;
                 break;
             }
 
@@ -218,6 +225,17 @@ export class MissionObjectiveEvaluator {
                 console.warn(`[MissionObjectiveEvaluator] Unknown objective type: ${objective.type}`);
                 break;
         }
+
+        // --- NEW: PROVENANCE ALLOWANCE CAP ---
+        // Dynamically constrains the evaluable quantity based on the progress of a parent tracker
+        // By running this AFTER the core switch evaluation, the UI continues to update in real-time
+        if (objective.dependsOn) {
+            const depProgress = missionProgress.objectives?.[objective.dependsOn];
+            if (depProgress && typeof depProgress.current === 'number') {
+                current = Math.min(current, depProgress.current);
+            }
+        }
+        // -------------------------------------
 
         // --- EVALUATION LOGIC ---
         if (typeof current !== 'number' || isNaN(current)) {
