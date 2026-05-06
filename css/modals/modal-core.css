@@ -1,0 +1,227 @@
+/* css/modals/modal-core.css */
+
+/* General Modal Backdrop Styling */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 1s ease-out;
+    pointer-events: none;
+}
+
+/* Hide modal backdrops by default */
+.modal-backdrop.hidden {
+    display: none;
+}
+
+/* Base styles for when a modal is active/visible */
+.modal-backdrop:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* General Modal Content Box Styling */
+.modal-content {
+    position: relative;
+    background-color: #111827;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #374151;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    max-width: 90%;
+    width: 400px;
+}
+
+/* Special override for slow intro fade */
+.intro-fade-in {
+    transition-duration: 2s !important;
+}
+.intro-fade-in .modal-content {
+    animation-duration: 2s !important;
+}
+
+/* State class for a modal that is currently visible */
+.modal-visible .modal-content {
+    animation: fadeIn 1s ease-out;
+}
+
+/* State class for a modal that is in the process of closing */
+.modal-hiding {
+    animation: fadeOut 1s ease-out forwards;
+}
+.modal-hiding .modal-content {
+    animation: fadeOut 1s ease-out forwards;
+}
+
+/* New class for the splash screen's unique exit animation */
+.splash-screen-hiding {
+    -webkit-mask-image: linear-gradient(to top, transparent 25%, black 75%);
+    mask-image: linear-gradient(to top, transparent 25%, black 75%);
+    -webkit-mask-size: 100% 400%;
+    mask-size: 100% 400%;
+    animation: scanlineFadeOut 2s ease-in-out forwards;
+}
+
+@keyframes scanlineFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) blur(0px);
+    }
+    50% {
+        opacity: 1;
+        filter: brightness(1.5) blur(1px);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.05);
+        filter: brightness(0) blur(4px);
+    }
+}
+
+/* Disable pointer events on modals that shouldn't be dismissible */
+.dismiss-disabled {
+    pointer-events: none;
+}
+
+/* --- GENERIC THEMED GLOW --- */
+@keyframes themed-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 24px var(--theme-glow-color), inset 0 0 16px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+}
+
+.is-glowing {
+    animation: themed-glow-animation 3s infinite;
+}
+
+/* --- MODAL COST TEXT --- */
+.modal-cost-text {
+    font-size: 1.1rem;
+}
+
+/* --- MODAL MARQUEE --- */
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.marquee-content {
+    display: inline-block;
+    padding-left: 100%;
+    animation: modal-marquee-scroll 10s linear infinite;
+}
+
+@keyframes modal-marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+/* ========================================================================= */
+/* --- STATIC MODAL TEXTURE INTEGRATION ---                                  */
+/* ========================================================================= */
+
+.modal-content {
+    position: relative;
+    /* Ensure the base color exists for the blend modes to calculate against */
+    background-color: #111827; 
+}
+
+/* Bottom Texture Layer: Multiply (Path Corrected) */
+.modal-content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 1; /* Above background */
+}
+
+/* Top Texture Layer: Screen (Path Corrected) */
+.modal-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1; /* Above background */
+}
+
+/* VIRTUAL WORKBENCH: Exempt Sol Station and Custom Wrappers from generic textures to preserve dynamic level themes */
+.sol-station-modal .modal-content::before,
+.sol-station-modal .modal-content::after,
+#launch-modal .modal-content::before,
+#launch-modal .modal-content::after,
+#cargo-detail-modal .modal-content::before,
+#cargo-detail-modal .modal-content::after,
+#mission-modal .modal-content::before,
+#mission-modal .modal-content::after,
+#pause-menu-modal .modal-content::before,
+#pause-menu-modal .modal-content::after {
+    display: none !important;
+}
+
+/* Push text elements ABOVE the texture layers */
+.modal-header,
+.modal-header-flex,
+.modal-content > div,
+.modal-footer {
+    position: relative;
+    z-index: 2;
+}
+
+/* Typographic Shielding */
+.modal-header h2,
+.modal-title-group {
+    text-shadow: 
+        -1px -1px 0 #000, 1px -1px 0 #000, 
+        -1px  1px 0 #000, 1px  1px 0 #000, 
+         0 4px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* ========================================================================= */
+/* --- Z-INDEX HIERARCHY OVERRIDES ---                                       */
+/* ========================================================================= */
+/* Elevate specific modals to float above HUD buttons (z-index: 100)         */
+#map-detail-modal,
+#lore-modal,
+#ship-detail-modal,
+#age-event-modal,
+#upgrade-installation-modal,
+#upgrade-progress-modal,
+#cargo-detail-modal,
+#mission-modal,
+#mission-detail-modal,
+#loan-acquired-modal,
+#intel-offer-modal,
+#intel-modal,
+#econ-weather-modal,
+.sol-station-modal {
+    z-index: 105 !important;
+}
