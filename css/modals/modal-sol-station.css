@@ -1,0 +1,686 @@
+/* css/modals/modal-sol-station.css */
+
+/* ========================================================================= */
+/* --- SOL STATION DASHBOARD (PHASE 3) --- */
+/* ========================================================================= */
+
+/* Special Override for Sol Station Modal Dimensions */
+.sol-station-modal .modal-content {
+    width: 80% !important;
+    max-width: 1200px !important;
+    /* VIRTUAL WORKBENCH: Flex-wrap sizing natively up to 85dvh safe area */
+    height: auto !important;
+    max-height: 85dvh !important;
+    display: flex;
+    flex-direction: column;
+    /* [FIX] +10px Top Padding, -4px Bottom Padding */
+    padding: 1.25rem 0.75rem 0.25rem 0.75rem !important; 
+}
+
+/* Completely hide the default modal title/header to reclaim vertical space */
+.sol-station-modal .modal-header-flex,
+.sol-station-modal > h3,
+.sol-station-modal h3#event-title {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* [RESTORED] Explicit Sol Station Level Background Gradients */
+.sol-station-modal .modal-content.sol-theme-white { background: linear-gradient(145deg, #1f2937, #111827) !important; border-color: #6b7280 !important; box-shadow: 0 0 20px rgba(107, 114, 128, 0.2), inset 0 0 15px rgba(107, 114, 128, 0.1) !important;}
+.sol-station-modal .modal-content.sol-theme-green { background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827) !important; border-color: #34d399 !important; box-shadow: 0 0 20px rgba(52, 211, 153, 0.2), inset 0 0 15px rgba(52, 211, 153, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-blue { background: linear-gradient(145deg, rgba(12, 74, 110, 0.9), #111827) !important; border-color: #38bdf8 !important; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 15px rgba(56, 189, 248, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-gold { background: linear-gradient(145deg, rgba(69, 42, 15, 0.9), #111827) !important; border-color: #fbbf24 !important; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2), inset 0 0 15px rgba(251, 191, 36, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-orange { background: linear-gradient(145deg, rgba(124, 45, 18, 0.9), #111827) !important; border-color: #f97316 !important; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), inset 0 0 15px rgba(249, 115, 22, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-red { background: linear-gradient(145deg, rgba(127, 29, 29, 0.9), #111827) !important; border-color: #ef4444 !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2), inset 0 0 15px rgba(239, 68, 68, 0.1) !important; }
+
+/* [FIX] Target the Description Wrapper injected by UIModalEngine */
+/* This element must grow and scroll to prevent the modal from exploding vertically */
+.sol-station-modal #event-description {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    margin: 0 !important; /* [FIX] Aggressively clamp UIModalEngine's injected my-4 and mb-6 Tailwind classes */
+    padding-right: 0.25rem; /* Space for scrollbar */
+    padding-bottom: 0 !important; 
+}
+
+/* Sol Station specifically placed indicator arrow inside modal text boundary */
+.sol-station-modal .scroll-indicator-arrow {
+    bottom: 4px; /* [FIX] Lowered since padding-bottom is now explicitly 4px */
+    right: 8px;
+}
+
+/* Tighten the gap above the button container specifically in Sol Station */
+.sol-station-modal #event-button-container {
+    margin-top: 0.5rem !important; 
+    margin-bottom: 0 !important; /* [FIX] Nuke inherited tailwind margins killing vertical space */
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+}
+
+.sol-dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* [FIX] Tighter gap */
+    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+    margin-bottom: 0 !important; /* [FIX] Kill layout bleed */
+}
+
+/* Scrollbar Styling for Webkit */
+.sol-station-modal #event-description::-webkit-scrollbar {
+    width: 6px;
+}
+.sol-station-modal #event-description::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+.sol-station-modal #event-description::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+    border-radius: 3px;
+}
+
+/* Compact Dismiss Button */
+.btn-dismiss-sm {
+    font-size: 0.85rem;
+    padding: 0.35rem 1.5rem;
+    line-height: 1.2;
+    height: auto;
+    min-height: 0;
+}
+
+/* Header & Status */
+.sol-header-panel {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem; 
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    flex-shrink: 0; 
+}
+
+.sol-health-bar-container {
+    margin-bottom: 0.75rem; 
+}
+
+.sol-health-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: #9ca3af;
+}
+
+.sol-health-track {
+    width: 100%;
+    height: 12px;
+    background-color: #374151;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.sol-health-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.sol-readout-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    text-align: center;
+}
+
+.readout-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.readout-item .label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.readout-item .value {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Mode Control */
+.sol-mode-control {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem; 
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    margin-bottom: 0.5rem; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.mode-toggle-group {
+    display: flex;
+    gap: 0.25rem; /* [FIX] Tighter gap for buttons */
+    justify-content: center;
+    margin-bottom: 0.5rem; 
+}
+
+.mode-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #4b5563;
+    color: #9ca3af;
+    padding: 0.35rem 0.25rem; /* [FIX] Reduced padding */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem; /* [FIX] Smaller font */
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+.mode-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #6b7280;
+}
+
+.mode-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    cursor: default;
+}
+
+.mode-btn.mode-stability.active {
+    border-color: #34d399; /* Green */
+    color: #34d399;
+}
+.mode-btn.mode-commerce.active {
+    border-color: #fbbf24; /* Amber */
+    color: #fbbf24;
+}
+.mode-btn.mode-production.active {
+    border-color: #f87171; /* Red */
+    color: #f87171;
+}
+
+.mode-description {
+    font-size: 0.8rem;
+    color: #d1d5db;
+    min-height: 1.2rem;
+}
+
+/* Cache Grid */
+.sol-cache-section {
+    flex-shrink: 0;
+}
+
+.cache-grid {
+    display: grid;
+    /* Phase 3 Fix: 2 Columns for better vertical scrolling */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem; 
+}
+
+.cache-card {
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.4rem; /* [FIX] Reduced padding */
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; 
+}
+
+.cache-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cache-icon {
+    width: 24px; 
+    height: 24px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    border: 1px solid #4b5563;
+}
+
+.cache-info {
+    overflow: hidden;
+}
+
+.cache-name {
+    font-size: 0.7rem; /* [FIX] Smaller font */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cache-tier {
+    font-size: 0.6rem;
+    color: #6b7280;
+}
+
+.cache-bar-track {
+    width: 100%;
+    height: 4px;
+    background: #1f2937;
+    border-radius: 2px;
+}
+
+.cache-bar-fill {
+    height: 100%;
+    background-color: #fff;
+    border-radius: 2px;
+}
+
+.cache-details {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    text-align: right;
+    font-family: monospace;
+}
+
+.cache-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.player-stock {
+    font-size: 0.65rem;
+    color: #6b7280;
+}
+
+.btn-donate {
+    background: #374151;
+    border: none;
+    color: #fff;
+    padding: 0.2rem 0.4rem; 
+    font-size: 0.65rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.btn-donate:hover:not(:disabled) {
+    background: #4b5563;
+}
+
+.btn-donate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Officer Slots */
+.sol-officer-section {
+    flex-shrink: 0;
+    padding-bottom: 0.5rem; 
+}
+
+.officer-slot-container {
+    display: flex;
+    gap: 0.75rem; 
+    justify-content: center;
+}
+
+.officer-slot {
+    width: 120px; 
+    height: 140px; 
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px dashed #4b5563;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.officer-slot:hover {
+    border-color: #9ca3af;
+    background: rgba(31, 41, 55, 0.8);
+}
+
+.officer-slot.filled {
+    border-style: solid;
+    border-color: #60a5fa; /* Blue */
+    background: rgba(30, 58, 138, 0.2);
+}
+
+.slot-header {
+    font-size: 0.65rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.empty-label {
+    margin-top: auto;
+    margin-bottom: auto;
+    color: #9ca3af;
+    font-size: 0.8rem;
+}
+
+.officer-name {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #e5e7eb;
+}
+
+.officer-role {
+    font-size: 0.65rem;
+    color: #60a5fa;
+    margin-bottom: 0.25rem;
+}
+
+.officer-buffs-mini {
+    font-size: 0.6rem;
+    color: #9ca3af;
+    margin-top: auto;
+    line-height: 1.1;
+}
+
+/* Roster Modal */
+.roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.roster-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #374151;
+}
+
+.roster-card .officer-info {
+    text-align: left;
+}
+
+.roster-card .officer-buffs {
+    font-size: 0.8rem;
+    color: #d1d5db;
+}
+
+.roster-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #374151;
+}
+
+.btn-red {
+    background-color: #991b1b;
+    color: #fee2e2;
+}
+.btn-red:hover {
+    background-color: #7f1d1d;
+}
+
+/* Sol Directorate Entry Button (Services Screen) */
+.sol-directorate-btn {
+    width: 100%;
+    max-width: 600px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 1px solid #60a5fa;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.sol-directorate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+    border-color: #93c5fd;
+}
+
+.sol-directorate-btn .btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.sol-directorate-btn .btn-icon {
+    font-size: 2rem;
+    color: #fbbf24; /* Sun Yellow */
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+}
+
+.sol-directorate-btn .btn-text {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.sol-directorate-btn .btn-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.sol-directorate-btn .btn-subtitle {
+    font-size: 0.8rem;
+    color: #bfdbfe;
+}
+
+/* ========================================================================= */
+/* --- SOL STATION: PHASE 3 PROGRESSION & OFFICER UI --- */
+/* ========================================================================= */
+
+/* Level Styling Matrix */
+.sol-level-header {
+    font-size: 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.sol-level-white { color: #fff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
+.sol-level-green { color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
+.sol-level-blue { color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.8); }
+
+@keyframes pulse-gold { 0%, 100% { text-shadow: 0 0 10px rgba(250, 204, 21, 0.8); } 50% { text-shadow: 0 0 20px rgba(250, 204, 21, 1); } }
+.sol-level-gold { color: #facc15; animation: pulse-gold 2s infinite; }
+
+@keyframes pulse-orange { 0%, 100% { text-shadow: 0 0 12px rgba(249, 115, 22, 0.8); } 50% { text-shadow: 0 0 25px rgba(249, 115, 22, 1); } }
+.sol-level-orange { color: #f97316; animation: pulse-orange 1.5s infinite; }
+
+@keyframes pulse-red { 0%, 100% { text-shadow: 0 0 15px rgba(239, 68, 68, 0.9); } 50% { text-shadow: 0 0 30px rgba(239, 68, 68, 1); } }
+.sol-level-red { color: #ef4444; animation: pulse-red 1s infinite; }
+
+/* Dual-Column Officer Management */
+.officer-mgmt-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    max-height: 50vh;
+}
+
+@media (max-width: 768px) {
+    .officer-mgmt-container {
+        flex-direction: column;
+        max-height: 60vh;
+    }
+}
+
+.column-avail, .column-active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.col-title {
+    background: #1f2937;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    border-bottom: 1px solid #374151;
+    font-weight: bold;
+}
+
+.col-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Row Interaction States */
+.officer-mgmt-row {
+    display: flex;
+    align-items: center;
+    background: #111827;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.officer-mgmt-row.selected {
+    background: #1e3a8a;
+    border-color: #60a5fa;
+}
+
+.officer-mgmt-row.assigned {
+    background: rgba(30, 58, 138, 0.2);
+    border-color: #3b82f6;
+}
+
+.officer-mgmt-row.empty-slot {
+    background: rgba(255, 255, 255, 0.05);
+    border-style: dashed;
+    cursor: default;
+    opacity: 0.6;
+}
+
+.slot-indicator {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-right: 0.5rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
+
+.row-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.row-info .o-name { font-size: 0.85rem; font-weight: bold; }
+.row-info .o-role { font-size: 0.7rem; color: #60a5fa; }
+.row-info .o-buffs { font-size: 0.65rem; margin-top: 2px; }
+
+.btn-inline-assign, .btn-inline-remove {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-inline-remove {
+    background: #dc2626;
+}
+
+/* Engineering Project Modal UI */
+.eng-requirements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.eng-req-row {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+}
+
+.req-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.eng-progress-track {
+    width: 100%;
+    height: 8px;
+    background: #1f2937;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.eng-progress-fill {
+    height: 100%;
+    background: #60a5fa;
+    transition: width 0.3s;
+}
+
+.credit-stepper {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.credit-stepper input {
+    flex: 1;
+    background: #111827;
+    border: 1px solid #4b5563;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* [[UPDATED]] Clean Project Complete Dematerialization */
+.project-complete-dematerialize {
+    animation: simpleFadeOut 2.5s linear forwards;
+    pointer-events: none; /* Prevent clicks during exit */
+}
+
+@keyframes simpleFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* [[NEW]] Dashboard Fade In Hook */
+.dashboard-fade-in {
+    animation: fadeIn 1s ease-in forwards;
+}

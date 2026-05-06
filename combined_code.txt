@@ -29,7 +29,11 @@
     <link rel="stylesheet" href="./css/navigation.css">
     <link rel="stylesheet" href="./css/news-ticker.css"> 
     <link rel="stylesheet" href="./css/help-system.css">
-    <link rel="stylesheet" href="./css/modals.css">
+    <link rel="stylesheet" href="./css/modals/modal-core.css">
+    <link rel="stylesheet" href="./css/modals/modal-sol-station.css">
+    <link rel="stylesheet" href="./css/modals/modal-cinematics.css">
+    <link rel="stylesheet" href="./css/modals/modal-events.css">
+    <link rel="stylesheet" href="./css/modals/modal-utility.css">
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/achievements.css">
     <link rel="stylesheet" href="./css/missions.css">
@@ -6294,6 +6298,2281 @@ card.
     font-style: normal;
 }
 --- END OF FILE: ./css/news-ticker.css ---
+
+--- START OF FILE: ./css/modals/modal-core.css ---
+/* css/modals/modal-core.css */
+
+/* General Modal Backdrop Styling */
+.modal-backdrop {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 50;
+    opacity: 0;
+    transition: opacity 1s ease-out;
+    pointer-events: none;
+}
+
+/* Hide modal backdrops by default */
+.modal-backdrop.hidden {
+    display: none;
+}
+
+/* Base styles for when a modal is active/visible */
+.modal-backdrop:not(.hidden) {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+/* General Modal Content Box Styling */
+.modal-content {
+    position: relative;
+    background-color: #111827;
+    padding: 1.5rem;
+    border-radius: 12px;
+    border: 1px solid #374151;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+    max-width: 90%;
+    width: 400px;
+}
+
+/* Special override for slow intro fade */
+.intro-fade-in {
+    transition-duration: 2s !important;
+}
+.intro-fade-in .modal-content {
+    animation-duration: 2s !important;
+}
+
+/* State class for a modal that is currently visible */
+.modal-visible .modal-content {
+    animation: fadeIn 1s ease-out;
+}
+
+/* State class for a modal that is in the process of closing */
+.modal-hiding {
+    animation: fadeOut 1s ease-out forwards;
+}
+.modal-hiding .modal-content {
+    animation: fadeOut 1s ease-out forwards;
+}
+
+/* New class for the splash screen's unique exit animation */
+.splash-screen-hiding {
+    -webkit-mask-image: linear-gradient(to top, transparent 25%, black 75%);
+    mask-image: linear-gradient(to top, transparent 25%, black 75%);
+    -webkit-mask-size: 100% 400%;
+    mask-size: 100% 400%;
+    animation: scanlineFadeOut 2s ease-in-out forwards;
+}
+
+@keyframes scanlineFadeOut {
+    0% {
+        opacity: 1;
+        transform: scale(1);
+        filter: brightness(1) blur(0px);
+    }
+    50% {
+        opacity: 1;
+        filter: brightness(1.5) blur(1px);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1.05);
+        filter: brightness(0) blur(4px);
+    }
+}
+
+/* Disable pointer events on modals that shouldn't be dismissible */
+.dismiss-disabled {
+    pointer-events: none;
+}
+
+/* --- GENERIC THEMED GLOW --- */
+@keyframes themed-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 12px var(--theme-glow-color), inset 0 0 12px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 24px var(--theme-glow-color), inset 0 0 16px var(--theme-glow-color);
+        border-color: var(--theme-glow-color);
+    }
+}
+
+.is-glowing {
+    animation: themed-glow-animation 3s infinite;
+}
+
+/* --- MODAL COST TEXT --- */
+.modal-cost-text {
+    font-size: 1.1rem;
+}
+
+/* --- MODAL MARQUEE --- */
+.marquee-container {
+    overflow: hidden;
+    white-space: nowrap;
+    width: 100%;
+}
+
+.marquee-content {
+    display: inline-block;
+    padding-left: 100%;
+    animation: modal-marquee-scroll 10s linear infinite;
+}
+
+@keyframes modal-marquee-scroll {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-100%); }
+}
+
+/* ========================================================================= */
+/* --- STATIC MODAL TEXTURE INTEGRATION ---                                  */
+/* ========================================================================= */
+
+.modal-content {
+    position: relative;
+    /* Ensure the base color exists for the blend modes to calculate against */
+    background-color: #111827; 
+}
+
+/* Bottom Texture Layer: Multiply (Path Corrected) */
+.modal-content::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: multiply;
+    opacity: 0.35;
+    pointer-events: none;
+    z-index: 1; /* Above background */
+}
+
+/* Top Texture Layer: Screen (Path Corrected) */
+.modal-content::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: var(--bg-metal, url('../assets/images/textures/ui_metal_tile.webp'));
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    border-radius: inherit;
+    mix-blend-mode: screen;
+    opacity: 0.15;
+    pointer-events: none;
+    z-index: 1; /* Above background */
+}
+
+/* VIRTUAL WORKBENCH: Exempt Sol Station and Custom Wrappers from generic textures to preserve dynamic level themes */
+.sol-station-modal .modal-content::before,
+.sol-station-modal .modal-content::after,
+#launch-modal .modal-content::before,
+#launch-modal .modal-content::after,
+#cargo-detail-modal .modal-content::before,
+#cargo-detail-modal .modal-content::after,
+#mission-modal .modal-content::before,
+#mission-modal .modal-content::after,
+#pause-menu-modal .modal-content::before,
+#pause-menu-modal .modal-content::after {
+    display: none !important;
+}
+
+/* Push text elements ABOVE the texture layers */
+.modal-header,
+.modal-header-flex,
+.modal-content > div,
+.modal-footer {
+    position: relative;
+    z-index: 2;
+}
+
+/* Typographic Shielding */
+.modal-header h2,
+.modal-title-group {
+    text-shadow: 
+        -1px -1px 0 #000, 1px -1px 0 #000, 
+        -1px  1px 0 #000, 1px  1px 0 #000, 
+         0 4px 8px rgba(0, 0, 0, 0.8);
+}
+
+/* ========================================================================= */
+/* --- Z-INDEX HIERARCHY OVERRIDES ---                                       */
+/* ========================================================================= */
+/* Elevate specific modals to float above HUD buttons (z-index: 100)         */
+#map-detail-modal,
+#lore-modal,
+#ship-detail-modal,
+#age-event-modal,
+#upgrade-installation-modal,
+#upgrade-progress-modal,
+#cargo-detail-modal,
+#mission-modal,
+#mission-detail-modal,
+#loan-acquired-modal,
+#intel-offer-modal,
+#intel-modal,
+#econ-weather-modal,
+.sol-station-modal {
+    z-index: 105 !important;
+}
+--- END OF FILE: ./css/modals/modal-core.css ---
+
+--- START OF FILE: ./css/modals/modal-events.css ---
+/* css/modals/modal-events.css */
+
+/* Random Event Modal */
+#random-event-modal .modal-content, #age-event-modal .modal-content {
+    background: radial-gradient(circle, #2d3748, #1a202c);
+    border: 2px solid #4a5568;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.6), inset 0 0 15px rgba(74, 85, 104, 0.3);
+    text-align: center;
+}
+
+#random-event-modal h3, #age-event-modal h3 {
+    font-family: 'Orbitron', sans-serif;
+    color: #e2e8f0;
+    text-shadow: 0 0 8px rgba(147, 197, 253, 0.4);
+}
+
+#random-event-choices-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    width: 100%;
+    margin-top: 1rem;
+}
+
+/* Age Event / Perk Selection Modal */
+#age-event-button-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+.perk-button {
+    background-color: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 8px;
+    padding: 1rem;
+    text-align: center;
+    transition: all 0.2s ease-in-out;
+}
+
+.perk-button:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+    border-color: #fde047;
+    transform: translateY(-2px);
+}
+
+.perk-button h4 {
+    font-family: 'Orbitron', sans-serif;
+    color: #fde047;
+    margin-bottom: 0.5rem;
+}
+
+.perk-button p {
+    font-size: 0.875rem;
+    color: #cbd5e1;
+}
+
+/* --- EVENT BUTTON CONTAINER ALIGNMENT --- */
+#event-button-container {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    width: 100%;
+}
+
+/* --- EVENT SYSTEM 2.0 STYLING (PHASE 2) --- */
+.event-choice-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    line-height: 1.2;
+    height: auto;
+    min-height: 3.5rem;
+}
+
+.choice-header {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #f3f4f6;
+    margin-bottom: 0.25rem;
+    pointer-events: none;
+}
+
+.choice-subtext {
+    font-size: 0.85rem;
+    font-weight: 500;
+    pointer-events: none;
+}
+
+/* Event Color Utilities */
+.text-cost-orange {
+    color: #fb923c !important;
+}
+
+.text-req-yellow {
+    color: #facc15 !important;
+}
+
+.text-delay-blue {
+    color: #60a5fa !important;
+}
+
+/* Event Result Text Colors (PHASE 3: Semantics) */
+.text-result-hull {
+    color: #4ade80 !important;
+}
+.text-result-fuel {
+    color: #60a5fa !important;
+}
+.text-result-time {
+    color: #9ca3af !important;
+}
+.text-result-cargo {
+    color: #facc15 !important;
+}
+.text-result-credit-gain {
+    color: #22d3ee !important;
+    text-shadow: 0 0 8px rgba(34, 211, 238, 0.4);
+}
+.text-result-credit-loss {
+    color: #ef4444 !important;
+    text-shadow: 0 0 8px rgba(239, 68, 68, 0.4);
+}
+
+/* --- BANKRUPTCY THEMES --- */
+.modal-theme-warning-yellow {
+    border-color: #ca8a04 !important;
+    background: linear-gradient(145deg, rgba(66, 32, 6, 0.95), #111827) !important;
+    box-shadow: 0 0 25px rgba(202, 138, 4, 0.4), inset 0 0 15px rgba(202, 138, 4, 0.2) !important;
+}
+
+.modal-theme-glitching-red {
+    border-color: #dc2626 !important;
+    background: linear-gradient(145deg, rgba(69, 10, 10, 0.95), #111827) !important;
+    box-shadow: 0 0 25px rgba(220, 38, 38, 0.5), inset 0 0 15px rgba(220, 38, 38, 0.3) !important;
+    animation: glitch-anim 2s infinite;
+}
+
+@keyframes glitch-anim {
+    0% { transform: translate(0) }
+    5% { transform: translate(-1px, 1px) }
+    10% { transform: translate(1px, -1px) }
+    15% { transform: translate(0) }
+    100% { transform: translate(0) }
+}
+
+.modal-theme-drab-gray {
+    border-color: #6b7280 !important;
+    background: linear-gradient(145deg, rgba(31, 41, 55, 0.95), #111827) !important;
+    box-shadow: 0 0 20px rgba(107, 114, 128, 0.3), inset 0 0 10px rgba(107, 114, 128, 0.2) !important;
+}
+
+/* ========================================================================= */
+/* --- COMM-LINK PORTRAIT SYSTEM (PHASE 2) --- */
+/* ========================================================================= */
+
+.comm-link-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    /* Adjusted for the 30% larger portrait to pull it further out of the modal */
+    margin-top: -100px; 
+    margin-bottom: 1rem;
+    z-index: 10;
+}
+
+.portrait-thumbnail.comm-active {
+    width: 128px;
+    height: 128px;
+    flex-shrink: 0;
+    
+    /* Square with rounded corners */
+    border-radius: 16px; 
+    border: 3px solid var(--comm-color, #38bdf8);
+    background-color: #000;
+    
+    /* Sprite properties */
+    background-repeat: no-repeat;
+    
+    /* Scale 30% up */
+    transform: scale(1.3);
+    /* Push the label down to account for the visual overflow of the scale */
+    margin-bottom: 22px; 
+    
+    /* Glowing active transmission animation */
+    animation: commPulse 2s infinite alternate;
+}
+
+@keyframes commPulse {
+    0% { 
+        box-shadow: 0 0 10px var(--comm-color-glow-low, rgba(56, 189, 248, 0.4)), inset 0 0 5px var(--comm-color-glow-low, rgba(56, 189, 248, 0.2)); 
+        border-color: var(--comm-color, #38bdf8);
+    }
+    100% { 
+        box-shadow: 0 0 25px var(--comm-color-glow-high, rgba(56, 189, 248, 0.8)), inset 0 0 15px var(--comm-color-glow-mid, rgba(56, 189, 248, 0.5)); 
+        border-color: var(--comm-color-bright, #bae6fd);
+    }
+}
+
+.portrait-name-label {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: var(--nameplate-text, #e0f2fe);
+    background: var(--nameplate-bg, rgba(12, 74, 110, 0.9));
+    border: 1px solid var(--nameplate-border, #38bdf8);
+    padding: 3px 14px;
+    border-radius: 99px; /* Pill shape */
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    
+    /* Overlap the bottom edge of the scaled portrait */
+    margin-top: -15px; 
+    z-index: 11;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.6);
+}
+
+/* ========================================================================= */
+/* --- OFFICER PORTRAITS GDD V1 (PHASE 2) --- */
+/* ========================================================================= */
+
+/* --- COMMON RARITY THEME (White/Slate) --- */
+.modal-theme-rarity-common {
+    --comm-color: #94a3b8;
+    --comm-color-bright: #f8fafc;
+    --comm-color-glow-low: rgba(148, 163, 184, 0.4);
+    --comm-color-glow-mid: rgba(148, 163, 184, 0.5);
+    --comm-color-glow-high: rgba(148, 163, 184, 0.8);
+    --nameplate-bg: rgba(30, 41, 59, 0.9);
+    --nameplate-border: #94a3b8;
+    --nameplate-text: #f8fafc;
+    
+    background: linear-gradient(145deg, rgba(30, 41, 59, 0.9), #111827) !important;
+    border-color: #94a3b8 !important;
+    box-shadow: 0 0 20px rgba(148, 163, 184, 0.2), inset 0 0 15px rgba(148, 163, 184, 0.1) !important;
+}
+.modal-theme-rarity-common .sol-level-header { 
+    color: #f8fafc !important; 
+    text-shadow: 0 0 10px rgba(248, 250, 252, 0.5); 
+}
+
+/* --- UNCOMMON RARITY THEME (Green) --- */
+.modal-theme-rarity-uncommon {
+    --comm-color: #4ade80;
+    --comm-color-bright: #86efac;
+    --comm-color-glow-low: rgba(74, 222, 128, 0.4);
+    --comm-color-glow-mid: rgba(74, 222, 128, 0.5);
+    --comm-color-glow-high: rgba(74, 222, 128, 0.8);
+    --nameplate-bg: rgba(6, 78, 59, 0.9);
+    --nameplate-border: #4ade80;
+    --nameplate-text: #ecfdf5;
+    
+    background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827) !important;
+    border-color: #34d399 !important;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.3), inset 0 0 15px rgba(52, 211, 153, 0.1) !important;
+}
+.modal-theme-rarity-uncommon .sol-level-header { 
+    color: #4ade80 !important; 
+    text-shadow: 0 0 10px rgba(74, 222, 128, 0.5); 
+}
+
+/* --- RARE RARITY THEME (Yellow/Gold) --- */
+.modal-theme-rarity-rare {
+    --comm-color: #facc15;
+    --comm-color-bright: #fef08a;
+    --comm-color-glow-low: rgba(250, 204, 21, 0.4);
+    --comm-color-glow-mid: rgba(250, 204, 21, 0.5);
+    --comm-color-glow-high: rgba(250, 204, 21, 0.8);
+    --nameplate-bg: rgba(113, 63, 18, 0.9);
+    --nameplate-border: #facc15;
+    --nameplate-text: #fefce8;
+    
+    background: linear-gradient(145deg, rgba(66, 32, 6, 0.9), #111827) !important;
+    border-color: #facc15 !important;
+    box-shadow: 0 0 20px rgba(250, 204, 21, 0.3), inset 0 0 15px rgba(250, 204, 21, 0.1) !important;
+}
+.modal-theme-rarity-rare .sol-level-header { 
+    color: #facc15 !important; 
+    text-shadow: 0 0 10px rgba(250, 204, 21, 0.5); 
+}
+
+/* --- VERY RARE RARITY THEME (Orange) --- */
+.modal-theme-rarity-very_rare {
+    --comm-color: #fb923c;
+    --comm-color-bright: #fdba74;
+    --comm-color-glow-low: rgba(251, 146, 60, 0.4);
+    --comm-color-glow-mid: rgba(251, 146, 60, 0.5);
+    --comm-color-glow-high: rgba(251, 146, 60, 0.8);
+    --nameplate-bg: rgba(124, 45, 18, 0.9);
+    --nameplate-border: #fb923c;
+    --nameplate-text: #fff7ed;
+    
+    background: linear-gradient(145deg, rgba(124, 45, 18, 0.9), #111827) !important;
+    border-color: #fb923c !important;
+    box-shadow: 0 0 20px rgba(251, 146, 60, 0.3), inset 0 0 15px rgba(251, 146, 60, 0.1) !important;
+}
+.modal-theme-rarity-very_rare .sol-level-header { 
+    color: #fb923c !important; 
+    text-shadow: 0 0 10px rgba(251, 146, 60, 0.5); 
+}
+
+/* --- HYPER RARE RARITY THEME (Red) --- */
+.modal-theme-rarity-hyper_rare {
+    --comm-color: #f87171;
+    --comm-color-bright: #fca5a5;
+    --comm-color-glow-low: rgba(248, 113, 113, 0.4);
+    --comm-color-glow-mid: rgba(248, 113, 113, 0.5);
+    --comm-color-glow-high: rgba(248, 113, 113, 0.8);
+    --nameplate-bg: rgba(127, 29, 29, 0.9);
+    --nameplate-border: #f87171;
+    --nameplate-text: #fef2f2;
+    
+    background: linear-gradient(145deg, rgba(127, 29, 29, 0.9), #111827) !important;
+    border-color: #f87171 !important;
+    box-shadow: 0 0 20px rgba(248, 113, 113, 0.3), inset 0 0 15px rgba(248, 113, 113, 0.1) !important;
+}
+.modal-theme-rarity-hyper_rare .sol-level-header { 
+    color: #f87171 !important; 
+    text-shadow: 0 0 10px rgba(248, 113, 113, 0.5); 
+}
+
+/* ========================================================================= */
+/* --- ANOMALY THEME (Story Events & Kintsugi) ---                           */
+/* ========================================================================= */
+
+.modal-theme-anomaly {
+    --comm-color: #eab308;
+    --comm-color-bright: #fef08a;
+    --comm-color-glow-low: rgba(234, 179, 8, 0.4);
+    --comm-color-glow-mid: rgba(234, 179, 8, 0.5);
+    --comm-color-glow-high: rgba(234, 179, 8, 0.8);
+    --nameplate-bg: rgba(0, 0, 0, 0.9);
+    --nameplate-border: #eab308;
+    --nameplate-text: #fef08a;
+    
+    background: linear-gradient(145deg, #000000 0%, #374151 60%, #ca8a04 100%) !important;
+    border: 2px solid #eab308 !important; /* Yellow 500 */
+    box-shadow: 0 0 30px rgba(234, 179, 8, 0.4), inset 0 0 20px rgba(234, 179, 8, 0.2) !important;
+    color: #f3f4f6 !important;
+}
+
+.modal-theme-anomaly * {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.modal-theme-anomaly h3, .modal-theme-anomaly #event-title {
+    color: #fef08a !important; /* Yellow 200 */
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.6) !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.modal-theme-anomaly .btn {
+    border-color: #eab308 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: #fef08a !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-theme-anomaly .btn:hover:not(:disabled) {
+    background: rgba(234, 179, 8, 0.2) !important;
+    box-shadow: 0 0 10px rgba(234, 179, 8, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+/* ========================================================================= */
+/* --- STORY EVENTS ---                                 */
+/* ========================================================================= */
+
+#story-event-title {
+    font-size: 23px !important; /* Reduced by 1 point from standard text-2xl */
+}
+
+#story-event-modal .modal-content,
+#story-event-description {
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+    hyphens: auto; /* Ensure continuous strings (like ERR_CODES) do not bleed out of the modal boundaries */
+}
+
+/* ========================================================================= */
+/* --- ECONOMIC WEATHER MODAL ANIMATIONS ---                                 */
+/* ========================================================================= */
+
+@keyframes econ-weather-fade-in {
+    0% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+@keyframes econ-weather-fade-out {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+}
+
+.econ-modal-anim-in {
+    animation: econ-weather-fade-in 0.5s ease-out forwards;
+}
+
+.econ-modal-anim-out {
+    animation: econ-weather-fade-out 0.5s ease-in forwards;
+    pointer-events: none;
+}
+
+/* Map the blur-fade keyframes directly to UIModalEngine's dynamic classes */
+#econ-weather-modal.modal-visible {
+    animation: econ-weather-fade-in 0.5s ease-out forwards;
+}
+
+#econ-weather-modal.modal-hiding {
+    animation: econ-weather-fade-out 0.5s ease-in forwards;
+    pointer-events: none;
+}
+--- END OF FILE: ./css/modals/modal-events.css ---
+
+--- START OF FILE: ./css/modals/modal-cinematics.css ---
+/* css/modals/modal-cinematics.css */
+
+/* Specific Modal Styling */
+
+/* Travel Animation Modal */
+#travel-animation-modal.modal-backdrop {
+    background-color: rgba(12, 16, 29, 0.6); 
+    transition: opacity 0.5s ease-out;
+}
+
+#travel-animation-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    width: 90%;
+    max-width: 800px;
+    padding: 0;
+    background: radial-gradient(circle, rgba(26, 32, 48, 0.7) 0%, rgba(12, 16, 29, 0.9) 100%);
+    border-color: #4a6a8a;
+    overflow: hidden;
+}
+
+#travel-header-panel, #travel-footer-panel {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    text-align: center;
+    flex-shrink: 0;
+    background-color: rgba(12, 16, 29, 0.5);
+    z-index: 10;
+}
+#travel-header-panel {
+    border-bottom: 1px solid #3a4a6a;
+    min-height: 80px;
+}
+#travel-footer-panel {
+    border-top: 1px solid #3a4a6a;
+    min-height: 80px;
+    justify-content: center;
+}
+
+#travel-progress-bar {
+    box-shadow: 0 0 8px var(--progress-glow-color, #fff), 0 0 12px var(--progress-glow-color, #fff);
+}
+
+/* --- [[PHASE 2]] TRAVEL CINEMATIC STYLES --- */
+
+#travel-canvas {
+    display: none !important;
+}
+
+#travel-image-wrapper {
+    width: 100%;
+    height: 350px; 
+    overflow: hidden; 
+    position: relative;
+    background-color: #000;
+    border-left: 1px solid #374151;
+    border-right: 1px solid #374151;
+    z-index: 5; 
+    pointer-events: none;
+}
+
+/* The actual image element */
+#travel-background-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transform: scale(1.1);
+    will-change: transform, opacity;
+    backface-visibility: hidden;
+    transform-origin: center center;
+    transition: opacity 1.0s ease-in, transform 2.5s ease-out;
+}
+
+#travel-background-image.travel-zoom-active {
+    transform: scale(1.0);
+}
+
+/* --- STARFIELD OVERLAY STATES & VISIBILITY FIXES --- */
+
+/* 1. Make the modal backdrops completely transparent so they don't dim the starfield */
+#launch-modal.modal-backdrop,
+#travel-animation-modal.modal-backdrop,
+#officer-recruitment-modal.modal-backdrop {
+    background-color: transparent !important;
+}
+
+/* 2. Give the launch wrapper a slight transparency so it floats elegantly over the stars */
+.launch-modal-wrapper {
+    /* Maintained blank as requested */
+}
+
+/* 3. Set the starfield to Deep Black and remove the redundant blur filters */
+#starfield-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    opacity: 0;
+    background-color: #000000; /* Deep black background */
+    z-index: 40; /* Stays strictly behind modal content (z-index 50) */
+}
+
+#starfield-overlay.starfield-entry {
+    opacity: 1;
+    transition: opacity 1s ease;
+}
+
+#starfield-overlay.starfield-exit-quick {
+    opacity: 0;
+    transition: opacity 0.4s ease;
+}
+
+#starfield-overlay.starfield-exit-arrival {
+    opacity: 0;
+    transition: opacity 0.6s ease;
+}
+
+/* --- MISSION COMPLETE ANIMATION --- */
+.modal-blur-fade-out {
+    animation: modalBlurFadeOut 1s ease-out forwards !important;
+    pointer-events: none;
+}
+
+@keyframes modalBlurFadeOut {
+    0% { 
+        opacity: 1; 
+        transform: scale(1); 
+        filter: blur(0px); 
+    }
+    100% { 
+        opacity: 0; 
+        transform: scale(1.05); 
+        filter: blur(8px); 
+    }
+}
+
+.backdrop-fade-out-slow {
+    animation: simpleFadeOut 2s ease-out forwards !important;
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* --- LICENSE ACQUISITION CINEMATIC SYSTEM --- */
+/* ========================================================================= */
+
+@keyframes licenseModalBlurIn {
+    0% { opacity: 0; filter: blur(10px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+.license-modal-blur-in {
+    /* FIXED: Added !important so it absolutely overrides .modal-visible standard fadeIn */
+    animation: licenseModalBlurIn 1.5s ease-out forwards !important;
+}
+
+.license-modal-blur-out {
+    animation: modalBlurFadeOut 0.8s ease-out forwards !important;
+    pointer-events: none;
+}
+
+/* Background Gradients for the Overlays */
+.license-overlay-t2 { background: linear-gradient(135deg, #22c55e, #ffffff) !important; }
+.license-overlay-t3 { background: linear-gradient(135deg, #8b5cf6, #06b6d4) !important; }
+.license-overlay-t4 { background: linear-gradient(135deg, #6b7280, #14b8a6) !important; }
+.license-overlay-t5 { background: linear-gradient(135deg, #eab308, #ec4899) !important; }
+.license-overlay-t6 { background: linear-gradient(135deg, #d8b4fe, #ef4444) !important; }
+.license-overlay-t7 { background: linear-gradient(135deg, #581c87, #f97316) !important; }
+
+/* Modal Themes */
+.modal-theme-license-t2 { background: linear-gradient(145deg, rgba(34, 197, 94, 0.95), rgba(255, 255, 255, 0.85)) !important; border: 2px solid #22c55e !important; }
+.modal-theme-license-t3 { background: linear-gradient(145deg, rgba(139, 92, 246, 0.95), rgba(6, 182, 212, 0.85)) !important; border: 2px solid #8b5cf6 !important; }
+.modal-theme-license-t4 { background: linear-gradient(145deg, rgba(107, 114, 128, 0.95), rgba(20, 184, 166, 0.85)) !important; border: 2px solid #6b7280 !important; }
+.modal-theme-license-t5 { background: linear-gradient(145deg, rgba(234, 179, 8, 0.95), rgba(236, 72, 153, 0.85)) !important; border: 2px solid #eab308 !important; }
+.modal-theme-license-t6 { background: linear-gradient(145deg, rgba(216, 180, 254, 0.95), rgba(239, 68, 68, 0.85)) !important; border: 2px solid #d8b4fe !important; }
+.modal-theme-license-t7 { background: linear-gradient(145deg, rgba(88, 28, 135, 0.95), rgba(249, 115, 22, 0.85)) !important; border: 2px solid #581c87 !important; }
+
+/* Header Colors */
+.license-header-t2 { color: #22c55e !important; }
+.license-header-t3 { color: #8b5cf6 !important; }
+.license-header-t4 { color: #9ca3af !important; }
+.license-header-t5 { color: #eab308 !important; }
+.license-header-t6 { color: #d8b4fe !important; }
+.license-header-t7 { color: #c084fc !important; } 
+
+/* Sub-header Glow Colors */
+.license-text-t2 { color: #22c55e !important; text-shadow: 0 0 10px rgba(34, 197, 94, 0.8) !important; }
+.license-text-t3 { color: #8b5cf6 !important; text-shadow: 0 0 10px rgba(139, 92, 246, 0.8) !important; }
+.license-text-t4 { color: #d1d5db !important; text-shadow: 0 0 10px rgba(209, 213, 219, 0.8) !important; }
+.license-text-t5 { color: #eab308 !important; text-shadow: 0 0 10px rgba(234, 179, 8, 0.8) !important; }
+.license-text-t6 { color: #d8b4fe !important; text-shadow: 0 0 10px rgba(216, 180, 254, 0.8) !important; }
+.license-text-t7 { color: #c084fc !important; text-shadow: 0 0 10px rgba(192, 132, 252, 0.8) !important; }
+
+/* Button Background Themes */
+.license-btn-t2 { background: linear-gradient(135deg, #22c55e, #ffffff) !important; color: #000 !important; }
+.license-btn-t3 { background: linear-gradient(135deg, #8b5cf6, #06b6d4) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t4 { background: linear-gradient(135deg, #6b7280, #14b8a6) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t5 { background: linear-gradient(135deg, #eab308, #ec4899) !important; color: #000 !important; }
+.license-btn-t6 { background: linear-gradient(135deg, #d8b4fe, #ef4444) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+.license-btn-t7 { background: linear-gradient(135deg, #581c87, #f97316) !important; color: #fff !important; text-shadow: 1px 1px 2px #000 !important; }
+
+/* Typography & Layout Rules */
+.license-header-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.75rem; 
+    font-weight: 900;
+    letter-spacing: 2px;
+    -webkit-text-stroke: 1.5px #000;
+    text-shadow: 2px 2px 5px rgba(0,0,0,0.9);
+    margin-bottom: 0.5rem;
+}
+
+.license-subheader-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.25rem; 
+    font-weight: bold;
+    animation: pulse-glow-text 2s infinite alternate;
+    -webkit-text-stroke: 0.5px #000;
+}
+
+.license-body-text {
+    font-size: 1.1rem; 
+    color: #ffffff !important;
+    text-shadow: 1px 1px 4px rgba(0,0,0,1), 0 0 8px rgba(0,0,0,0.8);
+    margin-top: 1rem;
+    font-weight: 600;
+    line-height: 1.4;
+}
+
+@keyframes pulse-glow-text {
+    0% { opacity: 0.8; filter: brightness(1); }
+    100% { opacity: 1; filter: brightness(1.3); }
+}
+
+@keyframes pulse-white-border {
+    0% { box-shadow: 0 0 5px rgba(255,255,255,0.5), inset 0 0 2px rgba(255,255,255,0.3); border-color: rgba(255,255,255,0.5); }
+    100% { box-shadow: 0 0 15px rgba(255,255,255,1), inset 0 0 8px rgba(255,255,255,0.8); border-color: #ffffff; }
+}
+
+.license-btn {
+    border: 2px solid #fff;
+    animation: pulse-white-border 1.5s infinite alternate;
+    font-size: 1.1rem;
+    letter-spacing: 1px;
+}
+
+/* ========================================================================= */
+/* --- GUILD CHARTER MODALS (PHASE 2 / POLISHED) --- */
+/* ========================================================================= */
+
+.modal-backdrop-grey {
+    background-color: rgba(20, 22, 25, 0.9) !important;
+}
+
+.modal-content.modal-theme-guild-charter {
+    background: linear-gradient(145deg, #1e2024 0%, #0f1115 100%);
+    border: 1px solid #3a3f47; /* Dark, subtle outer border */
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+    padding: 2.5rem 2rem; /* Professional padding */
+    color: #e2e8f0; /* Crisp silver text */
+}
+
+/* Style the text cleanly without aggressive overriding */
+.modal-content.modal-theme-guild-charter p, 
+.modal-content.modal-theme-guild-charter div {
+    color: #e2e8f0;
+    line-height: 1.6;
+}
+
+/* Keep the title gold */
+.modal-content.modal-theme-guild-charter h3,
+.modal-content.modal-theme-guild-charter #charter-title {
+    color: #d4af37 !important;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8) !important;
+    margin-bottom: 1.5rem !important;
+    font-family: 'Zorque', sans-serif !important;
+    font-size: 1.8rem !important;
+    letter-spacing: 1px !important;
+}
+
+/* Ensure the Processing Modal overrides the Guild Theme's default Zorque font */
+.modal-content.modal-theme-guild-charter #processing-title {
+    font-family: 'Orbitron', sans-serif !important;
+}
+
+.btn-gold-weighty {
+    background: linear-gradient(to bottom, #e5c358 0%, #c49a22 40%, #997312 100%) !important;
+    color: #111 !important;
+    border: 1px solid #7a5a08 !important;
+    box-shadow: 0 6px 12px rgba(0,0,0,0.7), inset 0 2px 1px rgba(255,255,255,0.5), inset 0 -2px 2px rgba(0,0,0,0.3) !important;
+    font-weight: 800 !important;
+    text-transform: uppercase;
+    letter-spacing: 1px !important;
+    transition: all 0.1s ease-in-out;
+    border-radius: 4px !important;
+    padding: 0.6rem 2rem !important;
+}
+
+.btn-gold-weighty:hover:not(:disabled) {
+    background: linear-gradient(to bottom, #f5d775 0%, #d4a930 40%, #a88018 100%) !important;
+    box-shadow: 0 8px 16px rgba(0,0,0,0.8), inset 0 2px 1px rgba(255,255,255,0.6), inset 0 -2px 2px rgba(0,0,0,0.3) !important;
+    transform: translateY(-1px);
+}
+
+.btn-gold-weighty:active:not(:disabled) {
+    transform: translateY(2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.9), inset 0 2px 4px rgba(0,0,0,0.5) !important;
+}
+
+.btn-gold-weighty:disabled {
+    background: linear-gradient(to bottom, #5a5038 0%, #423b28 100%) !important;
+    color: #888 !important;
+    border: 1px solid #333 !important;
+    box-shadow: none !important;
+}
+
+/* --- GOLDEN BLUR EXIT ANIMATION --- */
+@keyframes goldModalBlurOut {
+    0% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        border-color: #3a3f47;
+    }
+    100% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(1.05);
+        box-shadow: 0 0 60px rgba(212, 175, 55, 1), inset 0 0 30px rgba(212, 175, 55, 0.8);
+        border-color: #d4af37;
+    }
+}
+
+.modal-hiding.guild-backdrop .modal-content {
+    animation: goldModalBlurOut 2s ease-out forwards !important;
+}
+
+/* ========================================================================= */
+/* --- RESIGNATION TERMINAL PULSE & CLEAR BACKDROPS (PHASE 3) --- */
+/* ========================================================================= */
+
+.intro-backdrop-clear {
+    background-color: transparent !important;
+}
+
+@keyframes gentlePulseOpacity {
+    0%, 100% { opacity: 0.3; transform: translateX(-50%) scale(1); text-shadow: 0 0 10px rgba(255,255,255,0.4); }
+    50% { opacity: 0.6; transform: translateX(-50%) scale(1.02); text-shadow: 0 0 20px rgba(255,255,255,0.8); }
+}
+.quit-job-pulse {
+    animation: gentlePulseOpacity 3s ease-in-out infinite;
+    /* Baseline opacity handled natively within keyframes */
+}
+
+@keyframes quitJobFadeOut {
+    0% { opacity: 0.6; transform: translateX(-50%) scale(1); text-shadow: 0 0 20px rgba(255,255,255,0.8); }
+    100% { opacity: 0; transform: translateX(-50%) scale(1); text-shadow: 0 0 0px rgba(255,255,255,0); }
+}
+
+/* ========================================================================= */
+/* --- INTRO SEQUENCE POLISH (PHASE 1) --- */
+/* ========================================================================= */
+
+/* Intro Button Cyan */
+.btn-intro-cyan {
+    background: linear-gradient(135deg, #0284c7, #06b6d4) !important;
+    color: #fff !important;
+    border: 1px solid #22d3ee !important;
+    box-shadow: 0 4px 10px rgba(6, 182, 212, 0.4), inset 0 2px 2px rgba(255,255,255,0.2) !important;
+    font-family: 'Orbitron', sans-serif !important;
+    font-size: 1.5rem !important; /* Doubled size */
+    padding: 1rem 3rem !important;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    border-radius: 6px;
+    transition: all 0.2s ease-in-out;
+}
+.btn-intro-cyan:hover:not(:disabled) {
+    background: linear-gradient(135deg, #0ea5e9, #22d3ee) !important;
+    box-shadow: 0 6px 15px rgba(6, 182, 212, 0.6), inset 0 2px 2px rgba(255,255,255,0.4) !important;
+    transform: translateY(-2px);
+}
+
+/* Ship Selection Intro Blur */
+@keyframes introBlurFadeIn {
+    0% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+.intro-blur-fade-in {
+    animation: introBlurFadeIn 3s ease-out forwards !important;
+}
+
+/* Gold Modal Blur In (Charter / Guild) */
+@keyframes goldModalBlurIn {
+    0% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(0.95);
+        box-shadow: 0 0 60px rgba(212, 175, 55, 0.5), inset 0 0 30px rgba(212, 175, 55, 0.3);
+        border-color: #d4af37;
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.95), inset 0 1px 1px rgba(255, 255, 255, 0.05);
+        border-color: #3a3f47;
+    }
+}
+.modal-visible.guild-backdrop .modal-content {
+    animation: goldModalBlurIn 1s ease-out forwards !important;
+}
+
+/* Processing Modal Fades */
+@keyframes procBlurFadeIn {
+    0% { opacity: 0; filter: blur(8px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+@keyframes procBlurFadeOut {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(8px); transform: scale(1.05); }
+}
+.proc-blur-fade-in {
+    animation: procBlurFadeIn 1s ease-out forwards !important;
+}
+.proc-blur-fade-out {
+    animation: procBlurFadeOut 1s ease-out forwards !important;
+    pointer-events: none;
+}
+
+/* Prolonged Intro Blur Fades (Phase 3 Polish) */
+@keyframes introModalBlurIn4s {
+    0% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+.intro-blur-fade-in-4s {
+    animation: fadeIn 4s ease-out forwards !important;
+}
+.intro-blur-fade-in-4s .modal-content {
+    animation: introModalBlurIn4s 4s ease-out forwards !important;
+}
+
+@keyframes introModalBlurOut3s {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+}
+
+.intro-blur-fade-out-3s {
+    animation: fadeOut 3s ease-out forwards !important;
+    pointer-events: none;
+}
+.intro-blur-fade-out-3s .modal-content {
+    animation: introModalBlurOut3s 3s ease-out forwards !important;
+}
+
+/* Delayed Button Fade */
+@keyframes delayedFadeInAnim {
+    0% { opacity: 0; pointer-events: none; }
+    100% { opacity: 1; pointer-events: auto; }
+}
+
+/* 8 Second Delay: 4s for Modal to load + 4s Wait */
+.delayed-fade-in-8s {
+    opacity: 0;
+    animation: delayedFadeInAnim 1s ease-in forwards;
+    animation-delay: 8s;
+    pointer-events: none; /* Prevents click-through while invisible */
+}
+
+/* Bright Red Confirmation Button Override */
+.btn-confirm-red {
+    background-color: #dc2626 !important; 
+    border-color: #f87171 !important; 
+    color: #ffffff !important;
+    text-shadow: 0 0 5px rgba(255,255,255,0.5) !important;
+    box-shadow: 0 0 15px rgba(220, 38, 38, 0.6), inset 0 0 8px rgba(248, 113, 113, 0.4) !important;
+}
+.btn-confirm-red:hover:not(:disabled) {
+    background-color: #b91c1c !important; 
+    box-shadow: 0 0 20px rgba(220, 38, 38, 0.8), inset 0 0 10px rgba(248, 113, 113, 0.6) !important;
+}
+
+/* ========================================================================= */
+/* --- SEVERANCE TERMINAL CINEMATIC (PHASE 4) --- */
+/* ========================================================================= */
+
+.sev-term-overlay { 
+    position: fixed; inset: 0; z-index: 100; display: flex; align-items: center; justify-content: center; padding: 20px; perspective: 1000px; 
+}
+.sev-term-panel {
+    background: rgba(15, 23, 42, 0.6); padding: 45px; border-radius: 8px; width: 100%; max-width: 650px;
+    backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+    border: 1px solid #06b6d4; color: #06b6d4; position: relative; overflow: hidden;
+}
+.sev-term-panel::before {
+    content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0.15; 
+    background-image: repeating-radial-gradient(circle at bottom, transparent, transparent 12px, #06b6d4 13px); 
+}
+
+.sev-type-line { opacity: 0; transform: translateY(5px); }
+.sev-line-visible { animation: sevLineFade 0.5s ease-out forwards; }
+@keyframes sevLineFade { to { opacity: 1; transform: translateY(0); } }
+
+/* Rhythmic pulse specifically built for the Secure Terminal Link text */
+.sev-rhythmic-pulse { animation: sevRhythmicPulse 1.5s infinite; }
+@keyframes sevRhythmicPulse {
+    0%, 100% { opacity: 0.6; text-shadow: 0 0 2px currentColor; }
+    50% { opacity: 1; text-shadow: 0 0 12px currentColor; filter: brightness(1.3); }
+}
+
+/* Base button fade-in gracefully overrides opacity-0 */
+@keyframes sevBtnFadeIn {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+}
+
+/* Highly Physical Touch Actuator */
+.sev-actuator-btn {
+    width: 100%; min-height: 38px; margin-top: 30px; cursor: pointer; border-radius: 8px;
+    display: flex; justify-content: center; align-items: center; font-family: 'Orbitron', sans-serif;
+    font-weight: bold; letter-spacing: 2px; text-transform: uppercase; position: relative;
+    background: rgba(2, 6, 23, 0.8); border: 1px solid #06b6d4; color: #06b6d4;
+    transition: background 0.8s ease-out, border-color 0.8s ease-out, color 0.8s ease-out; 
+    overflow: hidden; padding: 0.75rem;
+    box-shadow: 0 6px 0 #0891b2, 0 10px 20px rgba(0,0,0,0.5); /* 3D Depth */
+    transform: translateY(0);
+    animation: sevBtnPulse 2s infinite alternate;
+}
+
+@keyframes sevBtnPulse {
+    0% { box-shadow: 0 6px 0 #0891b2, 0 10px 20px rgba(0,0,0,0.5), inset 0 0 5px rgba(6, 182, 212, 0.2); filter: brightness(1); }
+    100% { box-shadow: 0 6px 0 #0891b2, 0 10px 20px rgba(0,0,0,0.5), inset 0 0 20px rgba(6, 182, 212, 0.6); filter: brightness(1.2); }
+}
+
+.sev-actuator-btn:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #0891b2, 0 5px 10px rgba(0,0,0,0.5), inset 0 0 10px rgba(6, 182, 212, 0.4);
+    animation: none;
+}
+
+.sev-actuator-btn::after {
+    content: ''; position: absolute; z-index: 0; pointer-events: none;
+    border: 20px solid rgba(249, 115, 22, 0.6); border-radius: 8px;
+    transition: transform 0.8s ease-out, opacity 0.8s ease-out; 
+    top: 0; left: 0; right: 0; bottom: 0; opacity: 0; transform: scale(1.5);
+}
+
+.sev-btn-text { position: relative; z-index: 1; transition: color 0.8s ease-out; }
+
+/* Confirmation Phase Styling */
+.sev-actuator-btn.confirm-phase { 
+    background: #f97316; border-color: #f97316; 
+    box-shadow: 0 6px 0 #c2410c, 0 10px 20px rgba(0,0,0,0.5);
+    animation: sevBtnPulseOrange 2s infinite alternate;
+}
+
+@keyframes sevBtnPulseOrange {
+    0% { box-shadow: 0 6px 0 #c2410c, 0 10px 20px rgba(0,0,0,0.5), inset 0 0 5px rgba(249, 115, 22, 0.2); filter: brightness(1); }
+    100% { box-shadow: 0 6px 0 #c2410c, 0 10px 20px rgba(0,0,0,0.5), inset 0 0 20px rgba(249, 115, 22, 0.6); filter: brightness(1.1); }
+}
+
+.sev-actuator-btn.confirm-phase:active:not(:disabled) {
+    transform: translateY(4px);
+    box-shadow: 0 2px 0 #c2410c, 0 5px 10px rgba(0,0,0,0.5), inset 0 0 10px rgba(249, 115, 22, 0.4);
+    animation: none;
+}
+
+.sev-actuator-btn.confirm-phase::after { opacity: 1; transform: scale(0); }
+.sev-actuator-btn.confirm-phase .sev-btn-text { color: #020617; font-weight: 900; }
+
+/* CRT Opening and Shutdown */
+.sev-crt-turn-on { animation: sevCrtTurnOn 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+@keyframes sevCrtTurnOn {
+    0% { transform: scale(0, 0.005); filter: brightness(0); opacity: 0; }
+    60% { transform: scale(1, 0.005); filter: brightness(5); opacity: 1; }
+    100% { transform: scale(1, 1); filter: brightness(1); opacity: 1; }
+}
+
+.sev-crt-shutdown { animation: sevCrtTurnOff 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards !important; transform-origin: center center; }
+@keyframes sevCrtTurnOff {
+    0% { transform: scale(1, 1); filter: brightness(1); opacity: 1; }
+    40% { transform: scale(1, 0.005); filter: brightness(5); opacity: 1; }
+    100% { transform: scale(0, 0.005); filter: brightness(0); opacity: 0; }
+}
+--- END OF FILE: ./css/modals/modal-cinematics.css ---
+
+--- START OF FILE: ./css/modals/modal-sol-station.css ---
+/* css/modals/modal-sol-station.css */
+
+/* ========================================================================= */
+/* --- SOL STATION DASHBOARD (PHASE 3) --- */
+/* ========================================================================= */
+
+/* Special Override for Sol Station Modal Dimensions */
+.sol-station-modal .modal-content {
+    width: 80% !important;
+    max-width: 1200px !important;
+    /* VIRTUAL WORKBENCH: Flex-wrap sizing natively up to 85dvh safe area */
+    height: auto !important;
+    max-height: 85dvh !important;
+    display: flex;
+    flex-direction: column;
+    /* [FIX] +10px Top Padding, -4px Bottom Padding */
+    padding: 1.25rem 0.75rem 0.25rem 0.75rem !important; 
+}
+
+/* Completely hide the default modal title/header to reclaim vertical space */
+.sol-station-modal .modal-header-flex,
+.sol-station-modal > h3,
+.sol-station-modal h3#event-title {
+    display: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* [RESTORED] Explicit Sol Station Level Background Gradients */
+.sol-station-modal .modal-content.sol-theme-white { background: linear-gradient(145deg, #1f2937, #111827) !important; border-color: #6b7280 !important; box-shadow: 0 0 20px rgba(107, 114, 128, 0.2), inset 0 0 15px rgba(107, 114, 128, 0.1) !important;}
+.sol-station-modal .modal-content.sol-theme-green { background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827) !important; border-color: #34d399 !important; box-shadow: 0 0 20px rgba(52, 211, 153, 0.2), inset 0 0 15px rgba(52, 211, 153, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-blue { background: linear-gradient(145deg, rgba(12, 74, 110, 0.9), #111827) !important; border-color: #38bdf8 !important; box-shadow: 0 0 20px rgba(56, 189, 248, 0.2), inset 0 0 15px rgba(56, 189, 248, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-gold { background: linear-gradient(145deg, rgba(69, 42, 15, 0.9), #111827) !important; border-color: #fbbf24 !important; box-shadow: 0 0 20px rgba(251, 191, 36, 0.2), inset 0 0 15px rgba(251, 191, 36, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-orange { background: linear-gradient(145deg, rgba(124, 45, 18, 0.9), #111827) !important; border-color: #f97316 !important; box-shadow: 0 0 20px rgba(249, 115, 22, 0.2), inset 0 0 15px rgba(249, 115, 22, 0.1) !important; }
+.sol-station-modal .modal-content.sol-theme-red { background: linear-gradient(145deg, rgba(127, 29, 29, 0.9), #111827) !important; border-color: #ef4444 !important; box-shadow: 0 0 20px rgba(239, 68, 68, 0.2), inset 0 0 15px rgba(239, 68, 68, 0.1) !important; }
+
+/* [FIX] Target the Description Wrapper injected by UIModalEngine */
+/* This element must grow and scroll to prevent the modal from exploding vertically */
+.sol-station-modal #event-description {
+    flex: 1;
+    overflow-y: auto;
+    min-height: 0;
+    margin: 0 !important; /* [FIX] Aggressively clamp UIModalEngine's injected my-4 and mb-6 Tailwind classes */
+    padding-right: 0.25rem; /* Space for scrollbar */
+    padding-bottom: 0 !important; 
+}
+
+/* Sol Station specifically placed indicator arrow inside modal text boundary */
+.sol-station-modal .scroll-indicator-arrow {
+    bottom: 4px; /* [FIX] Lowered since padding-bottom is now explicitly 4px */
+    right: 8px;
+}
+
+/* Tighten the gap above the button container specifically in Sol Station */
+.sol-station-modal #event-button-container {
+    margin-top: 0.5rem !important; 
+    margin-bottom: 0 !important; /* [FIX] Nuke inherited tailwind margins killing vertical space */
+    padding-bottom: 0 !important;
+    min-height: 0 !important;
+}
+
+.sol-dashboard-container {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem; /* [FIX] Tighter gap */
+    font-family: 'Orbitron', sans-serif;
+    color: #fff;
+    margin-bottom: 0 !important; /* [FIX] Kill layout bleed */
+}
+
+/* Scrollbar Styling for Webkit */
+.sol-station-modal #event-description::-webkit-scrollbar {
+    width: 6px;
+}
+.sol-station-modal #event-description::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 3px;
+}
+.sol-station-modal #event-description::-webkit-scrollbar-thumb {
+    background-color: #4b5563;
+    border-radius: 3px;
+}
+
+/* Compact Dismiss Button */
+.btn-dismiss-sm {
+    font-size: 0.85rem;
+    padding: 0.35rem 1.5rem;
+    line-height: 1.2;
+    height: auto;
+    min-height: 0;
+}
+
+/* Header & Status */
+.sol-header-panel {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem; 
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    flex-shrink: 0; 
+}
+
+.sol-health-bar-container {
+    margin-bottom: 0.75rem; 
+}
+
+.sol-health-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    margin-bottom: 0.25rem;
+    color: #9ca3af;
+}
+
+.sol-health-track {
+    width: 100%;
+    height: 12px;
+    background-color: #374151;
+    border-radius: 99px;
+    overflow: hidden;
+}
+
+.sol-health-fill {
+    height: 100%;
+    transition: width 0.5s ease;
+}
+
+.sol-readout-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    text-align: center;
+}
+
+.readout-item {
+    display: flex;
+    flex-direction: column;
+}
+
+.readout-item .label {
+    font-size: 0.7rem;
+    color: #6b7280;
+    margin-bottom: 2px;
+}
+
+.readout-item .value {
+    font-size: 1rem;
+    font-weight: bold;
+}
+
+/* Mode Control */
+.sol-mode-control {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 0.75rem; 
+    border-radius: 8px;
+    border: 1px solid #4b5563;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.section-title {
+    font-size: 0.9rem;
+    color: #9ca3af;
+    margin-bottom: 0.5rem; 
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.mode-toggle-group {
+    display: flex;
+    gap: 0.25rem; /* [FIX] Tighter gap for buttons */
+    justify-content: center;
+    margin-bottom: 0.5rem; 
+}
+
+.mode-btn {
+    flex: 1;
+    background: transparent;
+    border: 1px solid #4b5563;
+    color: #9ca3af;
+    padding: 0.35rem 0.25rem; /* [FIX] Reduced padding */
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.7rem; /* [FIX] Smaller font */
+    cursor: pointer;
+    transition: all 0.2s;
+    text-transform: uppercase;
+    white-space: nowrap; /* Prevent wrapping */
+}
+
+.mode-btn:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: #6b7280;
+}
+
+.mode-btn.active {
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    box-shadow: 0 0 10px rgba(255,255,255,0.1);
+    cursor: default;
+}
+
+.mode-btn.mode-stability.active {
+    border-color: #34d399; /* Green */
+    color: #34d399;
+}
+.mode-btn.mode-commerce.active {
+    border-color: #fbbf24; /* Amber */
+    color: #fbbf24;
+}
+.mode-btn.mode-production.active {
+    border-color: #f87171; /* Red */
+    color: #f87171;
+}
+
+.mode-description {
+    font-size: 0.8rem;
+    color: #d1d5db;
+    min-height: 1.2rem;
+}
+
+/* Cache Grid */
+.sol-cache-section {
+    flex-shrink: 0;
+}
+
+.cache-grid {
+    display: grid;
+    /* Phase 3 Fix: 2 Columns for better vertical scrolling */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.5rem; 
+}
+
+.cache-card {
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.4rem; /* [FIX] Reduced padding */
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem; 
+}
+
+.cache-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.cache-icon {
+    width: 24px; 
+    height: 24px;
+    background-size: cover;
+    background-position: center;
+    border-radius: 4px;
+    border: 1px solid #4b5563;
+}
+
+.cache-info {
+    overflow: hidden;
+}
+
+.cache-name {
+    font-size: 0.7rem; /* [FIX] Smaller font */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cache-tier {
+    font-size: 0.6rem;
+    color: #6b7280;
+}
+
+.cache-bar-track {
+    width: 100%;
+    height: 4px;
+    background: #1f2937;
+    border-radius: 2px;
+}
+
+.cache-bar-fill {
+    height: 100%;
+    background-color: #fff;
+    border-radius: 2px;
+}
+
+.cache-details {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    text-align: right;
+    font-family: monospace;
+}
+
+.cache-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.player-stock {
+    font-size: 0.65rem;
+    color: #6b7280;
+}
+
+.btn-donate {
+    background: #374151;
+    border: none;
+    color: #fff;
+    padding: 0.2rem 0.4rem; 
+    font-size: 0.65rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-family: 'Orbitron', sans-serif;
+}
+
+.btn-donate:hover:not(:disabled) {
+    background: #4b5563;
+}
+
+.btn-donate:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Officer Slots */
+.sol-officer-section {
+    flex-shrink: 0;
+    padding-bottom: 0.5rem; 
+}
+
+.officer-slot-container {
+    display: flex;
+    gap: 0.75rem; 
+    justify-content: center;
+}
+
+.officer-slot {
+    width: 120px; 
+    height: 140px; 
+    background: rgba(17, 24, 39, 0.8);
+    border: 1px dashed #4b5563;
+    border-radius: 6px;
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.officer-slot:hover {
+    border-color: #9ca3af;
+    background: rgba(31, 41, 55, 0.8);
+}
+
+.officer-slot.filled {
+    border-style: solid;
+    border-color: #60a5fa; /* Blue */
+    background: rgba(30, 58, 138, 0.2);
+}
+
+.slot-header {
+    font-size: 0.65rem;
+    color: #6b7280;
+    margin-bottom: 0.25rem;
+}
+
+.empty-label {
+    margin-top: auto;
+    margin-bottom: auto;
+    color: #9ca3af;
+    font-size: 0.8rem;
+}
+
+.officer-name {
+    font-size: 0.75rem;
+    font-weight: bold;
+    color: #e5e7eb;
+}
+
+.officer-role {
+    font-size: 0.65rem;
+    color: #60a5fa;
+    margin-bottom: 0.25rem;
+}
+
+.officer-buffs-mini {
+    font-size: 0.6rem;
+    color: #9ca3af;
+    margin-top: auto;
+    line-height: 1.1;
+}
+
+/* Roster Modal */
+.roster-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 0.5rem;
+}
+
+.roster-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.75rem;
+    border-radius: 6px;
+    border: 1px solid #374151;
+}
+
+.roster-card .officer-info {
+    text-align: left;
+}
+
+.roster-card .officer-buffs {
+    font-size: 0.8rem;
+    color: #d1d5db;
+}
+
+.roster-footer {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid #374151;
+}
+
+.btn-red {
+    background-color: #991b1b;
+    color: #fee2e2;
+}
+.btn-red:hover {
+    background-color: #7f1d1d;
+}
+
+/* Sol Directorate Entry Button (Services Screen) */
+.sol-directorate-btn {
+    width: 100%;
+    max-width: 600px;
+    background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+    border: 1px solid #60a5fa;
+    border-radius: 8px;
+    padding: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.sol-directorate-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.4);
+    border-color: #93c5fd;
+}
+
+.sol-directorate-btn .btn-content {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+}
+
+.sol-directorate-btn .btn-icon {
+    font-size: 2rem;
+    color: #fbbf24; /* Sun Yellow */
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.6);
+}
+
+.sol-directorate-btn .btn-text {
+    text-align: left;
+    display: flex;
+    flex-direction: column;
+}
+
+.sol-directorate-btn .btn-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: #fff;
+    letter-spacing: 1px;
+}
+
+.sol-directorate-btn .btn-subtitle {
+    font-size: 0.8rem;
+    color: #bfdbfe;
+}
+
+/* ========================================================================= */
+/* --- SOL STATION: PHASE 3 PROGRESSION & OFFICER UI --- */
+/* ========================================================================= */
+
+/* Level Styling Matrix */
+.sol-level-header {
+    font-size: 1.5rem;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+}
+
+.sol-level-white { color: #fff; text-shadow: 0 0 8px rgba(255, 255, 255, 0.8); }
+.sol-level-green { color: #4ade80; text-shadow: 0 0 10px rgba(74, 222, 128, 0.8); }
+.sol-level-blue { color: #60a5fa; text-shadow: 0 0 10px rgba(96, 165, 250, 0.8); }
+
+@keyframes pulse-gold { 0%, 100% { text-shadow: 0 0 10px rgba(250, 204, 21, 0.8); } 50% { text-shadow: 0 0 20px rgba(250, 204, 21, 1); } }
+.sol-level-gold { color: #facc15; animation: pulse-gold 2s infinite; }
+
+@keyframes pulse-orange { 0%, 100% { text-shadow: 0 0 12px rgba(249, 115, 22, 0.8); } 50% { text-shadow: 0 0 25px rgba(249, 115, 22, 1); } }
+.sol-level-orange { color: #f97316; animation: pulse-orange 1.5s infinite; }
+
+@keyframes pulse-red { 0%, 100% { text-shadow: 0 0 15px rgba(239, 68, 68, 0.9); } 50% { text-shadow: 0 0 30px rgba(239, 68, 68, 1); } }
+.sol-level-red { color: #ef4444; animation: pulse-red 1s infinite; }
+
+/* Dual-Column Officer Management */
+.officer-mgmt-container {
+    display: flex;
+    flex-direction: row;
+    gap: 1rem;
+    max-height: 50vh;
+}
+
+@media (max-width: 768px) {
+    .officer-mgmt-container {
+        flex-direction: column;
+        max-height: 60vh;
+    }
+}
+
+.column-avail, .column-active {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.col-title {
+    background: #1f2937;
+    padding: 0.5rem;
+    text-align: center;
+    font-size: 0.8rem;
+    color: #9ca3af;
+    border-bottom: 1px solid #374151;
+    font-weight: bold;
+}
+
+.col-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* Row Interaction States */
+.officer-mgmt-row {
+    display: flex;
+    align-items: center;
+    background: #111827;
+    border: 1px solid #4b5563;
+    border-radius: 4px;
+    padding: 0.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: background 0.1s, border-color 0.1s;
+}
+
+.officer-mgmt-row.selected {
+    background: #1e3a8a;
+    border-color: #60a5fa;
+}
+
+.officer-mgmt-row.assigned {
+    background: rgba(30, 58, 138, 0.2);
+    border-color: #3b82f6;
+}
+
+.officer-mgmt-row.empty-slot {
+    background: rgba(255, 255, 255, 0.05);
+    border-style: dashed;
+    cursor: default;
+    opacity: 0.6;
+}
+
+.slot-indicator {
+    font-size: 0.65rem;
+    color: #9ca3af;
+    margin-right: 0.5rem;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+}
+
+.row-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.row-info .o-name { font-size: 0.85rem; font-weight: bold; }
+.row-info .o-role { font-size: 0.7rem; color: #60a5fa; }
+.row-info .o-buffs { font-size: 0.65rem; margin-top: 2px; }
+
+.btn-inline-assign, .btn-inline-remove {
+    background: #2563eb;
+    color: white;
+    border: none;
+    padding: 0.3rem 0.6rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.btn-inline-remove {
+    background: #dc2626;
+}
+
+/* Engineering Project Modal UI */
+.eng-requirements-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.eng-req-row {
+    background: rgba(0,0,0,0.4);
+    border: 1px solid #374151;
+    border-radius: 6px;
+    padding: 0.5rem 0.75rem;
+}
+
+.req-header {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+}
+
+.eng-progress-track {
+    width: 100%;
+    height: 8px;
+    background: #1f2937;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.eng-progress-fill {
+    height: 100%;
+    background: #60a5fa;
+    transition: width 0.3s;
+}
+
+.credit-stepper {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+}
+
+.credit-stepper input {
+    flex: 1;
+    background: #111827;
+    border: 1px solid #4b5563;
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-family: monospace;
+}
+
+/* [[UPDATED]] Clean Project Complete Dematerialization */
+.project-complete-dematerialize {
+    animation: simpleFadeOut 2.5s linear forwards;
+    pointer-events: none; /* Prevent clicks during exit */
+}
+
+@keyframes simpleFadeOut {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+}
+
+/* [[NEW]] Dashboard Fade In Hook */
+.dashboard-fade-in {
+    animation: fadeIn 1s ease-in forwards;
+}
+--- END OF FILE: ./css/modals/modal-sol-station.css ---
+
+--- START OF FILE: ./css/modals/modal-utility.css ---
+/* css/modals/modal-utility.css */
+
+/* Map Detail Modal has its own animation override already */
+#map-detail-modal.modal-visible .modal-content {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+#map-detail-modal.modal-hiding {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+#map-detail-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+/* --- SIGNATURE MODAL KEYBOARD FIX --- */
+#signature-modal {
+    align-items: flex-start;
+    padding-top: 15vh;
+}
+
+/* Ship Detail Modal */
+#ship-detail-modal .modal-content {
+    background: linear-gradient(145deg, #1f2937, #111827);
+    border-color: #4b5563;
+}
+
+/* Launch Confirmation Modal */
+#launch-modal {
+    transition: opacity 0.7s ease-out;
+}
+#launch-modal.modal-visible .modal-content {
+    animation: fadeIn 0.7s ease-out;
+}
+#launch-modal.modal-hiding {
+    animation: fadeOut 0.7s ease-out forwards;
+}
+#launch-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.7s ease-out forwards;
+}
+
+#launch-modal .modal-content {
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    width: auto;
+    max-width: none;
+}
+
+/* Reverted Pre-Texture Launch Modal Settings */
+.launch-modal-wrapper {
+    position: relative;
+    background: radial-gradient(circle, #1a2030 0%, #0c101d 100%);
+    border: 2px solid;
+    border-radius: 15px;
+    padding: 1rem;
+    width: 80vw;
+    height: 421px;
+    margin: 0 auto;
+    text-align: center;
+    box-shadow: 0 0 25px rgba(0,0,0,0.7);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.launch-modal-wrapper h3 {
+    font-size: 1.625rem;
+}
+.flavor-text {
+    font-size: 0.8125rem;
+    opacity: 0.80;
+}
+.travel-info-text {
+    font-size: 15px;
+    font-family: 'Roboto Mono', monospace;
+}
+
+.launch-modal-wrapper .commodity-name {
+    background-color: rgba(0, 0, 0, 0.3);
+    padding: 2px 8px;
+    border-radius: 5px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Cargo Detail Modal */
+#cargo-detail-modal .modal-content {
+    max-width: 320px;
+    width: 100%;
+}
+
+.max-cargo-modal-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.max-cargo-modal-content .commodity-card {
+    margin-bottom: 1rem;
+    transform: scale(1.2);
+}
+
+/* Processing / Loading Modal */
+#processing-modal .modal-content {
+    text-align: center;
+}
+
+.progress-bar-container {
+    width: 100%;
+    background-color: #2d3748;
+    border-radius: 99px;
+    height: 10px;
+    margin: 1rem 0;
+    overflow: hidden;
+}
+
+#processing-progress-bar {
+    width: 0%;
+    height: 100%;
+    background-color: #60a5fa;
+    transition: width 3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 99px;
+}
+
+/* Tutorial Skip Confirmation Modal */
+#skip-tutorial-modal .modal-content {
+    text-align: center;
+}
+
+#skip-tutorial-modal .button-group {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1.5rem;
+}
+
+/* Tutorial Log Modal */
+#tutorial-log-modal {
+    opacity: 0;
+    transition: opacity 1s;
+    pointer-events: none;
+}
+#tutorial-log-modal.visible {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+#tutorial-log-modal .modal-content {
+    max-height: 70vh;
+    display: flex;
+    flex-direction: column;
+}
+
+#tutorial-log-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding-right: 0.5rem;
+}
+
+/* --- LORE MODAL --- */
+#lore-modal.modal-backdrop {
+    transition: opacity 0.4s ease-out;
+}
+
+#lore-modal.modal-visible .modal-content {
+    animation: fadeIn 0.4s ease-out;
+}
+
+#lore-modal.modal-hiding {
+    animation: fadeOut 0.4s ease-out forwards;
+}
+
+#lore-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.4s ease-out forwards;
+}
+
+#lore-modal .modal-content {
+    width: 600px;
+    max-width: 90vw;
+    height: 70vh;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+#lore-modal-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* --- EULA Modal --- */
+#eula-modal .modal-content {
+    width: 600px;
+    max-width: 90vw;
+    height: 70vh;
+    max-height: 800px;
+    display: flex;
+    flex-direction: column;
+}
+
+#eula-modal-content {
+    flex-grow: 1;
+    overflow-y: auto;
+    padding-right: 1rem;
+    font-size: 1.1rem;
+    line-height: 1.6;
+}
+
+/* --- LAUNCH MODAL STYLES --- */
+@keyframes launch-glow-animation {
+    0%, 100% {
+        box-shadow: 0 0 8px var(--launch-glow-color), inset 0 0 8px var(--launch-glow-color);
+    }
+    50% {
+        box-shadow: 0 0 16px var(--launch-glow-color), inset 0 0 12px var(--launch-glow-color);
+    }
+}
+.btn-launch-glow {
+    width: 130px;
+    height: 130px;
+    border-radius: 50%;
+    background: radial-gradient(circle, #4a5568, #1a202c);
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+    font-family: 'Orbitron', sans-serif;
+    border: 4px solid var(--launch-glow-color);
+    box-shadow: 0 5px 10px rgba(0,0,0,0.4), inset 0 2px 3px rgba(255,255,255,0.2), inset 0 -3px 5px rgba(0,0,0,0.5);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+    transition: all 0.1s ease-in-out;
+    animation: launch-glow-animation 2.5s infinite;
+    margin: 0 auto;
+    text-shadow: 0 0 5px #fff;
+}
+
+.btn-launch-glow:active {
+    transform: translateY(2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.4), inset 0 3px 5px rgba(0,0,0,0.5), inset 0 -1px 2px rgba(255,255,255,0.2);
+}
+
+/* ========================================================================= */
+/* --- SHIP UPGRADE PROGRESS MODAL (PHASE 1) --- */
+/* ========================================================================= */
+
+.upgrade-progress-modal .modal-content {
+    text-align: center;
+    border-color: #D4AF37;
+    box-shadow: 0 0 20px rgba(212, 175, 55, 0.3);
+    background: radial-gradient(circle, #2d3748, #111827);
+}
+
+.upgrade-progress-text {
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.2rem;
+    color: #D4AF37;
+    margin-bottom: 1.5rem;
+    text-shadow: 0 0 8px rgba(212, 175, 55, 0.5);
+}
+
+.upgrade-progress-bar {
+    width: 100%;
+    height: 14px;
+    background-color: #1a202c;
+    border: 1px solid #4a5568;
+    border-radius: 99px;
+    overflow: hidden;
+    position: relative;
+}
+
+.upgrade-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #B8860B, #FFD700);
+    box-shadow: 0 0 10px #FFD700;
+    border-radius: 99px;
+    animation: fillProgressBar 2s linear forwards;
+}
+
+@keyframes fillProgressBar {
+    0% { width: 0%; }
+    100% { width: 100%; }
+}
+
+/* Intro Ship Themes */
+#ship-detail-modal .modal-content.modal-theme-amber {
+    background: linear-gradient(145deg, rgba(69, 42, 15, 0.9), #111827);
+    border-color: #fbbf24;
+    box-shadow: 0 0 20px rgba(251, 191, 36, 0.4), inset 0 0 15px rgba(251, 191, 36, 0.2);
+}
+#ship-detail-modal .modal-content.modal-theme-blue {
+    background: linear-gradient(145deg, rgba(12, 74, 110, 0.9), #111827);
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.4), inset 0 0 15px rgba(56, 189, 248, 0.2);
+}
+#ship-detail-modal .modal-content.modal-theme-green {
+    background: linear-gradient(145deg, rgba(6, 78, 59, 0.9), #111827);
+    border-color: #34d399;
+    box-shadow: 0 0 20px rgba(52, 211, 153, 0.4), inset 0 0 15px rgba(52, 211, 153, 0.2);
+}
+
+.btn-confirm-purchase {
+    background-color: #ffffff !important;
+    color: #000000 !important;
+    border-color: #ffffff !important;
+    font-weight: bold !important;
+    box-shadow: 0 0 10px rgba(255, 255, 255, 0.8) !important;
+}
+
+/* ========================================================================= */
+/* --- MISSION MODALS ANIMATION OVERRIDE ---                                 */
+/* ========================================================================= */
+
+#mission-modal.modal-visible .modal-content,
+#mission-detail-modal.modal-visible .modal-content {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+#mission-modal.modal-hiding,
+#mission-detail-modal.modal-hiding {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+#mission-modal.modal-hiding .modal-content,
+#mission-detail-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+--- END OF FILE: ./css/modals/modal-utility.css ---
 
 --- START OF FILE: ./css/screens/services-screen.css ---
 /* css/screens/services-screen.css */
