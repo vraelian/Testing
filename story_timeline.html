@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Orbital Trading - Encrypted Mission Logs</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;800&family=Share+Tech+Mono&display=swap');
+
+        :root {
+            --bg-dark: #070709;
+            --bg-panel: #111114;
+            --bg-card: #18181d;
+            --bg-highlight: #22222a;
+            --border-color: #2a2a35;
+            --border-glow: #424254;
+            --text-main: #d1d1d6;
+            --text-muted: #7b7b8a;
+            --text-bright: #ffffff;
+            --accent-color: #f39c12;
+            --accent-glow: rgba(243, 156, 18, 0.3);
+            --faction-guild: #3498db;
+            --faction-syndicate: #9b59b6;
+            --faction-station: #2ecc71;
+            
+            --font-main: 'Oxanium', sans-serif;
+            --font-mono: 'Share Tech Mono', monospace;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-main);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(20,20,30,1) 0%, rgba(7,7,9,1) 100%),
+                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+        }
+
+        /* Top Navigation */
+        #top-nav {
+            display: flex;
+            background-color: #0b0b0e;
+            border-bottom: 2px solid var(--border-color);
+            padding: 0 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            z-index: 100;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: var(--accent-color);
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            margin-right: 40px;
+            text-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .nav-tab {
+            padding: 20px 30px;
+            cursor: pointer;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-muted);
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+        }
+
+        .nav-tab:hover {
+            color: var(--text-bright);
+            background-color: rgba(255,255,255,0.02);
+        }
+
+        .nav-tab.active {
+            color: var(--accent-color);
+            border-bottom: 3px solid var(--accent-color);
+            background: linear-gradient(0deg, rgba(243, 156, 18, 0.1) 0%, transparent 100%);
+        }
+
+        /* Main Layout */
+        #app-container {
+            display: flex;
+            flex-grow: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .view-container {
+            display: none;
+            width: 100%;
+            height: 100%;
+        }
+
+        .view-container.active {
+            display: flex;
+        }
+
+        /* --- MISSIONS VIEW --- */
+        #sidebar {
+            width: 400px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.6);
+            z-index: 10;
+        }
+
+        .phase-header {
+            padding: 15px 20px;
+            background: linear-gradient(90deg, #1a1a24 0%, var(--bg-panel) 100%);
+            color: var(--text-bright);
+            font-size: 0.85rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border-bottom: 1px solid var(--border-color);
+            border-top: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 5;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+        }
+
+        .timeline-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0; width: 0;
+            background-color: var(--accent-color);
+            transition: width 0.2s ease;
+        }
+
+        .timeline-item:hover { background-color: var(--bg-highlight); }
+        .timeline-item.active { background-color: var(--bg-card); }
+        .timeline-item.active::before { width: 4px; box-shadow: 0 0 15px var(--accent-color); }
+
+        .item-main { flex-grow: 1; }
+        
+        .mission-id {
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin-bottom: 4px;
+        }
+
+        .mission-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-bright);
+        }
+
+        .item-reward {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #2ecc71;
+            text-align: right;
+            background: rgba(46, 204, 113, 0.1);
+            padding: 4px 8px;
+            border-radius: 3px;
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            white-space: pre-line;
+        }
+
+        #content-area {
+            flex-grow: 1;
+            padding: 40px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: center;
+            background: radial-gradient(circle at 50% 50%, #0d0d12 0%, var(--bg-dark) 100%);
+        }
+
+        #mission-detail {
+            max-width: 900px;
+            width: 100%;
+            display: none;
+            animation: fadeIn 0.4s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Dual Portraits Header */
+        .portraits-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 30px;
+        }
+
+        .portrait-block {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 160px;
+        }
+
+        .portrait-role {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+
+        .portrait-container {
+            width: 128px;
+            height: 128px;
+            border: 2px solid var(--border-color);
+            background-color: #000;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+            position: relative;
+            overflow: hidden;
+            border-radius: 4px;
+        }
+
+        .portrait { width: 100%; height: 100%; }
+
+        .mission-title-area {
+            flex-grow: 1;
+            text-align: center;
+            padding: 0 20px;
+        }
+
+        .mission-title-area h2 {
+            margin: 0 0 15px 0;
+            font-size: 2.2rem;
+            color: var(--text-bright);
+            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .badges { display: flex; gap: 10px; justify-content: center; }
+        .badge {
+            padding: 6px 12px;
+            border-radius: 3px;
+            font-size: 0.75rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            background-color: var(--bg-card);
+        }
+
+        .badge.guild { color: var(--faction-guild); border: 1px solid var(--faction-guild); box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
+        .badge.syndicate { color: var(--faction-syndicate); border: 1px solid var(--faction-syndicate); box-shadow: 0 0 10px rgba(155, 89, 182, 0.2); }
+        .badge.station { color: var(--faction-station); border: 1px solid var(--faction-station); box-shadow: 0 0 10px rgba(46, 204, 113, 0.2); }
+
+        .section-title {
+            color: var(--accent-color);
+            font-size: 1rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 40px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+        }
+        .section-title::after {
+            content: '';
+            flex-grow: 1;
+            height: 1px;
+            background: linear-gradient(90deg, var(--border-color) 0%, transparent 100%);
+            margin-left: 15px;
+        }
+
+        .dialog-box {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            padding: 25px;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            position: relative;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+        }
+
+        .objectives-list { list-style: none; padding: 0; margin: 0; }
+        .objectives-list li {
+            background-color: rgba(255, 255, 255, 0.03);
+            margin-bottom: 10px;
+            padding: 15px 20px;
+            border-radius: 4px;
+            border: 1px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.95rem;
+        }
+        .objectives-list li b { color: var(--text-bright); font-family: var(--font-main); }
+        .objectives-list li::before {
+            content: '>';
+            color: var(--accent-color);
+            margin-right: 15px;
+            font-weight: bold;
+        }
+
+        .completion-box {
+            background: linear-gradient(135deg, rgba(46, 204, 113, 0.05) 0%, transparent 100%);
+            border: 1px solid rgba(46, 204, 113, 0.2);
+            border-left: 3px solid #2ecc71;
+            padding: 25px;
+            position: relative;
+        }
+        .completion-title {
+            color: #2ecc71;
+            font-weight: 800;
+            font-size: 1.2rem;
+            margin-bottom: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        b { color: var(--text-bright); font-weight: 600; }
+        i { color: var(--text-muted); font-style: italic; }
+
+        /* --- TIMELINE & REWARDS VIEWS --- */
+        .scrolling-timeline-wrapper {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            padding: 40px 0 100px 0;
+            position: relative;
+        }
+
+        .vertical-line {
+            position: absolute;
+            top: 0; bottom: 0; left: 50%;
+            width: 2px;
+            background: var(--border-color);
+            transform: translateX(-50%);
+        }
+
+        .timeline-grid {
+            position: relative;
+            max-width: 1000px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .t-node {
+            position: relative;
+            width: 50%;
+            padding: 0 40px;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .t-node.left { align-self: flex-start; text-align: right; align-items: flex-end; }
+        .t-node.right { align-self: flex-end; text-align: left; align-items: flex-start; }
+
+        .t-dot {
+            position: absolute;
+            top: 50%;
+            width: 16px;
+            height: 16px;
+            background: var(--bg-dark);
+            border: 3px solid var(--accent-color);
+            border-radius: 50%;
+            transform: translateY(-50%);
+            z-index: 2;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .t-node.left .t-dot { right: -8px; }
+        .t-node.right .t-dot { left: -8px; }
+
+        .t-node:hover .t-dot {
+            background: var(--accent-color);
+            box-shadow: 0 0 15px var(--accent-color);
+        }
+
+        .t-content {
+            background: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            padding: 20px;
+            border-radius: 4px;
+            width: 100%;
+            max-width: 400px;
+            transition: all 0.3s ease;
+            cursor: help;
+        }
+
+        .t-node:hover .t-content {
+            border-color: var(--accent-color);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            transform: translateY(-2px);
+        }
+
+        .t-phase {
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        .t-title {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--text-bright);
+        }
+
+        .t-synopsis, .t-reward-desc {
+            margin-top: 10px;
+            font-size: 0.95rem;
+            color: #aaa;
+            line-height: 1.5;
+        }
+
+        .t-reward-desc {
+            font-family: var(--font-mono);
+            color: #2ecc71;
+            background: rgba(46,204,113,0.05);
+            padding: 10px;
+            border: 1px solid rgba(46,204,113,0.2);
+            border-radius: 3px;
+        }
+
+        /* Tooltip logic */
+        .tooltip {
+            position: fixed;
+            background: var(--bg-highlight);
+            border: 1px solid var(--accent-color);
+            color: var(--text-bright);
+            padding: 15px 20px;
+            font-size: 0.9rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+            border-radius: 4px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s;
+            z-index: 1000;
+            max-width: 300px;
+            line-height: 1.5;
+        }
+
+        /* Rewards Summary Footer */
+        .rewards-summary {
+            margin-top: 60px;
+            background: var(--bg-panel);
+            border-top: 2px solid var(--accent-color);
+            padding: 40px;
+            display: flex;
+            justify-content: space-around;
+            position: relative;
+            z-index: 5;
+        }
+
+        .stat-box { text-align: center; }
+        .stat-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            color: #2ecc71;
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(46,204,113,0.3);
+        }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+    </style>
+</head>
+<body>
+
+    <div id="top-nav">
+        <div class="nav-brand">Orbital Trading // Logs</div>
+        <div class="nav-tab active" data-target="view-missions">Missions</div>
+        <div class="nav-tab" data-target="view-timeline">Timeline</div>
+        <div class="nav-tab" data-target="view-rewards">Rewards</div>
+    </div>
+
+    <div id="app-container">
+        
+        <div id="view-missions" class="view-container active">
+            <div id="sidebar">
+                </div>
+            
+            <div id="content-area">
+                <div id="mission-detail">
+                    <div class="portraits-header">
+                        <div class="portrait-block">
+                            <div class="portrait-role">Initiator</div>
+                            <div class="portrait-container"><div id="init-portrait" class="portrait"></div></div>
+                        </div>
+                        
+                        <div class="mission-title-area">
+                            <h2 id="detail-name">MISSION NAME</h2>
+                            <div class="badges" id="detail-badges"></div>
+                        </div>
+
+                        <div class="portrait-block" id="completion-portrait-block">
+                            <div class="portrait-role">Resolution</div>
+                            <div class="portrait-container"><div id="comp-portrait" class="portrait"></div></div>
+                        </div>
+                    </div>
+
+                    <div class="section-title">Context & Directive</div>
+                    <div class="dialog-box" id="detail-desc"></div>
+
+                    <div class="section-title">Operational Objectives</div>
+                    <ul class="objectives-list" id="detail-objectives"></ul>
+
+                    <div class="section-title">Mission Resolution</div>
+                    <div class="completion-box">
+                        <div class="completion-title" id="detail-comp-title">Completion</div>
+                        <div id="detail-comp-text"></div>
+                    </div>
+                </div>
+                
+                <div id="empty-state" style="margin-top: 200px; color: var(--border-glow); font-size: 1.5rem; text-transform: uppercase; letter-spacing: 4px; font-weight: 800;">
+                    // Awaiting Decryption
+                </div>
+            </div>
+        </div>
+
+        <div id="view-timeline" class="view-container">
+            <div class="scrolling-timeline-wrapper">
+                <div class="vertical-line"></div>
+                <div class="timeline-grid" id="timeline-grid">
+                    </div>
+            </div>
+        </div>
+
+        <div id="view-rewards" class="view-container" style="flex-direction: column;">
+            <div class="scrolling-timeline-wrapper" style="flex-grow: 1;">
+                <div class="vertical-line"></div>
+                <div class="timeline-grid" id="rewards-grid">
+                    </div>
+            </div>
+            <div class="rewards-summary" id="rewards-summary">
+                </div>
+        </div>
+
+    </div>
+
+    <div id="tooltip" class="tooltip"></div>
+
+<script>
+// --- REGISTRY DATA ---
+const PortraitRegistry = {
+    "Affluent_1": { x: 0, y: 0 }, "Affluent_2": { x: 0, y: 128 }, "Affluent_3": { x: 0, y: 256 }, "Affluent_4": { x: 0, y: 384 }, "Affluent_5": { x: 0, y: 512 }, "Affluent_6": { x: 0, y: 640 }, "Affluent_7": { x: 0, y: 768 }, "Affluent_8": { x: 0, y: 896 }, "Affluent_9": { x: 0, y: 1024 }, "Affluent_10": { x: 0, y: 1152 }, "Affluent_11": { x: 0, y: 1280 }, "Affluent_12": { x: 0, y: 1408 }, "Affluent_13": { x: 0, y: 1536 }, "Affluent_14": { x: 128, y: 0 }, "Affluent_15": { x: 128, y: 128 }, "Affluent_16": { x: 128, y: 256 }, "AI_1": { x: 128, y: 384 }, "AI_2": { x: 128, y: 512 }, "AI_3": { x: 128, y: 640 }, "AI_4": { x: 128, y: 768 }, "AI_5": { x: 128, y: 896 }, "AI_6": { x: 128, y: 1024 }, "AI_7": { x: 128, y: 1152 }, "AI_8": { x: 128, y: 1280 }, "AI_9": { x: 128, y: 1408 }, "AI_10": { x: 128, y: 1536 }, "AI_11": { x: 256, y: 0 }, "AI_12": { x: 256, y: 128 }, "AI_13": { x: 256, y: 256 }, "AI_14": { x: 256, y: 384 }, "Arbiter_1": { x: 256, y: 512 }, "Audita_1": { x: 256, y: 640 }, "Business_1": { x: 256, y: 768 }, "Business_2": { x: 256, y: 896 }, "Business_3": { x: 256, y: 1024 }, "Business_4": { x: 256, y: 1152 }, "Business_5": { x: 256, y: 1280 }, "Business_6": { x: 256, y: 1408 }, "Business_7": { x: 256, y: 1536 }, "Business_8": { x: 384, y: 0 }, "Business_9": { x: 512, y: 0 }, "Business_10": { x: 640, y: 0 }, "Business_11": { x: 768, y: 0 }, "Business_12": { x: 896, y: 0 }, "Business_13": { x: 1024, y: 0 }, "Captain_1": { x: 1152, y: 0 }, "Captain_2": { x: 1280, y: 0 }, "Captain_3": { x: 1408, y: 0 }, "Captain_4": { x: 1536, y: 0 }, "Captain_5": { x: 1664, y: 0 }, "Captain_6": { x: 1792, y: 0 }, "Captain_7": { x: 384, y: 128 }, "Captain_8": { x: 384, y: 256 }, "Captain_9": { x: 384, y: 384 }, "Captain_10": { x: 384, y: 512 }, "Captain_11": { x: 384, y: 640 }, "Captain_12": { x: 384, y: 768 }, "Captain_13": { x: 384, y: 896 }, "Dockworker_1": { x: 384, y: 1024 }, "Dockworker_2": { x: 384, y: 1152 }, "Dockworker_3": { x: 384, y: 1280 }, "Dockworker_4": { x: 384, y: 1408 }, "Dockworker_5": { x: 384, y: 1536 }, "Dockworker_6": { x: 512, y: 128 }, "Dockworker_7": { x: 640, y: 128 }, "Dockworker_8": { x: 768, y: 128 }, "Dockworker_9": { x: 896, y: 128 }, "Dockworker_10": { x: 1024, y: 128 }, "Dockworker_11": { x: 1152, y: 128 }, "Dockworker_12": { x: 1280, y: 128 }, "Dockworker_13": { x: 1408, y: 128 }, "Expert_System_1": { x: 1536, y: 128 }, "Expert_System_2": { x: 1664, y: 128 }, "Expert_System_3": { x: 1792, y: 128 }, "Expert_System_4": { x: 512, y: 256 }, "Expert_System_5": { x: 512, y: 384 }, "Expert_System_6": { x: 512, y: 512 }, "Expert_System_7": { x: 512, y: 640 }, "Expert_System_8": { x: 512, y: 768 }, "Expert_System_9": { x: 512, y: 896 }, "Expert_System_10": { x: 512, y: 1024 }, "Expert_System_11": { x: 512, y: 1152 }, "Expert_System_12": { x: 512, y: 1280 }, "Expert_System_13": { x: 512, y: 1408 }, "Heavily_Augmented_1": { x: 512, y: 1536 }, "Heavily_Augmented_2": { x: 640, y: 256 }, "Heavily_Augmented_3": { x: 768, y: 256 }, "Heavily_Augmented_4": { x: 896, y: 256 }, "Heavily_Augmented_5": { x: 1024, y: 256 }, "Heavily_Augmented_6": { x: 1152, y: 256 }, "Heavily_Augmented_7": { x: 1280, y: 256 }, "Heavily_Augmented_8": { x: 1408, y: 256 }, "Heavily_Augmented_9": { x: 1536, y: 256 }, "Heavily_Augmented_10": { x: 1664, y: 256 }, "Heavily_Augmented_11": { x: 1792, y: 256 }, "Heavily_Augmented_12": { x: 640, y: 384 }, "Heavily_Augmented_13": { x: 640, y: 512 }, "Heavily_Augmented_14": { x: 640, y: 640 }, "Heavily_Augmented_15": { x: 640, y: 768 }, "Kintsugi_1": { x: 640, y: 896 }, "Kintsugi_2": { x: 640, y: 1024 }, "Kintsugi_3": { x: 640, y: 1152 }, "Lightly_Augmented_1": { x: 640, y: 1280 }, "Lightly_Augmented_2": { x: 640, y: 1408 }, "Lightly_Augmented_3": { x: 640, y: 1536 }, "Lightly_Augmented_4": { x: 768, y: 384 }, "Lightly_Augmented_5": { x: 896, y: 384 }, "Lightly_Augmented_6": { x: 1024, y: 384 }, "Lightly_Augmented_7": { x: 1152, y: 384 }, "Lightly_Augmented_8": { x: 1280, y: 384 }, "Lightly_Augmented_9": { x: 1408, y: 384 }, "Lightly_Augmented_10": { x: 1536, y: 384 }, "Lightly_Augmented_11": { x: 1664, y: 384 }, "Lightly_Augmented_12": { x: 1792, y: 384 }, "Lightly_Augmented_13": { x: 768, y: 512 }, "Lightly_Augmented_14": { x: 768, y: 640 }, "Merchants_Guild_1": { x: 768, y: 768 }, "Merchants_Guild_2": { x: 768, y: 896 }, "Merchants_Guild_3": { x: 768, y: 1024 }, "Merchants_Guild_4": { x: 768, y: 1152 }, "Merchants_Guild_5": { x: 768, y: 1280 }, "Merchants_Guild_6": { x: 768, y: 1408 }, "Merchants_Guild_7": { x: 768, y: 1536 }, "Merchants_Guild_8": { x: 896, y: 512 }, "Merchants_Guild_9": { x: 1024, y: 512 }, "Merchants_Guild_10": { x: 1152, y: 512 }, "Merchants_Guild_11": { x: 1280, y: 512 }, "Merchants_Guild_12": { x: 1408, y: 512 }, "Merchants_Guild_13": { x: 1536, y: 512 }, "Merchants_Guild_14": { x: 1664, y: 512 }, "Merchants_Guild_15": { x: 1792, y: 512 }, "Merchants_Guild_16": { x: 896, y: 640 }, "Merchants_Guild_17": { x: 896, y: 768 }, "Merchants_Guild_18": { x: 896, y: 896 }, "Merchants_Guild_19": { x: 896, y: 1024 }, "Merchants_Guild_20": { x: 896, y: 1152 }, "Merchants_Guild_21": { x: 896, y: 1280 }, "Merchants_Guild_22": { x: 896, y: 1408 }, "Miner_1": { x: 896, y: 1536 }, "Miner_2": { x: 1024, y: 640 }, "Miner_3": { x: 1152, y: 640 }, "Miner_4": { x: 1280, y: 640 }, "Miner_5": { x: 1408, y: 640 }, "Miner_6": { x: 1536, y: 640 }, "Miner_7": { x: 1664, y: 640 }, "Miner_8": { x: 1792, y: 640 }, "Miner_9": { x: 1024, y: 768 }, "Miner_10": { x: 1024, y: 896 }, "Scientist_1": { x: 1024, y: 1024 }, "Scientist_2": { x: 1024, y: 1152 }, "Scientist_3": { x: 1024, y: 1280 }, "Scientist_4": { x: 1024, y: 1408 }, "Scientist_5": { x: 1024, y: 1536 }, "Scientist_6": { x: 1152, y: 768 }, "Scientist_7": { x: 1280, y: 768 }, "Scientist_8": { x: 1408, y: 768 }, "Scientist_9": { x: 1536, y: 768 }, "Techie_1": { x: 1664, y: 768 }, "Techie_2": { x: 1792, y: 768 }, "Techie_3": { x: 1152, y: 896 }, "Techie_4": { x: 1152, y: 1024 }, "Techie_5": { x: 1152, y: 1152 }, "Techie_6": { x: 1152, y: 1280 }, "Techie_7": { x: 1152, y: 1408 }, "Techie_8": { x: 1152, y: 1536 }, "Techie_9": { x: 1280, y: 896 }, "Techie_10": { x: 1408, y: 896 }, "Techie_11": { x: 1536, y: 896 }, "Techie_12": { x: 1664, y: 896 }, "Techie_13": { x: 1792, y: 896 }, "Techie_14": { x: 1280, y: 1024 }, "Techie_15": { x: 1280, y: 1152 }, "Venusian_Syndicate_1": { x: 1280, y: 1280 }, "Venusian_Syndicate_2": { x: 1280, y: 1408 }, "Venusian_Syndicate_3": { x: 1280, y: 1536 }, "Venusian_Syndicate_4": { x: 1408, y: 1024 }, "Venusian_Syndicate_5": { x: 1536, y: 1024 }, "Venusian_Syndicate_6": { x: 1664, y: 1024 }, "Venusian_Syndicate_7": { x: 1792, y: 1024 }, "Venusian_Syndicate_8": { x: 1408, y: 1152 }, "Venusian_Syndicate_9": { x: 1408, y: 1280 }, "Venusian_Syndicate_10": { x: 1408, y: 1408 }, "Venusian_Syndicate_11": { x: 1408, y: 1536 }, "Venusian_Syndicate_12": { x: 1536, y: 1152 }, "Venusian_Syndicate_13": { x: 1664, y: 1152 }, "Venusian_Syndicate_14": { x: 1792, y: 1152 }, "Venusian_Syndicate_15": { x: 1536, y: 1280 }, "Venusian_Syndicate_16": { x: 1536, y: 1408 }, "Venusian_Syndicate_17": { x: 1536, y: 1536 }, "Venusian_Syndicate_18": { x: 1664, y: 1280 }, "Venusian_Syndicate_19": { x: 1792, y: 1280 }, "Venusian_Syndicate_20": { x: 1664, y: 1408 }, "Venusian_Syndicate_21": { x: 1664, y: 1536 }, "Venusian_Syndicate_22": { x: 1792, y: 1408 }, "Vrael_1": { x: 1792, y: 1536 }
+};
+
+const storyData = [
+    { phase: "Tutorial: Guild Induction", missions: [
+        { id: "1", name: "Welcome to Orbital Trading", host: "GUILD", portraitId: "Audita_1", synopsis: "The Guild introduces the player to the mission log framework.", description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>Completing missions is the most reliable way to earn credits.", objectives: [], completion: { title: "Mission Log", text: "When you accept a mission from the <b>Mission Terminal</b>, it moves to the <b>Mission Log</b>." }, rewards: [] },
+        { id: "2", name: "Review Your Finances", host: "GUILD", portraitId: "Audita_1", synopsis: "The player learns about their debt and strict financial obligations.", description: "Your financial obligations and transaction history are logged in the <b>Finance</b> tab. Note that your debt is due in exactly three years. The Guild does not grant extensions.", objectives: [{ type: "VISIT_SCREEN", navId: "data", screenId: "finance" }], completion: { title: "Debt", text: "Pay off your debts <i>as soon as possible</i> to minimize the cost of borrowing credits!" }, rewards: [] },
+        { id: "3", name: "Intel and the Codex", host: "GUILD", portraitId: "Audita_1", synopsis: "The player explores the Intel market and narrative Codex.", description: "The Intel screen houses your <b>Codex</b> and the <b>Intel Market</b>. The Codex contains key story information. The Intel market sells time-sensitive, guaranteed trade opportunities.", objectives: [{ type: "VISIT_SCREEN", navId: "data", screenId: "intel" }], completion: { title: "Market Intelligence", text: "You can only possess one piece of market intelligence at a time." }, rewards: [] },
+        { id: "4", name: "Solar System Map", host: "GUILD", portraitId: "Audita_1", synopsis: "The player utilizes the solar system map for arbitrage routes.", description: "The Guild has authorized your access to a live iteration of the Solar System <b>Map</b>. We expect you to utilize this map to identify profitable arbitrage routes between stations.", objectives: [{ type: "VISIT_SCREEN", navId: "ship", screenId: "map" }], completion: { title: "Use the Map Often", text: "Your map will also indicate the target of your current mission or intel." }, rewards: [] },
+        { id: "5", name: "Navigating Space Flight", host: "GUILD", portraitId: "Audita_1", synopsis: "The player travels to Luna for their very first flight.", description: "The <b>Navigation</b> screen is where space flight begins. Select <b>The Moon</b> to begin your journey.", objectives: [{ type: "TRAVEL_TO", target: "loc_luna" }], completion: { title: "Welcome to Luna", text: "Your new ship, the [shipName], has successfully completed its first voyage!" }, rewards: [] },
+        { id: "6", name: "Inspect the Cargo Hold", host: "GUILD", portraitId: "Audita_1", synopsis: "The player reviews their cargo and tracks cost basis data.", description: "The <b>Cargo</b> screen tracks your fleet's current inventory, average cost basis, and total market value. Inspect your hold now.", objectives: [{ type: "VISIT_SCREEN", navId: "ship", screenId: "cargo" }], completion: { title: "Review Your Cargo", text: "You may also review the cost basis and average value of individual commodities." }, rewards: [] },
+        { id: "7", name: "Trading in the Market", host: "GUILD", portraitId: "Audita_1", synopsis: "The player learns the core loop: buy low, travel, and sell high.", description: "Arbitrage involves <b>purchasing items at a low price, transporting them, and then selling them for more than they cost</b>. Buy some ice here at the Moon, travel to Mars, and sell it.", objectives: [{ type: "TRADE_ITEM", goodId: "water_ice", tradeType: "buy", quantity: 1 }, { type: "TRAVEL_TO", target: "loc_mars" }, { type: "TRADE_ITEM", goodId: "water_ice", tradeType: "sell", quantity: 1 }], completion: { title: "Station Diversity", text: "<b>Every station has a unique market.</b> Your trading decisions will directly impact these markets." }, rewards: [] },
+        { id: "8", name: "Tour the Shipyard", host: "GUILD", portraitId: "Audita_1", synopsis: "The player visits the Shipyard to view upgradeable vessels.", description: "Each station's <b>Shipyard</b> offers different vessels for purchase. The hangar is your personal ship storage. Tour the Martian Shipyard.", objectives: [{ type: "VISIT_SCREEN", navId: "starport", screenId: "hangar" }], completion: { title: "Ship Attributes", text: "Upgrade your fleet with the best ships to maximize your profit!" }, rewards: [] },
+        { id: "9", name: "Starport Services", host: "GUILD", portraitId: "Audita_1", synopsis: "The player fully refuels and repairs their ship using a Guild subsidy.", description: "Stations provide fueling, repairs, and permanent ship upgrades for a fee. The Guild has issued a one-time subsidy to cover your expenses.", objectives: [{ type: "VISIT_SCREEN", navId: "starport", screenId: "services" }, { type: "HAVE_HULL_PCT", value: 100 }, { type: "HAVE_FUEL_TANK", value: 40 }], completion: { title: "Ship Tuning", text: "A ship can have up to three upgrades at once." }, rewards: [{ type: "credits", amount: 7000 }] }
+    ]},
+    { phase: "Phase One: Act 1 (The Cog)", missions: [
+        { id: "10", name: "Oversupply", host: "GUILD", portraitId: "Audita_1", synopsis: "Audita tasks the player to trade on Earth to begin repaying the loan.", description: "Captain [playerName], your <b>loan deadline is in three short years</b>. Repay your debt to the Merchant’s Guild <i>as soon as possible</i>. Leverage a unique opportunity on Earth to your benefit.", objectives: [{ type: "TRAVEL_TO", target: "loc_earth" }], completion: { title: "Arrival", text: "I see that you’ve made it to the Earth. Continue to travel for arbitrage, buying low and selling high." }, rewards: [] },
+        { id: "11", name: "Financial Freedom", host: "GUILD", portraitId: "Audita_1", synopsis: "The player clears their loan and earns the right to take larger contracts.", description: "Captain, you are making adequate progress, however, the interest on your loan continues to grow. Your objective is to pay off all of your debt.", objectives: [{ type: "HAVE_DEBT", value: 0 }], completion: { title: "Debt Cleared", text: "Congratulations on paying down your loan. You now qualify for additional financing." }, rewards: [{ type: "UPGRADE", id: "UPG_ECO_SELL_1" }] },
+        { id: "12", name: "The Storm", host: "STATION", portraitId: "Dockworker_1", synopsis: "A coronal mass ejection forces emergency delivery of Water Ice to the Belt.", description: "We've got a sudden market shift—a coronal mass ejection is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for Water Ice.", objectives: [{ type: "DELIVER_ITEM", target: "loc_belt", goodId: "water_ice", quantity: 25 }], completion: { title: "Delivery Complete", text: "The belt farms will distribute the water to the scattered hydroponics farms shortly." }, rewards: [{ type: "credits", amount: 15500 }] },
+        { id: "13", name: "High-Society Hardware", host: "STATION", portraitId: "AI_4", synopsis: "A medical manufacturer pays the player to source and deliver Plasteel to Earth.", description: "I represent a medical manufacturing collective on Earth. We are experiencing a critical shortage of Plasteel, which is required for high-end cybernetic enhancements.", objectives: [{ type: "DELIVER_ITEM", target: "loc_earth", goodId: "plasteel", quantity: 10 }], completion: { title: "Delivery Complete", text: "The client is prepared to remit payment once the freight has been unloaded." }, rewards: [{ type: "credits", amount: 11000 }] },
+        { id: "14", name: "Economies of Scale", host: "GUILD", portraitId: "Merchants_Guild_3", synopsis: "The Guild commissions bulk Plasteel for a new Martian orbital tether.", description: "The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic. <b>Deliver bulk Plasteel to the Martian starport.</b> Time is money.", objectives: [{ type: "DELIVER_ITEM", target: "loc_mars", goodId: "plasteel", quantity: 120 }], completion: { title: "Contract Fulfilled", text: "The orbital tether construction continues on schedule. The Guild has authorized your payment." }, rewards: [{ type: "credits", amount: 24000 }] },
+        { id: "15", name: "Life Extension", host: "GUILD", portraitId: "Merchants_Guild_3", synopsis: "A senior Guild member demands luxury shipments of Ice and Plasteel on Luna.", description: "A senior board member of the Guild requires a pristine shipment for their personal estate on Luna. They need Water Ice for a cryo-therapy suite, and high-grade Plasteel.", objectives: [{ type: "DELIVER_ITEM", target: "loc_luna", goodId: "water_ice", quantity: 15 }, { type: "DELIVER_ITEM", target: "loc_luna", goodId: "plasteel", quantity: 15 }], completion: { title: "Cryo-Delivery Complete", text: "The lunar estate eagerly awaits the supplies to resume construction." }, rewards: [{ type: "credits", amount: 13000 }] },
+        { id: "16", name: "Survivor's Guilt", host: "STATION", portraitId: "Dockworker_4", synopsis: "A desperate Belter asks for emergency resources to sustain life support.", description: "When you left the Belt, the Guild didn't adjust our quotas. We're running critical on life support reserves and structural patching. We need a shipment of Water Ice and Plasteel.", objectives: [{ type: "DELIVER_ITEM", target: "loc_belt", goodId: "water_ice", quantity: 90 }, { type: "DELIVER_ITEM", target: "loc_belt", goodId: "plasteel", quantity: 20 }], completion: { title: "Delivery Complete", text: "Oh and [playerName], don't forget where you came from. Stay safe out there." }, rewards: [{ type: "credits", amount: 18000 }] },
+        { id: "17", name: "Diplomatic Vector", host: "GUILD", portraitId: "Audita_1", synopsis: "The player navigates a tense joint repair operation at Uranus.", description: "The Guild and Venusian Syndicate have entered a temporary, joint repair initiative for the orbital stations at Uranus. As an unaligned contractor, you represent the optimal deniable asset. Deliver Plasteel from Venus to Uranus.", objectives: [{ type: "DELIVER_ITEM", target: "loc_uranus", goodId: "plasteel", quantity: 25 }], completion: { title: "Delivery Complete", text: "Uranus Dock Authority have approved your access to the Starport depot for delivery." }, rewards: [{ type: "license", licenseId: "Tier 2 License" }, { type: "credits", amount: 25000 }] }
+    ]},
+    { phase: "Phase Two: Syndicate Emergence", missions: [
+        { id: "18", name: "Seed Capital", host: "SYNDICATE", portraitId: "Venusian_Syndicate_4", synopsis: "The Venusian Syndicate invites the player to their cloud-cities.", description: "I am Kiern, Research Director for the Venusian Syndicate. First, you must prove you are more than a debtor. <b>Amass a larger net worth</b>, then <b>meet me at the Venusian cloud-cities</b>.", objectives: [{ type: "HAVE_CREDITS", value: 50000 }, { type: "TRAVEL_TO", target: "loc_venus" }], completion: { title: "The Venusian Syndicate", text: "Your accounts reflect a respectable liquidity. Now let us see if you can manipulate the market." }, rewards: [] },
+        { id: "19", name: "A Synthetic Disruption", host: "SYNDICATE", portraitId: "Venusian_Syndicate_4", synopsis: "The Syndicate pays the player to flood Pluto with Cybernetics.", description: "The Guild relies on organic indentured labor to extract ice from Pluto. <b>Procure Cybernetics and flood the Plutonian market with them.</b> The availability of automation will shatter local labor values.", objectives: [{ type: "HAVE_ITEM", goodId: "cybernetics", quantity: 15 }, { type: "TRAVEL_TO", target: "loc_pluto" }, { type: "TRADE_ITEM", goodId: "cybernetics", tradeType: "sell", quantity: 15, target: "loc_pluto" }], completion: { title: "A Calculated Fracture", text: "The labor camps on Pluto are already in localized revolt; you have introduced a necessary chaos." }, rewards: [{ type: "credits", amount: 35000 }] },
+        { id: "20", name: "Jovian Promotion", host: "STATION", portraitId: "Business_11", synopsis: "Jupiter Atmo Refineries offers a complimentary refuel to the player.", description: "To celebrate our Q3 production surplus, Jupiter Atmo Refineries is offering a one-time <b>COMPLIMENTARY FLEET REFUEL</b>. Dock at any authorized Jovian orbital tether.", objectives: [{ type: "TRAVEL_TO", target: "loc_jupiter" }], completion: { title: "Voucher Accepted", text: "Your fleet will be fully refueled at no cost to you. Have a safe flight!" }, rewards: [{ type: "fill_fleet_fuel" }] },
+        { id: "21", name: "Lab Supply", host: "STATION", portraitId: "AI_4", synopsis: "The medical collective secretly hires the player to supply an illegal lab.", description: "We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research. We urgently require Hydroponics.", objectives: [{ type: "DELIVER_ITEM", goodId: "hydroponics", quantity: 15, target: "loc_mercury" }], completion: { portraitId: "Audita_1", host: "GUILD", title: "A Syndicate Shell", text: "Captain! Your delivery has been flagged! That medical manufacturer is a <b>known Venusian Syndicate shell company</b> running an <i>illegal organ cloning lab</i>." }, rewards: [{ type: "credits", amount: 35000 }] },
+        { id: "22", name: "Mercurian Balance", host: "GUILD", portraitId: "Audita_1", synopsis: "The Guild covers up the cloning lab by monopolizing Mercurian water ice.", description: "To balance the ledger regarding your recent indiscretion on Mercury, the Guild requires you to travel to Mercury, purchase ice in bulk, and deliver it to the Guild Moon depot promptly.", objectives: [{ type: "TRADE_ITEM", tradeType: "buy", goodId: "water_ice", quantity: 60, target: "loc_mercury" }, { type: "DELIVER_ITEM", goodId: "water_ice", quantity: 60, target: "loc_luna" }], completion: { portraitId: "Venusian_Syndicate_4", host: "SYNDICATE", title: "A Cold Calculation", text: "The Guild cut local feeds so Mercurian markets wouldn't notice you siphoning their aquifers. They plan to ransom that ice back to the colony at triple the price to soak up the organ cloning money." }, rewards: [{ type: "credits", amount: 25000 }] }
+    ]}
+];
+
+// --- UTILITIES ---
+
+function getPortraitStyle(portraitId) {
+    const coords = PortraitRegistry[portraitId];
+    if (!coords) return '';
+    return `background-image: url('assets/images/characters/characters_sprite.webp'); background-position: -${coords.x + 4}px -${coords.y}px;`;
+}
+
+function formatName(str) {
+    if (!str) return '';
+    return str.replace('loc_', '').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
+function parseObjective(obj) {
+    switch(obj.type) {
+        case 'VISIT_SCREEN': return `Visit the <b>${formatName(obj.screenId)}</b> screen under the <b>${formatName(obj.navId)}</b> tab.`;
+        case 'TRAVEL_TO': return `Maps to <b>${formatName(obj.target)}</b>.`;
+        case 'TRADE_ITEM': return `Trade (<b>${obj.tradeType.toUpperCase()}</b>) <b>${obj.quantity}x ${formatName(obj.goodId)}</b> at ${obj.target ? formatName(obj.target) : 'the local market'}.`;
+        case 'DELIVER_ITEM': return `Deliver <b>${obj.quantity}x ${formatName(obj.goodId)}</b> to <b>${formatName(obj.target)}</b>.`;
+        case 'HAVE_CREDITS': return `Amass a total net worth of <b>⌬ ${obj.value.toLocaleString()}</b> Credits.`;
+        case 'HAVE_DEBT': return `Reduce your Guild debt to <b>⌬ ${obj.value}</b>.`;
+        case 'HAVE_HULL_PCT': return `Repair your ship hull to at least <b>${obj.value}%</b>.`;
+        case 'HAVE_FUEL_TANK': return `Upgrade your vessel to hold <b>${obj.value}</b> fuel units.`;
+        case 'HAVE_ITEM': return `Procure and hold <b>${obj.quantity}x ${formatName(obj.goodId)}</b> in your cargo.`;
+        default: return `Complete Task: ${obj.type}`;
+    }
+}
+
+function formatRewardsStr(rewardsArr) {
+    if (!rewardsArr || rewardsArr.length === 0) return 'NO REWARD';
+    return rewardsArr.map(r => {
+        if (r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
+        if (r.type === 'UPGRADE') return `UPGRADE`;
+        if (r.type === 'license') return `LICENSE`;
+        if (r.type === 'fill_fleet_fuel') return `FUEL VOUCHER`;
+        return r.type.toUpperCase();
+    }).join('\n');
+}
+
+// --- TAB LOGIC ---
+document.querySelectorAll('.nav-tab').forEach(tab => {
+    tab.addEventListener('click', (e) => {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+        
+        e.target.classList.add('active');
+        document.getElementById(e.target.dataset.target).classList.add('active');
+    });
+});
+
+// --- TOOLTIP LOGIC ---
+const tooltip = document.getElementById('tooltip');
+document.addEventListener('mousemove', (e) => {
+    if (tooltip.style.opacity === '1') {
+        tooltip.style.left = (e.clientX + 15) + 'px';
+        tooltip.style.top = (e.clientY + 15) + 'px';
+    }
+});
+
+// --- RENDERERS ---
+
+function initApp() {
+    const sidebar = document.getElementById('sidebar');
+    const tGrid = document.getElementById('timeline-grid');
+    const rGrid = document.getElementById('rewards-grid');
+    const rSummary = document.getElementById('rewards-summary');
+
+    let isLeftNode = true;
+    let stats = { credits: 0, upgrades: 0, licenses: 0, phases: [] };
+
+    storyData.forEach(phaseData => {
+        // Stats tracker
+        let phaseStats = { name: phaseData.phase, credits: 0, rewards: 0 };
+        
+        // Sidebar Phase Header
+        const header = document.createElement('div');
+        header.className = 'phase-header';
+        header.textContent = phaseData.phase;
+        sidebar.appendChild(header);
+
+        phaseData.missions.forEach(mission => {
+            // --- 1. MISSIONS TAB ---
+            const item = document.createElement('div');
+            item.className = 'timeline-item';
+            
+            const rwds = formatRewardsStr(mission.rewards);
+            item.innerHTML = `
+                <div class="item-main">
+                    <div class="mission-id">ID_${mission.id.padStart(3, '0')}</div>
+                    <div class="mission-name">${mission.name}</div>
+                </div>
+                <div class="item-reward">${rwds}</div>
+            `;
+            item.addEventListener('click', () => loadMission(mission, item));
+            sidebar.appendChild(item);
+
+            // --- 2. TIMELINE TAB ---
+            const node = document.createElement('div');
+            node.className = `t-node ${isLeftNode ? 'left' : 'right'}`;
+            node.innerHTML = `
+                <div class="t-dot"></div>
+                <div class="t-content">
+                    <div class="t-phase">M_${mission.id.padStart(2,'0')} // ${mission.host}</div>
+                    <div class="t-title">${mission.name}</div>
+                </div>
+            `;
+            
+            // Tooltip events
+            node.querySelector('.t-content').addEventListener('mouseenter', () => {
+                tooltip.innerHTML = `<b>${mission.name}</b><br><br>${mission.synopsis}`;
+                tooltip.style.opacity = '1';
+            });
+            node.querySelector('.t-content').addEventListener('mouseleave', () => {
+                tooltip.style.opacity = '0';
+            });
+
+            tGrid.appendChild(node);
+
+            // --- 3. REWARDS TAB ---
+            if (mission.rewards && mission.rewards.length > 0) {
+                const rNode = document.createElement('div');
+                rNode.className = `t-node ${isLeftNode ? 'left' : 'right'}`;
+                
+                const rewardDetails = mission.rewards.map(r => {
+                    if (r.type === 'credits') { phaseStats.credits += r.amount; stats.credits += r.amount; return `Credited ⌬ ${r.amount.toLocaleString()} to ledger.`; }
+                    if (r.type === 'UPGRADE') { phaseStats.rewards++; stats.upgrades++; return `Permanent Ship Upgrade Authorized.`; }
+                    if (r.type === 'license') { phaseStats.rewards++; stats.licenses++; return `Granted Commercial License.`; }
+                    if (r.type === 'fill_fleet_fuel') { phaseStats.rewards++; return `Complete Fleet Refuel Voucher.`; }
+                }).join('<br>');
+
+                rNode.innerHTML = `
+                    <div class="t-dot" style="border-color: #2ecc71;"></div>
+                    <div class="t-content" style="border-color: rgba(46,204,113,0.3);">
+                        <div class="t-phase" style="color: #2ecc71;">M_${mission.id.padStart(2,'0')} Reward Dispensed</div>
+                        <div class="t-title">${mission.name}</div>
+                        <div class="t-reward-desc">${rewardDetails}</div>
+                    </div>
+                `;
+                rGrid.appendChild(rNode);
+            }
+
+            isLeftNode = !isLeftNode; // Alternate sides
+        });
+
+        stats.phases.push(phaseStats);
+    });
+
+    // --- REWARDS SUMMARY ---
+    rSummary.innerHTML = `
+        <div class="stat-box">
+            <div class="stat-title">Total Credits Earned</div>
+            <div class="stat-value">⌬ ${stats.credits.toLocaleString()}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-title">Licenses Acquired</div>
+            <div class="stat-value" style="color: var(--accent-color);">${stats.licenses}</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-title">Upgrades Installed</div>
+            <div class="stat-value" style="color: var(--faction-guild);">${stats.upgrades}</div>
+        </div>
+    `;
+}
+
+function loadMission(mission, element) {
+    document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active'));
+    element.classList.add('active');
+    
+    document.getElementById('empty-state').style.display = 'none';
+    const detailView = document.getElementById('mission-detail');
+    detailView.style.display = 'block';
+    
+    // Reset animation
+    detailView.style.animation = 'none';
+    detailView.offsetHeight; /* trigger reflow */
+    detailView.style.animation = null;
+
+    // Header Data
+    document.getElementById('detail-name').textContent = mission.name;
+    document.getElementById('detail-desc').innerHTML = mission.description;
+    
+    const isTwist = mission.completion && mission.completion.portraitId && (mission.completion.portraitId !== mission.portraitId);
+    
+    document.getElementById('init-portrait').style.cssText = getPortraitStyle(mission.portraitId);
+    
+    const compBlock = document.getElementById('completion-portrait-block');
+    if (isTwist) {
+        compBlock.style.display = 'flex';
+        document.getElementById('comp-portrait').style.cssText = getPortraitStyle(mission.completion.portraitId);
+    } else {
+        compBlock.style.display = 'none';
+    }
+    
+    // Badges
+    const badgesEl = document.getElementById('detail-badges');
+    const hostClass = mission.host === 'GUILD' ? 'guild' : (mission.host === 'SYNDICATE' ? 'syndicate' : 'station');
+    
+    let completionBadge = '';
+    if (isTwist) {
+        const compClass = mission.completion.host === 'GUILD' ? 'guild' : (mission.completion.host === 'SYNDICATE' ? 'syndicate' : 'station');
+        completionBadge = `<span class="badge ${compClass}">Resolved By: ${mission.completion.host}</span>`;
+    }
+
+    badgesEl.innerHTML = `
+        <span class="badge">Type: Story</span>
+        <span class="badge ${hostClass}">Host: ${mission.host}</span>
+        ${completionBadge}
+    `;
+
+    // Objectives
+    const objEl = document.getElementById('detail-objectives');
+    objEl.innerHTML = '';
+    if (mission.objectives.length === 0) {
+        objEl.innerHTML = `<li><i>No specific operational tasks required. Acknowledge transmission.</i></li>`;
+    } else {
+        mission.objectives.forEach(obj => {
+            const li = document.createElement('li');
+            li.innerHTML = parseObjective(obj);
+            objEl.appendChild(li);
+        });
+    }
+
+    // Completion
+    document.getElementById('detail-comp-title').textContent = mission.completion.title || 'Mission Complete';
+    document.getElementById('detail-comp-text').innerHTML = mission.completion.text || '';
+}
+
+// Boot
+initApp();
+</script>
+</body>
+</html>
