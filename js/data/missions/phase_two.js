@@ -104,7 +104,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "A quota deficit has been detected in our strategic reserves of ice. The Guild requests that you travel to Mercury and purchase Water Ice in bulk.<br><br>I will remit payment following the requisition, captain.",
+        description: "Captain [playerName], to balance the ledger regarding your recent indiscretion on Mercury, the Guild requires your immediate participation in correcting a local water ice quota deficit. You are being tasked to travel to Mercury and purchase ice in bulk and deliver the it to the Guild Moon depot promptly.<br><br>I will remit payment following the requisition. Thank you for your attention to this matter.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_21" } ],
         objectives: [
             { "id": "buy_ice", "type": "TRADE_ITEM", "tradeType": "buy", "goodId": "water_ice", "quantity": 60, "target": "loc_mercury" },

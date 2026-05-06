@@ -7,7 +7,7 @@
 export const PHASE_ONE_MISSIONS = {
     'mission_10': {
         id: "mission_10",
-        name: "Ice Crisis",
+        name: "Oversupply",
         type: "STORY",
         host: "GUILD",
         portraitId: "Audita_1",
@@ -123,7 +123,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Merchants_Guild_3",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets for now. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] cannot hold all of the freight at once, so get comfortable with the transit routes. You will likely need to source the Plasteel from multiple stations. Time is money.",
+        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] cannot hold all of the freight at once, so get comfortable with the transit routes. You will likely need to source the Plasteel from multiple stations. Time is money.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
@@ -137,7 +137,7 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Contract Fulfilled",
-            text: "The Martian dockmasters are ready to confirm receipt of the final Plasteel shipment. The orbital tether construction continues on schedule. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space. Take care, Captain.",
+            text: "The Martian dockmasters are ready to confirm receipt of the final Plasteel shipment. The orbital tether construction continues on schedule. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space.<br><br>I expect Audita will be in contact with you again soon. Take care, Captain.",
             buttonText: "Unload the Plasteel"
         },
         rewards: [

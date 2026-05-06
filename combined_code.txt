@@ -3699,6 +3699,18 @@ card.
     height: 24px;
     color: inherit !important; 
 }
+
+/* --- Achievements Modal Height Reduction --- */
+#achievements-modal .modal-content {
+    max-height: 70dvh !important;
+    display: flex;
+    flex-direction: column;
+}
+
+#achievements-scroll-container {
+    flex-grow: 1;
+    overflow-y: auto;
+}
 --- END OF FILE: ./css/achievements.css ---
 
 --- START OF FILE: ./css/modals.css ---
@@ -3871,15 +3883,15 @@ card.
 
 /* Map Detail Modal has its own animation override already */
 #map-detail-modal.modal-visible .modal-content {
-    animation: fadeIn 1s ease-out forwards;
+    animation: fadeIn 0.5s ease-out forwards;
 }
 
 #map-detail-modal.modal-hiding {
-    animation: fadeOut 0.6s ease-out forwards;
+    animation: fadeOut 0.5s ease-out forwards;
 }
 
 #map-detail-modal.modal-hiding .modal-content {
-    animation: fadeOut 0.6s ease-out forwards;
+    animation: fadeOut 0.5s ease-out forwards;
 }
 
 /* --- SIGNATURE MODAL KEYBOARD FIX --- */
@@ -6069,6 +6081,79 @@ card.
     word-wrap: break-word;
     word-break: break-word;
     hyphens: auto; /* Ensure continuous strings (like ERR_CODES) do not bleed out of the modal boundaries */
+}
+
+/* ========================================================================= */
+/* --- MISSION MODALS ANIMATION OVERRIDE ---                                 */
+/* ========================================================================= */
+
+#mission-modal.modal-visible .modal-content,
+#mission-detail-modal.modal-visible .modal-content {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+#mission-modal.modal-hiding,
+#mission-detail-modal.modal-hiding {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+#mission-modal.modal-hiding .modal-content,
+#mission-detail-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+/* ========================================================================= */
+/* --- ECONOMIC WEATHER MODAL ANIMATIONS ---                                 */
+/* ========================================================================= */
+
+@keyframes econ-weather-fade-in {
+    0% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+@keyframes econ-weather-fade-out {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+}
+
+.econ-modal-anim-in {
+    animation: econ-weather-fade-in 0.5s ease-out forwards;
+}
+
+.econ-modal-anim-out {
+    animation: econ-weather-fade-out 0.5s ease-in forwards;
+    pointer-events: none;
+}
+
+/* Map the blur-fade keyframes directly to UIModalEngine's dynamic classes */
+#econ-weather-modal.modal-visible {
+    animation: econ-weather-fade-in 0.5s ease-out forwards;
+}
+
+#econ-weather-modal.modal-hiding {
+    animation: econ-weather-fade-out 0.5s ease-in forwards;
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* --- Z-INDEX HIERARCHY OVERRIDES ---                                       */
+/* ========================================================================= */
+/* Elevate specific modals to float above HUD buttons (z-index: 100)         */
+#map-detail-modal,
+#lore-modal,
+#ship-detail-modal,
+#age-event-modal,
+#upgrade-installation-modal,
+#upgrade-progress-modal,
+#cargo-detail-modal,
+#mission-modal,
+#mission-detail-modal,
+#loan-acquired-modal,
+#intel-offer-modal,
+#intel-modal,
+#econ-weather-modal,
+.sol-station-modal {
+    z-index: 105 !important;
 }
 --- END OF FILE: ./css/modals.css ---
 
@@ -14937,7 +15022,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.19';
+export const APP_VERSION = '38.22';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -17098,7 +17183,7 @@ export const MISSION_REGISTRY = {
 export const PHASE_ONE_MISSIONS = {
     'mission_10': {
         id: "mission_10",
-        name: "Ice Crisis",
+        name: "Oversupply",
         type: "STORY",
         host: "GUILD",
         portraitId: "Audita_1",
@@ -17214,7 +17299,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Merchants_Guild_3",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets for now. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] cannot hold all of the freight at once, so get comfortable with the transit routes. You will likely need to source the Plasteel from multiple stations. Time is money.",
+        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] cannot hold all of the freight at once, so get comfortable with the transit routes. You will likely need to source the Plasteel from multiple stations. Time is money.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
@@ -17228,7 +17313,7 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Contract Fulfilled",
-            text: "The Martian dockmasters are ready to confirm receipt of the final Plasteel shipment. The orbital tether construction continues on schedule. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space. Take care, Captain.",
+            text: "The Martian dockmasters are ready to confirm receipt of the final Plasteel shipment. The orbital tether construction continues on schedule. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space.<br><br>I expect Audita will be in contact with you again soon. Take care, Captain.",
             buttonText: "Unload the Plasteel"
         },
         rewards: [
@@ -17401,7 +17486,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain, the nedical manufacturering collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on Mercury to conduct highly sensitive biological research.<br><br>We urgently require Hydroponics to sustain the lab's operations.<br><br>The Guild is currently imposing an embargo, heavily complicating trade routes, but we will compensate you generously for navigating these artificial constraints.",
+        description: "Greetings Captain [playerName]! The nedical manufacturering collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br>We urgently require Hydroponics to sustain the lab's operations.<br><br>The Guild is currently imposing an embargo, heavily complicating trade routes, but we will compensate you generously for navigating these artificial constraints.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_20" } ],
         onAccept: [ 
             { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
@@ -17431,7 +17516,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "A quota deficit has been detected in our strategic reserves of ice. The Guild requests that you travel to Mercury and purchase Water Ice in bulk.<br><br>I will remit payment following the requisition, captain.",
+        description: "Captain [playerName], to balance the ledger regarding your recent indiscretion on Mercury, the Guild requires your immediate participation in correcting a local water ice quota deficit. You are being tasked to travel to Mercury and purchase ice in bulk and deliver the it to the Guild Moon depot promptly.<br><br>I will remit payment following the requisition. Thank you for your attention to this matter.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_21" } ],
         objectives: [
             { "id": "buy_ice", "type": "TRADE_ITEM", "tradeType": "buy", "goodId": "water_ice", "quantity": 60, "target": "loc_mercury" },
@@ -25086,8 +25171,8 @@ export class UIMarketControl {
     }
 
     /**
-     * Updates the dynamic pricing display based on quantity input, injecting
-     * Phase 5 Wash-Trade warnings. Slippage is applied mathematically but hidden from the UI.
+     * Updates the dynamic pricing display based on quantity input.
+     * Cleaned of volume-elasticity and penalty warnings.
      * @param {string} goodId 
      * @param {number} quantity 
      * @param {string} mode 
@@ -25105,7 +25190,7 @@ export class UIMarketControl {
         const playerItem = this._getFleetItem(state, goodId);
         const ms = this.manager.simulationService?.marketService;
         
-        // Fetch Execution Details (Source of Truth)
+        // Fetch Execution Details (Source of Truth - Now stripped of dynamic elasticity)
         const execDetails = ms 
             ? ms.getExecutionPrice(state.currentLocationId, goodId, quantity > 0 ? quantity : 1, mode)
             : { unitPrice: this.getItemPrice(state, goodId, mode === 'sell'), totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
@@ -25116,24 +25201,11 @@ export class UIMarketControl {
             avgCostEl.classList.toggle('visible', mode === 'sell');
         }
 
-        // --- PHASE 5: Dynamic Wash-Trade Warning Injection (Slippage Hidden) ---
+        // --- CLEANUP: Removed Wash-Trade Warning Injections ---
         if (availEl) {
             const currentMarketStock = state.market.inventory[state.currentLocationId]?.[goodId]?.quantity || 0;
             const ownQty = playerItem ? playerItem.quantity : 0;
-            
-            let infoString = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
-            
-            if (quantity > 0) {
-                let warnings = [];
-                // Slippage UI explicitly removed per instructions. Applied computationally under the hood.
-                if (execDetails.washPenaltyPct > 0) {
-                    warnings.push(`Restocking Fee: -${(execDetails.washPenaltyPct * 100).toFixed(0)}%`);
-                }
-                if (warnings.length > 0) {
-                    infoString += ` <span class="text-amber-400 font-bold ml-2">(${warnings.join(' | ')})</span>`;
-                }
-            }
-            availEl.innerHTML = infoString;
+            availEl.innerHTML = `Avail: ${currentMarketStock} | <span id="p-inv-${goodId}">Own: ${ownQty}</span>`;
         }
 
         if (mode === 'buy') {
@@ -25421,7 +25493,6 @@ export class UIMarketControl {
 
         optimizedHistory.forEach((point) => {
             let y = vToY(point.price);
-            // Jitter: Ambient trading volume masking UI freezes during Price Lock states
             if (point.isLocked) {
                 y += (Math.random() * 2 - 1) * 2; 
             }
@@ -35761,7 +35832,6 @@ export class MarketService {
                 if (inventoryItem) {
                     inventoryItem.marketPressure = 0;
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
-                    inventoryItem.priceLockEndDay = 0;
                     inventoryItem.isDepleted = false;
                     inventoryItem.isSaturated = false;
                     inventoryItem.depletionDay = 0;
@@ -35782,6 +35852,33 @@ export class MarketService {
     }
 
     /**
+     * Helper to apply Location/Station quirks uniformly to base prices.
+     * @private
+     */
+    _applyStationQuirks(price, locationId, commodityId) {
+        let modifiedPrice = price;
+        if (locationId === LOCATION_IDS.EARTH && (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
+            modifiedPrice *= 1.10;
+        }
+        if (locationId === LOCATION_IDS.MARS && (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
+            modifiedPrice *= 1.10;
+        }
+        if (locationId === LOCATION_IDS.SATURN && (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
+            modifiedPrice *= 1.20;
+        }
+        if (locationId === LOCATION_IDS.PLUTO && (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
+            modifiedPrice *= 1.25;
+        }
+        if (locationId === LOCATION_IDS.MERCURY && commodityId === COMMODITY_IDS.WATER_ICE) {
+            modifiedPrice *= 1.40;
+        }
+        if (locationId === LOCATION_IDS.SUN && (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
+            modifiedPrice *= 1.25;
+        }
+        return modifiedPrice;
+    }
+
+    /**
      * Gets the base unit price for a commodity at a location without volumetric slippage.
      * Checks for active intel deal overrides, applies delays to extreme states, 
      * and optionally applies player-specific modifiers (e.g. Signal Hacker).
@@ -35798,7 +35895,7 @@ export class MarketService {
 
         const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
         if (inventoryItem) {
-            // PHASE 5: No Same-Day Reactions (Delay extreme modifiers by 7 days to match pressure)
+            // No Same-Day Reactions (Delay extreme modifiers by 7 days to match pressure)
             const daysSinceInteraction = this.gameState.day - (inventoryItem.lastPlayerInteractionTimestamp || 0);
             const delayPassed = daysSinceInteraction >= 7;
 
@@ -35827,30 +35924,7 @@ export class MarketService {
         }
 
         // Station Quirks (Price Boosts)
-        if (locationId === LOCATION_IDS.EARTH && 
-            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
-            price = price * 1.10;
-        }
-        if (locationId === LOCATION_IDS.MARS &&
-            (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.HYDROPONICS)) {
-            price = price * 1.10;
-        }
-        if (locationId === LOCATION_IDS.SATURN &&
-            (commodityId === COMMODITY_IDS.CLONED_ORGANS || commodityId === COMMODITY_IDS.CRYO_PODS)) {
-            price = price * 1.20;
-        }
-        if (locationId === LOCATION_IDS.PLUTO &&
-            (commodityId === COMMODITY_IDS.CYBERNETICS || commodityId === COMMODITY_IDS.ANTIMATTER)) {
-            price = price * 1.25;
-        }
-        if (locationId === LOCATION_IDS.MERCURY &&
-            commodityId === COMMODITY_IDS.WATER_ICE) {
-            price = price * 1.40;
-        }
-        if (locationId === LOCATION_IDS.SUN &&
-            (commodityId === COMMODITY_IDS.PLASTEEL || commodityId === COMMODITY_IDS.GRAPHENE_LATTICES)) {
-            price = price * 1.25;
-        }
+        price = this._applyStationQuirks(price, locationId, commodityId);
 
         // 2. Upgrade Modifiers (Signal Hacker, etc.)
         if (applyModifiers) {
@@ -35862,7 +35936,7 @@ export class MarketService {
              }
         }
 
-        // PHASE 2: HOT INTEL INTEGRATION
+        // HOT INTEL INTEGRATION
         const activeHotIntel = state.activeHotIntel;
         if (activeHotIntel && 
             activeHotIntel.locationId === locationId && 
@@ -35870,7 +35944,7 @@ export class MarketService {
             price = price * activeHotIntel.discountMultiplier;
         }
 
-        // --- PHASE 1: Tier-Scaled Intrinsic Support (Absolute Retail Floor) ---
+        // Tier-Scaled Intrinsic Support (Absolute Retail Floor)
         const commodityDef = DB.COMMODITIES.find(c => c.id === commodityId);
         let absoluteFloor = 1;
         if (commodityDef) {
@@ -35882,81 +35956,50 @@ export class MarketService {
     }
 
     /**
-     * PHASE 5: Unified Execution Engine.
-     * Evaluates Slippage, Wash-Trade Tariffs, and Situational Modifiers to determine
-     * the absolute final transaction value. This ensures UI prediction matches logic execution exactly.
+     * Execution Engine.
+     * Evaluates Situational Modifiers to determine the absolute final transaction value. 
+     * Ensures UI prediction matches logic execution exactly, without volume-elasticity.
      */
     getExecutionPrice(locationId, commodityId, quantity, transactionType) {
         let baseUnitPrice = this.getPrice(locationId, commodityId, true, transactionType);
-        if (quantity <= 0) return { unitPrice: baseUnitPrice, totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
-
-        const inventoryItem = this.gameState.market.inventory[locationId][commodityId];
-        
-        // 1. Synchronous Slippage (Under the hood)
-        const currentStock = Math.max(1, inventoryItem.quantity); // Fallback to 1 to prevent division by zero
-        let slippagePct = 0;
-        const slippageThreshold = currentStock * 0.65;
-        
-        if (quantity > slippageThreshold) {
-            const excessVolume = quantity - slippageThreshold;
-            const excessRatio = excessVolume / currentStock;
-            
-            // Slips by 0.5% for every 5% of excess volume traded beyond the 65% threshold, capped at 5%
-            slippagePct = Math.min(0.05, (excessRatio / 0.05) * 0.005); 
-        }
-        
-        let executionUnitPrice = baseUnitPrice;
-        if (transactionType === 'buy') {
-            executionUnitPrice *= (1 + slippagePct);
-        } else {
-            executionUnitPrice *= (1 - slippagePct);
-        }
-
-        // 2. Wash Trade Penalty
-        let washPenaltyPct = 0;
-        const sessionVol = inventoryItem.sessionNetVolume || 0;
-        const sessionDay = inventoryItem.sessionInteractionDay || 0;
-
-        if (sessionDay === this.gameState.day) {
-            if (transactionType === 'buy' && sessionVol > 0) {
-                washPenaltyPct = 0.05; // 5% Restocking Fee
-                executionUnitPrice *= (1 + washPenaltyPct);
-            } else if (transactionType === 'sell' && sessionVol < 0) {
-                washPenaltyPct = 0.05; // 5% Restocking Fee
-                executionUnitPrice *= (1 - washPenaltyPct);
-            }
-        }
-
-        let totalPrice = executionUnitPrice * quantity;
-
-        // 3. Situational Modifiers (Applied holistically to the total)
         const state = this.gameState.getState();
+
+        // 1. Situational Modifiers (Applied holistically to the base unit price)
         if (transactionType === 'buy') {
             const agePurchaseDiscount = state.player.statModifiers?.purchaseCost || 0;
-            if (agePurchaseDiscount > 0) totalPrice *= (1 - agePurchaseDiscount);
+            if (agePurchaseDiscount > 0) baseUnitPrice *= (1 - agePurchaseDiscount);
 
             const systemState = state.systemState;
             const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
             if (activeStateDef?.modifiers?.survivalGoodsDiscountMod && activeStateDef.modifiers.affectedCommodities?.includes(commodityId)) {
-                totalPrice *= activeStateDef.modifiers.survivalGoodsDiscountMod;
-            }
-
-            if (locationId === LOCATION_IDS.NEPTUNE && (commodityId === COMMODITY_IDS.PROPELLANT || commodityId === COMMODITY_IDS.PLASTEEL) && quantity > 50) {
-                totalPrice *= 0.90;
+                baseUnitPrice *= activeStateDef.modifiers.survivalGoodsDiscountMod;
             }
 
             if (locationId === LOCATION_IDS.BELT && (commodityId === COMMODITY_IDS.WATER_ICE || commodityId === COMMODITY_IDS.XENO_GEOLOGICALS)) {
-                totalPrice *= 0.95;
+                baseUnitPrice *= 0.95;
             }
         } else if (transactionType === 'sell') {
             const systemState = state.systemState;
             const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
             if (activeStateDef?.modifiers?.sellPriceBonusMod) {
-                totalPrice *= activeStateDef.modifiers.sellPriceBonusMod;
+                baseUnitPrice *= activeStateDef.modifiers.sellPriceBonusMod;
             }
 
             if (locationId === LOCATION_IDS.SUN && (commodityId === COMMODITY_IDS.GRAPHENE_LATTICES || commodityId === COMMODITY_IDS.PLASTEEL)) {
-                totalPrice *= 1.25;
+                baseUnitPrice *= 1.25;
+            }
+        }
+
+        baseUnitPrice = Math.max(1, baseUnitPrice);
+
+        if (quantity <= 0) return { unitPrice: baseUnitPrice, totalPrice: 0, slippagePct: 0, washPenaltyPct: 0 };
+
+        let totalPrice = baseUnitPrice * quantity;
+
+        // 2. Conditional Bulk Modifiers (Applied to Total)
+        if (transactionType === 'buy') {
+            if (locationId === LOCATION_IDS.NEPTUNE && (commodityId === COMMODITY_IDS.PROPELLANT || commodityId === COMMODITY_IDS.PLASTEEL) && quantity > 50) {
+                totalPrice *= 0.90;
             }
         }
 
@@ -35966,8 +36009,8 @@ export class MarketService {
         return {
             unitPrice: finalUnitPrice,
             totalPrice: totalPrice,
-            slippagePct: slippagePct,
-            washPenaltyPct: washPenaltyPct
+            slippagePct: 0,
+            washPenaltyPct: 0
         };
     }
 
@@ -36065,12 +36108,6 @@ export class MarketService {
                 let randomFluctuation = (randomVal() - 0.5) * priceRange * volatility;
                 
                 let reversionEffect = (localBaseline - price) * meanReversion;
-
-                let isLocked = this.gameState.day < inventoryItem.priceLockEndDay;
-                if (isLocked) {
-                    reversionEffect = 0;
-                    randomFluctuation = 0;
-                }
 
                 if (inventoryItem.rivalArbitrage.isActive && this.gameState.day < inventoryItem.rivalArbitrage.endDay) {
                     reversionEffect = (localBaseline - price) * 0.20;
@@ -36187,7 +36224,6 @@ export class MarketService {
                     inventoryItem.lastPlayerInteractionTimestamp = 0;
                     inventoryItem.marketPressure = 0;
                     inventoryItem.depletionDay = 0; 
-                    inventoryItem.priceLockEndDay = 0; 
                     inventoryItem.isDepleted = false;
                     inventoryItem.isSaturated = false; 
                 } else {
@@ -36277,8 +36313,6 @@ export class MarketService {
         if (inventoryItem.sessionInteractionDay !== this.gameState.day) {
             inventoryItem.sessionInteractionDay = this.gameState.day;
             inventoryItem.sessionNetVolume = 0;
-            inventoryItem.preSessionPriceLockEndDay = inventoryItem.priceLockEndDay || 0;
-            inventoryItem.preSessionInteractionTimestamp = inventoryItem.lastPlayerInteractionTimestamp || 0;
         }
         
         inventoryItem.sessionNetVolume += (transactionType === 'buy' ? -quantity : quantity);
@@ -36328,26 +36362,8 @@ export class MarketService {
         
         inventoryItem.marketPressure = Math.max(-2.5, Math.min(4.0, inventoryItem.marketPressure));
 
-        const baseLock = 60;
-        const distanceBonus = (market?.distance || 0) * 0.20;
-        const targetLock = baseLock + distanceBonus;
-        const jitter = targetLock * 0.10; 
-        
-        const lockDuration = Math.floor(targetLock + (Math.random() * (jitter * 2) - jitter));
-        
-        // --- PHASE 4: Fractional Volume Threshold ---
-        const maxAvailability = good.canonicalAvailability[1] || 100;
-        const fractionalShift = Math.abs(inventoryItem.sessionNetVolume) / maxAvailability;
-
-        if (fractionalShift < 0.05) {
-            // Treat as "Zero-Sum / Noise" - do not extend the price lock or reset the delay
-            inventoryItem.priceLockEndDay = inventoryItem.preSessionPriceLockEndDay;
-            inventoryItem.lastPlayerInteractionTimestamp = inventoryItem.preSessionInteractionTimestamp;
-        } else {
-            // Standard enforcement
-            inventoryItem.priceLockEndDay = this.gameState.day + lockDuration;
-            inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
-        }
+        // Mark interaction time for the 7-day organic delay
+        inventoryItem.lastPlayerInteractionTimestamp = this.gameState.day;
 
         if (this.gameState.uiState?.enableEconomicTelemetry) {
             if (!this.gameState.telemetry) this.gameState.telemetry = { ticks: [], trades: [], impacts: [] };
@@ -36361,7 +36377,6 @@ export class MarketService {
                 quantityTraded: quantity,
                 pressureChange: Number(pressureChange.toFixed(4)),
                 resultingPressure: Number(inventoryItem.marketPressure.toFixed(4)),
-                lockDuration: lockDuration,
                 isSaturated: inventoryItem.isSaturated || false
             });
 
@@ -36423,15 +36438,17 @@ export class MarketService {
             }
 
             const history = this.gameState.market.priceHistory[targetMarketId][good.id];
-            const currentPrice = this.gameState.market.prices[targetMarketId][good.id];
+            
+            // Log the fully formed, modified price (accounting for local quirks)
+            const currentDisplayPrice = this.getPrice(targetMarketId, good.id, false);
 
             const lastEntry = history[history.length - 1];
             if (lastEntry && lastEntry.day === this.gameState.day) {
-                if (lastEntry.price !== currentPrice) {
-                    lastEntry.price = currentPrice;
+                if (lastEntry.price !== currentDisplayPrice) {
+                    lastEntry.price = currentDisplayPrice;
                 }
             } else {
-                history.push({ day: this.gameState.day, price: currentPrice });
+                history.push({ day: this.gameState.day, price: currentDisplayPrice });
             }
 
             while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
@@ -36527,18 +36544,17 @@ export class MarketService {
             isLocked: false 
         }));
 
-        let lastPrice = historicalData.length > 0 
+        let lastDisplayPrice = historicalData.length > 0 
             ? historicalData[historicalData.length - 1].price 
-            : (this.gameState.market.prices[locationId]?.[commodityId] || 0);
+            : this.getPrice(locationId, commodityId, false);
             
         if (historicalData.length === 0 || historicalData[historicalData.length - 1].day < currentDay) {
-            const livePrice = this.gameState.market.prices[locationId]?.[commodityId] || lastPrice;
-            historicalData.push({ day: currentDay, price: livePrice, isLocked: false });
+            const liveDisplayPrice = this.getPrice(locationId, commodityId, false) || lastDisplayPrice;
+            historicalData.push({ day: currentDay, price: liveDisplayPrice, isLocked: false });
         }
         
         const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
         const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
-        const lockEndDay = inventoryItem ? inventoryItem.priceLockEndDay : 0;
         
         let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
         const location = DB.MARKETS.find(m => m.id === locationId);
@@ -36547,7 +36563,7 @@ export class MarketService {
         }
 
         const projection = [];
-        let currentProjPrice = lastPrice;
+        let currentRawPrice = this.gameState.market.prices[locationId]?.[commodityId] || 0;
         
         let activePressure = inventoryItem ? inventoryItem.marketPressure : 0;
         const PLAYER_PRESSURE_STRENGTH = 0.50; 
@@ -36564,20 +36580,14 @@ export class MarketService {
         
         for (let i = 1; i <= projectedDays; i++) {
             const projDay = currentDay + i;
-            let isLocked = projDay < lockEndDay;
             
-            let reversionEffect = (localBaseline - currentProjPrice) * meanReversion;
+            let reversionEffect = (localBaseline - currentRawPrice) * meanReversion;
             
             const seedStr = `${locationId}-${commodityId}-${projDay}`;
             const seedHash = this._hashString(seedStr);
             const pseudoRandom = this._seededRandom(seedHash);
             
             let randomFluctuation = (pseudoRandom - 0.5) * priceRange * volatility;
-
-            if (isLocked) {
-                reversionEffect = 0;
-                randomFluctuation = 0; 
-            }
             
             let pressureEffect = 0;
             daysSinceInteraction++;
@@ -36585,12 +36595,15 @@ export class MarketService {
                  pressureEffect = (localBaseline * activePressure * -1) * PLAYER_PRESSURE_STRENGTH;
             }
 
-            currentProjPrice += (reversionEffect + pressureEffect + randomFluctuation);
+            currentRawPrice += (reversionEffect + pressureEffect + randomFluctuation);
+            
+            // Ensure the SVG projected data matches the visual quirk modifications
+            let displayProjPrice = this._applyStationQuirks(currentRawPrice, locationId, commodityId);
             
             projection.push({
                 day: projDay,
-                price: Math.max(intrinsicFloor, Math.round(currentProjPrice)),
-                isLocked: isLocked
+                price: Math.max(intrinsicFloor, Math.round(displayProjPrice)),
+                isLocked: false
             });
             
             if (activePressure !== 0 && daysSinceInteraction >= 7) {
@@ -49241,7 +49254,7 @@ export class PlayerActionService {
             const match = lastBuyEntry.description.match(/Bought (\d+)x/i) || lastBuyEntry.description.match(/Bought (\d+)/i);
             const oldQty = match ? parseInt(match[1], 10) : 0;
             lastBuyEntry.description = `Bought ${oldQty + quantity}x ${good.name}`;
-            lastBuyEntry.value -= totalCost;
+            lastBuyEntry.amount -= totalCost;
         } else {
             this.simulationService._logTransaction('trade', -totalCost, `Bought ${quantity}x ${good.name}`);
             if (this.gameState.player.financeLog && this.gameState.player.financeLog.length > 0) {
@@ -49378,7 +49391,7 @@ export class PlayerActionService {
             const match = lastSellEntry.description.match(/Sold (\d+)x/i) || lastSellEntry.description.match(/Sold (\d+)/i);
             const oldQty = match ? parseInt(match[1], 10) : 0;
             lastSellEntry.description = `Sold ${oldQty + quantity}x ${good.name}`;
-            lastSellEntry.value += totalSaleValue;
+            lastSellEntry.amount += totalSaleValue;
         } else {
             this.simulationService._logTransaction('trade', totalSaleValue, `Sold ${quantity}x ${good.name}`);
             if (this.gameState.player.financeLog && this.gameState.player.financeLog.length > 0) {
@@ -50185,6 +50198,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [38.22] - 2026-5-6
+-  updated modal transition timing
+-  UI polish
+-  mission rewrites
 
 # [38.19] - 2026-5-4
 -  PWA view fixes (web version)

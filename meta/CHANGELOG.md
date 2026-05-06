@@ -3,6 +3,11 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [38.22] - 2026-5-6
+-  updated modal transition timing
+-  UI polish
+-  mission rewrites
+
 # [38.19] - 2026-5-4
 -  PWA view fixes (web version)
 -  updated tutorial writing

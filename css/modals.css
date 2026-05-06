@@ -167,15 +167,15 @@
 
 /* Map Detail Modal has its own animation override already */
 #map-detail-modal.modal-visible .modal-content {
-    animation: fadeIn 1s ease-out forwards;
+    animation: fadeIn 0.5s ease-out forwards;
 }
 
 #map-detail-modal.modal-hiding {
-    animation: fadeOut 0.6s ease-out forwards;
+    animation: fadeOut 0.5s ease-out forwards;
 }
 
 #map-detail-modal.modal-hiding .modal-content {
-    animation: fadeOut 0.6s ease-out forwards;
+    animation: fadeOut 0.5s ease-out forwards;
 }
 
 /* --- SIGNATURE MODAL KEYBOARD FIX --- */
@@ -2365,4 +2365,77 @@
     word-wrap: break-word;
     word-break: break-word;
     hyphens: auto; /* Ensure continuous strings (like ERR_CODES) do not bleed out of the modal boundaries */
+}
+
+/* ========================================================================= */
+/* --- MISSION MODALS ANIMATION OVERRIDE ---                                 */
+/* ========================================================================= */
+
+#mission-modal.modal-visible .modal-content,
+#mission-detail-modal.modal-visible .modal-content {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+#mission-modal.modal-hiding,
+#mission-detail-modal.modal-hiding {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+#mission-modal.modal-hiding .modal-content,
+#mission-detail-modal.modal-hiding .modal-content {
+    animation: fadeOut 0.5s ease-out forwards;
+}
+
+/* ========================================================================= */
+/* --- ECONOMIC WEATHER MODAL ANIMATIONS ---                                 */
+/* ========================================================================= */
+
+@keyframes econ-weather-fade-in {
+    0% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+@keyframes econ-weather-fade-out {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(10px); transform: scale(0.95); }
+}
+
+.econ-modal-anim-in {
+    animation: econ-weather-fade-in 0.5s ease-out forwards;
+}
+
+.econ-modal-anim-out {
+    animation: econ-weather-fade-out 0.5s ease-in forwards;
+    pointer-events: none;
+}
+
+/* Map the blur-fade keyframes directly to UIModalEngine's dynamic classes */
+#econ-weather-modal.modal-visible {
+    animation: econ-weather-fade-in 0.5s ease-out forwards;
+}
+
+#econ-weather-modal.modal-hiding {
+    animation: econ-weather-fade-out 0.5s ease-in forwards;
+    pointer-events: none;
+}
+
+/* ========================================================================= */
+/* --- Z-INDEX HIERARCHY OVERRIDES ---                                       */
+/* ========================================================================= */
+/* Elevate specific modals to float above HUD buttons (z-index: 100)         */
+#map-detail-modal,
+#lore-modal,
+#ship-detail-modal,
+#age-event-modal,
+#upgrade-installation-modal,
+#upgrade-progress-modal,
+#cargo-detail-modal,
+#mission-modal,
+#mission-detail-modal,
+#loan-acquired-modal,
+#intel-offer-modal,
+#intel-modal,
+#econ-weather-modal,
+.sol-station-modal {
+    z-index: 105 !important;
 }

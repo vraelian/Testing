@@ -134,3 +134,15 @@
     height: 24px;
     color: inherit !important; 
 }
+
+/* --- Achievements Modal Height Reduction --- */
+#achievements-modal .modal-content {
+    max-height: 70dvh !important;
+    display: flex;
+    flex-direction: column;
+}
+
+#achievements-scroll-container {
+    flex-grow: 1;
+    overflow-y: auto;
+}
