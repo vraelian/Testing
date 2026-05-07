@@ -12,7 +12,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>Completing missions is the most reliable way to earn credits.<br><br>Accept this mission below to add it to your log and begin.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br>Accept this mission below to add it to your log and begin.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
