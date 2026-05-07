@@ -8,20 +8,20 @@
         @import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;800&family=Share+Tech+Mono&display=swap');
 
         :root {
-            --bg-dark: #070709;
-            --bg-panel: #111114;
-            --bg-card: #18181d;
-            --bg-highlight: #22222a;
-            --border-color: #2a2a35;
-            --border-glow: #424254;
-            --text-main: #d1d1d6;
-            --text-muted: #7b7b8a;
+            --bg-dark: #050507;
+            --bg-panel: #0d0d12;
+            --bg-card: #15151a;
+            --bg-highlight: #1e1e26;
+            --border-color: #262630;
+            --border-glow: #38384a;
+            --text-main: #c4c4cc;
+            --text-muted: #6b6b7a;
             --text-bright: #ffffff;
-            --accent-color: #f39c12;
-            --accent-glow: rgba(243, 156, 18, 0.3);
-            --faction-guild: #3498db;
-            --faction-syndicate: #9b59b6;
-            --faction-station: #2ecc71;
+            --accent-color: #e67e22;
+            --accent-glow: rgba(230, 126, 34, 0.4);
+            --faction-guild: #2980b9;
+            --faction-syndicate: #8e44ad;
+            --faction-station: #27ae60;
             
             --font-main: 'Oxanium', sans-serif;
             --font-mono: 'Share Tech Mono', monospace;
@@ -39,53 +39,81 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(20,20,30,1) 0%, rgba(7,7,9,1) 100%),
-                repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.1) 2px, rgba(0,0,0,0.1) 4px);
+        }
+
+        /* CRT Overlay Effect */
+        .crt-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
+            background-size: 100% 3px, 3px 100%;
+            pointer-events: none;
+            z-index: 9999;
+            opacity: 0.8;
         }
 
         /* Top Navigation */
         #top-nav {
             display: flex;
-            background-color: #0b0b0e;
+            background-color: #08080a;
             border-bottom: 2px solid var(--border-color);
             padding: 0 20px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            box-shadow: 0 5px 25px rgba(0,0,0,0.9);
             z-index: 100;
+            position: relative;
+            overflow-x: auto;
+            flex-shrink: 0;
+            -ms-overflow-style: none;  
+            scrollbar-width: none;  
+        }
+        #top-nav::-webkit-scrollbar {
+            display: none; 
+        }
+
+        #top-nav::after {
+            content: '';
+            position: absolute;
+            bottom: -2px; left: 0; width: 100%; height: 2px;
+            background: linear-gradient(90deg, transparent 0%, var(--accent-color) 50%, transparent 100%);
+            opacity: 0.5;
         }
 
         .nav-brand {
             display: flex;
             align-items: center;
-            font-size: 1.2rem;
+            font-size: 1.1rem;
             font-weight: 800;
             color: var(--accent-color);
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             text-transform: uppercase;
             margin-right: 40px;
-            text-shadow: 0 0 10px var(--accent-glow);
+            text-shadow: 1px 0 2px rgba(255,0,0,0.4), -1px 0 2px rgba(0,255,255,0.4), 0 0 15px var(--accent-glow);
+            white-space: nowrap;
         }
 
         .nav-tab {
-            padding: 20px 30px;
+            padding: 22px 30px;
             cursor: pointer;
             font-weight: 600;
+            font-size: 0.9rem;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             color: var(--text-muted);
             border-bottom: 3px solid transparent;
-            transition: all 0.3s ease;
+            transition: all 0.2s ease;
+            white-space: nowrap;
         }
 
         .nav-tab:hover {
             color: var(--text-bright);
-            background-color: rgba(255,255,255,0.02);
+            background-color: rgba(255,255,255,0.03);
         }
 
         .nav-tab.active {
             color: var(--accent-color);
             border-bottom: 3px solid var(--accent-color);
-            background: linear-gradient(0deg, rgba(243, 156, 18, 0.1) 0%, transparent 100%);
+            background: linear-gradient(0deg, rgba(230, 126, 34, 0.1) 0%, transparent 100%);
+            text-shadow: 0 0 8px var(--accent-glow);
         }
 
         /* Main Layout */
@@ -104,38 +132,44 @@
 
         .view-container.active {
             display: flex;
+            animation: bootUp 0.3s ease-out;
+        }
+
+        @keyframes bootUp {
+            from { opacity: 0; filter: blur(4px); }
+            to { opacity: 1; filter: blur(0); }
         }
 
         /* --- MISSIONS VIEW --- */
         #sidebar {
-            width: 400px;
+            width: 420px;
             background-color: var(--bg-panel);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
             overflow-y: auto;
-            box-shadow: 10px 0 30px rgba(0,0,0,0.6);
+            box-shadow: 15px 0 40px rgba(0,0,0,0.8);
             z-index: 10;
         }
 
         .phase-header {
-            padding: 15px 20px;
-            background: linear-gradient(90deg, #1a1a24 0%, var(--bg-panel) 100%);
+            padding: 15px 25px;
+            background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%);
             color: var(--text-bright);
-            font-size: 0.85rem;
+            font-size: 0.8rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             border-bottom: 1px solid var(--border-color);
             border-top: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 5;
-            box-shadow: 0 5px 10px rgba(0,0,0,0.3);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
         }
 
         .timeline-item {
-            padding: 15px 20px;
+            padding: 18px 25px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.2s ease;
@@ -145,44 +179,52 @@
             position: relative;
         }
 
+        .timeline-item.host-guild { --t-item-color: var(--faction-guild); }
+        .timeline-item.host-syndicate { --t-item-color: var(--faction-syndicate); }
+        .timeline-item.host-station { --t-item-color: var(--faction-station); }
+        .timeline-item.host-default { --t-item-color: var(--accent-color); }
+
         .timeline-item::before {
             content: '';
             position: absolute;
             left: 0; top: 0; bottom: 0; width: 0;
-            background-color: var(--accent-color);
+            background-color: var(--t-item-color);
             transition: width 0.2s ease;
         }
 
         .timeline-item:hover { background-color: var(--bg-highlight); }
         .timeline-item.active { background-color: var(--bg-card); }
-        .timeline-item.active::before { width: 4px; box-shadow: 0 0 15px var(--accent-color); }
+        .timeline-item.active::before { width: 4px; box-shadow: 0 0 20px var(--t-item-color); }
 
-        .item-main { flex-grow: 1; }
+        .item-main { flex-grow: 1; padding-right: 15px; }
         
         .mission-id {
             font-family: var(--font-mono);
-            font-size: 1.1rem;
-            color: var(--accent-color);
+            font-size: 0.95rem;
+            color: var(--t-item-color);
             font-weight: bold;
-            margin-bottom: 4px;
+            margin-bottom: 6px;
+            letter-spacing: 1px;
         }
 
         .mission-name {
-            font-size: 1rem;
+            font-size: 1.05rem;
             font-weight: 600;
             color: var(--text-bright);
+            line-height: 1.3;
         }
 
         .item-reward {
             font-family: var(--font-mono);
             font-size: 0.75rem;
-            color: #2ecc71;
+            color: var(--faction-station);
             text-align: right;
-            background: rgba(46, 204, 113, 0.1);
-            padding: 4px 8px;
-            border-radius: 3px;
-            border: 1px solid rgba(46, 204, 113, 0.2);
+            background: rgba(39, 174, 96, 0.1);
+            padding: 6px 10px;
+            border-radius: 2px;
+            border: 1px solid rgba(39, 174, 96, 0.2);
             white-space: pre-line;
+            min-width: 90px;
         }
 
         #content-area {
@@ -191,18 +233,42 @@
             overflow-y: auto;
             display: flex;
             justify-content: center;
-            background: radial-gradient(circle at 50% 50%, #0d0d12 0%, var(--bg-dark) 100%);
+            align-items: flex-start;
+            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
         }
 
+        /* --- THEMATIC SCOPING --- */
         #mission-detail {
             max-width: 900px;
             width: 100%;
             display: none;
-            animation: fadeIn 0.4s ease;
+            animation: fadeIn 0.3s ease;
+            padding-bottom: 60px;
+            
+            /* Default variables */
+            --active-host-color: var(--accent-color);
+            --active-host-bg: rgba(230, 126, 34, 0.08);
+            --active-host-border: rgba(230, 126, 34, 0.3);
+        }
+
+        #mission-detail.host-guild {
+            --active-host-color: var(--faction-guild);
+            --active-host-bg: rgba(41, 128, 185, 0.08);
+            --active-host-border: rgba(41, 128, 185, 0.3);
+        }
+        #mission-detail.host-syndicate {
+            --active-host-color: var(--faction-syndicate);
+            --active-host-bg: rgba(142, 68, 173, 0.08);
+            --active-host-border: rgba(142, 68, 173, 0.3);
+        }
+        #mission-detail.host-station {
+            --active-host-color: var(--faction-station);
+            --active-host-bg: rgba(39, 174, 96, 0.08);
+            --active-host-border: rgba(39, 174, 96, 0.3);
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
+            from { opacity: 0; transform: translateY(15px); }
             to { opacity: 1; transform: translateY(0); }
         }
 
@@ -211,9 +277,9 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 30px;
+            margin-bottom: 40px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 30px;
+            padding-bottom: 40px;
         }
 
         .portrait-block {
@@ -224,22 +290,24 @@
         }
 
         .portrait-role {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             color: var(--text-muted);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
+            font-family: var(--font-mono);
         }
 
         .portrait-container {
             width: 128px;
             height: 128px;
-            border: 2px solid var(--border-color);
+            border: 2px solid var(--active-host-border);
             background-color: #000;
-            box-shadow: 0 0 20px rgba(0,0,0,0.8), inset 0 0 20px rgba(0,0,0,0.5);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 20px var(--active-host-bg);
             position: relative;
             overflow: hidden;
-            border-radius: 4px;
+            border-radius: 2px;
+            transition: all 0.3s ease;
         }
 
         .portrait { width: 100%; height: 100%; }
@@ -247,101 +315,128 @@
         .mission-title-area {
             flex-grow: 1;
             text-align: center;
-            padding: 0 20px;
+            padding: 0 30px;
         }
 
         .mission-title-area h2 {
-            margin: 0 0 15px 0;
-            font-size: 2.2rem;
+            margin: 0 0 20px 0;
+            font-size: 2.4rem;
             color: var(--text-bright);
-            text-shadow: 0 2px 10px rgba(0,0,0,0.5);
+            text-shadow: 1px 0 2px rgba(255,0,0,0.5), -1px 0 2px rgba(0,255,255,0.5), 0 2px 15px rgba(0,0,0,0.6);
+            font-weight: 800;
+            letter-spacing: 1px;
         }
 
-        .badges { display: flex; gap: 10px; justify-content: center; }
+        .badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
         .badge {
-            padding: 6px 12px;
-            border-radius: 3px;
+            padding: 6px 14px;
+            border-radius: 2px;
             font-size: 0.75rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
             background-color: var(--bg-card);
+            font-family: var(--font-mono);
         }
 
-        .badge.guild { color: var(--faction-guild); border: 1px solid var(--faction-guild); box-shadow: 0 0 10px rgba(52, 152, 219, 0.2); }
-        .badge.syndicate { color: var(--faction-syndicate); border: 1px solid var(--faction-syndicate); box-shadow: 0 0 10px rgba(155, 89, 182, 0.2); }
-        .badge.station { color: var(--faction-station); border: 1px solid var(--faction-station); box-shadow: 0 0 10px rgba(46, 204, 113, 0.2); }
+        .badge.guild { color: var(--faction-guild); border: 1px solid var(--faction-guild); box-shadow: 0 0 15px rgba(41, 128, 185, 0.15); }
+        .badge.syndicate { color: var(--faction-syndicate); border: 1px solid var(--faction-syndicate); box-shadow: 0 0 15px rgba(142, 68, 173, 0.15); }
+        .badge.station { color: var(--faction-station); border: 1px solid var(--faction-station); box-shadow: 0 0 15px rgba(39, 174, 96, 0.15); }
 
         .section-title {
-            color: var(--accent-color);
-            font-size: 1rem;
+            color: var(--active-host-color);
+            font-size: 0.9rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 3px;
             margin-top: 40px;
-            margin-bottom: 15px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
+            transition: color 0.3s ease;
+        }
+        .section-title::before {
+            content: '//';
+            margin-right: 10px;
+            color: var(--active-host-color);
+            opacity: 0.7;
         }
         .section-title::after {
             content: '';
             flex-grow: 1;
             height: 1px;
             background: linear-gradient(90deg, var(--border-color) 0%, transparent 100%);
-            margin-left: 15px;
+            margin-left: 20px;
         }
 
+        /* Host-Themed Dialog Boxes */
         .dialog-box {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
-            border-left: 3px solid var(--accent-color);
-            padding: 25px;
-            font-size: 1.05rem;
-            line-height: 1.7;
+            border-left: 4px solid var(--active-host-color);
+            padding: 30px;
+            font-size: 1.1rem;
+            line-height: 1.8;
             position: relative;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.3);
+            box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
+            color: var(--text-main);
+            transition: border-color 0.3s ease;
         }
 
-        .objectives-list { list-style: none; padding: 0; margin: 0; }
+        .objectives-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
         .objectives-list li {
-            background-color: rgba(255, 255, 255, 0.03);
-            margin-bottom: 10px;
-            padding: 15px 20px;
-            border-radius: 4px;
+            background-color: rgba(255, 255, 255, 0.02);
+            padding: 18px 25px;
+            border-radius: 2px;
             border: 1px solid var(--border-color);
             display: flex;
-            align-items: center;
+            align-items: flex-start;
             font-family: var(--font-mono);
             font-size: 0.95rem;
+            line-height: 1.5;
         }
         .objectives-list li b { color: var(--text-bright); font-family: var(--font-main); }
         .objectives-list li::before {
             content: '>';
-            color: var(--accent-color);
+            color: var(--active-host-color);
             margin-right: 15px;
             font-weight: bold;
+            font-size: 1.2rem;
+            line-height: 1;
+            transition: color 0.3s ease;
         }
 
+        /* Host-Themed Completion Boxes (With potential Twist overrides) */
         .completion-box {
-            background: linear-gradient(135deg, rgba(46, 204, 113, 0.05) 0%, transparent 100%);
-            border: 1px solid rgba(46, 204, 113, 0.2);
-            border-left: 3px solid #2ecc71;
-            padding: 25px;
+            background: linear-gradient(135deg, var(--comp-host-bg, var(--active-host-bg)) 0%, rgba(0,0,0,0) 100%);
+            border: 1px solid var(--comp-host-border, var(--active-host-border));
+            border-left: 4px solid var(--comp-host-color, var(--active-host-color));
+            padding: 30px;
             position: relative;
+            font-size: 1.05rem;
+            line-height: 1.7;
+            transition: all 0.3s ease;
         }
         .completion-title {
-            color: #2ecc71;
+            color: var(--comp-host-color, var(--active-host-color));
             font-weight: 800;
-            font-size: 1.2rem;
-            margin-bottom: 12px;
+            font-size: 1.1rem;
+            margin-bottom: 15px;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            font-family: var(--font-mono);
+            transition: color 0.3s ease;
         }
+        
+        .completion-box.host-guild { --comp-host-color: var(--faction-guild); --comp-host-bg: rgba(41, 128, 185, 0.08); --comp-host-border: rgba(41, 128, 185, 0.3); }
+        .completion-box.host-syndicate { --comp-host-color: var(--faction-syndicate); --comp-host-bg: rgba(142, 68, 173, 0.08); --comp-host-border: rgba(142, 68, 173, 0.3); }
+        .completion-box.host-station { --comp-host-color: var(--faction-station); --comp-host-bg: rgba(39, 174, 96, 0.08); --comp-host-border: rgba(39, 174, 96, 0.3); }
+        .completion-box.host-default { --comp-host-color: var(--accent-color); --comp-host-bg: rgba(230, 126, 34, 0.08); --comp-host-border: rgba(230, 126, 34, 0.3); }
 
         b { color: var(--text-bright); font-weight: 600; }
         i { color: var(--text-muted); font-style: italic; }
 
-        /* --- TIMELINE & REWARDS VIEWS --- */
+        /* --- TIMELINE VIEW --- */
         .scrolling-timeline-wrapper {
             width: 100%;
             height: 100%;
@@ -374,6 +469,11 @@
             display: flex;
             flex-direction: column;
         }
+        
+        .t-node.host-guild { --t-node-color: var(--faction-guild); }
+        .t-node.host-syndicate { --t-node-color: var(--faction-syndicate); }
+        .t-node.host-station { --t-node-color: var(--faction-station); }
+        .t-node.host-default { --t-node-color: var(--accent-color); }
 
         .t-node.left { align-self: flex-start; text-align: right; align-items: flex-end; }
         .t-node.right { align-self: flex-end; text-align: left; align-items: flex-start; }
@@ -381,10 +481,10 @@
         .t-dot {
             position: absolute;
             top: 50%;
-            width: 16px;
-            height: 16px;
+            width: 18px;
+            height: 18px;
             background: var(--bg-dark);
-            border: 3px solid var(--accent-color);
+            border: 4px solid var(--t-node-color, var(--accent-color));
             border-radius: 50%;
             transform: translateY(-50%);
             z-index: 2;
@@ -392,128 +492,386 @@
             cursor: pointer;
         }
 
-        .t-node.left .t-dot { right: -8px; }
-        .t-node.right .t-dot { left: -8px; }
+        .t-node.left .t-dot { right: -9px; }
+        .t-node.right .t-dot { left: -9px; }
 
         .t-node:hover .t-dot {
-            background: var(--accent-color);
-            box-shadow: 0 0 15px var(--accent-color);
+            background: var(--t-node-color, var(--accent-color));
+            box-shadow: 0 0 20px var(--t-node-color, var(--accent-color));
         }
 
         .t-content {
             background: var(--bg-panel);
             border: 1px solid var(--border-color);
-            padding: 20px;
-            border-radius: 4px;
+            padding: 25px;
+            border-radius: 2px;
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             transition: all 0.3s ease;
             cursor: help;
         }
 
         .t-node:hover .t-content {
-            border-color: var(--accent-color);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-            transform: translateY(-2px);
+            border-color: var(--t-node-color, var(--accent-color));
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            transform: translateY(-3px);
         }
 
         .t-phase {
             font-family: var(--font-mono);
-            color: var(--text-muted);
-            font-size: 0.75rem;
-            margin-bottom: 5px;
+            color: var(--t-node-color, var(--text-muted));
+            font-size: 0.8rem;
+            margin-bottom: 8px;
             text-transform: uppercase;
+            letter-spacing: 1px;
         }
 
         .t-title {
-            font-size: 1.2rem;
-            font-weight: bold;
+            font-size: 1.25rem;
+            font-weight: 800;
             color: var(--text-bright);
         }
 
-        .t-synopsis, .t-reward-desc {
-            margin-top: 10px;
-            font-size: 0.95rem;
-            color: #aaa;
-            line-height: 1.5;
+        /* --- ANALYTICS VIEW --- */
+        #view-analytics {
+            flex-direction: column;
+            padding: 40px;
+            overflow-y: auto;
+            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
+            align-items: center;
         }
 
-        .t-reward-desc {
-            font-family: var(--font-mono);
-            color: #2ecc71;
-            background: rgba(46,204,113,0.05);
-            padding: 10px;
-            border: 1px solid rgba(46,204,113,0.2);
-            border-radius: 3px;
+        .analytics-content-wrapper {
+            width: 100%;
+            max-width: 1000px;
         }
+
+        .rewards-summary-top {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+
+        .stat-box {
+            text-align: left;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-left: 3px solid var(--accent-color);
+            padding: 20px 25px;
+            border-radius: 2px;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
+        }
+
+        .stat-box.credits { border-left-color: var(--faction-station); }
+        .stat-box.upgrades { border-left-color: var(--faction-guild); }
+
+        .stat-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 3px;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+            font-family: var(--font-mono);
+        }
+
+        .stat-value {
+            font-family: var(--font-mono);
+            font-size: 2rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            text-shadow: 0 0 15px rgba(230, 126, 34, 0.3);
+        }
+        .stat-box.credits .stat-value { color: var(--faction-station); text-shadow: 0 0 15px rgba(39, 174, 96, 0.3); }
+        .stat-box.upgrades .stat-value { color: var(--faction-guild); text-shadow: 0 0 15px rgba(41, 128, 185, 0.3); }
+
+        .analytics-container {
+            padding: 30px;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
+            height: 350px;
+            position: relative;
+        }
+
+        #analytics-chart {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* --- LEDGER VIEW --- */
+        #view-ledger {
+            flex-direction: column;
+            padding: 40px;
+            overflow-y: auto;
+            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
+        }
+
+        .rewards-ledger-container {
+            width: 100%;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        /* Ledger Table */
+        .ledger-table {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            border-radius: 2px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+        }
+
+        .ledger-header {
+            display: grid;
+            grid-template-columns: 120px 1.5fr 2fr;
+            padding: 18px 25px;
+            background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%);
+            border-bottom: 2px solid var(--border-glow);
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            font-weight: bold;
+            color: var(--text-main);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .ledger-row {
+            display: grid;
+            grid-template-columns: 120px 1.5fr 2fr;
+            padding: 20px 25px;
+            border-bottom: 1px solid var(--border-color);
+            border-left: 3px solid var(--l-row-color, transparent);
+            transition: background-color 0.2s ease;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .ledger-row.host-guild { --l-row-color: var(--faction-guild); }
+        .ledger-row.host-syndicate { --l-row-color: var(--faction-syndicate); }
+        .ledger-row.host-station { --l-row-color: var(--faction-station); }
+
+        .ledger-row:nth-child(even) { background-color: rgba(255, 255, 255, 0.015); }
+        .ledger-row:hover { background-color: rgba(255, 255, 255, 0.04); }
+        .ledger-row:last-child { border-bottom: none; }
+
+        .ledger-id {
+            font-family: var(--font-mono);
+            color: var(--text-muted);
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .ledger-name {
+            font-weight: 600;
+            color: var(--text-bright);
+            font-size: 1.1rem;
+        }
+
+        .ledger-payouts { display: flex; flex-wrap: wrap; gap: 10px; }
+
+        .payout-tag {
+            display: inline-flex;
+            align-items: center;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 6px 12px;
+            border-radius: 2px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border-color);
+            width: fit-content;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+        }
+
+        .payout-tag.credits { color: var(--faction-station); border-color: rgba(39, 174, 96, 0.4); background: rgba(39, 174, 96, 0.08); box-shadow: 0 0 10px rgba(39,174,96,0.1); }
+        .payout-tag.upgrade { color: var(--accent-color); border-color: rgba(230, 126, 34, 0.4); background: rgba(230, 126, 34, 0.08); box-shadow: 0 0 10px rgba(230,126,34,0.1); }
+        .payout-tag.license { color: var(--faction-guild); border-color: rgba(41, 128, 185, 0.4); background: rgba(41, 128, 185, 0.08); box-shadow: 0 0 10px rgba(41,128,185,0.1); }
 
         /* Tooltip logic */
         .tooltip {
             position: fixed;
             background: var(--bg-highlight);
             border: 1px solid var(--accent-color);
-            color: var(--text-bright);
-            padding: 15px 20px;
-            font-size: 0.9rem;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-            border-radius: 4px;
+            color: var(--text-main);
+            padding: 20px 25px;
+            font-size: 0.95rem;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
+            border-radius: 2px;
             pointer-events: none;
             opacity: 0;
             transition: opacity 0.2s;
             z-index: 1000;
-            max-width: 300px;
-            line-height: 1.5;
+            max-width: 350px;
+            line-height: 1.6;
         }
 
-        /* Rewards Summary Footer */
-        .rewards-summary {
-            margin-top: 60px;
-            background: var(--bg-panel);
-            border-top: 2px solid var(--accent-color);
+        .tooltip b { font-size: 1.1rem; color: var(--text-bright); }
+
+        /* --- PERSONNEL / PORTRAIT VIEWER --- */
+        #view-personnel {
+            flex-direction: column;
             padding: 40px;
-            display: flex;
-            justify-content: space-around;
-            position: relative;
-            z-index: 5;
+            overflow-y: auto;
+            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
         }
 
-        .stat-box { text-align: center; }
-        .stat-title {
-            font-size: 0.8rem;
+        .personnel-controls {
+            display: flex;
+            align-items: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .personnel-controls label {
+            font-size: 0.9rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: var(--text-muted);
-            margin-bottom: 10px;
-        }
-        .stat-value {
+            margin-right: 20px;
             font-family: var(--font-mono);
-            font-size: 2rem;
-            color: #2ecc71;
+        }
+
+        .personnel-controls select {
+            background-color: var(--bg-card);
+            color: var(--text-bright);
+            border: 1px solid var(--border-color);
+            padding: 12px 20px;
+            font-size: 1rem;
+            font-family: var(--font-main);
+            font-weight: 600;
+            border-radius: 2px;
+            cursor: pointer;
+            outline: none;
+            transition: all 0.2s ease;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        .personnel-controls select:hover, .personnel-controls select:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 15px rgba(230, 126, 34, 0.2), inset 0 0 10px rgba(0,0,0,0.5);
+        }
+
+        #portrait-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 25px;
+        }
+
+        .portrait-card {
+            background-color: var(--bg-panel);
+            border: 1px solid var(--border-color);
+            border-radius: 2px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            transition: all 0.2s ease;
+            position: relative;
+        }
+
+        .portrait-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
+            background: transparent; transition: background 0.2s;
+        }
+
+        .portrait-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--border-glow);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+        }
+
+        .portrait-card:hover::before {
+            background: var(--accent-color);
+        }
+
+        .sprite-window {
+            width: 128px;
+            height: 128px;
+            border-radius: 2px;
+            background-image: url('assets/images/characters/characters_sprite.webp');
+            background-repeat: no-repeat;
+            margin-bottom: 20px;
+            border: 2px solid #000;
+            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+        }
+
+        .id-label {
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            background: var(--bg-dark);
+            padding: 8px 12px;
+            border-radius: 2px;
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            width: 100%;
+            text-align: center;
+        }
+
+        .id-label:hover {
+            color: var(--bg-dark);
+            background: var(--accent-color);
+            border-color: var(--accent-color);
             font-weight: bold;
-            text-shadow: 0 0 15px rgba(46,204,113,0.3);
+        }
+
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: var(--faction-station);
+            color: var(--bg-dark);
+            padding: 15px 30px;
+            border-radius: 2px;
+            font-weight: 800;
+            font-family: var(--font-mono);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+            z-index: 1000;
+        }
+
+        .toast.show {
+            opacity: 1;
+            transform: translateY(0);
         }
 
         /* Scrollbars */
         ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); }
-        ::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); border-left: 1px solid var(--border-color); }
+        ::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 0; }
         ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
     </style>
 </head>
 <body>
+    <div class="crt-overlay"></div>
+    <script src="./js/data/characters.js"></script>
 
     <div id="top-nav">
         <div class="nav-brand">Orbital Trading // Logs</div>
         <div class="nav-tab active" data-target="view-missions">Missions</div>
         <div class="nav-tab" data-target="view-timeline">Timeline</div>
-        <div class="nav-tab" data-target="view-rewards">Rewards</div>
+        <div class="nav-tab" data-target="view-analytics">Analytics</div>
+        <div class="nav-tab" data-target="view-ledger">Ledger</div>
+        <div class="nav-tab" data-target="view-personnel">Personnel</div>
     </div>
 
     <div id="app-container">
         
         <div id="view-missions" class="view-container active">
-            <div id="sidebar">
-                </div>
+            <div id="sidebar"></div>
             
             <div id="content-area">
                 <div id="mission-detail">
@@ -541,13 +899,13 @@
                     <ul class="objectives-list" id="detail-objectives"></ul>
 
                     <div class="section-title">Mission Resolution</div>
-                    <div class="completion-box">
+                    <div class="completion-box" id="detail-comp-box">
                         <div class="completion-title" id="detail-comp-title">Completion</div>
                         <div id="detail-comp-text"></div>
                     </div>
                 </div>
                 
-                <div id="empty-state" style="margin-top: 200px; color: var(--border-glow); font-size: 1.5rem; text-transform: uppercase; letter-spacing: 4px; font-weight: 800;">
+                <div id="empty-state" style="margin-top: 250px; color: var(--border-glow); font-size: 1.8rem; text-transform: uppercase; letter-spacing: 6px; font-weight: 800; font-family: var(--font-mono); width: 100%; text-align: center;">
                     // Awaiting Decryption
                 </div>
             </div>
@@ -556,79 +914,81 @@
         <div id="view-timeline" class="view-container">
             <div class="scrolling-timeline-wrapper">
                 <div class="vertical-line"></div>
-                <div class="timeline-grid" id="timeline-grid">
-                    </div>
+                <div class="timeline-grid" id="timeline-grid"></div>
             </div>
         </div>
 
-        <div id="view-rewards" class="view-container" style="flex-direction: column;">
-            <div class="scrolling-timeline-wrapper" style="flex-grow: 1;">
-                <div class="vertical-line"></div>
-                <div class="timeline-grid" id="rewards-grid">
+        <div id="view-analytics" class="view-container">
+            <div class="analytics-content-wrapper">
+                <div class="section-title" style="margin-top: 0;">Aggregate Metrics</div>
+                <div class="rewards-summary-top" id="rewards-summary">
                     </div>
-            </div>
-            <div class="rewards-summary" id="rewards-summary">
+                
+                <div class="section-title">Capital Generation (Timeline)</div>
+                <div class="analytics-container">
+                    <div id="analytics-chart">
+                        </div>
                 </div>
+            </div>
+        </div>
+
+        <div id="view-ledger" class="view-container">
+            <div class="rewards-ledger-container">
+                <div class="section-title" style="margin-top: 0;">Acquisition Ledger</div>
+                <div class="ledger-table">
+                    <div class="ledger-header">
+                        <div>Ref ID</div>
+                        <div>Contract</div>
+                        <div>Disbursements</div>
+                    </div>
+                    <div id="rewards-grid">
+                        </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="view-personnel" class="view-container">
+            <div class="personnel-controls">
+                <label for="category-select">Data Index Query:</label>
+                <select id="category-select"></select>
+            </div>
+            <div id="portrait-grid"></div>
         </div>
 
     </div>
 
     <div id="tooltip" class="tooltip"></div>
+    <div id="toast" class="toast">ID Copied to Clipboard</div>
 
-<script>
-// --- REGISTRY DATA ---
-const PortraitRegistry = {
-    "Affluent_1": { x: 0, y: 0 }, "Affluent_2": { x: 0, y: 128 }, "Affluent_3": { x: 0, y: 256 }, "Affluent_4": { x: 0, y: 384 }, "Affluent_5": { x: 0, y: 512 }, "Affluent_6": { x: 0, y: 640 }, "Affluent_7": { x: 0, y: 768 }, "Affluent_8": { x: 0, y: 896 }, "Affluent_9": { x: 0, y: 1024 }, "Affluent_10": { x: 0, y: 1152 }, "Affluent_11": { x: 0, y: 1280 }, "Affluent_12": { x: 0, y: 1408 }, "Affluent_13": { x: 0, y: 1536 }, "Affluent_14": { x: 128, y: 0 }, "Affluent_15": { x: 128, y: 128 }, "Affluent_16": { x: 128, y: 256 }, "AI_1": { x: 128, y: 384 }, "AI_2": { x: 128, y: 512 }, "AI_3": { x: 128, y: 640 }, "AI_4": { x: 128, y: 768 }, "AI_5": { x: 128, y: 896 }, "AI_6": { x: 128, y: 1024 }, "AI_7": { x: 128, y: 1152 }, "AI_8": { x: 128, y: 1280 }, "AI_9": { x: 128, y: 1408 }, "AI_10": { x: 128, y: 1536 }, "AI_11": { x: 256, y: 0 }, "AI_12": { x: 256, y: 128 }, "AI_13": { x: 256, y: 256 }, "AI_14": { x: 256, y: 384 }, "Arbiter_1": { x: 256, y: 512 }, "Audita_1": { x: 256, y: 640 }, "Business_1": { x: 256, y: 768 }, "Business_2": { x: 256, y: 896 }, "Business_3": { x: 256, y: 1024 }, "Business_4": { x: 256, y: 1152 }, "Business_5": { x: 256, y: 1280 }, "Business_6": { x: 256, y: 1408 }, "Business_7": { x: 256, y: 1536 }, "Business_8": { x: 384, y: 0 }, "Business_9": { x: 512, y: 0 }, "Business_10": { x: 640, y: 0 }, "Business_11": { x: 768, y: 0 }, "Business_12": { x: 896, y: 0 }, "Business_13": { x: 1024, y: 0 }, "Captain_1": { x: 1152, y: 0 }, "Captain_2": { x: 1280, y: 0 }, "Captain_3": { x: 1408, y: 0 }, "Captain_4": { x: 1536, y: 0 }, "Captain_5": { x: 1664, y: 0 }, "Captain_6": { x: 1792, y: 0 }, "Captain_7": { x: 384, y: 128 }, "Captain_8": { x: 384, y: 256 }, "Captain_9": { x: 384, y: 384 }, "Captain_10": { x: 384, y: 512 }, "Captain_11": { x: 384, y: 640 }, "Captain_12": { x: 384, y: 768 }, "Captain_13": { x: 384, y: 896 }, "Dockworker_1": { x: 384, y: 1024 }, "Dockworker_2": { x: 384, y: 1152 }, "Dockworker_3": { x: 384, y: 1280 }, "Dockworker_4": { x: 384, y: 1408 }, "Dockworker_5": { x: 384, y: 1536 }, "Dockworker_6": { x: 512, y: 128 }, "Dockworker_7": { x: 640, y: 128 }, "Dockworker_8": { x: 768, y: 128 }, "Dockworker_9": { x: 896, y: 128 }, "Dockworker_10": { x: 1024, y: 128 }, "Dockworker_11": { x: 1152, y: 128 }, "Dockworker_12": { x: 1280, y: 128 }, "Dockworker_13": { x: 1408, y: 128 }, "Expert_System_1": { x: 1536, y: 128 }, "Expert_System_2": { x: 1664, y: 128 }, "Expert_System_3": { x: 1792, y: 128 }, "Expert_System_4": { x: 512, y: 256 }, "Expert_System_5": { x: 512, y: 384 }, "Expert_System_6": { x: 512, y: 512 }, "Expert_System_7": { x: 512, y: 640 }, "Expert_System_8": { x: 512, y: 768 }, "Expert_System_9": { x: 512, y: 896 }, "Expert_System_10": { x: 512, y: 1024 }, "Expert_System_11": { x: 512, y: 1152 }, "Expert_System_12": { x: 512, y: 1280 }, "Expert_System_13": { x: 512, y: 1408 }, "Heavily_Augmented_1": { x: 512, y: 1536 }, "Heavily_Augmented_2": { x: 640, y: 256 }, "Heavily_Augmented_3": { x: 768, y: 256 }, "Heavily_Augmented_4": { x: 896, y: 256 }, "Heavily_Augmented_5": { x: 1024, y: 256 }, "Heavily_Augmented_6": { x: 1152, y: 256 }, "Heavily_Augmented_7": { x: 1280, y: 256 }, "Heavily_Augmented_8": { x: 1408, y: 256 }, "Heavily_Augmented_9": { x: 1536, y: 256 }, "Heavily_Augmented_10": { x: 1664, y: 256 }, "Heavily_Augmented_11": { x: 1792, y: 256 }, "Heavily_Augmented_12": { x: 640, y: 384 }, "Heavily_Augmented_13": { x: 640, y: 512 }, "Heavily_Augmented_14": { x: 640, y: 640 }, "Heavily_Augmented_15": { x: 640, y: 768 }, "Kintsugi_1": { x: 640, y: 896 }, "Kintsugi_2": { x: 640, y: 1024 }, "Kintsugi_3": { x: 640, y: 1152 }, "Lightly_Augmented_1": { x: 640, y: 1280 }, "Lightly_Augmented_2": { x: 640, y: 1408 }, "Lightly_Augmented_3": { x: 640, y: 1536 }, "Lightly_Augmented_4": { x: 768, y: 384 }, "Lightly_Augmented_5": { x: 896, y: 384 }, "Lightly_Augmented_6": { x: 1024, y: 384 }, "Lightly_Augmented_7": { x: 1152, y: 384 }, "Lightly_Augmented_8": { x: 1280, y: 384 }, "Lightly_Augmented_9": { x: 1408, y: 384 }, "Lightly_Augmented_10": { x: 1536, y: 384 }, "Lightly_Augmented_11": { x: 1664, y: 384 }, "Lightly_Augmented_12": { x: 1792, y: 384 }, "Lightly_Augmented_13": { x: 768, y: 512 }, "Lightly_Augmented_14": { x: 768, y: 640 }, "Merchants_Guild_1": { x: 768, y: 768 }, "Merchants_Guild_2": { x: 768, y: 896 }, "Merchants_Guild_3": { x: 768, y: 1024 }, "Merchants_Guild_4": { x: 768, y: 1152 }, "Merchants_Guild_5": { x: 768, y: 1280 }, "Merchants_Guild_6": { x: 768, y: 1408 }, "Merchants_Guild_7": { x: 768, y: 1536 }, "Merchants_Guild_8": { x: 896, y: 512 }, "Merchants_Guild_9": { x: 1024, y: 512 }, "Merchants_Guild_10": { x: 1152, y: 512 }, "Merchants_Guild_11": { x: 1280, y: 512 }, "Merchants_Guild_12": { x: 1408, y: 512 }, "Merchants_Guild_13": { x: 1536, y: 512 }, "Merchants_Guild_14": { x: 1664, y: 512 }, "Merchants_Guild_15": { x: 1792, y: 512 }, "Merchants_Guild_16": { x: 896, y: 640 }, "Merchants_Guild_17": { x: 896, y: 768 }, "Merchants_Guild_18": { x: 896, y: 896 }, "Merchants_Guild_19": { x: 896, y: 1024 }, "Merchants_Guild_20": { x: 896, y: 1152 }, "Merchants_Guild_21": { x: 896, y: 1280 }, "Merchants_Guild_22": { x: 896, y: 1408 }, "Miner_1": { x: 896, y: 1536 }, "Miner_2": { x: 1024, y: 640 }, "Miner_3": { x: 1152, y: 640 }, "Miner_4": { x: 1280, y: 640 }, "Miner_5": { x: 1408, y: 640 }, "Miner_6": { x: 1536, y: 640 }, "Miner_7": { x: 1664, y: 640 }, "Miner_8": { x: 1792, y: 640 }, "Miner_9": { x: 1024, y: 768 }, "Miner_10": { x: 1024, y: 896 }, "Scientist_1": { x: 1024, y: 1024 }, "Scientist_2": { x: 1024, y: 1152 }, "Scientist_3": { x: 1024, y: 1280 }, "Scientist_4": { x: 1024, y: 1408 }, "Scientist_5": { x: 1024, y: 1536 }, "Scientist_6": { x: 1152, y: 768 }, "Scientist_7": { x: 1280, y: 768 }, "Scientist_8": { x: 1408, y: 768 }, "Scientist_9": { x: 1536, y: 768 }, "Techie_1": { x: 1664, y: 768 }, "Techie_2": { x: 1792, y: 768 }, "Techie_3": { x: 1152, y: 896 }, "Techie_4": { x: 1152, y: 1024 }, "Techie_5": { x: 1152, y: 1152 }, "Techie_6": { x: 1152, y: 1280 }, "Techie_7": { x: 1152, y: 1408 }, "Techie_8": { x: 1152, y: 1536 }, "Techie_9": { x: 1280, y: 896 }, "Techie_10": { x: 1408, y: 896 }, "Techie_11": { x: 1536, y: 896 }, "Techie_12": { x: 1664, y: 896 }, "Techie_13": { x: 1792, y: 896 }, "Techie_14": { x: 1280, y: 1024 }, "Techie_15": { x: 1280, y: 1152 }, "Venusian_Syndicate_1": { x: 1280, y: 1280 }, "Venusian_Syndicate_2": { x: 1280, y: 1408 }, "Venusian_Syndicate_3": { x: 1280, y: 1536 }, "Venusian_Syndicate_4": { x: 1408, y: 1024 }, "Venusian_Syndicate_5": { x: 1536, y: 1024 }, "Venusian_Syndicate_6": { x: 1664, y: 1024 }, "Venusian_Syndicate_7": { x: 1792, y: 1024 }, "Venusian_Syndicate_8": { x: 1408, y: 1152 }, "Venusian_Syndicate_9": { x: 1408, y: 1280 }, "Venusian_Syndicate_10": { x: 1408, y: 1408 }, "Venusian_Syndicate_11": { x: 1408, y: 1536 }, "Venusian_Syndicate_12": { x: 1536, y: 1152 }, "Venusian_Syndicate_13": { x: 1664, y: 1152 }, "Venusian_Syndicate_14": { x: 1792, y: 1152 }, "Venusian_Syndicate_15": { x: 1536, y: 1280 }, "Venusian_Syndicate_16": { x: 1536, y: 1408 }, "Venusian_Syndicate_17": { x: 1536, y: 1536 }, "Venusian_Syndicate_18": { x: 1664, y: 1280 }, "Venusian_Syndicate_19": { x: 1792, y: 1280 }, "Venusian_Syndicate_20": { x: 1664, y: 1408 }, "Venusian_Syndicate_21": { x: 1664, y: 1536 }, "Venusian_Syndicate_22": { x: 1792, y: 1408 }, "Vrael_1": { x: 1792, y: 1536 }
-};
+<script type="module">
+import { TUTORIAL_MISSIONS } from './js/data/missions/tutorial_missions.js';
+import { PHASE_ONE_MISSIONS } from './js/data/missions/phase_one.js';
+import { PHASE_TWO_MISSIONS } from './js/data/missions/phase_two.js';
 
 const storyData = [
-    { phase: "Tutorial: Guild Induction", missions: [
-        { id: "1", name: "Welcome to Orbital Trading", host: "GUILD", portraitId: "Audita_1", synopsis: "The Guild introduces the player to the mission log framework.", description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>Completing missions is the most reliable way to earn credits.", objectives: [], completion: { title: "Mission Log", text: "When you accept a mission from the <b>Mission Terminal</b>, it moves to the <b>Mission Log</b>." }, rewards: [] },
-        { id: "2", name: "Review Your Finances", host: "GUILD", portraitId: "Audita_1", synopsis: "The player learns about their debt and strict financial obligations.", description: "Your financial obligations and transaction history are logged in the <b>Finance</b> tab. Note that your debt is due in exactly three years. The Guild does not grant extensions.", objectives: [{ type: "VISIT_SCREEN", navId: "data", screenId: "finance" }], completion: { title: "Debt", text: "Pay off your debts <i>as soon as possible</i> to minimize the cost of borrowing credits!" }, rewards: [] },
-        { id: "3", name: "Intel and the Codex", host: "GUILD", portraitId: "Audita_1", synopsis: "The player explores the Intel market and narrative Codex.", description: "The Intel screen houses your <b>Codex</b> and the <b>Intel Market</b>. The Codex contains key story information. The Intel market sells time-sensitive, guaranteed trade opportunities.", objectives: [{ type: "VISIT_SCREEN", navId: "data", screenId: "intel" }], completion: { title: "Market Intelligence", text: "You can only possess one piece of market intelligence at a time." }, rewards: [] },
-        { id: "4", name: "Solar System Map", host: "GUILD", portraitId: "Audita_1", synopsis: "The player utilizes the solar system map for arbitrage routes.", description: "The Guild has authorized your access to a live iteration of the Solar System <b>Map</b>. We expect you to utilize this map to identify profitable arbitrage routes between stations.", objectives: [{ type: "VISIT_SCREEN", navId: "ship", screenId: "map" }], completion: { title: "Use the Map Often", text: "Your map will also indicate the target of your current mission or intel." }, rewards: [] },
-        { id: "5", name: "Navigating Space Flight", host: "GUILD", portraitId: "Audita_1", synopsis: "The player travels to Luna for their very first flight.", description: "The <b>Navigation</b> screen is where space flight begins. Select <b>The Moon</b> to begin your journey.", objectives: [{ type: "TRAVEL_TO", target: "loc_luna" }], completion: { title: "Welcome to Luna", text: "Your new ship, the [shipName], has successfully completed its first voyage!" }, rewards: [] },
-        { id: "6", name: "Inspect the Cargo Hold", host: "GUILD", portraitId: "Audita_1", synopsis: "The player reviews their cargo and tracks cost basis data.", description: "The <b>Cargo</b> screen tracks your fleet's current inventory, average cost basis, and total market value. Inspect your hold now.", objectives: [{ type: "VISIT_SCREEN", navId: "ship", screenId: "cargo" }], completion: { title: "Review Your Cargo", text: "You may also review the cost basis and average value of individual commodities." }, rewards: [] },
-        { id: "7", name: "Trading in the Market", host: "GUILD", portraitId: "Audita_1", synopsis: "The player learns the core loop: buy low, travel, and sell high.", description: "Arbitrage involves <b>purchasing items at a low price, transporting them, and then selling them for more than they cost</b>. Buy some ice here at the Moon, travel to Mars, and sell it.", objectives: [{ type: "TRADE_ITEM", goodId: "water_ice", tradeType: "buy", quantity: 1 }, { type: "TRAVEL_TO", target: "loc_mars" }, { type: "TRADE_ITEM", goodId: "water_ice", tradeType: "sell", quantity: 1 }], completion: { title: "Station Diversity", text: "<b>Every station has a unique market.</b> Your trading decisions will directly impact these markets." }, rewards: [] },
-        { id: "8", name: "Tour the Shipyard", host: "GUILD", portraitId: "Audita_1", synopsis: "The player visits the Shipyard to view upgradeable vessels.", description: "Each station's <b>Shipyard</b> offers different vessels for purchase. The hangar is your personal ship storage. Tour the Martian Shipyard.", objectives: [{ type: "VISIT_SCREEN", navId: "starport", screenId: "hangar" }], completion: { title: "Ship Attributes", text: "Upgrade your fleet with the best ships to maximize your profit!" }, rewards: [] },
-        { id: "9", name: "Starport Services", host: "GUILD", portraitId: "Audita_1", synopsis: "The player fully refuels and repairs their ship using a Guild subsidy.", description: "Stations provide fueling, repairs, and permanent ship upgrades for a fee. The Guild has issued a one-time subsidy to cover your expenses.", objectives: [{ type: "VISIT_SCREEN", navId: "starport", screenId: "services" }, { type: "HAVE_HULL_PCT", value: 100 }, { type: "HAVE_FUEL_TANK", value: 40 }], completion: { title: "Ship Tuning", text: "A ship can have up to three upgrades at once." }, rewards: [{ type: "credits", amount: 7000 }] }
-    ]},
-    { phase: "Phase One: Act 1 (The Cog)", missions: [
-        { id: "10", name: "Oversupply", host: "GUILD", portraitId: "Audita_1", synopsis: "Audita tasks the player to trade on Earth to begin repaying the loan.", description: "Captain [playerName], your <b>loan deadline is in three short years</b>. Repay your debt to the Merchant’s Guild <i>as soon as possible</i>. Leverage a unique opportunity on Earth to your benefit.", objectives: [{ type: "TRAVEL_TO", target: "loc_earth" }], completion: { title: "Arrival", text: "I see that you’ve made it to the Earth. Continue to travel for arbitrage, buying low and selling high." }, rewards: [] },
-        { id: "11", name: "Financial Freedom", host: "GUILD", portraitId: "Audita_1", synopsis: "The player clears their loan and earns the right to take larger contracts.", description: "Captain, you are making adequate progress, however, the interest on your loan continues to grow. Your objective is to pay off all of your debt.", objectives: [{ type: "HAVE_DEBT", value: 0 }], completion: { title: "Debt Cleared", text: "Congratulations on paying down your loan. You now qualify for additional financing." }, rewards: [{ type: "UPGRADE", id: "UPG_ECO_SELL_1" }] },
-        { id: "12", name: "The Storm", host: "STATION", portraitId: "Dockworker_1", synopsis: "A coronal mass ejection forces emergency delivery of Water Ice to the Belt.", description: "We've got a sudden market shift—a coronal mass ejection is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for Water Ice.", objectives: [{ type: "DELIVER_ITEM", target: "loc_belt", goodId: "water_ice", quantity: 25 }], completion: { title: "Delivery Complete", text: "The belt farms will distribute the water to the scattered hydroponics farms shortly." }, rewards: [{ type: "credits", amount: 15500 }] },
-        { id: "13", name: "High-Society Hardware", host: "STATION", portraitId: "AI_4", synopsis: "A medical manufacturer pays the player to source and deliver Plasteel to Earth.", description: "I represent a medical manufacturing collective on Earth. We are experiencing a critical shortage of Plasteel, which is required for high-end cybernetic enhancements.", objectives: [{ type: "DELIVER_ITEM", target: "loc_earth", goodId: "plasteel", quantity: 10 }], completion: { title: "Delivery Complete", text: "The client is prepared to remit payment once the freight has been unloaded." }, rewards: [{ type: "credits", amount: 11000 }] },
-        { id: "14", name: "Economies of Scale", host: "GUILD", portraitId: "Merchants_Guild_3", synopsis: "The Guild commissions bulk Plasteel for a new Martian orbital tether.", description: "The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic. <b>Deliver bulk Plasteel to the Martian starport.</b> Time is money.", objectives: [{ type: "DELIVER_ITEM", target: "loc_mars", goodId: "plasteel", quantity: 120 }], completion: { title: "Contract Fulfilled", text: "The orbital tether construction continues on schedule. The Guild has authorized your payment." }, rewards: [{ type: "credits", amount: 24000 }] },
-        { id: "15", name: "Life Extension", host: "GUILD", portraitId: "Merchants_Guild_3", synopsis: "A senior Guild member demands luxury shipments of Ice and Plasteel on Luna.", description: "A senior board member of the Guild requires a pristine shipment for their personal estate on Luna. They need Water Ice for a cryo-therapy suite, and high-grade Plasteel.", objectives: [{ type: "DELIVER_ITEM", target: "loc_luna", goodId: "water_ice", quantity: 15 }, { type: "DELIVER_ITEM", target: "loc_luna", goodId: "plasteel", quantity: 15 }], completion: { title: "Cryo-Delivery Complete", text: "The lunar estate eagerly awaits the supplies to resume construction." }, rewards: [{ type: "credits", amount: 13000 }] },
-        { id: "16", name: "Survivor's Guilt", host: "STATION", portraitId: "Dockworker_4", synopsis: "A desperate Belter asks for emergency resources to sustain life support.", description: "When you left the Belt, the Guild didn't adjust our quotas. We're running critical on life support reserves and structural patching. We need a shipment of Water Ice and Plasteel.", objectives: [{ type: "DELIVER_ITEM", target: "loc_belt", goodId: "water_ice", quantity: 90 }, { type: "DELIVER_ITEM", target: "loc_belt", goodId: "plasteel", quantity: 20 }], completion: { title: "Delivery Complete", text: "Oh and [playerName], don't forget where you came from. Stay safe out there." }, rewards: [{ type: "credits", amount: 18000 }] },
-        { id: "17", name: "Diplomatic Vector", host: "GUILD", portraitId: "Audita_1", synopsis: "The player navigates a tense joint repair operation at Uranus.", description: "The Guild and Venusian Syndicate have entered a temporary, joint repair initiative for the orbital stations at Uranus. As an unaligned contractor, you represent the optimal deniable asset. Deliver Plasteel from Venus to Uranus.", objectives: [{ type: "DELIVER_ITEM", target: "loc_uranus", goodId: "plasteel", quantity: 25 }], completion: { title: "Delivery Complete", text: "Uranus Dock Authority have approved your access to the Starport depot for delivery." }, rewards: [{ type: "license", licenseId: "Tier 2 License" }, { type: "credits", amount: 25000 }] }
-    ]},
-    { phase: "Phase Two: Syndicate Emergence", missions: [
-        { id: "18", name: "Seed Capital", host: "SYNDICATE", portraitId: "Venusian_Syndicate_4", synopsis: "The Venusian Syndicate invites the player to their cloud-cities.", description: "I am Kiern, Research Director for the Venusian Syndicate. First, you must prove you are more than a debtor. <b>Amass a larger net worth</b>, then <b>meet me at the Venusian cloud-cities</b>.", objectives: [{ type: "HAVE_CREDITS", value: 50000 }, { type: "TRAVEL_TO", target: "loc_venus" }], completion: { title: "The Venusian Syndicate", text: "Your accounts reflect a respectable liquidity. Now let us see if you can manipulate the market." }, rewards: [] },
-        { id: "19", name: "A Synthetic Disruption", host: "SYNDICATE", portraitId: "Venusian_Syndicate_4", synopsis: "The Syndicate pays the player to flood Pluto with Cybernetics.", description: "The Guild relies on organic indentured labor to extract ice from Pluto. <b>Procure Cybernetics and flood the Plutonian market with them.</b> The availability of automation will shatter local labor values.", objectives: [{ type: "HAVE_ITEM", goodId: "cybernetics", quantity: 15 }, { type: "TRAVEL_TO", target: "loc_pluto" }, { type: "TRADE_ITEM", goodId: "cybernetics", tradeType: "sell", quantity: 15, target: "loc_pluto" }], completion: { title: "A Calculated Fracture", text: "The labor camps on Pluto are already in localized revolt; you have introduced a necessary chaos." }, rewards: [{ type: "credits", amount: 35000 }] },
-        { id: "20", name: "Jovian Promotion", host: "STATION", portraitId: "Business_11", synopsis: "Jupiter Atmo Refineries offers a complimentary refuel to the player.", description: "To celebrate our Q3 production surplus, Jupiter Atmo Refineries is offering a one-time <b>COMPLIMENTARY FLEET REFUEL</b>. Dock at any authorized Jovian orbital tether.", objectives: [{ type: "TRAVEL_TO", target: "loc_jupiter" }], completion: { title: "Voucher Accepted", text: "Your fleet will be fully refueled at no cost to you. Have a safe flight!" }, rewards: [{ type: "fill_fleet_fuel" }] },
-        { id: "21", name: "Lab Supply", host: "STATION", portraitId: "AI_4", synopsis: "The medical collective secretly hires the player to supply an illegal lab.", description: "We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research. We urgently require Hydroponics.", objectives: [{ type: "DELIVER_ITEM", goodId: "hydroponics", quantity: 15, target: "loc_mercury" }], completion: { portraitId: "Audita_1", host: "GUILD", title: "A Syndicate Shell", text: "Captain! Your delivery has been flagged! That medical manufacturer is a <b>known Venusian Syndicate shell company</b> running an <i>illegal organ cloning lab</i>." }, rewards: [{ type: "credits", amount: 35000 }] },
-        { id: "22", name: "Mercurian Balance", host: "GUILD", portraitId: "Audita_1", synopsis: "The Guild covers up the cloning lab by monopolizing Mercurian water ice.", description: "To balance the ledger regarding your recent indiscretion on Mercury, the Guild requires you to travel to Mercury, purchase ice in bulk, and deliver it to the Guild Moon depot promptly.", objectives: [{ type: "TRADE_ITEM", tradeType: "buy", goodId: "water_ice", quantity: 60, target: "loc_mercury" }, { type: "DELIVER_ITEM", goodId: "water_ice", quantity: 60, target: "loc_luna" }], completion: { portraitId: "Venusian_Syndicate_4", host: "SYNDICATE", title: "A Cold Calculation", text: "The Guild cut local feeds so Mercurian markets wouldn't notice you siphoning their aquifers. They plan to ransom that ice back to the colony at triple the price to soak up the organ cloning money." }, rewards: [{ type: "credits", amount: 25000 }] }
-    ]}
+    { phase: "Tutorial: Guild Induction", missions: Object.values(TUTORIAL_MISSIONS) },
+    { phase: "Phase One: Act 1 (The Cog)", missions: Object.values(PHASE_ONE_MISSIONS) },
+    { phase: "Phase Two: Syndicate Emergence", missions: Object.values(PHASE_TWO_MISSIONS) }
 ];
 
 // --- UTILITIES ---
 
 function getPortraitStyle(portraitId) {
-    const coords = PortraitRegistry[portraitId];
+    if (!window.PortraitRegistry) return '';
+    const coords = window.PortraitRegistry[portraitId];
     if (!coords) return '';
     return `background-image: url('assets/images/characters/characters_sprite.webp'); background-position: -${coords.x + 4}px -${coords.y}px;`;
 }
 
 function formatName(str) {
     if (!str) return '';
-    return str.replace('loc_', '').replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    return str.replace('loc_', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
 function parseObjective(obj) {
     switch(obj.type) {
         case 'VISIT_SCREEN': return `Visit the <b>${formatName(obj.screenId)}</b> screen under the <b>${formatName(obj.navId)}</b> tab.`;
-        case 'TRAVEL_TO': return `Maps to <b>${formatName(obj.target)}</b>.`;
+        case 'TRAVEL_TO': return `Maps map logic to <b>${formatName(obj.target)}</b>.`;
         case 'TRADE_ITEM': return `Trade (<b>${obj.tradeType.toUpperCase()}</b>) <b>${obj.quantity}x ${formatName(obj.goodId)}</b> at ${obj.target ? formatName(obj.target) : 'the local market'}.`;
         case 'DELIVER_ITEM': return `Deliver <b>${obj.quantity}x ${formatName(obj.goodId)}</b> to <b>${formatName(obj.target)}</b>.`;
         case 'HAVE_CREDITS': return `Amass a total net worth of <b>⌬ ${obj.value.toLocaleString()}</b> Credits.`;
@@ -671,6 +1031,127 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
+// --- SVG AREA CHART RENDERER ---
+function createSvgChart(dataArray, containerId) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = ''; 
+
+    if (!dataArray || dataArray.length === 0) return;
+
+    const width = 1000;
+    const height = 280;
+    const padding = { top: 20, right: 30, bottom: 30, left: 70 };
+    
+    const graphWidth = width - padding.left - padding.right;
+    const graphHeight = height - padding.top - padding.bottom;
+    const maxCredits = dataArray[dataArray.length - 1].total || 1;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
+    svg.style.width = "100%";
+    svg.style.height = "100%";
+    svg.style.overflow = "visible";
+
+    // Defs for gradient
+    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
+    defs.innerHTML = `
+        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="var(--faction-station)" stop-opacity="0.4"/>
+            <stop offset="100%" stop-color="var(--faction-station)" stop-opacity="0.0"/>
+        </linearGradient>
+    `;
+    svg.appendChild(defs);
+
+    // Calculate Coordinates
+    const points = dataArray.map((d, i) => {
+        const x = padding.left + (i * (graphWidth / Math.max(dataArray.length - 1, 1)));
+        const y = padding.top + graphHeight - ((d.total / maxCredits) * graphHeight);
+        return { x, y, ...d };
+    });
+
+    let dArea = `M ${padding.left} ${height - padding.bottom} `;
+    let dLine = ``;
+
+    points.forEach((p, i) => {
+        dArea += `L ${p.x} ${p.y} `;
+        dLine += (i === 0 ? `M ` : `L `) + `${p.x} ${p.y} `;
+    });
+
+    dArea += `L ${points[points.length-1].x} ${height - padding.bottom} Z`;
+
+    // Draw Area Fill
+    const areaPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    areaPath.setAttribute("d", dArea);
+    areaPath.setAttribute("fill", "url(#areaGradient)");
+    svg.appendChild(areaPath);
+
+    // Draw Grid Lines & Y-Axis Labels
+    const ticks = 4;
+    for(let i=0; i<=ticks; i++) {
+        const yPos = padding.top + (graphHeight / ticks) * i;
+        const val = maxCredits - ((maxCredits / ticks) * i);
+        
+        const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
+        gridLine.setAttribute("x1", padding.left);
+        gridLine.setAttribute("y1", yPos);
+        gridLine.setAttribute("x2", width - padding.right);
+        gridLine.setAttribute("y2", yPos);
+        gridLine.setAttribute("stroke", "var(--border-color)");
+        gridLine.setAttribute("stroke-width", "1");
+        svg.appendChild(gridLine);
+
+        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
+        label.setAttribute("x", padding.left - 15);
+        label.setAttribute("y", yPos + 4);
+        label.setAttribute("text-anchor", "end");
+        label.setAttribute("fill", "var(--text-muted)");
+        label.setAttribute("font-size", "11");
+        label.setAttribute("font-family", "var(--font-mono)");
+        label.textContent = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val;
+        svg.appendChild(label);
+    }
+
+    // Draw Plot Line
+    const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    linePath.setAttribute("d", dLine);
+    linePath.setAttribute("fill", "none");
+    linePath.setAttribute("stroke", "var(--faction-station)");
+    linePath.setAttribute("stroke-width", "3");
+    linePath.style.filter = "drop-shadow(0 0 5px rgba(39,174,96,0.6))";
+    svg.appendChild(linePath);
+
+    // Draw Interactive Data Dots
+    points.forEach((p) => {
+        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
+        circle.setAttribute("cx", p.x);
+        circle.setAttribute("cy", p.y);
+        circle.setAttribute("r", "5");
+        circle.setAttribute("fill", "var(--bg-dark)");
+        circle.setAttribute("stroke", "var(--faction-station)");
+        circle.setAttribute("stroke-width", "2");
+        circle.style.cursor = "pointer";
+        circle.style.transition = "all 0.2s ease";
+        
+        circle.addEventListener('mouseenter', () => {
+            tooltip.innerHTML = `<b>Mission M_${p.id.padStart(2,'0')}</b><br>Cumulative: ⌬ ${p.total.toLocaleString()}`;
+            tooltip.style.opacity = '1';
+            circle.setAttribute("r", "8");
+            circle.setAttribute("fill", "var(--faction-station)");
+            circle.style.filter = "drop-shadow(0 0 8px rgba(39,174,96,1))";
+        });
+        circle.addEventListener('mouseleave', () => {
+            tooltip.style.opacity = '0';
+            circle.setAttribute("r", "5");
+            circle.setAttribute("fill", "var(--bg-dark)");
+            circle.style.filter = "none";
+        });
+
+        svg.appendChild(circle);
+    });
+
+    container.appendChild(svg);
+}
+
 // --- RENDERERS ---
 
 function initApp() {
@@ -681,9 +1162,10 @@ function initApp() {
 
     let isLeftNode = true;
     let stats = { credits: 0, upgrades: 0, licenses: 0, phases: [] };
+    let chartData = [];
+    let cumulativeCredits = 0;
 
     storyData.forEach(phaseData => {
-        // Stats tracker
         let phaseStats = { name: phaseData.phase, credits: 0, rewards: 0 };
         
         // Sidebar Phase Header
@@ -693,9 +1175,12 @@ function initApp() {
         sidebar.appendChild(header);
 
         phaseData.missions.forEach(mission => {
+            
+            const hostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
+
             // --- 1. MISSIONS TAB ---
             const item = document.createElement('div');
-            item.className = 'timeline-item';
+            item.className = `timeline-item ${hostClass}`;
             
             const rwds = formatRewardsStr(mission.rewards);
             item.innerHTML = `
@@ -710,7 +1195,7 @@ function initApp() {
 
             // --- 2. TIMELINE TAB ---
             const node = document.createElement('div');
-            node.className = `t-node ${isLeftNode ? 'left' : 'right'}`;
+            node.className = `t-node ${isLeftNode ? 'left' : 'right'} ${hostClass}`;
             node.innerHTML = `
                 <div class="t-dot"></div>
                 <div class="t-content">
@@ -719,9 +1204,8 @@ function initApp() {
                 </div>
             `;
             
-            // Tooltip events
             node.querySelector('.t-content').addEventListener('mouseenter', () => {
-                tooltip.innerHTML = `<b>${mission.name}</b><br><br>${mission.synopsis}`;
+                tooltip.innerHTML = `<b>${mission.name}</b><br><br>${mission.description.substring(0, 100)}...`;
                 tooltip.style.opacity = '1';
             });
             node.querySelector('.t-content').addEventListener('mouseleave', () => {
@@ -730,50 +1214,71 @@ function initApp() {
 
             tGrid.appendChild(node);
 
-            // --- 3. REWARDS TAB ---
+            // --- 3. REWARDS LEDGER ---
+            let earnedCreditsThisMission = 0;
             if (mission.rewards && mission.rewards.length > 0) {
                 const rNode = document.createElement('div');
-                rNode.className = `t-node ${isLeftNode ? 'left' : 'right'}`;
+                rNode.className = `ledger-row ${hostClass}`;
                 
                 const rewardDetails = mission.rewards.map(r => {
-                    if (r.type === 'credits') { phaseStats.credits += r.amount; stats.credits += r.amount; return `Credited ⌬ ${r.amount.toLocaleString()} to ledger.`; }
-                    if (r.type === 'UPGRADE') { phaseStats.rewards++; stats.upgrades++; return `Permanent Ship Upgrade Authorized.`; }
-                    if (r.type === 'license') { phaseStats.rewards++; stats.licenses++; return `Granted Commercial License.`; }
-                    if (r.type === 'fill_fleet_fuel') { phaseStats.rewards++; return `Complete Fleet Refuel Voucher.`; }
-                }).join('<br>');
+                    if (r.type === 'credits') { 
+                        earnedCreditsThisMission = r.amount;
+                        phaseStats.credits += r.amount; 
+                        stats.credits += r.amount; 
+                        return `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
+                    }
+                    if (r.type === 'UPGRADE') { 
+                        phaseStats.rewards++; stats.upgrades++; 
+                        return `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
+                    }
+                    if (r.type === 'license') { 
+                        phaseStats.rewards++; stats.licenses++; 
+                        return `<div class="payout-tag license">LICENSE Granted</div>`; 
+                    }
+                    if (r.type === 'fill_fleet_fuel') { 
+                        phaseStats.rewards++; 
+                        return `<div class="payout-tag credits">FUEL VOUCHER</div>`; 
+                    }
+                }).join('');
 
                 rNode.innerHTML = `
-                    <div class="t-dot" style="border-color: #2ecc71;"></div>
-                    <div class="t-content" style="border-color: rgba(46,204,113,0.3);">
-                        <div class="t-phase" style="color: #2ecc71;">M_${mission.id.padStart(2,'0')} Reward Dispensed</div>
-                        <div class="t-title">${mission.name}</div>
-                        <div class="t-reward-desc">${rewardDetails}</div>
-                    </div>
+                    <div class="ledger-id">M_${mission.id.padStart(2,'0')}</div>
+                    <div class="ledger-name">${mission.name}</div>
+                    <div class="ledger-payouts">${rewardDetails}</div>
                 `;
                 rGrid.appendChild(rNode);
             }
 
-            isLeftNode = !isLeftNode; // Alternate sides
-        });
+            // Record data for SVG Chart 
+            cumulativeCredits += earnedCreditsThisMission;
+            chartData.push({ id: mission.id, total: cumulativeCredits });
 
+            isLeftNode = !isLeftNode;
+        });
         stats.phases.push(phaseStats);
     });
 
-    // --- REWARDS SUMMARY ---
+    // Render SVG Area Chart (Analytics Tab)
+    createSvgChart(chartData, 'analytics-chart');
+
+    // --- REWARDS SUMMARY DASHBOARD (Analytics Tab) ---
     rSummary.innerHTML = `
-        <div class="stat-box">
+        <div class="stat-box credits">
             <div class="stat-title">Total Credits Earned</div>
             <div class="stat-value">⌬ ${stats.credits.toLocaleString()}</div>
         </div>
+        <div class="stat-box upgrades">
+            <div class="stat-title">Upgrades Installed</div>
+            <div class="stat-value">${stats.upgrades}</div>
+        </div>
         <div class="stat-box">
             <div class="stat-title">Licenses Acquired</div>
-            <div class="stat-value" style="color: var(--accent-color);">${stats.licenses}</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-title">Upgrades Installed</div>
-            <div class="stat-value" style="color: var(--faction-guild);">${stats.upgrades}</div>
+            <div class="stat-value" style="color: var(--accent-color); text-shadow: 0 0 15px rgba(230,126,34,0.3);">${stats.licenses}</div>
         </div>
     `;
+
+    // Initialize Personnel Viewer
+    initPersonnelViewer();
 }
 
 function loadMission(mission, element) {
@@ -784,14 +1289,16 @@ function loadMission(mission, element) {
     const detailView = document.getElementById('mission-detail');
     detailView.style.display = 'block';
     
-    // Reset animation
     detailView.style.animation = 'none';
-    detailView.offsetHeight; /* trigger reflow */
+    detailView.offsetHeight; 
     detailView.style.animation = null;
 
-    // Header Data
+    // Apply Host Theme to Main Container (Cascades to children via CSS variables)
+    const mainHostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
+    detailView.className = mainHostClass; 
+
     document.getElementById('detail-name').textContent = mission.name;
-    document.getElementById('detail-desc').innerHTML = mission.description;
+    document.getElementById('detail-desc').innerHTML = mission.description || '';
     
     const isTwist = mission.completion && mission.completion.portraitId && (mission.completion.portraitId !== mission.portraitId);
     
@@ -805,7 +1312,6 @@ function loadMission(mission, element) {
         compBlock.style.display = 'none';
     }
     
-    // Badges
     const badgesEl = document.getElementById('detail-badges');
     const hostClass = mission.host === 'GUILD' ? 'guild' : (mission.host === 'SYNDICATE' ? 'syndicate' : 'station');
     
@@ -821,10 +1327,9 @@ function loadMission(mission, element) {
         ${completionBadge}
     `;
 
-    // Objectives
     const objEl = document.getElementById('detail-objectives');
     objEl.innerHTML = '';
-    if (mission.objectives.length === 0) {
+    if (!mission.objectives || mission.objectives.length === 0) {
         objEl.innerHTML = `<li><i>No specific operational tasks required. Acknowledge transmission.</i></li>`;
     } else {
         mission.objectives.forEach(obj => {
@@ -834,13 +1339,85 @@ function loadMission(mission, element) {
         });
     }
 
-    // Completion
-    document.getElementById('detail-comp-title').textContent = mission.completion.title || 'Mission Complete';
-    document.getElementById('detail-comp-text').innerHTML = mission.completion.text || '';
+    const compBox = document.getElementById('detail-comp-box');
+    if (mission.completion) {
+        document.getElementById('detail-comp-title').textContent = mission.completion.title || 'Mission Complete';
+        document.getElementById('detail-comp-text').innerHTML = mission.completion.text || '';
+        
+        // Apply Host Theme local override to Completion Box (Prioritizes twist host if present)
+        const compHost = (mission.completion && mission.completion.host) ? mission.completion.host : null;
+        if (compHost) {
+            compBox.className = `completion-box host-${compHost.toLowerCase()}`;
+        } else {
+            compBox.className = `completion-box`; // Uses inherited vars from #mission-detail
+        }
+    }
 }
 
-// Boot
-initApp();
+// --- PERSONNEL VIEWER LOGIC ---
+function initPersonnelViewer() {
+    if (!window.PortraitRegistry) return;
+
+    const select = document.getElementById('category-select');
+    const grid = document.getElementById('portrait-grid');
+    const toast = document.getElementById('toast');
+
+    const categories = new Set();
+    Object.keys(window.PortraitRegistry).forEach(key => {
+        const match = key.match(/^(.*)_\d+$/);
+        if (match) categories.add(match[1]);
+    });
+
+    Array.from(categories).sort().forEach(cat => {
+        const option = document.createElement('option');
+        option.value = cat;
+        option.textContent = cat.replace(/_/g, ' ');
+        select.appendChild(option);
+    });
+
+    function renderGrid(category) {
+        grid.innerHTML = '';
+        
+        const items = Object.entries(window.PortraitRegistry).filter(([key]) => key.startsWith(category + '_'));
+        items.sort((a, b) => {
+            const numA = parseInt(a[0].match(/_(\d+)$/)[1]);
+            const numB = parseInt(b[0].match(/_(\d+)$/)[1]);
+            return numA - numB;
+        });
+
+        items.forEach(([id, coords]) => {
+            const card = document.createElement('div');
+            card.className = 'portrait-card';
+
+            const sprite = document.createElement('div');
+            sprite.className = 'sprite-window';
+            sprite.style.backgroundPosition = `-${coords.x + 4}px -${coords.y}px`;
+
+            const label = document.createElement('div');
+            label.className = 'id-label';
+            label.textContent = id;
+            label.title = "Click to copy Index ID";
+            
+            label.onclick = () => {
+                navigator.clipboard.writeText(id);
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 2000);
+            };
+
+            card.appendChild(sprite);
+            card.appendChild(label);
+            grid.appendChild(card);
+        });
+    }
+
+    select.addEventListener('change', (e) => renderGrid(e.target.value));
+    if(select.value) renderGrid(select.value);
+}
+
+// Ensure the game files are loaded before init
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(initApp, 100); 
+});
 </script>
 </body>
 </html>
