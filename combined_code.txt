@@ -448,7 +448,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbital Trading - Encrypted Mission Logs</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Oxanium:wght@300;400;600;800&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Oxanium:wght@300;400;600;800&family=Share+Tech+Mono&display=swap');
 
         :root {
             --bg-dark: #050507;
@@ -462,12 +462,18 @@
             --text-bright: #ffffff;
             --accent-color: #e67e22;
             --accent-glow: rgba(230, 126, 34, 0.4);
-            --faction-guild: #2980b9;
-            --faction-syndicate: #8e44ad;
-            --faction-station: #27ae60;
+            
+            /* Themed Host Colors mapped from in-game CSS */
+            --faction-guild: #fbbf24; /* Gold */
+            --guild-dark: rgba(69, 26, 3, 0.95);
+            --faction-syndicate: #a855f7; /* Violet */
+            --syndicate-dark: rgba(59, 7, 100, 0.95);
+            --faction-station: #3b82f6; /* Blue */
+            --station-dark: rgba(8, 47, 73, 0.95);
             
             --font-main: 'Oxanium', sans-serif;
             --font-mono: 'Share Tech Mono', monospace;
+            --font-orbitron: 'Orbitron', sans-serif;
         }
 
         * { box-sizing: border-box; }
@@ -509,10 +515,7 @@
             -ms-overflow-style: none;  
             scrollbar-width: none;  
         }
-        #top-nav::-webkit-scrollbar {
-            display: none; 
-        }
-
+        #top-nav::-webkit-scrollbar { display: none; }
         #top-nav::after {
             content: '';
             position: absolute;
@@ -546,12 +549,7 @@
             transition: all 0.2s ease;
             white-space: nowrap;
         }
-
-        .nav-tab:hover {
-            color: var(--text-bright);
-            background-color: rgba(255,255,255,0.03);
-        }
-
+        .nav-tab:hover { color: var(--text-bright); background-color: rgba(255,255,255,0.03); }
         .nav-tab.active {
             color: var(--accent-color);
             border-bottom: 3px solid var(--accent-color);
@@ -567,16 +565,8 @@
             position: relative;
         }
 
-        .view-container {
-            display: none;
-            width: 100%;
-            height: 100%;
-        }
-
-        .view-container.active {
-            display: flex;
-            animation: bootUp 0.3s ease-out;
-        }
+        .view-container { display: none; width: 100%; height: 100%; }
+        .view-container.active { display: flex; animation: bootUp 0.3s ease-out; }
 
         @keyframes bootUp {
             from { opacity: 0; filter: blur(4px); }
@@ -585,40 +575,69 @@
 
         /* --- MISSIONS VIEW --- */
         #sidebar {
-            width: 420px;
+            width: 336px;
             background-color: var(--bg-panel);
             border-right: 1px solid var(--border-color);
             display: flex;
             flex-direction: column;
-            overflow-y: auto;
             box-shadow: 15px 0 40px rgba(0,0,0,0.8);
             z-index: 10;
         }
+        
+        .sidebar-search-area {
+            padding: 10px 15px;
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--border-color);
+        }
+        #mission-search {
+            width: 100%;
+            background: var(--bg-panel);
+            border: 1px solid var(--border-glow);
+            color: var(--text-bright);
+            font-family: var(--font-mono);
+            padding: 8px 12px;
+            border-radius: 2px;
+            outline: none;
+        }
+        #mission-search:focus { border-color: var(--accent-color); }
+        
+        .sidebar-scroll-content {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
 
         .phase-header {
-            padding: 15px 25px;
+            padding: 12px 20px;
             background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%);
             color: var(--text-bright);
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 3px;
+            letter-spacing: 2px;
             border-bottom: 1px solid var(--border-color);
             border-top: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 5;
             box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-        }
-
-        .timeline-item {
-            padding: 18px 25px;
-            border-bottom: 1px solid var(--border-color);
             cursor: pointer;
-            transition: all 0.2s ease;
             display: flex;
             justify-content: space-between;
             align-items: center;
+        }
+        .phase-header:hover { background: linear-gradient(90deg, #1e1e26 0%, var(--bg-panel) 100%); }
+        .phase-toggle { font-size: 0.7rem; transition: transform 0.2s ease; }
+        .phase-header.collapsed .phase-toggle { transform: rotate(-90deg); }
+
+        .timeline-item {
+            padding: 13px 15px;
+            border-bottom: 1px solid var(--border-color);
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: grid;
+            grid-template-columns: 1fr auto;
+            grid-template-rows: auto auto;
+            gap: 4px 10px;
             position: relative;
         }
 
@@ -628,46 +647,48 @@
         .timeline-item.host-default { --t-item-color: var(--accent-color); }
 
         .timeline-item::before {
-            content: '';
-            position: absolute;
-            left: 0; top: 0; bottom: 0; width: 0;
-            background-color: var(--t-item-color);
-            transition: width 0.2s ease;
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
+            background-color: var(--t-item-color); transition: width 0.2s ease;
         }
 
         .timeline-item:hover { background-color: var(--bg-highlight); }
         .timeline-item.active { background-color: var(--bg-card); }
         .timeline-item.active::before { width: 4px; box-shadow: 0 0 20px var(--t-item-color); }
-
-        .item-main { flex-grow: 1; padding-right: 15px; }
         
         .mission-id {
-            font-family: var(--font-mono);
-            font-size: 0.95rem;
+            grid-column: 1; grid-row: 1;
+            font-family: var(--font-orbitron);
+            font-size: 0.75rem;
             color: var(--t-item-color);
             font-weight: bold;
-            margin-bottom: 6px;
             letter-spacing: 1px;
         }
 
         .mission-name {
-            font-size: 1.05rem;
+            grid-column: 1; grid-row: 2;
+            font-size: 0.85rem;
             font-weight: 600;
             color: var(--text-bright);
-            line-height: 1.3;
+            line-height: 1.2;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .item-reward {
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            color: var(--faction-station);
-            text-align: right;
-            background: rgba(39, 174, 96, 0.1);
-            padding: 6px 10px;
+            grid-column: 2; grid-row: 1 / span 2;
+            font-family: var(--font-orbitron);
+            font-size: 0.7rem;
+            color: #4ade80; 
+            background: rgba(74, 222, 128, 0.1);
+            padding: 4px 8px;
             border-radius: 2px;
-            border: 1px solid rgba(39, 174, 96, 0.2);
+            border: 1px solid rgba(74, 222, 128, 0.2);
             white-space: pre-line;
-            min-width: 90px;
+            display: flex;
+            align-items: center;
+            text-align: center;
+            min-width: 60px;
         }
 
         #content-area {
@@ -688,26 +709,29 @@
             animation: fadeIn 0.3s ease;
             padding-bottom: 60px;
             
-            /* Default variables */
             --active-host-color: var(--accent-color);
             --active-host-bg: rgba(230, 126, 34, 0.08);
             --active-host-border: rgba(230, 126, 34, 0.3);
+            --active-host-grad: linear-gradient(135deg, rgba(230, 126, 34, 0.1), transparent);
         }
 
         #mission-detail.host-guild {
             --active-host-color: var(--faction-guild);
-            --active-host-bg: rgba(41, 128, 185, 0.08);
-            --active-host-border: rgba(41, 128, 185, 0.3);
+            --active-host-bg: rgba(251, 191, 36, 0.08);
+            --active-host-border: rgba(251, 191, 36, 0.3);
+            --active-host-grad: linear-gradient(135deg, rgba(69, 26, 3, 0.6), transparent);
         }
         #mission-detail.host-syndicate {
             --active-host-color: var(--faction-syndicate);
-            --active-host-bg: rgba(142, 68, 173, 0.08);
-            --active-host-border: rgba(142, 68, 173, 0.3);
+            --active-host-bg: rgba(168, 85, 247, 0.08);
+            --active-host-border: rgba(168, 85, 247, 0.3);
+            --active-host-grad: linear-gradient(135deg, rgba(59, 7, 100, 0.6), transparent);
         }
         #mission-detail.host-station {
             --active-host-color: var(--faction-station);
-            --active-host-bg: rgba(39, 174, 96, 0.08);
-            --active-host-border: rgba(39, 174, 96, 0.3);
+            --active-host-bg: rgba(59, 130, 246, 0.08);
+            --active-host-border: rgba(59, 130, 246, 0.3);
+            --active-host-grad: linear-gradient(135deg, rgba(8, 47, 73, 0.6), transparent);
         }
 
         @keyframes fadeIn {
@@ -720,30 +744,31 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 40px;
+            margin-bottom: 25px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 40px;
+            padding-bottom: 25px;
         }
 
         .portrait-block {
             display: flex;
             flex-direction: column;
             align-items: center;
-            width: 160px;
+            width: 140px;
         }
 
         .portrait-role {
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--text-muted);
-            margin-bottom: 12px;
+            letter-spacing: 2px;
+            color: var(--active-host-color);
+            margin-bottom: 8px;
             font-family: var(--font-mono);
+            font-weight: bold;
         }
 
         .portrait-container {
-            width: 128px;
-            height: 128px;
+            width: 110px;
+            height: 110px;
             border: 2px solid var(--active-host-border);
             background-color: #000;
             box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 20px var(--active-host-bg);
@@ -758,33 +783,52 @@
         .mission-title-area {
             flex-grow: 1;
             text-align: center;
-            padding: 0 30px;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
         }
 
         .mission-title-area h2 {
-            margin: 0 0 20px 0;
-            font-size: 2.4rem;
+            margin: 0;
+            font-size: 2.2rem;
             color: var(--text-bright);
             text-shadow: 1px 0 2px rgba(255,0,0,0.5), -1px 0 2px rgba(0,255,255,0.5), 0 2px 15px rgba(0,0,0,0.6);
             font-weight: 800;
             letter-spacing: 1px;
         }
 
-        .badges { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+        .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         .badge {
-            padding: 6px 14px;
+            padding: 4px 12px;
             border-radius: 2px;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 2px;
+            letter-spacing: 1.5px;
             background-color: var(--bg-card);
             font-family: var(--font-mono);
         }
 
-        .badge.guild { color: var(--faction-guild); border: 1px solid var(--faction-guild); box-shadow: 0 0 15px rgba(41, 128, 185, 0.15); }
-        .badge.syndicate { color: var(--faction-syndicate); border: 1px solid var(--faction-syndicate); box-shadow: 0 0 15px rgba(142, 68, 173, 0.15); }
-        .badge.station { color: var(--faction-station); border: 1px solid var(--faction-station); box-shadow: 0 0 15px rgba(39, 174, 96, 0.15); }
+        .badge.guild { color: var(--faction-guild); border: 1px solid var(--faction-guild); box-shadow: 0 0 10px rgba(251, 191, 36, 0.15); }
+        .badge.syndicate { color: var(--faction-syndicate); border: 1px solid var(--faction-syndicate); box-shadow: 0 0 10px rgba(168, 85, 247, 0.15); }
+        .badge.station { color: var(--faction-station); border: 1px solid var(--faction-station); box-shadow: 0 0 10px rgba(59, 130, 246, 0.15); }
+
+        .meta-flags {
+            display: flex;
+            gap: 15px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            color: #9ca3af;
+        }
+        .meta-flags span { display: flex; align-items: center; gap: 4px; }
+        .meta-trigger {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-style: italic;
+            font-family: var(--font-main);
+        }
 
         .section-title {
             color: var(--active-host-color);
@@ -792,33 +836,22 @@
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 3px;
-            margin-top: 40px;
-            margin-bottom: 20px;
+            margin-top: 30px;
+            margin-bottom: 15px;
             display: flex;
             align-items: center;
             transition: color 0.3s ease;
         }
-        .section-title::before {
-            content: '//';
-            margin-right: 10px;
-            color: var(--active-host-color);
-            opacity: 0.7;
-        }
-        .section-title::after {
-            content: '';
-            flex-grow: 1;
-            height: 1px;
-            background: linear-gradient(90deg, var(--border-color) 0%, transparent 100%);
-            margin-left: 20px;
-        }
+        .section-title::before { content: '//'; margin-right: 10px; color: var(--active-host-color); opacity: 0.7; }
+        .section-title::after { content: ''; flex-grow: 1; height: 1px; background: linear-gradient(90deg, var(--border-color) 0%, transparent 100%); margin-left: 20px; }
 
-        /* Host-Themed Dialog Boxes */
         .dialog-box {
-            background-color: var(--bg-card);
+            background: var(--bg-card);
+            background-image: var(--active-host-grad);
             border: 1px solid var(--border-color);
             border-left: 4px solid var(--active-host-color);
-            padding: 30px;
-            font-size: 1.1rem;
+            padding: 25px;
+            font-size: 0.95rem;
             line-height: 1.8;
             position: relative;
             box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
@@ -829,467 +862,153 @@
         .objectives-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
         .objectives-list li {
             background-color: rgba(255, 255, 255, 0.02);
-            padding: 18px 25px;
+            padding: 15px 20px;
             border-radius: 2px;
             border: 1px solid var(--border-color);
             display: flex;
             align-items: flex-start;
             font-family: var(--font-mono);
-            font-size: 0.95rem;
+            font-size: 0.9rem;
             line-height: 1.5;
         }
         .objectives-list li b { color: var(--text-bright); font-family: var(--font-main); }
-        .objectives-list li::before {
-            content: '>';
-            color: var(--active-host-color);
-            margin-right: 15px;
-            font-weight: bold;
-            font-size: 1.2rem;
-            line-height: 1;
-            transition: color 0.3s ease;
+        
+        .detail-rewards-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            background-color: rgba(255, 255, 255, 0.02);
+            padding: 20px;
+            border-radius: 2px;
+            border: 1px solid var(--border-color);
+        }
+        
+        .detail-rewards-container .payout-tag {
+            font-size: 0.85rem;
+            padding: 8px 14px;
         }
 
-        /* Host-Themed Completion Boxes (With potential Twist overrides) */
         .completion-box {
-            background: linear-gradient(135deg, var(--comp-host-bg, var(--active-host-bg)) 0%, rgba(0,0,0,0) 100%);
+            background: var(--bg-card);
+            background-image: linear-gradient(135deg, var(--comp-host-bg, var(--active-host-bg)) 0%, rgba(0,0,0,0) 100%);
             border: 1px solid var(--comp-host-border, var(--active-host-border));
             border-left: 4px solid var(--comp-host-color, var(--active-host-color));
-            padding: 30px;
+            padding: 25px;
             position: relative;
-            font-size: 1.05rem;
+            font-size: 0.95rem;
             line-height: 1.7;
             transition: all 0.3s ease;
         }
         .completion-title {
             color: var(--comp-host-color, var(--active-host-color));
             font-weight: 800;
-            font-size: 1.1rem;
-            margin-bottom: 15px;
+            font-size: 1.05rem;
+            margin-bottom: 12px;
             text-transform: uppercase;
             letter-spacing: 2px;
             font-family: var(--font-mono);
             transition: color 0.3s ease;
         }
         
-        .completion-box.host-guild { --comp-host-color: var(--faction-guild); --comp-host-bg: rgba(41, 128, 185, 0.08); --comp-host-border: rgba(41, 128, 185, 0.3); }
-        .completion-box.host-syndicate { --comp-host-color: var(--faction-syndicate); --comp-host-bg: rgba(142, 68, 173, 0.08); --comp-host-border: rgba(142, 68, 173, 0.3); }
-        .completion-box.host-station { --comp-host-color: var(--faction-station); --comp-host-bg: rgba(39, 174, 96, 0.08); --comp-host-border: rgba(39, 174, 96, 0.3); }
-        .completion-box.host-default { --comp-host-color: var(--accent-color); --comp-host-bg: rgba(230, 126, 34, 0.08); --comp-host-border: rgba(230, 126, 34, 0.3); }
+        .completion-box.host-guild { --comp-host-color: var(--faction-guild); --comp-host-bg: rgba(251, 191, 36, 0.08); --comp-host-border: rgba(251, 191, 36, 0.3); }
+        .completion-box.host-syndicate { --comp-host-color: var(--faction-syndicate); --comp-host-bg: rgba(168, 85, 247, 0.08); --comp-host-border: rgba(168, 85, 247, 0.3); }
+        .completion-box.host-station { --comp-host-color: var(--faction-station); --comp-host-bg: rgba(59, 130, 246, 0.08); --comp-host-border: rgba(59, 130, 246, 0.3); }
+
+        .btn-text-display {
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px dashed rgba(255,255,255,0.1);
+        }
+        .btn-text-display .lbl { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
+        .btn-text-display .val { font-family: var(--font-orbitron); font-size: 0.9rem; color: var(--comp-host-color, var(--active-host-color)); background: rgba(0,0,0,0.5); padding: 8px 12px; display: inline-block; border: 1px solid rgba(255,255,255,0.1); }
 
         b { color: var(--text-bright); font-weight: 600; }
         i { color: var(--text-muted); font-style: italic; }
 
         /* --- TIMELINE VIEW --- */
         .scrolling-timeline-wrapper {
-            width: 100%;
-            height: 100%;
-            overflow-y: auto;
-            padding: 40px 0 100px 0;
-            position: relative;
+            width: 100%; height: 100%; overflow-y: auto; padding: 40px 0 100px 0; position: relative;
+            -webkit-overflow-scrolling: touch;
         }
-
-        .vertical-line {
-            position: absolute;
-            top: 0; bottom: 0; left: 50%;
-            width: 2px;
-            background: var(--border-color);
-            transform: translateX(-50%);
-        }
-
-        .timeline-grid {
-            position: relative;
-            max-width: 1000px;
-            margin: 0 auto;
-            display: flex;
-            flex-direction: column;
-            gap: 40px;
-        }
-
-        .t-node {
-            position: relative;
-            width: 50%;
-            padding: 0 40px;
-            display: flex;
-            flex-direction: column;
-        }
-        
+        .vertical-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--border-color); transform: translateX(-50%); }
+        .timeline-grid { position: relative; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
+        .t-node { position: relative; width: 50%; padding: 0 40px; display: flex; flex-direction: column; }
         .t-node.host-guild { --t-node-color: var(--faction-guild); }
         .t-node.host-syndicate { --t-node-color: var(--faction-syndicate); }
         .t-node.host-station { --t-node-color: var(--faction-station); }
         .t-node.host-default { --t-node-color: var(--accent-color); }
-
         .t-node.left { align-self: flex-start; text-align: right; align-items: flex-end; }
         .t-node.right { align-self: flex-end; text-align: left; align-items: flex-start; }
-
-        .t-dot {
-            position: absolute;
-            top: 50%;
-            width: 18px;
-            height: 18px;
-            background: var(--bg-dark);
-            border: 4px solid var(--t-node-color, var(--accent-color));
-            border-radius: 50%;
-            transform: translateY(-50%);
-            z-index: 2;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-
+        .t-dot { position: absolute; top: 50%; width: 18px; height: 18px; background: var(--bg-dark); border: 4px solid var(--t-node-color, var(--accent-color)); border-radius: 50%; transform: translateY(-50%); z-index: 2; transition: all 0.3s ease; cursor: pointer; }
         .t-node.left .t-dot { right: -9px; }
         .t-node.right .t-dot { left: -9px; }
-
-        .t-node:hover .t-dot {
-            background: var(--t-node-color, var(--accent-color));
-            box-shadow: 0 0 20px var(--t-node-color, var(--accent-color));
-        }
-
-        .t-content {
-            background: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            padding: 25px;
-            border-radius: 2px;
-            width: 100%;
-            max-width: 420px;
-            transition: all 0.3s ease;
-            cursor: help;
-        }
-
-        .t-node:hover .t-content {
-            border-color: var(--t-node-color, var(--accent-color));
-            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
-            transform: translateY(-3px);
-        }
-
-        .t-phase {
-            font-family: var(--font-mono);
-            color: var(--t-node-color, var(--text-muted));
-            font-size: 0.8rem;
-            margin-bottom: 8px;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-        }
-
-        .t-title {
-            font-size: 1.25rem;
-            font-weight: 800;
-            color: var(--text-bright);
-        }
+        .t-node:hover .t-dot { background: var(--t-node-color, var(--accent-color)); box-shadow: 0 0 20px var(--t-node-color, var(--accent-color)); }
+        .t-content { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 25px; border-radius: 2px; width: 100%; max-width: 420px; transition: all 0.3s ease; cursor: help; }
+        .t-node:hover .t-content { border-color: var(--t-node-color, var(--accent-color)); box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform: translateY(-3px); }
+        .t-phase { font-family: var(--font-mono); color: var(--t-node-color, var(--text-muted)); font-size: 0.8rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .t-title { font-size: 1.25rem; font-weight: 800; color: var(--text-bright); }
 
         /* --- ANALYTICS VIEW --- */
-        #view-analytics {
-            flex-direction: column;
-            padding: 40px;
-            overflow-y: auto;
-            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
-            align-items: center;
-        }
-
-        .analytics-content-wrapper {
-            width: 100%;
-            max-width: 1000px;
-        }
-
-        .rewards-summary-top {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            margin-bottom: 40px;
-        }
-
-        .stat-box {
-            text-align: left;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-left: 3px solid var(--accent-color);
-            padding: 20px 25px;
-            border-radius: 2px;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.3);
-        }
-
+        #view-analytics { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); align-items: center; -webkit-overflow-scrolling: touch; }
+        .analytics-content-wrapper { width: 100%; max-width: 1000px; }
+        .rewards-summary-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px; }
+        .stat-box { text-align: left; background: var(--bg-card); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color); padding: 20px 25px; border-radius: 2px; box-shadow: inset 0 0 20px rgba(0,0,0,0.3); }
         .stat-box.credits { border-left-color: var(--faction-station); }
         .stat-box.upgrades { border-left-color: var(--faction-guild); }
-
-        .stat-title {
-            font-size: 0.8rem;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: var(--text-muted);
-            margin-bottom: 8px;
-            font-family: var(--font-mono);
-        }
-
-        .stat-value {
-            font-family: var(--font-mono);
-            font-size: 2rem;
-            color: var(--accent-color);
-            font-weight: bold;
-            text-shadow: 0 0 15px rgba(230, 126, 34, 0.3);
-        }
-        .stat-box.credits .stat-value { color: var(--faction-station); text-shadow: 0 0 15px rgba(39, 174, 96, 0.3); }
-        .stat-box.upgrades .stat-value { color: var(--faction-guild); text-shadow: 0 0 15px rgba(41, 128, 185, 0.3); }
-
-        .analytics-container {
-            padding: 30px;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 2px;
-            box-shadow: inset 0 0 30px rgba(0,0,0,0.4);
-            height: 350px;
-            position: relative;
-        }
-
-        #analytics-chart {
-            width: 100%;
-            height: 100%;
-        }
+        .stat-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); margin-bottom: 8px; font-family: var(--font-mono); }
+        .stat-value { font-family: var(--font-mono); font-size: 2rem; color: var(--accent-color); font-weight: bold; text-shadow: 0 0 15px rgba(230, 126, 34, 0.3); }
+        .stat-box.credits .stat-value { color: var(--faction-station); text-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+        .stat-box.upgrades .stat-value { color: var(--faction-guild); text-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
+        .analytics-container { padding: 30px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 2px; box-shadow: inset 0 0 30px rgba(0,0,0,0.4); height: 400px; position: relative; }
+        #analytics-canvas { width: 100%; height: 100%; }
 
         /* --- LEDGER VIEW --- */
-        #view-ledger {
-            flex-direction: column;
-            padding: 40px;
-            overflow-y: auto;
-            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
-        }
-
-        .rewards-ledger-container {
-            width: 100%;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        /* Ledger Table */
-        .ledger-table {
-            display: flex;
-            flex-direction: column;
-            width: 100%;
-            border: 1px solid var(--border-color);
-            background: var(--bg-card);
-            border-radius: 2px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.5);
-        }
-
-        .ledger-header {
-            display: grid;
-            grid-template-columns: 120px 1.5fr 2fr;
-            padding: 18px 25px;
-            background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%);
-            border-bottom: 2px solid var(--border-glow);
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            font-weight: bold;
-            color: var(--text-main);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-        }
-
-        .ledger-row {
-            display: grid;
-            grid-template-columns: 120px 1.5fr 2fr;
-            padding: 20px 25px;
-            border-bottom: 1px solid var(--border-color);
-            border-left: 3px solid var(--l-row-color, transparent);
-            transition: background-color 0.2s ease;
-            align-items: center;
-            gap: 20px;
-        }
+        #view-ledger { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); -webkit-overflow-scrolling: touch; }
+        .rewards-ledger-container { width: 100%; max-width: 1200px; margin: 0 auto; }
+        .ledger-table { display: flex; flex-direction: column; width: 100%; border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
+        .ledger-header { display: grid; grid-template-columns: 120px 1.5fr 2fr; padding: 18px 25px; background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%); border-bottom: 2px solid var(--border-glow); font-family: var(--font-mono); font-size: 0.85rem; font-weight: bold; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; }
+        .sortable-header { cursor: pointer; user-select: none; transition: color 0.2s; display: flex; align-items: center; gap: 5px; }
+        .sortable-header:hover { color: var(--text-bright); }
+        .sortable-header.active { color: var(--accent-color); }
+        .sortable-header.active::after { content: '▼'; font-size: 0.7em; }
+        .sortable-header.active.asc::after { content: '▲'; }
         
+        .ledger-row { display: grid; grid-template-columns: 120px 1.5fr 2fr; padding: 20px 25px; border-bottom: 1px solid var(--border-color); border-left: 3px solid var(--l-row-color, transparent); transition: background-color 0.2s ease; align-items: center; gap: 20px; }
         .ledger-row.host-guild { --l-row-color: var(--faction-guild); }
         .ledger-row.host-syndicate { --l-row-color: var(--faction-syndicate); }
         .ledger-row.host-station { --l-row-color: var(--faction-station); }
-
         .ledger-row:nth-child(even) { background-color: rgba(255, 255, 255, 0.015); }
         .ledger-row:hover { background-color: rgba(255, 255, 255, 0.04); }
         .ledger-row:last-child { border-bottom: none; }
-
-        .ledger-id {
-            font-family: var(--font-mono);
-            color: var(--text-muted);
-            font-weight: bold;
-            font-size: 1rem;
-        }
-
-        .ledger-name {
-            font-weight: 600;
-            color: var(--text-bright);
-            font-size: 1.1rem;
-        }
-
+        .ledger-id { font-family: var(--font-mono); color: var(--text-muted); font-weight: bold; font-size: 1rem; }
+        .ledger-name { font-weight: 600; color: var(--text-bright); font-size: 1.1rem; }
         .ledger-payouts { display: flex; flex-wrap: wrap; gap: 10px; }
-
-        .payout-tag {
-            display: inline-flex;
-            align-items: center;
-            font-family: var(--font-mono);
-            font-size: 0.8rem;
-            font-weight: bold;
-            padding: 6px 12px;
-            border-radius: 2px;
-            background: var(--bg-dark);
-            border: 1px solid var(--border-color);
-            width: fit-content;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-        }
-
-        .payout-tag.credits { color: var(--faction-station); border-color: rgba(39, 174, 96, 0.4); background: rgba(39, 174, 96, 0.08); box-shadow: 0 0 10px rgba(39,174,96,0.1); }
+        .payout-tag { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: bold; padding: 6px 12px; border-radius: 2px; background: var(--bg-dark); border: 1px solid var(--border-color); width: fit-content; letter-spacing: 1px; text-transform: uppercase; }
+        .payout-tag.credits { color: var(--faction-station); border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.08); box-shadow: 0 0 10px rgba(59,130,246,0.1); }
         .payout-tag.upgrade { color: var(--accent-color); border-color: rgba(230, 126, 34, 0.4); background: rgba(230, 126, 34, 0.08); box-shadow: 0 0 10px rgba(230,126,34,0.1); }
-        .payout-tag.license { color: var(--faction-guild); border-color: rgba(41, 128, 185, 0.4); background: rgba(41, 128, 185, 0.08); box-shadow: 0 0 10px rgba(41,128,185,0.1); }
+        .payout-tag.license { color: var(--faction-guild); border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.08); box-shadow: 0 0 10px rgba(251,191,36,0.1); }
 
         /* Tooltip logic */
-        .tooltip {
-            position: fixed;
-            background: var(--bg-highlight);
-            border: 1px solid var(--accent-color);
-            color: var(--text-main);
-            padding: 20px 25px;
-            font-size: 0.95rem;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.9);
-            border-radius: 2px;
-            pointer-events: none;
-            opacity: 0;
-            transition: opacity 0.2s;
-            z-index: 1000;
-            max-width: 350px;
-            line-height: 1.6;
-        }
-
+        .tooltip { position: fixed; background: var(--bg-highlight); border: 1px solid var(--accent-color); color: var(--text-main); padding: 20px 25px; font-size: 0.95rem; box-shadow: 0 10px 40px rgba(0,0,0,0.9); border-radius: 2px; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 1000; max-width: 350px; line-height: 1.6; }
         .tooltip b { font-size: 1.1rem; color: var(--text-bright); }
 
         /* --- PERSONNEL / PORTRAIT VIEWER --- */
-        #view-personnel {
-            flex-direction: column;
-            padding: 40px;
-            overflow-y: auto;
-            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
-        }
+        #view-personnel { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); -webkit-overflow-scrolling: touch; }
+        .personnel-controls { display: flex; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
+        .personnel-controls label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-right: 20px; font-family: var(--font-mono); }
+        .personnel-controls select { background-color: var(--bg-card); color: var(--text-bright); border: 1px solid var(--border-color); padding: 12px 20px; font-size: 1rem; font-family: var(--font-main); font-weight: 600; border-radius: 2px; cursor: pointer; outline: none; transition: all 0.2s ease; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        .personnel-controls select:hover, .personnel-controls select:focus { border-color: var(--accent-color); box-shadow: 0 0 15px rgba(230, 126, 34, 0.2), inset 0 0 10px rgba(0,0,0,0.5); }
+        #portrait-grid { display: flex; flex-wrap: wrap; gap: 25px; }
+        .portrait-card { background-color: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 2px; padding: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.2s ease; position: relative; }
+        .portrait-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: transparent; transition: background 0.2s; }
+        .portrait-card:hover { transform: translateY(-4px); border-color: var(--border-glow); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
+        .portrait-card:hover::before { background: var(--accent-color); }
+        .sprite-window { width: 128px; height: 128px; border-radius: 2px; background-image: url('assets/images/characters/characters_sprite.webp'); background-repeat: no-repeat; margin-bottom: 20px; border: 2px solid #000; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
+        .id-label { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); background: var(--bg-dark); padding: 8px 12px; border-radius: 2px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: center; }
+        .id-label:hover { color: var(--bg-dark); background: var(--accent-color); border-color: var(--accent-color); font-weight: bold; }
 
-        .personnel-controls {
-            display: flex;
-            align-items: center;
-            margin-bottom: 40px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .personnel-controls label {
-            font-size: 0.9rem;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            color: var(--text-muted);
-            margin-right: 20px;
-            font-family: var(--font-mono);
-        }
-
-        .personnel-controls select {
-            background-color: var(--bg-card);
-            color: var(--text-bright);
-            border: 1px solid var(--border-color);
-            padding: 12px 20px;
-            font-size: 1rem;
-            font-family: var(--font-main);
-            font-weight: 600;
-            border-radius: 2px;
-            cursor: pointer;
-            outline: none;
-            transition: all 0.2s ease;
-            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        .personnel-controls select:hover, .personnel-controls select:focus {
-            border-color: var(--accent-color);
-            box-shadow: 0 0 15px rgba(230, 126, 34, 0.2), inset 0 0 10px rgba(0,0,0,0.5);
-        }
-
-        #portrait-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 25px;
-        }
-
-        .portrait-card {
-            background-color: var(--bg-panel);
-            border: 1px solid var(--border-color);
-            border-radius: 2px;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            transition: all 0.2s ease;
-            position: relative;
-        }
-
-        .portrait-card::before {
-            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px;
-            background: transparent; transition: background 0.2s;
-        }
-
-        .portrait-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--border-glow);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.8);
-        }
-
-        .portrait-card:hover::before {
-            background: var(--accent-color);
-        }
-
-        .sprite-window {
-            width: 128px;
-            height: 128px;
-            border-radius: 2px;
-            background-image: url('assets/images/characters/characters_sprite.webp');
-            background-repeat: no-repeat;
-            margin-bottom: 20px;
-            border: 2px solid #000;
-            box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
-        }
-
-        .id-label {
-            font-family: var(--font-mono);
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            background: var(--bg-dark);
-            padding: 8px 12px;
-            border-radius: 2px;
-            border: 1px solid var(--border-color);
-            cursor: pointer;
-            transition: all 0.2s ease;
-            width: 100%;
-            text-align: center;
-        }
-
-        .id-label:hover {
-            color: var(--bg-dark);
-            background: var(--accent-color);
-            border-color: var(--accent-color);
-            font-weight: bold;
-        }
-
-        .toast {
-            position: fixed;
-            bottom: 30px;
-            right: 30px;
-            background: var(--faction-station);
-            color: var(--bg-dark);
-            padding: 15px 30px;
-            border-radius: 2px;
-            font-weight: 800;
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            box-shadow: 0 10px 30px rgba(39, 174, 96, 0.4);
-            opacity: 0;
-            transform: translateY(20px);
-            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-            pointer-events: none;
-            z-index: 1000;
-        }
-
-        .toast.show {
-            opacity: 1;
-            transform: translateY(0);
-        }
+        .toast { position: fixed; bottom: 30px; right: 30px; background: var(--faction-station); color: var(--bg-dark); padding: 15px 30px; border-radius: 2px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 1000; }
+        .toast.show { opacity: 1; transform: translateY(0); }
 
         /* Scrollbars */
         ::-webkit-scrollbar { width: 8px; }
@@ -1314,37 +1033,51 @@
     <div id="app-container">
         
         <div id="view-missions" class="view-container active">
-            <div id="sidebar"></div>
+            <div id="sidebar">
+                <div class="sidebar-search-area">
+                    <input type="text" id="mission-search" placeholder="Filter ID, Name, or Host...">
+                </div>
+                <div id="sidebar-content" class="sidebar-scroll-content"></div>
+            </div>
             
             <div id="content-area">
                 <div id="mission-detail">
                     <div class="portraits-header">
                         <div class="portrait-block">
-                            <div class="portrait-role">Initiator</div>
+                            <div class="portrait-role" id="init-role">INITIATOR</div>
                             <div class="portrait-container"><div id="init-portrait" class="portrait"></div></div>
                         </div>
                         
                         <div class="mission-title-area">
                             <h2 id="detail-name">MISSION NAME</h2>
                             <div class="badges" id="detail-badges"></div>
+                            <div class="meta-flags" id="detail-flags"></div>
+                            <div class="meta-trigger" id="detail-trigger"></div>
                         </div>
 
                         <div class="portrait-block" id="completion-portrait-block">
-                            <div class="portrait-role">Resolution</div>
+                            <div class="portrait-role" id="comp-role">RESOLUTION</div>
                             <div class="portrait-container"><div id="comp-portrait" class="portrait"></div></div>
                         </div>
                     </div>
 
-                    <div class="section-title">Context & Directive</div>
+                    <div class="section-title">Mission Details Modal</div>
                     <div class="dialog-box" id="detail-desc"></div>
 
-                    <div class="section-title">Operational Objectives</div>
+                    <div class="section-title">Directives</div>
                     <ul class="objectives-list" id="detail-objectives"></ul>
 
-                    <div class="section-title">Mission Resolution</div>
+                    <div class="section-title">Rewards</div>
+                    <div class="detail-rewards-container" id="detail-rewards"></div>
+
+                    <div class="section-title">Mission Completion Modal</div>
                     <div class="completion-box" id="detail-comp-box">
                         <div class="completion-title" id="detail-comp-title">Completion</div>
                         <div id="detail-comp-text"></div>
+                        <div class="btn-text-display" id="comp-btn-wrapper" style="display:none;">
+                            <div class="lbl">Confirmation Button</div>
+                            <div class="val" id="comp-btn-text"></div>
+                        </div>
                     </div>
                 </div>
                 
@@ -1364,13 +1097,11 @@
         <div id="view-analytics" class="view-container">
             <div class="analytics-content-wrapper">
                 <div class="section-title" style="margin-top: 0;">Aggregate Metrics</div>
-                <div class="rewards-summary-top" id="rewards-summary">
-                    </div>
+                <div class="rewards-summary-top" id="rewards-summary"></div>
                 
                 <div class="section-title">Capital Generation (Timeline)</div>
                 <div class="analytics-container">
-                    <div id="analytics-chart">
-                        </div>
+                    <canvas id="analytics-canvas"></canvas>
                 </div>
             </div>
         </div>
@@ -1380,12 +1111,11 @@
                 <div class="section-title" style="margin-top: 0;">Acquisition Ledger</div>
                 <div class="ledger-table">
                     <div class="ledger-header">
-                        <div>Ref ID</div>
-                        <div>Contract</div>
-                        <div>Disbursements</div>
+                        <div class="sortable-header" data-sort="id">Ref ID</div>
+                        <div class="sortable-header" data-sort="name">Contract</div>
+                        <div class="sortable-header" data-sort="credits">Disbursements</div>
                     </div>
-                    <div id="rewards-grid">
-                        </div>
+                    <div id="rewards-grid"></div>
                 </div>
             </div>
         </div>
@@ -1414,6 +1144,9 @@ const storyData = [
     { phase: "Phase Two: Syndicate Emergence", missions: Object.values(PHASE_TWO_MISSIONS) }
 ];
 
+let globalLedgerData = [];
+let currentSort = { column: 'id', asc: true };
+
 // --- UTILITIES ---
 
 function getPortraitStyle(portraitId) {
@@ -1429,18 +1162,53 @@ function formatName(str) {
 }
 
 function parseObjective(obj) {
+    let str = "";
     switch(obj.type) {
-        case 'VISIT_SCREEN': return `Visit the <b>${formatName(obj.screenId)}</b> screen under the <b>${formatName(obj.navId)}</b> tab.`;
-        case 'TRAVEL_TO': return `Maps map logic to <b>${formatName(obj.target)}</b>.`;
-        case 'TRADE_ITEM': return `Trade (<b>${obj.tradeType.toUpperCase()}</b>) <b>${obj.quantity}x ${formatName(obj.goodId)}</b> at ${obj.target ? formatName(obj.target) : 'the local market'}.`;
-        case 'DELIVER_ITEM': return `Deliver <b>${obj.quantity}x ${formatName(obj.goodId)}</b> to <b>${formatName(obj.target)}</b>.`;
-        case 'HAVE_CREDITS': return `Amass a total net worth of <b>⌬ ${obj.value.toLocaleString()}</b> Credits.`;
-        case 'HAVE_DEBT': return `Reduce your Guild debt to <b>⌬ ${obj.value}</b>.`;
-        case 'HAVE_HULL_PCT': return `Repair your ship hull to at least <b>${obj.value}%</b>.`;
-        case 'HAVE_FUEL_TANK': return `Upgrade your vessel to hold <b>${obj.value}</b> fuel units.`;
-        case 'HAVE_ITEM': return `Procure and hold <b>${obj.quantity}x ${formatName(obj.goodId)}</b> in your cargo.`;
-        default: return `Complete Task: ${obj.type}`;
+        case 'VISIT_SCREEN': 
+            str = `Visit the <b>${formatName(obj.screenId)}</b> screen under the <b>${formatName(obj.navId)}</b> tab.`;
+            break;
+        case 'TRAVEL_TO': 
+            str = `Map navigation to <b>${formatName(obj.target)}</b>.`;
+            break;
+        case 'TRADE_ITEM': 
+            str = `${obj.tradeType === 'buy' ? 'Buy' : 'Sell'} <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b> at ${obj.target ? formatName(obj.target) : 'the local market'}.`;
+            break;
+        case 'DELIVER_ITEM': 
+            str = `Deliver <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b> to <b>${formatName(obj.target)}</b>.`;
+            break;
+        case 'HAVE_CREDITS': 
+            str = `Amass a total net worth of <b>⌬ ${obj.value.toLocaleString()}</b> Credits.`;
+            break;
+        case 'HAVE_DEBT': 
+            str = `Reduce your Guild debt to <b>⌬ ${obj.value}</b>.`;
+            break;
+        case 'HAVE_HULL_PCT': 
+            str = `Repair your ship hull to at least <b>${obj.value}%</b>.`;
+            break;
+        case 'HAVE_FUEL_TANK': 
+            str = `Upgrade your vessel to hold <b>${obj.value}</b> fuel units.`;
+            break;
+        case 'HAVE_ITEM': 
+            str = `Procure and hold <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b> in your cargo.`;
+            break;
+        default: 
+            str = `Complete Task: ${obj.type}`;
     }
+    return '▸ ' + str;
+}
+
+function parseTriggers(triggers) {
+    if (!triggers || triggers.length === 0) return 'Available Immediately';
+    const reqs = triggers.filter(t => t.type === 'mission_completed').map(t => formatName(t.missionId));
+    if (reqs.length === 0) return 'Custom Requirements';
+    if (reqs.length === 1) return `Unlocked after ${reqs[0]}`;
+    const last = reqs.pop();
+    return `Unlocked after ${reqs.join(', ')} and ${last}`;
+}
+
+function parseDialog(text) {
+    if(!text) return '';
+    return text.replace(/\n/g, '<br>');
 }
 
 function formatRewardsStr(rewardsArr) {
@@ -1454,14 +1222,32 @@ function formatRewardsStr(rewardsArr) {
     }).join('\n');
 }
 
+function updateHash(tabId, missionId) {
+    let hash = `tab=${tabId}`;
+    if(missionId) hash += `&id=${missionId}`;
+    window.location.hash = hash;
+}
+
+function readHash() {
+    const hash = window.location.hash.substring(1);
+    const params = new URLSearchParams(hash);
+    return {
+        tab: params.get('tab') || 'view-missions',
+        id: params.get('id')
+    };
+}
+
 // --- TAB LOGIC ---
 document.querySelectorAll('.nav-tab').forEach(tab => {
     tab.addEventListener('click', (e) => {
+        const targetId = e.target.dataset.target;
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
         
         e.target.classList.add('active');
-        document.getElementById(e.target.dataset.target).classList.add('active');
+        document.getElementById(targetId).classList.add('active');
+        
+        updateHash(targetId, null);
     });
 });
 
@@ -1474,167 +1260,209 @@ document.addEventListener('mousemove', (e) => {
     }
 });
 
-// --- SVG AREA CHART RENDERER ---
-function createSvgChart(dataArray, containerId) {
-    const container = document.getElementById(containerId);
-    container.innerHTML = ''; 
+// --- CANVAS AREA CHART RENDERER ---
+function createCanvasChart(dataArray, containerId) {
+    const canvas = document.getElementById(containerId);
+    if (!canvas || dataArray.length === 0) return;
+    
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.parentElement.getBoundingClientRect();
+    
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
 
-    if (!dataArray || dataArray.length === 0) return;
-
-    const width = 1000;
-    const height = 280;
-    const padding = { top: 20, right: 30, bottom: 30, left: 70 };
+    const width = rect.width;
+    const height = rect.height;
+    const padding = { top: 20, right: 30, bottom: 40, left: 70 };
     
     const graphWidth = width - padding.left - padding.right;
     const graphHeight = height - padding.top - padding.bottom;
     const maxCredits = dataArray[dataArray.length - 1].total || 1;
 
-    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
-    svg.setAttribute("viewBox", `0 0 ${width} ${height}`);
-    svg.style.width = "100%";
-    svg.style.height = "100%";
-    svg.style.overflow = "visible";
+    // Background Gradient
+    const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); // faction-station color
+    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
-    // Defs for gradient
-    const defs = document.createElementNS("http://www.w3.org/2000/svg", "defs");
-    defs.innerHTML = `
-        <linearGradient id="areaGradient" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stop-color="var(--faction-station)" stop-opacity="0.4"/>
-            <stop offset="100%" stop-color="var(--faction-station)" stop-opacity="0.0"/>
-        </linearGradient>
-    `;
-    svg.appendChild(defs);
-
-    // Calculate Coordinates
     const points = dataArray.map((d, i) => {
         const x = padding.left + (i * (graphWidth / Math.max(dataArray.length - 1, 1)));
         const y = padding.top + graphHeight - ((d.total / maxCredits) * graphHeight);
         return { x, y, ...d };
     });
 
-    let dArea = `M ${padding.left} ${height - padding.bottom} `;
-    let dLine = ``;
+    ctx.clearRect(0, 0, width, height);
 
-    points.forEach((p, i) => {
-        dArea += `L ${p.x} ${p.y} `;
-        dLine += (i === 0 ? `M ` : `L `) + `${p.x} ${p.y} `;
-    });
+    // Draw Grid Lines & Labels
+    ctx.fillStyle = '#6b6b7a';
+    ctx.font = '11px "Share Tech Mono"';
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    ctx.strokeStyle = '#262630';
+    ctx.lineWidth = 1;
 
-    dArea += `L ${points[points.length-1].x} ${height - padding.bottom} Z`;
-
-    // Draw Area Fill
-    const areaPath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    areaPath.setAttribute("d", dArea);
-    areaPath.setAttribute("fill", "url(#areaGradient)");
-    svg.appendChild(areaPath);
-
-    // Draw Grid Lines & Y-Axis Labels
     const ticks = 4;
     for(let i=0; i<=ticks; i++) {
         const yPos = padding.top + (graphHeight / ticks) * i;
         const val = maxCredits - ((maxCredits / ticks) * i);
         
-        const gridLine = document.createElementNS("http://www.w3.org/2000/svg", "line");
-        gridLine.setAttribute("x1", padding.left);
-        gridLine.setAttribute("y1", yPos);
-        gridLine.setAttribute("x2", width - padding.right);
-        gridLine.setAttribute("y2", yPos);
-        gridLine.setAttribute("stroke", "var(--border-color)");
-        gridLine.setAttribute("stroke-width", "1");
-        svg.appendChild(gridLine);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, yPos);
+        ctx.lineTo(width - padding.right, yPos);
+        ctx.stroke();
 
-        const label = document.createElementNS("http://www.w3.org/2000/svg", "text");
-        label.setAttribute("x", padding.left - 15);
-        label.setAttribute("y", yPos + 4);
-        label.setAttribute("text-anchor", "end");
-        label.setAttribute("fill", "var(--text-muted)");
-        label.setAttribute("font-size", "11");
-        label.setAttribute("font-family", "var(--font-mono)");
-        label.textContent = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val;
-        svg.appendChild(label);
+        const labelStr = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val.toFixed(0);
+        ctx.fillText(labelStr, padding.left - 15, yPos);
     }
 
-    // Draw Plot Line
-    const linePath = document.createElementNS("http://www.w3.org/2000/svg", "path");
-    linePath.setAttribute("d", dLine);
-    linePath.setAttribute("fill", "none");
-    linePath.setAttribute("stroke", "var(--faction-station)");
-    linePath.setAttribute("stroke-width", "3");
-    linePath.style.filter = "drop-shadow(0 0 5px rgba(39,174,96,0.6))";
-    svg.appendChild(linePath);
+    // Draw Area
+    ctx.beginPath();
+    ctx.moveTo(padding.left, height - padding.bottom);
+    points.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.lineTo(points[points.length-1].x, height - padding.bottom);
+    ctx.closePath();
+    ctx.fillStyle = gradient;
+    ctx.fill();
 
-    // Draw Interactive Data Dots
-    points.forEach((p) => {
-        const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle");
-        circle.setAttribute("cx", p.x);
-        circle.setAttribute("cy", p.y);
-        circle.setAttribute("r", "5");
-        circle.setAttribute("fill", "var(--bg-dark)");
-        circle.setAttribute("stroke", "var(--faction-station)");
-        circle.setAttribute("stroke-width", "2");
-        circle.style.cursor = "pointer";
-        circle.style.transition = "all 0.2s ease";
+    // Draw Line
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    points.forEach(p => ctx.lineTo(p.x, p.y));
+    ctx.strokeStyle = '#3b82f6'; // faction-station
+    ctx.lineWidth = 3;
+    ctx.shadowColor = 'rgba(59, 130, 246, 0.6)';
+    ctx.shadowBlur = 10;
+    ctx.stroke();
+    
+    ctx.shadowBlur = 0; // reset
+
+    // Hover logic for dots
+    let hoverIndex = -1;
+    
+    canvas.addEventListener('mousemove', (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const mx = e.clientX - rect.left;
+        const my = e.clientY - rect.top;
         
-        circle.addEventListener('mouseenter', () => {
+        let found = -1;
+        for(let i=0; i<points.length; i++) {
+            const p = points[i];
+            const dx = mx - p.x;
+            const dy = my - p.y;
+            if(Math.sqrt(dx*dx + dy*dy) < 10) {
+                found = i; break;
+            }
+        }
+        
+        if (found !== hoverIndex) {
+            hoverIndex = found;
+            drawChart(); // Redraw to update dot styles
+        }
+        
+        if (hoverIndex > -1) {
+            const p = points[hoverIndex];
             tooltip.innerHTML = `<b>Mission M_${p.id.padStart(2,'0')}</b><br>Cumulative: ⌬ ${p.total.toLocaleString()}`;
             tooltip.style.opacity = '1';
-            circle.setAttribute("r", "8");
-            circle.setAttribute("fill", "var(--faction-station)");
-            circle.style.filter = "drop-shadow(0 0 8px rgba(39,174,96,1))";
-        });
-        circle.addEventListener('mouseleave', () => {
+        } else {
             tooltip.style.opacity = '0';
-            circle.setAttribute("r", "5");
-            circle.setAttribute("fill", "var(--bg-dark)");
-            circle.style.filter = "none";
-        });
-
-        svg.appendChild(circle);
+        }
+    });
+    
+    canvas.addEventListener('mouseleave', () => {
+        hoverIndex = -1;
+        tooltip.style.opacity = '0';
+        drawChart();
     });
 
-    container.appendChild(svg);
+    function drawChart() {
+        // Clear & redraw points only for efficiency
+        ctx.clearRect(0,0,width,height);
+        
+        // Re-stroke grid & area (could be cached)
+        ctx.fillStyle = '#6b6b7a';
+        ctx.strokeStyle = '#262630';
+        for(let i=0; i<=ticks; i++) {
+            const yPos = padding.top + (graphHeight / ticks) * i;
+            const val = maxCredits - ((maxCredits / ticks) * i);
+            ctx.beginPath(); ctx.moveTo(padding.left, yPos); ctx.lineTo(width - padding.right, yPos); ctx.stroke();
+            const labelStr = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val.toFixed(0);
+            ctx.fillText(labelStr, padding.left - 15, yPos);
+        }
+        ctx.beginPath(); ctx.moveTo(padding.left, height - padding.bottom);
+        points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.lineTo(points[points.length-1].x, height - padding.bottom);
+        ctx.closePath(); ctx.fillStyle = gradient; ctx.fill();
+        ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y); points.forEach(p => ctx.lineTo(p.x, p.y));
+        ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(59, 130, 246, 0.6)'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
+
+        points.forEach((p, i) => {
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, i === hoverIndex ? 8 : 5, 0, Math.PI * 2);
+            ctx.fillStyle = i === hoverIndex ? '#3b82f6' : '#050507';
+            ctx.lineWidth = 2;
+            ctx.strokeStyle = '#3b82f6';
+            if(i === hoverIndex) {
+                ctx.shadowColor = '#3b82f6';
+                ctx.shadowBlur = 10;
+            } else {
+                ctx.shadowBlur = 0;
+            }
+            ctx.fill();
+            ctx.stroke();
+        });
+        ctx.shadowBlur = 0;
+    }
+    
+    drawChart(); // Initial draw
 }
 
 // --- RENDERERS ---
 
 function initApp() {
-    const sidebar = document.getElementById('sidebar');
+    const sidebar = document.getElementById('sidebar-content');
     const tGrid = document.getElementById('timeline-grid');
-    const rGrid = document.getElementById('rewards-grid');
     const rSummary = document.getElementById('rewards-summary');
 
     let isLeftNode = true;
     let stats = { credits: 0, upgrades: 0, licenses: 0, phases: [] };
     let chartData = [];
     let cumulativeCredits = 0;
+    globalLedgerData = [];
 
     storyData.forEach(phaseData => {
         let phaseStats = { name: phaseData.phase, credits: 0, rewards: 0 };
         
-        // Sidebar Phase Header
+        // Sidebar Phase Header (Collapsible)
         const header = document.createElement('div');
         header.className = 'phase-header';
-        header.textContent = phaseData.phase;
+        header.innerHTML = `<span>${phaseData.phase}</span> <span class="phase-toggle">▼</span>`;
         sidebar.appendChild(header);
 
+        let phaseItems = [];
+
         phaseData.missions.forEach(mission => {
-            
             const hostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
 
             // --- 1. MISSIONS TAB ---
             const item = document.createElement('div');
             item.className = `timeline-item ${hostClass}`;
+            item.dataset.searchString = `${mission.id} ${mission.name} ${mission.host}`.toLowerCase();
             
             const rwds = formatRewardsStr(mission.rewards);
+            
             item.innerHTML = `
-                <div class="item-main">
-                    <div class="mission-id">ID_${mission.id.padStart(3, '0')}</div>
-                    <div class="mission-name">${mission.name}</div>
-                </div>
+                <div class="mission-id">ID_${mission.id.padStart(3, '0')}</div>
+                <div class="mission-name">${mission.name}</div>
                 <div class="item-reward">${rwds}</div>
             `;
-            item.addEventListener('click', () => loadMission(mission, item));
+            item.addEventListener('click', () => {
+                loadMission(mission, item);
+                updateHash('view-missions', mission.id);
+            });
             sidebar.appendChild(item);
+            phaseItems.push(item);
 
             // --- 2. TIMELINE TAB ---
             const node = document.createElement('div');
@@ -1646,65 +1474,84 @@ function initApp() {
                     <div class="t-title">${mission.name}</div>
                 </div>
             `;
-            
             node.querySelector('.t-content').addEventListener('mouseenter', () => {
                 tooltip.innerHTML = `<b>${mission.name}</b><br><br>${mission.description.substring(0, 100)}...`;
                 tooltip.style.opacity = '1';
             });
-            node.querySelector('.t-content').addEventListener('mouseleave', () => {
-                tooltip.style.opacity = '0';
-            });
-
+            node.querySelector('.t-content').addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
             tGrid.appendChild(node);
 
-            // --- 3. REWARDS LEDGER ---
+            // --- 3. REWARDS LEDGER DATA GATHERING ---
             let earnedCreditsThisMission = 0;
             if (mission.rewards && mission.rewards.length > 0) {
-                const rNode = document.createElement('div');
-                rNode.className = `ledger-row ${hostClass}`;
-                
-                const rewardDetails = mission.rewards.map(r => {
+                let rwdHtml = '';
+                mission.rewards.forEach(r => {
                     if (r.type === 'credits') { 
-                        earnedCreditsThisMission = r.amount;
-                        phaseStats.credits += r.amount; 
-                        stats.credits += r.amount; 
-                        return `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
+                        earnedCreditsThisMission = r.amount; phaseStats.credits += r.amount; stats.credits += r.amount; 
+                        rwdHtml += `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
                     }
                     if (r.type === 'UPGRADE') { 
                         phaseStats.rewards++; stats.upgrades++; 
-                        return `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
+                        rwdHtml += `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
                     }
                     if (r.type === 'license') { 
                         phaseStats.rewards++; stats.licenses++; 
-                        return `<div class="payout-tag license">LICENSE Granted</div>`; 
+                        rwdHtml += `<div class="payout-tag license">LICENSE Granted</div>`; 
                     }
                     if (r.type === 'fill_fleet_fuel') { 
                         phaseStats.rewards++; 
-                        return `<div class="payout-tag credits">FUEL VOUCHER</div>`; 
+                        rwdHtml += `<div class="payout-tag credits">FUEL VOUCHER</div>`; 
                     }
-                }).join('');
+                });
 
-                rNode.innerHTML = `
-                    <div class="ledger-id">M_${mission.id.padStart(2,'0')}</div>
-                    <div class="ledger-name">${mission.name}</div>
-                    <div class="ledger-payouts">${rewardDetails}</div>
-                `;
-                rGrid.appendChild(rNode);
+                globalLedgerData.push({
+                    id: mission.id,
+                    numId: parseInt(mission.id.replace(/\D/g, '') || 0),
+                    name: mission.name,
+                    hostClass: hostClass,
+                    credits: earnedCreditsThisMission,
+                    html: rwdHtml
+                });
             }
 
-            // Record data for SVG Chart 
             cumulativeCredits += earnedCreditsThisMission;
             chartData.push({ id: mission.id, total: cumulativeCredits });
 
             isLeftNode = !isLeftNode;
         });
+        
+        // Phase Toggle Logic
+        header.addEventListener('click', function() {
+            this.classList.toggle('collapsed');
+            const isCollapsed = this.classList.contains('collapsed');
+            phaseItems.forEach(item => {
+                if(!item.dataset.filtered) {
+                    item.style.display = isCollapsed ? 'none' : 'grid';
+                }
+            });
+        });
+
         stats.phases.push(phaseStats);
     });
 
-    // Render SVG Area Chart (Analytics Tab)
-    createSvgChart(chartData, 'analytics-chart');
+    // Initial Search Setup
+    document.getElementById('mission-search').addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        document.querySelectorAll('.timeline-item').forEach(item => {
+            if(item.dataset.searchString.includes(term)) {
+                item.style.display = 'grid';
+                item.dataset.filtered = '';
+            } else {
+                item.style.display = 'none';
+                item.dataset.filtered = 'true';
+            }
+        });
+    });
 
-    // --- REWARDS SUMMARY DASHBOARD (Analytics Tab) ---
+    // Render Canvas Area Chart
+    setTimeout(() => createCanvasChart(chartData, 'analytics-canvas'), 100);
+
+    // Rewards Summary
     rSummary.innerHTML = `
         <div class="stat-box credits">
             <div class="stat-title">Total Credits Earned</div>
@@ -1720,36 +1567,96 @@ function initApp() {
         </div>
     `;
 
-    // Initialize Personnel Viewer
+    // Render Ledger
+    renderLedger();
+
+    // Initial state from Hash
+    const state = readHash();
+    if(state.tab) {
+        document.querySelector(`.nav-tab[data-target="${state.tab}"]`)?.click();
+    }
+    if(state.id) {
+        let allMissions = [];
+        storyData.forEach(p => allMissions = allMissions.concat(p.missions));
+        const found = allMissions.find(m => m.id === state.id);
+        const itemEl = Array.from(document.querySelectorAll('.timeline-item')).find(el => el.querySelector('.mission-id').textContent === `ID_${state.id.padStart(3, '0')}`);
+        if(found && itemEl) loadMission(found, itemEl);
+    }
+
     initPersonnelViewer();
 }
 
+function renderLedger() {
+    const rGrid = document.getElementById('rewards-grid');
+    rGrid.innerHTML = '';
+    
+    let sortedData = [...globalLedgerData];
+    sortedData.sort((a, b) => {
+        let valA = a[currentSort.column];
+        let valB = b[currentSort.column];
+        if(currentSort.column === 'id') { valA = a.numId; valB = b.numId; }
+        
+        if(valA < valB) return currentSort.asc ? -1 : 1;
+        if(valA > valB) return currentSort.asc ? 1 : -1;
+        return 0;
+    });
+
+    sortedData.forEach(d => {
+        const rNode = document.createElement('div');
+        rNode.className = `ledger-row ${d.hostClass}`;
+        rNode.innerHTML = `
+            <div class="ledger-id">M_${d.id.padStart(2,'0')}</div>
+            <div class="ledger-name">${d.name}</div>
+            <div class="ledger-payouts">${d.html}</div>
+        `;
+        rGrid.appendChild(rNode);
+    });
+}
+
+document.querySelectorAll('.sortable-header').forEach(header => {
+    header.addEventListener('click', (e) => {
+        const col = e.target.dataset.sort;
+        if(currentSort.column === col) {
+            currentSort.asc = !currentSort.asc;
+        } else {
+            currentSort.column = col;
+            currentSort.asc = true;
+        }
+        document.querySelectorAll('.sortable-header').forEach(h => {
+            h.classList.remove('active', 'asc');
+        });
+        e.target.classList.add('active');
+        if(currentSort.asc) e.target.classList.add('asc');
+        renderLedger();
+    });
+});
+
 function loadMission(mission, element) {
     document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active'));
-    element.classList.add('active');
+    if(element) element.classList.add('active');
     
     document.getElementById('empty-state').style.display = 'none';
     const detailView = document.getElementById('mission-detail');
     detailView.style.display = 'block';
-    
     detailView.style.animation = 'none';
     detailView.offsetHeight; 
     detailView.style.animation = null;
 
-    // Apply Host Theme to Main Container (Cascades to children via CSS variables)
     const mainHostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
     detailView.className = mainHostClass; 
 
     document.getElementById('detail-name').textContent = mission.name;
-    document.getElementById('detail-desc').innerHTML = mission.description || '';
+    document.getElementById('detail-desc').innerHTML = parseDialog(mission.description);
     
-    const isTwist = mission.completion && mission.completion.portraitId && (mission.completion.portraitId !== mission.portraitId);
-    
+    document.getElementById('init-role').textContent = mission.portraitId || 'INITIATOR';
     document.getElementById('init-portrait').style.cssText = getPortraitStyle(mission.portraitId);
     
+    const isTwist = mission.completion && mission.completion.portraitId && (mission.completion.portraitId !== mission.portraitId);
     const compBlock = document.getElementById('completion-portrait-block');
-    if (isTwist) {
+    
+    if (mission.completion && mission.completion.portraitId) {
         compBlock.style.display = 'flex';
+        document.getElementById('comp-role').textContent = mission.completion.portraitId;
         document.getElementById('comp-portrait').style.cssText = getPortraitStyle(mission.completion.portraitId);
     } else {
         compBlock.style.display = 'none';
@@ -1770,10 +1677,18 @@ function loadMission(mission, element) {
         ${completionBadge}
     `;
 
+    // Meta Flags & Triggers
+    const flagsEl = document.getElementById('detail-flags');
+    flagsEl.innerHTML = `
+        <span class="flag">${mission.repeatable ? '✔' : '✗'} Repeatable</span>
+        <span class="flag">${mission.abandonable ? '✔' : '✗'} Abandonable</span>
+    `;
+    document.getElementById('detail-trigger').textContent = parseTriggers(mission.triggers);
+
     const objEl = document.getElementById('detail-objectives');
     objEl.innerHTML = '';
     if (!mission.objectives || mission.objectives.length === 0) {
-        objEl.innerHTML = `<li><i>No specific operational tasks required. Acknowledge transmission.</i></li>`;
+        objEl.innerHTML = `<li><i>▸ No specific operational tasks required. Acknowledge transmission.</i></li>`;
     } else {
         mission.objectives.forEach(obj => {
             const li = document.createElement('li');
@@ -1782,17 +1697,50 @@ function loadMission(mission, element) {
         });
     }
 
+    const rewardsEl = document.getElementById('detail-rewards');
+    rewardsEl.innerHTML = '';
+    if (!mission.rewards || mission.rewards.length === 0) {
+        rewardsEl.innerHTML = `<i>No material rewards authorized for this operation.</i>`;
+    } else {
+        let rwdHtml = '';
+        mission.rewards.forEach(r => {
+            if (r.type === 'credits') { 
+                rwdHtml += `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
+            }
+            else if (r.type === 'UPGRADE') { 
+                rwdHtml += `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
+            }
+            else if (r.type === 'license') { 
+                rwdHtml += `<div class="payout-tag license">LICENSE Granted</div>`; 
+            }
+            else if (r.type === 'fill_fleet_fuel') { 
+                rwdHtml += `<div class="payout-tag credits">FUEL VOUCHER</div>`; 
+            }
+            else {
+                rwdHtml += `<div class="payout-tag">${r.type.toUpperCase()}</div>`;
+            }
+        });
+        rewardsEl.innerHTML = rwdHtml;
+    }
+
     const compBox = document.getElementById('detail-comp-box');
+    const compBtnWrapper = document.getElementById('comp-btn-wrapper');
     if (mission.completion) {
         document.getElementById('detail-comp-title').textContent = mission.completion.title || 'Mission Complete';
-        document.getElementById('detail-comp-text').innerHTML = mission.completion.text || '';
+        document.getElementById('detail-comp-text').innerHTML = parseDialog(mission.completion.text);
         
-        // Apply Host Theme local override to Completion Box (Prioritizes twist host if present)
+        if(mission.completion.buttonText) {
+            compBtnWrapper.style.display = 'block';
+            document.getElementById('comp-btn-text').textContent = mission.completion.buttonText;
+        } else {
+            compBtnWrapper.style.display = 'none';
+        }
+
         const compHost = (mission.completion && mission.completion.host) ? mission.completion.host : null;
         if (compHost) {
             compBox.className = `completion-box host-${compHost.toLowerCase()}`;
         } else {
-            compBox.className = `completion-box`; // Uses inherited vars from #mission-detail
+            compBox.className = `completion-box`;
         }
     }
 }
