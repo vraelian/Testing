@@ -17957,7 +17957,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br>Accept this mission below to add it to your log and begin.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br><b>Accept</b> this mission below to add it to your log and begin.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
@@ -17967,7 +17967,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Mission Log",
-            text: "When you accept a mission from the <b>Mission Terminal</b>, it moves to the <b>Mission Log</b> - this is where you will review and complete missions.<br><br>Most missions have specific requirements, such as delivering commodities to a designated location.<br><br>To track the progress of a specific mission, select the star icon on its mission card.",
+            text: "When you accept a mission from the <b>Mission Terminal</b>, it moves to the <b>Mission Log</b>.<br><br>Missions will have a variety of different objectives to complete, such as delivering commodities to a designated location.<br><br>To track the progress of a specific mission, select the star icon on its mission card.",
             buttonText: "Understood"
         },
         rewards: []
@@ -17980,7 +17980,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Your financial obligations and transaction history are logged in the <b>Finance</b> tab. Note that your debt is due in exactly three years. The Guild does not grant extensions and your credits will be garnished eventually if you fail to pay in time.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
+        description: "Your financial obligations and transaction history are logged in the <b>Finance</b> tab. Note that your debt is due within three years. The Guild does not grant extensions and your <i>credits will be garnished</i> eventually if you fail to pay in time.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
         ],
@@ -17994,7 +17994,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Debt",
-            text: "As long as you have debt interest will accrue monthly.<br><br>Pay off your debts <i>as soon as possible</i> to minimize the cost of borrowing credits!",
+            text: "As long as you have debt <i>interest will accrue monthly</i>.<br><br>Pay off your debts <i>as soon as possible</i> to minimize the cost of borrowing credits!",
             buttonText: "Understood"
         },
         rewards: []
@@ -18007,7 +18007,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Intel screen houses your <b>Codex</b> and the <b>Intel Market<b>.<br><br>The Codex contains key story information. The Intel market sells time-sensitive, guaranteed trade opportunities.<br><br>Tour the Intel screen, then return here.",
+        description: "The Intel screen houses your <b>Codex</b> and the <b>Intel Market</b>.<br><br>The Codex contains key story information. The Intel market sells time-sensitive, guaranteed trade opportunities.<br><br>Tour the <b>Intel</b> screen, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_02" }
         ],
@@ -18021,7 +18021,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Market Intelligence",
-            text: "You can only possess one piece of market intelligence at a time. Intel may reveal bargains or profit opportunities.",
+            text: "You may only possess one piece of market intelligence at a time. Intel may reveal bargains or profit opportunities.",
             buttonText: "Understood"
         },
         rewards: []
@@ -18034,7 +18034,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Guild has authorized your access to a live iteration of the Solar System <b>Map</b>. We expect you to utilize this map to identify profitable arbitrage routes between stations, each of which possess unique market dynamics, behaviors, and ships for sale.<br><br>By selecting a point of interest on the map, you can view valuable market data for that station.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
+        description: "The Guild has authorized your access to a live iteration of the Solar System <b>Map</b>. We expect you to utilize this map to identify profitable arbitrage routes between stations, each of which possess unique market dynamics, behaviors, and ships for sale.<br><br>By selecting a point of interest on the map, you can <i>view valuable market data</i> for that station.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_03" }
         ],
@@ -18088,7 +18088,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The <b>Cargo</b> screen tracks your fleet's current inventory, average cost basis, and total market value.<br><br>Inspect your hold now, then return here.",
+        description: "The <b>Cargo</b> screen tracks your fleet's current inventory, average cost basis, and total market value.<br><br>Inspect your cargo hold, which is empty for now, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_05" }
         ],
@@ -18115,7 +18115,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Arbitrage involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for more than they cost and earning a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon <b>Market</b> on the <b>Starport</b> tab, travel to Mars, and then <i>sell it at the Martian station</i>.<br><br>Profit is not the priority for this exercise.",
+        description: "Arbitrage involves <b>purchasing items at a low price, transporting them to a different station, and then selling them for more than they cost, thereby earning a profit</b>.<br><br>To complete this mission you will need to buy some ice here at the Moon <b>Market</b> on the <b>Starport</b> tab, travel to Mars, and then <i>sell it at the Martian station</i>.<br><br>Profit is not the priority for this exercise.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_06" }
         ],
@@ -18131,7 +18131,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Station Diversity",
-            text: "<b>Every station has a unique market with different supply, demand, imports, exports, and prices.</b><br><br> Your trading decisions will directly impact these markets, sometimes even causing temporary crashes or inflation in prices. The markets will react and recover over time.<br><br>To optimize your trades, review the <b>Station Details</b> on the map screen.",
+            text: "<b>Every station has a unique market with different supply and demand which will affect prices.</b><br><br> Your trading decisions will directly impact these markets, sometimes even causing temporary crashes or inflation in prices. The markets will react and recover over time as you travel.<br><br>To optimize your trades, review the <b>Station Details</b> on the map screen.",
             buttonText: "Understood"
         },
         rewards: []
@@ -18144,7 +18144,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Each station's <b>Shipyard</b> offers different vessels for purchase.<br><br>The hangar is your personal ship storage which is accessible from any station.<br><br>Tour the Martian Shipyard, then return here.",
+        description: "Each station's <b>Shipyard</b> offers different vessels for purchase.<br><br>The <b>Hangar</b> is your personal ship storage and is accessible from any station.<br><br>Tour the Martian Shipyard, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_07" }
         ],
@@ -18158,7 +18158,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Ship Attributes",
-            text: "A ship's fuel capacity, hull integrity, and cargo capacity directly influences your trading. Upgrade your fleet with the best ships to maximize your profit!",
+            text: "A ship's <b>fuel capacity, hull integrity, and cargo capacity</b> directly influences your trading. Upgrade your fleet with the best ships to maximize your profit!",
             buttonText: "Understood"
         },
         rewards: []
@@ -18171,7 +18171,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Stations provide fueling, repairs, and permanent ship upgrades for a fee.<br><br>The Guild has issued a one-time subsidy to cover your expenses. Visit the <b>Services</b> screen to fully repair and refuel your ship.",
+        description: "Stations provide fueling, repairs, and permanent ship upgrades for a fee.<br><br>The Guild has issued a one-time subsidy to cover your expenses from your recent trip. Visit the <b>Services</b> screen to fully repair and refuel your ship now.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_08" }
         ],
@@ -18190,7 +18190,7 @@ export const TUTORIAL_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Ship Tuning",
-            text: "A ship can have up to three upgrades at once.<br><br>The installation cost for an upgrade is determined by a ship's class.",
+            text: "Station services will have valuable ship upgrades for sale that improve performance. A ship may possess up to three upgrades.<br><br>The installation cost for an upgrade is determined by a ship's <b>class</b>.",
             buttonText: "Complete Tutorial",
             clearNavLock: true // Unlocks navigation after finishing the whole tutorial block
         },
@@ -18255,7 +18255,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when travel takes months! <b>Do not wait</b> - repay your debt to the Merchant’s Guild <i>as soon as possible</i>. To help, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and leverage a unique opportunity on Earth to your benefit. Your success will reflect well on me with the guild.",
+        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when travel takes months!<br><br><b>Do not wait</b> - repay your debt to the Merchant’s Guild <i>as soon as possible</i>. To help, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and <b>leverage a unique opportunity on Earth to your benefit</b>. Your success will reflect well on me with the guild.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_09" }
         ],
@@ -18268,7 +18268,7 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_earth",
             title: "Arrival",
-            text: "I see that you’ve made it to the Earth in your [shipName]. Continue to travel for arbitrage, buying low and selling high while fulfilling contracts and building up your network of clients. Don’t forget to review station details on your map.",
+            text: "I see that you’ve made it to the Earth in your [shipName].<br><br>Continue to travel for arbitrage, buying low and selling high while fulfilling contracts and building up your network of clients. Don’t forget to review station details on your map.<br><br>I will be back in touch shortly.",
             buttonText: "Understood"
         },
         rewards: []
@@ -18281,7 +18281,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], you are making adequate progress as a new trader, however, the interest on your loan continues to grow. Your objective is to pay off all of your debt on your finance screen to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.",
+        description: "Captain [playerName], you are making adequate progress as a new trader, however, the interest on your loan continues to grow. Your objective is to <b>pay off all of your debt</b> on your finance screen to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.<br><br>One more thing - take care to avoid the <b>Syndicate</b>.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
@@ -18291,7 +18291,7 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "Debt Cleared",
-            text: "Congratulations on paying down your loan. You now qualify for additional financing should you ever need the extra leveraging power for a large trade or some help with finances. The choice is up to you.",
+            text: "Congratulations on paying down your loan, Captain!<br><br>You now qualify for additional financing should you ever need the extra leveraging power for a large trade or just some general help. The choice is yours.<br><br>I am being called away to deal with a problem concerning a Venusian Syndicate shell company. I have fully unlocked your trade license so new clients should be in touch soon. Take care.",
             buttonText: "Understood"
         },
         rewards: [
@@ -18306,7 +18306,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Dockworker_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hey there. A Guild rep. passed your transponder code my way. We've got a sudden market shift—a coronal mass ejection is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for Water Ice.<br><br>If you can make it out to the Belt amidst the storm, I'll put in a good word for you.",
+        description: "Hey there. A Guild rep. passed your transponder code my way. We've got a sudden market shift—a coronal mass ejection is disrupting supply lines, and the hydroponics farms out in the Asteroid Belt are desperate for water!<br><br>If you can <b>make it out to the Belt amidst the storm to deliver water ice</b>, I'll put in a good word for you on the trade network.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
@@ -18325,11 +18325,11 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_belt",
             title: "Delivery Complete",
-            text: "The belt farms will distribute the water to the scattered hydroponics farms shortly. The valuable plants cultivated for food and oxygen will persist for a while longer now thanks to you.",
+            text: "The belt farms will distribute the water to the scattered hydroponics farms shortly. The valuable plants cultivated for food and oxygen will persist for a while longer now, thanks to you. We appreciate your help, Captain.",
             buttonText: "Unload the Water Ice"
         },
         rewards: [
-            { "type": "credits", "amount": 15500 }
+            { "type": "credits", "amount": 12500 }
         ]
     },
     'mission_13': {
@@ -18340,7 +18340,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings, Captain. I represent a medical manufacturing collective on Earth. We are experiencing a critical shortage of Plasteel, which is required for high-end cybernetic enhancements.<br><br>My client is in the market for a reliable supplier. If you can procure the requested amount of freight yourself, deliver it to our Earth facilities for generous compensation. We may have more work for you if you prove to be reliable.",
+        description: "Greetings, Captain.<br><br>I represent a medical manufacturing collective on Earth. We are experiencing a critical shortage of plasteel which is required for high-end cybernetic enhancements.<br><br>My client is seeking a reliable supplier. If you can <b>procure the plasteel yourself and deliver it to our Earth facilities</b> you will be generously compensated.<br><br>We will have more work for you if you prove to be reliable.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
@@ -18354,7 +18354,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 11000 }
+            { "type": "credits", "amount": 9000 }
         ]
     },
     'mission_14': {
@@ -18365,7 +18365,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Merchants_Guild_3",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk Plasteel to the Martian starport.</b> Your [shipName] cannot hold all of the freight at once, so get comfortable with the transit routes. You will likely need to source the Plasteel from multiple stations. Time is money.",
+        description: "Hello Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk plasteel to the Martian starport to supply the construction project.</b> Your [shipName] likely <i>cannot hold all of the freight at once</i> so get comfortable with the transit routes. You will likely need to source the plasteel from multiple stations. Good luck, time is money.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
@@ -18379,7 +18379,7 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Contract Fulfilled",
-            text: "The Martian dockmasters are ready to confirm receipt of the final Plasteel shipment. The orbital tether construction continues on schedule. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space.<br><br>I expect Audita will be in contact with you again soon. Take care, Captain.",
+            text: "The Martian dockmasters are ready to confirm receipt of the final Plasteel shipment. The orbital tether construction continues on schedule thanks to you. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space.<br><br>I have additional work for you when you're ready, Captain. You will find the order in your mission terminal. ",
             buttonText: "Unload the Plasteel"
         },
         rewards: [
@@ -18394,7 +18394,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Merchants_Guild_3",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], I have a specialized procurement order. A senior board member of the Guild requires a pristine shipment for their personal estate on Luna.<br><br><b>They will need substantial amounts of Water Ice for a localized cryo-therapy life-extension suite, and high-grade Plasteel for structural reinforcements of the estate.</b><br>Do not keep them waiting.",
+        description: "Captain [playerName], I have a special procurement order for you to fulfill. A very senior board member of the Guild requires a pristine shipment for their personal estate on Luna.<br><br><b>They need substantial amounts of water ice for a cryo-therapy life-extension suite and high-grade plasteel</b> for structural reinforcements of the estate.<br><br>Do not keep them waiting, and do not embarrass me, Captain.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_14" }
         ],
@@ -18405,7 +18405,7 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_luna",
             title: "Cryo-Delivery Complete",
-            text: "The lunar estate eagerly awaits the supplies to resume construction are prepared to transfer the credits upon delivery.",
+            text: "The lunar estate eagerly awaits the supplies to resume construction and are prepared to transfer payment upon delivery.",
             buttonText: "Unload the Freight"
         },
         rewards: [
@@ -18420,7 +18420,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Dockworker_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hey... [playerName]. Glad to see you're still around. Listen, things are bad here. When you left the Belt, the Guild didn't adjust our quotas. They just squeezed the rest of us harder. We're running critical on life support reserves and structural patching for the habitation modules.<br><br>I know you're busy playing merchant now, but we need a shipment of Water Ice and Plasteel here at the Belt. I can pay you from the habitation stipend the guild affords us Belters on duty.",
+        description: "Hey... [playerName]. It's been a while since you quit the mine. Glad to see you're still around.<br><br>Listen, things are bad here. When you left the Belt, the Guild didn't adjust our quotas. They just squeezed the rest of us harder. So, we're running critical on life support reserves and structural patching for the habitation modules.<br><br>I know you're busy playing merchant now, but <b>we need a shipment of water ice and plasteel</b> here at the Belt if you can manage it. I can pay you from the habitation stipend that the guild affords us Belters while on duty.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_15" }
         ],
@@ -18431,11 +18431,11 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_belt",
             title: "Delivery Complete",
-            text: "Once you've unloaded all the cargo I can transfer the credits your way. <br><br>Oh and [playerName], don't forget where you came from. Stay safe out there.",
+            text: "Thanks pal, this helps your old crew more than you know. Once you've unloaded all the cargo I can transfer the credits your way. <br><br>Oh and [playerName], don't forget where you came from. Stay safe out there.",
             buttonText: "Unload the Freight"
         },
         rewards: [
-            { "type": "credits", "amount": 18000 }
+            { "type": "credits", "amount": 9000 }
         ]
     },
     'mission_17': {
@@ -18446,7 +18446,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings, Captain [playerName]. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, joint repair initiative for the orbital stations at Uranus. However, statistical probability of sabotage from either of the two factions is 89.4%. Therefore, as an unaligned contractor, you represent the optimal deniable asset.<br><br><b>Travel to Venus to loadup with Plasteel and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
+        description: "Greetings, Captain. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, emergency joint repair initiative for the orbital stations at Uranus.<br><br><b>Travel to Venus to loadup with plasteel and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_16" }
         ],
@@ -18464,12 +18464,12 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_uranus",
             title: "Delivery Complete",
-            text: "Uranus Dock Authority have approved your access to the Starport depot for delivery. The dockmasters are ready to offload the Plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.",
+            text: "The Uranus Dock Authority have approved your access to the Starport depot for delivery. The dockmasters are ready to offload the Plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.<br><br><b>Your clearance granted by the UDA has unlocked tier 2 trading</b>.",
             buttonText: "Unload Freight"
         },
         rewards: [
             { "type": "license", "licenseId": "t2_license" },
-            { "type": "credits", "amount": 25000 }
+            { "type": "credits", "amount": 15000 }
         ]
     }
 };
