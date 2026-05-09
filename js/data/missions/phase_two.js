@@ -8,7 +8,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hello, Captain. I am Kiern, Research Director for the Venusian Syndicate. I have noted your recent logistical endeavors. The Syndicate has highly lucrative work available for an aspiring operator such as yourself, provided you aren't owned by the Merchant's Guild.<br><br>But first, you must prove you are more than a debtor. <b>Amass a larger net worth</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel as an act of good faith.",
+        description: "Hello, Captain [playerName].<br><br>I am <b>Kiern</b>, Research Director for the <b>Venusian Syndicate</b>. I have noted your recent logistical endeavors and I'm impressed. The Syndicate has highly lucrative work available for an aspiring operator such as yourself, provided you aren't owned by the Merchant's Guild.<br><br>But first, you must prove you are more than a debtor. <b>Amass a larger net worth</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel as an act of good faith.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_17" } ],
         grantedIntel: [ { name: "Syndicate Tip", location: "loc_venus" } ],
         objectives: [

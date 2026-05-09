@@ -17905,7 +17905,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your Merchant's Guild liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br><b>Accept</b> this mission below to add it to your log and begin.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your <b>Merchant's Guild</b> liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br><b>Accept</b> this mission below to add it to your log and begin.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
@@ -18394,7 +18394,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings, Captain. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, emergency joint repair initiative for the orbital stations at Uranus.<br><br><b>Travel to Venus to loadup with plasteel and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
+        description: "Greetings, Captain.<br><br>I was previously called away for other guild business but have returned to coordinate an expedited operation on behalf of the Guild. You are being entrusted with a diplomatic logistics run sponsored by the system's two <i>largest rival factions, the Merchant's Guild and the Venusian Syndicate</i>. As a neutral third party your involvement will be handsomely rewarded.<br><br>The Merchant's Guild and the Venusian Syndicate have temporarily entered into an emergency joint repair agreement for the orbital stations at Uranus. The stations urgently need building material for repairs. All parties involved need these stations operational as soon as possible to resume regular trade.<br><br><b>Travel to Venus to loadup with plasteel and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_16" }
         ],
@@ -18412,12 +18412,12 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_uranus",
             title: "Delivery Complete",
-            text: "The Uranus Dock Authority have approved your access to the Starport depot for delivery. The dockmasters are ready to offload the Plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.<br><br><b>Your clearance granted by the UDA has unlocked tier 2 trading</b>.",
+            text: "The Uranus Dock Authority has approved your access to the Starport depot for delivery. The dockmasters are ready to offload the plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.<br><br><b>Your clearance granted by the UDA has unlocked tier 2 trading</b>.",
             buttonText: "Unload Freight"
         },
         rewards: [
             { "type": "license", "licenseId": "t2_license" },
-            { "type": "credits", "amount": 15000 }
+            { "type": "credits", "amount": 25000 }
         ]
     }
 };
@@ -18434,7 +18434,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hello, Captain. I am Kiern, Research Director for the Venusian Syndicate. I have noted your recent logistical endeavors. The Syndicate has highly lucrative work available for an aspiring operator such as yourself, provided you aren't owned by the Merchant's Guild.<br><br>But first, you must prove you are more than a debtor. <b>Amass a larger net worth</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel as an act of good faith.",
+        description: "Hello, Captain [playerName].<br><br>I am <b>Kiern</b>, Research Director for the <b>Venusian Syndicate</b>. I have noted your recent logistical endeavors and I'm impressed. The Syndicate has highly lucrative work available for an aspiring operator such as yourself, provided you aren't owned by the Merchant's Guild.<br><br>But first, you must prove you are more than a debtor. <b>Amass a larger net worth</b> to demonstrate your merit in arbitrage, then <b>meet me at the Venusian cloud-cities</b>. I have forwarded a piece of intel as an act of good faith.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_17" } ],
         grantedIntel: [ { name: "Syndicate Tip", location: "loc_venus" } ],
         objectives: [

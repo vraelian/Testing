@@ -204,7 +204,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings, Captain. I was previously called away for guild business but have returned to administer this latest mission. You are being entrusted with a diplomatic logistics run.<br><br>The Guild and the Venusian Syndicate have entered a temporary, emergency joint repair initiative for the orbital stations at Uranus.<br><br><b>Travel to Venus to loadup with plasteel and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
+        description: "Greetings, Captain.<br><br>I was previously called away for other guild business but have returned to coordinate an expedited operation on behalf of the Guild. You are being entrusted with a diplomatic logistics run sponsored by the system's two <i>largest rival factions, the Merchant's Guild and the Venusian Syndicate</i>. As a neutral third party your involvement will be handsomely rewarded.<br><br>The Merchant's Guild and the Venusian Syndicate have temporarily entered into an emergency joint repair agreement for the orbital stations at Uranus. The stations urgently need building material for repairs. All parties involved need these stations operational as soon as possible to resume regular trade.<br><br><b>Travel to Venus to loadup with plasteel and deliver the freight to Uranus.</b> This contract will test the operational limits of the [shipName]. Monitor your fuel reserves closely. You will likely need to stop to refuel along the way.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_16" }
         ],
@@ -222,12 +222,12 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_uranus",
             title: "Delivery Complete",
-            text: "The Uranus Dock Authority have approved your access to the Starport depot for delivery. The dockmasters are ready to offload the Plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.<br><br><b>Your clearance granted by the UDA has unlocked tier 2 trading</b>.",
+            text: "The Uranus Dock Authority has approved your access to the Starport depot for delivery. The dockmasters are ready to offload the plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.<br><br><b>Your clearance granted by the UDA has unlocked tier 2 trading</b>.",
             buttonText: "Unload Freight"
         },
         rewards: [
             { "type": "license", "licenseId": "t2_license" },
-            { "type": "credits", "amount": 15000 }
+            { "type": "credits", "amount": 25000 }
         ]
     }
 };
