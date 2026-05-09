@@ -31,7 +31,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Guild relies on organic indentured labor to extract ice from Pluto. It is slow and agonizingly stable. I want to see you disrupt their monopoly.<br><br><b>Procure Cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap, automated augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
+        description: "Captain, in case you haven't realized this yet, the Merchant's Guild is not what it seems. Their precious 'order' carries a cost that they readily socialize across the lower castes.<br><br>For example, the guild relies on organic indentured labor to extract ice from Pluto. It is a slow and stable market at the fringes for which they wield an oppressive grip. I want to see you disrupt their monopoly to improve the lives of the workforce on this world.<br><br><b>Procure cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_18" } ],
         objectives: [
             { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15, "latch": true },
@@ -54,7 +54,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Business_11",
         isRepeatable: false,
         isAbandonable: false,
-        description: "<b>ATTENTION NEW CAPTAINS:</b><br><br>Jupiter Atmo Refineries welcomes you to the trade network! To celebrate our Q3 production surplus, we are offering a one-time <b>COMPLIMENTARY FLEET REFUEL</b> to newly licensed logistics operators.<br><br>Dock at any authorized Jovian orbital tether to claim your stipend.<br><br><i>Jupiter Atmo Refineries: Powering the Long Watch.</i>",
+        description: "<b>ATTENTION NEW CAPTAINS:</b><br><br>Jupiter Atmo Refineries welcomes you to the trade network! To celebrate our Q3 production surplus, we are offering a one-time <b>COMPLIMENTARY FLEET REFUEL</b> to newly licensed logistics operators.<br><br><b>Dock at any authorized Jovian orbital station</b> to claim your stipend.<br><br><i>Jupiter Atmo Refineries: Fueling the Long Watch.</i>",
         triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
         onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_story_1" } ],
         objectives: [ { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" } ],
@@ -74,8 +74,8 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings Captain [playerName]! The nedical manufacturering collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br>We urgently require Hydroponics to sustain the lab's operations.<br><br>The Guild is currently imposing an embargo, heavily complicating trade routes, but we will compensate you generously for navigating these artificial constraints.",
-        triggers: [ { "type": "mission_completed", "missionId": "mission_20" } ],
+        description: "Greetings Captain [playerName]!<br><br>The nedical manufacturering collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br><b>We urgently require hydroponics to sustain the lab's operations.</b><br><br>The Guild is currently imposing an embargo that is heavily complicating trade routes but we will compensate you generously for navigating these constraints. I have provided you with the coordinates for the lab on Mercury.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
         onAccept: [ 
             { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
             { "type": "TRIGGER_SYSTEM_STATE", "stateId": "GUILD_EMBARGO" }
