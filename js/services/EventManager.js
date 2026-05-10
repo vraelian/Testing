@@ -82,6 +82,9 @@ export class EventManager {
             }
         };
 
+        // Phase 2 Fix: Guarantee Scroll Dismissal on ALL native scroll events (capture phase)
+        document.addEventListener('scroll', dismissTooltipsOnScroll, { capture: true, passive: true });
+
         document.body.addEventListener('wheel', (e) => {
             dismissTooltipsOnScroll(e);
             if (e.target.closest('.carousel-container')) {

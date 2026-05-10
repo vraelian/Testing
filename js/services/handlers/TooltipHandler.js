@@ -125,8 +125,12 @@ export class TooltipHandler {
             }
         }
 
-        // Only hide if we didn't click another tooltip-triggering element
-        if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
+        // --- Phase 3 Hardened Click Dismissal ---
+        // Guaranteed wipe for clicks outside the active graph anchor or tooltip target
+        const isClickingActiveTarget = actionTarget && (actionTarget === this.activeTooltipTarget || actionTarget === this.uiManager.activeGraphAnchor);
+        const hasActiveTooltip = this.activeTooltipTarget || this.uiManager.activeGraphAnchor;
+
+        if (hasActiveTooltip && !isClickingActiveTarget) {
             this.hideAllTooltips();
         }
         

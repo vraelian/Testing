@@ -18500,7 +18500,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings Captain [playerName]!<br><br>The nedical manufacturering collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br><b>We urgently require hydroponics to sustain the lab's operations.</b><br><br>The Guild is currently imposing an embargo that is heavily complicating trade routes but we will compensate you generously for navigating these constraints. I have provided you with the coordinates for the lab on Mercury.",
+        description: "Greetings Captain [playerName]!<br><br>The medical manufacturing collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br><b>We urgently require hydroponics to sustain the lab's operations.</b><br><br>The Guild is currently imposing an embargo that is heavily complicating trade routes but we will compensate you generously for navigating these constraints. I have provided you with the coordinates for the lab on Mercury.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
         onAccept: [ 
             { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
@@ -18510,7 +18510,8 @@ export const PHASE_TWO_MISSIONS = {
             { "type": "END_SYSTEM_STATE" }
         ],
         objectives: [ 
-            { "id": "deliver_hydroponics", "type": "DELIVER_ITEM", "goodId": "hydroponics", "quantity": 15, "target": "loc_mercury" } 
+            { "id": "procure_hydroponics", "type": "HAVE_ITEM", "goodId": "hydroponics", "quantity": 15, "latch": true },
+            { "id": "travel_mercury", "type": "TRAVEL_TO", "target": "loc_mercury", "dependsOn": "procure_hydroponics" }
         ],
         completion: {
             host: "GUILD",
@@ -41734,7 +41735,32 @@ export class EventManager {
 
         document.body.addEventListener('contextmenu', (e) => e.preventDefault());
 
+        // --- VIRTUAL WORKBENCH: Physical Input Tooltip Dismissal ---
+        // Replaces the bugged global scroll intercept to prevent DOM shift abortions
+        const dismissTooltipsOnScroll = (e) => {
+            if (e.target && e.target.closest && e.target.closest('#graph-tooltip, #generic-tooltip')) return;
+            
+            if (this.uiManager.activeGraphAnchor || this.uiManager.activeGenericTooltipAnchor || this.tooltipHandler.activeStatusTooltip) {
+                if (typeof this.tooltipHandler.hideAllTooltips === 'function') {
+                    this.tooltipHandler.hideAllTooltips();
+                } else {
+                    // Fallback to manual teardown if hideAllTooltips isn't available
+                    this.uiManager.hideGraph();
+                    this.uiManager.hideGenericTooltip();
+                    this.tooltipHandler.activeTooltipTarget = null;
+                    if (this.tooltipHandler.activeStatusTooltip) {
+                        this.tooltipHandler.activeStatusTooltip.classList.remove('visible');
+                        this.tooltipHandler.activeStatusTooltip = null;
+                    }
+                }
+            }
+        };
+
+        // Phase 2 Fix: Guarantee Scroll Dismissal on ALL native scroll events (capture phase)
+        document.addEventListener('scroll', dismissTooltipsOnScroll, { capture: true, passive: true });
+
         document.body.addEventListener('wheel', (e) => {
+            dismissTooltipsOnScroll(e);
             if (e.target.closest('.carousel-container')) {
                 e.preventDefault();
                 this.carouselEventHandler.handleWheel(e);
@@ -41783,10 +41809,12 @@ export class EventManager {
         document.body.addEventListener('touchcancel', endDragOrHold);
 
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
+        
         document.body.addEventListener('touchmove', (e) => {
-             if (this.carouselEventHandler.state.isDragging) {
-                 e.preventDefault();
-             }
+            dismissTooltipsOnScroll(e); // Dismiss popups on physical touch swipe
+            if (this.carouselEventHandler.state.isDragging) {
+                e.preventDefault();
+            }
             this.carouselEventHandler.handleDragMove(e);
         }, { passive: false });
 
@@ -43888,7 +43916,7 @@ export class UIManager {
             navigationScreen: document.getElementById(`${SCREEN_IDS.NAVIGATION}-screen`),
             servicesScreen: document.getElementById(`${SCREEN_IDS.SERVICES}-screen`),
             marketScreen: document.getElementById(`${SCREEN_IDS.MARKET}-screen`),
-            cargoScreen: document.getElementById(`${SCREEN_IDS.CARGO}-screen`),
+            cargoScreen: document.getElementById(`${SCREEN_IDS.HANGAR}-screen`),
             hangarScreen: document.getElementById(`${SCREEN_IDS.HANGAR}-screen`),
             missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
@@ -44652,6 +44680,37 @@ export class UIManager {
         return null;
     }
 
+    hideGraph() {
+        const tooltip = this.cache.graphTooltip;
+        if (!tooltip) return;
+
+        // Guard against listener spam
+        if (tooltip.classList.contains('blur-fade-out')) return;
+
+        if (this.activeGraphAnchor || tooltip.style.display !== 'none') {
+            tooltip.classList.remove('blur-fade-in');
+            
+            // Phase 1 Acceleration: Dynamically override the CSS animation duration
+            tooltip.style.animationDuration = '0.15s';
+            
+            void tooltip.offsetWidth; // Force layout recalculation
+            tooltip.classList.add('blur-fade-out');
+            
+            const cleanup = () => {
+                if (tooltip.classList.contains('blur-fade-out')) {
+                    tooltip.style.display = 'none';
+                    tooltip.classList.remove('blur-fade-out');
+                    tooltip.style.animationDuration = ''; // Strip the override so entrance animations aren't broken
+                }
+            };
+            
+            tooltip.addEventListener('animationend', cleanup, { once: true });
+            setTimeout(cleanup, 150); // Fallback reduced to match the 150ms acceleration
+            
+            this.activeGraphAnchor = null;
+        }
+    }
+
     showGraph(anchorEl, gameState) {
         this.activeGraphAnchor = anchorEl;
         const tooltip = this.cache.graphTooltip;
@@ -44665,27 +44724,14 @@ export class UIManager {
             tooltip.innerHTML = this.marketControl.renderFinanceGraph(gameState);
         }
 
-        tooltip.classList.remove('graph-blur-fade-out');
-        tooltip.classList.add('graph-blur-fade-in');
+        tooltip.classList.remove('blur-fade-out');
+        tooltip.style.animationDuration = '0.15s'; // OVERRIDE TO 0.15s
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
-    }
-
-    hideGraph() {
-         if (this.activeGraphAnchor) {
-            const tooltip = this.cache.graphTooltip;
-            tooltip.classList.remove('graph-blur-fade-in');
-            tooltip.classList.add('graph-blur-fade-out');
-            
-            tooltip.addEventListener('animationend', () => {
-                if (tooltip.classList.contains('graph-blur-fade-out')) {
-                    tooltip.style.display = 'none';
-                    tooltip.classList.remove('graph-blur-fade-out');
-                }
-            }, { once: true });
-            
-            this.activeGraphAnchor = null;
-        }
+        
+        tooltip.classList.remove('blur-fade-in');
+        void tooltip.offsetWidth; // Force layout recalculation
+        tooltip.classList.add('blur-fade-in');
     }
 
     updateGraphTooltipPosition() {
@@ -44717,6 +44763,8 @@ export class UIManager {
         tooltip.style.transform = '';
         tooltip.style.right = 'auto';
         tooltip.style.bottom = 'auto';
+        
+        // Ensure clean state before positioning
         tooltip.style.display = 'block';
         
         // Force the browser to render the tooltip's text block on the next frame 
@@ -44729,8 +44777,9 @@ export class UIManager {
     }
 
     hideGenericTooltip() {
-        if (this.activeGenericTooltipAnchor) {
-            this.cache.genericTooltip.style.display = 'none';
+        const tooltip = this.cache.genericTooltip;
+        if (this.activeGenericTooltipAnchor || (tooltip && tooltip.style.display !== 'none')) {
+            if (tooltip) tooltip.style.display = 'none';
             this.activeGenericTooltipAnchor = null;
             this.activePointerCoords = null;
         }
@@ -49006,7 +49055,12 @@ export class ActionClickHandler {
                 
                 const hullRatio = shipState.health / maxHealth;
 
-                this.uiManager.hideModal('launch-modal');
+                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
+                if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
+                    this.uiManager.modalEngine.destroyModalInstant('launch-modal');
+                } else {
+                    this.uiManager.hideModal('launch-modal');
+                }
 
                 // The Intercept
                 if (hullRatio < 0.15) {
@@ -49023,7 +49077,24 @@ export class ActionClickHandler {
                 const { locationId } = dataset;
                 if (!locationId) return;
 
-                this.uiManager.hideMapDetailModal();
+                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
+                const mapModal = document.getElementById('map-detail-modal');
+                if (mapModal) {
+                    mapModal.classList.remove('is-glowing');
+                    delete mapModal.dataset.theme;
+                }
+                
+                if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
+                    this.uiManager.modalEngine.destroyModalInstant('map-detail-modal');
+                } else {
+                    // Fallback to safety if engine lacks instant destroy hook
+                    if (typeof this.uiManager.hideMapDetailModal === 'function') {
+                        this.uiManager.hideMapDetailModal();
+                    } else {
+                        this.uiManager.hideModal('map-detail-modal');
+                    }
+                }
+
                 this.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
 
                 setTimeout(() => {
@@ -49511,6 +49582,20 @@ export class TooltipHandler {
     }
 
     /**
+     * Centralized utility to instantly dismiss any active tooltips or popups.
+     */
+    hideAllTooltips() {
+        this.uiManager.hideGraph();
+        this.uiManager.hideGenericTooltip();
+        this.activeTooltipTarget = null;
+        
+        if (this.activeStatusTooltip) {
+            this.activeStatusTooltip.classList.remove('visible');
+            this.activeStatusTooltip = null;
+        }
+    }
+
+    /**
      * Helper to verify if an element is genuinely visible on screen.
      * @private
      */
@@ -49536,9 +49621,7 @@ export class TooltipHandler {
             this.activeStatusTooltip = null;
         }
         if (this.uiManager.isClickInside(e, '#graph-tooltip, #generic-tooltip')) {
-            this.uiManager.hideGraph();
-            this.uiManager.hideGenericTooltip();
-            this.activeTooltipTarget = null;
+            this.hideAllTooltips();
             return;
         }
         
@@ -49605,11 +49688,13 @@ export class TooltipHandler {
             }
         }
 
-        // Only hide if we didn't click another tooltip-triggering element
-        if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
-            this.uiManager.hideGraph();
-            this.uiManager.hideGenericTooltip();
-            this.activeTooltipTarget = null;
+        // --- Phase 3 Hardened Click Dismissal ---
+        // Guaranteed wipe for clicks outside the active graph anchor or tooltip target
+        const isClickingActiveTarget = actionTarget && (actionTarget === this.activeTooltipTarget || actionTarget === this.uiManager.activeGraphAnchor);
+        const hasActiveTooltip = this.activeTooltipTarget || this.uiManager.activeGraphAnchor;
+
+        if (hasActiveTooltip && !isClickingActiveTarget) {
+            this.hideAllTooltips();
         }
         
         if (this.uiManager.isMobile) {
