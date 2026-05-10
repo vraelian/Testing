@@ -61,7 +61,29 @@ export class EventManager {
 
         document.body.addEventListener('contextmenu', (e) => e.preventDefault());
 
+        // --- VIRTUAL WORKBENCH: Physical Input Tooltip Dismissal ---
+        // Replaces the bugged global scroll intercept to prevent DOM shift abortions
+        const dismissTooltipsOnScroll = (e) => {
+            if (e.target && e.target.closest && e.target.closest('#graph-tooltip, #generic-tooltip')) return;
+            
+            if (this.uiManager.activeGraphAnchor || this.uiManager.activeGenericTooltipAnchor || this.tooltipHandler.activeStatusTooltip) {
+                if (typeof this.tooltipHandler.hideAllTooltips === 'function') {
+                    this.tooltipHandler.hideAllTooltips();
+                } else {
+                    // Fallback to manual teardown if hideAllTooltips isn't available
+                    this.uiManager.hideGraph();
+                    this.uiManager.hideGenericTooltip();
+                    this.tooltipHandler.activeTooltipTarget = null;
+                    if (this.tooltipHandler.activeStatusTooltip) {
+                        this.tooltipHandler.activeStatusTooltip.classList.remove('visible');
+                        this.tooltipHandler.activeStatusTooltip = null;
+                    }
+                }
+            }
+        };
+
         document.body.addEventListener('wheel', (e) => {
+            dismissTooltipsOnScroll(e);
             if (e.target.closest('.carousel-container')) {
                 e.preventDefault();
                 this.carouselEventHandler.handleWheel(e);
@@ -110,10 +132,12 @@ export class EventManager {
         document.body.addEventListener('touchcancel', endDragOrHold);
 
         document.body.addEventListener('mousemove', (e) => this.carouselEventHandler.handleDragMove(e));
+        
         document.body.addEventListener('touchmove', (e) => {
-             if (this.carouselEventHandler.state.isDragging) {
-                 e.preventDefault();
-             }
+            dismissTooltipsOnScroll(e); // Dismiss popups on physical touch swipe
+            if (this.carouselEventHandler.state.isDragging) {
+                e.preventDefault();
+            }
             this.carouselEventHandler.handleDragMove(e);
         }, { passive: false });
 

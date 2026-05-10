@@ -577,7 +577,12 @@ export class ActionClickHandler {
                 
                 const hullRatio = shipState.health / maxHealth;
 
-                this.uiManager.hideModal('launch-modal');
+                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
+                if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
+                    this.uiManager.modalEngine.destroyModalInstant('launch-modal');
+                } else {
+                    this.uiManager.hideModal('launch-modal');
+                }
 
                 // The Intercept
                 if (hullRatio < 0.15) {
@@ -594,7 +599,24 @@ export class ActionClickHandler {
                 const { locationId } = dataset;
                 if (!locationId) return;
 
-                this.uiManager.hideMapDetailModal();
+                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
+                const mapModal = document.getElementById('map-detail-modal');
+                if (mapModal) {
+                    mapModal.classList.remove('is-glowing');
+                    delete mapModal.dataset.theme;
+                }
+                
+                if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
+                    this.uiManager.modalEngine.destroyModalInstant('map-detail-modal');
+                } else {
+                    // Fallback to safety if engine lacks instant destroy hook
+                    if (typeof this.uiManager.hideMapDetailModal === 'function') {
+                        this.uiManager.hideMapDetailModal();
+                    } else {
+                        this.uiManager.hideModal('map-detail-modal');
+                    }
+                }
+
                 this.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.NAVIGATION);
 
                 setTimeout(() => {
