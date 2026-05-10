@@ -74,7 +74,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings Captain [playerName]!<br><br>The nedical manufacturering collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br><b>We urgently require hydroponics to sustain the lab's operations.</b><br><br>The Guild is currently imposing an embargo that is heavily complicating trade routes but we will compensate you generously for navigating these constraints. I have provided you with the coordinates for the lab on Mercury.",
+        description: "Greetings Captain [playerName]!<br><br>The medical manufacturing collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br><b>We urgently require hydroponics to sustain the lab's operations.</b><br><br>The Guild is currently imposing an embargo that is heavily complicating trade routes but we will compensate you generously for navigating these constraints. I have provided you with the coordinates for the lab on Mercury.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
         onAccept: [ 
             { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
@@ -84,7 +84,8 @@ export const PHASE_TWO_MISSIONS = {
             { "type": "END_SYSTEM_STATE" }
         ],
         objectives: [ 
-            { "id": "deliver_hydroponics", "type": "DELIVER_ITEM", "goodId": "hydroponics", "quantity": 15, "target": "loc_mercury" } 
+            { "id": "procure_hydroponics", "type": "HAVE_ITEM", "goodId": "hydroponics", "quantity": 15, "latch": true },
+            { "id": "travel_mercury", "type": "TRAVEL_TO", "target": "loc_mercury", "dependsOn": "procure_hydroponics" }
         ],
         completion: {
             host: "GUILD",

@@ -19,6 +19,20 @@ export class TooltipHandler {
     }
 
     /**
+     * Centralized utility to instantly dismiss any active tooltips or popups.
+     */
+    hideAllTooltips() {
+        this.uiManager.hideGraph();
+        this.uiManager.hideGenericTooltip();
+        this.activeTooltipTarget = null;
+        
+        if (this.activeStatusTooltip) {
+            this.activeStatusTooltip.classList.remove('visible');
+            this.activeStatusTooltip = null;
+        }
+    }
+
+    /**
      * Helper to verify if an element is genuinely visible on screen.
      * @private
      */
@@ -44,9 +58,7 @@ export class TooltipHandler {
             this.activeStatusTooltip = null;
         }
         if (this.uiManager.isClickInside(e, '#graph-tooltip, #generic-tooltip')) {
-            this.uiManager.hideGraph();
-            this.uiManager.hideGenericTooltip();
-            this.activeTooltipTarget = null;
+            this.hideAllTooltips();
             return;
         }
         
@@ -115,9 +127,7 @@ export class TooltipHandler {
 
         // Only hide if we didn't click another tooltip-triggering element
         if (this.activeTooltipTarget && actionTarget !== this.activeTooltipTarget) {
-            this.uiManager.hideGraph();
-            this.uiManager.hideGenericTooltip();
-            this.activeTooltipTarget = null;
+            this.hideAllTooltips();
         }
         
         if (this.uiManager.isMobile) {

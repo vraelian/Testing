@@ -881,6 +881,37 @@ export class UIManager {
         return null;
     }
 
+    hideGraph() {
+        const tooltip = this.cache.graphTooltip;
+        if (!tooltip) return;
+
+        // Guard against listener spam
+        if (tooltip.classList.contains('graph-blur-fade-out')) return;
+
+        if (this.activeGraphAnchor || tooltip.style.display !== 'none') {
+            tooltip.classList.remove('graph-blur-fade-in');
+            
+            // Phase 1 Acceleration: Dynamically override the CSS animation duration
+            tooltip.style.animationDuration = '0.15s';
+            
+            void tooltip.offsetWidth; // Force layout recalculation
+            tooltip.classList.add('graph-blur-fade-out');
+            
+            const cleanup = () => {
+                if (tooltip.classList.contains('graph-blur-fade-out')) {
+                    tooltip.style.display = 'none';
+                    tooltip.classList.remove('graph-blur-fade-out');
+                    tooltip.style.animationDuration = ''; // Strip the override so entrance animations aren't broken
+                }
+            };
+            
+            tooltip.addEventListener('animationend', cleanup, { once: true });
+            setTimeout(cleanup, 150); // Fallback reduced to match the 150ms acceleration
+            
+            this.activeGraphAnchor = null;
+        }
+    }
+
     showGraph(anchorEl, gameState) {
         this.activeGraphAnchor = anchorEl;
         const tooltip = this.cache.graphTooltip;
@@ -895,26 +926,13 @@ export class UIManager {
         }
 
         tooltip.classList.remove('graph-blur-fade-out');
-        tooltip.classList.add('graph-blur-fade-in');
+        tooltip.style.animationDuration = ''; // Ensure standard entrance speed
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
-    }
-
-    hideGraph() {
-         if (this.activeGraphAnchor) {
-            const tooltip = this.cache.graphTooltip;
-            tooltip.classList.remove('graph-blur-fade-in');
-            tooltip.classList.add('graph-blur-fade-out');
-            
-            tooltip.addEventListener('animationend', () => {
-                if (tooltip.classList.contains('graph-blur-fade-out')) {
-                    tooltip.style.display = 'none';
-                    tooltip.classList.remove('graph-blur-fade-out');
-                }
-            }, { once: true });
-            
-            this.activeGraphAnchor = null;
-        }
+        
+        tooltip.classList.remove('graph-blur-fade-in');
+        void tooltip.offsetWidth; // Force layout recalculation
+        tooltip.classList.add('graph-blur-fade-in');
     }
 
     updateGraphTooltipPosition() {
@@ -946,6 +964,8 @@ export class UIManager {
         tooltip.style.transform = '';
         tooltip.style.right = 'auto';
         tooltip.style.bottom = 'auto';
+        
+        // Ensure clean state before positioning
         tooltip.style.display = 'block';
         
         // Force the browser to render the tooltip's text block on the next frame 
@@ -958,8 +978,9 @@ export class UIManager {
     }
 
     hideGenericTooltip() {
-        if (this.activeGenericTooltipAnchor) {
-            this.cache.genericTooltip.style.display = 'none';
+        const tooltip = this.cache.genericTooltip;
+        if (this.activeGenericTooltipAnchor || (tooltip && tooltip.style.display !== 'none')) {
+            if (tooltip) tooltip.style.display = 'none';
             this.activeGenericTooltipAnchor = null;
             this.activePointerCoords = null;
         }
