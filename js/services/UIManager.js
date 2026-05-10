@@ -117,7 +117,7 @@ export class UIManager {
             navigationScreen: document.getElementById(`${SCREEN_IDS.NAVIGATION}-screen`),
             servicesScreen: document.getElementById(`${SCREEN_IDS.SERVICES}-screen`),
             marketScreen: document.getElementById(`${SCREEN_IDS.MARKET}-screen`),
-            cargoScreen: document.getElementById(`${SCREEN_IDS.CARGO}-screen`),
+            cargoScreen: document.getElementById(`${SCREEN_IDS.HANGAR}-screen`),
             hangarScreen: document.getElementById(`${SCREEN_IDS.HANGAR}-screen`),
             missionsScreen: document.getElementById(`${SCREEN_IDS.MISSIONS}-screen`),
             financeScreen: document.getElementById(`${SCREEN_IDS.FINANCE}-screen`),
@@ -886,21 +886,21 @@ export class UIManager {
         if (!tooltip) return;
 
         // Guard against listener spam
-        if (tooltip.classList.contains('graph-blur-fade-out')) return;
+        if (tooltip.classList.contains('blur-fade-out')) return;
 
         if (this.activeGraphAnchor || tooltip.style.display !== 'none') {
-            tooltip.classList.remove('graph-blur-fade-in');
+            tooltip.classList.remove('blur-fade-in');
             
             // Phase 1 Acceleration: Dynamically override the CSS animation duration
             tooltip.style.animationDuration = '0.15s';
             
             void tooltip.offsetWidth; // Force layout recalculation
-            tooltip.classList.add('graph-blur-fade-out');
+            tooltip.classList.add('blur-fade-out');
             
             const cleanup = () => {
-                if (tooltip.classList.contains('graph-blur-fade-out')) {
+                if (tooltip.classList.contains('blur-fade-out')) {
                     tooltip.style.display = 'none';
-                    tooltip.classList.remove('graph-blur-fade-out');
+                    tooltip.classList.remove('blur-fade-out');
                     tooltip.style.animationDuration = ''; // Strip the override so entrance animations aren't broken
                 }
             };
@@ -925,14 +925,14 @@ export class UIManager {
             tooltip.innerHTML = this.marketControl.renderFinanceGraph(gameState);
         }
 
-        tooltip.classList.remove('graph-blur-fade-out');
-        tooltip.style.animationDuration = ''; // Ensure standard entrance speed
+        tooltip.classList.remove('blur-fade-out');
+        tooltip.style.animationDuration = '0.15s'; // OVERRIDE TO 0.15s
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
         
-        tooltip.classList.remove('graph-blur-fade-in');
+        tooltip.classList.remove('blur-fade-in');
         void tooltip.offsetWidth; // Force layout recalculation
-        tooltip.classList.add('graph-blur-fade-in');
+        tooltip.classList.add('blur-fade-in');
     }
 
     updateGraphTooltipPosition() {
