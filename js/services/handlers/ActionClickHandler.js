@@ -850,6 +850,43 @@ export class ActionClickHandler {
                         payAmount = parseInt(slider.value, 10);
                     }
                 }
+
+                // --- PHASE 2: Debt Payment Liquidity Safeguard (Updated) ---
+                const actualPayAmount = payAmount !== null ? payAmount : Math.min(state.player.credits, state.player.debt);
+                const loanId = state.player.loanStartDate || 'legacy_loan';
+                
+                if (actualPayAmount > 0 && actualPayAmount > (state.player.credits * 0.75) && state.player.warnedLoanId !== loanId) {
+                    delete actionTarget.dataset.primed;
+                    actionTarget.classList.remove('primed');
+                    
+                    // FIX: Mutate the root gameState object and trigger a state save so it persists across renders
+                    this.gameState.player.warnedLoanId = loanId;
+                    this.gameState.setState({});
+                    
+                    this.uiManager.queueModal(
+                        'event-modal', 
+                        '<span class="text-red-500">Liquidity Warning</span>', 
+                        'Making this payment with so few credits risks an inability to purchase profitable cargo or worse, bankruptcy. Ensure you have enough credits remaining for services and trading before committing to large debt payments. This warning will not appear again.',
+                        null, 
+                        { 
+                            dismissOutside: false,
+                            customSetup: (modal, closeHandler) => {
+                                const btnContainer = modal.querySelector('#event-button-container');
+                                btnContainer.innerHTML = '<button id="ack-debt-warning" class="btn w-full text-red-400 border-red-500 hover:bg-red-900/30">Acknowledged</button>';
+                                modal.querySelector('#ack-debt-warning').onclick = closeHandler;
+                                
+                                const modalContent = modal.querySelector('.modal-content');
+                                if (modalContent) {
+                                    modalContent.style.borderColor = '#ef4444';
+                                    modalContent.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.2)';
+                                }
+                            }
+                        }
+                    );
+                    return;
+                }
+                // ------------------------------------------------
+
                 this.simulationService.payOffDebt(payAmount !== null ? payAmount : e, e);
                 break;
             }

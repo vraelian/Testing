@@ -202,7 +202,7 @@ export const EVENTS_TRAFFIC = [
             {
                 id: 'choice_sell',
                 text: 'Flash Sale (Lose Cargo, +Credits)',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }], 
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }], 
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_sell' }] }
             },
             {

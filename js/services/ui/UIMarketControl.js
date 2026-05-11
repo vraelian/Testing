@@ -20,6 +20,15 @@ export class UIMarketControl {
      */
     resetMarketTransactionState() {
         this.marketTransactionState = {};
+        
+        // --- PHASE 2: Explicit DOM Input Reset ---
+        if (this.manager && this.manager.cache && this.manager.cache.marketScreen) {
+            const inputs = this.manager.cache.marketScreen.querySelectorAll('.qty-stepper input');
+            inputs.forEach(input => {
+                input.value = "0";
+                input.classList.remove('qty-high');
+            });
+        }
     }
 
     /**

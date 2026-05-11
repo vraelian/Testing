@@ -698,6 +698,9 @@ export class PlayerActionService {
             player.repoNextEventDay = null;
             player.lastRepoStrikeDay = null;
             player.seenGarnishmentWarning = false;
+            
+            // --- NEW: Clear the liquidity warning flag when debt is settled ---
+            player.warnedLoanId = null;
         }
 
         this.missionService.checkTriggers();
