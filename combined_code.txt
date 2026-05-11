@@ -2747,6 +2747,23 @@ document.addEventListener('DOMContentLoaded', () => {
     0%, 100% { transform: translateY(0); opacity: 0.4; }
     50% { transform: translateY(4px); opacity: 1; }
 }
+
+/* ========================================================================= */
+/* --- SCROLLBAR SUPPRESSION FOR MISSION MODALS --- */
+/* ========================================================================= */
+#mission-modal .modal-body,
+#mission-complete-modal .modal-body,
+#mission-modal [class*="scroll"],
+#mission-complete-modal [class*="scroll"] {
+    scrollbar-width: none !important;
+}
+
+#mission-modal .modal-body::-webkit-scrollbar,
+#mission-complete-modal .modal-body::-webkit-scrollbar,
+#mission-modal [class*="scroll"]::-webkit-scrollbar,
+#mission-complete-modal [class*="scroll"]::-webkit-scrollbar {
+    display: none !important;
+}
 --- END OF FILE: ./css/missions.css ---
 
 --- START OF FILE: ./css/debug.css ---
@@ -4883,11 +4900,30 @@ card.
     color: inherit !important; 
 }
 
-/* --- Achievements Modal Height Reduction --- */
+/* --- Achievements Modal Height Reduction & Premium Theming --- */
 #achievements-modal .modal-content {
-    max-height: 70dvh !important;
+    /* Increased from 70dvh to 77dvh (+10%) per spec */
+    max-height: 77dvh !important;
     display: flex;
     flex-direction: column;
+    
+    /* Premium Gold/Silver Gradient Theming Override */
+    background: linear-gradient(145deg, rgba(20, 25, 35, 0.98), rgba(10, 15, 20, 0.98));
+    border: 1px solid #fbbf24;
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.15), inset 0 0 15px rgba(148, 163, 184, 0.2);
+}
+
+#achievements-modal .modal-header {
+    background: linear-gradient(90deg, rgba(250, 204, 21, 0.15), rgba(148, 163, 184, 0.1));
+    border-bottom: 1px solid rgba(250, 204, 21, 0.5);
+}
+
+#achievements-modal .modal-title {
+    background: linear-gradient(to right, #fbbf24, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 #achievements-scroll-container {
@@ -4923,11 +4959,12 @@ card.
 
 .news-ticker-content {
     /* JITTER FIX: Use Flexbox layout */
-    /* ARCHITECTURAL WARNING: Do not remove 'display: flex' or 'width: fit-content'.
+    /* ARCHITECTURAL WARNING: Do not remove 'display: flex' or 'width: max-content'.
        This structure ensures that the container width is exactly equal to the 
        sum of its children, guaranteeing that -50% is exactly one child width. */
     display: flex;
-    width: fit-content; 
+    width: max-content; /* CHANGED to max-content to prevent sub-pixel flex rounding */
+    contain: layout paint; /* DEFENSIVE: Enforce strict boundaries to prevent layout thrashing */
     white-space: nowrap;
     position: absolute;
     will-change: transform;
@@ -4953,11 +4990,13 @@ card.
 .ticker-block {
     flex: 0 0 auto; /* Do not shrink or grow */
     display: flex;  /* Keep internal spans in line */
+    width: max-content; /* DEFENSIVE: Explicit deterministic sizing */
     align-items: center;
     /* BLINK FIX: Hardware Acceleration for the block itself */
     /* Prevents repainting when the loop resets at 0px */
-    transform: translate3d(0,0,0);
+    transform: translateZ(0); /* Upgraded from translate3d to translateZ for better compositing */
     backface-visibility: hidden;
+    contain: layout paint; /* DEFENSIVE: Scope repaints strictly to this element */
 }
 
 /*
@@ -12818,10 +12857,14 @@ export function renderIntelScreen() {
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { AssetService } from '../../services/AssetService.js';
 
 export function renderNavigationScreen(gameState) {
     const { player, currentLocationId, TRAVEL_DATA, systemState, missions } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
+
+    // --- PHASE 4: PRE-HYDRATE LOCATION THUMBNAILS ---
+    AssetService.preloadLocationThumbnails();
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
     const activeShipId = player.activeShipId;
@@ -17905,7 +17948,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your <b>Merchant's Guild</b> liaison. My primary task is ensuring you repay your ⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br><b>Accept</b> this mission below to add it to your log and begin.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your <b>Merchant's Guild</b> liaison. My primary task is ensuring you repay your <br>⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br><b>Accept</b> this mission below to add it to your log and begin.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
@@ -18229,7 +18272,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], you are making adequate progress as a new trader, however, the interest on your loan continues to grow. Your objective is to <b>pay off all of your debt</b> on your finance screen to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.<br><br>One more thing - take care to avoid the <b>Syndicate</b>.",
+        description: "Captain [playerName], you are making adequate progress as a new trader, however, the interest on your loan continues to grow. Your objective is to <b>pay off all of your debt</b> to avoid additional interest or worse. You can pay off your loans on the finance screen.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.<br><br>One more thing - take care to avoid the <b>Syndicate</b>.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
@@ -18277,7 +18320,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Water Ice"
         },
         rewards: [
-            { "type": "credits", "amount": 12500 }
+            { "type": "credits", "amount": 13000 }
         ]
     },
     'mission_13': {
@@ -18302,18 +18345,18 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 9000 }
+            { "type": "credits", "amount": 25000 }
         ]
     },
     'mission_14': {
         id: "mission_14",
         name: "Economies of Scale",
-        type: "LOGISTICS",
+        type: "PROCUREMENT",
         host: "GUILD",
         portraitId: "Merchants_Guild_3",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hello Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk plasteel to the Martian starport to supply the construction project.</b> Your [shipName] likely <i>cannot hold all of the freight at once</i> so get comfortable with the transit routes. You will likely need to source the plasteel from multiple stations. Good luck, time is money.",
+        description: "Hello Captain [playerName].<br><br>Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. I imagine our interest rates were a trivial matter for you.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk plasteel to the Martian starport to supply the construction project.</b> Your [shipName] likely <i>cannot hold all of the freight at once</i> so get comfortable with the transit routes. You will likely need to source the plasteel from multiple stations.<br>Good luck, time is money.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
@@ -18322,7 +18365,7 @@ export const PHASE_ONE_MISSIONS = {
             { "type": "reveal_tier", "value": 2 }
         ],
         objectives: [
-            { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 120 }
+            { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 80 }
         ],
         completion: {
             locationId: "loc_mars",
@@ -18331,7 +18374,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 24000 }
+            { "type": "credits", "amount": 34000 }
         ]
     },
     'mission_15': {
@@ -24671,6 +24714,7 @@ import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
 import { COMMODITY_IDS, APP_VERSION } from '../../data/constants.js';
 import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
+import { AssetService } from '../AssetService.js';
 
 export class UIEventControl {
     constructor(manager) {
@@ -25143,6 +25187,10 @@ export class UIEventControl {
 
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
+
+        // --- PRE-HYDRATION HOOK (PHASE 4) ---
+        // Immediately fetch the target location background while the player reads the modal
+        AssetService.hydrateTargetLocation(locationId);
 
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];
@@ -36780,6 +36828,24 @@ export class AssetService {
             this.hydrateAssets(queue).catch(e => console.warn('[AssetService] Buffer preload warning:', e));
         }
     }
+
+    /**
+     * Pre-caches thumbnail pointer paths for all active navigation locations.
+     * Triggers when the Navigation tab is opened.
+     */
+    static preloadLocationThumbnails() {
+        const queue = DB.MARKETS.map(m => ({ type: 'location', id: m.id }));
+        this.hydrateAssets(queue).catch(e => console.warn('[AssetService] Location preload warning:', e));
+    }
+
+    /**
+     * Forces the targeted high-res location background to hydrate immediately.
+     * Called during Launch Modal instantiation to ensure it's ready if the player confirms.
+     * @param {string} locId 
+     */
+    static hydrateTargetLocation(locId) {
+        this.hydrateAssets([{ type: 'location', id: locId }]).catch(e => console.warn(`[AssetService] Target location ${locId} hydration failed:`, e));
+    }
 }
 --- END OF FILE: ./js/services/AssetService.js ---
 
@@ -38374,23 +38440,27 @@ export class TravelService {
             
             this.logger.info.player(this.gameState.day, 'TRAVEL_STRANDED', `Stranded returning to ${originName}.`);
             
-            if (this.uiManager.eventControl && this.uiManager.eventControl.showStrandedModal) {
-                this.uiManager.eventControl.showStrandedModal(originName, lostDays);
-            } else {
-                this.uiManager.showEventResultModal(
-                    "Critical Failure: Stranded",
-                    `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`,
-                    [
-                        { type: 'EFF_FUEL', value: 0 },
-                        { type: 'EFF_TRAVEL_TIME', value: lostDays }
-                    ]
-                );
-            }
+            // Defers starfield demount & navigation redirect until modal closure
+            const strandedCallback = () => {
+                starfieldService.triggerQuickExit();
+                this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+                
+                // Flush deferred modals
+                if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                    this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.deferredModals = [];
+                }
+            };
+
+            const strandedTitle = "Critical Failure: Stranded";
+            const strandedDesc = `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`;
+
+            // Display modal over the existing travel starfield sequence
+            this.uiManager.queueModal('event-modal', strandedTitle, strandedDesc, strandedCallback, {
+                buttonClass: 'bg-red-800/80 hover:bg-red-700',
+                dismissOutside: false
+            });
             
-            // FIX: Gracefully demount the starfield overlay instead of allowing it to hang indefinitely
-            starfieldService.triggerQuickExit();
-            
-            this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
 
@@ -38540,6 +38610,14 @@ export class TravelService {
 
             if (this.simulationService.toastService) {
                 this.simulationService.toastService.evaluateArrivalTriggers();
+            }
+
+            // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
+            if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                this.gameState.deferredModals.forEach(m => {
+                    this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
+                });
+                this.gameState.deferredModals = [];
             }
 
             if (locationId === 'sol' && this.timeService.solStationService) {
@@ -38739,7 +38817,13 @@ export class TravelService {
                 { type: 'EFF_HULL', value: -1 }, 
                 { type: 'EFF_FUEL', value: 0 },
                 { type: 'EFF_TRAVEL_TIME', value: lostDays }
-            ]
+            ],
+            () => {
+                if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                    this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.deferredModals = [];
+                }
+            }
         );
     }
 
@@ -38816,6 +38900,11 @@ export class TravelService {
                 this.uiManager.queueModal('event-modal', 'Vessel Lost', message, () => {
                     this.simulationService.setHangarShipyardMode('hangar');
                     this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                    
+                    if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                        this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                        this.gameState.deferredModals = [];
+                    }
                 }, { dismissOutside: false });
 
                 const fadeOut = overlay.animate([
@@ -39110,6 +39199,7 @@ export class TimeService {
 
     /**
      * Handles the new 3-Era Birthday System logic.
+     * Defers modal instantiation to the Post-Travel phase to prevent sequence interruption.
      * @param {number} age - The player's new age.
      * @private
      */
@@ -39123,6 +39213,9 @@ export class TimeService {
         let title = `Happy Birthday!`;
         let desc = `You turned ${age}.`;
         let bonusText = "";
+
+        // Push target to deferred queue
+        if (!this.gameState.deferredModals) this.gameState.deferredModals = [];
 
         // --- ERA 1: THE PRIME YEARS (25 - 99) ---
         // Cycle: Profit -> Intel -> Purchase -> IntelDur -> Fuel -> Intel -> Repair
@@ -39160,8 +39253,11 @@ export class TimeService {
                     break;
             }
             
-            // Era 1 uses the standard modal format
-            this.uiManager.queueModal('event-modal', title, `${desc} ${bonusText}`);
+            this.gameState.deferredModals.push({
+                id: 'event-modal',
+                title: title,
+                body: `${desc} ${bonusText}`
+            });
         }
 
         // --- ERA 2: THE TRANSHUMANIST ERA (100 - 199) ---
@@ -39184,9 +39280,13 @@ export class TimeService {
                 else if (event.bonus === 'upgradeSpawnRate') bonusDisplay = `Increased ship upgrade spawn rate by ${valPct}.`;
                 else if (event.bonus === 'intelDuration') bonusDisplay = `Intel lasts ${valPct} longer.`;
 
-                // Era 2 uses specific narrative text
                 title = `Augmentation Installed: ${event.title}`;
-                this.uiManager.queueModal('event-modal', title, `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`);
+                
+                this.gameState.deferredModals.push({
+                    id: 'event-modal',
+                    title: title,
+                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`
+                });
             }
         }
 
@@ -39215,7 +39315,11 @@ export class TimeService {
                     bonusText = "Hull integrity fully restored.";
                 }
 
-                this.uiManager.queueModal('event-modal', title, `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`);
+                this.gameState.deferredModals.push({
+                    id: 'event-modal',
+                    title: title,
+                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`
+                });
             }
         }
     }
@@ -39946,9 +40050,17 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // Resolve Fallbacks dynamically via AssetService to prevent hardcoded missing variants
-            let imgSrc = AssetService.getFallbackImage(shipInfo.id) || AssetService.getShipImage(shipInfo.id, 0);
+            // Re-synchronized the thumbnail asset fetch to perfectly match the logic used by UIHangarControl
+            let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
             
+            // Hardcoded variant overrides match what UIHangarControl will force in `context === 'intro_shipyard'`
+            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
+            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
+            
+            // Final fallback
+            if (!imgSrc || imgSrc === '') imgSrc = AssetService.getFallbackImage(shipInfo.id);
+
             btn.innerHTML = `
                 <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
                     <img src="${imgSrc}" alt="${shipStatic.name}" style="transform: scale(1.3); object-fit: cover; width: 100%; height: 100%;" />

@@ -930,3 +930,20 @@
     0%, 100% { transform: translateY(0); opacity: 0.4; }
     50% { transform: translateY(4px); opacity: 1; }
 }
+
+/* ========================================================================= */
+/* --- SCROLLBAR SUPPRESSION FOR MISSION MODALS --- */
+/* ========================================================================= */
+#mission-modal .modal-body,
+#mission-complete-modal .modal-body,
+#mission-modal [class*="scroll"],
+#mission-complete-modal [class*="scroll"] {
+    scrollbar-width: none !important;
+}
+
+#mission-modal .modal-body::-webkit-scrollbar,
+#mission-complete-modal .modal-body::-webkit-scrollbar,
+#mission-modal [class*="scroll"]::-webkit-scrollbar,
+#mission-complete-modal [class*="scroll"]::-webkit-scrollbar {
+    display: none !important;
+}

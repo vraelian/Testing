@@ -39,7 +39,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], you are making adequate progress as a new trader, however, the interest on your loan continues to grow. Your objective is to <b>pay off all of your debt</b> on your finance screen to avoid additional interest or worse.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.<br><br>One more thing - take care to avoid the <b>Syndicate</b>.",
+        description: "Captain [playerName], you are making adequate progress as a new trader, however, the interest on your loan continues to grow. Your objective is to <b>pay off all of your debt</b> to avoid additional interest or worse. You can pay off your loans on the finance screen.<br><br><b>Remember, you will need to trade favorably in the market to earn credits if ever there are no contracts available.</b> Use what you've learned to succeed in arbitrage. The Guild looks fondly upon those that contribute to the trade network rather than detract from it.<br><br>One more thing - take care to avoid the <b>Syndicate</b>.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
@@ -87,7 +87,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Water Ice"
         },
         rewards: [
-            { "type": "credits", "amount": 12500 }
+            { "type": "credits", "amount": 13000 }
         ]
     },
     'mission_13': {
@@ -112,18 +112,18 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 9000 }
+            { "type": "credits", "amount": 25000 }
         ]
     },
     'mission_14': {
         id: "mission_14",
         name: "Economies of Scale",
-        type: "LOGISTICS",
+        type: "PROCUREMENT",
         host: "GUILD",
         portraitId: "Merchants_Guild_3",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hello Captain [playerName]. Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. Surviving our interest rates is a statistical anomaly. Congratulations.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk plasteel to the Martian starport to supply the construction project.</b> Your [shipName] likely <i>cannot hold all of the freight at once</i> so get comfortable with the transit routes. You will likely need to source the plasteel from multiple stations. Good luck, time is money.",
+        description: "Hello Captain [playerName].<br><br>Your previous handler, Audita, has been reassigned to other assets temporarily. I see you've cleared your Guild loan. I imagine our interest rates were a trivial matter for you.<br><br>Anyway, I have a job for you, Captain - The Guild is constructing a new high-capacity orbital tether above Mars to streamline heavy freighter traffic.<br><br><b>Deliver bulk plasteel to the Martian starport to supply the construction project.</b> Your [shipName] likely <i>cannot hold all of the freight at once</i> so get comfortable with the transit routes. You will likely need to source the plasteel from multiple stations.<br>Good luck, time is money.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
@@ -132,7 +132,7 @@ export const PHASE_ONE_MISSIONS = {
             { "type": "reveal_tier", "value": 2 }
         ],
         objectives: [
-            { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 120 }
+            { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 80 }
         ],
         completion: {
             locationId: "loc_mars",
@@ -141,7 +141,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 24000 }
+            { "type": "credits", "amount": 34000 }
         ]
     },
     'mission_15': {

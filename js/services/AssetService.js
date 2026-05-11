@@ -551,4 +551,22 @@ export class AssetService {
             this.hydrateAssets(queue).catch(e => console.warn('[AssetService] Buffer preload warning:', e));
         }
     }
+
+    /**
+     * Pre-caches thumbnail pointer paths for all active navigation locations.
+     * Triggers when the Navigation tab is opened.
+     */
+    static preloadLocationThumbnails() {
+        const queue = DB.MARKETS.map(m => ({ type: 'location', id: m.id }));
+        this.hydrateAssets(queue).catch(e => console.warn('[AssetService] Location preload warning:', e));
+    }
+
+    /**
+     * Forces the targeted high-res location background to hydrate immediately.
+     * Called during Launch Modal instantiation to ensure it's ready if the player confirms.
+     * @param {string} locId 
+     */
+    static hydrateTargetLocation(locId) {
+        this.hydrateAssets([{ type: 'location', id: locId }]).catch(e => console.warn(`[AssetService] Target location ${locId} hydration failed:`, e));
+    }
 }

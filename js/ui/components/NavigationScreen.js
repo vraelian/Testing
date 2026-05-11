@@ -2,10 +2,14 @@
 import { DB } from '../../data/database.js';
 import { ACTION_IDS, SCREEN_IDS, PERK_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
+import { AssetService } from '../../services/AssetService.js';
 
 export function renderNavigationScreen(gameState) {
     const { player, currentLocationId, TRAVEL_DATA, systemState, missions } = gameState;
     const currentLocation = DB.MARKETS.find(loc => loc.id === currentLocationId);
+
+    // --- PHASE 4: PRE-HYDRATE LOCATION THUMBNAILS ---
+    AssetService.preloadLocationThumbnails();
 
     // --- UPGRADE SYSTEM: MODIFIER CALCULATIONS ---
     const activeShipId = player.activeShipId;

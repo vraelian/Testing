@@ -277,6 +277,7 @@ export class TimeService {
 
     /**
      * Handles the new 3-Era Birthday System logic.
+     * Defers modal instantiation to the Post-Travel phase to prevent sequence interruption.
      * @param {number} age - The player's new age.
      * @private
      */
@@ -290,6 +291,9 @@ export class TimeService {
         let title = `Happy Birthday!`;
         let desc = `You turned ${age}.`;
         let bonusText = "";
+
+        // Push target to deferred queue
+        if (!this.gameState.deferredModals) this.gameState.deferredModals = [];
 
         // --- ERA 1: THE PRIME YEARS (25 - 99) ---
         // Cycle: Profit -> Intel -> Purchase -> IntelDur -> Fuel -> Intel -> Repair
@@ -327,8 +331,11 @@ export class TimeService {
                     break;
             }
             
-            // Era 1 uses the standard modal format
-            this.uiManager.queueModal('event-modal', title, `${desc} ${bonusText}`);
+            this.gameState.deferredModals.push({
+                id: 'event-modal',
+                title: title,
+                body: `${desc} ${bonusText}`
+            });
         }
 
         // --- ERA 2: THE TRANSHUMANIST ERA (100 - 199) ---
@@ -351,9 +358,13 @@ export class TimeService {
                 else if (event.bonus === 'upgradeSpawnRate') bonusDisplay = `Increased ship upgrade spawn rate by ${valPct}.`;
                 else if (event.bonus === 'intelDuration') bonusDisplay = `Intel lasts ${valPct} longer.`;
 
-                // Era 2 uses specific narrative text
                 title = `Augmentation Installed: ${event.title}`;
-                this.uiManager.queueModal('event-modal', title, `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`);
+                
+                this.gameState.deferredModals.push({
+                    id: 'event-modal',
+                    title: title,
+                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`
+                });
             }
         }
 
@@ -382,7 +393,11 @@ export class TimeService {
                     bonusText = "Hull integrity fully restored.";
                 }
 
-                this.uiManager.queueModal('event-modal', title, `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`);
+                this.gameState.deferredModals.push({
+                    id: 'event-modal',
+                    title: title,
+                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`
+                });
             }
         }
     }
