@@ -39447,6 +39447,217 @@ export class IntroService {
         
         // Strict Lock: Persists until the *next* modal is actively queued
         this._transitioning = false; 
+
+        // Skip Mechanic Variables
+        this._timeouts = new Set();
+        this._intervals = new Set();
+        this._skipListener = this._handleIntroSkipClick.bind(this);
+        this.lastTapTime = 0;
+        this.tapCount = 0;
+        this.skipState = 'hidden';
+        this.skipTimerId = null;
+        this.hasSkipped = false;
+        this.skipBtnElement = null;
+    }
+
+    /**
+     * Safe timeout wrapper to enable aggressive teardown
+     */
+    _setTimeout(fn, delay) {
+        const timerId = setTimeout(() => {
+            this._timeouts.delete(timerId);
+            fn();
+        }, delay);
+        this._timeouts.add(timerId);
+        return timerId;
+    }
+
+    /**
+     * Safe interval wrapper to enable aggressive teardown
+     */
+    _setInterval(fn, delay) {
+        const timerId = setInterval(fn, delay);
+        this._intervals.add(timerId);
+        return timerId;
+    }
+
+    /**
+     * Injects the required CSS for the skip button directly to satisfy single-file deployment
+     */
+    _injectSkipCSS() {
+        if (document.getElementById('intro-skip-styles')) return;
+        const style = document.createElement('style');
+        style.id = 'intro-skip-styles';
+        style.textContent = `
+            .intro-skip-btn {
+                position: fixed;
+                bottom: calc(env(safe-area-inset-bottom, 20px) + 20px);
+                right: 20px;
+                font-family: 'Oxanium', sans-serif;
+                font-weight: bold;
+                font-size: 18px;
+                color: #9ca3af;
+                text-shadow: 0 0 8px rgba(156, 163, 175, 0.5);
+                opacity: 0;
+                pointer-events: none;
+                transition: opacity 0.3s ease, color 0.3s ease, text-shadow 0.3s ease;
+                z-index: 9999;
+                background: transparent;
+                border: none;
+                outline: none;
+                cursor: pointer;
+                letter-spacing: 2px;
+            }
+            .intro-skip-btn.is-visible {
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .intro-skip-btn.is-confirm {
+                color: #ffffff;
+                text-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.6);
+            }
+        `;
+        document.head.appendChild(style);
+    }
+
+    /**
+     * Handles temporal off-target taps to reveal the skip sequence
+     */
+    _handleIntroSkipClick(e) {
+        if (!this.gameState.introSequenceActive) {
+            document.body.removeEventListener('pointerdown', this._skipListener);
+            return;
+        }
+
+        // Prevent activation if interacting with actual UI elements
+        if (e.target.closest('.modal-content') || 
+            e.target.closest('.sev-term-panel') || 
+            e.target.closest('.intro-skip-btn') ||
+            e.target.closest('button') ||
+            e.target.closest('input')) {
+            return;
+        }
+
+        const now = Date.now();
+        if (now - this.lastTapTime < 3000) {
+            this.tapCount++;
+        } else {
+            this.tapCount = 1;
+        }
+        this.lastTapTime = now;
+
+        if (this.tapCount >= 2 && this.skipState === 'hidden') {
+            this._showSkipButton();
+        }
+    }
+
+    _showSkipButton() {
+        if (!this.skipBtnElement) {
+            this.skipBtnElement = document.createElement('button');
+            this.skipBtnElement.className = 'intro-skip-btn';
+            this.skipBtnElement.innerHTML = 'SKIP';
+            
+            this.skipBtnElement.onclick = (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                
+                if (this.skipTimerId) clearTimeout(this.skipTimerId);
+
+                if (this.skipState === 'skip_visible') {
+                    this.skipState = 'confirm_visible';
+                    this.skipBtnElement.innerHTML = 'CONFIRM?';
+                    this.skipBtnElement.classList.add('is-confirm');
+                    
+                    this.skipTimerId = setTimeout(() => this._hideSkipButton(), 3000);
+                } else if (this.skipState === 'confirm_visible') {
+                    this._executeSkipRouting();
+                }
+            };
+            document.body.appendChild(this.skipBtnElement);
+        }
+
+        this.skipState = 'skip_visible';
+        this.skipBtnElement.innerHTML = 'SKIP';
+        this.skipBtnElement.classList.remove('is-confirm');
+        
+        // Force reflow
+        void this.skipBtnElement.offsetWidth;
+        this.skipBtnElement.classList.add('is-visible');
+
+        if (this.skipTimerId) clearTimeout(this.skipTimerId);
+        this.skipTimerId = setTimeout(() => this._hideSkipButton(), 3000);
+    }
+
+    _hideSkipButton() {
+        this.skipState = 'hidden';
+        if (this.skipBtnElement) {
+            this.skipBtnElement.classList.remove('is-visible');
+        }
+    }
+
+    _teardownCurrentScreen() {
+        // Clear tracked timers
+        for (const timer of this._timeouts) clearTimeout(timer);
+        this._timeouts.clear();
+        for (const interval of this._intervals) clearInterval(interval);
+        this._intervals.clear();
+
+        // Destroy generic modals
+        this.uiManager.hideModal('event-modal');
+        this.uiManager.hideModal('charter-modal');
+        
+        // Destroy specialized intro DOM elements
+        const elementsToRemove = [
+            'intro-physical-shield',
+            'quit-job-text',
+            'mars-travel-overlay'
+        ];
+        elementsToRemove.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.remove();
+        });
+
+        const classesToRemove = ['.sev-term-overlay', '.bg-black.z-\\[150\\]'];
+        classesToRemove.forEach(cls => {
+            const els = document.querySelectorAll(cls);
+            els.forEach(el => el.remove());
+        });
+    }
+
+    _executeSkipRouting() {
+        this.hasSkipped = true;
+        // Permanently lock out the mechanic once skip is confirmed
+        document.body.removeEventListener('pointerdown', this._skipListener);
+
+        this._hideSkipButton();
+        this._teardownCurrentScreen();
+        this._transitioning = false;
+
+        const fader = document.createElement('div');
+        fader.className = 'fixed inset-0 bg-black z-[150]';
+        document.body.appendChild(fader);
+
+        if (!this.gameState.player.name) {
+            const sigIndex = DB.INTRO_SEQUENCE_V1.modals.findIndex(m => m.id === 'signature');
+            if (sigIndex !== -1) {
+                this.gameState.player.introStep = sigIndex;
+                fader.remove();
+                this._showNextModal();
+            }
+        } else {
+            // Protect state integrity if skipped post-signature but pre-credit transfer
+            if (this.gameState.player.credits < 25000) {
+                this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
+                this.gameState.player.financeLog.push({
+                    day: this.gameState.day,
+                    type: 'loan',
+                    amount: 25000,
+                    balance: this.gameState.player.credits,
+                    description: 'Merchant Guild Start-up Loan'
+                });
+            }
+            this._showStarterShipSelection(fader);
+        }
     }
 
     /**
@@ -39456,31 +39667,27 @@ export class IntroService {
         if (!this.gameState.introSequenceActive) return;
         this.logger.info.state(this.gameState.day, 'INTRO_START', 'Starting new game introduction sequence.');
         
-        // [FIX] Force inline display: none to override CSS ID specificity
+        this._injectSkipCSS();
+        document.body.addEventListener('pointerdown', this._skipListener);
+
         const econBtn = document.getElementById('btn-econ-weather');
         if (econBtn) econBtn.style.display = 'none';
 
-        // --- VIRTUAL WORKBENCH: Hide Pause Menu Cog during Intro ---
         const cogBtn = document.getElementById('btn-game-menu');
         if (cogBtn) cogBtn.style.display = 'none';
-        // --- END VIRTUAL WORKBENCH ---
 
-        // Ensure the Help Anchor is completely suppressed early in the intro.
         if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
             this.uiManager.helpManager.anchorBtn.style.display = 'none';
         }
         
-        // Set the initial state for the intro (strips debug/default items)
         this.gameState.player.ownedShipIds = [];
         this.gameState.player.activeShipId = null;
         this.gameState.player.shipStates = {};
         this.gameState.player.inventories = {};
         this.gameState.player.introStep = 0;
         
-        // Lock UI interactions while cinematic plays
         this._transitioning = true; 
         
-        // Trigger the dual-path cinematic, passing the modal initialization as the callback
         this.uiManager.playIntroCinematic(() => {
             this._transitioning = false;
             this._showNextModal();
@@ -39511,11 +39718,10 @@ export class IntroService {
             const sanitizedPlayerName = playerName.replace(/[^a-zA-Z0-9 ]/g, '').trim();
     
             if (!sanitizedPlayerName || sanitizedPlayerName.length === 0) {
-                // Clear the DOM to prevent stacking, then queue the rejection
                 this.uiManager.hideModal('signature-modal');
                 this.uiManager.queueModal('event-modal', 'Invalid Signature', "The Merchant's Guild requires a valid name on the contract. Please provide your legal mark.", () => {
-                    this._transitioning = false; // Safely release lock
-                    this._showNextModal();       // Re-present the form cleanly
+                    this._transitioning = false; 
+                    this._showNextModal();       
                 });
             } else {
                 this.gameState.player.name = sanitizedPlayerName;
@@ -39525,13 +39731,28 @@ export class IntroService {
     
                 this.logger.info.state(this.gameState.day, 'LOAN_ACCEPTED', `Player ${sanitizedPlayerName} accepted Guild loan.`);
                 
-                // Explicitly close the signature modal to clear the stage
                 this.uiManager.hideModal('signature-modal');
 
-                // Wait for the golden blur animation (1000ms) before popping up the processing modal
-                setTimeout(() => {
-                    this._startProcessingSequence();
-                }, 2000);
+                if (this.hasSkipped) {
+                    this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
+                    this.gameState.player.financeLog.push({
+                        day: this.gameState.day,
+                        type: 'loan',
+                        amount: 25000,
+                        balance: this.gameState.player.credits,
+                        description: 'Merchant Guild Start-up Loan'
+                    });
+                    this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
+                    
+                    const fader = document.createElement('div');
+                    fader.className = 'fixed inset-0 bg-black z-[150]';
+                    document.body.appendChild(fader);
+                    this._showStarterShipSelection(fader);
+                } else {
+                    this._setTimeout(() => {
+                        this._startProcessingSequence();
+                    }, 2000);
+                }
             }
         }
     }
@@ -39543,13 +39764,11 @@ export class IntroService {
     _showNextModal() {
         const step = DB.INTRO_SEQUENCE_V1.modals[this.gameState.player.introStep];
         
-        // Skip the old "final" modal as it relied on the player having a ship from the deprecated tutorial
         if (!step || step.id === 'final') {
             this._end();
             return;
         }
 
-        // Release lock: The next step is ready to be queued.
         this._transitioning = false;
 
         const options = {
@@ -39563,17 +39782,13 @@ export class IntroService {
             starfieldService.mount();
             starfieldService.triggerEntry();
 
-            // --- VIRTUAL WORKBENCH: PHYSICAL INTERACTION SHIELD ---
-            // Protects the full visual apparition from being interrupted or spammed.
-            // Maintained at 9000ms to guarantee safety post-coalescence (8.5s).
             const shield = document.createElement('div');
             shield.id = 'intro-physical-shield';
             shield.className = 'fixed inset-0 z-[9999]';
             document.body.appendChild(shield);
-            setTimeout(() => {
+            this._setTimeout(() => {
                 if (document.body.contains(shield)) shield.remove();
             }, 9000);
-            // --- END VIRTUAL WORKBENCH ---
 
         } else if (step.id !== 'charter' && step.id !== 'signature') {
             options.specialClass = 'intro-backdrop-clear';
@@ -39605,19 +39820,17 @@ export class IntroService {
                 button.id = 'intro-next-btn';
                 button.innerHTML = step.buttonText;
                 
-                // --- VIRTUAL WORKBENCH: THE POINTER SHIELD ---
                 let isFirstModalLocked = (this.gameState.player.introStep === 0);
                 
                 if (isFirstModalLocked) {
-                    button.style.pointerEvents = 'none'; // Prevent iOS from targeting it during animation
-                    setTimeout(() => {
+                    button.style.pointerEvents = 'none'; 
+                    this._setTimeout(() => {
                         if (document.body.contains(button)) {
                             isFirstModalLocked = false;
                             button.style.pointerEvents = 'auto';
                         }
                     }, 9000); 
                 }
-                // --- END VIRTUAL WORKBENCH ---
 
                 button.onclick = (e) => {
                     e.preventDefault();
@@ -39634,8 +39847,6 @@ export class IntroService {
             };
         }
 
-        // Recursive Callback:
-        // When the modal closes, increment step and queue the next one.
         const onModalClose = () => {
             this.gameState.player.introStep++;
             this._showNextModal();
@@ -39714,7 +39925,6 @@ export class IntroService {
                 this._transitioning = true;
                 if(event && event.target) event.target.disabled = true;
                 
-                // Doubled size and dynamic duration for transition text
                 this.uiManager.createFloatingText(
                     `<span style="font-size: 200%; text-shadow: 0 0 10px #34d399;">+${formatCredits(25000, false)}</span>`, 
                     event.clientX, 
@@ -39726,7 +39936,6 @@ export class IntroService {
                 
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + 25000);
 
-                // --- RECORD LOAN TO LOG ---
                 this.gameState.player.financeLog.push({
                     day: this.gameState.day,
                     type: 'loan',
@@ -39737,8 +39946,7 @@ export class IntroService {
 
                 this.logger.info.player(this.gameState.day, 'CREDITS_TRANSFER', 'Accepted loan transfer of ⌬25,000');
 
-                // Extended black screen timing logic for income text persist
-                setTimeout(() => {
+                this._setTimeout(() => {
                     this._showResignationModal();
                 }, 3500);
             };
@@ -39776,7 +39984,6 @@ export class IntroService {
     _showResignationModal() {
         this._transitioning = false;
 
-        // 1. Retain the Anchor
         const quitText = document.createElement('div');
         quitText.id = 'quit-job-text';
         quitText.className = 'fixed font-orbitron font-bold text-white text-[21px] z-[100] tracking-widest pointer-events-none text-center quit-job-pulse';
@@ -39785,12 +39992,11 @@ export class IntroService {
         quitText.innerHTML = 'QUIT YOUR JOB!';
         document.body.appendChild(quitText);
 
-        // 2. Build the Container
         const overlay = document.createElement('div');
         overlay.className = 'sev-term-overlay';
         
         const panel = document.createElement('div');
-        panel.className = 'sev-term-panel opacity-0'; // Will be faded in by CRT Turn On
+        panel.className = 'sev-term-panel opacity-0'; 
 
         const textContainer = document.createElement('div');
         textContainer.id = 'sev-text-container';
@@ -39807,7 +40013,6 @@ export class IntroService {
         
         actuatorBtn.appendChild(btnText);
 
-        // Warning wrapper physically guarantees layout height underneath button
         const warningWrapper = document.createElement('div');
         warningWrapper.className = 'h-[24px] mt-4 w-full relative z-10';
         
@@ -39824,13 +40029,11 @@ export class IntroService {
         overlay.appendChild(panel);
         document.body.appendChild(overlay);
 
-        // D. Modal opens with reverse CRT effect
         panel.classList.add('sev-crt-turn-on');
 
         let currentPhase = 0;
 
-        // E. CRT Turn On (1.3s), then Typewriter company name (1.5s)
-        setTimeout(() => {
+        this._setTimeout(() => {
             const headerDiv = document.createElement('div');
             headerDiv.className = 'font-orbitron text-[22px] text-[#d97706] text-center tracking-[0.2em] uppercase mb-8 pb-3 border-b border-current opacity-80 font-bold';
             const headerSpan = document.createElement('span');
@@ -39839,15 +40042,17 @@ export class IntroService {
 
             const textToType = "Belt Delta Mining Co.";
             let charIndex = 0;
-            const typeInterval = 1500 / textToType.length; // ~71ms
-            const typer = setInterval(() => {
+            const typeInterval = 1500 / textToType.length; 
+            const typer = this._setInterval(() => {
                 headerSpan.textContent += textToType[charIndex];
                 charIndex++;
-                if (charIndex >= textToType.length) clearInterval(typer);
+                if (charIndex >= textToType.length) {
+                    clearInterval(typer);
+                    this._intervals.delete(typer);
+                }
             }, typeInterval);
 
-            // Start line rendering after typewriter
-            setTimeout(() => {
+            this._setTimeout(() => {
                 const terminalLines = [
                     `<div id="secure-link-line" class='font-roboto-mono mb-8 font-bold tracking-widest text-[13px] text-center opacity-90'>SECURE TERMINAL LINK ESTABLISHED</div>`,
                     `<div class='font-roboto-mono flex justify-between py-3 border-b border-current border-opacity-30 text-[15px]'><span class='opacity-70'>[ EMPLOYEE ID ]</span><span class='text-[#cffafe] font-bold'>${this.gameState.player.name}</span></div>`,
@@ -39855,7 +40060,7 @@ export class IntroService {
                     `<div class='font-roboto-mono flex justify-between py-3 border-b border-current border-opacity-30 text-[15px]'><span class='opacity-70'>[ CYCLES LOGGED ]</span><span class='text-[#cffafe]'>2,849</span></div>`
                 ];
 
-                const timings = [0, 4000, 5800, 7600]; // 4s pause, 1.8s delays
+                const timings = [0, 4000, 5800, 7600]; 
 
                 terminalLines.forEach((line, i) => {
                     const lineDiv = document.createElement('div');
@@ -39863,7 +40068,7 @@ export class IntroService {
                     lineDiv.innerHTML = line;
                     textContainer.appendChild(lineDiv);
 
-                    setTimeout(() => {
+                    this._setTimeout(() => {
                         lineDiv.classList.add('sev-line-visible');
                         
                         if (i === 0) {
@@ -39872,18 +40077,17 @@ export class IntroService {
                         }
                         
                         if (i === 3) {
-                            setTimeout(() => {
+                            this._setTimeout(() => {
                                 currentPhase = 1;
                                 actuatorBtn.classList.remove('pointer-events-none');
                                 actuatorBtn.style.animation = 'sevBtnFadeIn 1.5s ease-out forwards';
-                            }, 1800); // Wait 1.8s after 4th line drops
+                            }, 1800); 
                         }
                     }, timings[i]);
                 });
-            }, 1500); // 1.5s typewriter duration
-        }, 1300); // 1.3s CRT turn on duration
+            }, 1500); 
+        }, 1300); 
 
-        // 5. Actuation and Closure Logic
         actuatorBtn.onclick = (e) => {
             if (this._transitioning) return;
 
@@ -39891,7 +40095,6 @@ export class IntroService {
                 currentPhase = 2;
                 actuatorBtn.classList.add('confirm-phase');
                 
-                // Warning text strictly appears only at confirmation phase
                 warningMsg.classList.remove('opacity-0');
                 warningMsg.classList.add('animate-pulse');
                 
@@ -39902,18 +40105,15 @@ export class IntroService {
                 actuatorBtn.style.pointerEvents = 'none';
                 btnText.innerHTML = 'EXECUTING...';
                 
-                // C. Smoothly fade away "QUIT YOUR JOB!"
                 if (quitText) {
                     quitText.style.animation = 'quitJobFadeOut 0.6s ease-out forwards';
                 }
 
-                // Remove CRT Turn On and force reflow to prevent animation conflict
                 panel.classList.remove('sev-crt-turn-on');
                 void panel.offsetWidth;
                 panel.classList.add('sev-crt-shutdown');
 
-                // 6. Post-Closure Cinematic Handoff
-                setTimeout(() => {
+                this._setTimeout(() => {
                     panel.remove();
 
                     const finalSpan = document.createElement('span');
@@ -39922,34 +40122,31 @@ export class IntroService {
                     finalSpan.innerHTML = '> PENSION FORFEITED. TERMINATION COMPLETE <';
                     overlay.appendChild(finalSpan);
 
-                    setTimeout(() => {
-                        // Blur fade the text out into the void
+                    this._setTimeout(() => {
                         overlay.style.transition = 'all 3s ease-out';
                         overlay.style.opacity = '0';
                         overlay.style.filter = 'blur(12px)';
 
-                        setTimeout(() => {
-                            // D. 0.5-second screen fade to black bridging to Mars sequence
+                        this._setTimeout(() => {
                             const fader = document.createElement('div');
                             fader.className = 'fixed inset-0 bg-black z-[150]';
                             fader.style.opacity = '0';
                             fader.style.transition = 'opacity 0.5s ease-in-out';
                             document.body.appendChild(fader);
                             
-                            // Force reflow
                             void fader.offsetWidth;
                             fader.style.opacity = '1';
 
-                            setTimeout(() => {
+                            this._setTimeout(() => {
                                 overlay.remove();
                                 if (quitText && quitText.parentNode) quitText.remove();
                                 
                                 this._triggerMarsTravelSequence(fader);
-                            }, 500); // Wait 0.5s for black screen
+                            }, 500); 
                             
-                        }, 3000); // Wait 3s for text blur fade
-                    }, 3000); // 3s persistence time before fading text
-                }, 1300); // Wait 1.3s for CRT shutdown
+                        }, 3000); 
+                    }, 3000); 
+                }, 1300); 
             }
         };
     }
@@ -39961,13 +40158,11 @@ export class IntroService {
      * @param {HTMLElement} fader - The black overlay div shielding the transition
      */
     _triggerMarsTravelSequence(fader) {
-        // Unhide the game container so the injected elements have the proper backdrop
         this.uiManager.showGameContainer();
         
         starfieldService.mount();
         starfieldService.triggerEntry();
-        // Force fast travel speed immediately after the entry tries to idle it
-        setTimeout(() => starfieldService.setEngageWarp(), 50);
+        this._setTimeout(() => starfieldService.setEngageWarp(), 50);
         
         const overlay = document.createElement('div');
         overlay.id = 'mars-travel-overlay';
@@ -39975,20 +40170,14 @@ export class IntroService {
         overlay.innerHTML = `<span class='text-white font-orbitron text-2xl tracking-widest drop-shadow-[0_0_10px_rgba(255,255,255,0.8)] text-center px-4'>Traveling to the Martian Shipyards...</span>`;
         document.body.appendChild(overlay);
 
-        // 1. Fade IN from black over 2s
         fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
             
-            // 2. Hold for 2s
-            setTimeout(() => {
+            this._setTimeout(() => {
                 
-                // 3. Fade OUT to black over 2s
                 fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
                     overlay.remove();
                     starfieldService.triggerQuickExit();
                     
-                    // Instead of fading out the black screen here, we keep it persistent
-                    // We set z-index to 10000. This perfectly sandwiches the fader underneath
-                    // the Help Modals (z-index: 10001) but above ALL game UI elements.
                     fader.style.zIndex = '10000'; 
                     
                     this._transitioning = false;
@@ -40008,7 +40197,7 @@ export class IntroService {
         this.uiManager.showGameContainer();
 
         this.uiManager.showHelpModal('meta-tutorial', 0, () => {
-            setTimeout(() => {
+            this._setTimeout(() => {
                 this.uiManager.showHelpModal('meta-autosave', 0, () => {
                     this._showStarterShipSelection(fader);
                 });
@@ -40026,24 +40215,19 @@ export class IntroService {
         
         this.uiManager.showGameContainer();
 
-        // [FIX] Force inline display: none to override CSS ID specificity
         const econBtn = document.getElementById('btn-econ-weather');
         if (econBtn) econBtn.style.display = 'none';
 
-        // Restore Help Anchor visibility specifically for the selection sequence
         if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
             this.uiManager.helpManager.anchorBtn.style.display = 'flex';
         }
         
-        // --- INJECT HIGH-FIDELITY STARFIELD ---
         starfieldService.mount();
         starfieldService.triggerEntry();
 
         const overlay = document.createElement('div');
         overlay.id = 'starter-ship-selection-overlay';
         
-        // Lowered to z-[40] to allow the Ship Detail Modal and Help Modal (z-50+) to stack above cleanly
-        // Background set to completely transparent so the starfield shines through beautifully
         overlay.className = 'fixed inset-0 z-[40] flex flex-col items-center justify-center intro-blur-fade-in';
         overlay.style.background = 'transparent'; 
         
@@ -40074,15 +40258,12 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // Re-synchronized the thumbnail asset fetch to perfectly match the logic used by UIHangarControl
             let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
             
-            // Hardcoded variant overrides match what UIHangarControl will force in `context === 'intro_shipyard'`
             if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
             if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
             if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
             
-            // Final fallback
             if (!imgSrc || imgSrc === '') imgSrc = AssetService.getFallbackImage(shipInfo.id);
 
             btn.innerHTML = `
@@ -40113,8 +40294,6 @@ export class IntroService {
 
         document.body.appendChild(overlay);
 
-        // --- REVEAL FROM BLACK ---
-        // Fades the persistent black fader screen out, revealing the starfield and UI below it.
         if (fader) {
             fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).onfinish = () => {
                 fader.remove();
@@ -40131,17 +40310,14 @@ export class IntroService {
         if (this._transitioning) return;
         this._transitioning = true;
 
-        // Hide tutorial modal button ' ( ? ) ' after ship selection screen is concluded.
         if (this.uiManager.helpManager && this.uiManager.helpManager.anchorBtn) {
             this.uiManager.helpManager.anchorBtn.style.display = 'none';
         }
 
         const overlay = document.getElementById('starter-ship-selection-overlay');
         
-        // Hide the detail modal immediately
         this.uiManager.hideModal('ship-detail-modal');
 
-        // Render dynamic purchase deduction text
         this.uiManager.createFloatingText(
             `<span style="font-size: 200%; font-weight: bold; text-shadow: 0 0 10px #ef4444;">-25k</span>`,
             window.innerWidth / 2,
@@ -40151,28 +40327,12 @@ export class IntroService {
             true
         );
 
-        // Create the blackout shield for transitions
         const fader = document.createElement('div');
-        fader.className = 'fixed inset-0 bg-black z-[150]'; // Acts as a physical click shield
+        fader.className = 'fixed inset-0 bg-black z-[150]'; 
         fader.style.opacity = '0';
         document.body.appendChild(fader);
 
-        // 1. Fade OUT the Ship Selection UI to pure black over 2s
-        await fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).finished;
-
-        if (overlay) overlay.style.display = 'none';
-
-        // 2. Setup Subtle Starfield & Cinematic Text
-        starfieldService.mount();
-        starfieldService.triggerEntry(); 
-        // Note: triggerEntry automatically sets idleWarp (subtle movement)
-
-        const textOverlay = document.createElement('div');
-        textOverlay.className = 'fixed inset-0 z-[100] flex items-center justify-center pointer-events-none';
-        textOverlay.innerHTML = `<span class='text-white font-orbitron text-xl tracking-widest text-center px-4'>Months later...<br><br><br>Flight School is complete.</span>`;
-        document.body.appendChild(textOverlay);
-
-        // Mutate Player State quietly behind the blackout
+        // Mutate Player State quietly
         const shipStatic = DB.SHIPS[shipId];
         this.gameState.player.credits -= 25000; 
         this.gameState.player.ownedShipIds.push(shipId);
@@ -40188,38 +40348,60 @@ export class IntroService {
             this.gameState.player.inventories[shipId][c.id] = { quantity: 0, avgCost: 0 };
         });
 
-        // Suppress visual jarring when the game container is booted
         const gameContainer = document.getElementById('game-container');
         if (gameContainer) {
             gameContainer.style.transition = 'none';
             gameContainer.style.opacity = '0';
         }
 
-        // 3. Fade IN from black over 2s to reveal subtle starfield and text
-        await fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).finished;
+        if (!this.hasSkipped) {
+            // Standard Cinematic Route
+            await fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).finished;
 
-        // 4. Hold visual on Flight School for 4s
-        await new Promise(res => setTimeout(res, 4000));
+            if (overlay) overlay.style.display = 'none';
 
-        // 5. Fade OUT to black over 2s
-        await fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).finished;
+            starfieldService.mount();
+            starfieldService.triggerEntry(); 
 
-        // Clean up cinematic elements
-        textOverlay.remove();
-        starfieldService.triggerQuickExit();
-        if (overlay) overlay.remove();
+            const textOverlay = document.createElement('div');
+            textOverlay.className = 'fixed inset-0 z-[100] flex items-center justify-center pointer-events-none';
+            textOverlay.innerHTML = `<span class='text-white font-orbitron text-xl tracking-widest text-center px-4'>Months later...<br><br><br>Flight School is complete.</span>`;
+            document.body.appendChild(textOverlay);
 
-        // Boot the core game loop, generating the UI layout invisibly
-        this._end();
+            await fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).finished;
 
-        // Reveal the fully rendered game behind the blackout
-        if (gameContainer) gameContainer.style.opacity = '';
+            await new Promise(res => setTimeout(res, 4000));
 
-        // 6. Fade IN the Game UI from black over 2s
-        await fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).finished;
+            await fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 2000, fill: 'forwards' }).finished;
 
-        fader.remove();
-        if (gameContainer) gameContainer.style.transition = '';
+            textOverlay.remove();
+            starfieldService.triggerQuickExit();
+            if (overlay) overlay.remove();
+
+            this._end();
+
+            if (gameContainer) gameContainer.style.opacity = '';
+
+            await fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards' }).finished;
+
+            fader.remove();
+            if (gameContainer) gameContainer.style.transition = '';
+        } else {
+            // Total Cinematic Bypass Route
+            await fader.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, fill: 'forwards' }).finished;
+            
+            if (overlay) overlay.remove();
+            starfieldService.triggerQuickExit();
+            
+            this._end();
+            
+            if (gameContainer) gameContainer.style.opacity = '';
+            
+            await fader.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 500, fill: 'forwards' }).finished;
+            fader.remove();
+            
+            if (gameContainer) gameContainer.style.transition = '';
+        }
     }
 
     /**
@@ -40230,27 +40412,22 @@ export class IntroService {
         this.gameState.introSequenceActive = false;
         this._transitioning = false;
         
+        document.body.removeEventListener('pointerdown', this._skipListener);
+
         this.logger.info.state(this.gameState.day, 'INTRO_END', 'Introduction sequence complete. Booting to Missions.');
         
-        // Restore Economic Weather button visibility via inline styles
         const econBtn = document.getElementById('btn-econ-weather');
         if (econBtn) econBtn.style.display = '';
 
-        // --- VIRTUAL WORKBENCH: Restore Pause Menu Cog after Intro ---
         const cogBtn = document.getElementById('btn-game-menu');
         if (cogBtn) cogBtn.style.display = '';
-        // --- END VIRTUAL WORKBENCH ---
 
-        // Default the Hangar screen to "Hangar" so they see their newly purchased ship immediately
         this.gameState.uiState.hangarShipyardToggleState = 'hangar';
 
-        // Reveal the main layout
         this.uiManager.showGameContainer();
         
-        // Set context to the Missions screen
         this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
         
-        // Force the master render cycle to execute, naturally triggering the Help Modal
         this.uiManager.render(this.gameState.getState());
     }
 }
@@ -51474,12 +51651,13 @@ export class PlayerActionService {
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [38.30] - 2026-5-10
+# [38.31] - 2026-5-10
 -  mission rewrites
 -  modal polish
 -  UI polish
 -  location art optimization
 -  added loan payment confirmation warning
+-  added intro skip
 
 # [38.25] - 2026-5-9
 -  mission rewrites
