@@ -651,9 +651,17 @@ export class IntroService {
             btn.className = `starter-thumbnail-btn ${shipInfo.borderClass}`;
             btn.type = 'button';
             
-            // Resolve Fallbacks dynamically via AssetService to prevent hardcoded missing variants
-            let imgSrc = AssetService.getFallbackImage(shipInfo.id) || AssetService.getShipImage(shipInfo.id, 0);
+            // Re-synchronized the thumbnail asset fetch to perfectly match the logic used by UIHangarControl
+            let imgSrc = AssetService.getShipImage(shipInfo.id, this.gameState.player.visualSeed);
             
+            // Hardcoded variant overrides match what UIHangarControl will force in `context === 'intro_shipyard'`
+            if (shipInfo.id === 'Wanderer.Ship') imgSrc = 'assets/images/ships/Wanderer/Wanderer_F.webp';
+            if (shipInfo.id === 'Mule.Ship') imgSrc = 'assets/images/ships/Mule/Mule_H.webp';
+            if (shipInfo.id === 'Nomad.Ship') imgSrc = 'assets/images/ships/Nomad/Nomad_A.webp';
+            
+            // Final fallback
+            if (!imgSrc || imgSrc === '') imgSrc = AssetService.getFallbackImage(shipInfo.id);
+
             btn.innerHTML = `
                 <div style="overflow: hidden; aspect-ratio: 1/1; width: 100%; border-radius: 4px; display: flex; justify-content: center; align-items: center; border: 1px solid #4b5563;">
                     <img src="${imgSrc}" alt="${shipStatic.name}" style="transform: scale(1.3); object-fit: cover; width: 100%; height: 100%;" />

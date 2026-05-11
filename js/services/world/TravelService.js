@@ -436,23 +436,27 @@ export class TravelService {
             
             this.logger.info.player(this.gameState.day, 'TRAVEL_STRANDED', `Stranded returning to ${originName}.`);
             
-            if (this.uiManager.eventControl && this.uiManager.eventControl.showStrandedModal) {
-                this.uiManager.eventControl.showStrandedModal(originName, lostDays);
-            } else {
-                this.uiManager.showEventResultModal(
-                    "Critical Failure: Stranded",
-                    `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`,
-                    [
-                        { type: 'EFF_FUEL', value: 0 },
-                        { type: 'EFF_TRAVEL_TIME', value: lostDays }
-                    ]
-                );
-            }
+            // Defers starfield demount & navigation redirect until modal closure
+            const strandedCallback = () => {
+                starfieldService.triggerQuickExit();
+                this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+                
+                // Flush deferred modals
+                if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                    this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.deferredModals = [];
+                }
+            };
+
+            const strandedTitle = "Critical Failure: Stranded";
+            const strandedDesc = `Event delays and route deviations have pushed your fuel requirements beyond your current reserves. <br><br>Your engines sputter and die, leaving you drifting in the void. After <span class="text-result-time">${lostDays}</span> grueling days on emergency life support, a passing freighter tows you back to <b>${originName}</b>.<br><br>The rescue fees have drained your remaining fuel. Your arbitrage run has failed.`;
+
+            // Display modal over the existing travel starfield sequence
+            this.uiManager.queueModal('event-modal', strandedTitle, strandedDesc, strandedCallback, {
+                buttonClass: 'bg-red-800/80 hover:bg-red-700',
+                dismissOutside: false
+            });
             
-            // FIX: Gracefully demount the starfield overlay instead of allowing it to hang indefinitely
-            starfieldService.triggerQuickExit();
-            
-            this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
             return;
         }
 
@@ -602,6 +606,14 @@ export class TravelService {
 
             if (this.simulationService.toastService) {
                 this.simulationService.toastService.evaluateArrivalTriggers();
+            }
+
+            // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
+            if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                this.gameState.deferredModals.forEach(m => {
+                    this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
+                });
+                this.gameState.deferredModals = [];
             }
 
             if (locationId === 'sol' && this.timeService.solStationService) {
@@ -801,7 +813,13 @@ export class TravelService {
                 { type: 'EFF_HULL', value: -1 }, 
                 { type: 'EFF_FUEL', value: 0 },
                 { type: 'EFF_TRAVEL_TIME', value: lostDays }
-            ]
+            ],
+            () => {
+                if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                    this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.deferredModals = [];
+                }
+            }
         );
     }
 
@@ -878,6 +896,11 @@ export class TravelService {
                 this.uiManager.queueModal('event-modal', 'Vessel Lost', message, () => {
                     this.simulationService.setHangarShipyardMode('hangar');
                     this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.HANGAR);
+                    
+                    if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                        this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                        this.gameState.deferredModals = [];
+                    }
                 }, { dismissOutside: false });
 
                 const fadeOut = overlay.animate([

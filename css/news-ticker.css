@@ -24,11 +24,12 @@
 
 .news-ticker-content {
     /* JITTER FIX: Use Flexbox layout */
-    /* ARCHITECTURAL WARNING: Do not remove 'display: flex' or 'width: fit-content'.
+    /* ARCHITECTURAL WARNING: Do not remove 'display: flex' or 'width: max-content'.
        This structure ensures that the container width is exactly equal to the 
        sum of its children, guaranteeing that -50% is exactly one child width. */
     display: flex;
-    width: fit-content; 
+    width: max-content; /* CHANGED to max-content to prevent sub-pixel flex rounding */
+    contain: layout paint; /* DEFENSIVE: Enforce strict boundaries to prevent layout thrashing */
     white-space: nowrap;
     position: absolute;
     will-change: transform;
@@ -54,11 +55,13 @@
 .ticker-block {
     flex: 0 0 auto; /* Do not shrink or grow */
     display: flex;  /* Keep internal spans in line */
+    width: max-content; /* DEFENSIVE: Explicit deterministic sizing */
     align-items: center;
     /* BLINK FIX: Hardware Acceleration for the block itself */
     /* Prevents repainting when the loop resets at 0px */
-    transform: translate3d(0,0,0);
+    transform: translateZ(0); /* Upgraded from translate3d to translateZ for better compositing */
     backface-visibility: hidden;
+    contain: layout paint; /* DEFENSIVE: Scope repaints strictly to this element */
 }
 
 /*

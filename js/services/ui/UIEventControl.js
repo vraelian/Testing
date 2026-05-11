@@ -8,6 +8,7 @@ import { _renderMaxCargoModal } from '../../ui/components/CargoScreen.js';
 import { COMMODITY_IDS, APP_VERSION } from '../../data/constants.js';
 import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
+import { AssetService } from '../AssetService.js';
 
 export class UIEventControl {
     constructor(manager) {
@@ -480,6 +481,10 @@ export class UIEventControl {
 
         const location = DB.MARKETS.find(l => l.id === locationId);
         if (!location) return;
+
+        // --- PRE-HYDRATION HOOK (PHASE 4) ---
+        // Immediately fetch the target location background while the player reads the modal
+        AssetService.hydrateTargetLocation(locationId);
 
         const theme = location.navTheme;
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId]?.[locationId];

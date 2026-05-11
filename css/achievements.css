@@ -135,11 +135,30 @@
     color: inherit !important; 
 }
 
-/* --- Achievements Modal Height Reduction --- */
+/* --- Achievements Modal Height Reduction & Premium Theming --- */
 #achievements-modal .modal-content {
-    max-height: 70dvh !important;
+    /* Increased from 70dvh to 77dvh (+10%) per spec */
+    max-height: 77dvh !important;
     display: flex;
     flex-direction: column;
+    
+    /* Premium Gold/Silver Gradient Theming Override */
+    background: linear-gradient(145deg, rgba(20, 25, 35, 0.98), rgba(10, 15, 20, 0.98));
+    border: 1px solid #fbbf24;
+    box-shadow: 0 0 25px rgba(250, 204, 21, 0.15), inset 0 0 15px rgba(148, 163, 184, 0.2);
+}
+
+#achievements-modal .modal-header {
+    background: linear-gradient(90deg, rgba(250, 204, 21, 0.15), rgba(148, 163, 184, 0.1));
+    border-bottom: 1px solid rgba(250, 204, 21, 0.5);
+}
+
+#achievements-modal .modal-title {
+    background: linear-gradient(to right, #fbbf24, #94a3b8);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 #achievements-scroll-container {
