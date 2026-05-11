@@ -75,7 +75,7 @@ export const PHASE_ONE_MISSIONS = {
             { type: 'TRIGGER_SYSTEM_STATE', stateId: 'CORONAL_MASS_EJECTION' }
         ],
         onComplete: [
-            { type: 'END_SYSTEM_STATE' }
+            { type: 'TRIGGER_SYSTEM_STATE', stateId: 'NEUTRAL' }
         ],
         objectives: [
             { "id": "deliver_ice", "type": "DELIVER_ITEM", "target": "loc_belt", "goodId": "water_ice", "quantity": 25 }
@@ -102,6 +102,9 @@ export const PHASE_ONE_MISSIONS = {
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
+        onComplete: [
+            { "type": "reveal_tier", "value": 2 }
+        ],
         objectives: [
             { "id": "deliver_plasteel", "type": "DELIVER_ITEM", "target": "loc_earth", "goodId": "plasteel", "quantity": 10 }
         ],
@@ -112,7 +115,7 @@ export const PHASE_ONE_MISSIONS = {
             buttonText: "Unload the Plasteel"
         },
         rewards: [
-            { "type": "credits", "amount": 25000 }
+            { "type": "credits", "amount": 37000 }
         ]
     },
     'mission_14': {
@@ -127,9 +130,6 @@ export const PHASE_ONE_MISSIONS = {
         triggers: [
             { "type": "mission_completed", "missionId": "mission_11" },
             { "type": "mission_completed", "missionId": "mission_13" }
-        ],
-        onComplete: [
-            { "type": "reveal_tier", "value": 2 }
         ],
         objectives: [
             { "id": "deliver_plasteel_bulk", "type": "DELIVER_ITEM", "target": "loc_mars", "goodId": "plasteel", "quantity": 80 }

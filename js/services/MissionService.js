@@ -955,6 +955,21 @@ export class MissionService {
                     if (this.simulationService.systemStateService) {
                         this.simulationService.systemStateService.endCurrentState();
                     }
+                } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
+                    if (this.simulationService.systemStateService) {
+                        this.simulationService.systemStateService.triggerState(action.stateId);
+                    } else {
+                        const sysStateService = new SystemStateService(this.gameState, this.logger);
+                        sysStateService.triggerState(action.stateId);
+                    }
+                    
+                    this.gameState.setState({});
+                    
+                    if (this.uiManager && typeof this.uiManager.showEconWeatherModal === 'function') {
+                        setTimeout(() => {
+                            this.uiManager.showEconWeatherModal(this.gameState.getState());
+                        }, 600);
+                    }
                 } else if (action.type === 'reveal_tier') {
                     const newTier = Math.max(this.gameState.player.revealedTier, action.value);
                     if (newTier > this.gameState.player.revealedTier) {

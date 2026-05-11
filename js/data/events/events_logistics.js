@@ -12,7 +12,7 @@ export const EVENTS_LOGISTICS = [
         id: 'evt_logistics_containment',
         tags: [EVENT_CONSTANTS.TAGS.SPACE],
         weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
         template: {
             title: 'Mag-Lock Failure',
             description: 'A cargo pod is vibrating loose. If you don\'t secure it, it will tear itself free—and might take a chunk of the hull with it.'
@@ -74,10 +74,10 @@ export const EVENTS_LOGISTICS = [
         id: 'evt_logistics_spoilage',
         tags: [EVENT_CONSTANTS.TAGS.SPACE],
         weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
         template: {
             title: 'Temp Rising',
-            description: 'The refrigeration unit in Bay 4 is dying. Your temperature-sensitive cargo (Cloned Organs, Cybernetics) will rot if you don\'t act fast.'
+            description: 'The refrigeration unit in Bay 4 is dying. Your temperature-sensitive freight will rot if you don\'t act fast.'
         },
         choices: [
             {
@@ -119,7 +119,7 @@ export const EVENTS_LOGISTICS = [
         id: 'evt_logistics_bloom',
         tags: [EVENT_CONSTANTS.TAGS.SPACE],
         weight: 10,
-        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'LT', value: 9999 }],
+        requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
         template: {
             title: 'The Bloom',
             description: 'Humidity sensors detect a rapid algal bloom in the cargo hold. It is eating the packaging and will soon eat the cargo.'
