@@ -18,12 +18,13 @@ Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelSe
 
 IntroService (F033)
 Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
+Key Behavior: Handles the explicit "Intro Skip" bypass trigger to circumvent the cinematic sequence and route players directly into standard gameplay.
 Dependencies: GameState, UIManager, Logger, SimulationService.
 
 PlayerActionService (F034)
-Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
-Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
+Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair, and Loan Repayments.
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging. Validates debt repayment actions against a mandatory confirmation warning before executing liquidity transfers.
+Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes, BankruptcyService.
 
 GameAttributes (F069)
 Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
@@ -36,7 +37,7 @@ Dependencies: GameState, TimeService, RandomEventService, StoryEventService.
 
 MarketService (F010)
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Applies System State weather modifiers and Station Quirks dynamically.
+Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Applies System State weather modifiers and Station Quirks dynamically. Evaluates trade executions against Anti-Exploit mechanics, calculating transaction volume price slippage and tracking short-term trade arrays to apply Wash Trade penalties dynamically.
 Dependencies: GameState, IntelService, AssetService, SystemStateService.
 
 IntelService (F057)
@@ -64,7 +65,7 @@ Dependencies: GameState, UIManager, SimulationService.
 
 BankruptcyService (F107)
 Responsibility: Evaluates financial health, manages distinct debt pools (Guild vs Syndicate), and executes punitive actions.
-Key Behavior: Triggers Repo Events forcibly liquidating player assets to cover outstanding Syndicate Debt.
+Key Behavior: Triggers Repo Events forcibly liquidating player assets to cover outstanding Syndicate Debt. Coordinates with PlayerActionService to resolve explicitly confirmed debt repayments.
 Dependencies: GameState, PlayerActionService, SimulationService, Logger.
 
 SystemStateService (F108)
@@ -141,9 +142,15 @@ Dependencies: None.
 5. Persistence Services
 SaveStorageService (F101)
 Responsibility: Manages game saves using a dual-write architecture and local file I/O operations.
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation, including optimized serialization and export handling for large save blobs to prevent memory crashes on mobile.
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation, including optimized serialization and export handling for large save blobs to prevent memory crashes on mobile. Rigidly enforces schema stripping protocols to preserve deterministic `false` and `0` values.
 Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
 AssetStorageService (F070)
 Responsibility: Low-level IndexedDB wrapper.
 Dependencies: Native IndexedDB API.
+
+6. Debug & Automated Testing Services
+AutomatedPlayerService
+Responsibility: Headless client-side GOAP (Goal-Oriented Action Planning) bot for validating long-term economic stability and stress-testing system mechanics.
+Key Behavior: Directly interfaces with domain logic (bypassing UIManager constraints) to rapidly simulate multi-year runs. Features updated strategic logic to navigate Anti-Exploit mechanics by calculating efficient cross-system arbitrage routes and avoiding local wash trade penalties or massive single-tick dumps. Populates Economic Telemetry arrays for macro-analysis.
+Dependencies: GameState, SimulationService, Logger, TelemetryStorageService.

@@ -1,6 +1,7 @@
 // meta/DATA_FLOW.md
 
 # Orbital Trading - Data Flow Architecture
+Last Edit: 5/11/26, ver. [38.33]
 
 ## 1. System Overview
 The application follows a Strict Unidirectional Data Flow: Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)
@@ -42,7 +43,7 @@ graph TD
 
     H --> A;
 2.2 Boot Sequence & Pre-Flight (ADR-021 & ADR-034)
-Initialization logic satisfying legal (EULA), performance (Asset Hydration), and cinematic (Web Animations API) constraints.
+Initialization logic satisfying legal (EULA), performance (Asset Hydration), cinematic (Web Animations API) constraints, and the Intro Skip bypass.
 
 Code snippet
 graph TD
@@ -53,19 +54,22 @@ graph TD
         D --> E[Render Title Screen & EULA Modal];
     end
 
-    subgraph Phase 2: User Gate & Loan
+    subgraph Phase 2: User Gate & Skip Decision
         E --> F{User Accepts EULA?};
         F -- No --> G[Wait / Pulse Warning];
         F -- Yes --> H[Trigger Signature Modal];
-        H --> I[Accept Loan & Intro Sequences];
+        H --> I{User Selects Intro Skip?};
+        I -- No --> J[Accept Loan & Route to Intro Sequences];
+        I -- Yes --> K[Accept Loan & Bypass Cinematic Sequence];
     end
 
     subgraph Phase 3: Game Injection (Cinematic Handoff)
-        I --> J[DOM Inject: Starter Ship Selection Overlay];
-        J --> K{User Selects Ship};
-        K --> L[Mutate GameState Invisibly];
-        L --> M[Web Animations API: Crossfade Overlay to Game Container];
-        M --> N[UIManager.render: Hangar/Shipyard];
+        J --> L[DOM Inject: Starter Ship Selection Overlay];
+        L --> M{User Selects Ship};
+        M --> N[Mutate GameState Invisibly];
+        N --> O[Web Animations API: Crossfade Overlay to Game Container];
+        O --> P[UIManager.render: Hangar/Shipyard];
+        K --> P;
     end
 2.3 Asset Hydration Architecture
 Persistence strategy to prevent iOS cache eviction, expanded to include high-frequency UI textures.
@@ -145,30 +149,33 @@ graph TD
         H & J --> K[PlayerActionService.executeInstallUpgrade];
         K --> L((Update Ship State));
     end
-2.6 Animated Transaction Flow
-Handling asynchronous visual blocking during state transitions.
+2.6 Animated Transaction & Debt Validation Flow
+Handling asynchronous visual blocking during state transitions and guarding critical debt repayments.
 
 Code snippet
 graph TD
-    subgraph Input
-        A[Buy Ship Click] --> B[ActionClickHandler];
+    subgraph Input & Validation
+        A[Buy Asset / Pay Loan Click] --> B[ActionClickHandler];
+        B --> C{Is Debt Repayment?};
+        C -- Yes --> D[UI: Render Loan Payment Confirmation Warning];
+        D -- Confirm --> E[PlayerActionService.validate];
+        C -- No --> E;
     end
 
     subgraph Coordination
-        B --> C[SimulationService.buyShip];
-        C --> D[PlayerActionService.validate];
-        D -- Valid --> E[UIManager.runShipTransactionAnimation];
-        E --> F[AnimationService.playBlockingAnimation];
+        E -- Valid --> F[SimulationService.executeTransaction];
+        F --> G[UIManager.runTransactionAnimation];
+        G --> H[AnimationService.playBlockingAnimation];
     end
 
     subgraph Visual Block
-        F -- Await 'animationend' --> G[Animation Complete];
+        H -- Await 'animationend' --> I[Animation Complete];
     end
 
     subgraph Finalization
-        G --> H[PlayerActionService.executeBuyShip];
-        H --> I((Mutate GameState));
-        I --> J[UIManager.render];
+        I --> J[PlayerActionService.commitExecution];
+        J --> K((Mutate GameState));
+        K --> L[UIManager.render];
     end
 2.7 Automated Testing Bot
 Headless execution path bypassing the input layer, heavily integrated with Economic Telemetry tracking.
@@ -375,17 +382,18 @@ graph TD
         G --> H[Assess Scaling Convoy Tax against resources];
     end
 2.15 Game State Persistence & Dual-Write Storage
-Flow for saving and loading game data.
+Flow for saving and loading game data, explicitly enforcing schema integrity.
 
 Code snippet
 graph TD
     subgraph Save Operation
         A1[User/Auto Saves Game] --> B1[SaveStorageService.saveGame];
-        B1 --> C1[Write to IndexedDB];
-        C1 --> D1{Is iOS WebKit Bridge Active?};
-        D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
-        D1 -- No --> F1[End Save];
-        E1 --> F1;
+        B1 --> C1[Schema Stripping: Force Retain '0' and 'false' Values];
+        C1 --> D1[Write to IndexedDB];
+        D1 --> E1{Is iOS WebKit Bridge Active?};
+        E1 -- Yes --> F1[Post Message: iOS Native UserDefaults];
+        E1 -- No --> G1[End Save];
+        F1 --> G1;
     end
 
     subgraph Load Operation
@@ -399,8 +407,10 @@ graph TD
 
     subgraph Optimized Import / Export
         H1[User Exports Save] --> I1[SaveStorageService.exportSave];
-        I1 --> J1[Optimize & Serialize Massive State Blob];
-        J1 --> K1[Trigger File Download via Blob URL];
+        I1 --> J1[Optimize & Strip Schema: Force Retain '0' and 'false'];
+        J1 --> K1[Serialize Massive State Blob];
+        K1 --> L1[Trigger File Download via Blob URL];
+        
         H2[User Imports File] --> I2[SaveStorageService.importSave];
         I2 --> J2[Parse JSON & Overwrite IDB];
         J2 --> G2;
@@ -580,13 +590,14 @@ graph TD
     
     subgraph Execution
         B --> C[SaveStorageService.saveGame];
-        C --> D[Force IDB and iOS Native Bridge Writes];
+        C --> D[Schema Stripping: Force Retain '0' and 'false'];
+        D --> E[Force IDB and iOS Native Bridge Writes];
     end
     
     subgraph Termination
-        B -- Exit Selected --> E[Wait for Writes to Resolve];
-        E --> F[Clear Ephemeral State / Flush JIT Telemetry];
-        F --> G[Return to Title Screen];
+        B -- Exit Selected --> F[Wait for Writes to Resolve];
+        F --> G[Clear Ephemeral State / Flush JIT Telemetry];
+        G --> H[Return to Title Screen];
     end
 2.24 Officer Recruitment Pipeline
 Flow converting static roster data into persistent player state via the UI.

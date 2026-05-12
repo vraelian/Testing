@@ -6,6 +6,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [38.33] - 2026-5-11
 -  price history graph update and polish
 -  calculations performance optimization
+-  updated meta files
 
 # [38.31] - 2026-5-10
 -  mission rewrites

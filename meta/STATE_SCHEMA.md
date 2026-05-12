@@ -1,7 +1,7 @@
 // meta/STATE_SCHEMA.md
 
 # Orbital Trading: State Schema Definition
-Last Edit: 4/30/26, ver. [40.00]
+Last Edit: 5/11/26, ver. [38.33]
 
 ## 1. Root State Object
 
@@ -80,10 +80,11 @@ Contains all progression, assets, and statistics for the user.
 | `fleet` | Object | Map of stored `shipId`s to their status, docked location, and specific cargo configurations. |
 | `officerRoster` | Array<String> | List of recruited officer IDs. |
 | `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[], statusEffects[] }`. |
-| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
+| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. Contains physical cargo (e.g., Sentient AIs functioning as physical beings, Venusian artifacts) and high-value consumable commodities (e.g., Folded-Space Drives). The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
 | `unlockedLicenseIds` | Array<String> | List of trade licenses owned. |
 | `unlockedLocationIds` | Array<String> | List of locations visited/unlocked. |
 | `seenEvents` | Array<String> | List of unique Event IDs already triggered. |
+| **`recentTrades`** | **Array<Object>** | **Short-term tracking array for recent transactions, used to algorithmically evaluate and apply Wash Trade penalties to locations.** |
 
 ---
 
@@ -201,6 +202,8 @@ Manages the active concurrent missions and their granular progress.
 ## 9. Serialized Save Structure
 
 When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge. The payload object is carefully serialized to manage massive blob sizes safely without causing mobile RAM crashes.
+
+**CRITICAL SCHEMA STRIPPING CONSTRAINT:** During serialization, optimization, and compression, the parsing logic MUST rigidly preserve intentional `false` and `0` values. These are critical deterministic state mutators; systematically stripping them as 'falsy' nulls will result in catastrophic player save file corruption.
 
 | Property | Type | Description |
 | --- | --- | --- |

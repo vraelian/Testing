@@ -675,3 +675,29 @@ Consequences:
 * Pro: Guarantees player agency and explicit awareness of progression rewards via the redemption loop.
 * Pro: Abbreviated numbers completely prevent flexbox/grid ruptures on mobile viewports.
 * Con: Requires distinct state tracking for `isCompletable` versus `isRedeemed`.
+
+ADR-051: External Narrative Visualization (story_timeline.html)
+Status: Accepted (2026-05-06)
+
+Context: As the narrative expanded with Story Events and Act intermissions, verifying narrative continuity, flag dependencies, and sequence logic across scattered files became difficult without playing through the entire game simulation loop.
+
+Decision: Implemented story_timeline.html, a standalone interactive HTML application. It bypasses the game loop entirely to parse and visualize mission data, character portraits, and rewards in sequential order.
+
+Consequences:
+Pro: Vastly accelerates narrative QA and verification of flag dependencies.
+Pro: Decouples narrative testing from simulation mechanics.
+Con: Requires manual maintenance to ensure it correctly mirrors the evolving schemas of the mission and event registries.
+
+ADR-052: Anti-Exploit Market Mechanics
+Status: Accepted (2026-05-04)
+
+Context: The "Delayed Supply" model permitted edge-case exploits where players could engage in rapid "Wash Trading" at a single port or execute massive, single-tick volume dumps that sidestepped intended economic resistance and generated infinite wealth loops.
+
+Decision: Implemented transaction volume price slippage and wash trade penalties.
+Wash Trade Penalty: Rapid buy/sell cycles at a single location now algorithmically degrade local target margins.
+Volume Price Slippage: Massive transaction volumes incrementally shift the availabilityRatio during the execution of the trade itself, lowering the average execution value dynamically.
+
+Consequences:
+Pro: Closes loopholes allowing risk-free, same-port infinite wealth generation.
+Pro: Forces players to physically move cargo between locations to realize optimal profits, diversifying trade routes.
+Con: Adds significant mathematical complexity to the MarketService during trade execution.
