@@ -35,6 +35,7 @@ export const EVENTS_BUREAUCRACY = [
             {
                 id: 'choice_manual',
                 text: 'Manual Vacuum Purge (Risk Cargo & Status)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -145,6 +146,7 @@ export const EVENTS_BUREAUCRACY = [
             {
                 id: 'choice_dump',
                 text: 'Dump Cache to Void',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dump' }] }
             },
             {

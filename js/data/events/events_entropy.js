@@ -23,6 +23,7 @@ export const EVENTS_ENTROPY = [
             {
                 id: 'choice_vent',
                 text: 'Vent Cargo Bay (Risk Any Onboard Cargo)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent' }] }
             },
             {

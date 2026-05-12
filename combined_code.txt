@@ -5089,7 +5089,7 @@ card.
     align-items: center;
     z-index: 50;
     opacity: 0;
-    transition: opacity 1s ease-out;
+    transition: opacity 0.3s ease-out;
     pointer-events: none;
 }
 
@@ -5126,15 +5126,15 @@ card.
 
 /* State class for a modal that is currently visible */
 .modal-visible .modal-content {
-    animation: fadeIn 1s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
 
 /* State class for a modal that is in the process of closing */
 .modal-hiding {
-    animation: fadeOut 1s ease-out forwards;
+    animation: fadeOut 0.3s ease-out forwards;
 }
 .modal-hiding .modal-content {
-    animation: fadeOut 1s ease-out forwards;
+    animation: fadeOut 0.3s ease-out forwards;
 }
 
 /* New class for the splash screen's unique exit animation */
@@ -20955,6 +20955,7 @@ export const EVENTS_ENTROPY = [
             {
                 id: 'choice_vent',
                 text: 'Vent Cargo Bay (Risk Any Onboard Cargo)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_vent' }] }
             },
             {
@@ -21417,6 +21418,7 @@ export const EVENTS_BUREAUCRACY = [
             {
                 id: 'choice_manual',
                 text: 'Manual Vacuum Purge (Risk Cargo & Status)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -21527,6 +21529,7 @@ export const EVENTS_BUREAUCRACY = [
             {
                 id: 'choice_dump',
                 text: 'Dump Cache to Void',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_dump' }] }
             },
             {
@@ -22110,7 +22113,7 @@ export const EVENTS_SALVAGE = [
             {
                 id: 'choice_surrender',
                 text: 'Surrender Claimed Goods',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'EQ', value: 1 }],
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_surrender' }] }
             },
             {
@@ -22313,11 +22316,13 @@ export const EVENTS_SALVAGE = [
             {
                 id: 'choice_scrap',
                 text: 'Harvest Scrap (+Trip Delay, +Plasteel)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
             },
             {
                 id: 'choice_deep',
                 text: 'Deep Search (Risk Hull)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -22714,6 +22719,7 @@ export const EVENTS_HAZARDS = [
             {
                 id: 'choice_run',
                 text: 'Run Silent (Risk Cargo)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
@@ -51765,6 +51771,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [38.35] - 2026-5-11
+-  modal timing polish
+-  event updates
 
 # [38.33] - 2026-5-11
 -  price history graph update and polish

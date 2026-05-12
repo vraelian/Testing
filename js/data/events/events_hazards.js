@@ -76,6 +76,7 @@ export const EVENTS_HAZARDS = [
             {
                 id: 'choice_run',
                 text: 'Run Silent (Risk Cargo)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
