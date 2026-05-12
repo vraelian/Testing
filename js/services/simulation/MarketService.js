@@ -23,6 +23,32 @@ export class MarketService {
         this.gameState = gameState;
         this._currentSystemState = null;
         this._systemStateExpirationDay = 0;
+        
+        // Phase 1: O(1) Dictionary Caching Lookups
+        this._marketMap = null;
+        this._commodityMap = null;
+    }
+
+    /**
+     * Lazy initialization for O(1) Market lookups
+     * @private
+     */
+    _getMarket(id) {
+        if (!this._marketMap) {
+            this._marketMap = new Map(DB.MARKETS.map(m => [m.id, m]));
+        }
+        return this._marketMap.get(id);
+    }
+
+    /**
+     * Lazy initialization for O(1) Commodity lookups
+     * @private
+     */
+    _getCommodity(id) {
+        if (!this._commodityMap) {
+            this._commodityMap = new Map(DB.COMMODITIES.map(c => [c.id, c]));
+        }
+        return this._commodityMap.get(id);
     }
 
     /**
@@ -129,7 +155,7 @@ export class MarketService {
             const delayPassed = daysSinceInteraction >= 7;
 
             if (inventoryItem.isDepleted && delayPassed) {
-                const location = DB.MARKETS.find(m => m.id === locationId);
+                const location = this._getMarket(locationId);
                 const panicMult = location?.ecoProfile?.panicMult ?? 1.5;
                 basePrice *= panicMult;
             }
@@ -174,7 +200,7 @@ export class MarketService {
         }
 
         // Tier-Scaled Intrinsic Support (Absolute Retail Floor)
-        const commodityDef = DB.COMMODITIES.find(c => c.id === commodityId);
+        const commodityDef = this._getCommodity(commodityId);
         let absoluteFloor = 1;
         if (commodityDef) {
             const baseMin = commodityDef.basePriceRange[0];
@@ -270,15 +296,25 @@ export class MarketService {
      * and player-driven market pressure.
      */
     evolveMarketPrices(economySeed = null) {
+        // Phase 1: Static Evaluation Hoisting
+        const activeDeal = this.gameState.activeIntelDeal;
+        const systemState = this.gameState.systemStates || this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const targetLocationsSet = new Set(systemState?.targetLocations || []);
+        
         DB.MARKETS.forEach(location => {
+            const isTargetLocation = targetLocationsSet.has(location.id);
+            
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
-                const seedStr = economySeed !== null ? `${location.id}-${commodity.id}-${economySeed}` : null;
-                const seedHash = seedStr ? this._hashString(seedStr) : null;
+                // Phase 4: Garbage Collection Stabilization
+                let seedHash = null;
+                if (economySeed !== null) {
+                    seedHash = this._hashString(`${location.id}-${commodity.id}-${economySeed}`);
+                }
                 const randomVal = () => seedHash !== null ? this._seededRandom(seedHash) : Math.random();
 
-                const activeDeal = this.gameState.activeIntelDeal;
                 if (activeDeal &&
                      activeDeal.locationId === location.id &&
                      activeDeal.commodityId === commodity.id)
@@ -289,7 +325,11 @@ export class MarketService {
                     const maxPrice = basePrice * (1 + fluctuation);
                     
                     const fluctuatedPrice = randomVal() * (maxPrice - minPrice) + minPrice;
-                    this.gameState.market.prices[location.id][commodity.id] = Math.max(1, Math.round(fluctuatedPrice));
+                    const finalOverridePrice = Math.max(1, Math.round(fluctuatedPrice));
+                    this.gameState.market.prices[location.id][commodity.id] = finalOverridePrice;
+                    
+                    // Phase 4: Inline History Tracking (Bypasses redundant getPrice execution)
+                    this._logInlineHistory(location.id, commodity.id, this._applyStationQuirks(finalOverridePrice, location.id, commodity.id));
                     return; 
                 }
 
@@ -297,10 +337,6 @@ export class MarketService {
                 const price = this.gameState.market.prices[location.id][commodity.id];
                 const avg = this.gameState.market.galacticAverages[commodity.id];
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
-
-                const systemState = this.gameState.systemStates || this.gameState.systemState;
-                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-                const isTargetLocation = systemState && systemState.targetLocations?.includes(location.id);
 
                 let basePriceMod = 1.0;
                 let activeStateMeanReversionMod = 1.0;
@@ -366,6 +402,9 @@ export class MarketService {
                 const finalRoundedPrice = Math.max(intrinsicFloor, Math.round(newPrice));
                 
                 this.gameState.market.prices[location.id][commodity.id] = finalRoundedPrice;
+                
+                // Phase 4: Inline History Tracking (Bypasses redundant getPrice execution)
+                this._logInlineHistory(location.id, commodity.id, this._applyStationQuirks(finalRoundedPrice, location.id, commodity.id));
 
                 // TELEMETRY: Gated execution
                 if (this.gameState.uiState?.enableEconomicTelemetry) {
@@ -391,8 +430,6 @@ export class MarketService {
                             isDepleted: inventoryItem.isDepleted || false,
                             isSaturated: inventoryItem.isSaturated || false
                         });
-
-                        if (this.gameState.telemetry.ticks.length > 2000) this.gameState.telemetry.ticks.shift();
                     }
                 }
 
@@ -415,24 +452,69 @@ export class MarketService {
                     }
                 }
             });
-            this._recordPriceHistory(location.id);
         });
+
+        // Phase 3: Telemetry & History Memory Management (Batch Slicing)
+        this._executeMemoryGarbageCollection();
+    }
+
+    /**
+     * Replaces the redundant _recordPriceHistory to write final parsed prices directly, 
+     * preventing double-evaluation of the pricing engine.
+     * @private
+     */
+    _logInlineHistory(locationId, commodityId, displayPrice) {
+        if (!this.gameState.market.priceHistory[locationId]) this.gameState.market.priceHistory[locationId] = {};
+        if (!this.gameState.market.priceHistory[locationId][commodityId]) this.gameState.market.priceHistory[locationId][commodityId] = [];
+        
+        const history = this.gameState.market.priceHistory[locationId][commodityId];
+        const lastEntry = history[history.length - 1];
+        
+        if (lastEntry && lastEntry.day === this.gameState.day) {
+            lastEntry.price = displayPrice;
+        } else {
+            history.push({ day: this.gameState.day, price: displayPrice });
+        }
+    }
+
+    /**
+     * Phase 3: Executes O(1) Batch Array Slicing to prevent memory reallocation thrashing.
+     * @private
+     */
+    _executeMemoryGarbageCollection() {
+        // Run history cleanup weekly to conserve cycles
+        if (this.gameState.day % 7 === 0) {
+            Object.values(this.gameState.market.priceHistory).forEach(locationHist => {
+                Object.values(locationHist).forEach(histArray => {
+                    if (histArray.length > GAME_RULES.PRICE_HISTORY_LENGTH + 30) {
+                        histArray.splice(0, histArray.length - GAME_RULES.PRICE_HISTORY_LENGTH);
+                    }
+                });
+            });
+        }
+
+        // Telemetry Buffer Truncation
+        if (this.gameState.telemetry && this.gameState.telemetry.ticks.length > 2500) {
+            this.gameState.telemetry.ticks = this.gameState.telemetry.ticks.slice(-2000);
+        }
     }
     
     /**
      * Simulates the weekly replenishment of commodity stock using a hybrid model.
      */
     replenishMarketInventory() {
+        // Phase 1: Static Evaluation Hoisting
+        const systemState = this.gameState.systemStates || this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const targetLocationsSet = new Set(systemState?.targetLocations || []);
+
         DB.MARKETS.forEach(market => {
+            const isTargetLocation = targetLocationsSet.has(market.id);
+
             DB.COMMODITIES.forEach(c => {
                 if (c.tier > this.gameState.player.revealedTier) return;
 
                 const inventoryItem = this.gameState.market.inventory[market.id][c.id];
-
-                const systemState = this.gameState.systemStates || this.gameState.systemState;
-                const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-                const isTargetLocation = systemState && systemState.targetLocations?.includes(market.id);
-
                 let targetStockMod = 1.0;
                 let replenishRate = market.ecoProfile?.commodityReplenishRates?.[c.id] ?? market.ecoProfile?.replenishRate ?? 0.10;
 
@@ -530,8 +612,8 @@ export class MarketService {
      * @param {string} transactionType - 'buy' or 'sell'.
      */
     applyMarketImpact(goodId, quantity, transactionType) {
-        const good = DB.COMMODITIES.find(c => c.id === goodId);
-        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
+        const good = this._getCommodity(goodId);
+        const market = this._getMarket(this.gameState.currentLocationId);
         const inventoryItem = this.gameState.market.inventory[this.gameState.currentLocationId][goodId];
         
         let pressureMod = market?.ecoProfile?.dampeners?.[goodId] ?? market?.ecoProfile?.pressureMod ?? 1.0;
@@ -609,7 +691,10 @@ export class MarketService {
                 isSaturated: inventoryItem.isSaturated || false
             });
 
-            if (this.gameState.telemetry.impacts.length > 1000) this.gameState.telemetry.impacts.shift();
+            // Phase 3: Telemetry Batch Slicing
+            if (this.gameState.telemetry.impacts.length > 1500) {
+                this.gameState.telemetry.impacts = this.gameState.telemetry.impacts.slice(-1000);
+            }
         }
     }
 
@@ -617,7 +702,7 @@ export class MarketService {
      * Checks if a purchase triggers a market depletion event.
      */
     checkDepletion(good, inventoryItem, purchaseQuantity, currentDay) {
-        const market = DB.MARKETS.find(m => m.id === this.gameState.currentLocationId);
+        const market = this._getMarket(this.gameState.currentLocationId);
         const [minAvail, maxAvail] = good.canonicalAvailability;
         const modifier = market.availabilityModifier?.[good.id] ?? 1.0;
         const baseMeanStock = (minAvail + maxAvail) / 2 * modifier;
@@ -652,40 +737,6 @@ export class MarketService {
         return Math.floor(skewedRandom(min, max) * modifier);
     }
 
-    _recordPriceHistory(marketId = null) {
-        if (!this.gameState || !this.gameState.market) return;
-        const targetMarketId = marketId || this.gameState.currentLocationId;
-
-        if (!this.gameState.market.priceHistory[targetMarketId]) {
-            this.gameState.market.priceHistory[targetMarketId] = {};
-        }
-
-        DB.COMMODITIES.forEach(good => {
-            if (good.tier > this.gameState.player.revealedTier) return;
-            if (!this.gameState.market.priceHistory[targetMarketId][good.id]) {
-                this.gameState.market.priceHistory[targetMarketId][good.id] = [];
-            }
-
-            const history = this.gameState.market.priceHistory[targetMarketId][good.id];
-            
-            // Log the fully formed, modified price (accounting for local quirks)
-            const currentDisplayPrice = this.getPrice(targetMarketId, good.id, false);
-
-            const lastEntry = history[history.length - 1];
-            if (lastEntry && lastEntry.day === this.gameState.day) {
-                if (lastEntry.price !== currentDisplayPrice) {
-                    lastEntry.price = currentDisplayPrice;
-                }
-            } else {
-                history.push({ day: this.gameState.day, price: currentDisplayPrice });
-            }
-
-            while (history.length > GAME_RULES.PRICE_HISTORY_LENGTH) {
-                history.shift();
-            }
-        });
-    }
-
     _updateShipyardStock() {
         const { player } = this.gameState;
         player.unlockedLocationIds.forEach(locationId => {
@@ -714,7 +765,7 @@ export class MarketService {
     }
 
     getLocalTargetPrice(locationId, commodityId) {
-        const location = DB.MARKETS.find(m => m.id === locationId);
+        const location = this._getMarket(locationId);
         if (!location) return 0;
         
         const avg = this.gameState.market.galacticAverages[commodityId] || 0;
@@ -742,8 +793,8 @@ export class MarketService {
     }
 
     getGlutThreshold(locationId, commodityId) {
-        const location = DB.MARKETS.find(m => m.id === locationId);
-        const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+        const location = this._getMarket(locationId);
+        const commodity = this._getCommodity(commodityId);
         if (!location || !commodity) return Infinity;
 
         const [minAvail, maxAvail] = commodity.canonicalAvailability;
@@ -783,7 +834,7 @@ export class MarketService {
         }
         
         const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
-        const location = DB.MARKETS.find(m => m.id === locationId);
+        const location = this._getMarket(locationId);
         
         // Extract systemic mods for forward-simulation
         const systemState = this.gameState.systemStates || this.gameState.systemState;
@@ -821,7 +872,7 @@ export class MarketService {
         let currentT = T;
         const phi = 0.85; // Trend dampening
         
-        const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
+        const commodity = this._getCommodity(commodityId);
         const baseMin = commodity ? commodity.basePriceRange[0] : 1;
         const tier = commodity ? commodity.tier : 1;
         const intrinsicFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));

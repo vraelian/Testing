@@ -91,11 +91,28 @@ export class TimeService {
         // Update visual seed for procedural rotations
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
 
-        // Pre-fetch active ship data for the loop
+        // Phase 2: Static Modifier Pre-Calculation Hoisting
         const activeShipId = this.gameState.player.activeShipId;
         const activeShipState = this.gameState.player.shipStates[activeShipId];
         const activeUpgrades = activeShipState ? (activeShipState.upgrades || []) : [];
         const activeShipAttributes = GameAttributes.getShipAttributes(activeShipId);
+        
+        let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
+        if (activeShipAttributes.includes('ATTR_SELF_ASSEMBLY')) {
+            passiveRepairRate += 0.05;
+        }
+
+        let flatDecayAmount = 0;
+        activeShipAttributes.forEach(attrId => {
+            const def = GameAttributes.getDefinition(attrId);
+            if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
+                flatDecayAmount += def.value;
+            }
+        });
+
+        const canAge = !activeShipAttributes.includes('ATTR_CRYO_STASIS');
+        const interestMod = GameAttributes.getInterestModifier(activeUpgrades);
+        const effectiveStats = this.simulationService ? this.simulationService.getEffectiveShipStats(activeShipId) : null;
 
         for (let i = 0; i < days; i++) {
             if (this.gameState.isGameOver) {
@@ -132,16 +149,7 @@ export class TimeService {
             this.systemStateService.evaluateTick();
 
             // --- PASSIVE REPAIR (UPGRADES & Z-CLASS) ---
-            // Only applies to the active ship.
-            let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
-            
-            // ATTR_SELF_ASSEMBLY (Engine of Recursion): +5% Daily Repair
-            if (activeShipAttributes.includes('ATTR_SELF_ASSEMBLY')) {
-                passiveRepairRate += 0.05;
-            }
-
-            if (passiveRepairRate > 0 && this.simulationService) {
-                const effectiveStats = this.simulationService.getEffectiveShipStats(activeShipId);
+            if (passiveRepairRate > 0 && effectiveStats && activeShipState) {
                 if (activeShipState.health < effectiveStats.maxHealth) {
                     const healAmount = effectiveStats.maxHealth * passiveRepairRate;
                     activeShipState.health = Math.min(
@@ -152,21 +160,13 @@ export class TimeService {
             }
 
             // --- Legacy Attribute Support (Flat Decay) ---
-            activeShipAttributes.forEach(attrId => {
-                const def = GameAttributes.getDefinition(attrId);
-                if (def && def.type === ATTRIBUTE_TYPES.MOD_HULL_DECAY && def.mode === 'flat_daily') {
-                    if (activeShipState.health > 1) {
-                        activeShipState.health = Math.max(1, activeShipState.health - def.value);
-                    }
-                }
-            });
+            if (flatDecayAmount > 0 && activeShipState && activeShipState.health > 1) {
+                activeShipState.health = Math.max(1, activeShipState.health - flatDecayAmount);
+            }
 
             // Age & Birthday Check (Replaces legacy hardcoded logic)
             const dayOfYear = (this.gameState.day - 1) % 365;
             const currentYear = DB.DATE_CONFIG.START_YEAR + Math.floor((this.gameState.day - 1) / 365);
-            
-            // Cryo-Stasis: Check if age should advance
-            const canAge = !activeShipAttributes.includes('ATTR_CRYO_STASIS');
 
             if (canAge && dayOfYear === 11 && currentYear > this.gameState.player.lastBirthdayYear) {
                 this.gameState.player.lastBirthdayYear = currentYear;
@@ -186,13 +186,6 @@ export class TimeService {
                 }
                 
                 this.gameState.lastMarketUpdateDay = this.gameState.day;
-            }
-
-            // --- V1 OPTIMIZATION: Telemetry Garbage Collection ---
-            if (this.gameState.day % 7 === 0) {
-                if (this.simulationService && this.simulationService.telemetryService) {
-                    this.simulationService.telemetryService.flushRoutine();
-                }
             }
 
             // Intel Expiration
@@ -240,8 +233,6 @@ export class TimeService {
                 }
                 // --- END SYSTEM STATES V3 ---
                 
-                // Apply Multiplicative Modifier (e.g. 0.80 for 20% off)
-                const interestMod = GameAttributes.getInterestModifier(activeUpgrades);
                 const finalInterest = Math.floor(rawInterest * interestMod);
 
                 this.gameState.player.debt += finalInterest;
@@ -269,6 +260,15 @@ export class TimeService {
         if (solLoopSuspended && this.solStationService) {
             this.solStationService.catchUpDays(this.gameState.day);
             this.solStationService.startLocalLiveLoop();
+        }
+
+        // Phase 2: Async IDB Deferral
+        if (days >= 7 || this.gameState.day % 7 === 0) {
+            if (this.simulationService && this.simulationService.telemetryService) {
+                Promise.resolve().then(() => {
+                    this.simulationService.telemetryService.flushRoutine();
+                });
+            }
         }
 
         this.logger.groupEnd();
