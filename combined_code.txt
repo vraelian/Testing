@@ -51769,6 +51769,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 # [38.33] - 2026-5-11
 -  price history graph update and polish
 -  calculations performance optimization
+-  updated meta files
 
 # [38.31] - 2026-5-10
 -  mission rewrites
@@ -53709,7 +53710,7 @@ Correction: Define these as constants in js/data/constants.js and import them.
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 4/25/26, ver. [40.00]
+Last Edit: 5/11/26, ver. [38.33]
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
@@ -53720,6 +53721,7 @@ Local Price Target: This is the new price baseline that each location's market t
 An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
 An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
 Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize. To address unrealistic price floors during extreme market sell-offs across the 14 distinct commodities, recovery logic has been updated to feature dynamic elasticity, aggressively pulling prices up when they hit the system's hard floor limit.
+Calculation Performance Optimization: To ensure accurate historical tracking without compounding math errors over long sessions, baseline calculations utilize optimized performance routines, maintaining strict economic fidelity during long-term simulation runs.
 
 II. Local Price Influences by Location
 This is the full list of price influences for every market.
@@ -53814,6 +53816,14 @@ The market slowly restocks (or sheds) its inventory to move back toward its targ
 A macroeconomic link between the contract system and standard arbitrage.
 Trigger: A player deposits and completes a cargo delivery objective for a mission.
 Effect: The delivered freight "leaks" directly into the destination market's physical inventory (`currentStock`). This organic injection inflates the local `availabilityRatio`, driving local commodity prices down and dynamically creating new export arbitrage opportunities for players post-mission.
+
+7. Force: Wash Trade Penalties (The Local Sandbox)
+Mechanic: Rapid buy/sell cycles executed at a single location trigger an algorithmic degradation of local target margins. 
+Effect: Prevents risk-free, same-port infinite wealth loops, forcing players to physically move cargo between locations to realize optimal profits.
+
+8. Force: Volume Price Slippage (The Execution Tax)
+Mechanic: Massive single-tick transaction volumes incrementally shift the `availabilityRatio` during the execution of the trade itself. 
+Effect: Lowers the average execution value dynamically for massive dumps, ensuring that players cannot sidestep intended economic resistance by executing trades in one giant monolithic block.
 
 V. The "Packing Peanut" Volume Constraints (Geometric Pricing)
 To prevent the "late-game singularity", the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing.
@@ -55286,12 +55296,13 @@ Dependencies: GameState, UIManager, Logger, MarketService, TimeService, TravelSe
 
 IntroService (F033)
 Responsibility: Manages the entire new game introduction sequence, from initial lore modals to the final cinematic handoff to the core game loop.
+Key Behavior: Handles the explicit "Intro Skip" bypass trigger to circumvent the cinematic sequence and route players directly into standard gameplay.
 Dependencies: GameState, UIManager, Logger, SimulationService.
 
 PlayerActionService (F034)
-Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair.
-Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging.
-Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes.
+Responsibility: Handles direct player commands: Buy/Sell Cargo, Buy/Sell Ships, Install Upgrades, Refuel/Repair, and Loan Repayments.
+Key Behavior: Validates actions against player credits/capacity, mutates GameState, logs transactions. Uses dynamic class multipliers for refueling costs and algorithmic pricing (`ShipPrice * 0.0001`) for repairs. Orchestrates fleet trading, storage mechanics, and dynamic fleet cost averaging. Validates debt repayment actions against a mandatory confirmation warning before executing liquidity transfers.
+Dependencies: GameState, UIManager, MissionService, MarketService, GameAttributes, BankruptcyService.
 
 GameAttributes (F069)
 Responsibility: The Upgrade Registry. Defines the metadata (cost, name, description) for all Ship Upgrades and Station Quirks. Acts as a lookup engine for modifiers.
@@ -55304,7 +55315,7 @@ Dependencies: GameState, TimeService, RandomEventService, StoryEventService.
 
 MarketService (F010)
 Responsibility: Simulates the economy. Evolves prices daily, replenishes stock weekly.
-Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Applies System State weather modifiers and Station Quirks dynamically.
+Key Behavior: Implements "Delayed Supply" logic where player actions affect prices 7 days later. Governed by tuned `MARKET_PRESSURE_DECAY` and `MEAN_REVERSION_STRENGTH` rules. Applies System State weather modifiers and Station Quirks dynamically. Evaluates trade executions against Anti-Exploit mechanics, calculating transaction volume price slippage and tracking short-term trade arrays to apply Wash Trade penalties dynamically.
 Dependencies: GameState, IntelService, AssetService, SystemStateService.
 
 IntelService (F057)
@@ -55332,7 +55343,7 @@ Dependencies: GameState, UIManager, SimulationService.
 
 BankruptcyService (F107)
 Responsibility: Evaluates financial health, manages distinct debt pools (Guild vs Syndicate), and executes punitive actions.
-Key Behavior: Triggers Repo Events forcibly liquidating player assets to cover outstanding Syndicate Debt.
+Key Behavior: Triggers Repo Events forcibly liquidating player assets to cover outstanding Syndicate Debt. Coordinates with PlayerActionService to resolve explicitly confirmed debt repayments.
 Dependencies: GameState, PlayerActionService, SimulationService, Logger.
 
 SystemStateService (F108)
@@ -55409,12 +55420,18 @@ Dependencies: None.
 5. Persistence Services
 SaveStorageService (F101)
 Responsibility: Manages game saves using a dual-write architecture and local file I/O operations.
-Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation, including optimized serialization and export handling for large save blobs to prevent memory crashes on mobile.
+Key Behavior: Serializes and stores `GameState` locally in IndexedDB while concurrently broadcasting to the iOS native layer via WebKit message handlers. Exposes `exportSave` and `importSave` for external file manipulation, including optimized serialization and export handling for large save blobs to prevent memory crashes on mobile. Rigidly enforces schema stripping protocols to preserve deterministic `false` and `0` values.
 Dependencies: Native IndexedDB API, WebKit Message Handlers.
 
 AssetStorageService (F070)
 Responsibility: Low-level IndexedDB wrapper.
 Dependencies: Native IndexedDB API.
+
+6. Debug & Automated Testing Services
+AutomatedPlayerService
+Responsibility: Headless client-side GOAP (Goal-Oriented Action Planning) bot for validating long-term economic stability and stress-testing system mechanics.
+Key Behavior: Directly interfaces with domain logic (bypassing UIManager constraints) to rapidly simulate multi-year runs. Features updated strategic logic to navigate Anti-Exploit mechanics by calculating efficient cross-system arbitrage routes and avoiding local wash trade penalties or massive single-tick dumps. Populates Economic Telemetry arrays for macro-analysis.
+Dependencies: GameState, SimulationService, Logger, TelemetryStorageService.
 --- END OF FILE: ./meta/SERVICES.md ---
 
 --- START OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
@@ -56095,12 +56112,39 @@ Consequences:
 * Pro: Guarantees player agency and explicit awareness of progression rewards via the redemption loop.
 * Pro: Abbreviated numbers completely prevent flexbox/grid ruptures on mobile viewports.
 * Con: Requires distinct state tracking for `isCompletable` versus `isRedeemed`.
+
+ADR-051: External Narrative Visualization (story_timeline.html)
+Status: Accepted (2026-05-06)
+
+Context: As the narrative expanded with Story Events and Act intermissions, verifying narrative continuity, flag dependencies, and sequence logic across scattered files became difficult without playing through the entire game simulation loop.
+
+Decision: Implemented story_timeline.html, a standalone interactive HTML application. It bypasses the game loop entirely to parse and visualize mission data, character portraits, and rewards in sequential order.
+
+Consequences:
+Pro: Vastly accelerates narrative QA and verification of flag dependencies.
+Pro: Decouples narrative testing from simulation mechanics.
+Con: Requires manual maintenance to ensure it correctly mirrors the evolving schemas of the mission and event registries.
+
+ADR-052: Anti-Exploit Market Mechanics
+Status: Accepted (2026-05-04)
+
+Context: The "Delayed Supply" model permitted edge-case exploits where players could engage in rapid "Wash Trading" at a single port or execute massive, single-tick volume dumps that sidestepped intended economic resistance and generated infinite wealth loops.
+
+Decision: Implemented transaction volume price slippage and wash trade penalties.
+Wash Trade Penalty: Rapid buy/sell cycles at a single location now algorithmically degrade local target margins.
+Volume Price Slippage: Massive transaction volumes incrementally shift the availabilityRatio during the execution of the trade itself, lowering the average execution value dynamically.
+
+Consequences:
+Pro: Closes loopholes allowing risk-free, same-port infinite wealth generation.
+Pro: Forces players to physically move cargo between locations to realize optimal profits, diversifying trade routes.
+Con: Adds significant mathematical complexity to the MarketService during trade execution.
 --- END OF FILE: ./meta/ARCHITECTURAL_DECISIONS.md ---
 
 --- START OF FILE: ./meta/DATA_FLOW.md ---
 // meta/DATA_FLOW.md
 
 # Orbital Trading - Data Flow Architecture
+Last Edit: 5/11/26, ver. [38.33]
 
 ## 1. System Overview
 The application follows a Strict Unidirectional Data Flow: Input (Event) -> Logic (Service) -> State (Mutation) -> Output (Render)
@@ -56142,7 +56186,7 @@ graph TD
 
     H --> A;
 2.2 Boot Sequence & Pre-Flight (ADR-021 & ADR-034)
-Initialization logic satisfying legal (EULA), performance (Asset Hydration), and cinematic (Web Animations API) constraints.
+Initialization logic satisfying legal (EULA), performance (Asset Hydration), cinematic (Web Animations API) constraints, and the Intro Skip bypass.
 
 Code snippet
 graph TD
@@ -56153,19 +56197,22 @@ graph TD
         D --> E[Render Title Screen & EULA Modal];
     end
 
-    subgraph Phase 2: User Gate & Loan
+    subgraph Phase 2: User Gate & Skip Decision
         E --> F{User Accepts EULA?};
         F -- No --> G[Wait / Pulse Warning];
         F -- Yes --> H[Trigger Signature Modal];
-        H --> I[Accept Loan & Intro Sequences];
+        H --> I{User Selects Intro Skip?};
+        I -- No --> J[Accept Loan & Route to Intro Sequences];
+        I -- Yes --> K[Accept Loan & Bypass Cinematic Sequence];
     end
 
     subgraph Phase 3: Game Injection (Cinematic Handoff)
-        I --> J[DOM Inject: Starter Ship Selection Overlay];
-        J --> K{User Selects Ship};
-        K --> L[Mutate GameState Invisibly];
-        L --> M[Web Animations API: Crossfade Overlay to Game Container];
-        M --> N[UIManager.render: Hangar/Shipyard];
+        J --> L[DOM Inject: Starter Ship Selection Overlay];
+        L --> M{User Selects Ship};
+        M --> N[Mutate GameState Invisibly];
+        N --> O[Web Animations API: Crossfade Overlay to Game Container];
+        O --> P[UIManager.render: Hangar/Shipyard];
+        K --> P;
     end
 2.3 Asset Hydration Architecture
 Persistence strategy to prevent iOS cache eviction, expanded to include high-frequency UI textures.
@@ -56245,30 +56292,33 @@ graph TD
         H & J --> K[PlayerActionService.executeInstallUpgrade];
         K --> L((Update Ship State));
     end
-2.6 Animated Transaction Flow
-Handling asynchronous visual blocking during state transitions.
+2.6 Animated Transaction & Debt Validation Flow
+Handling asynchronous visual blocking during state transitions and guarding critical debt repayments.
 
 Code snippet
 graph TD
-    subgraph Input
-        A[Buy Ship Click] --> B[ActionClickHandler];
+    subgraph Input & Validation
+        A[Buy Asset / Pay Loan Click] --> B[ActionClickHandler];
+        B --> C{Is Debt Repayment?};
+        C -- Yes --> D[UI: Render Loan Payment Confirmation Warning];
+        D -- Confirm --> E[PlayerActionService.validate];
+        C -- No --> E;
     end
 
     subgraph Coordination
-        B --> C[SimulationService.buyShip];
-        C --> D[PlayerActionService.validate];
-        D -- Valid --> E[UIManager.runShipTransactionAnimation];
-        E --> F[AnimationService.playBlockingAnimation];
+        E -- Valid --> F[SimulationService.executeTransaction];
+        F --> G[UIManager.runTransactionAnimation];
+        G --> H[AnimationService.playBlockingAnimation];
     end
 
     subgraph Visual Block
-        F -- Await 'animationend' --> G[Animation Complete];
+        H -- Await 'animationend' --> I[Animation Complete];
     end
 
     subgraph Finalization
-        G --> H[PlayerActionService.executeBuyShip];
-        H --> I((Mutate GameState));
-        I --> J[UIManager.render];
+        I --> J[PlayerActionService.commitExecution];
+        J --> K((Mutate GameState));
+        K --> L[UIManager.render];
     end
 2.7 Automated Testing Bot
 Headless execution path bypassing the input layer, heavily integrated with Economic Telemetry tracking.
@@ -56475,17 +56525,18 @@ graph TD
         G --> H[Assess Scaling Convoy Tax against resources];
     end
 2.15 Game State Persistence & Dual-Write Storage
-Flow for saving and loading game data.
+Flow for saving and loading game data, explicitly enforcing schema integrity.
 
 Code snippet
 graph TD
     subgraph Save Operation
         A1[User/Auto Saves Game] --> B1[SaveStorageService.saveGame];
-        B1 --> C1[Write to IndexedDB];
-        C1 --> D1{Is iOS WebKit Bridge Active?};
-        D1 -- Yes --> E1[Post Message: iOS Native UserDefaults];
-        D1 -- No --> F1[End Save];
-        E1 --> F1;
+        B1 --> C1[Schema Stripping: Force Retain '0' and 'false' Values];
+        C1 --> D1[Write to IndexedDB];
+        D1 --> E1{Is iOS WebKit Bridge Active?};
+        E1 -- Yes --> F1[Post Message: iOS Native UserDefaults];
+        E1 -- No --> G1[End Save];
+        F1 --> G1;
     end
 
     subgraph Load Operation
@@ -56499,8 +56550,10 @@ graph TD
 
     subgraph Optimized Import / Export
         H1[User Exports Save] --> I1[SaveStorageService.exportSave];
-        I1 --> J1[Optimize & Serialize Massive State Blob];
-        J1 --> K1[Trigger File Download via Blob URL];
+        I1 --> J1[Optimize & Strip Schema: Force Retain '0' and 'false'];
+        J1 --> K1[Serialize Massive State Blob];
+        K1 --> L1[Trigger File Download via Blob URL];
+        
         H2[User Imports File] --> I2[SaveStorageService.importSave];
         I2 --> J2[Parse JSON & Overwrite IDB];
         J2 --> G2;
@@ -56680,13 +56733,14 @@ graph TD
     
     subgraph Execution
         B --> C[SaveStorageService.saveGame];
-        C --> D[Force IDB and iOS Native Bridge Writes];
+        C --> D[Schema Stripping: Force Retain '0' and 'false'];
+        D --> E[Force IDB and iOS Native Bridge Writes];
     end
     
     subgraph Termination
-        B -- Exit Selected --> E[Wait for Writes to Resolve];
-        E --> F[Clear Ephemeral State / Flush JIT Telemetry];
-        F --> G[Return to Title Screen];
+        B -- Exit Selected --> F[Wait for Writes to Resolve];
+        F --> G[Clear Ephemeral State / Flush JIT Telemetry];
+        G --> H[Return to Title Screen];
     end
 2.24 Officer Recruitment Pipeline
 Flow converting static roster data into persistent player state via the UI.
@@ -56826,7 +56880,7 @@ graph TD
 // meta/STATE_SCHEMA.md
 
 # Orbital Trading: State Schema Definition
-Last Edit: 4/30/26, ver. [40.00]
+Last Edit: 5/11/26, ver. [38.33]
 
 ## 1. Root State Object
 
@@ -56905,10 +56959,11 @@ Contains all progression, assets, and statistics for the user.
 | `fleet` | Object | Map of stored `shipId`s to their status, docked location, and specific cargo configurations. |
 | `officerRoster` | Array<String> | List of recruited officer IDs. |
 | `shipStates` | Object | Map of `shipId` -> `{ health, fuel, hullAlerts, upgrades[], statusEffects[] }`. |
-| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
+| `inventories` | Object | Map of `shipId` -> `{ commodityId: { quantity, avgCost } }`. Contains physical cargo (e.g., Sentient AIs functioning as physical beings, Venusian artifacts) and high-value consumable commodities (e.g., Folded-Space Drives). The `avgCost` dynamically accounts for fleet-wide purchases and storage transfers. |
 | `unlockedLicenseIds` | Array<String> | List of trade licenses owned. |
 | `unlockedLocationIds` | Array<String> | List of locations visited/unlocked. |
 | `seenEvents` | Array<String> | List of unique Event IDs already triggered. |
+| **`recentTrades`** | **Array<Object>** | **Short-term tracking array for recent transactions, used to algorithmically evaluate and apply Wash Trade penalties to locations.** |
 
 ---
 
@@ -57026,6 +57081,8 @@ Manages the active concurrent missions and their granular progress.
 ## 9. Serialized Save Structure
 
 When the game is saved via `SaveStorageService`, the core `GameState` is wrapped in an envelope containing metadata for safe persistence across IndexedDB and the iOS Native Bridge. The payload object is carefully serialized to manage massive blob sizes safely without causing mobile RAM crashes.
+
+**CRITICAL SCHEMA STRIPPING CONSTRAINT:** During serialization, optimization, and compression, the parsing logic MUST rigidly preserve intentional `false` and `0` values. These are critical deterministic state mutators; systematically stripping them as 'falsy' nulls will result in catastrophic player save file corruption.
 
 | Property | Type | Description |
 | --- | --- | --- |

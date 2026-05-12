@@ -2,7 +2,7 @@
 
 CURRENT ECONOMIC BEHAVIOR
 Orbital Trading Gameplay Data
-Last Edit: 4/25/26, ver. [40.00]
+Last Edit: 5/11/26, ver. [38.33]
 
 This document provides a complete breakdown of the game's current economic model, including the core price mechanics, local market influences, system-wide macro conditions, and the specific forces that govern the player-driven simulation.
 
@@ -13,6 +13,7 @@ Local Price Target: This is the new price baseline that each location's market t
 An Exporter (e.g., modifier of 2.0) has a local target price that is significantly lower than the Galactic Average.
 An Importer (e.g., modifier of 0.5) has a local target price that is significantly higher than the Galactic Average.
 Mean Reversion: This is the "gravitational pull" (currently set to 2.5% strength) that slowly pulls a commodity's current price back toward its new Local Price Target each week. This system ensures that import/export locations will always trend toward the prices you expect, creating stable and logical trade routes. It now takes roughly 120 to 180 in-game days (4 to 6 months) for a crashed market to fully restabilize. To address unrealistic price floors during extreme market sell-offs across the 14 distinct commodities, recovery logic has been updated to feature dynamic elasticity, aggressively pulling prices up when they hit the system's hard floor limit.
+Calculation Performance Optimization: To ensure accurate historical tracking without compounding math errors over long sessions, baseline calculations utilize optimized performance routines, maintaining strict economic fidelity during long-term simulation runs.
 
 II. Local Price Influences by Location
 This is the full list of price influences for every market.
@@ -107,6 +108,14 @@ The market slowly restocks (or sheds) its inventory to move back toward its targ
 A macroeconomic link between the contract system and standard arbitrage.
 Trigger: A player deposits and completes a cargo delivery objective for a mission.
 Effect: The delivered freight "leaks" directly into the destination market's physical inventory (`currentStock`). This organic injection inflates the local `availabilityRatio`, driving local commodity prices down and dynamically creating new export arbitrage opportunities for players post-mission.
+
+7. Force: Wash Trade Penalties (The Local Sandbox)
+Mechanic: Rapid buy/sell cycles executed at a single location trigger an algorithmic degradation of local target margins. 
+Effect: Prevents risk-free, same-port infinite wealth loops, forcing players to physically move cargo between locations to realize optimal profits.
+
+8. Force: Volume Price Slippage (The Execution Tax)
+Mechanic: Massive single-tick transaction volumes incrementally shift the `availabilityRatio` during the execution of the trade itself. 
+Effect: Lowers the average execution value dynamically for massive dumps, ensuring that players cannot sidestep intended economic resistance by executing trades in one giant monolithic block.
 
 V. The "Packing Peanut" Volume Constraints (Geometric Pricing)
 To prevent the "late-game singularity", the economy utilizes strict Volume over Value constraints coupled with Geometric Pricing.
