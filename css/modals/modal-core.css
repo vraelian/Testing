@@ -13,7 +13,7 @@
     align-items: center;
     z-index: 50;
     opacity: 0;
-    transition: opacity 1s ease-out;
+    transition: opacity 0.3s ease-out;
     pointer-events: none;
 }
 
@@ -50,15 +50,15 @@
 
 /* State class for a modal that is currently visible */
 .modal-visible .modal-content {
-    animation: fadeIn 1s ease-out;
+    animation: fadeIn 0.3s ease-out;
 }
 
 /* State class for a modal that is in the process of closing */
 .modal-hiding {
-    animation: fadeOut 1s ease-out forwards;
+    animation: fadeOut 0.3s ease-out forwards;
 }
 .modal-hiding .modal-content {
-    animation: fadeOut 1s ease-out forwards;
+    animation: fadeOut 0.3s ease-out forwards;
 }
 
 /* New class for the splash screen's unique exit animation */

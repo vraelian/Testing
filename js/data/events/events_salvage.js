@@ -58,7 +58,7 @@ export const EVENTS_SALVAGE = [
             {
                 id: 'choice_surrender',
                 text: 'Surrender Claimed Goods',
-                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'EQ', value: 1 }],
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_USED_CARGO_SPACE, operator: 'GTE', value: 1 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_surrender' }] }
             },
             {
@@ -261,11 +261,13 @@ export const EVENTS_SALVAGE = [
             {
                 id: 'choice_scrap',
                 text: 'Harvest Scrap (+Trip Delay, +Plasteel)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
             },
             {
                 id: 'choice_deep',
                 text: 'Deep Search (Risk Hull)',
+                requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
                 resolution: {
                     type: EVENT_CONSTANTS.RESOLVERS.WEIGHTED_RNG,
                     pool: [
