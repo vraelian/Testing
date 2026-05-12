@@ -330,7 +330,7 @@ export class MarketService {
                 const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodity.id];
                 if (commodityMods) {
                     if (commodityMods.volatility_mult) volatility *= commodityMods.volatility_mult;
-                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.meanReversion_mult;
+                    if (commodityMods.mean_reversion_mult) meanReversion *= commodityMods.mean_reversion_mult;
                 }
 
                 const priceRange = commodity.basePriceRange[1] - commodity.basePriceRange[0];
@@ -783,70 +783,104 @@ export class MarketService {
         }
         
         const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
-        const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
-        
-        let meanReversion = GAME_RULES.MEAN_REVERSION_STRENGTH;
         const location = DB.MARKETS.find(m => m.id === locationId);
-        if (location?.ecoProfile?.meanReversionMod) {
-            meanReversion *= location.ecoProfile.meanReversionMod;
+        
+        // Extract systemic mods for forward-simulation
+        const systemState = this.gameState.systemStates || this.gameState.systemState;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        let activeStateMeanReversionMod = 1.0;
+        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.meanReversionMod) {
+            activeStateMeanReversionMod = activeStateDef.modifiers.meanReversionMod;
         }
 
-        const projection = [];
-        let currentRawPrice = this.gameState.market.prices[locationId]?.[commodityId] || 0;
+        let meanReversion = (GAME_RULES.MEAN_REVERSION_STRENGTH || 0.05) * activeStateMeanReversionMod;
+        if (location?.ecoProfile?.meanReversionMod) meanReversion *= location.ecoProfile.meanReversionMod;
+        const commodityMods = this._currentSystemState?.modifiers?.commodity?.[commodityId];
+        if (commodityMods && commodityMods.mean_reversion_mult) meanReversion *= commodityMods.mean_reversion_mult;
         
-        let activePressure = inventoryItem ? inventoryItem.marketPressure : 0;
-        const PLAYER_PRESSURE_STRENGTH = 0.50; 
+        // Holt's Double Exponential Smoothing (Baseline trend anchor)
+        const alpha = 0.3;
+        const beta = 0.15;
+        let S = historicalData.length > 0 ? historicalData[0].price : localBaseline;
+        let T = historicalData.length > 1 ? historicalData[1].price - historicalData[0].price : 0;
+        
+        for (let i = 1; i < historicalData.length; i++) {
+            let X = historicalData[i].price;
+            let nextS = alpha * X + (1 - alpha) * (S + T);
+            let nextT = beta * (nextS - S) + (1 - beta) * T;
+            S = nextS;
+            T = nextT;
+        }
+
+        const inventoryItem = this.gameState.market.inventory[locationId]?.[commodityId];
+        let simPrice = S;
+        let simPressure = inventoryItem ? inventoryItem.marketPressure : 0;
         let daysSinceInteraction = inventoryItem ? (currentDay - inventoryItem.lastPlayerInteractionTimestamp) : 999;
         
+        const projection = [];
+        let currentT = T;
+        const phi = 0.85; // Trend dampening
+        
         const commodity = DB.COMMODITIES.find(c => c.id === commodityId);
-        const priceRange = commodity ? (commodity.basePriceRange[1] - commodity.basePriceRange[0]) : localBaseline * 0.5;
-        
-        const volatility = GAME_RULES.DAILY_PRICE_VOLATILITY * 0.5;
-        
         const baseMin = commodity ? commodity.basePriceRange[0] : 1;
         const tier = commodity ? commodity.tier : 1;
         const intrinsicFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
         
+        let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY || 0.05;
+        if (commodityMods && commodityMods.volatility_mult) {
+            volatility *= commodityMods.volatility_mult;
+        }
+        
         for (let i = 1; i <= projectedDays; i++) {
             const projDay = currentDay + i;
-            
-            let reversionEffect = (localBaseline - currentRawPrice) * meanReversion;
-            
-            const seedStr = `${locationId}-${commodityId}-${projDay}`;
-            const seedHash = this._hashString(seedStr);
-            const pseudoRandom = this._seededRandom(seedHash);
-            
-            let randomFluctuation = (pseudoRandom - 0.5) * priceRange * volatility;
-            
-            let pressureEffect = 0;
             daysSinceInteraction++;
+            
+            currentT *= phi;
+            
+            // Forward simulate market pressure impacts explicitly 7 days out
+            let pressureEffect = 0;
             if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
-                 pressureEffect = (localBaseline * activePressure * -1) * PLAYER_PRESSURE_STRENGTH;
+                 pressureEffect = (localBaseline * simPressure * -1) * 0.50; // PLAYER_PRESSURE_STRENGTH
             }
 
-            currentRawPrice += (reversionEffect + pressureEffect + randomFluctuation);
+            let reversionEffect = (localBaseline - simPrice) * meanReversion;
+
+            simPrice += (reversionEffect + pressureEffect + currentT);
             
-            // Ensure the SVG projected data matches the visual quirk modifications
-            let displayProjPrice = this._applyStationQuirks(currentRawPrice, locationId, commodityId);
-            
-            projection.push({
-                day: projDay,
-                price: Math.max(intrinsicFloor, Math.round(displayProjPrice)),
-                isLocked: false
-            });
-            
-            if (activePressure !== 0 && daysSinceInteraction >= 7) {
+            // Decay pressure naturally
+            if (simPressure !== 0 && daysSinceInteraction >= 7) {
                 let decayMod = 1.0;
-                if (activePressure > 0 && location?.ecoProfile?.recoveryMod) {
+                if (simPressure > 0 && location?.ecoProfile?.recoveryMod) {
                     decayMod = 1.0 / location.ecoProfile.recoveryMod;
                 }
-                
                 let replenishRate = location?.ecoProfile?.commodityReplenishRates?.[commodityId] ?? location?.ecoProfile?.replenishRate ?? 0.10;
                 let dailyRestockPercent = replenishRate / 7;
                 let dynamicDecayMultiplier = 1.0 - (dailyRestockPercent * decayMod);
-                
-                activePressure *= dynamicDecayMultiplier;
+                simPressure *= dynamicDecayMultiplier;
             }
+            
+            // Widening variance for the cone
+            let variance = (volatility * localBaseline * Math.pow(i, 1.2)) * 0.25; 
+            
+            let upper = simPrice + variance;
+            let lower = simPrice - variance;
+            
+            // Absolute economic limit clamping for the lower bound cone
+            if (lower < intrinsicFloor) lower = intrinsicFloor;
+            let clampedMedianPrice = Math.max(intrinsicFloor, simPrice);
+
+            // Ensure the SVG projected data matches the visual quirk modifications
+            let displayProjPrice = this._applyStationQuirks(clampedMedianPrice, locationId, commodityId);
+            let displayUpper = this._applyStationQuirks(upper, locationId, commodityId);
+            let displayLower = this._applyStationQuirks(lower, locationId, commodityId);
+            
+            projection.push({
+                day: projDay,
+                price: Math.round(displayProjPrice),
+                upper: Math.round(displayUpper),
+                lower: Math.round(displayLower),
+                isLocked: false
+            });
         }
 
         const curveData = [...historicalData, ...projection];
