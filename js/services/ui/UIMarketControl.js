@@ -367,7 +367,7 @@ export class UIMarketControl {
      * Procedurally constructs forecasting cones, baselines, and historical tracking.
      * @param {string} goodId 
      * @param {object} gameState 
-     * @param {object} _playerItem - Kept for signature compatibility, unused.
+     * @param {object} _playerItem - Legacy signature variable
      * @returns {string} SVG HTML string
      */
     renderPriceGraph(goodId, gameState, _playerItem) {
@@ -388,14 +388,23 @@ export class UIMarketControl {
         const curveData = payload.points;
         const footprints = payload.footprints || [];
 
-        const galacticAvg = ms.getGalacticAverage(goodId);
         const localAvg = ms.getLocalTargetPrice(locId, goodId);
+        
+        const fleetItem = this._getFleetItem(gameState, goodId);
+        const avgCost = fleetItem ? fleetItem.avgCost : null;
 
         // Expanded width and converted to asymmetric padding to stretch into right-side tooltip space
         const width = 380, height = 255, paddingLeft = 60, paddingRight = 20, paddingTop = 30, paddingBottom = 105;
 
         // Determine dynamic scaling
-        const allPrices = curveData.map(d => d.price).concat([galacticAvg, localAvg]);
+        const allPrices = curveData.map(d => d.price);
+        curveData.forEach(d => {
+            if (d.upper !== undefined) allPrices.push(d.upper);
+            if (d.lower !== undefined) allPrices.push(d.lower);
+        });
+        allPrices.push(localAvg);
+        if (avgCost !== null) allPrices.push(avgCost);
+
         const minVal = Math.max(1, Math.min(...allPrices) * 0.85); // 15% padding below
         const maxVal = Math.max(...allPrices) * 1.15; // 15% padding above
         const valueRange = maxVal - minVal > 0 ? maxVal - minVal : 1;
@@ -433,8 +442,16 @@ export class UIMarketControl {
             if (typeof band === 'string') return; // Skip legacy string IDs
             
             const stateDef = DB.SYSTEM_STATES?.[band.id];
-            const isMalign = stateDef?.isMalign === true; 
-            const bandClass = isMalign ? 'svg-band-malign' : 'svg-band-benign';
+            let fillStyle = 'fill: rgba(156, 163, 175, 0.15);'; // Default Neutral/Conservative Grey (#9ca3af)
+            
+            if (stateDef && stateDef.archetype) {
+                const arch = stateDef.archetype.toLowerCase();
+                if (arch.includes('bear')) {
+                    fillStyle = 'fill: rgba(236, 72, 153, 0.15);'; // Red/Pink
+                } else if (arch.includes('bull') || arch.includes('charitable') || arch.includes('beneficial') || arch.includes('expansive')) {
+                    fillStyle = 'fill: rgba(16, 185, 129, 0.15);'; // Green
+                }
+            }
 
             // clamp background band rendering strictly to visible X-axis bounds mapped to asymmetric padding
             const rawStartX = iToX(band.startDay || band.day);
@@ -443,7 +460,7 @@ export class UIMarketControl {
             const endX = Math.min(width - paddingRight, rawEndX);
 
             if (endX > startX && endX >= paddingLeft && startX <= width - paddingRight) {
-                svg += `<rect x="${startX}" y="${paddingTop}" width="${endX - startX}" height="${height - paddingTop - paddingBottom}" class="${bandClass}" />`;
+                svg += `<rect x="${startX}" y="${paddingTop}" width="${endX - startX}" height="${height - paddingTop - paddingBottom}" style="${fillStyle}" />`;
             }
         });
 
@@ -461,13 +478,14 @@ export class UIMarketControl {
         }
         svg += `</g>`;
 
-        // Pass 3: Mathematical Baselines
-        const sysAvgY = vToY(galacticAvg);
+        // Pass 3: Mathematical Baselines (Opacity reduced by 25% to .55)
         const localAvgY = vToY(localAvg);
-        
-        // Escalate priority with inline styles to override CSS class restrictions
-        svg += `<line x1="${paddingLeft}" y1="${sysAvgY}" x2="${width - paddingRight}" y2="${sysAvgY}" class="svg-line-sys-avg" style="stroke: #ffffff !important;" stroke-dasharray="4,4" />`;
-        svg += `<line x1="${paddingLeft}" y1="${localAvgY}" x2="${width - paddingRight}" y2="${localAvgY}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" />`;
+        svg += `<line x1="${paddingLeft}" y1="${localAvgY}" x2="${width - paddingRight}" y2="${localAvgY}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" opacity="0.55" />`;
+
+        if (avgCost !== null) {
+            const avgCostY = vToY(avgCost);
+            svg += `<line x1="${paddingLeft}" y1="${avgCostY}" x2="${width - paddingRight}" y2="${avgCostY}" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,4" opacity="0.55" />`;
+        }
 
         // Pass 4: Construct Paths with Smoothing
         const rawHistory = curveData.filter(p => p.day <= currentDay);
@@ -483,9 +501,7 @@ export class UIMarketControl {
 
         optimizedHistory.forEach((point) => {
             let y = vToY(point.price);
-            if (point.isLocked) {
-                y += (Math.random() * 2 - 1) * 2; 
-            }
+            if (point.isLocked) y += (Math.random() * 2 - 1) * 2; 
             const x = iToX(point.day);
             historyPath += `${isFirstHistory ? 'M' : 'L'}${x},${y} `;
             isFirstHistory = false;
@@ -493,9 +509,7 @@ export class UIMarketControl {
 
         projection.forEach((point) => {
             let y = vToY(point.price);
-            if (point.isLocked) {
-                y += (Math.random() * 2 - 1) * 2; 
-            }
+            if (point.isLocked) y += (Math.random() * 2 - 1) * 2; 
             const x = iToX(point.day);
             projectPath += `${isFirstProject ? 'M' : 'L'}${x},${y} `;
             isFirstProject = false;
@@ -506,17 +520,34 @@ export class UIMarketControl {
             currentPricePoint = { price: exactCurrentPoint.price };
         }
 
-        // Render Data Paths (INJECTED INLINE STROKES HERE)
-        svg += `<path d="${historyPath.trim()}" class="svg-line-history" fill="none" stroke="#60a5fa" stroke-width="2" />`;
-        if (projectPath.length > 0) {
-            svg += `<path d="${projectPath.trim()}" class="svg-line-project" fill="none" stroke="#a78bfa" stroke-width="2" stroke-dasharray="4,4" />`;
+        // Build Cone of Uncertainty `<path>` using Holt bounds
+        let conePath = '';
+        if (projection.length > 0) {
+            const startX = iToX(currentDay);
+            const startY = vToY(currentPricePoint.price);
+            conePath += `M${startX},${startY} `;
+            
+            projection.forEach(point => {
+                conePath += `L${iToX(point.day)},${vToY(point.upper)} `;
+            });
+            for (let i = projection.length - 1; i >= 0; i--) {
+                conePath += `L${iToX(projection[i].day)},${vToY(projection[i].lower)} `;
+            }
+            conePath += 'Z';
         }
 
-        // Render Player Footprints
+        // Render Data Paths
+        if (conePath.length > 0) {
+            // Fill Opacity reduced by 55%
+            svg += `<path d="${conePath.trim()}" fill="rgba(167, 139, 250, 0.22)" />`;
+            svg += `<path d="${projectPath.trim()}" class="svg-line-project" fill="none" stroke="rgba(167, 139, 250, 0.4)" stroke-width="1" stroke-dasharray="4,4" />`;
+        }
+        svg += `<path d="${historyPath.trim()}" class="svg-line-history" fill="none" stroke="#60a5fa" stroke-width="2" />`;
+
+        // Render Player Footprints (Scaled +40%)
         if (footprints && footprints.length > 0) {
             const uniqueFootprints = {};
             footprints.forEach(fp => {
-                // Prioritize extreme events over standard buy/sell for display
                 if (!uniqueFootprints[fp.day] || fp.type === 'SATURATION' || fp.type === 'DEPLETION') {
                     uniqueFootprints[fp.day] = fp;
                 }
@@ -530,13 +561,13 @@ export class UIMarketControl {
                  if (hPt) {
                      const y = vToY(hPt.price);
                      if (fp.type === 'SATURATION') {
-                         svg += `<polygon points="${x-4},${y-30} ${x+4},${y-30} ${x},${y-20}" fill="#ec4899" />`;
+                         svg += `<polygon points="${x-5.6},${y-34} ${x+5.6},${y-34} ${x},${y-20}" fill="#ec4899" />`;
                      } else if (fp.type === 'DEPLETION') {
-                         svg += `<polygon points="${x-4},${y+30} ${x+4},${y+30} ${x},${y+20}" fill="#ec4899" />`;
+                         svg += `<polygon points="${x-5.6},${y+34} ${x+5.6},${y+34} ${x},${y+20}" fill="#ec4899" />`;
                      } else if (fp.type === 'SELL') {
-                         svg += `<polygon points="${x-3},${y-24} ${x+3},${y-24} ${x},${y-16}" fill="#f59e0b" />`;
+                         svg += `<polygon points="${x-4.5},${y-27.5} ${x+4.5},${y-27.5} ${x},${y-16}" fill="#f59e0b" />`;
                      } else if (fp.type === 'BUY') {
-                         svg += `<polygon points="${x-3},${y+24} ${x+3},${y+24} ${x},${y+16}" fill="#3b82f6" />`;
+                         svg += `<polygon points="${x-4.5},${y+27.5} ${x+4.5},${y+27.5} ${x},${y+16}" fill="#3b82f6" />`;
                      }
                  }
             });
@@ -557,9 +588,9 @@ export class UIMarketControl {
         const graphCenterX = paddingLeft + ((width - paddingLeft - paddingRight) / 2);
         svg += `<text x="${graphCenterX}" y="${graphBottomY + 34}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="middle">TIME</text>`;
 
-        // Current Price Floating Label (Offset to top left)
+        // Current Price Floating Label (Offset to bottom right)
         const currY = vToY(currentPricePoint.price);
-        svg += `<text x="${currX - 6}" y="${currY - 6}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(currentPricePoint.price, false)}</text>`;
+        svg += `<text x="${currX + 6}" y="${currY + 16}" fill="#ffffff" font-size="12" font-family="Roboto Mono" text-anchor="start">${formatCredits(currentPricePoint.price, false)}</text>`;
 
         // Y-Axis Scale Bounds (Including Midpoint and PRICE Label)
         svg += `<text x="${paddingLeft - 6}" y="${paddingTop - 12}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">PRICE</text>`;
@@ -567,24 +598,23 @@ export class UIMarketControl {
         svg += `<text x="${paddingLeft - 6}" y="${vToY(midVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(midVal, false)}</text>`;
         svg += `<text x="${paddingLeft - 6}" y="${vToY(maxVal) + 4}" fill="#9ca3af" font-size="12" font-family="Roboto Mono" text-anchor="end">${formatCredits(maxVal, false)}</text>`;
 
-        // Pass 6: Structural Legend (Key) - Realigned to new paddingLeft
+        // Pass 6: Structural Legend (Key)
         const legendY1 = height - 35;
         const legendY2 = height - 15;
         
-        // Row 1 (INJECTED INLINE STROKES HERE)
+        // Row 1
         svg += `<line x1="${paddingLeft}" y1="${legendY1 - 4}" x2="${paddingLeft + 12}" y2="${legendY1 - 4}" class="svg-line-history" stroke="#60a5fa" stroke-width="2" />`;
         svg += `<text x="${paddingLeft + 18}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">History</text>`;
         
-        svg += `<line x1="${paddingLeft + 85}" y1="${legendY1 - 4}" x2="${paddingLeft + 97}" y2="${legendY1 - 4}" class="svg-line-project" stroke="#a78bfa" stroke-width="2" stroke-dasharray="3,3" />`;
+        svg += `<path d="M${paddingLeft + 85},${legendY1 - 6} L${paddingLeft + 97},${legendY1 - 6} L${paddingLeft + 97},${legendY1 - 2} L${paddingLeft + 85},${legendY1 - 2} Z" fill="rgba(167, 139, 250, 0.5)" />`;
         svg += `<text x="${paddingLeft + 103}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Project</text>`;
         
-        // Escalate priority with inline styles to override CSS class restrictions
-        svg += `<line x1="${paddingLeft + 175}" y1="${legendY1 - 4}" x2="${paddingLeft + 187}" y2="${legendY1 - 4}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" />`;
+        svg += `<line x1="${paddingLeft + 175}" y1="${legendY1 - 4}" x2="${paddingLeft + 187}" y2="${legendY1 - 4}" class="svg-line-local-avg" style="stroke: #fbbf24 !important;" stroke-dasharray="4,4" opacity="0.55" />`;
         svg += `<text x="${paddingLeft + 193}" y="${legendY1}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Local MKT</text>`;
 
         // Row 2
-        svg += `<line x1="${paddingLeft}" y1="${legendY2 - 4}" x2="${paddingLeft + 12}" y2="${legendY2 - 4}" class="svg-line-sys-avg" style="stroke: #ffffff !important;" stroke-dasharray="4,4" />`;
-        svg += `<text x="${paddingLeft + 18}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Sys Avg</text>`;
+        svg += `<line x1="${paddingLeft}" y1="${legendY2 - 4}" x2="${paddingLeft + 12}" y2="${legendY2 - 4}" stroke="#10b981" stroke-dasharray="4,4" opacity="0.55" />`;
+        svg += `<text x="${paddingLeft + 18}" y="${legendY2}" fill="#9ca3af" font-size="12" font-family="Roboto Mono">Avg Cost</text>`;
 
         svg += `<rect x="${paddingLeft + 85}" y="${legendY2 - 10}" width="10" height="10" fill="rgba(0, 255, 0, 0.35)" />`;
         svg += `<rect x="${paddingLeft + 95}" y="${legendY2 - 10}" width="10" height="10" fill="rgba(255, 0, 0, 0.35)" />`;
