@@ -27,6 +27,7 @@
             --syndicate-dark: rgba(59, 7, 100, 0.95);
             --faction-station: #3b82f6; /* Blue */
             --station-dark: rgba(8, 47, 73, 0.95);
+            --credit-cyan: #00e5ff; /* Cyan Credits Theme */
             
             --font-main: 'Oxanium', sans-serif;
             --font-mono: 'Share Tech Mono', monospace;
@@ -145,8 +146,11 @@
             padding: 10px 15px;
             background: var(--bg-dark);
             border-bottom: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
-        #mission-search {
+        #mission-search, #mission-filter {
             width: 100%;
             background: var(--bg-panel);
             border: 1px solid var(--border-glow);
@@ -155,8 +159,10 @@
             padding: 8px 12px;
             border-radius: 2px;
             outline: none;
+            transition: border-color 0.2s;
         }
-        #mission-search:focus { border-color: var(--accent-color); }
+        #mission-search:focus, #mission-filter:focus { border-color: var(--accent-color); }
+        #mission-filter { cursor: pointer; }
         
         .sidebar-scroll-content {
             flex-grow: 1;
@@ -236,16 +242,23 @@
             grid-column: 2; grid-row: 1 / span 2;
             font-family: var(--font-orbitron);
             font-size: 0.7rem;
-            color: #4ade80; 
-            background: rgba(74, 222, 128, 0.1);
+            color: var(--credit-cyan); 
+            background: rgba(0, 229, 255, 0.1);
             padding: 4px 8px;
             border-radius: 2px;
-            border: 1px solid rgba(74, 222, 128, 0.2);
+            border: 1px solid rgba(0, 229, 255, 0.2);
             white-space: pre-line;
             display: flex;
             align-items: center;
             text-align: center;
             min-width: 60px;
+        }
+        
+        /* Non-credit rewards revert back */
+        .item-reward:not(.is-credits) {
+            color: #4ade80; 
+            background: rgba(74, 222, 128, 0.1);
+            border-color: rgba(74, 222, 128, 0.2);
         }
 
         #content-area {
@@ -488,33 +501,33 @@
             -webkit-overflow-scrolling: touch;
         }
         .vertical-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--border-color); transform: translateX(-50%); }
-        .timeline-grid { position: relative; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 40px; }
-        .t-node { position: relative; width: 50%; padding: 0 40px; display: flex; flex-direction: column; }
+        .timeline-grid { position: relative; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
+        .t-node { position: relative; width: 50%; padding: 0 40px; display: flex; flex-direction: column; cursor: pointer; }
         .t-node.host-guild { --t-node-color: var(--faction-guild); }
         .t-node.host-syndicate { --t-node-color: var(--faction-syndicate); }
         .t-node.host-station { --t-node-color: var(--faction-station); }
         .t-node.host-default { --t-node-color: var(--accent-color); }
         .t-node.left { align-self: flex-start; text-align: right; align-items: flex-end; }
         .t-node.right { align-self: flex-end; text-align: left; align-items: flex-start; }
-        .t-dot { position: absolute; top: 50%; width: 18px; height: 18px; background: var(--bg-dark); border: 4px solid var(--t-node-color, var(--accent-color)); border-radius: 50%; transform: translateY(-50%); z-index: 2; transition: all 0.3s ease; cursor: pointer; }
+        .t-dot { position: absolute; top: 50%; width: 18px; height: 18px; background: var(--bg-dark); border: 4px solid var(--t-node-color, var(--accent-color)); border-radius: 50%; transform: translateY(-50%); z-index: 2; transition: all 0.3s ease; }
         .t-node.left .t-dot { right: -9px; }
         .t-node.right .t-dot { left: -9px; }
         .t-node:hover .t-dot { background: var(--t-node-color, var(--accent-color)); box-shadow: 0 0 20px var(--t-node-color, var(--accent-color)); }
-        .t-content { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 25px; border-radius: 2px; width: 100%; max-width: 420px; transition: all 0.3s ease; cursor: help; }
+        .t-content { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 15px; border-radius: 2px; width: 100%; max-width: 420px; transition: all 0.3s ease; }
         .t-node:hover .t-content { border-color: var(--t-node-color, var(--accent-color)); box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform: translateY(-3px); }
-        .t-phase { font-family: var(--font-mono); color: var(--t-node-color, var(--text-muted)); font-size: 0.8rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .t-title { font-size: 1.25rem; font-weight: 800; color: var(--text-bright); }
+        .t-phase { font-family: var(--font-mono); color: var(--t-node-color, var(--text-muted)); font-size: 0.6rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
+        .t-title { font-size: 0.95rem; font-weight: 800; color: var(--text-bright); }
 
         /* --- ANALYTICS VIEW --- */
         #view-analytics { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); align-items: center; -webkit-overflow-scrolling: touch; }
         .analytics-content-wrapper { width: 100%; max-width: 1000px; }
         .rewards-summary-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px; }
         .stat-box { text-align: left; background: var(--bg-card); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color); padding: 20px 25px; border-radius: 2px; box-shadow: inset 0 0 20px rgba(0,0,0,0.3); }
-        .stat-box.credits { border-left-color: var(--faction-station); }
+        .stat-box.credits { border-left-color: var(--credit-cyan); }
         .stat-box.upgrades { border-left-color: var(--faction-guild); }
         .stat-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); margin-bottom: 8px; font-family: var(--font-mono); }
         .stat-value { font-family: var(--font-mono); font-size: 2rem; color: var(--accent-color); font-weight: bold; text-shadow: 0 0 15px rgba(230, 126, 34, 0.3); }
-        .stat-box.credits .stat-value { color: var(--faction-station); text-shadow: 0 0 15px rgba(59, 130, 246, 0.3); }
+        .stat-box.credits .stat-value { color: var(--credit-cyan); text-shadow: 0 0 15px rgba(0, 229, 255, 0.3); }
         .stat-box.upgrades .stat-value { color: var(--faction-guild); text-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
         .analytics-container { padding: 30px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 2px; box-shadow: inset 0 0 30px rgba(0,0,0,0.4); height: 400px; position: relative; }
         #analytics-canvas { width: 100%; height: 100%; }
@@ -541,7 +554,7 @@
         .ledger-name { font-weight: 600; color: var(--text-bright); font-size: 1.1rem; }
         .ledger-payouts { display: flex; flex-wrap: wrap; gap: 10px; }
         .payout-tag { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: bold; padding: 6px 12px; border-radius: 2px; background: var(--bg-dark); border: 1px solid var(--border-color); width: fit-content; letter-spacing: 1px; text-transform: uppercase; }
-        .payout-tag.credits { color: var(--faction-station); border-color: rgba(59, 130, 246, 0.4); background: rgba(59, 130, 246, 0.08); box-shadow: 0 0 10px rgba(59,130,246,0.1); }
+        .payout-tag.credits { color: var(--credit-cyan); border-color: rgba(0, 229, 255, 0.4); background: rgba(0, 229, 255, 0.08); box-shadow: 0 0 10px rgba(0,229,255,0.1); }
         .payout-tag.upgrade { color: var(--accent-color); border-color: rgba(230, 126, 34, 0.4); background: rgba(230, 126, 34, 0.08); box-shadow: 0 0 10px rgba(230,126,34,0.1); }
         .payout-tag.license { color: var(--faction-guild); border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.08); box-shadow: 0 0 10px rgba(251,191,36,0.1); }
 
@@ -593,6 +606,12 @@
             <div id="sidebar">
                 <div class="sidebar-search-area">
                     <input type="text" id="mission-search" placeholder="Filter ID, Name, or Host...">
+                    <select id="mission-filter">
+                        <option value="ALL">All Hosts</option>
+                        <option value="GUILD">Guild</option>
+                        <option value="SYNDICATE">Syndicate</option>
+                        <option value="STATION">Station</option>
+                    </select>
                 </div>
                 <div id="sidebar-content" class="sidebar-scroll-content"></div>
             </div>
@@ -702,6 +721,8 @@ const storyData = [
 ];
 
 let globalLedgerData = [];
+let globalChartData = [];
+let globalPhaseTransitions = [];
 let currentSort = { column: 'id', asc: true };
 
 // --- UTILITIES ---
@@ -805,6 +826,10 @@ document.querySelectorAll('.nav-tab').forEach(tab => {
         document.getElementById(targetId).classList.add('active');
         
         updateHash(targetId, null);
+
+        if (targetId === 'view-analytics') {
+            setTimeout(() => createCanvasChart(globalChartData, 'analytics-canvas', globalPhaseTransitions), 50);
+        }
     });
 });
 
@@ -818,7 +843,7 @@ document.addEventListener('mousemove', (e) => {
 });
 
 // --- CANVAS AREA CHART RENDERER ---
-function createCanvasChart(dataArray, containerId) {
+function createCanvasChart(dataArray, containerId, transitions = []) {
     const canvas = document.getElementById(containerId);
     if (!canvas || dataArray.length === 0) return;
     
@@ -826,6 +851,9 @@ function createCanvasChart(dataArray, containerId) {
     const dpr = window.devicePixelRatio || 1;
     const rect = canvas.parentElement.getBoundingClientRect();
     
+    // Safety check if the container bounds are 0 (e.g. display: none context fallback)
+    if (rect.width === 0) return; 
+
     canvas.width = rect.width * dpr;
     canvas.height = rect.height * dpr;
     ctx.scale(dpr, dpr);
@@ -834,7 +862,7 @@ function createCanvasChart(dataArray, containerId) {
 
     const width = rect.width;
     const height = rect.height;
-    const padding = { top: 20, right: 30, bottom: 40, left: 70 };
+    const padding = { top: 30, right: 30, bottom: 40, left: 70 };
     
     const graphWidth = width - padding.left - padding.right;
     const graphHeight = height - padding.top - padding.bottom;
@@ -842,7 +870,7 @@ function createCanvasChart(dataArray, containerId) {
 
     // Background Gradient
     const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); // faction-station color
+    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); 
     gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
 
     const points = dataArray.map((d, i) => {
@@ -853,56 +881,13 @@ function createCanvasChart(dataArray, containerId) {
 
     ctx.clearRect(0, 0, width, height);
 
-    // Draw Grid Lines & Labels
-    ctx.fillStyle = '#6b6b7a';
-    ctx.font = '11px "Share Tech Mono"';
-    ctx.textAlign = 'right';
-    ctx.textBaseline = 'middle';
-    ctx.strokeStyle = '#262630';
-    ctx.lineWidth = 1;
-
-    const ticks = 4;
-    for(let i=0; i<=ticks; i++) {
-        const yPos = padding.top + (graphHeight / ticks) * i;
-        const val = maxCredits - ((maxCredits / ticks) * i);
-        
-        ctx.beginPath();
-        ctx.moveTo(padding.left, yPos);
-        ctx.lineTo(width - padding.right, yPos);
-        ctx.stroke();
-
-        const labelStr = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val.toFixed(0);
-        ctx.fillText(labelStr, padding.left - 15, yPos);
-    }
-
-    // Draw Area
-    ctx.beginPath();
-    ctx.moveTo(padding.left, height - padding.bottom);
-    points.forEach(p => ctx.lineTo(p.x, p.y));
-    ctx.lineTo(points[points.length-1].x, height - padding.bottom);
-    ctx.closePath();
-    ctx.fillStyle = gradient;
-    ctx.fill();
-
-    // Draw Line
-    ctx.beginPath();
-    ctx.moveTo(points[0].x, points[0].y);
-    points.forEach(p => ctx.lineTo(p.x, p.y));
-    ctx.strokeStyle = '#3b82f6'; // faction-station
-    ctx.lineWidth = 3;
-    ctx.shadowColor = 'rgba(59, 130, 246, 0.6)';
-    ctx.shadowBlur = 10;
-    ctx.stroke();
-    
-    ctx.shadowBlur = 0; // reset
-
     // Hover logic for dots
     let hoverIndex = -1;
     
     canvas.addEventListener('mousemove', (e) => {
-        const rect = canvas.getBoundingClientRect();
-        const mx = e.clientX - rect.left;
-        const my = e.clientY - rect.top;
+        const r = canvas.getBoundingClientRect();
+        const mx = e.clientX - r.left;
+        const my = e.clientY - r.top;
         
         let found = -1;
         for(let i=0; i<points.length; i++) {
@@ -916,7 +901,7 @@ function createCanvasChart(dataArray, containerId) {
         
         if (found !== hoverIndex) {
             hoverIndex = found;
-            drawChart(); // Redraw to update dot styles
+            drawChart(); 
         }
         
         if (hoverIndex > -1) {
@@ -935,12 +920,17 @@ function createCanvasChart(dataArray, containerId) {
     });
 
     function drawChart() {
-        // Clear & redraw points only for efficiency
         ctx.clearRect(0,0,width,height);
         
-        // Re-stroke grid & area (could be cached)
+        // Draw Grid
         ctx.fillStyle = '#6b6b7a';
         ctx.strokeStyle = '#262630';
+        ctx.lineWidth = 1;
+        ctx.font = '11px "Share Tech Mono"';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        
+        const ticks = 4;
         for(let i=0; i<=ticks; i++) {
             const yPos = padding.top + (graphHeight / ticks) * i;
             const val = maxCredits - ((maxCredits / ticks) * i);
@@ -948,6 +938,30 @@ function createCanvasChart(dataArray, containerId) {
             const labelStr = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val.toFixed(0);
             ctx.fillText(labelStr, padding.left - 15, yPos);
         }
+
+        // Draw Phase Milestone Markers
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+        ctx.textAlign = 'left';
+        ctx.textBaseline = 'bottom';
+        transitions.forEach(tr => {
+            if(tr.index >= dataArray.length || tr.index === 0) return;
+            const x = padding.left + (tr.index * (graphWidth / Math.max(dataArray.length - 1, 1)));
+            
+            ctx.beginPath();
+            ctx.moveTo(x, padding.top);
+            ctx.lineTo(x, height - padding.bottom);
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
+            ctx.setLineDash([4, 4]);
+            ctx.stroke();
+            ctx.setLineDash([]); 
+
+            ctx.save();
+            ctx.translate(x + 5, padding.top - 5);
+            ctx.fillText(tr.name.split(':')[0], 0, 0); 
+            ctx.restore();
+        });
+
+        // Draw Area & Path
         ctx.beginPath(); ctx.moveTo(padding.left, height - padding.bottom);
         points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.lineTo(points[points.length-1].x, height - padding.bottom);
         ctx.closePath(); ctx.fillStyle = gradient; ctx.fill();
@@ -972,7 +986,7 @@ function createCanvasChart(dataArray, containerId) {
         ctx.shadowBlur = 0;
     }
     
-    drawChart(); // Initial draw
+    drawChart(); 
 }
 
 // --- RENDERERS ---
@@ -984,12 +998,19 @@ function initApp() {
 
     let isLeftNode = true;
     let stats = { credits: 0, upgrades: 0, licenses: 0, phases: [] };
-    let chartData = [];
     let cumulativeCredits = 0;
+    
     globalLedgerData = [];
+    globalChartData = [];
+    globalPhaseTransitions = [];
 
-    storyData.forEach(phaseData => {
+    storyData.forEach((phaseData, phaseIndex) => {
         let phaseStats = { name: phaseData.phase, credits: 0, rewards: 0 };
+        
+        globalPhaseTransitions.push({
+            name: phaseData.phase,
+            index: globalChartData.length
+        });
         
         // Sidebar Phase Header (Collapsible)
         const header = document.createElement('div');
@@ -1006,13 +1027,15 @@ function initApp() {
             const item = document.createElement('div');
             item.className = `timeline-item ${hostClass}`;
             item.dataset.searchString = `${mission.id} ${mission.name} ${mission.host}`.toLowerCase();
+            item.dataset.host = mission.host || 'NONE';
             
             const rwds = formatRewardsStr(mission.rewards);
+            const isCreditsStr = rwds.includes('⌬') ? 'is-credits' : '';
             
             item.innerHTML = `
                 <div class="mission-id">ID_${mission.id.padStart(3, '0')}</div>
                 <div class="mission-name">${mission.name}</div>
-                <div class="item-reward">${rwds}</div>
+                <div class="item-reward ${isCreditsStr}">${rwds}</div>
             `;
             item.addEventListener('click', () => {
                 loadMission(mission, item);
@@ -1027,10 +1050,17 @@ function initApp() {
             node.innerHTML = `
                 <div class="t-dot"></div>
                 <div class="t-content">
-                    <div class="t-phase">M_${mission.id.padStart(2,'0')} // ${mission.host}</div>
+                    <div class="t-phase">M_${mission.id.padStart(2,'0')} // ${mission.host || 'NONE'}</div>
                     <div class="t-title">${mission.name}</div>
                 </div>
             `;
+            
+            node.addEventListener('click', () => {
+                document.querySelector('.nav-tab[data-target="view-missions"]').click();
+                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                item.click();
+            });
+
             node.querySelector('.t-content').addEventListener('mouseenter', () => {
                 tooltip.innerHTML = `<b>${mission.name}</b><br><br>${mission.description.substring(0, 100)}...`;
                 tooltip.style.opacity = '1';
@@ -1072,7 +1102,7 @@ function initApp() {
             }
 
             cumulativeCredits += earnedCreditsThisMission;
-            chartData.push({ id: mission.id, total: cumulativeCredits });
+            globalChartData.push({ id: mission.id, total: cumulativeCredits });
 
             isLeftNode = !isLeftNode;
         });
@@ -1091,11 +1121,19 @@ function initApp() {
         stats.phases.push(phaseStats);
     });
 
-    // Initial Search Setup
-    document.getElementById('mission-search').addEventListener('input', (e) => {
-        const term = e.target.value.toLowerCase();
+    // Search and Filter Logic
+    const searchInput = document.getElementById('mission-search');
+    const filterSelect = document.getElementById('mission-filter');
+
+    function filterMissions() {
+        const term = searchInput.value.toLowerCase();
+        const hostVal = filterSelect.value;
+        
         document.querySelectorAll('.timeline-item').forEach(item => {
-            if(item.dataset.searchString.includes(term)) {
+            const matchSearch = item.dataset.searchString.includes(term);
+            const matchHost = hostVal === 'ALL' || item.dataset.host === hostVal;
+            
+            if(matchSearch && matchHost) {
                 item.style.display = 'grid';
                 item.dataset.filtered = '';
             } else {
@@ -1103,10 +1141,10 @@ function initApp() {
                 item.dataset.filtered = 'true';
             }
         });
-    });
+    }
 
-    // Render Canvas Area Chart
-    setTimeout(() => createCanvasChart(chartData, 'analytics-canvas'), 100);
+    searchInput.addEventListener('input', filterMissions);
+    filterSelect.addEventListener('change', filterMissions);
 
     // Rewards Summary
     rSummary.innerHTML = `
@@ -1228,8 +1266,10 @@ function loadMission(mission, element) {
         completionBadge = `<span class="badge ${compClass}">Resolved By: ${mission.completion.host}</span>`;
     }
 
+    const missionType = mission.type || 'Story';
+    
     badgesEl.innerHTML = `
-        <span class="badge">Type: Story</span>
+        <span class="badge">Type: ${missionType}</span>
         <span class="badge ${hostClass}">Host: ${mission.host}</span>
         ${completionBadge}
     `;
