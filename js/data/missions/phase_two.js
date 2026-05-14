@@ -84,8 +84,7 @@ export const PHASE_TWO_MISSIONS = {
             { "type": "END_SYSTEM_STATE" }
         ],
         objectives: [ 
-            { "id": "procure_hydroponics", "type": "HAVE_ITEM", "goodId": "hydroponics", "quantity": 15, "latch": true },
-            { "id": "travel_mercury", "type": "TRAVEL_TO", "target": "loc_mercury", "dependsOn": "procure_hydroponics" }
+            { "id": "deliver_hydroponics_mercury", "type": "DELIVER_ITEM", "target": "loc_mercury", "goodId": "hydroponics", "quantity": 15 }
         ],
         completion: {
             host: "GUILD",
