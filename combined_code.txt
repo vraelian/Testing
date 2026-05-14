@@ -18535,7 +18535,7 @@ export const PHASE_TWO_MISSIONS = {
     'mission_19': {
         id: "mission_19",
         name: "A Synthetic Disruption",
-        type: "FACTION",
+        type: "STORY",
         host: "SYNDICATE",
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
@@ -18578,7 +18578,7 @@ export const PHASE_TWO_MISSIONS = {
     'mission_21': {
         id: "mission_21",
         name: "Lab Supply",
-        type: "STORY",
+        type: "PROCUREMENT",
         host: "STATION",
         portraitId: "AI_4",
         isRepeatable: false,
@@ -18617,15 +18617,15 @@ export const PHASE_TWO_MISSIONS = {
         description: "Captain [playerName], to balance the ledger regarding your recent indiscretion on Mercury, the Guild requires your immediate participation in correcting a local water ice quota deficit. You are being tasked to travel to Mercury and purchase ice in bulk and deliver the it to the Guild Moon depot promptly.<br><br>I will remit payment following the requisition. Thank you for your attention to this matter.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_21" } ],
         objectives: [
-            { "id": "buy_ice", "type": "TRADE_ITEM", "tradeType": "buy", "goodId": "water_ice", "quantity": 60, "target": "loc_mercury" },
-            { "id": "deliver_ice", "type": "DELIVER_ITEM", "goodId": "water_ice", "quantity": 60, "target": "loc_luna", "dependsOn": "buy_ice" }
+            { "id": "buy_ice", "type": "TRADE_ITEM", "tradeType": "buy", "goodId": "water_ice", "quantity": 45, "target": "loc_mercury" },
+            { "id": "deliver_ice", "type": "DELIVER_ITEM", "goodId": "water_ice", "quantity": 45, "target": "loc_luna", "dependsOn": "buy_ice" }
         ],
         completion: {
             host: "SYNDICATE",
             portraitId: "Venusian_Syndicate_4",
             locationId: "loc_luna",
             title: "A Cold Calculation",
-            text: "Captain [playerName], hello again. I thought you should know the Guild cut local telemetry feeds so Mercurian markets wouldn't notice you siphoning their aquifers. They plan to ransom that ice back to the colony at triple the price to soak up the organ cloning money.<br><br>That's right, on behalf of the Guild you just stole Mercury's water. When the colony gets thirsty, which will be soon because the Sun is right next door, the Guild will sell it back at a premium to crush the planet's economy.<br><br>When they sent you on this mission, they didn't even mention the cloning lab, did they? You see, the Guild doesn't get mad. They just adjust the algorithm; they balance aggressively and chase a cold, contrived sense of order.",
+            text: "Captain [playerName], hello again. I thought you should know the Guild cut local telemetry feeds so Mercurian markets wouldn't notice you siphoning their aquifers. They plan to ransom that ice back to the colony at triple the price to soak up the credits made from the organ cloning labs.<br><br>That's right, on behalf of the Guild you just stole Mercury's water. When the colony gets thirsty, which will be soon because the Sun is right next door, the Guild will sell it back at a premium to crush the planet's economy.<br><br>When they sent you on this mission, they didn't even mention the cloning lab, did they? You see, the Guild doesn't get mad. They just adjust the algorithm; they balance aggressively and chase a cold, contrived sense of order. The mining colonies on Mercury will suffer as a result.",
             buttonText: "Disconnect"
         },
         rewards: [ 
