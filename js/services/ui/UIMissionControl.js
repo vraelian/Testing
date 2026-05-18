@@ -61,6 +61,7 @@ export class UIMissionControl {
         if (el.style.display !== 'none' && el.style.opacity !== '0') {
             el.style.transition = 'opacity 0.6s ease-out';
             el.style.opacity = '0';
+            el.style.pointerEvents = 'none'; // Immediately release the click mask
             setTimeout(() => {
                 if (el.style.opacity === '0') {
                     el.style.display = 'none';
@@ -342,6 +343,8 @@ export class UIMissionControl {
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         
         let shouldBeDisabled = false;
+        let isShipClassGated = false;
+        let shipClassGateText = '';
         
         if (!isActive && missions.activeMissionIds.length >= 4) {
             shouldBeDisabled = true;
@@ -349,6 +352,24 @@ export class UIMissionControl {
 
         if (mission.id === 'mission_tutorial_02' && tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_2_4') {
             shouldBeDisabled = true;
+        }
+
+        // Fleet Check Gatekeeping for specific missions requiring certain ship classes (e.g., M25)
+        if (mission.id === 'mission_25' && !isActive) {
+            const classRanks = { 'C': 1, 'B': 2, 'A': 3, 'S': 4, 'O': 5, 'Z': 6, 'F': 0 };
+            let highestRank = 0;
+            for (const shipId of gameState.player.ownedShipIds) {
+                const shipDef = DB.SHIPS[shipId] || {};
+                if (shipDef && shipDef.class) {
+                    const rank = classRanks[shipDef.class.toUpperCase()] || 0;
+                    if (rank > highestRank) highestRank = rank;
+                }
+            }
+            if (highestRank < classRanks['B']) {
+                shouldBeDisabled = true;
+                isShipClassGated = true;
+                shipClassGateText = 'REQUIRES CLASS B VESSEL';
+            }
         }
 
         const parsedDescription = this._parseMissionText(mission.description, gameState);
@@ -438,8 +459,19 @@ export class UIMissionControl {
                             if(r.type.toLowerCase() === 'credits') {
                                 content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                             } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
-                                const upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name || 'SHIP UPGRADE';
-                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                                let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
+                                if (!upgName) {
+                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                                    upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
+                                }
+                                
+                                let color = '#60a5fa'; // Default blue
+                                const lowerName = upgName.toLowerCase();
+                                if (lowerName.includes('syndicate')) color = '#ef4444';
+                                else if (lowerName.includes('guild')) color = '#eab308';
+                                else if (lowerName.includes('radar')) color = '#a855f7';
+                                
+                                content = `<span style="font-family: 'Teko', sans-serif; font-size: 0.9em; color: ${color}; text-shadow: 0 0 5px ${color};">${upgName.toUpperCase()}</span>`;
                             } else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
                                 const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
                                 const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
@@ -492,13 +524,12 @@ export class UIMissionControl {
                     });
                 }
 
-                // 3. DIRECTIVE (Removed Visual Gating, locations are explicitly added)
+                // 3. DIRECTIVE
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
                         let text = this._getObjectiveDescription(obj, false);
                         
-                        // Prevent \d+ replacement from breaking HTML classes generated for HAVE_CREDITS
                         if (!['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
                             text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
                         }
@@ -644,7 +675,8 @@ export class UIMissionControl {
                                     let isUnlocked = true;
                                     if (obj.dependsOn) {
                                         const depProgress = progress?.objectives?.[obj.dependsOn];
-                                        if (!depProgress || depProgress.current < depProgress.target) {
+                                        // CHANGED: Allow partial deposits as long as we have collected more than we have deposited
+                                        if (!depProgress || depProgress.current <= depositedAmt) {
                                             isUnlocked = false;
                                         }
                                     }
@@ -702,7 +734,13 @@ export class UIMissionControl {
                     
                     buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${navButtonHtml}`;
                 } else {
-                     const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
+                     let btnText = 'Accept';
+                     if (isShipClassGated) {
+                         btnText = shipClassGateText;
+                     } else if (shouldBeDisabled && missions.activeMissionIds.length >= 4) {
+                         btnText = 'Mission Log Full (4/4)';
+                     }
+                     
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                      
                      if (mission.id === 'mission_tutorial_01') {
@@ -810,9 +848,9 @@ export class UIMissionControl {
              const action = obj.tradeType === 'buy' ? 'BUY' : 'SELL';
              if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
                  const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                 return `${action} ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
+                 return `${action} ${name} on ${locName}`;
              }
-             return `${action} ${obj.quantity || 1}x ${name.toUpperCase()}`;
+             return `${action} ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
              if (omitLocation) return `ESTABLISH PRESENCE`;
@@ -934,8 +972,19 @@ export class UIMissionControl {
                             if(r.type.toLowerCase() === 'credits') {
                                 content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
                             } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
-                                const upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name || 'SHIP UPGRADE';
-                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
+                                let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
+                                if (!upgName) {
+                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                                    upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
+                                }
+                                
+                                let color = '#60a5fa'; // Default blue
+                                const lowerName = upgName.toLowerCase();
+                                if (lowerName.includes('syndicate')) color = '#ef4444';
+                                else if (lowerName.includes('guild')) color = '#eab308';
+                                else if (lowerName.includes('radar')) color = '#a855f7';
+                                
+                                content = `<span style="font-family: 'Teko', sans-serif; font-size: 0.9em; color: ${color}; text-shadow: 0 0 5px ${color};">${upgName.toUpperCase()}</span>`;
                             } else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
                                 const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
                                 const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
@@ -1510,7 +1559,7 @@ export class UIMissionControl {
         if (parsedText.includes('[shipName]')) {
             const activeId = gameState.player?.activeShipId;
             const shipName = activeId && DB.SHIPS[activeId] ? DB.SHIPS[activeId].name : 'Vessel';
-            parsedText = parsedText.replace(/\[shipName\]/g, shipName);
+            parsedText = parsedText.replace(/\\[shipName\\]/g, shipName);
         }
         
         return parsedText;

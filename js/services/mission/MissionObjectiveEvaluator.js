@@ -257,13 +257,14 @@ export class MissionObjectiveEvaluator {
                 break;
         }
 
-        // --- NEW: PROVENANCE ALLOWANCE CAP ---
-        // Dynamically constrains the evaluable quantity based on the progress of a parent tracker
-        // By running this AFTER the core switch evaluation, the UI continues to update in real-time
+        // --- DEPENDENCY GATE ---
+        // Do not mathematically clamp `current` as that breaks UI for non-volume dependencies (like ship classes).
+        // Instead, we track if the dependency is met to gate `isMet` during final evaluation.
+        let dependencyMet = true;
         if (objective.dependsOn) {
             const depProgress = missionProgress.objectives?.[objective.dependsOn];
-            if (depProgress && typeof depProgress.current === 'number') {
-                current = Math.min(current, depProgress.current);
+            if (!depProgress || depProgress.current < depProgress.target) {
+                dependencyMet = false;
             }
         }
         // -------------------------------------
@@ -277,22 +278,27 @@ export class MissionObjectiveEvaluator {
             case '>=':
                 if (current >= target) {
                     current = target; 
-                    isMet = true;
+                    if (dependencyMet) isMet = true;
                 }
                 break;
             case '<=':
                 if (current <= target) {
-                    isMet = true;
+                    if (dependencyMet) isMet = true;
                 }
                 break;
             case '==':
                 if (current === target) {
-                    isMet = true;
+                    if (dependencyMet) isMet = true;
                 }
                 break;
             default:
                 console.warn(`[MissionObjectiveEvaluator] Unknown comparator: ${comparator}`);
-                if (current >= target) isMet = true;
+                if (current >= target && dependencyMet) isMet = true;
+        }
+
+        // Failsafe closure: If the dependency is not met, the objective cannot be met
+        if (!dependencyMet) {
+            isMet = false;
         }
 
         return { current, target, isMet };

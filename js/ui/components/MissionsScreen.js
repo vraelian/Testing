@@ -118,11 +118,29 @@ export function renderMissionsScreen(gameState, missionService) {
         // Format Rewards
         const rewardTextParts = [];
         if (mission.rewards) {
-            mission.rewards.forEach(r => {
+            const visibleRewards = mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits');
+            
+            visibleRewards.forEach(r => {
                 if(r.type.toLowerCase() === 'credits') rewardTextParts.push(`<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`);
-                else if(r.type.toLowerCase() === 'upgrade') {
-                    const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                    rewardTextParts.push(upgName.toUpperCase());
+                else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
+                    let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
+                    if (!upgName) {
+                        const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                        upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
+                    }
+                    
+                    let color = '#60a5fa'; // Default blue
+                    const lowerName = upgName.toLowerCase();
+                    if (lowerName.includes('syndicate')) color = '#ef4444';
+                    else if (lowerName.includes('guild')) color = '#eab308';
+                    else if (lowerName.includes('radar')) color = '#a855f7';
+                    
+                    rewardTextParts.push(`<span style="font-family: 'Teko', sans-serif; font-size: 0.9em; color: ${color}; text-shadow: 0 0 5px ${color};">${upgName.toUpperCase()}</span>`);
+                }
+                else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
+                    const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
+                    const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
+                    rewardTextParts.push(`<span class="${colorClass}">TIER ${tierVal} LICENSE</span>`);
                 }
                 else if(r.type.toLowerCase() === 'fill_fleet_fuel') {
                     rewardTextParts.push(`<span class="text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`);
@@ -258,6 +276,16 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
+                else if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
+                    const targetLoc = obj.targetLoc || obj.target;
+                    const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || targetLoc))?.name.toUpperCase() || 'ITEM';
+                    desc = `COLLECT ${commName}`;
+                    if (targetLoc && DB.MARKETS.find(m => m.id === targetLoc)) {
+                        const locName = DB.MARKETS.find(m => m.id === targetLoc).name.toUpperCase();
+                        desc += ` ON ${locName}`;
+                    }
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
                 else if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
                     const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase() || 'ITEM';
                     desc = `PROCURE ${commName}`;
@@ -275,6 +303,14 @@ export function renderMissionsScreen(gameState, missionService) {
                     desc = `TRAVEL TO ${DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase()}`;
                     displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
                     percent = current * 100;
+                }
+                else if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+                    desc = `ACQUIRE CLASS ${obj.target} VESSEL`;
+                    const classMap = {0: 'F', 1: 'C', 2: 'B', 3: 'A', 4: 'S', 5: 'O', 6: 'Z'};
+                    const currentClassStr = classMap[current] || 'C';
+                    const targetClassStr = classMap[target] || obj.target;
+                    displayStr = `CLASS ${currentClassStr} / CLASS ${targetClassStr}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
                     desc = 'AMASS CREDITS';
