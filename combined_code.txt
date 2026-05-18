@@ -5247,6 +5247,11 @@ card.
     100% { transform: translateX(-100%); }
 }
 
+/* --- PORTRAIT FILTERS --- */
+.greyscale-filter {
+    filter: grayscale(100%) opacity(0.8);
+}
+
 /* ========================================================================= */
 /* --- STATIC MODAL TEXTURE INTEGRATION ---                                  */
 /* ========================================================================= */
@@ -13244,11 +13249,29 @@ export function renderMissionsScreen(gameState, missionService) {
         // Format Rewards
         const rewardTextParts = [];
         if (mission.rewards) {
-            mission.rewards.forEach(r => {
+            const visibleRewards = mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits');
+            
+            visibleRewards.forEach(r => {
                 if(r.type.toLowerCase() === 'credits') rewardTextParts.push(`<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`);
-                else if(r.type.toLowerCase() === 'upgrade') {
-                    const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                    rewardTextParts.push(upgName.toUpperCase());
+                else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
+                    let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
+                    if (!upgName) {
+                        const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                        upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
+                    }
+                    
+                    let color = '#60a5fa'; // Default blue
+                    const lowerName = upgName.toLowerCase();
+                    if (lowerName.includes('syndicate')) color = '#ef4444';
+                    else if (lowerName.includes('guild')) color = '#eab308';
+                    else if (lowerName.includes('radar')) color = '#a855f7';
+                    
+                    rewardTextParts.push(`<span style="font-family: 'Teko', sans-serif; font-size: 0.9em; color: ${color}; text-shadow: 0 0 5px ${color};">${upgName.toUpperCase()}</span>`);
+                }
+                else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
+                    const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
+                    const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
+                    rewardTextParts.push(`<span class="${colorClass}">TIER ${tierVal} LICENSE</span>`);
                 }
                 else if(r.type.toLowerCase() === 'fill_fleet_fuel') {
                     rewardTextParts.push(`<span class="text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`);
@@ -13384,6 +13407,16 @@ export function renderMissionsScreen(gameState, missionService) {
                     }
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
+                else if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
+                    const targetLoc = obj.targetLoc || obj.target;
+                    const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || targetLoc))?.name.toUpperCase() || 'ITEM';
+                    desc = `COLLECT ${commName}`;
+                    if (targetLoc && DB.MARKETS.find(m => m.id === targetLoc)) {
+                        const locName = DB.MARKETS.find(m => m.id === targetLoc).name.toUpperCase();
+                        desc += ` ON ${locName}`;
+                    }
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
                 else if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
                     const commName = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name.toUpperCase() || 'ITEM';
                     desc = `PROCURE ${commName}`;
@@ -13401,6 +13434,14 @@ export function renderMissionsScreen(gameState, missionService) {
                     desc = `TRAVEL TO ${DB.MARKETS.find(m => m.id === obj.target)?.name.toUpperCase()}`;
                     displayStr = current === 1 ? 'ARRIVED' : 'EN ROUTE';
                     percent = current * 100;
+                }
+                else if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+                    desc = `ACQUIRE CLASS ${obj.target} VESSEL`;
+                    const classMap = {0: 'F', 1: 'C', 2: 'B', 3: 'A', 4: 'S', 5: 'O', 6: 'Z'};
+                    const currentClassStr = classMap[current] || 'C';
+                    const targetClassStr = classMap[target] || obj.target;
+                    displayStr = `CLASS ${currentClassStr} / CLASS ${targetClassStr}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
                     desc = 'AMASS CREDITS';
@@ -18170,9 +18211,6 @@ export const TUTORIAL_MISSIONS = {
  * Defines license granting mission data.
  */
 export const LICENSE_MISSIONS = {
-    'mission_license_t3': {
-         id: "mission_license_t3", name: "Guild Certification", type: "LICENSE_GRANT", host: "GUILD", isRepeatable: false, isAbandonable: false, description: "The Merchant's Guild requires you to certify your trade proficiency. Accepting this contract formally recognizes your status and grants you access to Tier 3 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 3 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t3_license" }]
-    },
     'mission_license_t5': {
          id: "mission_license_t5", name: "Governor's Contract", type: "LICENSE_GRANT", host: "STATION", isRepeatable: false, isAbandonable: false, description: "The planetary governor requires a sign of your commitment to local industry. This contract solidifies your standing and unlocks access to Tier 5 commodities.", prerequisites: [{ "type": "revealed_tier", "tier": 5 }], objectives: [], completion: {}, rewards: [{ "type": "license", "licenseId": "t5_license" }]
     },
@@ -18562,6 +18600,173 @@ export const PHASE_TWO_MISSIONS = {
         },
         rewards: [ 
             { "type": "credits", "amount": 25000 } 
+        ]
+    },
+    'mission_23': {
+        id: "mission_23",
+        name: "Volatility License",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain [playerName], as a courtesy I have submitted an application on your behalf for a Tier 3 Trade License which has been provisionally approved by the Jovian Fuel Authority office with authorization by the Merchant's Guild. This license qualifies you to transport highly sensitive materials, specifically Neural Processors and Refined Propellant, across inner and outer system vectors. A small license fee is required to finalize the application.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_22" } ],
+        objectives: [
+            { "id": "have_100k", "type": "HAVE_CREDITS", "value": 100000 }
+        ],
+        completion: {
+            host: "GUILD",
+            portraitId: "Merchants_Guild_11",
+            title: "License Activated",
+            text: "Application complete. You will shortly receive your Tier 3 Trade License. You are now authorized to handle and transport Refined Propellant and Neural Processors. Thank you for responsibly participating in the trade network.",
+            buttonText: "Accept License"
+        },
+        rewards: [
+            { "type": "DEDUCT_CREDITS", "amount": 100000 },
+            { "type": "UNLOCK_TIER", "value": 3 }
+        ]
+    },
+    'mission_24': {
+        id: "mission_24",
+        name: "Syndicate Slight",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain, I have a straitforward exercise for you this time. I have a acquired a few pallets of cybernetics, hydroponics, and plasteel. I need you to transport this freight to Luna and sell it on that market at your convenience. You may keep the income as compensation. You are to be discreet and ask no questions.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_22" } ],
+        onAccept: [
+            { 
+                "type": "GRANT_ITEM", 
+                "items": [
+                    { "goodId": "cybernetics", "quantity": 5 },
+                    { "goodId": "hydroponics", "quantity": 10 },
+                    { "goodId": "plasteel", "quantity": 15 }
+                ]
+            }
+        ],
+        objectives: [
+            { "id": "sell_cybernetics_luna", "type": "TRADE_ITEM", "tradeType": "sell", "goodId": "cybernetics", "quantity": 5, "target": "loc_luna" },
+            { "id": "sell_hydroponics_luna", "type": "TRADE_ITEM", "tradeType": "sell", "goodId": "hydroponics", "quantity": 10, "target": "loc_luna" },
+            { "id": "sell_plasteel_luna", "type": "TRADE_ITEM", "tradeType": "sell", "goodId": "plasteel", "quantity": 15, "target": "loc_luna" }
+        ],
+        completion: {
+            title: "Unwitting Fence",
+            text: "Very nice work, Captain. That cargo that you just fenced for me was taken from a dead-drifting Guild vessel stranded in lower Venusian orbit. I thought that selling the Guild's own merchandise back to them would be suitable payback for interfering with our operations on Mercury. It made me feel better, at least. Anyway, the Syndicate has a big job for you coming up. I will be in touch soon.",
+            buttonText: "Acknowledged"
+        },
+        rewards: []
+    },
+    'mission_25': {
+        id: "mission_25",
+        name: "Escalation of Scale",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain, the Syndicate is orchestrating a highly valuable commodity swap with a Saturnian Aristocrat. This individual requires 20 units of our hybridized, Venusian-grown Hydroponics in exchange for 15 units of Saturnian brand Cybernetics. We need these augmentations for research.<br><br>However, there is a complication. This Aristocrat is a bit of a snob that refuses to deal with anyone flying \"junk\" and requires a verified Class B pilot or higher to even approach their private docking ring. We insist on using you for this job, which means you must acquire a Class B vessel before we release the routing codes. Purchase a suitable ship of Class B or higher, source the Hydroponics from Venus, execute the swap at Saturn, and bring the Cybernetics back to Venus. You will compensated very generously for the effort.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_24" } ],
+        objectives: [
+            { "id": "acquire_class_b", "type": "OWN_SHIP_CLASS", "target": "B" },
+            { "id": "collect_hydroponics_venus", "type": "COLLECT_ITEM", "goodId": "hydroponics", "quantity": 20, "target": "loc_venus", "dependsOn": "acquire_class_b" },
+            { "id": "deliver_hydroponics_saturn", "type": "DELIVER_ITEM", "goodId": "hydroponics", "quantity": 20, "target": "loc_saturn", "dependsOn": "collect_hydroponics_venus" },
+            { "id": "collect_cybernetics_saturn", "type": "COLLECT_ITEM", "goodId": "cybernetics", "quantity": 15, "target": "loc_saturn", "dependsOn": "deliver_hydroponics_saturn" },
+            { "id": "deliver_cybernetics_venus", "type": "DELIVER_ITEM", "goodId": "cybernetics", "quantity": 15, "target": "loc_venus", "dependsOn": "collect_cybernetics_saturn" }
+        ],
+        completion: {
+            title: "Verified Operator",
+            text: "The Saturnian cybernetics have been secured. Once again you have proven yourself a capable merchant, an effective hauler, and a friend of the Syndicate. I am provisioning a transponder upgrade as thanks.",
+            buttonText: "Acknowledged"
+        },
+        rewards: [
+            { "type": "GRANT_UPGRADE", "upgradeId": "syndicate_badge_1" }
+        ]
+    },
+    'mission_26': {
+        id: "mission_26",
+        name: "Family Emergency",
+        type: "PROCUREMENT",
+        host: "STATION",
+        portraitId: "Techie_14",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Greetings, I've been desperately searching for a merchant and I saw the [shipName] docked at port. I don't have much time. My little brother has fallen gravely ill from radiation and particulate exposure down in the belt mines. The clinics won't even look at us without an upfront insurance binder that we can't afford. He urgently needs a heavy bio-filter apparatus which is comprised of 6 total cybernetics. We have pooled every last credit our family has saved in the last decade. I know it's severely below market value, but it's everything we have. Please, my little brother is needs this augmentation.",
+        triggers: [ 
+            { "type": "mission_completed", "missionId": "mission_22" },
+            { "type": "location", "target": "loc_belt" }
+        ],
+        onAccept: [
+            { "type": "GRANT_CREDITS", "amount": 4000 }
+        ],
+        objectives: [
+            { "id": "deliver_cybernetics", "type": "DELIVER_ITEM", "goodId": "cybernetics", "quantity": 6, "target": "loc_belt" }
+        ],
+        completion: {
+            title: "A Debt of Life",
+            text: "The surgical drone is already installing the filtration cybernetics. His breathing has stabilized. You took a loss to do this for us... The Guild would have let us choke in the vacuum, but you didn't. We have nothing else to give you but our gratitude. Thank you, Captain [playerName].",
+            buttonText: "Stay Safe"
+        },
+        rewards: [
+            { "type": "SET_FLAG", "flagId": "helped_belt_family", "value": true }
+        ]
+    },
+    'mission_27': {
+        id: "mission_27",
+        name: "Mango's Mural",
+        type: "PROCUREMENT",
+        host: "STATION",
+        portraitId: "Affluent_13",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain [playerName], Greetings! I am Mango, the visionary. The rings of Saturn sing to me, and they demand a monument! I am constructing an orbital sculpture of unprecedented scale, modeled after myself of course. It is a testament to the sheer beauty of Saturn's many moons and brilliant rings.<br><br>To realize this masterpiece, I need 200 units of Plasteel. The local Guild quartermasters lack the artistic temperament to supply me, citing \"wasteful expenditure of structural resources.\" Philistines! Source the Plasteel for me. Bring it here, drop it in the designated orbital construction zone, and you shall be part of history! C'mon, buddy! Help me out here.",
+        triggers: [ 
+            { "type": "mission_completed", "missionId": "mission_22" },
+            { "type": "location", "target": "loc_saturn" }
+        ],
+        objectives: [
+            { "id": "deliver_plasteel", "type": "DELIVER_ITEM", "goodId": "plasteel", "quantity": 200, "target": "loc_saturn" }
+        ],
+        completion: {
+            host: "STATION",
+            portraitId: "Affluent_13",
+            portraitFilter: "greyscale",
+            title: "The Disappearing Artist",
+            text: "You deposit the final load of Plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the mural approaches you at port, handing you a ship mod meant for the artist, insisting you take it in his memory. They proudly claim they will resume the work on the mural.",
+            buttonText: "Accept Ship Mod"
+        },
+        rewards: [
+            { "type": "GRANT_UPGRADE", "upgradeId": "radar_mod_1" }
+        ]
+    },
+    'mission_28': {
+        id: "mission_28",
+        name: "Ghost in the Nav",
+        type: "STORY",
+        host: "STATION",
+        portraitId: "Dockworker_11",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Hail, Captain. This is an emergency contract being sent out to all capable haulers with a Tier 2 License. The automated cargo loader AIs on Uranus Station have gone completely berserk. They aren't just malfunctioning; they're actively tearing apart their own docking bays. The Guild is officially blaming a Syndicate cyber-attack, while the Syndicate claims it's the result of cheap Guild coding algorithms deteriorating.<br><br>Regardless of the politics, the station is bleeding atmosphere and structurally compromised. Uranus station authority is urgently requesting 50 Plasteel, 10 Cybernetics, 10 Hydroponics, and 25 Water Ice to stabilize the outer ring before it collapses.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_25" } ],
+        objectives: [
+            { "id": "deliver_plasteel", "type": "DELIVER_ITEM", "goodId": "plasteel", "quantity": 50, "target": "loc_uranus" },
+            { "id": "deliver_cybernetics", "type": "DELIVER_ITEM", "goodId": "cybernetics", "quantity": 10, "target": "loc_uranus" },
+            { "id": "deliver_hydroponics", "type": "DELIVER_ITEM", "goodId": "hydroponics", "quantity": 10, "target": "loc_uranus" },
+            { "id": "deliver_water_ice", "type": "DELIVER_ITEM", "goodId": "water_ice", "quantity": 25, "target": "loc_uranus" }
+        ],
+        completion: {
+            host: "STATION",
+            portraitId: "Kintsugi_3",
+            portraitFilter: "greyscale",
+            title: "The Sunward Scrap",
+            text: "The structural integrity of Uranus station is restored, but the repair logs reveal a deeply unsettling truth. The AIs weren't attacking the station blindly. They were methodically dismantling the structural plating into precise scrap geometry and launching it via the mass drivers in a silent, highly calculated trajectory straight toward the Sun. This wasn't a glitch or a faction attack. Something has orchestrating this...",
+            buttonText: "Close Log"
+        },
+        rewards: [
+            { "type": "credits", "amount": 65000 }
         ]
     }
 };
@@ -23342,6 +23547,7 @@ export class UIMissionControl {
         if (el.style.display !== 'none' && el.style.opacity !== '0') {
             el.style.transition = 'opacity 0.6s ease-out';
             el.style.opacity = '0';
+            el.style.pointerEvents = 'none'; // Immediately release the click mask
             setTimeout(() => {
                 if (el.style.opacity === '0') {
                     el.style.display = 'none';
@@ -23535,6 +23741,14 @@ export class UIMissionControl {
              }
              return `Deliver ${name}`;
         }
+        if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
+            const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.targetLoc || obj.target))?.name || 'Item';
+            if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                const locName = DB.MARKETS.find(m => m.id === obj.target).name;
+                return `Collect ${name} on ${locName}`;
+            }
+            return `Collect ${name}`;
+        }
         if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Procure ${name}`;
@@ -23563,6 +23777,9 @@ export class UIMissionControl {
         if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `Visit ${screenTarget} Screen`;
+        }
+        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+            return `Acquire Class ${obj.target} Vessel`;
         }
         
         return `Objective`;
@@ -23612,6 +23829,8 @@ export class UIMissionControl {
         const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         
         let shouldBeDisabled = false;
+        let isShipClassGated = false;
+        let shipClassGateText = '';
         
         if (!isActive && missions.activeMissionIds.length >= 4) {
             shouldBeDisabled = true;
@@ -23619,6 +23838,24 @@ export class UIMissionControl {
 
         if (mission.id === 'mission_tutorial_02' && tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_2_4') {
             shouldBeDisabled = true;
+        }
+
+        // Fleet Check Gatekeeping for specific missions requiring certain ship classes (e.g., M25)
+        if (mission.id === 'mission_25' && !isActive) {
+            const classRanks = { 'C': 1, 'B': 2, 'A': 3, 'S': 4, 'O': 5, 'Z': 6, 'F': 0 };
+            let highestRank = 0;
+            for (const shipId of gameState.player.ownedShipIds) {
+                const shipDef = DB.SHIPS[shipId] || {};
+                if (shipDef && shipDef.class) {
+                    const rank = classRanks[shipDef.class.toUpperCase()] || 0;
+                    if (rank > highestRank) highestRank = rank;
+                }
+            }
+            if (highestRank < classRanks['B']) {
+                shouldBeDisabled = true;
+                isShipClassGated = true;
+                shipClassGateText = 'REQUIRES CLASS B VESSEL';
+            }
         }
 
         const parsedDescription = this._parseMissionText(mission.description, gameState);
@@ -23652,7 +23889,8 @@ export class UIMissionControl {
                 let flexColumns = [];
                 let animDelayIdx = 0;
 
-                const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
+                const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+                const hasPayout = visibleRewards.length > 0 || !!mission.officerReward;
 
                 // 1. GRANTED
                 let inboundItems = [];
@@ -23670,7 +23908,13 @@ export class UIMissionControl {
                 if (mission.onAccept && mission.onAccept.length > 0) {
                     mission.onAccept.forEach(action => {
                         if (action.type === 'GRANT_CREDITS') {
-                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span> <span class="t-subject">GRANT</span>`);
+                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span>`);
+                        }
+                        if (action.type === 'GRANT_ITEM' && action.items) {
+                            action.items.forEach(cargo => {
+                                const name = DB.COMMODITIES.find(c => c.id === cargo.goodId)?.name || 'ITEM';
+                                inboundItems.push(`<span class="t-qty">${cargo.quantity}x</span> <span class="t-subject">${name.toUpperCase()}</span>`);
+                            });
                         }
                     });
                 }
@@ -23694,20 +23938,38 @@ export class UIMissionControl {
                 let payoutPanelHtml = '';
                 if (hasPayout) {
                     let rewsList = '';
-                    if (mission.rewards) {
-                        rewsList += mission.rewards.map(r => {
+                    if (visibleRewards.length > 0) {
+                        rewsList += visibleRewards.map(r => {
                             const delay = animDelayIdx++ * 0.05;
                             let content = '';
                             if(r.type.toLowerCase() === 'credits') {
                                 content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                            } else if(r.type.toLowerCase() === 'upgrade') {
-                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                            } else if(r.type.toLowerCase() === 'license') {
-                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
-                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
+                                let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
+                                if (!upgName) {
+                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                                    upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
+                                }
+                                
+                                let color = '#60a5fa'; // Default blue
+                                const lowerName = upgName.toLowerCase();
+                                if (lowerName.includes('syndicate')) color = '#ef4444';
+                                else if (lowerName.includes('guild')) color = '#eab308';
+                                else if (lowerName.includes('radar')) color = '#a855f7';
+                                
+                                content = `<span style="font-family: 'Teko', sans-serif; font-size: 0.9em; color: ${color}; text-shadow: 0 0 5px ${color};">${upgName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
+                                const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
+                                const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
+                                content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'set_flag') {
+                                if (r.flagId === 'helped_belt_family') {
+                                    content = `<span class="t-subject">GRATITUDE</span>`;
+                                } else {
+                                    content = `<span class="t-subject">REPUTATION</span>`;
+                                }
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -23740,7 +24002,7 @@ export class UIMissionControl {
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
-                        if (['DELIVER_ITEM', 'travel_to', 'TRAVEL_TO', 'trade_item', 'TRADE_ITEM'].includes(obj.type)) {
+                        if (['DELIVER_ITEM', 'travel_to', 'TRAVEL_TO', 'trade_item', 'TRADE_ITEM', 'COLLECT_ITEM', 'collect_item'].includes(obj.type)) {
                             if (obj.target && DB.MARKETS.some(m => m.id === obj.target)) {
                                 uniqueDestinations.add(obj.target);
                             }
@@ -23748,13 +24010,12 @@ export class UIMissionControl {
                     });
                 }
 
-                // 3. DIRECTIVE (Removed Visual Gating, locations are explicitly added)
+                // 3. DIRECTIVE
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.map(obj => {
                         const delay = animDelayIdx++ * 0.05;
                         let text = this._getObjectiveDescription(obj, false);
                         
-                        // Prevent \d+ replacement from breaking HTML classes generated for HAVE_CREDITS
                         if (!['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
                             text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
                         }
@@ -23765,6 +24026,15 @@ export class UIMissionControl {
                             const targetQty = obj.quantity || obj.value || 1;
                             if (depositedAmt > 0) {
                                 text += `<br><span class="text-blue-400 font-bold">[DEPOSITED: ${depositedAmt}/${targetQty}]</span>`;
+                            }
+                        }
+                        
+                        if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                            const objKey = obj.id || obj.goodId || obj.target;
+                            const collectedAmt = progress?.objectives?.[objKey]?.collected || 0;
+                            const targetQty = obj.quantity || obj.value || 1;
+                            if (collectedAmt > 0) {
+                                text += `<br><span class="text-blue-400 font-bold">[COLLECTED: ${collectedAmt}/${targetQty}]</span>`;
                             }
                         }
                         
@@ -23860,6 +24130,7 @@ export class UIMissionControl {
                     const isAbandonable = mission.isAbandonable !== false;
                     let navButtonHtml = '';
                     let depositButtonHtml = '';
+                    let collectButtonHtml = '';
                     
                     if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any' && !isLogisticsPickupPhase) {
                         navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.completion.locationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
@@ -23868,7 +24139,9 @@ export class UIMissionControl {
                         navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.pickupLocationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     
-                    if (isAtCorrectLocation) {
+                    let canCollect = false;
+
+                    if (isAtCorrectLocation || true) {
                         let canDeposit = false;
                         if (mission.objectives) {
                             mission.objectives.forEach(obj => {
@@ -23883,15 +24156,50 @@ export class UIMissionControl {
                                     if (isObjLocationSpecific && obj.target !== gameState.currentLocationId) {
                                         return; // We are not at the right place to deposit for this specific objective
                                     }
+                                    
+                                    // --- DEPENDENCY CHECK ---
+                                    let isUnlocked = true;
+                                    if (obj.dependsOn) {
+                                        const depProgress = progress?.objectives?.[obj.dependsOn];
+                                        // CHANGED: Allow partial deposits as long as we have collected more than we have deposited
+                                        if (!depProgress || depProgress.current <= depositedAmt) {
+                                            isUnlocked = false;
+                                        }
+                                    }
                                     // ----------------------------------
                                     
-                                    if ((targetQty - depositedAmt > 0)) {
+                                    if (isUnlocked && (targetQty - depositedAmt > 0)) {
                                         for (const shipId of gameState.player.ownedShipIds) {
                                             if (gameState.player.inventories[shipId]?.[itemId]?.quantity > 0) {
                                                 canDeposit = true;
                                                 break;
                                             }
                                         }
+                                    }
+                                }
+                                
+                                // EVALUATE COLLECTION UI
+                                if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                                    const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                                    const targetQty = obj.quantity || obj.value || 1;
+                                    const collectedAmt = progress?.objectives?.[objKey]?.collected || 0;
+                                    const targetLocation = obj.targetLoc || obj.target;
+
+                                    const isObjLocationSpecific = targetLocation && DB.MARKETS.some(m => m.id === targetLocation);
+                                    if (isObjLocationSpecific && targetLocation !== gameState.currentLocationId) {
+                                        return; 
+                                    }
+
+                                    let isUnlocked = true;
+                                    if (obj.dependsOn) {
+                                        const depProgress = progress.objectives[obj.dependsOn];
+                                        if (!depProgress || depProgress.current < depProgress.target) {
+                                            isUnlocked = false;
+                                        }
+                                    }
+
+                                    if (isUnlocked && (targetQty - collectedAmt > 0)) {
+                                        canCollect = true;
                                     }
                                 }
                             });
@@ -23902,13 +24210,23 @@ export class UIMissionControl {
                         }
                     }
                     
+                    if (canCollect) {
+                        collectButtonHtml = `<button id="mission-collect-btn" class="btn w-full mt-2 bg-blue-600/80 hover:bg-blue-500/80 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.6)] text-white font-bold" style="${btnStyles}">COLLECT FREIGHT</button>`;
+                    }
+                    
                     if (isLogisticsPickupPhase && isAtPickupLocation) {
                         depositButtonHtml = `<button id="mission-load-cargo-btn" data-mission-id="${mission.id}" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">LOAD CARGO</button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${navButtonHtml}`;
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${navButtonHtml}`;
                 } else {
-                     const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
+                     let btnText = 'Accept';
+                     if (isShipClassGated) {
+                         btnText = shipClassGateText;
+                     } else if (shouldBeDisabled && missions.activeMissionIds.length >= 4) {
+                         btnText = 'Mission Log Full (4/4)';
+                     }
+                     
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
                      
                      if (mission.id === 'mission_tutorial_01') {
@@ -23954,6 +24272,24 @@ export class UIMissionControl {
                     });
                 }
                 
+                const collectBtn = modal.querySelector('#mission-collect-btn');
+                if (collectBtn) {
+                    collectBtn.addEventListener('click', (e) => {
+                        if (this.manager.simulationService) {
+                            const collectedAmt = this.manager.simulationService.missionService.collectMissionCargo(mission.id);
+                            
+                            if (collectedAmt > 0) {
+                                const rect = collectBtn.getBoundingClientRect();
+                                const x = e.clientX || rect.left + (rect.width / 2);
+                                const y = e.clientY || rect.top;
+                                this.manager.createFloatingText(`+${collectedAmt}`, x, y, '#60a5fa');
+                            }
+
+                            closeHandler();
+                        }
+                    });
+                }
+                
                 const loadCargoBtn = modal.querySelector('#mission-load-cargo-btn');
                 if (loadCargoBtn) {
                     loadCargoBtn.addEventListener('click', (e) => {
@@ -23981,6 +24317,14 @@ export class UIMissionControl {
              }
              return text;
         }
+        if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
+            const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.targetLoc || obj.target))?.name || 'Item';
+            if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
+                const locName = DB.MARKETS.find(m => m.id === obj.target).name;
+                return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
+            }
+            return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()}`;
+        }
         if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `PROCURE ${obj.quantity || 1}x ${name.toUpperCase()}`;
@@ -23990,9 +24334,9 @@ export class UIMissionControl {
              const action = obj.tradeType === 'buy' ? 'BUY' : 'SELL';
              if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
                  const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                 return `${action} ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
+                 return `${action} ${name} on ${locName}`;
              }
-             return `${action} ${obj.quantity || 1}x ${name.toUpperCase()}`;
+             return `${action} ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
              if (omitLocation) return `ESTABLISH PRESENCE`;
@@ -24013,6 +24357,9 @@ export class UIMissionControl {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
         }
+        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+            return `ACQUIRE CLASS ${obj.target} VESSEL`;
+        }
         return `COMPLETE OBJECTIVE`;
     }
 
@@ -24020,8 +24367,8 @@ export class UIMissionControl {
         const gameState = this.manager.lastKnownState;
         
         let rewardVolume = 0;
-        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade');
-        const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license') : null;
+        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade');
+        const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier') : null;
 
         if (mission.rewards) {
             mission.rewards.forEach(r => {
@@ -24073,6 +24420,7 @@ export class UIMissionControl {
 
         const options = {
            portraitId: activePortraitId,
+           portraitFilter: mission.completion.portraitFilter,
            dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
@@ -24097,25 +24445,44 @@ export class UIMissionControl {
                objectivesEl.style.display = 'none';
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-               const hasStandardRewards = mission.rewards && mission.rewards.length > 0;
+               const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+               const hasStandardRewards = visibleRewards.length > 0;
                const hasOfficerReward = !!mission.officerReward;
                
                if (hasStandardRewards || hasOfficerReward) {
                    let rewardsHtml = '';
                    if (hasStandardRewards) {
-                       rewardsHtml += mission.rewards.map((r, i) => {
+                       rewardsHtml += visibleRewards.map((r, i) => {
                             const delay = i * 0.1;
                             let content = '';
                             if(r.type.toLowerCase() === 'credits') {
                                 content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                            } else if(r.type.toLowerCase() === 'upgrade') {
-                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
-                                content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                            } else if(r.type.toLowerCase() === 'license') {
-                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
-                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
+                                let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
+                                if (!upgName) {
+                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                                    upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
+                                }
+                                
+                                let color = '#60a5fa'; // Default blue
+                                const lowerName = upgName.toLowerCase();
+                                if (lowerName.includes('syndicate')) color = '#ef4444';
+                                else if (lowerName.includes('guild')) color = '#eab308';
+                                else if (lowerName.includes('radar')) color = '#a855f7';
+                                
+                                content = `<span style="font-family: 'Teko', sans-serif; font-size: 0.9em; color: ${color}; text-shadow: 0 0 5px ${color};">${upgName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
+                                const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
+                                const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
+                                content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'set_flag') {
+                                if (r.flagId === 'helped_belt_family') {
+                                    content = `<span class="t-subject">GRATITUDE</span>`;
+                                } else {
+                                    content = `<span class="t-subject">REPUTATION</span>`;
+                                }
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -24126,7 +24493,7 @@ export class UIMissionControl {
                    if (hasOfficerReward) {
                         const offDef = OFFICERS[mission.officerReward];
                         if (offDef) {
-                            const delay = (mission.rewards?.length || 0) * 0.1;
+                            const delay = (visibleRewards.length || 0) * 0.1;
                             const color = getOfficerRarityHex(offDef.rarity);
                             const content = `<span class="t-subject" style="color: ${color}; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`;
                             rewardsHtml += `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
@@ -24279,11 +24646,15 @@ export class UIMissionControl {
 
                        // License Sequence Intercept
                        if (licenseReward) {
-                           const licenseId = licenseReward.licenseId;
-                           const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
-                           const tierMatch = licenseId.match(/t(\d)_license/);
-                           const tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
+                           let tierNum = 2;
+                           if (licenseReward.type.toLowerCase() === 'unlock_tier') {
+                               tierNum = licenseReward.value || licenseReward.amount || 2;
+                           } else if (licenseReward.licenseId) {
+                               const tierMatch = licenseReward.licenseId.match(/t(\d)_license/);
+                               tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
+                           }
                            
+                           const licenseDef = DB.LICENSES ? DB.LICENSES[`t${tierNum}_license`] : null;
                            const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
                            const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
 
@@ -24293,7 +24664,7 @@ export class UIMissionControl {
                                <div class="text-center w-full flex flex-col items-center justify-center p-2">
                                    <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
                                    <br>
-                                   <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : 'TRADE LICENSE'}</div>
+                                   <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : `TIER ${tierNum} LICENSE`}</div>
                                    <div class="license-body-text">${bodyText}</div>
                                </div>
                            `;
@@ -24328,11 +24699,12 @@ export class UIMissionControl {
                                            // Execute state mutation via the properly injected, fully mutable GameState reference
                                            if (uiManager.simulationService && uiManager.simulationService.gameState) {
                                                const coreState = uiManager.simulationService.gameState;
-                                               if (licenseReward.licenseId === 't2_license') {
+                                               if (tierNum === 2) {
                                                    coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
                                                }
-                                               if (!coreState.player.unlockedLicenseIds.includes(licenseReward.licenseId)) {
-                                                   coreState.player.unlockedLicenseIds.push(licenseReward.licenseId);
+                                               const licId = `t${tierNum}_license`;
+                                               if (!coreState.player.unlockedLicenseIds.includes(licId)) {
+                                                   coreState.player.unlockedLicenseIds.push(licId);
                                                }
                                                coreState.setState({}); // Persist and broadcast
                                                
@@ -24673,7 +25045,7 @@ export class UIMissionControl {
         if (parsedText.includes('[shipName]')) {
             const activeId = gameState.player?.activeShipId;
             const shipName = activeId && DB.SHIPS[activeId] ? DB.SHIPS[activeId].name : 'Vessel';
-            parsedText = parsedText.replace(/\[shipName\]/g, shipName);
+            parsedText = parsedText.replace(/\\[shipName\\]/g, shipName);
         }
         
         return parsedText;
@@ -29949,7 +30321,9 @@ export class UIModalEngine {
         if (options.portraitId && typeof window.getPortraitStyle === 'function' && titleEl) {
             const pStyle = window.getPortraitStyle(options.portraitId);
             if (pStyle) {
-                const parsedName = options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
+                const parsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KEIRN' : 
+                                   options.portraitId === 'Affluent_13' ? 'MANGO' : 
+                                   options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 
                 if (modalId === 'mission-modal' || modalId === 'story-event-modal') {
                     titleEl.style.textAlign = 'center';
@@ -29960,6 +30334,9 @@ export class UIModalEngine {
                     const pDiv = document.createElement('div');
                     pDiv.className = 'portrait-thumbnail comm-active';
                     pDiv.style.cssText = pStyle;
+                    if (options.portraitFilter === 'greyscale') {
+                        pDiv.classList.add('greyscale-filter');
+                    }
                     
                     const nameLabel = document.createElement('div');
                     nameLabel.className = 'portrait-name-label comm-label';
@@ -29986,6 +30363,9 @@ export class UIModalEngine {
                     const pDiv = document.createElement('div');
                     pDiv.className = 'portrait-thumbnail';
                     pDiv.style.cssText = pStyle;
+                    if (options.portraitFilter === 'greyscale') {
+                        pDiv.classList.add('greyscale-filter');
+                    }
                     
                     const nameLabel = document.createElement('div');
                     nameLabel.className = 'portrait-name-label';
@@ -30560,6 +30940,8 @@ export class UIModalEngine {
  * @fileoverview Provides generic, blocking animation utility functions.
  */
 
+let licenseUIObserver = null;
+
 /**
  * Applies a CSS class to an element and returns a Promise
  * that resolves when the element's 'animationend' event fires.
@@ -30745,6 +31127,54 @@ export async function startLicenseAnimation(tierNum = 2) {
         document.body.appendChild(overlay);
     }
 
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+
+    const hideAndCache = (el) => {
+        if (el && el.style.display !== 'none') {
+            if (el.dataset.cachedDisplay === undefined) {
+                el.dataset.cachedDisplay = el.style.display || '';
+            }
+            el.style.setProperty('display', 'none', 'important');
+        }
+    };
+
+    // Initial Hide
+    sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
+    document.querySelectorAll('button').forEach((btn) => {
+        if (btn.textContent && btn.textContent.trim() === '(?)') {
+            btn.dataset.isDynamicHelpBtn = "true";
+            hideAndCache(btn);
+        }
+    });
+
+    // Establish MutationObserver to aggressively enforce masking during the sequence
+    if (licenseUIObserver) licenseUIObserver.disconnect();
+    
+    licenseUIObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                const el = mutation.target;
+                if (sideUIElements.includes(el.id) || el.dataset.isDynamicHelpBtn === "true") {
+                    if (el.style.display !== 'none') {
+                        el.style.setProperty('display', 'none', 'important');
+                    }
+                }
+            } else if (mutation.type === 'childList') {
+                // If UIManager completely overwrites the DOM nodes, we must re-query and mask
+                sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
+                document.querySelectorAll('button').forEach((btn) => {
+                    if (btn.textContent && btn.textContent.trim() === '(?)') {
+                        if (!btn.dataset.isDynamicHelpBtn) btn.dataset.isDynamicHelpBtn = "true";
+                        hideAndCache(btn);
+                    }
+                });
+            }
+        });
+    });
+
+    // Observe the entire document body for any UIManager re-renders
+    licenseUIObserver.observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['style'] });
+
     const fadeIn = overlay.animate(
         [{ opacity: 0 }, { opacity: 1 }],
         { duration: 2000, fill: 'forwards', easing: 'ease-in-out' }
@@ -30785,6 +31215,30 @@ export async function endLicenseAnimation(tierNum = 2) {
     if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
     }
+
+    // --- Disconnect the Observer & Restore Sidebar UI Elements ---
+    if (licenseUIObserver) {
+        licenseUIObserver.disconnect();
+        licenseUIObserver = null;
+    }
+
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+    sideUIElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.dataset.cachedDisplay !== undefined) {
+            el.style.display = el.dataset.cachedDisplay;
+            delete el.dataset.cachedDisplay;
+        }
+    });
+
+    // Restore dynamically found (?) buttons
+    document.querySelectorAll('button[data-is-dynamic-help-btn="true"]').forEach(btn => {
+        if (btn.dataset.cachedDisplay !== undefined) {
+            btn.style.display = btn.dataset.cachedDisplay;
+            delete btn.dataset.cachedDisplay;
+            delete btn.dataset.isDynamicHelpBtn;
+        }
+    });
 
     // Fade out the white flash to transparent over 1 second
     const fadeOut = whiteFlash.animate(
@@ -34925,8 +35379,7 @@ export class SolStationService {
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
- * UPDATED: Includes new QUEUE_STORY_EVENT and UNLOCK_LOCATION action hooks during accept/complete,
- * and Provenance Allowance Capping for dependent objectives in depositMissionCargo.
+ * UPDATED: Includes COLLECT_ITEM logistics injection and strict DB optional chaining.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -34972,7 +35425,7 @@ export class MissionService {
      * @returns {boolean} True if all prerequisites are met, false otherwise.
      */
     arePrerequisitesMet(missionId) {
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission) return false;
         
         // Support both old 'prerequisites' and new 'triggers' fields
@@ -34997,7 +35450,7 @@ export class MissionService {
      */
     getAvailableMissions() {
         const { activeMissionIds, completedMissionIds } = this.gameState.missions;
-        return Object.values(DB.MISSIONS).filter(mission => {
+        return Object.values(DB.MISSIONS || {}).filter(mission => {
             const isForced = this._forcedTerminalMissions && this._forcedTerminalMissions.has(mission.id);
             const isAvailable =
                 !activeMissionIds.includes(mission.id) &&
@@ -35028,7 +35481,7 @@ export class MissionService {
      * @param {boolean} [force=false] If true, bypasses checks.
      */
     acceptMission(missionId, force = false) {
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         
         // 1. Validation (skipped if forced)
         if (!force) {
@@ -35049,31 +35502,56 @@ export class MissionService {
         }
 
         // 3. Cargo Space Validation
+        let totalGrantedSpace = 0;
+        const itemsToGrant = [];
+
         if (mission.grantedCargo && mission.grantedCargo.length > 0) {
-            let totalGrantedSpace = 0;
-            mission.grantedCargo.forEach(cargo => totalGrantedSpace += cargo.quantity);
-            
-            const activeShipId = this.gameState.player.activeShipId;
-            let currentUsedSpace = 0;
-            if (this.gameState.player.inventories[activeShipId]) {
-                Object.values(this.gameState.player.inventories[activeShipId]).forEach(item => {
-                    currentUsedSpace += item.quantity;
-                });
+            mission.grantedCargo.forEach(cargo => {
+                totalGrantedSpace += cargo.quantity;
+                itemsToGrant.push(cargo);
+            });
+        }
+        if (mission.onAccept) {
+            mission.onAccept.forEach(action => {
+                if (action.type === 'GRANT_ITEM' && action.items) {
+                    action.items.forEach(cargo => {
+                        totalGrantedSpace += cargo.quantity;
+                        itemsToGrant.push(cargo);
+                    });
+                }
+            });
+        }
+
+        if (totalGrantedSpace > 0) {
+            let fleetAvailableSpace = 0;
+            const shipCapacities = [];
+
+            for (const shipId of this.gameState.player.ownedShipIds) {
+                let usedSpace = 0;
+                if (this.gameState.player.inventories[shipId]) {
+                    Object.values(this.gameState.player.inventories[shipId]).forEach(item => {
+                        usedSpace += item.quantity;
+                    });
+                }
+                
+                const maxCap = this.simulationService ? 
+                    this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                    (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
+                    
+                const availableSpace = Math.max(0, maxCap - usedSpace);
+                fleetAvailableSpace += availableSpace;
+                shipCapacities.push({ shipId, availableSpace });
             }
             
-            const maxCapacity = this.simulationService ? 
-                this.simulationService.getEffectiveShipStats(activeShipId).cargoCapacity : 
-                (DB.SHIPS[activeShipId]?.cargoCapacity || 100);
-                
-            const availableSpace = maxCapacity - currentUsedSpace;
-            
-            if (availableSpace < totalGrantedSpace) {
-                const errorMsg = `Cannot accept mission: Insufficient cargo space. You need space in your cargo hold for ${totalGrantedSpace} units.`;
+            if (fleetAvailableSpace < totalGrantedSpace) {
+                const errorMsg = `Cannot accept mission: Insufficient cargo space. You need space in your fleet for ${totalGrantedSpace} units.`;
                 if (this.uiManager) {
                     this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
                 }
                 return; // Abort acceptance
             }
+            
+            this._tempShipCapacities = shipCapacities;
         }
 
         // 4. Initialize State
@@ -35104,17 +35582,38 @@ export class MissionService {
         this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
         
         // 5. Grant Start Items
-        if (mission.grantedCargo && this.simulationService) {
-            mission.grantedCargo.forEach(cargo => {
-                const activeShipId = this.gameState.player.activeShipId;
-                if (!this.gameState.player.inventories[activeShipId]) {
-                    this.gameState.player.inventories[activeShipId] = {};
-                }
-                if (!this.gameState.player.inventories[activeShipId][cargo.goodId]) {
-                    this.gameState.player.inventories[activeShipId][cargo.goodId] = { quantity: 0, avgCost: 0 };
-                }
-                this.gameState.player.inventories[activeShipId][cargo.goodId].quantity += cargo.quantity;
+        if (itemsToGrant.length > 0 && this._tempShipCapacities) {
+            const activeShipId = this.gameState.player.activeShipId;
+            // Sort to prioritize active ship
+            this._tempShipCapacities.sort((a, b) => {
+                if (a.shipId === activeShipId) return -1;
+                if (b.shipId === activeShipId) return 1;
+                return b.availableSpace - a.availableSpace;
             });
+
+            itemsToGrant.forEach(cargo => {
+                let remainingToDistribute = cargo.quantity;
+                for (const shipData of this._tempShipCapacities) {
+                    if (remainingToDistribute <= 0) break;
+                    const spaceHere = shipData.availableSpace;
+                    if (spaceHere > 0) {
+                        const amountToPut = Math.min(remainingToDistribute, spaceHere);
+                        
+                        if (!this.gameState.player.inventories[shipData.shipId]) {
+                            this.gameState.player.inventories[shipData.shipId] = {};
+                        }
+                        if (!this.gameState.player.inventories[shipData.shipId][cargo.goodId]) {
+                            this.gameState.player.inventories[shipData.shipId][cargo.goodId] = { quantity: 0, avgCost: 0 };
+                        }
+                        
+                        this.gameState.player.inventories[shipData.shipId][cargo.goodId].quantity += amountToPut;
+                        
+                        shipData.availableSpace -= amountToPut;
+                        remainingToDistribute -= amountToPut;
+                    }
+                }
+            });
+            delete this._tempShipCapacities;
         }
 
         if (this.simulationService && typeof this.simulationService.grantMissionCargo === 'function') {
@@ -35234,7 +35733,7 @@ export class MissionService {
         this.gameState.missions.activeMissionIds.forEach(missionId => {
             if (missionId === excludedMissionId) return;
             
-            const mission = DB.MISSIONS[missionId];
+            const mission = DB.MISSIONS?.[missionId];
             const progress = this.gameState.missions.missionProgress[missionId];
             
             let missionRequiresThisGood = false;
@@ -35258,20 +35757,38 @@ export class MissionService {
                         protectedQuantity += cDef.quantity;
                     }
                 }
+                
+                if (mission.onAccept) {
+                    mission.onAccept.forEach(action => {
+                        if (action.type === 'GRANT_ITEM' && action.items) {
+                            action.items.forEach(cDef => {
+                                if (cDef.goodId === goodId) {
+                                    missionRequiresThisGood = true;
+                                    protectedQuantity += cDef.quantity;
+                                }
+                            });
+                        }
+                    });
+                }
 
                 if (missionRequiresThisGood) {
                     // Reduce protection by what has already been deposited for this mission
                     let deposited = 0;
+                    let sellExemption = 0;
                     if (mission.objectives) {
                         mission.objectives.forEach(obj => {
                             if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item' || obj.type === 'HAVE_ITEM') && (obj.goodId === goodId || obj.target === goodId)) {
                                 const objKey = obj.id || obj.goodId || obj.target;
                                 deposited += (progress.objectives[objKey]?.deposited || 0);
                             }
+                            // EXEMPTION: Fencing Missions (Like M24). Selling it IS the objective, so do not protect it from the market.
+                            if ((obj.type === 'TRADE_ITEM' || obj.type === 'trade_item') && obj.tradeType === 'sell' && (obj.goodId === goodId || obj.target === goodId)) {
+                                sellExemption += (obj.quantity || obj.value || 1);
+                            }
                         });
                     }
                     
-                    const remainingProtected = Math.max(0, protectedQuantity - deposited);
+                    const remainingProtected = Math.max(0, protectedQuantity - deposited - sellExemption);
                     if (remainingProtected > 0) {
                         baseline += remainingProtected;
                         if (!protectedMissions.includes(missionId)) {
@@ -35291,16 +35808,23 @@ export class MissionService {
      * @param {string} missionId 
      */
     penalizeThirdPartyInfraction(missionId) {
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission) return;
         
         let penaltyValue = 0;
         const cargoArrays = [];
         if (mission.deferredCargo) cargoArrays.push(...mission.deferredCargo);
         if (mission.grantedCargo) cargoArrays.push(...mission.grantedCargo);
+        if (mission.onAccept) {
+            mission.onAccept.forEach(action => {
+                if (action.type === 'GRANT_ITEM' && action.items) {
+                    cargoArrays.push(...action.items);
+                }
+            });
+        }
         
         cargoArrays.forEach(c => {
-            const commodity = DB.COMMODITIES.find(comm => comm.id === c.goodId);
+            const commodity = DB.COMMODITIES?.find(comm => comm.id === c.goodId);
             let basePrice = this.gameState.market.galacticAverages[c.goodId];
             if (!basePrice && commodity && commodity.basePriceRange) {
                 basePrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
@@ -35328,10 +35852,10 @@ export class MissionService {
             this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
         }
 
-        // Force Abandonment Sequence
+        // Force Abandonment Sequence (HARD WIPE STATE TO ALLOW TERMINAL RE-ENTRY)
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         if (this.gameState.missions.missionProgress[missionId]) {
-            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+            delete this.gameState.missions.missionProgress[missionId];
         }
         if (this.gameState.missions.trackedMissionId === missionId) {
             const nextMission = this.gameState.missions.activeMissionIds[0];
@@ -35352,7 +35876,7 @@ export class MissionService {
     loadDeferredCargo(missionId) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return;
         
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission || !mission.deferredCargo || mission.deferredCargo.length === 0) return;
 
         const progress = this.gameState.missions.missionProgress[missionId];
@@ -35376,7 +35900,7 @@ export class MissionService {
             
             const maxCap = this.simulationService ? 
                 this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
-                (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
             
             const availableSpace = Math.max(0, maxCap - usedSpace);
             fleetAvailableSpace += availableSpace;
@@ -35436,6 +35960,132 @@ export class MissionService {
         if (this.uiManager && typeof this.uiManager.render === 'function') {
             this.uiManager.render(this.gameState.getState());
         }
+    }
+
+    /**
+     * Extracts items specified by COLLECT_ITEM objectives from the target location and assigns them to the player's hold.
+     * Evaluates fleet-wide capacity prior to granting the cargo.
+     * @param {string} missionId 
+     * @returns {number} The total amount of freight successfully collected.
+     */
+    collectMissionCargo(missionId) {
+        if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
+        const mission = DB.MISSIONS?.[missionId];
+        if (!mission || !mission.objectives) return 0;
+
+        const progress = this.gameState.missions.missionProgress[missionId];
+        if (!progress) return 0;
+
+        let totalCollectedThisCall = 0;
+
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                const itemId = obj.goodId || obj.target;
+                const isObjLocationSpecific = obj.targetLoc && DB.MARKETS?.some(m => m.id === obj.targetLoc) || (obj.target && DB.MARKETS?.some(m => m.id === obj.target));
+                const targetLocation = obj.targetLoc || obj.target;
+
+                if (isObjLocationSpecific && targetLocation !== this.gameState.currentLocationId) {
+                    return; // Not at the right location to collect this specific item
+                }
+
+                const targetQty = obj.quantity || obj.value || 1;
+                const objKey = obj.id || obj.goodId || obj.target;
+
+                if (!progress.objectives[objKey]) {
+                    progress.objectives[objKey] = { current: 0, target: targetQty, collected: 0 };
+                }
+                if (progress.objectives[objKey].collected === undefined) {
+                    progress.objectives[objKey].collected = 0;
+                }
+
+                let collectedSoFar = progress.objectives[objKey].collected;
+                let remainingNeeded = targetQty - collectedSoFar;
+
+                // Restrict collection if sequential dependencies are unmet
+                if (obj.dependsOn) {
+                    const depProgress = progress.objectives?.[obj.dependsOn];
+                    if (!depProgress || depProgress.current < depProgress.target) {
+                        return; 
+                    }
+                }
+
+                if (remainingNeeded > 0) {
+                    // Check fleet capacity
+                    let fleetAvailableSpace = 0;
+                    const shipCapacities = [];
+                    
+                    for (const shipId of this.gameState.player.ownedShipIds) {
+                        let usedSpace = 0;
+                        if (this.gameState.player.inventories[shipId]) {
+                            Object.values(this.gameState.player.inventories[shipId]).forEach(item => {
+                                usedSpace += item.quantity;
+                            });
+                        }
+                        const maxCap = this.simulationService ? 
+                            this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                            (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
+                        
+                        const availableSpace = Math.max(0, maxCap - usedSpace);
+                        fleetAvailableSpace += availableSpace;
+                        shipCapacities.push({ shipId, availableSpace });
+                    }
+
+                    if (fleetAvailableSpace <= 0) {
+                        if (this.uiManager) {
+                            this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', `You have no available space in your fleet to collect this freight.`);
+                        }
+                        return; // Halt this specific objective collection
+                    }
+
+                    // Distribute across the fleet prioritizing the active vessel
+                    const activeShipId = this.gameState.player.activeShipId;
+                    shipCapacities.sort((a, b) => {
+                        if (a.shipId === activeShipId) return -1;
+                        if (b.shipId === activeShipId) return 1;
+                        return b.availableSpace - a.availableSpace;
+                    });
+
+                    let amountToCollect = Math.min(remainingNeeded, fleetAvailableSpace);
+                    let amountCollectedThisTime = 0;
+
+                    for (const shipData of shipCapacities) {
+                        if (amountToCollect <= 0) break;
+                        const spaceHere = shipData.availableSpace;
+                        if (spaceHere > 0) {
+                            const amountToPut = Math.min(amountToCollect, spaceHere);
+                            
+                            if (!this.gameState.player.inventories[shipData.shipId]) {
+                                this.gameState.player.inventories[shipData.shipId] = {};
+                            }
+                            if (!this.gameState.player.inventories[shipData.shipId][itemId]) {
+                                this.gameState.player.inventories[shipData.shipId][itemId] = { quantity: 0, avgCost: 0 };
+                            }
+                            
+                            this.gameState.player.inventories[shipData.shipId][itemId].quantity += amountToPut;
+                            
+                            amountToCollect -= amountToPut;
+                            amountCollectedThisTime += amountToPut;
+                        }
+                    }
+
+                    if (amountCollectedThisTime > 0) {
+                        progress.objectives[objKey].collected += amountCollectedThisTime;
+                        totalCollectedThisCall += amountCollectedThisTime;
+                        this.logger.info.player(this.gameState.day, 'MISSION_COLLECT', `Collected ${amountCollectedThisTime}x ${itemId} for mission ${missionId}.`);
+                    }
+                }
+            }
+        });
+
+        if (totalCollectedThisCall > 0) {
+            this.checkTriggers();
+            this.gameState.setState({});
+            if (this.uiManager && typeof this.uiManager.render === 'function') {
+                this.uiManager.render(this.gameState.getState());
+            }
+        }
+
+        return totalCollectedThisCall;
     }
 
     /**
@@ -35510,12 +36160,13 @@ export class MissionService {
     abandonMission(missionId) {
         if (!missionId || !this.gameState.missions.activeMissionIds.includes(missionId)) return;
 
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
 
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         
+        // HARD WIPE STATE: Deleting the progress key entirely forces it back to the terminal.
         if (this.gameState.missions.missionProgress[missionId]) {
-            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+            delete this.gameState.missions.missionProgress[missionId];
         }
 
         // Logic: If abandoned mission was tracked, clear tracking or pick next.
@@ -35546,7 +36197,7 @@ export class MissionService {
         let stateChanged = false;
 
         activeMissionIds.forEach(missionId => {
-            const mission = DB.MISSIONS[missionId];
+            const mission = DB.MISSIONS?.[missionId];
             if (!mission) return;
 
             let allObjectivesMet = true;
@@ -35610,7 +36261,7 @@ export class MissionService {
      */
     depositMissionCargo(missionId, forceInfraction = false) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission || !mission.objectives) return 0;
 
         const progress = this.gameState.missions.missionProgress[missionId];
@@ -35623,7 +36274,7 @@ export class MissionService {
                 const itemId = obj.goodId || obj.target;
                 
                 // --- STRICT LOCATION GATING FOR DEPOSITS ---
-                const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                const isObjLocationSpecific = obj.target && DB.MARKETS?.some(m => m.id === obj.target);
                 if (isObjLocationSpecific && obj.target !== this.gameState.currentLocationId) {
                     return; // Skip this objective; we are not at its required location
                 }
@@ -35637,10 +36288,16 @@ export class MissionService {
 
                 // --- PROVENANCE CAP: Restrict drain to what is authorized by the parent tracker
                 if (obj.dependsOn) {
+                    const parentObj = mission.objectives.find(o => (o.id || o.goodId || o.target) === obj.dependsOn);
                     const depProgress = progress.objectives?.[obj.dependsOn];
-                    if (depProgress && typeof depProgress.current === 'number') {
+                    
+                    const isVolumeParent = parentObj && ['COLLECT_ITEM', 'collect_item', 'DELIVER_ITEM', 'deliver_item', 'HAVE_ITEM', 'have_item', 'TRADE_ITEM', 'trade_item'].includes(parentObj.type);
+                    
+                    if (isVolumeParent && depProgress && typeof depProgress.current === 'number') {
                         const maxAllowedNow = Math.max(0, depProgress.current - depositedSoFar);
                         remainingNeeded = Math.min(remainingNeeded, maxAllowedNow);
+                    } else if (!depProgress || depProgress.current < depProgress.target) {
+                        remainingNeeded = 0; // Strictly gate if non-volume parent isn't complete
                     }
                 }
                 
@@ -35713,7 +36370,7 @@ export class MissionService {
                 const itemId = obj.goodId || obj.target;
                 
                 // --- STRICT LOCATION GATING FOR DEPOSITS ---
-                const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                const isObjLocationSpecific = obj.target && DB.MARKETS?.some(m => m.id === obj.target);
                 if (isObjLocationSpecific && obj.target !== this.gameState.currentLocationId) {
                     return; // Skip this objective; we are not at its required location
                 }
@@ -35734,10 +36391,16 @@ export class MissionService {
 
                 // --- PROVENANCE CAP: Execute cap during final inventory pull
                 if (obj.dependsOn) {
+                    const parentObj = mission.objectives.find(o => (o.id || o.goodId || o.target) === obj.dependsOn);
                     const depProgress = progress.objectives?.[obj.dependsOn];
-                    if (depProgress && typeof depProgress.current === 'number') {
+                    
+                    const isVolumeParent = parentObj && ['COLLECT_ITEM', 'collect_item', 'DELIVER_ITEM', 'deliver_item', 'HAVE_ITEM', 'have_item', 'TRADE_ITEM', 'trade_item'].includes(parentObj.type);
+                    
+                    if (isVolumeParent && depProgress && typeof depProgress.current === 'number') {
                         const maxAllowedNow = Math.max(0, depProgress.current - depositedSoFar);
                         remainingNeeded = Math.min(remainingNeeded, maxAllowedNow);
+                    } else if (!depProgress || depProgress.current < depProgress.target) {
+                        remainingNeeded = 0; // Strictly gate if non-volume parent isn't complete
                     }
                 }
 
@@ -35801,7 +36464,7 @@ export class MissionService {
     completeMission(missionId, force = false) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return;
         
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         const progress = this.gameState.missions.missionProgress[missionId];
         
         const isCompletable = progress ? progress.isCompletable : false;
@@ -35830,7 +36493,7 @@ export class MissionService {
                             const qty = this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0;
                             const maxCapacity = this.simulationService ? 
                                 this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
-                                (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                                (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
                             
                             shipInventories.push({ shipId, qty, maxCapacity });
                         }
@@ -35859,6 +36522,35 @@ export class MissionService {
         // 2. Grant rewards
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
+        }
+
+        if (mission.rewards) {
+            mission.rewards.forEach(reward => {
+                if (reward.type === 'DEDUCT_CREDITS') {
+                    const amount = reward.amount || reward.value || 0;
+                    this.gameState.player.credits = Math.max(0, this.gameState.player.credits - amount);
+                    this.logger.info.player(this.gameState.day, 'MISSION_PAYMENT', `Deducted ⌬ ${formatCredits(amount)} for mission ${missionId}.`);
+                } else if (reward.type === 'UNLOCK_TIER') {
+                    const newTier = Math.max(this.gameState.player.revealedTier || 1, (reward.amount || reward.value || 1));
+                    this.gameState.player.revealedTier = newTier;
+                    this.logger.info.player(this.gameState.day, 'TIER_UNLOCKED', `Unlocked Trade Tier ${newTier}.`);
+                } else if (reward.type === 'SET_FLAG') {
+                    if (!this.gameState.storyFlags) this.gameState.storyFlags = {};
+                    this.gameState.storyFlags[reward.flagId] = reward.value;
+                } else if (reward.type.toLowerCase() === 'grant_upgrade') {
+                    // Manual route to forcefully append the upgrade without triggering installation modals
+                    const upgradeId = reward.upgradeId || reward.id || reward.target;
+                    const activeShipId = this.gameState.player.activeShipId;
+                    const shipState = this.gameState.player.shipStates[activeShipId];
+                    if (shipState && shipState.upgrades && upgradeId) {
+                        if (shipState.upgrades.length >= 3) {
+                            shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                        }
+                        shipState.upgrades.push(upgradeId);
+                        this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);
+                    }
+                }
+            });
         }
         
         // --- PHASE 4: OFFICER REWARD PIPELINE ---
@@ -40549,6 +41241,7 @@ export class MissionObjectiveEvaluator {
         
         const currentProgress = objProgress.current || 0;
         const deposited = objProgress.deposited || 0;
+        const collected = objProgress.collected || 0;
         
         // Allow 0 as a valid target (e.g. Empty Hold = 0 items)
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
@@ -40593,6 +41286,14 @@ export class MissionObjectiveEvaluator {
                 // Only tracks what the player has explicitly offloaded/deposited at the target location.
                 // Decouples fleet inventory from objective completion logic.
                 current = deposited;
+                break;
+            }
+            
+            case 'collect_item':
+            case 'COLLECT_ITEM': {
+                // STRICT COLLECTION TRACKING:
+                // Only tracks what the player has explicitly picked up from the target location.
+                current = collected;
                 break;
             }
 
@@ -40737,11 +41438,33 @@ export class MissionObjectiveEvaluator {
 
             // --- PLAYER STATE CHECKS ---
             case 'have_ship':
-            case 'OWN_SHIP':
+            case 'OWN_SHIP': {
                 const requiredShipId = objective.target;
                 const ownsShip = gameState.player.ownedShipIds.includes(requiredShipId);
                 current = ownsShip ? 1 : 0;
                 break;
+            }
+            
+            case 'own_ship_class':
+            case 'OWN_SHIP_CLASS': {
+                const requiredClass = objective.target;
+                const classRanks = { 'C': 1, 'B': 2, 'A': 3, 'S': 4, 'O': 5, 'Z': 6, 'F': 0 };
+                const reqRank = classRanks[requiredClass ? requiredClass.toUpperCase() : 'C'] || 1;
+                
+                let highestRank = 0;
+                for (const shipId of gameState.player.ownedShipIds) {
+                    const shipDef = getShipStats(shipId);
+                    if (shipDef && shipDef.class) {
+                        const rank = classRanks[shipDef.class.toUpperCase()] || 0;
+                        if (rank > highestRank) highestRank = rank;
+                    }
+                }
+                
+                current = highestRank;
+                target = reqRank;
+                comparator = '>=';
+                break;
+            }
             
             case 'mission_complete':
             case 'MISSION_COMPLETE':
@@ -40755,13 +41478,14 @@ export class MissionObjectiveEvaluator {
                 break;
         }
 
-        // --- NEW: PROVENANCE ALLOWANCE CAP ---
-        // Dynamically constrains the evaluable quantity based on the progress of a parent tracker
-        // By running this AFTER the core switch evaluation, the UI continues to update in real-time
+        // --- DEPENDENCY GATE ---
+        // Do not mathematically clamp `current` as that breaks UI for non-volume dependencies (like ship classes).
+        // Instead, we track if the dependency is met to gate `isMet` during final evaluation.
+        let dependencyMet = true;
         if (objective.dependsOn) {
             const depProgress = missionProgress.objectives?.[objective.dependsOn];
-            if (depProgress && typeof depProgress.current === 'number') {
-                current = Math.min(current, depProgress.current);
+            if (!depProgress || depProgress.current < depProgress.target) {
+                dependencyMet = false;
             }
         }
         // -------------------------------------
@@ -40775,22 +41499,27 @@ export class MissionObjectiveEvaluator {
             case '>=':
                 if (current >= target) {
                     current = target; 
-                    isMet = true;
+                    if (dependencyMet) isMet = true;
                 }
                 break;
             case '<=':
                 if (current <= target) {
-                    isMet = true;
+                    if (dependencyMet) isMet = true;
                 }
                 break;
             case '==':
                 if (current === target) {
-                    isMet = true;
+                    if (dependencyMet) isMet = true;
                 }
                 break;
             default:
                 console.warn(`[MissionObjectiveEvaluator] Unknown comparator: ${comparator}`);
-                if (current >= target) isMet = true;
+                if (current >= target && dependencyMet) isMet = true;
+        }
+
+        // Failsafe closure: If the dependency is not met, the objective cannot be met
+        if (!dependencyMet) {
+            isMet = false;
         }
 
         return { current, target, isMet };

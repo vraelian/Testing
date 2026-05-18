@@ -3,6 +3,8 @@
  * @fileoverview Provides generic, blocking animation utility functions.
  */
 
+let licenseUIObserver = null;
+
 /**
  * Applies a CSS class to an element and returns a Promise
  * that resolves when the element's 'animationend' event fires.
@@ -188,6 +190,54 @@ export async function startLicenseAnimation(tierNum = 2) {
         document.body.appendChild(overlay);
     }
 
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+
+    const hideAndCache = (el) => {
+        if (el && el.style.display !== 'none') {
+            if (el.dataset.cachedDisplay === undefined) {
+                el.dataset.cachedDisplay = el.style.display || '';
+            }
+            el.style.setProperty('display', 'none', 'important');
+        }
+    };
+
+    // Initial Hide
+    sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
+    document.querySelectorAll('button').forEach((btn) => {
+        if (btn.textContent && btn.textContent.trim() === '(?)') {
+            btn.dataset.isDynamicHelpBtn = "true";
+            hideAndCache(btn);
+        }
+    });
+
+    // Establish MutationObserver to aggressively enforce masking during the sequence
+    if (licenseUIObserver) licenseUIObserver.disconnect();
+    
+    licenseUIObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                const el = mutation.target;
+                if (sideUIElements.includes(el.id) || el.dataset.isDynamicHelpBtn === "true") {
+                    if (el.style.display !== 'none') {
+                        el.style.setProperty('display', 'none', 'important');
+                    }
+                }
+            } else if (mutation.type === 'childList') {
+                // If UIManager completely overwrites the DOM nodes, we must re-query and mask
+                sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
+                document.querySelectorAll('button').forEach((btn) => {
+                    if (btn.textContent && btn.textContent.trim() === '(?)') {
+                        if (!btn.dataset.isDynamicHelpBtn) btn.dataset.isDynamicHelpBtn = "true";
+                        hideAndCache(btn);
+                    }
+                });
+            }
+        });
+    });
+
+    // Observe the entire document body for any UIManager re-renders
+    licenseUIObserver.observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['style'] });
+
     const fadeIn = overlay.animate(
         [{ opacity: 0 }, { opacity: 1 }],
         { duration: 2000, fill: 'forwards', easing: 'ease-in-out' }
@@ -228,6 +278,30 @@ export async function endLicenseAnimation(tierNum = 2) {
     if (overlay.parentNode) {
         overlay.parentNode.removeChild(overlay);
     }
+
+    // --- Disconnect the Observer & Restore Sidebar UI Elements ---
+    if (licenseUIObserver) {
+        licenseUIObserver.disconnect();
+        licenseUIObserver = null;
+    }
+
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+    sideUIElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.dataset.cachedDisplay !== undefined) {
+            el.style.display = el.dataset.cachedDisplay;
+            delete el.dataset.cachedDisplay;
+        }
+    });
+
+    // Restore dynamically found (?) buttons
+    document.querySelectorAll('button[data-is-dynamic-help-btn="true"]').forEach(btn => {
+        if (btn.dataset.cachedDisplay !== undefined) {
+            btn.style.display = btn.dataset.cachedDisplay;
+            delete btn.dataset.cachedDisplay;
+            delete btn.dataset.isDynamicHelpBtn;
+        }
+    });
 
     // Fade out the white flash to transparent over 1 second
     const fadeOut = whiteFlash.animate(

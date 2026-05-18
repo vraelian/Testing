@@ -2,7 +2,7 @@
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
- * UPDATED: Includes COLLECT_ITEM logistics injection.
+ * UPDATED: Includes COLLECT_ITEM logistics injection and strict DB optional chaining.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -48,7 +48,7 @@ export class MissionService {
      * @returns {boolean} True if all prerequisites are met, false otherwise.
      */
     arePrerequisitesMet(missionId) {
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission) return false;
         
         // Support both old 'prerequisites' and new 'triggers' fields
@@ -73,7 +73,7 @@ export class MissionService {
      */
     getAvailableMissions() {
         const { activeMissionIds, completedMissionIds } = this.gameState.missions;
-        return Object.values(DB.MISSIONS).filter(mission => {
+        return Object.values(DB.MISSIONS || {}).filter(mission => {
             const isForced = this._forcedTerminalMissions && this._forcedTerminalMissions.has(mission.id);
             const isAvailable =
                 !activeMissionIds.includes(mission.id) &&
@@ -104,7 +104,7 @@ export class MissionService {
      * @param {boolean} [force=false] If true, bypasses checks.
      */
     acceptMission(missionId, force = false) {
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         
         // 1. Validation (skipped if forced)
         if (!force) {
@@ -159,7 +159,7 @@ export class MissionService {
                 
                 const maxCap = this.simulationService ? 
                     this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
-                    (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                    (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
                     
                 const availableSpace = Math.max(0, maxCap - usedSpace);
                 fleetAvailableSpace += availableSpace;
@@ -356,7 +356,7 @@ export class MissionService {
         this.gameState.missions.activeMissionIds.forEach(missionId => {
             if (missionId === excludedMissionId) return;
             
-            const mission = DB.MISSIONS[missionId];
+            const mission = DB.MISSIONS?.[missionId];
             const progress = this.gameState.missions.missionProgress[missionId];
             
             let missionRequiresThisGood = false;
@@ -431,7 +431,7 @@ export class MissionService {
      * @param {string} missionId 
      */
     penalizeThirdPartyInfraction(missionId) {
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission) return;
         
         let penaltyValue = 0;
@@ -447,7 +447,7 @@ export class MissionService {
         }
         
         cargoArrays.forEach(c => {
-            const commodity = DB.COMMODITIES.find(comm => comm.id === c.goodId);
+            const commodity = DB.COMMODITIES?.find(comm => comm.id === c.goodId);
             let basePrice = this.gameState.market.galacticAverages[c.goodId];
             if (!basePrice && commodity && commodity.basePriceRange) {
                 basePrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
@@ -499,7 +499,7 @@ export class MissionService {
     loadDeferredCargo(missionId) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return;
         
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission || !mission.deferredCargo || mission.deferredCargo.length === 0) return;
 
         const progress = this.gameState.missions.missionProgress[missionId];
@@ -523,7 +523,7 @@ export class MissionService {
             
             const maxCap = this.simulationService ? 
                 this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
-                (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
             
             const availableSpace = Math.max(0, maxCap - usedSpace);
             fleetAvailableSpace += availableSpace;
@@ -593,7 +593,7 @@ export class MissionService {
      */
     collectMissionCargo(missionId) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission || !mission.objectives) return 0;
 
         const progress = this.gameState.missions.missionProgress[missionId];
@@ -604,7 +604,7 @@ export class MissionService {
         mission.objectives.forEach(obj => {
             if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
                 const itemId = obj.goodId || obj.target;
-                const isObjLocationSpecific = obj.targetLoc && DB.MARKETS.some(m => m.id === obj.targetLoc) || (obj.target && DB.MARKETS.some(m => m.id === obj.target));
+                const isObjLocationSpecific = obj.targetLoc && DB.MARKETS?.some(m => m.id === obj.targetLoc) || (obj.target && DB.MARKETS?.some(m => m.id === obj.target));
                 const targetLocation = obj.targetLoc || obj.target;
 
                 if (isObjLocationSpecific && targetLocation !== this.gameState.currentLocationId) {
@@ -646,16 +646,16 @@ export class MissionService {
                         }
                         const maxCap = this.simulationService ? 
                             this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
-                            (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                            (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
                         
                         const availableSpace = Math.max(0, maxCap - usedSpace);
                         fleetAvailableSpace += availableSpace;
                         shipCapacities.push({ shipId, availableSpace });
                     }
 
-                    if (fleetAvailableSpace < remainingNeeded) {
+                    if (fleetAvailableSpace <= 0) {
                         if (this.uiManager) {
-                            this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', `You need space in your fleet for ${remainingNeeded} units to collect this freight.`);
+                            this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', `You have no available space in your fleet to collect this freight.`);
                         }
                         return; // Halt this specific objective collection
                     }
@@ -668,7 +668,7 @@ export class MissionService {
                         return b.availableSpace - a.availableSpace;
                     });
 
-                    let amountToCollect = remainingNeeded;
+                    let amountToCollect = Math.min(remainingNeeded, fleetAvailableSpace);
                     let amountCollectedThisTime = 0;
 
                     for (const shipData of shipCapacities) {
@@ -783,7 +783,7 @@ export class MissionService {
     abandonMission(missionId) {
         if (!missionId || !this.gameState.missions.activeMissionIds.includes(missionId)) return;
 
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
 
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         
@@ -820,7 +820,7 @@ export class MissionService {
         let stateChanged = false;
 
         activeMissionIds.forEach(missionId => {
-            const mission = DB.MISSIONS[missionId];
+            const mission = DB.MISSIONS?.[missionId];
             if (!mission) return;
 
             let allObjectivesMet = true;
@@ -884,7 +884,7 @@ export class MissionService {
      */
     depositMissionCargo(missionId, forceInfraction = false) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         if (!mission || !mission.objectives) return 0;
 
         const progress = this.gameState.missions.missionProgress[missionId];
@@ -897,7 +897,7 @@ export class MissionService {
                 const itemId = obj.goodId || obj.target;
                 
                 // --- STRICT LOCATION GATING FOR DEPOSITS ---
-                const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                const isObjLocationSpecific = obj.target && DB.MARKETS?.some(m => m.id === obj.target);
                 if (isObjLocationSpecific && obj.target !== this.gameState.currentLocationId) {
                     return; // Skip this objective; we are not at its required location
                 }
@@ -911,10 +911,16 @@ export class MissionService {
 
                 // --- PROVENANCE CAP: Restrict drain to what is authorized by the parent tracker
                 if (obj.dependsOn) {
+                    const parentObj = mission.objectives.find(o => (o.id || o.goodId || o.target) === obj.dependsOn);
                     const depProgress = progress.objectives?.[obj.dependsOn];
-                    if (depProgress && typeof depProgress.current === 'number') {
+                    
+                    const isVolumeParent = parentObj && ['COLLECT_ITEM', 'collect_item', 'DELIVER_ITEM', 'deliver_item', 'HAVE_ITEM', 'have_item', 'TRADE_ITEM', 'trade_item'].includes(parentObj.type);
+                    
+                    if (isVolumeParent && depProgress && typeof depProgress.current === 'number') {
                         const maxAllowedNow = Math.max(0, depProgress.current - depositedSoFar);
                         remainingNeeded = Math.min(remainingNeeded, maxAllowedNow);
+                    } else if (!depProgress || depProgress.current < depProgress.target) {
+                        remainingNeeded = 0; // Strictly gate if non-volume parent isn't complete
                     }
                 }
                 
@@ -987,7 +993,7 @@ export class MissionService {
                 const itemId = obj.goodId || obj.target;
                 
                 // --- STRICT LOCATION GATING FOR DEPOSITS ---
-                const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                const isObjLocationSpecific = obj.target && DB.MARKETS?.some(m => m.id === obj.target);
                 if (isObjLocationSpecific && obj.target !== this.gameState.currentLocationId) {
                     return; // Skip this objective; we are not at its required location
                 }
@@ -1008,10 +1014,16 @@ export class MissionService {
 
                 // --- PROVENANCE CAP: Execute cap during final inventory pull
                 if (obj.dependsOn) {
+                    const parentObj = mission.objectives.find(o => (o.id || o.goodId || o.target) === obj.dependsOn);
                     const depProgress = progress.objectives?.[obj.dependsOn];
-                    if (depProgress && typeof depProgress.current === 'number') {
+                    
+                    const isVolumeParent = parentObj && ['COLLECT_ITEM', 'collect_item', 'DELIVER_ITEM', 'deliver_item', 'HAVE_ITEM', 'have_item', 'TRADE_ITEM', 'trade_item'].includes(parentObj.type);
+                    
+                    if (isVolumeParent && depProgress && typeof depProgress.current === 'number') {
                         const maxAllowedNow = Math.max(0, depProgress.current - depositedSoFar);
                         remainingNeeded = Math.min(remainingNeeded, maxAllowedNow);
+                    } else if (!depProgress || depProgress.current < depProgress.target) {
+                        remainingNeeded = 0; // Strictly gate if non-volume parent isn't complete
                     }
                 }
 
@@ -1075,7 +1087,7 @@ export class MissionService {
     completeMission(missionId, force = false) {
         if (!this.gameState.missions.activeMissionIds.includes(missionId)) return;
         
-        const mission = DB.MISSIONS[missionId];
+        const mission = DB.MISSIONS?.[missionId];
         const progress = this.gameState.missions.missionProgress[missionId];
         
         const isCompletable = progress ? progress.isCompletable : false;
@@ -1104,7 +1116,7 @@ export class MissionService {
                             const qty = this.gameState.player.inventories[shipId]?.[itemId]?.quantity || 0;
                             const maxCapacity = this.simulationService ? 
                                 this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
-                                (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                                (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
                             
                             shipInventories.push({ shipId, qty, maxCapacity });
                         }
