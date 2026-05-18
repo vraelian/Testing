@@ -131,6 +131,11 @@
     100% { transform: translateX(-100%); }
 }
 
+/* --- PORTRAIT FILTERS --- */
+.greyscale-filter {
+    filter: grayscale(100%) opacity(0.8);
+}
+
 /* ========================================================================= */
 /* --- STATIC MODAL TEXTURE INTEGRATION ---                                  */
 /* ========================================================================= */
