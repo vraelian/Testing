@@ -272,7 +272,9 @@ export class UIModalEngine {
         if (options.portraitId && typeof window.getPortraitStyle === 'function' && titleEl) {
             const pStyle = window.getPortraitStyle(options.portraitId);
             if (pStyle) {
-                const parsedName = options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
+                const parsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KEIRN' : 
+                                   options.portraitId === 'Affluent_13' ? 'MANGO' : 
+                                   options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 
                 if (modalId === 'mission-modal' || modalId === 'story-event-modal') {
                     titleEl.style.textAlign = 'center';
@@ -283,6 +285,9 @@ export class UIModalEngine {
                     const pDiv = document.createElement('div');
                     pDiv.className = 'portrait-thumbnail comm-active';
                     pDiv.style.cssText = pStyle;
+                    if (options.portraitFilter === 'greyscale') {
+                        pDiv.classList.add('greyscale-filter');
+                    }
                     
                     const nameLabel = document.createElement('div');
                     nameLabel.className = 'portrait-name-label comm-label';
@@ -309,6 +314,9 @@ export class UIModalEngine {
                     const pDiv = document.createElement('div');
                     pDiv.className = 'portrait-thumbnail';
                     pDiv.style.cssText = pStyle;
+                    if (options.portraitFilter === 'greyscale') {
+                        pDiv.classList.add('greyscale-filter');
+                    }
                     
                     const nameLabel = document.createElement('div');
                     nameLabel.className = 'portrait-name-label';

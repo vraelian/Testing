@@ -2,8 +2,7 @@
 /**
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
- * UPDATED: Includes new QUEUE_STORY_EVENT and UNLOCK_LOCATION action hooks during accept/complete,
- * and Provenance Allowance Capping for dependent objectives in depositMissionCargo.
+ * UPDATED: Includes COLLECT_ITEM logistics injection.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -126,31 +125,56 @@ export class MissionService {
         }
 
         // 3. Cargo Space Validation
+        let totalGrantedSpace = 0;
+        const itemsToGrant = [];
+
         if (mission.grantedCargo && mission.grantedCargo.length > 0) {
-            let totalGrantedSpace = 0;
-            mission.grantedCargo.forEach(cargo => totalGrantedSpace += cargo.quantity);
-            
-            const activeShipId = this.gameState.player.activeShipId;
-            let currentUsedSpace = 0;
-            if (this.gameState.player.inventories[activeShipId]) {
-                Object.values(this.gameState.player.inventories[activeShipId]).forEach(item => {
-                    currentUsedSpace += item.quantity;
-                });
+            mission.grantedCargo.forEach(cargo => {
+                totalGrantedSpace += cargo.quantity;
+                itemsToGrant.push(cargo);
+            });
+        }
+        if (mission.onAccept) {
+            mission.onAccept.forEach(action => {
+                if (action.type === 'GRANT_ITEM' && action.items) {
+                    action.items.forEach(cargo => {
+                        totalGrantedSpace += cargo.quantity;
+                        itemsToGrant.push(cargo);
+                    });
+                }
+            });
+        }
+
+        if (totalGrantedSpace > 0) {
+            let fleetAvailableSpace = 0;
+            const shipCapacities = [];
+
+            for (const shipId of this.gameState.player.ownedShipIds) {
+                let usedSpace = 0;
+                if (this.gameState.player.inventories[shipId]) {
+                    Object.values(this.gameState.player.inventories[shipId]).forEach(item => {
+                        usedSpace += item.quantity;
+                    });
+                }
+                
+                const maxCap = this.simulationService ? 
+                    this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                    (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                    
+                const availableSpace = Math.max(0, maxCap - usedSpace);
+                fleetAvailableSpace += availableSpace;
+                shipCapacities.push({ shipId, availableSpace });
             }
             
-            const maxCapacity = this.simulationService ? 
-                this.simulationService.getEffectiveShipStats(activeShipId).cargoCapacity : 
-                (DB.SHIPS[activeShipId]?.cargoCapacity || 100);
-                
-            const availableSpace = maxCapacity - currentUsedSpace;
-            
-            if (availableSpace < totalGrantedSpace) {
-                const errorMsg = `Cannot accept mission: Insufficient cargo space. You need space in your cargo hold for ${totalGrantedSpace} units.`;
+            if (fleetAvailableSpace < totalGrantedSpace) {
+                const errorMsg = `Cannot accept mission: Insufficient cargo space. You need space in your fleet for ${totalGrantedSpace} units.`;
                 if (this.uiManager) {
                     this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
                 }
                 return; // Abort acceptance
             }
+            
+            this._tempShipCapacities = shipCapacities;
         }
 
         // 4. Initialize State
@@ -181,17 +205,38 @@ export class MissionService {
         this.logger.info.player(this.gameState.day, 'MISSION_ACCEPT', `Accepted mission: ${missionId} ${force ? '(FORCED)' : ''}`);
         
         // 5. Grant Start Items
-        if (mission.grantedCargo && this.simulationService) {
-            mission.grantedCargo.forEach(cargo => {
-                const activeShipId = this.gameState.player.activeShipId;
-                if (!this.gameState.player.inventories[activeShipId]) {
-                    this.gameState.player.inventories[activeShipId] = {};
-                }
-                if (!this.gameState.player.inventories[activeShipId][cargo.goodId]) {
-                    this.gameState.player.inventories[activeShipId][cargo.goodId] = { quantity: 0, avgCost: 0 };
-                }
-                this.gameState.player.inventories[activeShipId][cargo.goodId].quantity += cargo.quantity;
+        if (itemsToGrant.length > 0 && this._tempShipCapacities) {
+            const activeShipId = this.gameState.player.activeShipId;
+            // Sort to prioritize active ship
+            this._tempShipCapacities.sort((a, b) => {
+                if (a.shipId === activeShipId) return -1;
+                if (b.shipId === activeShipId) return 1;
+                return b.availableSpace - a.availableSpace;
             });
+
+            itemsToGrant.forEach(cargo => {
+                let remainingToDistribute = cargo.quantity;
+                for (const shipData of this._tempShipCapacities) {
+                    if (remainingToDistribute <= 0) break;
+                    const spaceHere = shipData.availableSpace;
+                    if (spaceHere > 0) {
+                        const amountToPut = Math.min(remainingToDistribute, spaceHere);
+                        
+                        if (!this.gameState.player.inventories[shipData.shipId]) {
+                            this.gameState.player.inventories[shipData.shipId] = {};
+                        }
+                        if (!this.gameState.player.inventories[shipData.shipId][cargo.goodId]) {
+                            this.gameState.player.inventories[shipData.shipId][cargo.goodId] = { quantity: 0, avgCost: 0 };
+                        }
+                        
+                        this.gameState.player.inventories[shipData.shipId][cargo.goodId].quantity += amountToPut;
+                        
+                        shipData.availableSpace -= amountToPut;
+                        remainingToDistribute -= amountToPut;
+                    }
+                }
+            });
+            delete this._tempShipCapacities;
         }
 
         if (this.simulationService && typeof this.simulationService.grantMissionCargo === 'function') {
@@ -335,20 +380,38 @@ export class MissionService {
                         protectedQuantity += cDef.quantity;
                     }
                 }
+                
+                if (mission.onAccept) {
+                    mission.onAccept.forEach(action => {
+                        if (action.type === 'GRANT_ITEM' && action.items) {
+                            action.items.forEach(cDef => {
+                                if (cDef.goodId === goodId) {
+                                    missionRequiresThisGood = true;
+                                    protectedQuantity += cDef.quantity;
+                                }
+                            });
+                        }
+                    });
+                }
 
                 if (missionRequiresThisGood) {
                     // Reduce protection by what has already been deposited for this mission
                     let deposited = 0;
+                    let sellExemption = 0;
                     if (mission.objectives) {
                         mission.objectives.forEach(obj => {
                             if ((obj.type === 'DELIVER_ITEM' || obj.type === 'have_item' || obj.type === 'HAVE_ITEM') && (obj.goodId === goodId || obj.target === goodId)) {
                                 const objKey = obj.id || obj.goodId || obj.target;
                                 deposited += (progress.objectives[objKey]?.deposited || 0);
                             }
+                            // EXEMPTION: Fencing Missions (Like M24). Selling it IS the objective, so do not protect it from the market.
+                            if ((obj.type === 'TRADE_ITEM' || obj.type === 'trade_item') && obj.tradeType === 'sell' && (obj.goodId === goodId || obj.target === goodId)) {
+                                sellExemption += (obj.quantity || obj.value || 1);
+                            }
                         });
                     }
                     
-                    const remainingProtected = Math.max(0, protectedQuantity - deposited);
+                    const remainingProtected = Math.max(0, protectedQuantity - deposited - sellExemption);
                     if (remainingProtected > 0) {
                         baseline += remainingProtected;
                         if (!protectedMissions.includes(missionId)) {
@@ -375,6 +438,13 @@ export class MissionService {
         const cargoArrays = [];
         if (mission.deferredCargo) cargoArrays.push(...mission.deferredCargo);
         if (mission.grantedCargo) cargoArrays.push(...mission.grantedCargo);
+        if (mission.onAccept) {
+            mission.onAccept.forEach(action => {
+                if (action.type === 'GRANT_ITEM' && action.items) {
+                    cargoArrays.push(...action.items);
+                }
+            });
+        }
         
         cargoArrays.forEach(c => {
             const commodity = DB.COMMODITIES.find(comm => comm.id === c.goodId);
@@ -405,10 +475,10 @@ export class MissionService {
             this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
         }
 
-        // Force Abandonment Sequence
+        // Force Abandonment Sequence (HARD WIPE STATE TO ALLOW TERMINAL RE-ENTRY)
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         if (this.gameState.missions.missionProgress[missionId]) {
-            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+            delete this.gameState.missions.missionProgress[missionId];
         }
         if (this.gameState.missions.trackedMissionId === missionId) {
             const nextMission = this.gameState.missions.activeMissionIds[0];
@@ -516,6 +586,132 @@ export class MissionService {
     }
 
     /**
+     * Extracts items specified by COLLECT_ITEM objectives from the target location and assigns them to the player's hold.
+     * Evaluates fleet-wide capacity prior to granting the cargo.
+     * @param {string} missionId 
+     * @returns {number} The total amount of freight successfully collected.
+     */
+    collectMissionCargo(missionId) {
+        if (!this.gameState.missions.activeMissionIds.includes(missionId)) return 0;
+        const mission = DB.MISSIONS[missionId];
+        if (!mission || !mission.objectives) return 0;
+
+        const progress = this.gameState.missions.missionProgress[missionId];
+        if (!progress) return 0;
+
+        let totalCollectedThisCall = 0;
+
+        mission.objectives.forEach(obj => {
+            if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                const itemId = obj.goodId || obj.target;
+                const isObjLocationSpecific = obj.targetLoc && DB.MARKETS.some(m => m.id === obj.targetLoc) || (obj.target && DB.MARKETS.some(m => m.id === obj.target));
+                const targetLocation = obj.targetLoc || obj.target;
+
+                if (isObjLocationSpecific && targetLocation !== this.gameState.currentLocationId) {
+                    return; // Not at the right location to collect this specific item
+                }
+
+                const targetQty = obj.quantity || obj.value || 1;
+                const objKey = obj.id || obj.goodId || obj.target;
+
+                if (!progress.objectives[objKey]) {
+                    progress.objectives[objKey] = { current: 0, target: targetQty, collected: 0 };
+                }
+                if (progress.objectives[objKey].collected === undefined) {
+                    progress.objectives[objKey].collected = 0;
+                }
+
+                let collectedSoFar = progress.objectives[objKey].collected;
+                let remainingNeeded = targetQty - collectedSoFar;
+
+                // Restrict collection if sequential dependencies are unmet
+                if (obj.dependsOn) {
+                    const depProgress = progress.objectives?.[obj.dependsOn];
+                    if (!depProgress || depProgress.current < depProgress.target) {
+                        return; 
+                    }
+                }
+
+                if (remainingNeeded > 0) {
+                    // Check fleet capacity
+                    let fleetAvailableSpace = 0;
+                    const shipCapacities = [];
+                    
+                    for (const shipId of this.gameState.player.ownedShipIds) {
+                        let usedSpace = 0;
+                        if (this.gameState.player.inventories[shipId]) {
+                            Object.values(this.gameState.player.inventories[shipId]).forEach(item => {
+                                usedSpace += item.quantity;
+                            });
+                        }
+                        const maxCap = this.simulationService ? 
+                            this.simulationService.getEffectiveShipStats(shipId).cargoCapacity : 
+                            (DB.SHIPS[shipId]?.cargoCapacity || 100);
+                        
+                        const availableSpace = Math.max(0, maxCap - usedSpace);
+                        fleetAvailableSpace += availableSpace;
+                        shipCapacities.push({ shipId, availableSpace });
+                    }
+
+                    if (fleetAvailableSpace < remainingNeeded) {
+                        if (this.uiManager) {
+                            this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', `You need space in your fleet for ${remainingNeeded} units to collect this freight.`);
+                        }
+                        return; // Halt this specific objective collection
+                    }
+
+                    // Distribute across the fleet prioritizing the active vessel
+                    const activeShipId = this.gameState.player.activeShipId;
+                    shipCapacities.sort((a, b) => {
+                        if (a.shipId === activeShipId) return -1;
+                        if (b.shipId === activeShipId) return 1;
+                        return b.availableSpace - a.availableSpace;
+                    });
+
+                    let amountToCollect = remainingNeeded;
+                    let amountCollectedThisTime = 0;
+
+                    for (const shipData of shipCapacities) {
+                        if (amountToCollect <= 0) break;
+                        const spaceHere = shipData.availableSpace;
+                        if (spaceHere > 0) {
+                            const amountToPut = Math.min(amountToCollect, spaceHere);
+                            
+                            if (!this.gameState.player.inventories[shipData.shipId]) {
+                                this.gameState.player.inventories[shipData.shipId] = {};
+                            }
+                            if (!this.gameState.player.inventories[shipData.shipId][itemId]) {
+                                this.gameState.player.inventories[shipData.shipId][itemId] = { quantity: 0, avgCost: 0 };
+                            }
+                            
+                            this.gameState.player.inventories[shipData.shipId][itemId].quantity += amountToPut;
+                            
+                            amountToCollect -= amountToPut;
+                            amountCollectedThisTime += amountToPut;
+                        }
+                    }
+
+                    if (amountCollectedThisTime > 0) {
+                        progress.objectives[objKey].collected += amountCollectedThisTime;
+                        totalCollectedThisCall += amountCollectedThisTime;
+                        this.logger.info.player(this.gameState.day, 'MISSION_COLLECT', `Collected ${amountCollectedThisTime}x ${itemId} for mission ${missionId}.`);
+                    }
+                }
+            }
+        });
+
+        if (totalCollectedThisCall > 0) {
+            this.checkTriggers();
+            this.gameState.setState({});
+            if (this.uiManager && typeof this.uiManager.render === 'function') {
+                this.uiManager.render(this.gameState.getState());
+            }
+        }
+
+        return totalCollectedThisCall;
+    }
+
+    /**
      * Skips the entire 9-part tutorial sequence.
      */
     skipTutorial() {
@@ -591,8 +787,9 @@ export class MissionService {
 
         this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
         
+        // HARD WIPE STATE: Deleting the progress key entirely forces it back to the terminal.
         if (this.gameState.missions.missionProgress[missionId]) {
-            this.gameState.missions.missionProgress[missionId].isCompletable = false;
+            delete this.gameState.missions.missionProgress[missionId];
         }
 
         // Logic: If abandoned mission was tracked, clear tracking or pick next.
@@ -936,6 +1133,35 @@ export class MissionService {
         // 2. Grant rewards
         if (this.simulationService) {
             this.simulationService._grantRewards(mission.rewards, mission.name);
+        }
+
+        if (mission.rewards) {
+            mission.rewards.forEach(reward => {
+                if (reward.type === 'DEDUCT_CREDITS') {
+                    const amount = reward.amount || reward.value || 0;
+                    this.gameState.player.credits = Math.max(0, this.gameState.player.credits - amount);
+                    this.logger.info.player(this.gameState.day, 'MISSION_PAYMENT', `Deducted ⌬ ${formatCredits(amount)} for mission ${missionId}.`);
+                } else if (reward.type === 'UNLOCK_TIER') {
+                    const newTier = Math.max(this.gameState.player.revealedTier || 1, (reward.amount || reward.value || 1));
+                    this.gameState.player.revealedTier = newTier;
+                    this.logger.info.player(this.gameState.day, 'TIER_UNLOCKED', `Unlocked Trade Tier ${newTier}.`);
+                } else if (reward.type === 'SET_FLAG') {
+                    if (!this.gameState.storyFlags) this.gameState.storyFlags = {};
+                    this.gameState.storyFlags[reward.flagId] = reward.value;
+                } else if (reward.type.toLowerCase() === 'grant_upgrade') {
+                    // Manual route to forcefully append the upgrade without triggering installation modals
+                    const upgradeId = reward.upgradeId || reward.id || reward.target;
+                    const activeShipId = this.gameState.player.activeShipId;
+                    const shipState = this.gameState.player.shipStates[activeShipId];
+                    if (shipState && shipState.upgrades && upgradeId) {
+                        if (shipState.upgrades.length >= 3) {
+                            shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                        }
+                        shipState.upgrades.push(upgradeId);
+                        this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);
+                    }
+                }
+            });
         }
         
         // --- PHASE 4: OFFICER REWARD PIPELINE ---

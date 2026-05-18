@@ -254,6 +254,14 @@ export class UIMissionControl {
              }
              return `Deliver ${name}`;
         }
+        if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
+            const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.targetLoc || obj.target))?.name || 'Item';
+            if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                const locName = DB.MARKETS.find(m => m.id === obj.target).name;
+                return `Collect ${name} on ${locName}`;
+            }
+            return `Collect ${name}`;
+        }
         if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              return `Procure ${name}`;
@@ -282,6 +290,9 @@ export class UIMissionControl {
         if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `Visit ${screenTarget} Screen`;
+        }
+        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+            return `Acquire Class ${obj.target} Vessel`;
         }
         
         return `Objective`;
@@ -371,7 +382,8 @@ export class UIMissionControl {
                 let flexColumns = [];
                 let animDelayIdx = 0;
 
-                const hasPayout = (mission.rewards && mission.rewards.length > 0) || !!mission.officerReward;
+                const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+                const hasPayout = visibleRewards.length > 0 || !!mission.officerReward;
 
                 // 1. GRANTED
                 let inboundItems = [];
@@ -389,7 +401,13 @@ export class UIMissionControl {
                 if (mission.onAccept && mission.onAccept.length > 0) {
                     mission.onAccept.forEach(action => {
                         if (action.type === 'GRANT_CREDITS') {
-                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span> <span class="t-subject">GRANT</span>`);
+                            inboundItems.push(`<span class="credits-text-pulsing">${formatCredits(action.amount, true)}</span>`);
+                        }
+                        if (action.type === 'GRANT_ITEM' && action.items) {
+                            action.items.forEach(cargo => {
+                                const name = DB.COMMODITIES.find(c => c.id === cargo.goodId)?.name || 'ITEM';
+                                inboundItems.push(`<span class="t-qty">${cargo.quantity}x</span> <span class="t-subject">${name.toUpperCase()}</span>`);
+                            });
                         }
                     });
                 }
@@ -413,20 +431,27 @@ export class UIMissionControl {
                 let payoutPanelHtml = '';
                 if (hasPayout) {
                     let rewsList = '';
-                    if (mission.rewards) {
-                        rewsList += mission.rewards.map(r => {
+                    if (visibleRewards.length > 0) {
+                        rewsList += visibleRewards.map(r => {
                             const delay = animDelayIdx++ * 0.05;
                             let content = '';
                             if(r.type.toLowerCase() === 'credits') {
                                 content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                            } else if(r.type.toLowerCase() === 'upgrade') {
-                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                            } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
+                                const upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name || 'SHIP UPGRADE';
                                 content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                            } else if(r.type.toLowerCase() === 'license') {
-                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
-                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
+                                const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
+                                const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
+                                content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'set_flag') {
+                                if (r.flagId === 'helped_belt_family') {
+                                    content = `<span class="t-subject">GRATITUDE</span>`;
+                                } else {
+                                    content = `<span class="t-subject">REPUTATION</span>`;
+                                }
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -459,7 +484,7 @@ export class UIMissionControl {
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
-                        if (['DELIVER_ITEM', 'travel_to', 'TRAVEL_TO', 'trade_item', 'TRADE_ITEM'].includes(obj.type)) {
+                        if (['DELIVER_ITEM', 'travel_to', 'TRAVEL_TO', 'trade_item', 'TRADE_ITEM', 'COLLECT_ITEM', 'collect_item'].includes(obj.type)) {
                             if (obj.target && DB.MARKETS.some(m => m.id === obj.target)) {
                                 uniqueDestinations.add(obj.target);
                             }
@@ -484,6 +509,15 @@ export class UIMissionControl {
                             const targetQty = obj.quantity || obj.value || 1;
                             if (depositedAmt > 0) {
                                 text += `<br><span class="text-blue-400 font-bold">[DEPOSITED: ${depositedAmt}/${targetQty}]</span>`;
+                            }
+                        }
+                        
+                        if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                            const objKey = obj.id || obj.goodId || obj.target;
+                            const collectedAmt = progress?.objectives?.[objKey]?.collected || 0;
+                            const targetQty = obj.quantity || obj.value || 1;
+                            if (collectedAmt > 0) {
+                                text += `<br><span class="text-blue-400 font-bold">[COLLECTED: ${collectedAmt}/${targetQty}]</span>`;
                             }
                         }
                         
@@ -579,6 +613,7 @@ export class UIMissionControl {
                     const isAbandonable = mission.isAbandonable !== false;
                     let navButtonHtml = '';
                     let depositButtonHtml = '';
+                    let collectButtonHtml = '';
                     
                     if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any' && !isLogisticsPickupPhase) {
                         navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.completion.locationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
@@ -587,7 +622,9 @@ export class UIMissionControl {
                         navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.pickupLocationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     
-                    if (isAtCorrectLocation) {
+                    let canCollect = false;
+
+                    if (isAtCorrectLocation || true) {
                         let canDeposit = false;
                         if (mission.objectives) {
                             mission.objectives.forEach(obj => {
@@ -602,15 +639,49 @@ export class UIMissionControl {
                                     if (isObjLocationSpecific && obj.target !== gameState.currentLocationId) {
                                         return; // We are not at the right place to deposit for this specific objective
                                     }
+                                    
+                                    // --- DEPENDENCY CHECK ---
+                                    let isUnlocked = true;
+                                    if (obj.dependsOn) {
+                                        const depProgress = progress?.objectives?.[obj.dependsOn];
+                                        if (!depProgress || depProgress.current < depProgress.target) {
+                                            isUnlocked = false;
+                                        }
+                                    }
                                     // ----------------------------------
                                     
-                                    if ((targetQty - depositedAmt > 0)) {
+                                    if (isUnlocked && (targetQty - depositedAmt > 0)) {
                                         for (const shipId of gameState.player.ownedShipIds) {
                                             if (gameState.player.inventories[shipId]?.[itemId]?.quantity > 0) {
                                                 canDeposit = true;
                                                 break;
                                             }
                                         }
+                                    }
+                                }
+                                
+                                // EVALUATE COLLECTION UI
+                                if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                                    const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                                    const targetQty = obj.quantity || obj.value || 1;
+                                    const collectedAmt = progress?.objectives?.[objKey]?.collected || 0;
+                                    const targetLocation = obj.targetLoc || obj.target;
+
+                                    const isObjLocationSpecific = targetLocation && DB.MARKETS.some(m => m.id === targetLocation);
+                                    if (isObjLocationSpecific && targetLocation !== gameState.currentLocationId) {
+                                        return; 
+                                    }
+
+                                    let isUnlocked = true;
+                                    if (obj.dependsOn) {
+                                        const depProgress = progress.objectives[obj.dependsOn];
+                                        if (!depProgress || depProgress.current < depProgress.target) {
+                                            isUnlocked = false;
+                                        }
+                                    }
+
+                                    if (isUnlocked && (targetQty - collectedAmt > 0)) {
+                                        canCollect = true;
                                     }
                                 }
                             });
@@ -621,11 +692,15 @@ export class UIMissionControl {
                         }
                     }
                     
+                    if (canCollect) {
+                        collectButtonHtml = `<button id="mission-collect-btn" class="btn w-full mt-2 bg-blue-600/80 hover:bg-blue-500/80 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.6)] text-white font-bold" style="${btnStyles}">COLLECT FREIGHT</button>`;
+                    }
+                    
                     if (isLogisticsPickupPhase && isAtPickupLocation) {
                         depositButtonHtml = `<button id="mission-load-cargo-btn" data-mission-id="${mission.id}" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">LOAD CARGO</button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${navButtonHtml}`;
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${navButtonHtml}`;
                 } else {
                      const btnText = shouldBeDisabled && missions.activeMissionIds.length >= 4 ? 'Mission Log Full (4/4)' : 'Accept';
                      buttonsEl.innerHTML = `<button class="btn w-full mission-action-btn" style="${btnStyles}" data-action="accept-mission" data-mission-id="${mission.id}" ${shouldBeDisabled ? 'disabled' : ''}>${btnText}</button>`;
@@ -673,6 +748,24 @@ export class UIMissionControl {
                     });
                 }
                 
+                const collectBtn = modal.querySelector('#mission-collect-btn');
+                if (collectBtn) {
+                    collectBtn.addEventListener('click', (e) => {
+                        if (this.manager.simulationService) {
+                            const collectedAmt = this.manager.simulationService.missionService.collectMissionCargo(mission.id);
+                            
+                            if (collectedAmt > 0) {
+                                const rect = collectBtn.getBoundingClientRect();
+                                const x = e.clientX || rect.left + (rect.width / 2);
+                                const y = e.clientY || rect.top;
+                                this.manager.createFloatingText(`+${collectedAmt}`, x, y, '#60a5fa');
+                            }
+
+                            closeHandler();
+                        }
+                    });
+                }
+                
                 const loadCargoBtn = modal.querySelector('#mission-load-cargo-btn');
                 if (loadCargoBtn) {
                     loadCargoBtn.addEventListener('click', (e) => {
@@ -699,6 +792,14 @@ export class UIMissionControl {
                  text += ` TO ${locName.toUpperCase()}`;
              }
              return text;
+        }
+        if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
+            const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.targetLoc || obj.target))?.name || 'Item';
+            if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
+                const locName = DB.MARKETS.find(m => m.id === obj.target).name;
+                return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
+            }
+            return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()}`;
         }
         if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
@@ -732,6 +833,9 @@ export class UIMissionControl {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
         }
+        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+            return `ACQUIRE CLASS ${obj.target} VESSEL`;
+        }
         return `COMPLETE OBJECTIVE`;
     }
 
@@ -739,8 +843,8 @@ export class UIMissionControl {
         const gameState = this.manager.lastKnownState;
         
         let rewardVolume = 0;
-        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade');
-        const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license') : null;
+        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade');
+        const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier') : null;
 
         if (mission.rewards) {
             mission.rewards.forEach(r => {
@@ -792,6 +896,7 @@ export class UIMissionControl {
 
         const options = {
            portraitId: activePortraitId,
+           portraitFilter: mission.completion.portraitFilter,
            dismissOutside: true,
             customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
@@ -816,25 +921,33 @@ export class UIMissionControl {
                objectivesEl.style.display = 'none';
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-               const hasStandardRewards = mission.rewards && mission.rewards.length > 0;
+               const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+               const hasStandardRewards = visibleRewards.length > 0;
                const hasOfficerReward = !!mission.officerReward;
                
                if (hasStandardRewards || hasOfficerReward) {
                    let rewardsHtml = '';
                    if (hasStandardRewards) {
-                       rewardsHtml += mission.rewards.map((r, i) => {
+                       rewardsHtml += visibleRewards.map((r, i) => {
                             const delay = i * 0.1;
                             let content = '';
                             if(r.type.toLowerCase() === 'credits') {
                                 content = `<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`;
-                            } else if(r.type.toLowerCase() === 'upgrade') {
-                                const upgName = GameAttributes.getDefinition(r.id || r.target)?.name || 'SHIP UPGRADE';
+                            } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
+                                const upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name || 'SHIP UPGRADE';
                                 content = `<span class="t-subject">${upgName.toUpperCase()}</span>`;
-                            } else if(r.type.toLowerCase() === 'license') {
-                                const licName = DB.LICENSES && DB.LICENSES[r.licenseId] ? DB.LICENSES[r.licenseId].name : 'LICENSE';
-                                content = `<span class="t-subject" style="color: #34d399;">${licName.toUpperCase()}</span>`;
+                            } else if(r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier' || r.type.toLowerCase() === 'reveal_tier') {
+                                const tierVal = r.value || r.amount || (r.licenseId ? parseInt(r.licenseId.match(/\d+/)[0], 10) : 1);
+                                const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
+                                content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'set_flag') {
+                                if (r.flagId === 'helped_belt_family') {
+                                    content = `<span class="t-subject">GRATITUDE</span>`;
+                                } else {
+                                    content = `<span class="t-subject">REPUTATION</span>`;
+                                }
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -845,7 +958,7 @@ export class UIMissionControl {
                    if (hasOfficerReward) {
                         const offDef = OFFICERS[mission.officerReward];
                         if (offDef) {
-                            const delay = (mission.rewards?.length || 0) * 0.1;
+                            const delay = (visibleRewards.length || 0) * 0.1;
                             const color = getOfficerRarityHex(offDef.rarity);
                             const content = `<span class="t-subject" style="color: ${color}; text-shadow: 0 0 5px ${color};">OFFICER: ${offDef.name.toUpperCase()}</span>`;
                             rewardsHtml += `<div class="hero-payout-item w-full flex justify-center items-center text-center my-1 text-lg font-bold" style="animation-delay: ${delay}s">${content}</div>`;
@@ -998,11 +1111,15 @@ export class UIMissionControl {
 
                        // License Sequence Intercept
                        if (licenseReward) {
-                           const licenseId = licenseReward.licenseId;
-                           const licenseDef = DB.LICENSES ? DB.LICENSES[licenseId] : null;
-                           const tierMatch = licenseId.match(/t(\d)_license/);
-                           const tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
+                           let tierNum = 2;
+                           if (licenseReward.type.toLowerCase() === 'unlock_tier') {
+                               tierNum = licenseReward.value || licenseReward.amount || 2;
+                           } else if (licenseReward.licenseId) {
+                               const tierMatch = licenseReward.licenseId.match(/t(\d)_license/);
+                               tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
+                           }
                            
+                           const licenseDef = DB.LICENSES ? DB.LICENSES[`t${tierNum}_license`] : null;
                            const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
                            const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
 
@@ -1012,7 +1129,7 @@ export class UIMissionControl {
                                <div class="text-center w-full flex flex-col items-center justify-center p-2">
                                    <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
                                    <br>
-                                   <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : 'TRADE LICENSE'}</div>
+                                   <div class="license-subheader-text license-text-t${tierNum} mb-2">${licenseDef ? licenseDef.name.toUpperCase() : `TIER ${tierNum} LICENSE`}</div>
                                    <div class="license-body-text">${bodyText}</div>
                                </div>
                            `;
@@ -1047,11 +1164,12 @@ export class UIMissionControl {
                                            // Execute state mutation via the properly injected, fully mutable GameState reference
                                            if (uiManager.simulationService && uiManager.simulationService.gameState) {
                                                const coreState = uiManager.simulationService.gameState;
-                                               if (licenseReward.licenseId === 't2_license') {
+                                               if (tierNum === 2) {
                                                    coreState.player.revealedTier = Math.max(coreState.player.revealedTier || 1, 2);
                                                }
-                                               if (!coreState.player.unlockedLicenseIds.includes(licenseReward.licenseId)) {
-                                                   coreState.player.unlockedLicenseIds.push(licenseReward.licenseId);
+                                               const licId = `t${tierNum}_license`;
+                                               if (!coreState.player.unlockedLicenseIds.includes(licId)) {
+                                                   coreState.player.unlockedLicenseIds.push(licId);
                                                }
                                                coreState.setState({}); // Persist and broadcast
                                                

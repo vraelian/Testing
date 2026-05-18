@@ -20,6 +20,7 @@ export class MissionObjectiveEvaluator {
         
         const currentProgress = objProgress.current || 0;
         const deposited = objProgress.deposited || 0;
+        const collected = objProgress.collected || 0;
         
         // Allow 0 as a valid target (e.g. Empty Hold = 0 items)
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
@@ -64,6 +65,14 @@ export class MissionObjectiveEvaluator {
                 // Only tracks what the player has explicitly offloaded/deposited at the target location.
                 // Decouples fleet inventory from objective completion logic.
                 current = deposited;
+                break;
+            }
+            
+            case 'collect_item':
+            case 'COLLECT_ITEM': {
+                // STRICT COLLECTION TRACKING:
+                // Only tracks what the player has explicitly picked up from the target location.
+                current = collected;
                 break;
             }
 
@@ -208,11 +217,33 @@ export class MissionObjectiveEvaluator {
 
             // --- PLAYER STATE CHECKS ---
             case 'have_ship':
-            case 'OWN_SHIP':
+            case 'OWN_SHIP': {
                 const requiredShipId = objective.target;
                 const ownsShip = gameState.player.ownedShipIds.includes(requiredShipId);
                 current = ownsShip ? 1 : 0;
                 break;
+            }
+            
+            case 'own_ship_class':
+            case 'OWN_SHIP_CLASS': {
+                const requiredClass = objective.target;
+                const classRanks = { 'C': 1, 'B': 2, 'A': 3, 'S': 4, 'O': 5, 'Z': 6, 'F': 0 };
+                const reqRank = classRanks[requiredClass ? requiredClass.toUpperCase() : 'C'] || 1;
+                
+                let highestRank = 0;
+                for (const shipId of gameState.player.ownedShipIds) {
+                    const shipDef = getShipStats(shipId);
+                    if (shipDef && shipDef.class) {
+                        const rank = classRanks[shipDef.class.toUpperCase()] || 0;
+                        if (rank > highestRank) highestRank = rank;
+                    }
+                }
+                
+                current = highestRank;
+                target = reqRank;
+                comparator = '>=';
+                break;
+            }
             
             case 'mission_complete':
             case 'MISSION_COMPLETE':
