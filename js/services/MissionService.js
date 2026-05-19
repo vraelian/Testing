@@ -1161,16 +1161,40 @@ export class MissionService {
                     if (!this.gameState.storyFlags) this.gameState.storyFlags = {};
                     this.gameState.storyFlags[reward.flagId] = reward.value;
                 } else if (reward.type.toLowerCase() === 'grant_upgrade') {
-                    // Manual route to forcefully append the upgrade without triggering installation modals
                     const upgradeId = reward.upgradeId || reward.id || reward.target;
                     const activeShipId = this.gameState.player.activeShipId;
                     const shipState = this.gameState.player.shipStates[activeShipId];
                     if (shipState && shipState.upgrades && upgradeId) {
-                        if (shipState.upgrades.length >= 3) {
-                            shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                        if (this.uiManager && this.uiManager.hangarControl) {
+                            this.uiManager.hangarControl.showUpgradeInstallationModal(
+                                upgradeId,
+                                { source: 'mission' },
+                                shipState,
+                                async (replaceIndex) => {
+                                    if (replaceIndex !== -1) {
+                                        shipState.upgrades.splice(replaceIndex, 1);
+                                    }
+                                    shipState.upgrades.push(upgradeId);
+                                    this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Installed mission upgrade ${upgradeId} to ship ${activeShipId}.`);
+                                    
+                                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                                    const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
+                                    this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                                    
+                                    await this.uiManager.orchestrateUpgradeSequence(activeShipId);
+                                    this.gameState.setState({});
+                                },
+                                () => {
+                                    this.uiManager.render(this.gameState.getState());
+                                }
+                            );
+                        } else {
+                            if (shipState.upgrades.length >= 3) {
+                                shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                            }
+                            shipState.upgrades.push(upgradeId);
+                            this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);
                         }
-                        shipState.upgrades.push(upgradeId);
-                        this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);
                     }
                 }
             });

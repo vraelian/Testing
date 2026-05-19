@@ -198,44 +198,59 @@ export class UIManager {
         const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden') && !launchModal.classList.contains('modal-hiding');
         const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || document.body.classList.contains('ui-cinematic-lock');
 
+        // Helper function to force hide/show HUD UI elements via !important flags
+        const toggleHUDElement = (el, forceHide, displayType = 'flex') => {
+            if (!el) return;
+            if (forceHide) {
+                el.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('opacity', '0', 'important');
+                el.style.setProperty('visibility', 'hidden', 'important');
+                el.style.setProperty('pointer-events', 'none', 'important');
+            } else {
+                el.style.removeProperty('display');
+                el.style.display = displayType;
+                el.style.removeProperty('opacity');
+                el.style.opacity = '1';
+                el.style.removeProperty('visibility');
+                el.style.visibility = 'visible';
+                el.style.removeProperty('pointer-events');
+                el.style.pointerEvents = 'auto';
+            }
+        };
+
         if (gameState.introSequenceActive) {
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
-            if (this.cache.btnAchievements) this.cache.btnAchievements.style.display = 'none';
-            const gameMenuBtn = document.getElementById('btn-game-menu');
-            if (gameMenuBtn) gameMenuBtn.style.display = 'none';
+            toggleHUDElement(this.cache.econWeatherBtn, true);
+            toggleHUDElement(this.cache.btnAchievements, true);
+            toggleHUDElement(document.getElementById('btn-game-menu'), true);
+            if (this.helpManager && this.helpManager.anchorBtn) {
+                toggleHUDElement(this.helpManager.anchorBtn, true);
+            }
             return;
         } else {
-            // FIX: Remove Tailwind hidden classes to allow JS layout management to take over
-            // Also forcefully reset opacity and pointer events after travel locking
             if (this.cache.econWeatherBtn) {
                 this.cache.econWeatherBtn.classList.remove('hidden');
-                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : 'flex';
-                if (!isTravelLocked) {
-                    this.cache.econWeatherBtn.style.opacity = '1';
-                    this.cache.econWeatherBtn.style.pointerEvents = 'auto';
-                }
+                toggleHUDElement(this.cache.econWeatherBtn, isTravelLocked);
             }
             if (this.cache.btnAchievements) {
                 this.cache.btnAchievements.classList.remove('hidden');
-                this.cache.btnAchievements.style.display = isTravelLocked ? 'none' : 'flex';
-                if (!isTravelLocked) {
-                    this.cache.btnAchievements.style.opacity = '1';
-                    this.cache.btnAchievements.style.pointerEvents = 'auto';
-                }
-            }
-            if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
-                this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';
-                if (!isTravelLocked) {
-                    this.helpManager.anchorBtn.style.opacity = '1';
-                    this.helpManager.anchorBtn.style.pointerEvents = 'auto';
-                }
+                toggleHUDElement(this.cache.btnAchievements, isTravelLocked);
             }
             const gameMenuBtn = document.getElementById('btn-game-menu');
             if (gameMenuBtn) {
-                gameMenuBtn.style.display = isTravelLocked ? 'none' : '';
+                toggleHUDElement(gameMenuBtn, isTravelLocked);
+            }
+            if (this.cache.missionStickyBar) {
+                toggleHUDElement(this.cache.missionStickyBar, isTravelLocked, 'block');
                 if (!isTravelLocked) {
-                    gameMenuBtn.style.opacity = '1';
-                    gameMenuBtn.style.pointerEvents = 'auto';
+                    this.cache.missionStickyBar.style.removeProperty('display');
+                }
+            }
+            if (this.helpManager && this.helpManager.anchorBtn) {
+                toggleHUDElement(this.helpManager.anchorBtn, isTravelLocked);
+                // Ensure opacity handles help modal visibility if it is actively rendering
+                if (!isTravelLocked && this.helpManager.isVisible) {
+                    this.helpManager.anchorBtn.style.setProperty('opacity', '0', 'important');
+                    this.helpManager.anchorBtn.style.setProperty('pointer-events', 'none', 'important');
                 }
             }
         }

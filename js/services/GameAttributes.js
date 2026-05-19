@@ -496,7 +496,7 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 1,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.80 },
-        color: COLORS.GREY
+        color: '#8b5cf6'
     },
     'UPG_ECO_DEBT_2': {
         name: "Syndicate Badge II",
@@ -504,7 +504,7 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 2,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.70 },
-        color: COLORS.INDIGO
+        color: '#d946ef'
     },
     'UPG_ECO_DEBT_3': {
         name: "Syndicate Badge III",
@@ -512,7 +512,8 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 3,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.50 },
-        color: COLORS.VIOLET
+        color: '#ffffff',
+        pillColor: '#a855f7'
     },
     'UPG_ECO_DEBT_4': {
         name: "Syndicate Badge IV",
@@ -520,8 +521,8 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 4,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.40 },
-        color: COLORS.RED,
-        pillColor: "#ef4444"
+        color: '#8b5cf6',
+        pillColor: '#f97316'
     },
     'UPG_ECO_DEBT_5': {
         name: "Syndicate Badge V",
@@ -529,7 +530,8 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 5,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.34 },
-        color: COLORS.VIOLET
+        color: '#c084fc',
+        pillColor: '#ea580c'
     },
 
     // --- UPGRADES: UTILITY (REBALANCED) ---
