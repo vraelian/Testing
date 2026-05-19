@@ -190,7 +190,7 @@ export async function startLicenseAnimation(tierNum = 2) {
         document.body.appendChild(overlay);
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
 
     const hideAndCache = (el) => {
         if (el && el.style.display !== 'none') {
@@ -204,7 +204,7 @@ export async function startLicenseAnimation(tierNum = 2) {
     // Initial Hide
     sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
     document.querySelectorAll('button').forEach((btn) => {
-        if (btn.textContent && btn.textContent.trim() === '(?)') {
+        if (btn.textContent && (btn.textContent.trim() === '(?)' || btn.textContent.trim() === '?')) {
             btn.dataset.isDynamicHelpBtn = "true";
             hideAndCache(btn);
         }
@@ -226,7 +226,7 @@ export async function startLicenseAnimation(tierNum = 2) {
                 // If UIManager completely overwrites the DOM nodes, we must re-query and mask
                 sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
                 document.querySelectorAll('button').forEach((btn) => {
-                    if (btn.textContent && btn.textContent.trim() === '(?)') {
+                    if (btn.textContent && (btn.textContent.trim() === '(?)' || btn.textContent.trim() === '?')) {
                         if (!btn.dataset.isDynamicHelpBtn) btn.dataset.isDynamicHelpBtn = "true";
                         hideAndCache(btn);
                     }
@@ -285,7 +285,7 @@ export async function endLicenseAnimation(tierNum = 2) {
         licenseUIObserver = null;
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
     sideUIElements.forEach(id => {
         const el = document.getElementById(id);
         if (el && el.dataset.cachedDisplay !== undefined) {
