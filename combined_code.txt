@@ -18682,7 +18682,7 @@ export const PHASE_TWO_MISSIONS = {
             buttonText: "Acknowledged"
         },
         rewards: [
-            { "type": "GRANT_UPGRADE", "upgradeId": "syndicate_badge_1" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_1" }
         ]
     },
     'mission_26': {
@@ -18738,7 +18738,7 @@ export const PHASE_TWO_MISSIONS = {
             buttonText: "Accept Ship Mod"
         },
         rewards: [
-            { "type": "GRANT_UPGRADE", "upgradeId": "radar_mod_1" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_RADAR_1" }
         ]
     },
     'mission_28': {
@@ -31127,7 +31127,7 @@ export async function startLicenseAnimation(tierNum = 2) {
         document.body.appendChild(overlay);
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
 
     const hideAndCache = (el) => {
         if (el && el.style.display !== 'none') {
@@ -31141,7 +31141,7 @@ export async function startLicenseAnimation(tierNum = 2) {
     // Initial Hide
     sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
     document.querySelectorAll('button').forEach((btn) => {
-        if (btn.textContent && btn.textContent.trim() === '(?)') {
+        if (btn.textContent && (btn.textContent.trim() === '(?)' || btn.textContent.trim() === '?')) {
             btn.dataset.isDynamicHelpBtn = "true";
             hideAndCache(btn);
         }
@@ -31163,7 +31163,7 @@ export async function startLicenseAnimation(tierNum = 2) {
                 // If UIManager completely overwrites the DOM nodes, we must re-query and mask
                 sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
                 document.querySelectorAll('button').forEach((btn) => {
-                    if (btn.textContent && btn.textContent.trim() === '(?)') {
+                    if (btn.textContent && (btn.textContent.trim() === '(?)' || btn.textContent.trim() === '?')) {
                         if (!btn.dataset.isDynamicHelpBtn) btn.dataset.isDynamicHelpBtn = "true";
                         hideAndCache(btn);
                     }
@@ -31222,7 +31222,7 @@ export async function endLicenseAnimation(tierNum = 2) {
         licenseUIObserver = null;
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
     sideUIElements.forEach(id => {
         const el = document.getElementById(id);
         if (el && el.dataset.cachedDisplay !== undefined) {
@@ -36538,16 +36538,40 @@ export class MissionService {
                     if (!this.gameState.storyFlags) this.gameState.storyFlags = {};
                     this.gameState.storyFlags[reward.flagId] = reward.value;
                 } else if (reward.type.toLowerCase() === 'grant_upgrade') {
-                    // Manual route to forcefully append the upgrade without triggering installation modals
                     const upgradeId = reward.upgradeId || reward.id || reward.target;
                     const activeShipId = this.gameState.player.activeShipId;
                     const shipState = this.gameState.player.shipStates[activeShipId];
                     if (shipState && shipState.upgrades && upgradeId) {
-                        if (shipState.upgrades.length >= 3) {
-                            shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                        if (this.uiManager && this.uiManager.hangarControl) {
+                            this.uiManager.hangarControl.showUpgradeInstallationModal(
+                                upgradeId,
+                                { source: 'mission' },
+                                shipState,
+                                async (replaceIndex) => {
+                                    if (replaceIndex !== -1) {
+                                        shipState.upgrades.splice(replaceIndex, 1);
+                                    }
+                                    shipState.upgrades.push(upgradeId);
+                                    this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Installed mission upgrade ${upgradeId} to ship ${activeShipId}.`);
+                                    
+                                    this.gameState.uiState.hangarShipyardToggleState = 'hangar';
+                                    const shipIndex = this.gameState.player.ownedShipIds.indexOf(activeShipId);
+                                    this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
+                                    
+                                    await this.uiManager.orchestrateUpgradeSequence(activeShipId);
+                                    this.gameState.setState({});
+                                },
+                                () => {
+                                    this.uiManager.render(this.gameState.getState());
+                                }
+                            );
+                        } else {
+                            if (shipState.upgrades.length >= 3) {
+                                shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                            }
+                            shipState.upgrades.push(upgradeId);
+                            this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);
                         }
-                        shipState.upgrades.push(upgradeId);
-                        this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);
                     }
                 }
             });
@@ -43541,7 +43565,7 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 1,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.80 },
-        color: COLORS.GREY
+        color: '#8b5cf6'
     },
     'UPG_ECO_DEBT_2': {
         name: "Syndicate Badge II",
@@ -43549,7 +43573,7 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 2,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.70 },
-        color: COLORS.INDIGO
+        color: '#d946ef'
     },
     'UPG_ECO_DEBT_3': {
         name: "Syndicate Badge III",
@@ -43557,7 +43581,8 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 3,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.50 },
-        color: COLORS.VIOLET
+        color: '#ffffff',
+        pillColor: '#a855f7'
     },
     'UPG_ECO_DEBT_4': {
         name: "Syndicate Badge IV",
@@ -43565,8 +43590,8 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 4,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.40 },
-        color: COLORS.RED,
-        pillColor: "#ef4444"
+        color: '#8b5cf6',
+        pillColor: '#f97316'
     },
     'UPG_ECO_DEBT_5': {
         name: "Syndicate Badge V",
@@ -43574,7 +43599,8 @@ const ATTRIBUTE_DEFINITIONS = {
         tier: 5,
         type: UPGRADE_TYPES.MOD_DEBT_INTEREST,
         modifiers: { interestRate: 0.34 },
-        color: COLORS.VIOLET
+        color: '#c084fc',
+        pillColor: '#ea580c'
     },
 
     // --- UPGRADES: UTILITY (REBALANCED) ---
@@ -45132,44 +45158,59 @@ export class UIManager {
         const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden') && !launchModal.classList.contains('modal-hiding');
         const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || document.body.classList.contains('ui-cinematic-lock');
 
+        // Helper function to force hide/show HUD UI elements via !important flags
+        const toggleHUDElement = (el, forceHide, displayType = 'flex') => {
+            if (!el) return;
+            if (forceHide) {
+                el.style.setProperty('display', 'none', 'important');
+                el.style.setProperty('opacity', '0', 'important');
+                el.style.setProperty('visibility', 'hidden', 'important');
+                el.style.setProperty('pointer-events', 'none', 'important');
+            } else {
+                el.style.removeProperty('display');
+                el.style.display = displayType;
+                el.style.removeProperty('opacity');
+                el.style.opacity = '1';
+                el.style.removeProperty('visibility');
+                el.style.visibility = 'visible';
+                el.style.removeProperty('pointer-events');
+                el.style.pointerEvents = 'auto';
+            }
+        };
+
         if (gameState.introSequenceActive) {
-            if (this.cache.econWeatherBtn) this.cache.econWeatherBtn.style.display = 'none';
-            if (this.cache.btnAchievements) this.cache.btnAchievements.style.display = 'none';
-            const gameMenuBtn = document.getElementById('btn-game-menu');
-            if (gameMenuBtn) gameMenuBtn.style.display = 'none';
+            toggleHUDElement(this.cache.econWeatherBtn, true);
+            toggleHUDElement(this.cache.btnAchievements, true);
+            toggleHUDElement(document.getElementById('btn-game-menu'), true);
+            if (this.helpManager && this.helpManager.anchorBtn) {
+                toggleHUDElement(this.helpManager.anchorBtn, true);
+            }
             return;
         } else {
-            // FIX: Remove Tailwind hidden classes to allow JS layout management to take over
-            // Also forcefully reset opacity and pointer events after travel locking
             if (this.cache.econWeatherBtn) {
                 this.cache.econWeatherBtn.classList.remove('hidden');
-                this.cache.econWeatherBtn.style.display = isTravelLocked ? 'none' : 'flex';
-                if (!isTravelLocked) {
-                    this.cache.econWeatherBtn.style.opacity = '1';
-                    this.cache.econWeatherBtn.style.pointerEvents = 'auto';
-                }
+                toggleHUDElement(this.cache.econWeatherBtn, isTravelLocked);
             }
             if (this.cache.btnAchievements) {
                 this.cache.btnAchievements.classList.remove('hidden');
-                this.cache.btnAchievements.style.display = isTravelLocked ? 'none' : 'flex';
-                if (!isTravelLocked) {
-                    this.cache.btnAchievements.style.opacity = '1';
-                    this.cache.btnAchievements.style.pointerEvents = 'auto';
-                }
-            }
-            if (this.helpManager && this.helpManager.anchorBtn && !this.helpManager.isVisible) {
-                this.helpManager.anchorBtn.style.display = isTravelLocked ? 'none' : 'flex';
-                if (!isTravelLocked) {
-                    this.helpManager.anchorBtn.style.opacity = '1';
-                    this.helpManager.anchorBtn.style.pointerEvents = 'auto';
-                }
+                toggleHUDElement(this.cache.btnAchievements, isTravelLocked);
             }
             const gameMenuBtn = document.getElementById('btn-game-menu');
             if (gameMenuBtn) {
-                gameMenuBtn.style.display = isTravelLocked ? 'none' : '';
+                toggleHUDElement(gameMenuBtn, isTravelLocked);
+            }
+            if (this.cache.missionStickyBar) {
+                toggleHUDElement(this.cache.missionStickyBar, isTravelLocked, 'block');
                 if (!isTravelLocked) {
-                    gameMenuBtn.style.opacity = '1';
-                    gameMenuBtn.style.pointerEvents = 'auto';
+                    this.cache.missionStickyBar.style.removeProperty('display');
+                }
+            }
+            if (this.helpManager && this.helpManager.anchorBtn) {
+                toggleHUDElement(this.helpManager.anchorBtn, isTravelLocked);
+                // Ensure opacity handles help modal visibility if it is actively rendering
+                if (!isTravelLocked && this.helpManager.isVisible) {
+                    this.helpManager.anchorBtn.style.setProperty('opacity', '0', 'important');
+                    this.helpManager.anchorBtn.style.setProperty('pointer-events', 'none', 'important');
                 }
             }
         }
@@ -50669,8 +50710,22 @@ export class ActionClickHandler {
                         const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
                         const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
 
+                        document.body.classList.add('ui-cinematic-lock');
+                        this.uiManager.render(this.gameState.getState());
+
                         await startLicenseAnimation(tierNum);
+
+                        document.body.classList.add('ui-cinematic-lock');
                         
+                        // FIX: Force render to apply travel locks to UI buttons, and explicitly hide the help anchor
+                        this.uiManager.render(this.gameState.getState());
+                        const helpAnchor = document.getElementById('global-help-anchor');
+                        if (helpAnchor) {
+                            helpAnchor.style.setProperty('display', 'none', 'important');
+                            helpAnchor.style.setProperty('opacity', '0', 'important');
+                            helpAnchor.style.setProperty('visibility', 'hidden', 'important');
+                        }
+
                         const textHtml = `
                             <div class="text-center w-full flex flex-col items-center justify-center p-2">
                                 <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
@@ -50705,6 +50760,8 @@ export class ActionClickHandler {
                                         licModalContent.classList.remove('license-modal-blur-out');
                                         licCloseHandler();
                                         await endLicenseAnimation(tierNum);
+
+                                        document.body.classList.remove('ui-cinematic-lock');
 
                                         const result = this.simulationService.purchaseLicense(licenseId);
                                         if (result.success) {
