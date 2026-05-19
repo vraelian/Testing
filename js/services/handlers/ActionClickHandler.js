@@ -1056,8 +1056,22 @@ export class ActionClickHandler {
                         const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
                         const bodyText = `Unlocked ${tierComms.join(' and ')} trading.`;
 
+                        document.body.classList.add('ui-cinematic-lock');
+                        this.uiManager.render(this.gameState.getState());
+
                         await startLicenseAnimation(tierNum);
+
+                        document.body.classList.add('ui-cinematic-lock');
                         
+                        // FIX: Force render to apply travel locks to UI buttons, and explicitly hide the help anchor
+                        this.uiManager.render(this.gameState.getState());
+                        const helpAnchor = document.getElementById('global-help-anchor');
+                        if (helpAnchor) {
+                            helpAnchor.style.setProperty('display', 'none', 'important');
+                            helpAnchor.style.setProperty('opacity', '0', 'important');
+                            helpAnchor.style.setProperty('visibility', 'hidden', 'important');
+                        }
+
                         const textHtml = `
                             <div class="text-center w-full flex flex-col items-center justify-center p-2">
                                 <div class="license-header-text license-header-t${tierNum}">LICENSE ACQUIRED</div>
@@ -1092,6 +1106,8 @@ export class ActionClickHandler {
                                         licModalContent.classList.remove('license-modal-blur-out');
                                         licCloseHandler();
                                         await endLicenseAnimation(tierNum);
+
+                                        document.body.classList.remove('ui-cinematic-lock');
 
                                         const result = this.simulationService.purchaseLicense(licenseId);
                                         if (result.success) {

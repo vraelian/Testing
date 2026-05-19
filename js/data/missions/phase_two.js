@@ -202,7 +202,7 @@ export const PHASE_TWO_MISSIONS = {
             buttonText: "Acknowledged"
         },
         rewards: [
-            { "type": "GRANT_UPGRADE", "upgradeId": "syndicate_badge_1" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_1" }
         ]
     },
     'mission_26': {
@@ -258,7 +258,7 @@ export const PHASE_TWO_MISSIONS = {
             buttonText: "Accept Ship Mod"
         },
         rewards: [
-            { "type": "GRANT_UPGRADE", "upgradeId": "radar_mod_1" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_RADAR_1" }
         ]
     },
     'mission_28': {
