@@ -12,7 +12,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your <b>Merchant's Guild</b> liaison. My primary task is ensuring you repay your <br>⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading space industrial goods in the market.<br><br><b>Accept</b> this mission below to add it to your log and begin.",
+        description: "Captain [playerName], welcome to the industry. I am <b>Audita</b>, your <b>Merchant's Guild</b> liaison. My primary task is ensuring you repay your <br>⌬ 25,000 credit loan.<br><br>You can earn credits by completing missions and trading industrial goods in the market.<br><br><b>Accept</b> this mission below to add it to your log and begin.",
         triggers: [],
         objectives: [], // Empty to trigger "accept and turn-in" mechanics silently
         navLock: { 
@@ -62,7 +62,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Intel screen houses your <b>Codex</b> and the <b>Intel Market</b>.<br><br>The Codex contains key story information. The Intel market sells time-sensitive, guaranteed trade opportunities.<br><br>Tour the <b>Intel</b> screen, then return here.",
+        description: "The Intel screen houses your <b>Codex</b> and the <b>Intel Market</b>.<br><br>The Codex contains key story information. The Intel Market sells time-sensitive, guaranteed trade opportunities.<br><br>Tour the <b>Intel</b> screen, then return here.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_02" }
         ],
@@ -89,7 +89,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Guild has authorized your access to a live iteration of the Solar System <b>Map</b>. We expect you to utilize this map to identify profitable arbitrage routes between stations, each of which possess unique market dynamics, behaviors, and ships for sale.<br><br>By selecting a point of interest on the map, you can <i>view valuable market data</i> for that station.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
+        description: "The Guild has authorized your access to a live iteration of the Solar System <b>Map</b>. We expect you to utilize this map to identify profitable arbitrage routes between stations, each of which possesses unique market dynamics, behaviors, and ships for sale.<br><br>By selecting a point of interest on the map, you can <i>view valuable market data</i> for that station.<br><br>Review the map screen on the <b>Ship</b> tab and then return here to complete the mission.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_03" }
         ],
