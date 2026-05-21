@@ -3,8 +3,10 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
-# [38.45] - 2026-5-XX
--  
+# [38.51] - 2026-5-21
+-  added missions 29 - 32
+-  updated mission modal logic
+-  mission modal polish
 
 # [38.45] - 2026-5-18
 -  added mission 23 - 28

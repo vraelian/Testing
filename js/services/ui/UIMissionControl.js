@@ -377,6 +377,7 @@ export class UIMissionControl {
 
         const options = {
             portraitId: mission.portraitId,
+            portraitName: mission.portraitName,
             dismissOutside: true, 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
@@ -387,6 +388,28 @@ export class UIMissionControl {
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                 const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                 modalContent.classList.add(hostClass);
+                
+                // Split Portrait Injection
+                if (mission.portraitId === 'split_audita_kiern') {
+                    const portraitEl = modal.querySelector('.portrait-thumbnail');
+                    if (portraitEl && typeof window.getPortraitStyle === 'function') {
+                        const auditaStyle = window.getPortraitStyle('Audita_1');
+                        const kiernStyle = window.getPortraitStyle('Venusian_Syndicate_4');
+                        
+                        portraitEl.style.background = 'none';
+                        portraitEl.innerHTML = `
+                            <div style="position: absolute; inset: 0; display: flex; border-radius: inherit; overflow: hidden; background: #000;">
+                                <div style="flex: 1; position: relative; overflow: hidden;">
+                                    <div style="${auditaStyle}; position: absolute; top:0; left:0; width: 200%; height: 100%;"></div>
+                                </div>
+                                <div style="width: 3px; background: rgba(255,255,255,0.8); z-index: 10; box-shadow: 0 0 8px rgba(255,255,255,1);"></div>
+                                <div style="flex: 1; position: relative; overflow: hidden;">
+                                    <div style="${kiernStyle}; position: absolute; top:0; right:0; width: 200%; height: 100%;"></div>
+                                </div>
+                            </div>
+                        `;
+                    }
+                }
 
                 const typeEl = modal.querySelector('#mission-modal-type');
                 if (typeEl) {
@@ -461,7 +484,7 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
                                 let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
                                 if (!upgName) {
-                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I', 'UPG_GUILD_BADGE_2': 'Guild Badge II', 'UPG_SYNDICATE_BADGE_2': 'Syndicate Badge II' };
                                     upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
                                 }
                                 
@@ -484,6 +507,9 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
+                            } else if (r.type.toLowerCase() === 'grant_ship') {
+                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
+                                content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -930,21 +956,45 @@ export class UIMissionControl {
         const parsedText = this._parseMissionText(mission.completion.text, gameState);
 
         const activePortraitId = mission.completion.portraitId || mission.portraitId;
-        const activeHost = mission.completion.host || mission.host;
+        const activePortraitName = mission.completion.portraitName !== undefined ? mission.completion.portraitName : mission.portraitName;
 
         const options = {
            portraitId: activePortraitId,
+           portraitName: activePortraitName,
            portraitFilter: mission.completion.portraitFilter,
            dismissOutside: true,
-            customSetup: (modal, closeHandler) => {
+           customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
                
                modalContent.classList.remove('modal-blur-fade-out');
                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
+               const activeHost = mission.completion.host || mission.host;
                const hostClass = `host-${activeHost.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                modalContent.classList.add(hostClass);
+               
+               // Split Portrait Injection
+               if (activePortraitId === 'split_audita_kiern') {
+                   const portraitEl = modal.querySelector('.portrait-thumbnail');
+                   if (portraitEl && typeof window.getPortraitStyle === 'function') {
+                       const auditaStyle = window.getPortraitStyle('Audita_1');
+                       const kiernStyle = window.getPortraitStyle('Venusian_Syndicate_4');
+                       
+                       portraitEl.style.background = 'none';
+                       portraitEl.innerHTML = `
+                           <div style="position: absolute; inset: 0; display: flex; border-radius: inherit; overflow: hidden; background: #000;">
+                               <div style="flex: 1; position: relative; overflow: hidden;">
+                                   <div style="${auditaStyle}; position: absolute; top:0; left:0; width: 200%; height: 100%;"></div>
+                               </div>
+                               <div style="width: 3px; background: rgba(255,255,255,0.8); z-index: 10; box-shadow: 0 0 8px rgba(255,255,255,1);"></div>
+                               <div style="flex: 1; position: relative; overflow: hidden;">
+                                   <div style="${kiernStyle}; position: absolute; top:0; right:0; width: 200%; height: 100%;"></div>
+                               </div>
+                           </div>
+                       `;
+                   }
+               }
 
                modal.querySelector('#mission-modal-title').textContent = parsedTitle;
                
@@ -974,7 +1024,7 @@ export class UIMissionControl {
                             } else if(r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade') {
                                 let upgName = GameAttributes.getDefinition(r.id || r.upgradeId || r.target)?.name;
                                 if (!upgName) {
-                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I' };
+                                    const fallbacks = { 'syndicate_badge_1': 'Syndicate Badge I', 'radar_mod_1': 'Radar Mod I', 'UPG_GUILD_BADGE_2': 'Guild Badge II', 'UPG_SYNDICATE_BADGE_2': 'Syndicate Badge II' };
                                     upgName = fallbacks[r.id || r.upgradeId || r.target] || 'SHIP UPGRADE';
                                 }
                                 
@@ -997,6 +1047,9 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
+                            } else if (r.type.toLowerCase() === 'grant_ship') {
+                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
+                                content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -1081,14 +1134,25 @@ export class UIMissionControl {
                buttonsEl.innerHTML = '';
                
                const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
-               const completeBtn = document.createElement('button');
-               completeBtn.className = hasSpace ? 'btn w-full mission-action-btn host-btn-pulse' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
-               completeBtn.textContent = hasSpace ? mission.completion.buttonText : 'INSUFFICIENT CARGO SPACE';
-               completeBtn.style.cssText = btnStyles;
-               completeBtn.disabled = !hasSpace;
 
-               completeBtn.onclick = () => {
-                   completeBtn.disabled = true;
+               // Refactored shared execution sequence for completion buttons
+               const executeCompletion = (e) => {
+                   
+                   // Dynamic Float Text for Credit Deduction Sequence
+                   let deductedAmount = 0;
+                   if (mission.rewards) {
+                       const deductReward = mission.rewards.find(r => r.type === 'DEDUCT_CREDITS' || r.type === 'deduct_credits');
+                       if (deductReward) deductedAmount = deductReward.amount || 0;
+                   }
+                   if (deductedAmount > 0 && e) {
+                       const btn = e.target ? (e.target.closest('button') || e.target) : document.body;
+                       const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0 };
+                       const x = e.clientX || rect.left + (rect.width / 2);
+                       const y = e.clientY || rect.top;
+                       if (this.manager.createFloatingText) {
+                           this.manager.createFloatingText(`-${formatCredits(deductedAmount, false)}`, x, y, '#ef4444');
+                       }
+                   }
 
                    modal.dataset.dismissOutside = 'false';
                    modal.classList.add('dismiss-disabled');
@@ -1293,7 +1357,70 @@ export class UIMissionControl {
                        }
                    }, 1500); 
                };
-               buttonsEl.appendChild(completeBtn);
+
+               // --- LOGIC FOR BRANCHING COMPLETION CHOICES ---
+               if (mission.completion.choices && mission.completion.choices.length > 0) {
+                   mission.completion.choices.forEach((choice) => {
+                       const choiceBtn = document.createElement('button');
+                       choiceBtn.className = `btn w-full mb-2 ${choice.buttonClass || 'mission-action-btn host-btn-pulse'}`;
+                       if (choice.buttonStyle) {
+                           choiceBtn.style.cssText = btnStyles + choice.buttonStyle;
+                       } else {
+                           choiceBtn.style.cssText = btnStyles;
+                       }
+                       choiceBtn.textContent = choice.buttonText;
+                       
+                       choiceBtn.onclick = (e) => {
+                           Array.from(buttonsEl.querySelectorAll('button')).forEach(b => b.disabled = true);
+                           
+                           // Custom Narrative/Animation sequence for Act II Climax decision
+                           if (mission.id === 'mission_32') {
+                               const whiteOverlay = document.createElement('div');
+                               whiteOverlay.style.position = 'fixed';
+                               whiteOverlay.style.inset = '0';
+                               whiteOverlay.style.backgroundColor = '#ffffff';
+                               whiteOverlay.style.zIndex = '999999';
+                               whiteOverlay.style.opacity = '0';
+                               whiteOverlay.style.transition = 'opacity 3s ease-in-out';
+                               whiteOverlay.style.pointerEvents = 'all';
+                               document.body.appendChild(whiteOverlay);
+                               
+                               requestAnimationFrame(() => {
+                                   whiteOverlay.style.opacity = '1';
+                               });
+                               
+                               setTimeout(() => {
+                                   mission.rewards = choice.rewards;
+                                   executeCompletion(e);
+                                   
+                                   setTimeout(() => {
+                                       whiteOverlay.style.transition = 'opacity 2s ease-in-out';
+                                       whiteOverlay.style.opacity = '0';
+                                       setTimeout(() => {
+                                           whiteOverlay.remove();
+                                       }, 2000);
+                                   }, 2000);
+                               }, 3000);
+                           } else {
+                               mission.rewards = choice.rewards;
+                               executeCompletion(e);
+                           }
+                       };
+                       buttonsEl.appendChild(choiceBtn);
+                   });
+               } else {
+                   const completeBtn = document.createElement('button');
+                   completeBtn.className = hasSpace ? 'btn w-full mission-action-btn host-btn-pulse' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
+                   completeBtn.textContent = hasSpace ? mission.completion.buttonText : 'INSUFFICIENT CARGO SPACE';
+                   completeBtn.style.cssText = btnStyles;
+                   completeBtn.disabled = !hasSpace;
+
+                   completeBtn.onclick = (e) => {
+                       completeBtn.disabled = true;
+                       executeCompletion(e);
+                   };
+                   buttonsEl.appendChild(completeBtn);
+               }
                
                if (mission.id === 'mission_tutorial_01') {
                    const skipBtn = document.createElement('button');
