@@ -38,5 +38,15 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
 </span>`,
         confirmText: 'Archive Message',
         choices: [] 
+    },
+    'evt_kiern_intercept': {
+        id: 'evt_kiern_intercept',
+        theme: 'host-syndicate',
+        portraitId: 'Venusian_Syndicate_4',
+        repeatable: false,
+        title: 'Syndicate Intercept',
+        text: "Captain. I see the Guild has you chasing ghosts on your own dime. The Syndicate is highly interested in whatever that Uranus scrap was aiming at. Do not give the telemetry to the Guild. Transmit it to me instead, and I will personally reimburse your recent bribe with 50% interest, plus a new level of Syndicate clearance. It's your choice, Captain. Order, or opportunity.",
+        confirmText: 'Close Channel',
+        choices: [] 
     }
 };

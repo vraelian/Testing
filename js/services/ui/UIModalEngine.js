@@ -269,68 +269,78 @@ export class UIModalEngine {
             titleEl.innerHTML = title;
         }
 
-        if (options.portraitId && typeof window.getPortraitStyle === 'function' && titleEl) {
-            const pStyle = window.getPortraitStyle(options.portraitId);
-            if (pStyle) {
-                const parsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KEIRN' : 
-                                   options.portraitId === 'Affluent_13' ? 'MANGO' : 
-                                   options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
+        // --- DYNAMIC PORTRAIT EVALUATION ---
+        let pStyle = null;
+        if (options.portraitId === 'split_audita_kiern') {
+            pStyle = 'background: transparent;'; // Dummy style to pass validation and generate container
+        } else if (options.portraitId && typeof window.getPortraitStyle === 'function') {
+            pStyle = window.getPortraitStyle(options.portraitId);
+        }
 
-                if (modalId === 'mission-modal' || modalId === 'story-event-modal') {
-                    titleEl.style.textAlign = 'center';
-                    
-                    const wrapperDiv = document.createElement('div');
-                    wrapperDiv.className = 'comm-link-wrapper';
-                    
-                    const pDiv = document.createElement('div');
-                    pDiv.className = 'portrait-thumbnail comm-active';
-                    pDiv.style.cssText = pStyle;
-                    if (options.portraitFilter === 'greyscale') {
-                        pDiv.classList.add('greyscale-filter');
-                    }
-                    
-                    const nameLabel = document.createElement('div');
-                    nameLabel.className = 'portrait-name-label comm-label';
-                    nameLabel.textContent = parsedName;
-                    
-                    wrapperDiv.appendChild(pDiv);
-                    wrapperDiv.appendChild(nameLabel);
-                    
-                    const modalContent = modal.querySelector('.modal-content');
-                    if (modalContent) {
-                        modalContent.insertBefore(wrapperDiv, modalContent.firstChild);
-                    }
-                } else {
-                    if (!headerFlex) {
-                        headerFlex = document.createElement('div');
-                        titleEl.parentNode.insertBefore(headerFlex, titleEl);
-                        headerFlex.appendChild(titleEl);
-                    }
-                    headerFlex.className = 'modal-header-flex flex flex-row justify-between items-start w-full mb-2 gap-4';
-                    
-                    const wrapperDiv = document.createElement('div');
-                    wrapperDiv.className = 'portrait-wrapper';
-                    
-                    const pDiv = document.createElement('div');
-                    pDiv.className = 'portrait-thumbnail';
-                    pDiv.style.cssText = pStyle;
-                    if (options.portraitFilter === 'greyscale') {
-                        pDiv.classList.add('greyscale-filter');
-                    }
-                    
-                    const nameLabel = document.createElement('div');
-                    nameLabel.className = 'portrait-name-label';
-                    nameLabel.textContent = parsedName;
-                    
-                    wrapperDiv.appendChild(pDiv);
-                    wrapperDiv.appendChild(nameLabel);
-                    headerFlex.insertBefore(wrapperDiv, titleEl);
-                    
-                    titleEl.classList.add('modal-title-group');
-                    titleEl.style.textAlign = 'right';
-                    titleEl.style.flexGrow = '1';
-                    titleEl.style.marginBottom = '0';
+        if (pStyle && titleEl) {
+            const defaultParsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KEIRN' : 
+                                      options.portraitId === 'Affluent_13' ? 'MANGO' : 
+                                      options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
+
+            const parsedName = options.portraitName !== undefined ? options.portraitName : defaultParsedName;
+            const hideNameplate = parsedName.trim() === '';
+
+            if (modalId === 'mission-modal' || modalId === 'story-event-modal') {
+                titleEl.style.textAlign = 'center';
+                
+                const wrapperDiv = document.createElement('div');
+                wrapperDiv.className = 'comm-link-wrapper';
+                
+                const pDiv = document.createElement('div');
+                pDiv.className = 'portrait-thumbnail comm-active';
+                pDiv.style.cssText = pStyle;
+                if (options.portraitFilter === 'greyscale') {
+                    pDiv.classList.add('greyscale-filter');
                 }
+                
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'portrait-name-label comm-label';
+                nameLabel.textContent = parsedName;
+                if (hideNameplate) nameLabel.style.display = 'none';
+                
+                wrapperDiv.appendChild(pDiv);
+                wrapperDiv.appendChild(nameLabel);
+                
+                const modalContent = modal.querySelector('.modal-content');
+                if (modalContent) {
+                    modalContent.insertBefore(wrapperDiv, modalContent.firstChild);
+                }
+            } else {
+                if (!headerFlex) {
+                    headerFlex = document.createElement('div');
+                    titleEl.parentNode.insertBefore(headerFlex, titleEl);
+                    headerFlex.appendChild(titleEl);
+                }
+                headerFlex.className = 'modal-header-flex flex flex-row justify-between items-start w-full mb-2 gap-4';
+                
+                const wrapperDiv = document.createElement('div');
+                wrapperDiv.className = 'portrait-wrapper';
+                
+                const pDiv = document.createElement('div');
+                pDiv.className = 'portrait-thumbnail';
+                pDiv.style.cssText = pStyle;
+                if (options.portraitFilter === 'greyscale') {
+                    pDiv.classList.add('greyscale-filter');
+                }
+                
+                const nameLabel = document.createElement('div');
+                nameLabel.className = 'portrait-name-label';
+                nameLabel.textContent = parsedName;
+                if (hideNameplate) nameLabel.style.display = 'none';
+                
+                wrapperDiv.appendChild(pDiv);
+                wrapperDiv.appendChild(nameLabel);
+                headerFlex.insertBefore(wrapperDiv, titleEl);
+                
+                titleEl.classList.add('modal-title-group');
+                titleEl.style.textAlign = 'right';
+                titleEl.style.flexGrow = '1';
+                titleEl.style.marginBottom = '0';
             }
         }
 

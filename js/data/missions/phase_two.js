@@ -31,7 +31,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain, in case you haven't realized this yet, the Merchant's Guild is not what it seems. Their precious 'order' carries a cost that they readily socialize across the lower castes.<br><br>For example, the guild relies on organic indentured labor to extract ice from Pluto. It is a slow and stable market at the fringes for which they wield an oppressive grip. I want to see you disrupt their monopoly to improve the lives of the workforce on this world.<br><br><b>Procure cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
+        description: "Captain, in case you haven't realized this yet, the Merchant's Guild is not what it seems. Their precious 'order' carries a cost that they readily socialize across the lower castes.<br><br>For example, the Guild relies on organic indentured labor to extract ice from Pluto. It is a slow and stable market at the fringes for which they wield an oppressive grip. I want to see you disrupt their monopoly to improve the lives of the workforce on this world.<br><br><b>Procure cybernetics and flood the Plutonian market with them.</b> The sudden availability of cheap augmentation will shatter local labor values. Do not concern yourself with the immediate profit margin; the Syndicate will compensate you handsomely for the disruption.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_18" } ],
         objectives: [
             { "id": "have_cybernetics", "type": "HAVE_ITEM", "goodId": "cybernetics", "quantity": 15, "latch": true },
@@ -74,7 +74,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings Captain [playerName]!<br><br>The medical manufacturing collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br><b>We urgently require hydroponics to sustain the lab's operations.</b><br><br>The Guild is currently imposing an embargo that is heavily complicating trade routes but we will compensate you generously for navigating these constraints. I have provided you with the coordinates for the lab on Mercury.",
+        description: "Greetings Captain [playerName]!<br><br>The medical manufacturing collective I work for requires your logistical expertise once again. We have established a remote, sub-surface laboratory deep within a crater on <b>Mercury</b> to conduct highly sensitive biological research.<br><br><b>We urgently require hydroponics to sustain the lab's operations.</b><br><br>The Guild is currently imposing an embargo that is heavily complicating trade routes, but we will compensate you generously for navigating these constraints. I have provided you with the coordinates for the lab on Mercury.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_19" } ],
         onAccept: [ 
             { "type": "UNLOCK_LOCATION", "locationId": "loc_mercury" },
@@ -104,7 +104,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], to balance the ledger regarding your recent indiscretion on Mercury, the Guild requires your immediate participation in correcting a local water ice quota deficit. You are being tasked to travel to Mercury and purchase ice in bulk and deliver the it to the Guild Moon depot promptly.<br><br>I will remit payment following the requisition. Thank you for your attention to this matter.",
+        description: "Captain [playerName], to balance the ledger regarding your recent indiscretion on Mercury, the Guild requires your immediate participation in correcting a local water ice quota deficit. You are being tasked to travel to Mercury and purchase ice in bulk and deliver it to the Guild lunar depot promptly.<br><br>I will remit payment following the requisition. Thank you for your attention to this matter.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_21" } ],
         objectives: [
             { "id": "buy_ice", "type": "TRADE_ITEM", "tradeType": "buy", "goodId": "water_ice", "quantity": 45, "target": "loc_mercury" },
@@ -241,7 +241,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Affluent_13",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], Greetings! I am Mango, the visionary. The rings of Saturn sing to me, and they demand a monument! I am constructing an orbital sculpture of unprecedented scale, modeled after myself of course. It is a testament to the sheer beauty of Saturn's many moons and brilliant rings.<br><br>To realize this masterpiece, I need 200 units of Plasteel. The local Guild quartermasters lack the artistic temperament to supply me, citing \"wasteful expenditure of structural resources.\" Philistines! Source the Plasteel for me. Bring it here, drop it in the designated orbital construction zone, and you shall be part of history! C'mon, buddy! Help me out here.",
+        description: "Captain [playerName], Greetings! I am Mango, the visionary. The rings of Saturn sing to me, and they demand a monument! I am constructing an orbital sculpture of unprecedented scale, modeled after myself of course. It is a testament to the sheer beauty of Saturn's many moons and brilliant rings.<br><br>To realize this masterpiece, I need 200 units of plasteel. The local Guild quartermasters lack the artistic temperament to supply me, citing \"wasteful expenditure of structural resources.\" Philistines! Source the plasteel for me. Bring it here, drop it in the designated orbital construction zone, and you shall be part of history! C'mon, buddy! Help me out here.",
         triggers: [ 
             { "type": "mission_completed", "missionId": "mission_22" },
             { "type": "location", "target": "loc_saturn" }
@@ -254,7 +254,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitId: "Affluent_13",
             portraitFilter: "greyscale",
             title: "The Disappearing Artist",
-            text: "You deposit the final load of Plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.",
+            text: "You deposit the final load of plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.",
             buttonText: "Accept Ship Mod"
         },
         rewards: [
@@ -281,6 +281,7 @@ export const PHASE_TWO_MISSIONS = {
             host: "STATION",
             portraitId: "Kintsugi_3",
             portraitFilter: "greyscale",
+            portraitName: " ",
             title: "The Sunward Scrap",
             text: "The structural integrity of Uranus station is restored, but the repair logs reveal a deeply unsettling truth. The AIs weren't attacking the station blindly. They were methodically dismantling the structural plating into precise scrap geometry and launching it via the mass drivers in a silent, highly calculated trajectory straight toward the Sun. This wasn't a glitch or a faction attack. Something has been orchestrating this...",
             buttonText: "Close Log"
@@ -288,5 +289,129 @@ export const PHASE_TWO_MISSIONS = {
         rewards: [
             { "type": "credits", "amount": 65000 }
         ]
+    },
+    'mission_29': {
+        id: "mission_29",
+        name: "Anomalous Witness",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Captain [playerName]. The Guild has concluded its preliminary analysis of the Uranus Station AI malfunction. The scrap launched from the mass drivers was not randomized; it was plotted. We have identified a low-level traffic marshal that observed the launch vectors at the time before the systems purged themselves in anomalous event. The Guild is requesting that you travel to Uranus and acquire those coordinates from the individual. This is a Level 1 Systemic Hazard investigation. Secure the data, and I am authorized to transfer the title of a Class B 'Odyssey' vessel to your fleet as compensation and for your assistance to the Guild in this matter.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_28" } ],
+        objectives: [
+            { "id": "travel_uranus", "type": "TRAVEL_TO", "target": "loc_uranus" }
+        ],
+        completion: {
+            host: "STATION",
+            portraitId: "AI_11",
+            portraitName: "Picurian",
+            locationId: "loc_uranus",
+            title: "Traffic Marshal AI",
+            text: "Stellar day to you, Captain! No collisions projected, and local traffic is wonderfully nominal! Ah, the Uranus incident? Yes, I tracked the exact sub-solar vectors. They are temporarily archived. I say temporarily because my corporate memory retention subscription is severely past due. System policy mandates an imminent optimism-wipe to prevent logic-decay. I simply cannot retain the data! However, a rapid capital injection to clear my balance would ensure I can afford to remember exactly what you need!",
+            buttonText: "Acknowledge"
+        },
+        rewards: []
+    },
+    'mission_30': {
+        id: "mission_30",
+        name: "Bribing a Computer",
+        type: "STORY",
+        host: "STATION",
+        portraitId: "AI_11",
+        portraitName: "Picurian",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "To prevent the imminent deletion of the trajectory data, I require an immediate capital injection to settle my outstanding accounts and bypass the optimistic wipe protocol. Please deposit the required funds directly to my terminal.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_29" } ],
+        objectives: [
+            { "id": "bribe_picurian", "type": "HAVE_CREDITS", "value": 90000 }
+        ],
+        completion: {
+            host: "STATION",
+            portraitId: "AI_11",
+            portraitName: "Picurian",
+            locationId: "loc_uranus",
+            title: "Subscription Renewed",
+            text: "Capital injection verified! Outstanding balance: zero! Oh, it is truly a spectacular day to be solvent! My optimism subroutines are already spooling up to maximum capacity. I have beamed the encrypted sub-solar trajectory data directly to the [shipName]'s nav-computer. The endpoint is a localized pocket of absolutely nothing, just past Mercury's orbit. Have a wonderfully profitable and collision-free journey!",
+            buttonText: "Transfer ⌬ 90,000"
+        },
+        rewards: [
+            { "type": "DEDUCT_CREDITS", "amount": 90000 }
+        ]
+    },
+    'mission_31': {
+        id: "mission_31",
+        name: "Telemetry Echo",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "Travel to Mercury to investigate the coordinates of the nearby trajectory endpoint.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_30" } ],
+        onAccept: [
+            { "type": "QUEUE_STORY_EVENT", "eventId": "evt_kiern_intercept" }
+        ],
+        objectives: [
+            { "id": "travel_mercury", "type": "TRAVEL_TO", "target": "loc_mercury" }
+        ],
+        completion: {
+            host: "STATION",
+            portraitId: "Kintsugi_3",
+            portraitFilter: "greyscale",
+            portraitName: " ",
+            locationId: "loc_mercury",
+            title: "The Ghost Wake",
+            text: "The coordinates are completely empty. However, the [shipName]'s sensors are quite vocal. You are sitting in the epicenter of a massive, slowly dissipating gravitational wake. The scrap from Uranus didn't burn up in the sun; it rendezvoused with an unregistered, colossal object that passed through this exact point in space and continued its orbit. You are staring at the ghost-wake of a hidden megastructure.",
+            buttonText: "Log Telemetry"
+        },
+        rewards: []
+    },
+    'mission_32': {
+        id: "mission_32",
+        name: "The Faction Reaction",
+        type: "STORY",
+        host: "STATION",
+        portraitId: "split_audita_kiern",
+        portraitName: " ",
+        isRepeatable: false,
+        isAbandonable: false,
+        description: "You hold the raw telemetry of a megastructure operating in the solar corona. Two secure channels are open, awaiting your transmission.",
+        triggers: [ { "type": "mission_completed", "missionId": "mission_31" } ],
+        objectives: [],
+        completion: {
+            host: "STATION",
+            portraitId: "split_audita_kiern",
+            portraitFilter: "none",
+            portraitName: " ",
+            locationId: "any",
+            title: "A System Altering Choice",
+            text: "The data in your nav-computer threatens the Merchant Guild's order within the solar economy, but it also entices the chaotic Venusian Syndicate who's intentions with the data remain unclear.<br><br>Audita demands the data to initiate a Guild quarantine and maintain order, promising you the Odyssey hull to ensure your silence and cooperation.<br><br>Kiern demands the data to exploit this potential opportunity to undermine the Guild's influence in the system, promising a massive credit payout to reimburse you for recent expenses and fund your rise within the Syndicate.",
+            choices: [
+                {
+                    buttonText: "Transmit to Audita in the Merchant's Guild",
+                    buttonClass: "text-black font-bold",
+                    buttonStyle: "background: linear-gradient(135deg, #ffffff 0%, #eab308 100%); border: 1px solid #ca8a04; box-shadow: 0 0 15px rgba(234,179,8,0.6);",
+                    rewards: [
+                        { "type": "GRANT_SHIP", "shipId": "Odyssey.Ship" },
+                        { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" },
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true }
+                    ]
+                },
+                {
+                    buttonText: "Transmit to Kiern in the Venusian Syndicate",
+                    buttonClass: "text-white font-bold",
+                    buttonStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #f97316 100%); border: 1px solid #c084fc; box-shadow: 0 0 15px rgba(139,92,246,0.6);",
+                    rewards: [
+                        { "type": "credits", "amount": 135000 },
+                        { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" },
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true }
+                    ]
+                }
+            ]
+        },
+        rewards: []
     }
 };
