@@ -84,7 +84,7 @@ export const PHASE_ONE_MISSIONS = {
             locationId: "loc_belt",
             title: "Delivery Complete",
             text: "The belt farms will distribute the water to the scattered hydroponics farms shortly. The valuable plants cultivated for food and oxygen will persist for a while longer now, thanks to you. We appreciate your help, Captain.",
-            buttonText: "Unload the Water Ice"
+            buttonText: "Accept Payment"
         },
         rewards: [
             { "type": "credits", "amount": 13000 }
@@ -111,8 +111,8 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_earth",
             title: "Delivery Complete",
-            text: "The client is prepared to remit payment once the freight has been unloaded from the [shipName].",
-            buttonText: "Unload the Plasteel"
+            text: "The client has received the freight from the [shipName] and is prepared to remit payment.",
+            buttonText: "Accept Payment"
         },
         rewards: [
             { "type": "credits", "amount": 37000 }
@@ -137,8 +137,8 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Contract Fulfilled",
-            text: "The Martian dockmasters are ready to confirm receipt of the final plasteel shipment. The orbital tether construction continues on schedule thanks to you. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space.<br><br>I have additional work for you when you're ready, Captain. You will find the order in your mission terminal. ",
-            buttonText: "Unload the Plasteel"
+            text: "The Martian dockmasters have confirmed receipt of the final plasteel shipment. The orbital tether construction continues on schedule thanks to you. The Guild has authorized your payment.<br><br>To make future hauls easier, consider the purchase of a larger vessel with greater cargo space.<br><br>I have additional work for you when you're ready, Captain. You will find the order in your mission terminal. ",
+            buttonText: "Accept Payment"
         },
         rewards: [
             { "type": "credits", "amount": 34000 }
@@ -163,8 +163,8 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_luna",
             title: "Cryo-Delivery Complete",
-            text: "The lunar estate eagerly awaits the supplies to resume construction and are prepared to transfer payment upon delivery.",
-            buttonText: "Unload the Freight"
+            text: "The lunar estate has received the supplies and is prepared to transfer payment.",
+            buttonText: "Accept Payment"
         },
         rewards: [
             { "type": "credits", "amount": 13000 }
@@ -189,8 +189,8 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_belt",
             title: "Delivery Complete",
-            text: "Thanks pal, this helps your old crew more than you know. Once you've unloaded all the cargo I can transfer the credits your way. <br><br>Oh and [playerName], don't forget where you came from. Stay safe out there.",
-            buttonText: "Unload the Freight"
+            text: "Thanks pal, this helps your old crew more than you know. Now that you've unloaded the cargo, I can transfer the credits your way. <br><br>Oh and [playerName], don't forget where you came from. Stay safe out there.",
+            buttonText: "Accept Payment"
         },
         rewards: [
             { "type": "credits", "amount": 9000 }
@@ -222,8 +222,8 @@ export const PHASE_ONE_MISSIONS = {
         completion: {
             locationId: "loc_uranus",
             title: "Delivery Complete",
-            text: "The Uranus Dock Authority has approved your access to the Starport depot for delivery. The dockmasters are ready to offload the plasteel for immediate integration into the station superstructure once you've confirmed the freight transfer.<br><br><b>Your clearance granted by the UDA has unlocked tier 2 trading</b>.",
-            buttonText: "Unload Freight"
+            text: "The Uranus Dock Authority has approved your access to the Starport depot for delivery. The dockmasters have offloaded the plasteel and are integrating it into the station superstructure.<br><br><b>Your clearance granted by the UDA has unlocked tier 2 trading</b>.",
+            buttonText: "Accept Clearance"
         },
         rewards: [
             { "type": "license", "licenseId": "t2_license" },
