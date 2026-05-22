@@ -15,6 +15,7 @@ import { TravelService } from './services/world/TravelService.js';
 
 import { AssetService } from './services/AssetService.js';
 import { saveStorageService } from './services/SaveStorageService.js';
+import CinematicService from './services/ui/CinematicService.js';
 import { formatCredits } from './utils.js';
 import { SHIP_IDS, APP_VERSION, APP_FEEDBACK_URL } from './data/constants.js'; 
 import { DB } from './data/database.js';
@@ -119,7 +120,8 @@ document.addEventListener('DOMContentLoaded', () => {
             missionService,
             uiManager,
             eventManager,
-            debugService
+            debugService,
+            CinematicService // Expose the global execution hook for QA testing
         };
         console.log("Game services exposed to window.game");
     }

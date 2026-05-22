@@ -9,6 +9,7 @@ import { COMMODITY_IDS, APP_VERSION } from '../../data/constants.js';
 import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 import { AssetService } from '../AssetService.js';
+import CinematicService from './CinematicService.js';
 
 export class UIEventControl {
     constructor(manager) {
@@ -102,12 +103,24 @@ export class UIEventControl {
 
     /**
      * Executes the CRT instantiation and resolution sequence for Story Events.
-     * Maps faction themes, injects character portraits, and supports both branching 
-     * choice menus and simple linear dismissals.
+     * Phase 3 Update: Asynchronously intercepts cinematic payloads via the Glass Pane logic 
+     * before generating the UI standard modal to maintain narrative pacing without layout destruction.
      * @param {Object} eventDef - The definition object from STORY_EVENTS.
      * @param {Function} choicesCallback - Resolution hook passing the selected choice.id (or null if none).
      */
-    showStoryEventModal(eventDef, choicesCallback) {
+    async showStoryEventModal(eventDef, choicesCallback) {
+        
+        // Phase 3 Integration: If a cinematic is attached to this narrative event, 
+        // halt the standard UI generation and play the video first.
+        if (eventDef.cinematicPath) {
+            try {
+                this.manager.logger.info('UIEventControl', `Initiating cinematic sequence for narrative event: ${eventDef.cinematicPath}`);
+                await CinematicService.playVideo(eventDef.cinematicPath);
+            } catch (err) {
+                this.manager.logger.warn('UIEventControl', 'Cinematic playback interrupted or failed. Proceeding to modal fallback.', err);
+            }
+        }
+
         const title = eventDef.title || 'Incoming Transmission';
         const description = eventDef.text || '';
 
@@ -1114,5 +1127,21 @@ export class UIEventControl {
             modalContent.classList.remove('sev-crt-shutdown');
             modalContent.style.animationDuration = '';
         }, 400); 
+    }
+
+    /**
+     * Test hook for validating the CinematicService integration.
+     * Executes the Glass Pane FMV overlay manually. Accessible from standard debug hooks.
+     * @param {string} videoPath - The asset path to test.
+     */
+    async testCinematicPlayback(videoPath = 'assets/videos/test.mp4') {
+        this.manager.logger.info('UIEventControl', `Initiating cinematic test sequence for: ${videoPath}`);
+        
+        try {
+            await CinematicService.playVideo(videoPath);
+            this.manager.logger.info('UIEventControl', `Cinematic test sequence resolved successfully.`);
+        } catch (error) {
+            this.manager.logger.error('UIEventControl', `Cinematic test sequence failed:`, error);
+        }
     }
 }

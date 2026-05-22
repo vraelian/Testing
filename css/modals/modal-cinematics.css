@@ -591,3 +591,81 @@
     40% { transform: scale(1, 0.005); filter: brightness(5); opacity: 1; }
     100% { transform: scale(0, 0.005); filter: brightness(0); opacity: 0; }
 }
+
+/* ========================================================================= */
+/* --- GLASS PANE FMV CINEMATIC OVERLAY (PHASE 1) --- */
+/* ========================================================================= */
+/*
+ * Context: Architecture dictates absolute z-index supremacy (3500) to render
+ * atop the Z-Index 3000 Game Menu and Z-Index 2800 Act Intermissions.
+ * This overlay completely isolates full-motion video from UIManager render 
+ * cycles to prevent layout thrashing and iOS WKWebView memory crashes.
+ */
+
+#fmv-cinematic-overlay {
+    position: fixed;
+    inset: 0;
+    background-color: #000000;
+    z-index: 3500;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    opacity: 0;
+    pointer-events: none; /* Passes clicks through when hidden */
+    transition: opacity 0.5s ease-in-out;
+}
+
+#fmv-cinematic-overlay.active {
+    opacity: 1;
+    pointer-events: auto; /* Captures clicks to trigger skip button reveal */
+}
+
+/* * Forces the video to span the entire device viewport. 
+ * object-fit: cover guarantees no letterboxing on varying iOS ratios.
+ */
+#fmv-video-container {
+    width: 100%;
+    height: 100%;
+}
+
+#fmv-video-container video {
+    width: 100vw;
+    height: 100dvh;
+    object-fit: cover;
+    pointer-events: none; /* Prevents native iOS player controls from intercepting taps */
+}
+
+/* * Cinematic Skip Interface.
+ * Rendered at 3550 to guarantee it floats above the active video layer.
+ * Does not rely on :hover for interactions per mobile/touch standards.
+ */
+.fmv-skip-btn {
+    position: absolute;
+    bottom: 40px;
+    right: 40px;
+    z-index: 3550;
+    opacity: 0;
+    pointer-events: none;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid #374151;
+    color: #e2e8f0;
+    font-family: 'Orbitron', sans-serif;
+    font-weight: bold;
+    letter-spacing: 2px;
+    padding: 0.75rem 2rem;
+    border-radius: 4px;
+    transition: opacity 0.3s ease, transform 0.1s ease;
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+}
+
+.fmv-skip-btn.active {
+    opacity: 1;
+    pointer-events: auto; /* Clickable only when revealed */
+}
+
+.fmv-skip-btn:active {
+    transform: scale(0.95);
+    background: rgba(15, 23, 42, 0.9);
+    border-color: #6b7280;
+}
