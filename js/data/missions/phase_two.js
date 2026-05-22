@@ -254,7 +254,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitId: "Affluent_13",
             portraitFilter: "greyscale",
             title: "The Disappearing Artist",
-            text: "You deposit the final load of plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.",
+            text: "You deposited the final load of plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.",
             buttonText: "Accept Ship Mod"
         },
         rewards: [
