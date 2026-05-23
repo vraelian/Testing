@@ -244,7 +244,6 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
-                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                     if (actionTarget) {
                         playBlockingAnimationAndRemove(actionTarget, 'is-glowing-green');
                     }
@@ -274,7 +273,6 @@ export class ActionClickHandler {
                     });
 
                     actionTarget.dataset.primed = "true";
-                    // Apply both the logic flag and the CSS class that colors it white
                     actionTarget.classList.add('primed', 'btn-confirm-purchase');
                     actionTarget.innerHTML = '<span style="pointer-events: none;">Confirm Purchase?</span>';
                     return; 
@@ -325,7 +323,6 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
-                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                     if (actionTarget) {
                         playBlockingAnimationAndRemove(actionTarget, 'is-glowing-red');
                     }
@@ -347,7 +344,6 @@ export class ActionClickHandler {
                     return;
                 }
 
-                // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                 if (actionTarget) {
                     const sellButton = actionTarget.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
                     if (sellButton) sellButton.disabled = true;
@@ -356,7 +352,6 @@ export class ActionClickHandler {
 
                 await this.simulationService.boardShip(shipId); 
                 
-                // After state mutation, wait for DOM render before executing the board 'entrance' animation
                 await new Promise(resolve => requestAnimationFrame(resolve));
                 await this.uiManager.runShipTransactionAnimation(shipId, 'is-boarding');
                 
@@ -387,7 +382,6 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: SERVICES NAVIGATION ---
             case 'set-services-tab': {
                 const tabId = dataset.target;
                 if (tabId && (tabId === 'supply' || tabId === 'tuning')) {
@@ -401,7 +395,6 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- VIRTUAL WORKBENCH: UPGRADE INSTALLATION ---
             case 'install_upgrade': {
                 const { upgradeId } = dataset;
                 if (!upgradeId) return;
@@ -412,7 +405,6 @@ export class ActionClickHandler {
                 const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
-                // FIX F & C: Calculate hardwareCost correctly so totalCost is not NaN
                 const hardwareCost = GameAttributes.getUpgradeHardwareCost(upgradeDef.tier || 1, activeShipStatic ? activeShipStatic.price : 0);
                 const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
                 const totalCost = hardwareCost + laborFee;
@@ -512,9 +504,6 @@ export class ActionClickHandler {
 
                 const carousel = document.getElementById('hangar-carousel');
                 
-                // --- VIRTUAL WORKBENCH: PHASE 2 DECOUPLING ---
-                // Silently mutate the active index and call localized update
-                // Completely bypasses SimulationService.setHangarCarouselIndex global render wipe
                 if (isHangarMode) {
                     this.gameState.uiState.hangarActiveIndex = newIndex;
                 } else {
@@ -560,9 +549,8 @@ export class ActionClickHandler {
                 break;
             }
             
-            // --- VIRTUAL WORKBENCH: PHASE 4 - HULL WARNING INTERCEPT ---
             case ACTION_IDS.TRAVEL: {
-                e.preventDefault(); // Complying with ADR-026 Mars Revert Protocol
+                e.preventDefault(); 
                 const useFoldedDrive = dataset.useFoldedDrive === 'true';
                 const locationId = dataset.locationId;
 
@@ -577,29 +565,25 @@ export class ActionClickHandler {
                 
                 const hullRatio = shipState.health / maxHealth;
 
-                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
                 if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
                     this.uiManager.modalEngine.destroyModalInstant('launch-modal');
                 } else {
                     this.uiManager.hideModal('launch-modal');
                 }
 
-                // The Intercept
                 if (hullRatio < 0.15) {
                     this.uiManager.eventControl.showCriticalHullWarningModal(locationId, useFoldedDrive);
-                    return; // Halt travel sequence
+                    return; 
                 }
 
                 this.simulationService.travelTo(locationId, useFoldedDrive);
                 break;
             }
-            // --- END VIRTUAL WORKBENCH ---
 
             case 'navigate-to-poi': {
                 const { locationId } = dataset;
                 if (!locationId) return;
 
-                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
                 const mapModal = document.getElementById('map-detail-modal');
                 if (mapModal) {
                     mapModal.classList.remove('is-glowing');
@@ -609,7 +593,6 @@ export class ActionClickHandler {
                 if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
                     this.uiManager.modalEngine.destroyModalInstant('map-detail-modal');
                 } else {
-                    // Fallback to safety if engine lacks instant destroy hook
                     if (typeof this.uiManager.hideMapDetailModal === 'function') {
                         this.uiManager.hideMapDetailModal();
                     } else {
@@ -644,10 +627,8 @@ export class ActionClickHandler {
                 const missionId = dataset.missionId;
                 if (!missionId) return;
 
-                // Silently mutate state
                 this.gameState.missions.trackedMissionId = missionId;
 
-                // Targeted DOM manipulation to update stars
                 const missionList = actionTarget.closest('.missions-scroll-panel');
                 if (missionList) {
                     missionList.querySelectorAll('.mission-track-star').forEach(star => {
@@ -659,7 +640,6 @@ export class ActionClickHandler {
                     });
                 }
 
-                // Update the sticky bar directly using the updated state snapshot
                 if (this.uiManager.missionControl) {
                     this.uiManager.missionControl.renderStickyBar(this.gameState.getState());
                 }
@@ -683,7 +663,7 @@ export class ActionClickHandler {
             case 'show-mission-modal': {
                 const missionId = dataset.missionId;
                 
-                // --- PHASE 2: INTERCEPT ACT MILESTONES ---
+                // --- INTERCEPT ACT MILESTONES ---
                 const ACT_SEQUENCES = {
                     'mission_tutorial_01': { flag: 'seen_act_0', videoPath: 'assets/images/video/act_0_audita.mp4', actText: '2220 - The Century of Stagnation' },
                     'mission_10': { flag: 'seen_act_1', videoPath: 'assets/images/video/act_1_begin.mp4', actText: 'Act I - The Trade' },
@@ -691,9 +671,10 @@ export class ActionClickHandler {
                 };
 
                 const sequenceData = ACT_SEQUENCES[missionId];
+                const storyFlags = state.player.storyFlags || {};
 
                 // If this is an Act milestone mission and the sequence hasn't fired yet...
-                if (sequenceData && (!state.player.storyFlags || !state.player.storyFlags[sequenceData.flag])) {
+                if (sequenceData && !storyFlags[sequenceData.flag]) {
                     if (e) e.stopPropagation();
                     this.uiManager.triggerActIntermissionSequence(missionId, sequenceData);
                 } else {
@@ -714,7 +695,6 @@ export class ActionClickHandler {
                 this.uiManager.hideMapDetailModal();
                 break;
             case 'show-system-states':
-                // Trigger the Economic Weather modal
                 if (this.uiManager.showEconWeatherModal) {
                     this.uiManager.showEconWeatherModal(state);
                 }
@@ -727,7 +707,6 @@ export class ActionClickHandler {
 
             case 'toggle-help': {
                 e.preventDefault();
-                // Custom Override during Intro Sequence
                 if (state.introSequenceActive) {
                     const modal = document.getElementById('event-modal');
                     const isVisible = modal && !modal.classList.contains('hidden') && !modal.classList.contains('modal-hiding');
@@ -753,7 +732,6 @@ export class ActionClickHandler {
                     return;
                 }
                 
-                // PHASE 4 FIX: Toggle logic for the help modal
                 if (this.uiManager.helpManager && this.uiManager.helpManager.isVisible) {
                     this.uiManager.hideHelpModal();
                 } else {
@@ -771,14 +749,10 @@ export class ActionClickHandler {
                 break;
             }
 
-            // --- UNIVERSAL TOAST ROUTING ---
             case 'route-toast': {
                 e.stopPropagation();
                 const { target, navTarget } = dataset;
                 if (navTarget && target) {
-                    
-                    // 1. Pre-configure the UI state BEFORE triggering the screen transition.
-                    // Copy current uiState to apply the correct DOM ID mutations
                     const newUiState = { ...state.uiState };
 
                     if (target === 'intel') {
@@ -787,13 +761,9 @@ export class ActionClickHandler {
                         newUiState.activeMissionTab = 'terminal';
                     }
                     
-                    // 2. Commit the mutated UI state to the live GameState 
                     this.gameState.setState({ uiState: newUiState });
-
-                    // 3. Route to the intended screen (triggers single cohesive render)
                     this.simulationService.setScreen(navTarget, target);
 
-                    // 4. Manually dismiss the toast so it doesn't linger
                     if (this.uiManager.toastManager) {
                         this.uiManager.toastManager.hideToast();
                     }
@@ -810,11 +780,9 @@ export class ActionClickHandler {
                                 this.uiManager.createFloatingText(`+${formatCredits(action.amount, false)}`, e.clientX, e.clientY, '#4ade80');
                             }
                         } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
-                            // --- VIRTUAL WORKBENCH: NARRATIVE SYSTEM STATE HOOK ---
                             if (this.simulationService && this.simulationService.systemStateService) {
                                 this.simulationService.systemStateService.applySpecificState(action.stateId);
                             }
-                            // --- END VIRTUAL WORKBENCH ---
                         }
                     });
                 }
@@ -869,7 +837,6 @@ export class ActionClickHandler {
                     }
                 }
 
-                // --- PHASE 2: Debt Payment Liquidity Safeguard (Updated) ---
                 const actualPayAmount = payAmount !== null ? payAmount : Math.min(state.player.credits, state.player.debt);
                 const loanId = state.player.loanStartDate || 'legacy_loan';
                 
@@ -877,7 +844,6 @@ export class ActionClickHandler {
                     delete actionTarget.dataset.primed;
                     actionTarget.classList.remove('primed');
                     
-                    // FIX: Mutate the root gameState object and trigger a state save so it persists across renders
                     this.gameState.player.warnedLoanId = loanId;
                     this.gameState.setState({});
                     
@@ -903,7 +869,6 @@ export class ActionClickHandler {
                     );
                     return;
                 }
-                // ------------------------------------------------
 
                 this.simulationService.payOffDebt(payAmount !== null ? payAmount : e, e);
                 break;
@@ -1068,7 +1033,6 @@ export class ActionClickHandler {
 
                         closeHandler();
                         
-                        // Begin specific tier cinematic grant
                         const tierMatch = licenseId.match(/t(\d)_license/);
                         const tierNum = tierMatch ? parseInt(tierMatch[1], 10) : 2;
                         const tierComms = DB.COMMODITIES.filter(c => c.tier === tierNum).map(c => c.name);
@@ -1081,7 +1045,6 @@ export class ActionClickHandler {
 
                         document.body.classList.add('ui-cinematic-lock');
                         
-                        // FIX: Force render to apply travel locks to UI buttons, and explicitly hide the help anchor
                         this.uiManager.render(this.gameState.getState());
                         const helpAnchor = document.getElementById('global-help-anchor');
                         if (helpAnchor) {
@@ -1105,7 +1068,6 @@ export class ActionClickHandler {
                             theme: `license-t${tierNum}`,
                             customSetup: (licModal, licCloseHandler) => {
                                 const licModalContent = licModal.querySelector('.modal-content');
-                                // FIX: Remove sticky exit class from previous singleton usages
                                 licModalContent.classList.remove('license-modal-blur-out');
                                 licModalContent.classList.add('license-modal-blur-in');
 
@@ -1120,7 +1082,6 @@ export class ActionClickHandler {
                                     licModalContent.classList.add('license-modal-blur-out');
                                     
                                     setTimeout(async () => {
-                                        // FIX: Purge the class so it's clean for the next modal
                                         licModalContent.classList.remove('license-modal-blur-out');
                                         licCloseHandler();
                                         await endLicenseAnimation(tierNum);
@@ -1134,7 +1095,7 @@ export class ActionClickHandler {
                                             }
                                         }
                                         this.uiManager.render(this.gameState.getState());
-                                    }, 800); // 800ms to allow blur fade out
+                                    }, 800); 
                                 };
                             }
                         });
