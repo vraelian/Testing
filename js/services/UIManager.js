@@ -20,6 +20,7 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 import { playActCinematic } from './ui/AnimationService.js';
+import CinematicService from './ui/CinematicService.js';
 
 // --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
@@ -1156,13 +1157,15 @@ export class UIManager {
             zIndex: '9999', backgroundColor: '#000'
         });
 
-        const videoEl = document.createElement('video');
+        const videoEl = this._preloadedIntroVideo || document.createElement('video');
+        this._preloadedIntroVideo = null; // Clear to prevent accidental reuse
+
         videoEl.id = 'intro-cinematic-video';
-        
-        videoEl.src = 'assets/images/video/intro_cinematic.mp4';
-        
-        videoEl.autoplay = true;
-        videoEl.playsInline = true;
+        if (!videoEl.src) {
+            videoEl.src = 'assets/images/video/intro_cinematic.mp4';
+            videoEl.setAttribute('playsinline', '');
+            videoEl.setAttribute('webkit-playsinline', '');
+        }
         videoEl.disablePictureInPicture = true;
         videoEl.controls = false;
         Object.assign(videoEl.style, {
@@ -1223,7 +1226,12 @@ export class UIManager {
         });
 
         videoEl.addEventListener('ended', finishCinematic);
-        videoEl.addEventListener('error', finishCinematic);
+        
+        // Critical: Catch error directly to skip missing/failed intro gracefully
+        videoEl.addEventListener('error', (e) => {
+            console.warn('[UIManager] Video error or missing file. Skipping.', e);
+            finishCinematic();
+        });
         
         setTimeout(finishCinematic, 110000); 
 
@@ -1286,6 +1294,76 @@ export class UIManager {
             this.logger.error('UIManager', `Act sequence failed: ${e}`);
         } finally {
             document.body.classList.remove('ui-cinematic-lock');
+        }
+    }
+
+    async triggerActIntermissionSequence(missionId, sequenceData, unlockedVideo = null) {
+        try {
+            // Step A: Lock & Blackout
+            document.body.classList.add('ui-cinematic-lock');
+            
+            const blackoutOverlay = document.createElement('div');
+            blackoutOverlay.className = 'fixed inset-0 bg-black pointer-events-auto';
+            blackoutOverlay.style.zIndex = '3400';
+            blackoutOverlay.style.opacity = '0';
+            blackoutOverlay.style.transition = 'opacity 1.5s ease-in-out';
+            document.body.appendChild(blackoutOverlay);
+
+            // Force layout reflow
+            void blackoutOverlay.offsetWidth;
+            blackoutOverlay.style.opacity = '1';
+
+            // Step B: Hold 1 (1.5s fade + 1.0s hold = 2.5s total)
+            await new Promise(r => setTimeout(r, 2500));
+
+            // Step C: Video Playback
+            if (sequenceData.videoPath) {
+                try {
+                    this.logger.info('UIManager', `Playing Act Intermission cinematic: ${sequenceData.videoPath}`);
+                    await CinematicService.playVideo(unlockedVideo || sequenceData.videoPath);
+                } catch (err) {
+                    this.logger.warn('UIManager', `Failed or skipped cinematic video: ${sequenceData.videoPath}`, err);
+                }
+            }
+
+            // Step D: Hold 2 (1.0s)
+            await new Promise(r => setTimeout(r, 1000));
+
+            // Step E: Act Text (Native text sequence)
+            if (sequenceData.actText) {
+                await this.playActSequence(sequenceData.actText);
+            }
+
+            // Step F: Cleanup
+            blackoutOverlay.style.transition = 'opacity 1.5s ease-in-out';
+            blackoutOverlay.style.opacity = '0';
+            
+            await new Promise(r => setTimeout(r, 1500));
+            if (blackoutOverlay.parentNode) {
+                blackoutOverlay.parentNode.removeChild(blackoutOverlay);
+            }
+            
+            document.body.classList.remove('ui-cinematic-lock');
+
+            // Step G: State Mutation & Handoff
+            if (this.simulationService && this.simulationService.gameState) {
+                const liveState = this.simulationService.gameState;
+                if (!liveState.player.storyFlags) liveState.player.storyFlags = {};
+                liveState.player.storyFlags[sequenceData.flag] = true;
+                liveState.setState({}); // Persist
+            } else if (this.lastKnownState) {
+                if (!this.lastKnownState.player.storyFlags) this.lastKnownState.player.storyFlags = {};
+                this.lastKnownState.player.storyFlags[sequenceData.flag] = true;
+            }
+
+            // Instantiate the intercepted mission modal
+            this.showMissionModal(missionId);
+
+        } catch (error) {
+            this.logger.error('UIManager', `Act Intermission Sequence failed: ${error}`);
+            document.body.classList.remove('ui-cinematic-lock');
+            // Failsafe: show the modal anyway so the player isn't soft-locked
+            this.showMissionModal(missionId);
         }
     }
 }
