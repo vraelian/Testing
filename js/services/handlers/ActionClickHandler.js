@@ -680,9 +680,27 @@ export class ActionClickHandler {
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
 
-            case 'show-mission-modal':
-                this.uiManager.showMissionModal(dataset.missionId);
+            case 'show-mission-modal': {
+                const missionId = dataset.missionId;
+                
+                // --- PHASE 2: INTERCEPT ACT MILESTONES ---
+                const ACT_SEQUENCES = {
+                    'mission_tutorial_01': { flag: 'seen_act_0', videoPath: 'assets/images/video/act_0_audita.mp4', actText: '2220 - The Century of Stagnation' },
+                    'mission_10': { flag: 'seen_act_1', videoPath: 'assets/images/video/act_1_begin.mp4', actText: 'Act I - The Trade' },
+                    'mission_18': { flag: 'seen_act_2', videoPath: 'assets/images/video/act_1_kiern.mp4', actText: 'Act II - The Intel' }
+                };
+
+                const sequenceData = ACT_SEQUENCES[missionId];
+
+                // If this is an Act milestone mission and the sequence hasn't fired yet...
+                if (sequenceData && (!state.player.storyFlags || !state.player.storyFlags[sequenceData.flag])) {
+                    if (e) e.stopPropagation();
+                    this.uiManager.triggerActIntermissionSequence(missionId, sequenceData);
+                } else {
+                    this.uiManager.showMissionModal(missionId);
+                }
                 break;
+            }
             case 'show_cargo_detail':
                 this.uiManager.showCargoDetailModal(state, dataset.goodId);
                 break;
