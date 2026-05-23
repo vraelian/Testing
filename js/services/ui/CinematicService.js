@@ -20,6 +20,25 @@ class CinematicService {
      */
     static playVideo(videoPath) {
         return new Promise((resolve) => {
+            // 1. NATIVE IOS BRIDGE PRIORITY
+            // Perfectly mirrors the proven architecture of the Intro Cinematic.
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
+                console.log(`[CinematicService] Delegating playback to native iOS layer: ${videoPath}`);
+                
+                // Extract filename without extension to match Swift AVPlayer expectations
+                // e.g., 'assets/images/video/act_0_audita.mp4' -> 'act_0_audita'
+                const filename = videoPath.split('/').pop().split('.')[0];
+                
+                window.onCinematicComplete = () => {
+                    delete window.onCinematicComplete;
+                    resolve();
+                };
+                
+                window.webkit.messageHandlers.iosPlayCinematic.postMessage(filename);
+                return;
+            }
+
+            // 2. HTML5 BROWSER FALLBACK
             const overlay = document.getElementById('fmv-cinematic-overlay');
             const container = document.getElementById('fmv-video-container');
             const skipBtn = document.getElementById('fmv-skip-btn');
@@ -31,7 +50,6 @@ class CinematicService {
                 return;
             }
 
-            // 1. Construct the Video Element
             const video = document.createElement('video');
             video.src = videoPath;
             video.setAttribute('playsinline', '');
@@ -40,10 +58,8 @@ class CinematicService {
             
             container.appendChild(video);
 
-            // Mutex to prevent double-resolutions if multiple events fire concurrently
             let isResolved = false;
 
-            // 2. Garbage Collection & Resolution Protocol (ADR-048)
             const cleanupAndResolve = () => {
                 if (isResolved) return;
                 isResolved = true;
@@ -54,13 +70,11 @@ class CinematicService {
 
                 // Await CSS transition completion (0.5s mapped in modal-cinematics.css) before hardware wipe
                 setTimeout(() => {
-                    // Aggressive iOS WKWebView hardware decoder wipe
                     video.pause();
                     video.removeAttribute('src');
-                    video.load(); // Flushes the active video buffer from RAM
-                    video.remove(); // Severs the DOM node completely
+                    video.load(); 
+                    video.remove(); 
                     
-                    // Listener teardown to prevent memory leaks on the persistent parent DOM overlay
                     overlay.removeEventListener('pointerdown', handleOverlayTap);
                     skipBtn.removeEventListener('click', handleSkipClick);
                     
@@ -68,7 +82,6 @@ class CinematicService {
                 }, 500); 
             };
 
-            // 3. Event Handlers
             const handleOverlayTap = (e) => {
                 if (e.target !== skipBtn && !skipBtn.classList.contains('active')) {
                     skipBtn.classList.add('active');
@@ -76,12 +89,11 @@ class CinematicService {
             };
 
             const handleSkipClick = (e) => {
-                e.stopPropagation(); // Halt bubbling to prevent triggering handleOverlayTap
-                e.preventDefault();  // Safety protocol (ADR-026)
+                e.stopPropagation(); 
+                e.preventDefault();  
                 cleanupAndResolve();
             };
 
-            // Bind contextual listeners
             overlay.addEventListener('pointerdown', handleOverlayTap);
             skipBtn.addEventListener('click', handleSkipClick);
             video.addEventListener('ended', cleanupAndResolve);
@@ -92,7 +104,6 @@ class CinematicService {
                 cleanupAndResolve();
             });
 
-            // 4. Execution Sequence
             overlay.classList.add('active');
             
             video.play().catch(error => {
