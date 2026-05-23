@@ -10,46 +10,6 @@
  * with ADR-048 regarding memory leak prevention on iOS targets.
  */
 
-/**
- * ////////////////////////////////////////////////
- * ============================================================================
- * FMV CINEMATIC ASSET GUIDELINES (iOS WKWebView Golden Standard)
- * ============================================================================
- * To ensure flawless playback, zero frame drops, and absolute compliance with 
- * iOS's strict WKWebView memory ceilings, all pre-rendered narrative videos 
- * must be exported using the following optimized, mobile-first profile:
- *
- * [1] Container / Format: .mp4
- * - Universally hardware-accelerated on iOS. Avoid .webm or .mkv.
- *
- * [2] Video Codec: H.264 (or H.265 / HEVC)
- * - H.264 is the safest bet for maximum compatibility and low latency. 
- * H.265 yields smaller files but is slightly heavier on initial decode.
- *
- * [3] Resolution: 1080 x 1920 (Vertical HD)
- * - Native 9:16 portrait ratio. Fits large screens perfectly. 
- * - CSS `object-fit: cover` handles graceful cropping on shorter devices.
- * - STRICT CONSTRAINT: Do NOT render in 4K (2160x3840). The visual gain 
- * is negligible, but it will bloat RAM and trigger a silent OS crash.
- *
- * [4] Framerate: 30 FPS (or 24 FPS)
- * - Provides a cinematic look while preserving processing power for the 
- * background simulation loop. Avoid 60 FPS for full-screen video.
- *
- * [5] Target Bitrate: VBR, 1 Pass @ ~3.0 to 5.0 Mbps
- * - Variable Bitrate ensures simple frames (deep space) save data. 
- * - At 5 Mbps, a 10-second clip weighs roughly 5MB to 8MB.
- *
- * [6] Audio Profile: AAC format, Stereo, 128 kbps, 48000 Hz
- * - Standard, highly compressed native web audio.
- *
- * [7] Standard File Pathing: 
- * - Store assets in: `assets/images/video/`
- * - Reference relatively (e.g., `cinematicPath: 'assets/images/video/scene1.mp4'`)
- * ============================================================================
- */ ////////////////////////////////////////////////
-
-
 class CinematicService {
     /**
      * Initiates a blocking, full-screen video playback sequence.
@@ -72,17 +32,11 @@ class CinematicService {
             }
 
             // 1. Construct the Video Element
-            // Explicit WKWebView attributes force inline playback, preventing the native iOS 
-            // media player from taking full-screen control and breaking the SPA context.
             const video = document.createElement('video');
             video.src = videoPath;
             video.setAttribute('playsinline', '');
             video.setAttribute('webkit-playsinline', '');
             video.setAttribute('disablePictureInPicture', '');
-            
-            // Depending on the trigger, the video might require the 'muted' attribute if not 
-            // preceded directly by a user gesture. Assuming standard narrative flow (user clicked an event choice),
-            // audio permissions will inherently be granted by the OS.
             
             container.appendChild(video);
 
@@ -116,8 +70,6 @@ class CinematicService {
 
             // 3. Event Handlers
             const handleOverlayTap = (e) => {
-                // Ignore taps directly on the skip button to prevent event overlap,
-                // only reveal the skip button on the first general screen tap.
                 if (e.target !== skipBtn && !skipBtn.classList.contains('active')) {
                     skipBtn.classList.add('active');
                 }
@@ -133,15 +85,18 @@ class CinematicService {
             overlay.addEventListener('pointerdown', handleOverlayTap);
             skipBtn.addEventListener('click', handleSkipClick);
             video.addEventListener('ended', cleanupAndResolve);
+            
+            // CRITICAL FIX: Prevent hanging at black if video asset is missing (404)
+            video.addEventListener('error', (e) => {
+                console.warn('[CinematicService] Video failed to load or encountered an error. Skipping.', e);
+                cleanupAndResolve();
+            });
 
             // 4. Execution Sequence
             overlay.classList.add('active');
             
-            // Execute playback. 
-            // A catch block is mandatory; if iOS strictly blocks playback due to an unfulfilled 
-            // user-gesture policy, it will throw an error. Resolving immediately prevents an infinite hang.
             video.play().catch(error => {
-                console.warn('[CinematicService] Playback rejected by OS. Missing user gesture context?', error);
+                console.warn('[CinematicService] Playback rejected by OS.', error);
                 cleanupAndResolve();
             });
         });
