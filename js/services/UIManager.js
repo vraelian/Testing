@@ -20,7 +20,6 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 import { playActCinematic } from './ui/AnimationService.js';
-import CinematicService from './ui/CinematicService.js';
 
 // --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
@@ -1269,6 +1268,7 @@ export class UIManager {
 
     async triggerActIntermissionSequence(missionId, sequenceData) {
         try {
+            // Lock UI and start standard visual blackout
             document.body.classList.add('ui-cinematic-lock');
             
             const blackoutOverlay = document.createElement('div');
@@ -1278,38 +1278,97 @@ export class UIManager {
             blackoutOverlay.style.transition = 'opacity 1.5s ease-in-out';
             document.body.appendChild(blackoutOverlay);
 
+            // Force layout reflow
             void blackoutOverlay.offsetWidth;
             blackoutOverlay.style.opacity = '1';
 
-            // Fade to black (1.5s) + Hold (1.0s) = 2.5s
+            // Wait 2.5s (1.5s fade + 1.0s pure black)
             await new Promise(r => setTimeout(r, 2500));
 
+            // Execute Video
             if (sequenceData.videoPath) {
-                try {
-                    this.logger.info('UIManager', `Playing Act Intermission cinematic: ${sequenceData.videoPath}`);
-                    await CinematicService.playVideo(sequenceData.videoPath);
-                } catch (err) {
-                    this.logger.warn('UIManager', `Cinematic video failed or skipped.`, err);
-                }
+                await new Promise((resolve) => {
+                    const filename = sequenceData.videoPath.split('/').pop().split('.')[0];
+
+                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
+                        console.log(`[UIManager] Triggering native iOS playback for: ${filename}`);
+                        window.onCinematicComplete = () => {
+                            delete window.onCinematicComplete;
+                            resolve();
+                        };
+                        window.webkit.messageHandlers.iosPlayCinematic.postMessage(filename);
+                    } else {
+                        console.log(`[UIManager] Triggering web fallback playback for: ${filename}`);
+                        
+                        const container = document.createElement('div');
+                        Object.assign(container.style, {
+                            position: 'fixed', top: '0', left: '0', width: '100vw', height: '100dvh',
+                            zIndex: '9999', backgroundColor: '#000', opacity: '0', transition: 'opacity 0.5s ease'
+                        });
+
+                        const videoEl = document.createElement('video');
+                        videoEl.src = sequenceData.videoPath;
+                        videoEl.autoplay = true;
+                        videoEl.playsInline = true;
+                        videoEl.disablePictureInPicture = true;
+                        videoEl.controls = false;
+                        Object.assign(videoEl.style, {
+                            width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none'
+                        });
+
+                        let isFinished = false;
+                        const finish = () => {
+                            if (isFinished) return;
+                            isFinished = true;
+                            
+                            container.style.opacity = '0';
+                            setTimeout(() => {
+                                videoEl.pause();
+                                videoEl.removeAttribute('src');
+                                videoEl.load();
+                                container.remove();
+                                resolve();
+                            }, 500);
+                        };
+
+                        videoEl.addEventListener('ended', finish);
+                        videoEl.addEventListener('error', finish); // Prevents hanging on Web 404
+
+                        container.appendChild(videoEl);
+                        document.body.appendChild(container);
+
+                        // Fade in immediately over the standard blackout
+                        void container.offsetWidth;
+                        container.style.opacity = '1';
+
+                        videoEl.play().catch(e => {
+                            console.warn('[UIManager] Web fallback video autoplay blocked/failed:', e);
+                            finish();
+                        });
+                    }
+                });
             }
 
             // Hold black for 1 second after video concludes
             await new Promise(r => setTimeout(r, 1000));
 
-            if (sequenceData.actText) {
-                await this.playActSequence(sequenceData.actText);
-            }
+            // Initiate the standard CSS-driven text overlay (which handles its own fades)
+            const actPromise = sequenceData.actText ? this.playActSequence(sequenceData.actText) : Promise.resolve();
 
-            blackoutOverlay.style.transition = 'opacity 1.5s ease-in-out';
-            blackoutOverlay.style.opacity = '0';
-            
-            await new Promise(r => setTimeout(r, 1500));
-            if (blackoutOverlay.parentNode) {
-                blackoutOverlay.parentNode.removeChild(blackoutOverlay);
-            }
-            
+            // After the text overlay's black screen reaches full opacity (3s mark),
+            // silently tear down our foundation tracking layer to prevent fade-out collisions.
+            setTimeout(() => {
+                if (blackoutOverlay.parentNode) {
+                    blackoutOverlay.parentNode.removeChild(blackoutOverlay);
+                }
+            }, 3000);
+
+            // Wait for the full 12s text sequence to conclude naturally
+            await actPromise;
+
             document.body.classList.remove('ui-cinematic-lock');
 
+            // Set flags and render modal
             if (this.simulationService && this.simulationService.gameState) {
                 const liveState = this.simulationService.gameState;
                 if (!liveState.player.storyFlags) liveState.player.storyFlags = {};
