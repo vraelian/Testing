@@ -26189,9 +26189,9 @@ import { AssetService } from '../AssetService.js';
 import CinematicService from './CinematicService.js';
 
 export const ACT_CINEMATIC_CONFIG = {
-    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: '2220 - The Century of Stagnation', actLabel: 'PROLOGUE' },
-    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'Act I - The Trade', actLabel: 'ACT I' },
-    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'Act II - The Intel', actLabel: 'ACT II' }
+    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: 'The Century of Stagnation', actLabel: 'PROLOGUE' },
+    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'The Trade', actLabel: 'ACT I' },
+    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'The Intel', actLabel: 'ACT II' }
 };
 
 export class UIEventControl {
@@ -27366,41 +27366,69 @@ export class UIEventControl {
         promptPanel.style.minWidth = '300px';
         promptPanel.style.animationDuration = '0.4s';
         
-        // --- PHASE 2: High-Fidelity Glass Polish ---
+        // High-Fidelity Glass Polish
         promptPanel.style.backdropFilter = 'blur(10px)';
         promptPanel.style.webkitBackdropFilter = 'blur(10px)';
         
         const promptTitle = document.createElement('h2');
         promptTitle.className = 'text-3xl tracking-widest mb-8 text-center';
-        promptTitle.style.fontFamily = '"Iceland", sans-serif';
+        promptTitle.style.fontFamily = '"Aldrich", sans-serif';
         promptTitle.textContent = config.actLabel || 'ACT';
 
-        // --- PHASE 2: Tri-Color Gradients and Shadow Depth ---
+        const startBtn = document.createElement('button');
+        startBtn.className = 'btn px-8 py-3 text-lg font-bold w-1/2 transition-colors duration-300';
+        startBtn.textContent = 'START';
+
+        // Custom Theme Applications
         if (missionId === 'mission_tutorial_01') { // Act 0: Deep Space Blue -> Obsidian -> Amber
             promptTitle.style.color = '#38bdf8';
             promptTitle.style.textShadow = '0 0 8px rgba(56, 189, 248, 0.6)';
             promptPanel.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 6, 23, 0.95) 50%, rgba(217, 119, 6, 0.85) 100%)';
             promptPanel.style.border = '1px solid rgba(251, 191, 36, 0.5)';
             promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 25px rgba(251, 191, 36, 0.4), inset 0 0 15px rgba(251, 191, 36, 0.2)';
+            
+            // Thematic Button: Blue/Orange
+            startBtn.style.color = '#fbbf24'; // Amber
+            startBtn.style.border = '1px solid #38bdf8'; // Cyan
+            startBtn.style.backgroundColor = 'rgba(15, 23, 42, 0.8)'; // Dark Slate
+            startBtn.style.boxShadow = '0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2)';
+            startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(15, 23, 42, 1)'; startBtn.style.boxShadow = '0 0 20px rgba(56, 189, 248, 0.6)'; };
+            startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(15, 23, 42, 0.8)'; startBtn.style.boxShadow = '0 0 15px rgba(56, 189, 248, 0.4), inset 0 0 10px rgba(56, 189, 248, 0.2)'; };
+
         } else if (missionId === 'mission_10') { // Act I: Cream/Ivory -> Soft Gold -> Deep Gold
             promptTitle.style.color = '#111827';
             promptTitle.style.textShadow = '0 0 5px rgba(251, 191, 36, 0.8)';
             promptPanel.style.background = 'linear-gradient(135deg, rgba(254, 252, 232, 0.95) 0%, rgba(253, 224, 71, 0.9) 50%, rgba(202, 138, 4, 0.95) 100%)';
             promptPanel.style.border = '1px solid rgba(255, 255, 255, 0.6)';
             promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(250, 204, 21, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.4)';
+            
+            // Thematic Button: Gold/White
+            startBtn.style.color = '#111827'; // Dark text
+            startBtn.style.border = '1px solid #ffffff'; // White border
+            startBtn.style.backgroundColor = 'rgba(253, 224, 71, 0.8)'; // Bright Gold
+            startBtn.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3)';
+            startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(253, 224, 71, 1)'; startBtn.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.8)'; };
+            startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(253, 224, 71, 0.8)'; startBtn.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.5), inset 0 0 10px rgba(255, 255, 255, 0.3)'; };
+
         } else if (missionId === 'mission_18') { // Act II: Void Purple -> Imperial Violet -> Burnt Orange
             promptTitle.style.color = '#ffffff';
             promptTitle.style.textShadow = '0 0 10px rgba(0, 0, 0, 0.9)';
             promptPanel.style.background = 'linear-gradient(135deg, rgba(46, 16, 101, 0.85) 0%, rgba(76, 29, 149, 0.95) 50%, rgba(234, 88, 12, 0.85) 100%)';
             promptPanel.style.border = '1px solid rgba(168, 85, 247, 0.5)';
             promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 25px rgba(168, 85, 247, 0.4), inset 0 0 15px rgba(234, 88, 12, 0.3)';
+
+            // Thematic Button: Violet/Orange
+            startBtn.style.color = '#ea580c'; // Orange
+            startBtn.style.border = '1px solid #a855f7'; // Purple border
+            startBtn.style.backgroundColor = 'rgba(46, 16, 101, 0.8)'; // Deep Violet
+            startBtn.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.5), inset 0 0 10px rgba(168, 85, 247, 0.3)';
+            startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(46, 16, 101, 1)'; startBtn.style.boxShadow = '0 0 20px rgba(168, 85, 247, 0.8)'; };
+            startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(46, 16, 101, 0.8)'; startBtn.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.5), inset 0 0 10px rgba(168, 85, 247, 0.3)'; };
+
         } else {
             promptTitle.style.color = '#67e8f9';
+            startBtn.classList.add('btn-pulse-green'); // Fallback
         }
-
-        const startBtn = document.createElement('button');
-        startBtn.className = 'btn px-8 py-3 text-lg font-bold btn-pulse-green w-1/2';
-        startBtn.textContent = 'START';
 
         promptPanel.appendChild(promptTitle);
         promptPanel.appendChild(startBtn);
@@ -27473,7 +27501,7 @@ export class UIEventControl {
 
                 overlay.remove();
                 
-                // --- PHASE 3: Restore Background UI ---
+                // Restore Background UI
                 toggleBackgroundUI('1', 'auto');
                 
             }).catch(err => {
@@ -31859,7 +31887,7 @@ export class UIModalEngine {
         }
 
         if (pStyle && titleEl) {
-            const defaultParsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KEIRN' : 
+            const defaultParsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KIERN' : 
                                       options.portraitId === 'Affluent_13' ? 'MANGO' : 
                                       options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 

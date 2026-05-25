@@ -278,7 +278,7 @@ export class UIModalEngine {
         }
 
         if (pStyle && titleEl) {
-            const defaultParsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KEIRN' : 
+            const defaultParsedName = options.portraitId === 'Venusian_Syndicate_4' ? 'KIERN' : 
                                       options.portraitId === 'Affluent_13' ? 'MANGO' : 
                                       options.portraitId.replace(/_\d+$/, '').replace(/_/g, ' ');
 
