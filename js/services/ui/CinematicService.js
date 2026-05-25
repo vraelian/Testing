@@ -49,7 +49,6 @@
  * ============================================================================
  */ ////////////////////////////////////////////////
 
-
 class CinematicService {
     /**
      * Initiates a blocking, full-screen video playback sequence.
@@ -60,45 +59,76 @@ class CinematicService {
      */
     static playVideo(videoPath) {
         return new Promise((resolve) => {
-            const overlay = document.getElementById('fmv-cinematic-overlay');
-            const container = document.getElementById('fmv-video-container');
-            const skipBtn = document.getElementById('fmv-skip-btn');
+            // 1. Construct the Dynamic DOM Infrastructure
+            const container = document.createElement('div');
+            container.id = 'dynamic-cinematic-overlay';
+            Object.assign(container.style, {
+                position: 'fixed',
+                inset: '0',
+                zIndex: '100000', // Forces rendering over the EventControl blackout layer
+                backgroundColor: '#000000',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: '0',
+                transition: 'opacity 0.5s ease-in-out'
+            });
 
-            // Fail-safe: Prevent soft-locking the simulation if DOM elements are missing
-            if (!overlay || !container || !skipBtn) {
-                console.error('[CinematicService] Critical DOM infrastructure missing. Verify index.html injections.');
-                resolve(); 
-                return;
-            }
-
-            // 1. Construct the Video Element
             // Explicit WKWebView attributes force inline playback, preventing the native iOS 
             // media player from taking full-screen control and breaking the SPA context.
             const video = document.createElement('video');
             video.src = videoPath;
+            video.controls = false; // Strictly enforce no native media controls
+            video.playsInline = true; // Hard-lock property
             video.setAttribute('playsinline', '');
             video.setAttribute('webkit-playsinline', '');
             video.setAttribute('disablePictureInPicture', '');
-            
-            // Depending on the trigger, the video might require the 'muted' attribute if not 
-            // preceded directly by a user gesture. Assuming standard narrative flow (user clicked an event choice),
-            // audio permissions will inherently be granted by the OS.
-            
+            Object.assign(video.style, {
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                pointerEvents: 'none' // Let interactions pass to the wrapper for skip detection
+            });
+
+            const skipBtn = document.createElement('button');
+            skipBtn.innerHTML = 'SKIP ⏭';
+            skipBtn.className = 'btn';
+            Object.assign(skipBtn.style, {
+                position: 'absolute',
+                bottom: 'calc(env(safe-area-inset-bottom, 20px) + 20px)',
+                right: '20px',
+                zIndex: '100001',
+                opacity: '0',
+                pointerEvents: 'none',
+                transition: 'opacity 0.3s ease',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.8)',
+                textTransform: 'uppercase'
+            });
+
             container.appendChild(video);
+            container.appendChild(skipBtn);
+            document.body.appendChild(container);
+
+            // Force reflow and initiate CSS fade-in
+            void container.offsetWidth;
+            container.style.opacity = '1';
 
             // Mutex to prevent double-resolutions if multiple events fire concurrently
             let isResolved = false;
+            let skipTimeout;
 
             // 2. Garbage Collection & Resolution Protocol (ADR-048)
             const cleanupAndResolve = () => {
                 if (isResolved) return;
                 isResolved = true;
 
-                // Initiate CSS fade out sequence
-                overlay.classList.remove('active');
-                skipBtn.classList.remove('active');
+                clearTimeout(skipTimeout);
 
-                // Await CSS transition completion (0.5s mapped in modal-cinematics.css) before hardware wipe
+                // Initiate CSS fade out sequence
+                container.style.opacity = '0';
+                skipBtn.style.opacity = '0';
+
+                // Await CSS transition completion before hardware wipe
                 setTimeout(() => {
                     // Aggressive iOS WKWebView hardware decoder wipe
                     video.pause();
@@ -106,9 +136,13 @@ class CinematicService {
                     video.load(); // Flushes the active video buffer from RAM
                     video.remove(); // Severs the DOM node completely
                     
-                    // Listener teardown to prevent memory leaks on the persistent parent DOM overlay
-                    overlay.removeEventListener('pointerdown', handleOverlayTap);
+                    // Listener teardown to prevent memory leaks
+                    container.removeEventListener('pointerdown', handleOverlayTap);
                     skipBtn.removeEventListener('click', handleSkipClick);
+                    
+                    if (container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
                     
                     resolve();
                 }, 500); 
@@ -118,8 +152,14 @@ class CinematicService {
             const handleOverlayTap = (e) => {
                 // Ignore taps directly on the skip button to prevent event overlap,
                 // only reveal the skip button on the first general screen tap.
-                if (e.target !== skipBtn && !skipBtn.classList.contains('active')) {
-                    skipBtn.classList.add('active');
+                if (e.target !== skipBtn && skipBtn.style.opacity === '0') {
+                    skipBtn.style.opacity = '1';
+                    skipBtn.style.pointerEvents = 'auto';
+                    
+                    skipTimeout = setTimeout(() => {
+                        skipBtn.style.opacity = '0';
+                        skipBtn.style.pointerEvents = 'none';
+                    }, 3000);
                 }
             };
 
@@ -130,14 +170,15 @@ class CinematicService {
             };
 
             // Bind contextual listeners
-            overlay.addEventListener('pointerdown', handleOverlayTap);
+            container.addEventListener('pointerdown', handleOverlayTap);
             skipBtn.addEventListener('click', handleSkipClick);
             video.addEventListener('ended', cleanupAndResolve);
+            video.addEventListener('error', () => {
+                console.warn(`[CinematicService] Video failed to load or play: ${videoPath}`);
+                cleanupAndResolve();
+            });
 
             // 4. Execution Sequence
-            overlay.classList.add('active');
-            
-            // Execute playback. 
             // A catch block is mandatory; if iOS strictly blocks playback due to an unfulfilled 
             // user-gesture policy, it will throw an error. Resolving immediately prevents an infinite hang.
             video.play().catch(error => {

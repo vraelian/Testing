@@ -11,6 +11,12 @@ import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 import { AssetService } from '../AssetService.js';
 import CinematicService from './CinematicService.js';
 
+export const ACT_CINEMATIC_CONFIG = {
+    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: '2220 - The Century of Stagnation', actLabel: 'PROLOGUE' },
+    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'Act I - The Trade', actLabel: 'ACT I' },
+    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'Act II - The Intel', actLabel: 'ACT II' }
+};
+
 export class UIEventControl {
     constructor(manager) {
         this.manager = manager;
@@ -103,15 +109,9 @@ export class UIEventControl {
 
     /**
      * Executes the CRT instantiation and resolution sequence for Story Events.
-     * Phase 3 Update: Asynchronously intercepts cinematic payloads via the Glass Pane logic 
-     * before generating the UI standard modal to maintain narrative pacing without layout destruction.
-     * @param {Object} eventDef - The definition object from STORY_EVENTS.
-     * @param {Function} choicesCallback - Resolution hook passing the selected choice.id (or null if none).
      */
     async showStoryEventModal(eventDef, choicesCallback) {
         
-        // Phase 3 Integration: If a cinematic is attached to this narrative event, 
-        // halt the standard UI generation and play the video first.
         if (eventDef.cinematicPath) {
             try {
                 this.manager.logger.info('UIEventControl', `Initiating cinematic sequence for narrative event: ${eventDef.cinematicPath}`);
@@ -242,9 +242,6 @@ export class UIEventControl {
                             modal.classList.add('hidden');
                         }
                         
-                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
-                        // to the next frame. This prevents the main thread from locking up 
-                        // and dropping frames in the Canvas-driven travel animation.
                         requestAnimationFrame(() => {
                             setTimeout(() => {
                                 choicesCallback(choiceId);
@@ -364,15 +361,11 @@ export class UIEventControl {
                     }
 
                     button.onclick = () => {
-                        // Prevent multi-clicks and provide immediate tactile feedback
                         button.style.transform = 'scale(0.98)';
                         button.style.opacity = '0.7';
                         const allBtns = choicesContainer.querySelectorAll('.event-choice-btn');
                         allBtns.forEach(b => b.style.pointerEvents = 'none');
 
-                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
-                        // to the next frame. This prevents the main thread from locking up 
-                        // and dropping frames in the Canvas-driven travel animation.
                         requestAnimationFrame(() => {
                             setTimeout(() => {
                                 choicesCallback(choice.id);
@@ -1143,5 +1136,144 @@ export class UIEventControl {
         } catch (error) {
             this.manager.logger.error('UIEventControl', `Cinematic test sequence failed:`, error);
         }
+    }
+
+    /**
+     * Executes the Act Intermission Sequence (Video + Act Intermission Screen).
+     * Option A: The "Bridging Gesture" Approach. Intercepts OS user-gesture
+     * expiration by spawning a diegetic prompt over the blackout to serve as a 
+     * fresh, fully trusted trigger for the unmuted video overlay.
+     * @param {string} missionId 
+     * @param {Object} config 
+     * @param {Function} callback 
+     */
+    async playActIntermissionSequence(missionId, config, callback) {
+        // 1. Mount Starfield Background
+        starfieldService.mount(document.body);
+        starfieldService.triggerEntry();
+
+        // 2. Instantly create the overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'act-intermission-overlay';
+        overlay.className = 'fixed inset-0 z-[10000] flex flex-col items-center justify-center pointer-events-auto opacity-0';
+        document.body.appendChild(overlay);
+
+        // 3. Fade in overlay over 1.5s
+        const fadeIn = overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1500, fill: 'forwards', easing: 'ease-in-out' });
+        await fadeIn.finished;
+
+        // 4. Construct Diegetic Prompt Modal (CRT Style)
+        const promptPanel = document.createElement('div');
+        promptPanel.className = 'modal-content sci-fi-frame sev-crt-turn-on flex flex-col items-center justify-center p-8';
+        promptPanel.style.minWidth = '300px';
+        promptPanel.style.animationDuration = '0.4s';
+        
+        const promptTitle = document.createElement('h2');
+        promptTitle.className = 'text-3xl tracking-widest mb-8 text-center';
+        promptTitle.style.fontFamily = '"Iceland", sans-serif';
+        promptTitle.textContent = config.actLabel || 'ACT';
+
+        // Custom Theme Applications
+        if (missionId === 'mission_tutorial_01') { // Act 0
+            promptTitle.style.color = '#22d3ee';
+            promptPanel.style.background = 'linear-gradient(135deg, #0f172a, #000000)';
+            promptPanel.style.border = '1px solid #fbbf24';
+            promptPanel.style.boxShadow = '0 0 15px rgba(251, 191, 36, 0.8)';
+        } else if (missionId === 'mission_10') { // Act I
+            promptTitle.style.color = '#fbbf24';
+            promptPanel.style.background = 'linear-gradient(135deg, #fdf6e3, #ffffff)';
+            promptPanel.style.border = '1px solid #ffffff';
+            promptPanel.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.8)';
+            promptTitle.style.textShadow = '0 0 5px rgba(251, 191, 36, 0.5)';
+        } else if (missionId === 'mission_18') { // Act II
+            promptTitle.style.color = '#ffffff';
+            promptPanel.style.background = 'linear-gradient(135deg, #8b5cf6, #ea580c)';
+            promptPanel.style.border = '1px solid #a855f7';
+            promptPanel.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.8)';
+            promptTitle.style.textShadow = '0 0 8px rgba(0,0,0,0.8)';
+        } else {
+            promptTitle.style.color = '#67e8f9';
+        }
+
+        const startBtn = document.createElement('button');
+        startBtn.className = 'btn px-8 py-3 text-lg font-bold btn-pulse-green w-1/2';
+        startBtn.textContent = 'START';
+
+        promptPanel.appendChild(promptTitle);
+        promptPanel.appendChild(startBtn);
+        overlay.appendChild(promptPanel);
+
+        // 5. Synchronous Execution Hook (The Bridge)
+        startBtn.onclick = (e) => {
+            e.preventDefault();
+            startBtn.disabled = true;
+
+            // Trigger CRT Shutdown Visuals
+            promptPanel.classList.remove('sev-crt-turn-on');
+            promptPanel.classList.add('sev-crt-shutdown');
+            promptPanel.style.animationDuration = '0.35s';
+
+            // Elevate the cinematic overlay to ensure it renders above the blackout screen
+            const fmvOverlay = document.getElementById('fmv-cinematic-overlay') || document.getElementById('dynamic-cinematic-overlay');
+            let originalZIndex = '';
+            if (fmvOverlay) {
+                originalZIndex = fmvOverlay.style.zIndex;
+                fmvOverlay.style.zIndex = '10001';
+            }
+
+            // CRITICAL: Execute CinematicService synchronously within the click event execution stack
+            CinematicService.playVideo(config.video).then(async () => {
+                // Restore Z-Index
+                if (fmvOverlay) {
+                    fmvOverlay.style.zIndex = originalZIndex;
+                }
+                
+                // Clear the prompt panel from DOM completely
+                promptPanel.remove();
+
+                // 1s hold
+                await new Promise(r => setTimeout(r, 1000));
+
+                // Act Intermission Screen Text Sequence
+                const text = document.createElement('h1');
+                text.className = 'text-3xl md:text-5xl text-white tracking-widest opacity-0 text-center px-4';
+                text.style.fontFamily = '"Bruno Ace SC", sans-serif';
+                text.textContent = config.title;
+                overlay.appendChild(text);
+
+                // Fade Text In (3s)
+                const textIn = text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 3000, fill: 'forwards', easing: 'ease-out' });
+                await textIn.finished;
+
+                // Hold Text reduced to 2s
+                await new Promise(r => setTimeout(r, 2000));
+
+                // Blur-Fade Out Text (3s)
+                const textOut = text.animate([
+                    { opacity: 1, filter: 'blur(0px)' }, 
+                    { opacity: 0, filter: 'blur(10px)' }
+                ], { duration: 3000, fill: 'forwards', easing: 'ease-in' });
+                await textOut.finished;
+
+                // Execute callback to pop mission modal instantly, hidden behind the black overlay
+                if (callback) {
+                    callback();
+                }
+
+                // Fade out the primary overlay back to the UI
+                const fadeOut = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 3000, fill: 'forwards', easing: 'ease-in-out' });
+                await fadeOut.finished;
+
+                overlay.remove();
+                starfieldService.triggerQuickExit();
+            }).catch(err => {
+                this.manager.logger.warn('UIEventControl', 'Act intermission video playback failed.', err);
+                
+                // Execute fallback text and resolve the sequence even on a strict failure
+                if (callback) callback();
+                overlay.remove();
+                starfieldService.triggerQuickExit();
+            });
+        };
     }
 }

@@ -6,6 +6,7 @@ import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
 import { startLicenseAnimation, endLicenseAnimation } from './AnimationService.js';
+import { ACT_CINEMATIC_CONFIG } from './UIEventControl.js';
 
 function getOfficerRarityHex(rarity) {
     switch (rarity) {
@@ -313,7 +314,8 @@ export class UIMissionControl {
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
 
-        const { missions, currentLocationId } = this.manager.lastKnownState;
+        const gameState = this.manager.lastKnownState;
+        const { missions, currentLocationId, player } = gameState;
         
         const isActive = missions.activeMissionIds.includes(missionId);
         const progress = missions.missionProgress[missionId];
@@ -321,6 +323,43 @@ export class UIMissionControl {
 
         const isLocationValid = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
+
+        // --- ACT INTERMISSION INTERCEPT (PHASE 3) ---
+        if (ACT_CINEMATIC_CONFIG && ACT_CINEMATIC_CONFIG[missionId]) {
+            // Target the core mutable state, not the disconnected snapshot
+            const coreState = this.manager.simulationService?.gameState;
+            const targetPlayer = coreState ? coreState.player : player;
+            
+            if (!targetPlayer.viewedIntermissions) targetPlayer.viewedIntermissions = [];
+            
+            if (!targetPlayer.viewedIntermissions.includes(missionId)) {
+                // Mark as viewed on the core state to satisfy the "once only, ever" constraint
+                targetPlayer.viewedIntermissions.push(missionId);
+                
+                // Force background save immediately to ensure persistence without redrawing UI
+                if (coreState && this.manager.simulationService) {
+                    this.manager.simulationService.saveGame();
+                }
+
+                // Execute sequence, delaying standard modal instantiation
+                if (this.manager.eventControl && typeof this.manager.eventControl.playActIntermissionSequence === 'function') {
+                    this.manager.eventControl.playActIntermissionSequence(
+                        missionId,
+                        ACT_CINEMATIC_CONFIG[missionId],
+                        () => {
+                            // Render standard modal post-sequence
+                            if (canComplete) {
+                                this._showMissionCompletionModal(mission);
+                            } else {
+                                this._showMissionDetailsModal(mission);
+                            }
+                        }
+                    );
+                    return; // Halt standard execution path
+                }
+            }
+        }
+        // --- END INTERCEPT ---
 
         if (canComplete) {
             this._showMissionCompletionModal(mission);
