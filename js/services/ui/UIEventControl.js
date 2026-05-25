@@ -1148,6 +1148,27 @@ export class UIEventControl {
      * @param {Function} callback 
      */
     async playActIntermissionSequence(missionId, config, callback) {
+        // --- PHASE 3: Background UI Muting ---
+        const toggleBackgroundUI = (opacity, pointerEvents) => {
+            const elements = [
+                document.getElementById('mission-sticky-bar'),
+                document.getElementById('btn-econ-weather'),
+                document.getElementById('global-help-anchor'),
+                document.getElementById('btn-game-menu'),
+                document.getElementById('btn-achievements')
+            ];
+            elements.forEach(el => {
+                if (el) {
+                    el.style.transition = 'opacity 0.2s ease';
+                    el.style.opacity = opacity;
+                    el.style.pointerEvents = pointerEvents;
+                }
+            });
+        };
+
+        // Mute UI
+        toggleBackgroundUI('0', 'none');
+
         // 1. Mount Starfield Background
         starfieldService.mount(document.body);
         starfieldService.triggerEntry();
@@ -1155,7 +1176,7 @@ export class UIEventControl {
         // 2. Instantly create the overlay
         const overlay = document.createElement('div');
         overlay.id = 'act-intermission-overlay';
-        overlay.className = 'fixed inset-0 z-[10000] flex flex-col items-center justify-center pointer-events-auto opacity-0';
+        overlay.className = 'fixed inset-0 z-[10000] flex flex-col items-center justify-center pointer-events-auto opacity-0 transition-colors duration-500';
         document.body.appendChild(overlay);
 
         // 3. Fade in overlay over 1.5s
@@ -1168,29 +1189,34 @@ export class UIEventControl {
         promptPanel.style.minWidth = '300px';
         promptPanel.style.animationDuration = '0.4s';
         
+        // --- PHASE 2: High-Fidelity Glass Polish ---
+        promptPanel.style.backdropFilter = 'blur(10px)';
+        promptPanel.style.webkitBackdropFilter = 'blur(10px)';
+        
         const promptTitle = document.createElement('h2');
         promptTitle.className = 'text-3xl tracking-widest mb-8 text-center';
         promptTitle.style.fontFamily = '"Iceland", sans-serif';
         promptTitle.textContent = config.actLabel || 'ACT';
 
-        // Custom Theme Applications
-        if (missionId === 'mission_tutorial_01') { // Act 0
-            promptTitle.style.color = '#22d3ee';
-            promptPanel.style.background = 'linear-gradient(135deg, #0f172a, #000000)';
-            promptPanel.style.border = '1px solid #fbbf24';
-            promptPanel.style.boxShadow = '0 0 15px rgba(251, 191, 36, 0.8)';
-        } else if (missionId === 'mission_10') { // Act I
-            promptTitle.style.color = '#fbbf24';
-            promptPanel.style.background = 'linear-gradient(135deg, #fdf6e3, #ffffff)';
-            promptPanel.style.border = '1px solid #ffffff';
-            promptPanel.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.8)';
-            promptTitle.style.textShadow = '0 0 5px rgba(251, 191, 36, 0.5)';
-        } else if (missionId === 'mission_18') { // Act II
+        // --- PHASE 2: Tri-Color Gradients and Shadow Depth ---
+        if (missionId === 'mission_tutorial_01') { // Act 0: Deep Space Blue -> Obsidian -> Amber
+            promptTitle.style.color = '#38bdf8';
+            promptTitle.style.textShadow = '0 0 8px rgba(56, 189, 248, 0.6)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 6, 23, 0.95) 50%, rgba(217, 119, 6, 0.85) 100%)';
+            promptPanel.style.border = '1px solid rgba(251, 191, 36, 0.5)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 25px rgba(251, 191, 36, 0.4), inset 0 0 15px rgba(251, 191, 36, 0.2)';
+        } else if (missionId === 'mission_10') { // Act I: Cream/Ivory -> Soft Gold -> Deep Gold
+            promptTitle.style.color = '#111827';
+            promptTitle.style.textShadow = '0 0 5px rgba(251, 191, 36, 0.8)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(254, 252, 232, 0.95) 0%, rgba(253, 224, 71, 0.9) 50%, rgba(202, 138, 4, 0.95) 100%)';
+            promptPanel.style.border = '1px solid rgba(255, 255, 255, 0.6)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(250, 204, 21, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.4)';
+        } else if (missionId === 'mission_18') { // Act II: Void Purple -> Imperial Violet -> Burnt Orange
             promptTitle.style.color = '#ffffff';
-            promptPanel.style.background = 'linear-gradient(135deg, #8b5cf6, #ea580c)';
-            promptPanel.style.border = '1px solid #a855f7';
-            promptPanel.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.8)';
-            promptTitle.style.textShadow = '0 0 8px rgba(0,0,0,0.8)';
+            promptTitle.style.textShadow = '0 0 10px rgba(0, 0, 0, 0.9)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(46, 16, 101, 0.85) 0%, rgba(76, 29, 149, 0.95) 50%, rgba(234, 88, 12, 0.85) 100%)';
+            promptPanel.style.border = '1px solid rgba(168, 85, 247, 0.5)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 25px rgba(168, 85, 247, 0.4), inset 0 0 15px rgba(234, 88, 12, 0.3)';
         } else {
             promptTitle.style.color = '#67e8f9';
         }
@@ -1207,6 +1233,10 @@ export class UIEventControl {
         startBtn.onclick = (e) => {
             e.preventDefault();
             startBtn.disabled = true;
+
+            // --- PHASE 4: Early Starfield Dismissal & Blackout ---
+            starfieldService.triggerQuickExit();
+            overlay.classList.add('bg-black');
 
             // Trigger CRT Shutdown Visuals
             promptPanel.classList.remove('sev-crt-turn-on');
@@ -1265,14 +1295,17 @@ export class UIEventControl {
                 await fadeOut.finished;
 
                 overlay.remove();
-                starfieldService.triggerQuickExit();
+                
+                // --- PHASE 3: Restore Background UI ---
+                toggleBackgroundUI('1', 'auto');
+                
             }).catch(err => {
                 this.manager.logger.warn('UIEventControl', 'Act intermission video playback failed.', err);
                 
                 // Execute fallback text and resolve the sequence even on a strict failure
                 if (callback) callback();
                 overlay.remove();
-                starfieldService.triggerQuickExit();
+                toggleBackgroundUI('1', 'auto');
             });
         };
     }

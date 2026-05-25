@@ -74,6 +74,15 @@ class CinematicService {
                 transition: 'opacity 0.5s ease-in-out'
             });
 
+            // Dynamic CSS injection to aggressively suppress native OS media player controls bleeding into the UI
+            const styleBlock = document.createElement('style');
+            styleBlock.textContent = `
+                #dynamic-cinematic-overlay video::-webkit-media-controls {
+                    display: none !important;
+                }
+            `;
+            container.appendChild(styleBlock);
+
             // Explicit WKWebView attributes force inline playback, preventing the native iOS 
             // media player from taking full-screen control and breaking the SPA context.
             const video = document.createElement('video');
@@ -91,7 +100,7 @@ class CinematicService {
             });
 
             const skipBtn = document.createElement('button');
-            skipBtn.innerHTML = 'SKIP ⏭';
+            skipBtn.innerHTML = 'SKIP SEQUENCE';
             skipBtn.className = 'btn';
             Object.assign(skipBtn.style, {
                 position: 'absolute',
@@ -116,6 +125,8 @@ class CinematicService {
             // Mutex to prevent double-resolutions if multiple events fire concurrently
             let isResolved = false;
             let skipTimeout;
+            let lastTapTime = 0;
+            let tapCount = 0;
 
             // 2. Garbage Collection & Resolution Protocol (ADR-048)
             const cleanupAndResolve = () => {
@@ -151,15 +162,26 @@ class CinematicService {
             // 3. Event Handlers
             const handleOverlayTap = (e) => {
                 // Ignore taps directly on the skip button to prevent event overlap,
-                // only reveal the skip button on the first general screen tap.
+                // utilize a double-tap requirement to prevent accidental UI triggers.
                 if (e.target !== skipBtn && skipBtn.style.opacity === '0') {
-                    skipBtn.style.opacity = '1';
-                    skipBtn.style.pointerEvents = 'auto';
-                    
-                    skipTimeout = setTimeout(() => {
-                        skipBtn.style.opacity = '0';
-                        skipBtn.style.pointerEvents = 'none';
-                    }, 3000);
+                    const now = Date.now();
+                    if (now - lastTapTime < 3000) {
+                        tapCount++;
+                    } else {
+                        tapCount = 1;
+                    }
+                    lastTapTime = now;
+
+                    if (tapCount >= 2) {
+                        skipBtn.style.opacity = '1';
+                        skipBtn.style.pointerEvents = 'auto';
+                        
+                        skipTimeout = setTimeout(() => {
+                            skipBtn.style.opacity = '0';
+                            skipBtn.style.pointerEvents = 'none';
+                            tapCount = 0; // Reset internal tap registry on fade
+                        }, 3000);
+                    }
                 }
             };
 
