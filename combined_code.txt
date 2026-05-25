@@ -24447,6 +24447,7 @@ import { NAV_IDS, SCREEN_IDS } from '../../data/constants.js';
 import { GameAttributes } from '../GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
 import { startLicenseAnimation, endLicenseAnimation } from './AnimationService.js';
+import { ACT_CINEMATIC_CONFIG } from './UIEventControl.js';
 
 function getOfficerRarityHex(rarity) {
     switch (rarity) {
@@ -24754,7 +24755,8 @@ export class UIMissionControl {
         const mission = DB.MISSIONS[missionId];
         if (!mission) return;
 
-        const { missions, currentLocationId } = this.manager.lastKnownState;
+        const gameState = this.manager.lastKnownState;
+        const { missions, currentLocationId, player } = gameState;
         
         const isActive = missions.activeMissionIds.includes(missionId);
         const progress = missions.missionProgress[missionId];
@@ -24762,6 +24764,43 @@ export class UIMissionControl {
 
         const isLocationValid = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
+
+        // --- ACT INTERMISSION INTERCEPT (PHASE 3) ---
+        if (ACT_CINEMATIC_CONFIG && ACT_CINEMATIC_CONFIG[missionId]) {
+            // Target the core mutable state, not the disconnected snapshot
+            const coreState = this.manager.simulationService?.gameState;
+            const targetPlayer = coreState ? coreState.player : player;
+            
+            if (!targetPlayer.viewedIntermissions) targetPlayer.viewedIntermissions = [];
+            
+            if (!targetPlayer.viewedIntermissions.includes(missionId)) {
+                // Mark as viewed on the core state to satisfy the "once only, ever" constraint
+                targetPlayer.viewedIntermissions.push(missionId);
+                
+                // Force background save immediately to ensure persistence without redrawing UI
+                if (coreState && this.manager.simulationService) {
+                    this.manager.simulationService.saveGame();
+                }
+
+                // Execute sequence, delaying standard modal instantiation
+                if (this.manager.eventControl && typeof this.manager.eventControl.playActIntermissionSequence === 'function') {
+                    this.manager.eventControl.playActIntermissionSequence(
+                        missionId,
+                        ACT_CINEMATIC_CONFIG[missionId],
+                        () => {
+                            // Render standard modal post-sequence
+                            if (canComplete) {
+                                this._showMissionCompletionModal(mission);
+                            } else {
+                                this._showMissionDetailsModal(mission);
+                            }
+                        }
+                    );
+                    return; // Halt standard execution path
+                }
+            }
+        }
+        // --- END INTERCEPT ---
 
         if (canComplete) {
             this._showMissionCompletionModal(mission);
@@ -26149,6 +26188,12 @@ import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 import { AssetService } from '../AssetService.js';
 import CinematicService from './CinematicService.js';
 
+export const ACT_CINEMATIC_CONFIG = {
+    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: '2220 - The Century of Stagnation', actLabel: 'PROLOGUE' },
+    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'Act I - The Trade', actLabel: 'ACT I' },
+    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'Act II - The Intel', actLabel: 'ACT II' }
+};
+
 export class UIEventControl {
     constructor(manager) {
         this.manager = manager;
@@ -26241,15 +26286,9 @@ export class UIEventControl {
 
     /**
      * Executes the CRT instantiation and resolution sequence for Story Events.
-     * Phase 3 Update: Asynchronously intercepts cinematic payloads via the Glass Pane logic 
-     * before generating the UI standard modal to maintain narrative pacing without layout destruction.
-     * @param {Object} eventDef - The definition object from STORY_EVENTS.
-     * @param {Function} choicesCallback - Resolution hook passing the selected choice.id (or null if none).
      */
     async showStoryEventModal(eventDef, choicesCallback) {
         
-        // Phase 3 Integration: If a cinematic is attached to this narrative event, 
-        // halt the standard UI generation and play the video first.
         if (eventDef.cinematicPath) {
             try {
                 this.manager.logger.info('UIEventControl', `Initiating cinematic sequence for narrative event: ${eventDef.cinematicPath}`);
@@ -26380,9 +26419,6 @@ export class UIEventControl {
                             modal.classList.add('hidden');
                         }
                         
-                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
-                        // to the next frame. This prevents the main thread from locking up 
-                        // and dropping frames in the Canvas-driven travel animation.
                         requestAnimationFrame(() => {
                             setTimeout(() => {
                                 choicesCallback(choiceId);
@@ -26502,15 +26538,11 @@ export class UIEventControl {
                     }
 
                     button.onclick = () => {
-                        // Prevent multi-clicks and provide immediate tactile feedback
                         button.style.transform = 'scale(0.98)';
                         button.style.opacity = '0.7';
                         const allBtns = choicesContainer.querySelectorAll('.event-choice-btn');
                         allBtns.forEach(b => b.style.pointerEvents = 'none');
 
-                        // PHASE 3 FIX: Defer the heavy outcome resolution and DOM generation 
-                        // to the next frame. This prevents the main thread from locking up 
-                        // and dropping frames in the Canvas-driven travel animation.
                         requestAnimationFrame(() => {
                             setTimeout(() => {
                                 choicesCallback(choice.id);
@@ -27281,6 +27313,178 @@ export class UIEventControl {
         } catch (error) {
             this.manager.logger.error('UIEventControl', `Cinematic test sequence failed:`, error);
         }
+    }
+
+    /**
+     * Executes the Act Intermission Sequence (Video + Act Intermission Screen).
+     * Option A: The "Bridging Gesture" Approach. Intercepts OS user-gesture
+     * expiration by spawning a diegetic prompt over the blackout to serve as a 
+     * fresh, fully trusted trigger for the unmuted video overlay.
+     * @param {string} missionId 
+     * @param {Object} config 
+     * @param {Function} callback 
+     */
+    async playActIntermissionSequence(missionId, config, callback) {
+        // --- PHASE 3: Background UI Muting ---
+        const toggleBackgroundUI = (opacity, pointerEvents) => {
+            const elements = [
+                document.getElementById('mission-sticky-bar'),
+                document.getElementById('btn-econ-weather'),
+                document.getElementById('global-help-anchor'),
+                document.getElementById('btn-game-menu'),
+                document.getElementById('btn-achievements')
+            ];
+            elements.forEach(el => {
+                if (el) {
+                    el.style.transition = 'opacity 0.2s ease';
+                    el.style.opacity = opacity;
+                    el.style.pointerEvents = pointerEvents;
+                }
+            });
+        };
+
+        // Mute UI
+        toggleBackgroundUI('0', 'none');
+
+        // 1. Mount Starfield Background
+        starfieldService.mount(document.body);
+        starfieldService.triggerEntry();
+
+        // 2. Instantly create the overlay
+        const overlay = document.createElement('div');
+        overlay.id = 'act-intermission-overlay';
+        overlay.className = 'fixed inset-0 z-[10000] flex flex-col items-center justify-center pointer-events-auto opacity-0 transition-colors duration-500';
+        document.body.appendChild(overlay);
+
+        // 3. Fade in overlay over 1.5s
+        const fadeIn = overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1500, fill: 'forwards', easing: 'ease-in-out' });
+        await fadeIn.finished;
+
+        // 4. Construct Diegetic Prompt Modal (CRT Style)
+        const promptPanel = document.createElement('div');
+        promptPanel.className = 'modal-content sci-fi-frame sev-crt-turn-on flex flex-col items-center justify-center p-8';
+        promptPanel.style.minWidth = '300px';
+        promptPanel.style.animationDuration = '0.4s';
+        
+        // --- PHASE 2: High-Fidelity Glass Polish ---
+        promptPanel.style.backdropFilter = 'blur(10px)';
+        promptPanel.style.webkitBackdropFilter = 'blur(10px)';
+        
+        const promptTitle = document.createElement('h2');
+        promptTitle.className = 'text-3xl tracking-widest mb-8 text-center';
+        promptTitle.style.fontFamily = '"Iceland", sans-serif';
+        promptTitle.textContent = config.actLabel || 'ACT';
+
+        // --- PHASE 2: Tri-Color Gradients and Shadow Depth ---
+        if (missionId === 'mission_tutorial_01') { // Act 0: Deep Space Blue -> Obsidian -> Amber
+            promptTitle.style.color = '#38bdf8';
+            promptTitle.style.textShadow = '0 0 8px rgba(56, 189, 248, 0.6)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 6, 23, 0.95) 50%, rgba(217, 119, 6, 0.85) 100%)';
+            promptPanel.style.border = '1px solid rgba(251, 191, 36, 0.5)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 25px rgba(251, 191, 36, 0.4), inset 0 0 15px rgba(251, 191, 36, 0.2)';
+        } else if (missionId === 'mission_10') { // Act I: Cream/Ivory -> Soft Gold -> Deep Gold
+            promptTitle.style.color = '#111827';
+            promptTitle.style.textShadow = '0 0 5px rgba(251, 191, 36, 0.8)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(254, 252, 232, 0.95) 0%, rgba(253, 224, 71, 0.9) 50%, rgba(202, 138, 4, 0.95) 100%)';
+            promptPanel.style.border = '1px solid rgba(255, 255, 255, 0.6)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.8), 0 0 30px rgba(250, 204, 21, 0.5), inset 0 0 20px rgba(255, 255, 255, 0.4)';
+        } else if (missionId === 'mission_18') { // Act II: Void Purple -> Imperial Violet -> Burnt Orange
+            promptTitle.style.color = '#ffffff';
+            promptTitle.style.textShadow = '0 0 10px rgba(0, 0, 0, 0.9)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(46, 16, 101, 0.85) 0%, rgba(76, 29, 149, 0.95) 50%, rgba(234, 88, 12, 0.85) 100%)';
+            promptPanel.style.border = '1px solid rgba(168, 85, 247, 0.5)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 25px rgba(168, 85, 247, 0.4), inset 0 0 15px rgba(234, 88, 12, 0.3)';
+        } else {
+            promptTitle.style.color = '#67e8f9';
+        }
+
+        const startBtn = document.createElement('button');
+        startBtn.className = 'btn px-8 py-3 text-lg font-bold btn-pulse-green w-1/2';
+        startBtn.textContent = 'START';
+
+        promptPanel.appendChild(promptTitle);
+        promptPanel.appendChild(startBtn);
+        overlay.appendChild(promptPanel);
+
+        // 5. Synchronous Execution Hook (The Bridge)
+        startBtn.onclick = (e) => {
+            e.preventDefault();
+            startBtn.disabled = true;
+
+            // --- PHASE 4: Early Starfield Dismissal & Blackout ---
+            starfieldService.triggerQuickExit();
+            overlay.classList.add('bg-black');
+
+            // Trigger CRT Shutdown Visuals
+            promptPanel.classList.remove('sev-crt-turn-on');
+            promptPanel.classList.add('sev-crt-shutdown');
+            promptPanel.style.animationDuration = '0.35s';
+
+            // Elevate the cinematic overlay to ensure it renders above the blackout screen
+            const fmvOverlay = document.getElementById('fmv-cinematic-overlay') || document.getElementById('dynamic-cinematic-overlay');
+            let originalZIndex = '';
+            if (fmvOverlay) {
+                originalZIndex = fmvOverlay.style.zIndex;
+                fmvOverlay.style.zIndex = '10001';
+            }
+
+            // CRITICAL: Execute CinematicService synchronously within the click event execution stack
+            CinematicService.playVideo(config.video).then(async () => {
+                // Restore Z-Index
+                if (fmvOverlay) {
+                    fmvOverlay.style.zIndex = originalZIndex;
+                }
+                
+                // Clear the prompt panel from DOM completely
+                promptPanel.remove();
+
+                // 1s hold
+                await new Promise(r => setTimeout(r, 1000));
+
+                // Act Intermission Screen Text Sequence
+                const text = document.createElement('h1');
+                text.className = 'text-3xl md:text-5xl text-white tracking-widest opacity-0 text-center px-4';
+                text.style.fontFamily = '"Bruno Ace SC", sans-serif';
+                text.textContent = config.title;
+                overlay.appendChild(text);
+
+                // Fade Text In (3s)
+                const textIn = text.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 3000, fill: 'forwards', easing: 'ease-out' });
+                await textIn.finished;
+
+                // Hold Text reduced to 2s
+                await new Promise(r => setTimeout(r, 2000));
+
+                // Blur-Fade Out Text (3s)
+                const textOut = text.animate([
+                    { opacity: 1, filter: 'blur(0px)' }, 
+                    { opacity: 0, filter: 'blur(10px)' }
+                ], { duration: 3000, fill: 'forwards', easing: 'ease-in' });
+                await textOut.finished;
+
+                // Execute callback to pop mission modal instantly, hidden behind the black overlay
+                if (callback) {
+                    callback();
+                }
+
+                // Fade out the primary overlay back to the UI
+                const fadeOut = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 3000, fill: 'forwards', easing: 'ease-in-out' });
+                await fadeOut.finished;
+
+                overlay.remove();
+                
+                // --- PHASE 3: Restore Background UI ---
+                toggleBackgroundUI('1', 'auto');
+                
+            }).catch(err => {
+                this.manager.logger.warn('UIEventControl', 'Act intermission video playback failed.', err);
+                
+                // Execute fallback text and resolve the sequence even on a strict failure
+                if (callback) callback();
+                overlay.remove();
+                toggleBackgroundUI('1', 'auto');
+            });
+        };
     }
 }
 --- END OF FILE: ./js/services/ui/UIEventControl.js ---
@@ -29520,7 +29724,6 @@ export class UIHangarControl {
  * ============================================================================
  */ ////////////////////////////////////////////////
 
-
 class CinematicService {
     /**
      * Initiates a blocking, full-screen video playback sequence.
@@ -29531,45 +29734,87 @@ class CinematicService {
      */
     static playVideo(videoPath) {
         return new Promise((resolve) => {
-            const overlay = document.getElementById('fmv-cinematic-overlay');
-            const container = document.getElementById('fmv-video-container');
-            const skipBtn = document.getElementById('fmv-skip-btn');
+            // 1. Construct the Dynamic DOM Infrastructure
+            const container = document.createElement('div');
+            container.id = 'dynamic-cinematic-overlay';
+            Object.assign(container.style, {
+                position: 'fixed',
+                inset: '0',
+                zIndex: '100000', // Forces rendering over the EventControl blackout layer
+                backgroundColor: '#000000',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                opacity: '0',
+                transition: 'opacity 0.5s ease-in-out'
+            });
 
-            // Fail-safe: Prevent soft-locking the simulation if DOM elements are missing
-            if (!overlay || !container || !skipBtn) {
-                console.error('[CinematicService] Critical DOM infrastructure missing. Verify index.html injections.');
-                resolve(); 
-                return;
-            }
+            // Dynamic CSS injection to aggressively suppress native OS media player controls bleeding into the UI
+            const styleBlock = document.createElement('style');
+            styleBlock.textContent = `
+                #dynamic-cinematic-overlay video::-webkit-media-controls {
+                    display: none !important;
+                }
+            `;
+            container.appendChild(styleBlock);
 
-            // 1. Construct the Video Element
             // Explicit WKWebView attributes force inline playback, preventing the native iOS 
             // media player from taking full-screen control and breaking the SPA context.
             const video = document.createElement('video');
             video.src = videoPath;
+            video.controls = false; // Strictly enforce no native media controls
+            video.playsInline = true; // Hard-lock property
             video.setAttribute('playsinline', '');
             video.setAttribute('webkit-playsinline', '');
             video.setAttribute('disablePictureInPicture', '');
-            
-            // Depending on the trigger, the video might require the 'muted' attribute if not 
-            // preceded directly by a user gesture. Assuming standard narrative flow (user clicked an event choice),
-            // audio permissions will inherently be granted by the OS.
-            
+            Object.assign(video.style, {
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                pointerEvents: 'none' // Let interactions pass to the wrapper for skip detection
+            });
+
+            const skipBtn = document.createElement('button');
+            skipBtn.innerHTML = 'SKIP SEQUENCE';
+            skipBtn.className = 'btn';
+            Object.assign(skipBtn.style, {
+                position: 'absolute',
+                bottom: 'calc(env(safe-area-inset-bottom, 20px) + 20px)',
+                right: '20px',
+                zIndex: '100001',
+                opacity: '0',
+                pointerEvents: 'none',
+                transition: 'opacity 0.3s ease',
+                boxShadow: '0 4px 15px rgba(0, 0, 0, 0.8)',
+                textTransform: 'uppercase'
+            });
+
             container.appendChild(video);
+            container.appendChild(skipBtn);
+            document.body.appendChild(container);
+
+            // Force reflow and initiate CSS fade-in
+            void container.offsetWidth;
+            container.style.opacity = '1';
 
             // Mutex to prevent double-resolutions if multiple events fire concurrently
             let isResolved = false;
+            let skipTimeout;
+            let lastTapTime = 0;
+            let tapCount = 0;
 
             // 2. Garbage Collection & Resolution Protocol (ADR-048)
             const cleanupAndResolve = () => {
                 if (isResolved) return;
                 isResolved = true;
 
-                // Initiate CSS fade out sequence
-                overlay.classList.remove('active');
-                skipBtn.classList.remove('active');
+                clearTimeout(skipTimeout);
 
-                // Await CSS transition completion (0.5s mapped in modal-cinematics.css) before hardware wipe
+                // Initiate CSS fade out sequence
+                container.style.opacity = '0';
+                skipBtn.style.opacity = '0';
+
+                // Await CSS transition completion before hardware wipe
                 setTimeout(() => {
                     // Aggressive iOS WKWebView hardware decoder wipe
                     video.pause();
@@ -29577,9 +29822,13 @@ class CinematicService {
                     video.load(); // Flushes the active video buffer from RAM
                     video.remove(); // Severs the DOM node completely
                     
-                    // Listener teardown to prevent memory leaks on the persistent parent DOM overlay
-                    overlay.removeEventListener('pointerdown', handleOverlayTap);
+                    // Listener teardown to prevent memory leaks
+                    container.removeEventListener('pointerdown', handleOverlayTap);
                     skipBtn.removeEventListener('click', handleSkipClick);
+                    
+                    if (container.parentNode) {
+                        container.parentNode.removeChild(container);
+                    }
                     
                     resolve();
                 }, 500); 
@@ -29588,9 +29837,26 @@ class CinematicService {
             // 3. Event Handlers
             const handleOverlayTap = (e) => {
                 // Ignore taps directly on the skip button to prevent event overlap,
-                // only reveal the skip button on the first general screen tap.
-                if (e.target !== skipBtn && !skipBtn.classList.contains('active')) {
-                    skipBtn.classList.add('active');
+                // utilize a double-tap requirement to prevent accidental UI triggers.
+                if (e.target !== skipBtn && skipBtn.style.opacity === '0') {
+                    const now = Date.now();
+                    if (now - lastTapTime < 3000) {
+                        tapCount++;
+                    } else {
+                        tapCount = 1;
+                    }
+                    lastTapTime = now;
+
+                    if (tapCount >= 2) {
+                        skipBtn.style.opacity = '1';
+                        skipBtn.style.pointerEvents = 'auto';
+                        
+                        skipTimeout = setTimeout(() => {
+                            skipBtn.style.opacity = '0';
+                            skipBtn.style.pointerEvents = 'none';
+                            tapCount = 0; // Reset internal tap registry on fade
+                        }, 3000);
+                    }
                 }
             };
 
@@ -29601,14 +29867,15 @@ class CinematicService {
             };
 
             // Bind contextual listeners
-            overlay.addEventListener('pointerdown', handleOverlayTap);
+            container.addEventListener('pointerdown', handleOverlayTap);
             skipBtn.addEventListener('click', handleSkipClick);
             video.addEventListener('ended', cleanupAndResolve);
+            video.addEventListener('error', () => {
+                console.warn(`[CinematicService] Video failed to load or play: ${videoPath}`);
+                cleanupAndResolve();
+            });
 
             // 4. Execution Sequence
-            overlay.classList.add('active');
-            
-            // Execute playback. 
             // A catch block is mandatory; if iOS strictly blocks playback due to an unfulfilled 
             // user-gesture policy, it will throw an error. Resolving immediately prevents an infinite hang.
             video.play().catch(error => {
@@ -35220,7 +35487,7 @@ export class GameState {
                 ),
                 seenCommodityMilestones: [], financeLog: [],
                 seenAutoSaveNotice: false, // V4 SYSTEM: Notification flag
-                activePerks: {}, seenEvents: [], seenStoryEvents: [], activeShipId: SHIP_IDS.WANDERER, 
+                activePerks: {}, seenEvents: [], seenStoryEvents: [], viewedIntermissions: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
                 unlockedOfficerIds: [], // Added for Officer Acquisition Pipeline
@@ -36913,17 +37180,6 @@ export class MissionService {
                  discountPercent: 0.70, 
                  durationDays: 120 
              });
-        }
-
-        // --- NEW: Act Screen Cinematic Triggers ---
-        if (missionId === 'mission_10') {
-            if (this.uiManager && typeof this.uiManager.playActSequence === 'function') {
-                this.uiManager.playActSequence('Act I - The Trade');
-            }
-        } else if (missionId === 'mission_18') {
-            if (this.uiManager && typeof this.uiManager.playActSequence === 'function') {
-                this.uiManager.playActSequence('Act II - The Intel');
-            }
         }
 
         // --- NEW: ON ACCEPT ACTIONS (System State Triggers & Credit Grants) ---
