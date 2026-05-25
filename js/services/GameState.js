@@ -457,7 +457,7 @@ export class GameState {
                 ),
                 seenCommodityMilestones: [], financeLog: [],
                 seenAutoSaveNotice: false, // V4 SYSTEM: Notification flag
-                activePerks: {}, seenEvents: [], seenStoryEvents: [], activeShipId: SHIP_IDS.WANDERER, 
+                activePerks: {}, seenEvents: [], seenStoryEvents: [], viewedIntermissions: [], activeShipId: SHIP_IDS.WANDERER, 
                 ownedShipIds: [SHIP_IDS.WANDERER],
                 officerRoster: Object.keys(OFFICERS), // Expanded officer universe pool tracking, initialized for testing
                 unlockedOfficerIds: [], // Added for Officer Acquisition Pipeline
