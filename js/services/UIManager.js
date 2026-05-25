@@ -194,9 +194,11 @@ export class UIManager {
 
         const launchModal = this.cache.launchModal;
         
+        // VIRTUAL WORKBENCH FIX: Treat 'modal-hiding' as closed to bypass dropped animationend events
         const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden') && !launchModal.classList.contains('modal-hiding');
         const isTravelLocked = gameState.pendingTravel || gameState.isTraveling || isLaunchModalOpen || document.body.classList.contains('ui-cinematic-lock');
 
+        // Helper function to force hide/show HUD UI elements via !important flags
         const toggleHUDElement = (el, forceHide, displayType = 'flex') => {
             if (!el) return;
             if (forceHide) {
@@ -245,6 +247,7 @@ export class UIManager {
             }
             if (this.helpManager && this.helpManager.anchorBtn) {
                 toggleHUDElement(this.helpManager.anchorBtn, isTravelLocked);
+                // Ensure opacity handles help modal visibility if it is actively rendering
                 if (!isTravelLocked && this.helpManager.isVisible) {
                     this.helpManager.anchorBtn.style.setProperty('opacity', '0', 'important');
                     this.helpManager.anchorBtn.style.setProperty('pointer-events', 'none', 'important');
@@ -263,7 +266,13 @@ export class UIManager {
     }
 
     _applyTheme(gameState) {
+        // V1 OPTIMIZATION: Phase 5 - JavaScript Theme Engine Routing
+        // Delegates entirely to AssetService for root-level CSS variable mutation.
+        // Abandons legacy granular DOM manipulation and .theme-x class swapping.
+        
+        // Ensure the base class structure remains intact for the container
         this.cache.gameContainer.className = 'game-container';
+        
         AssetService.applyLocationTheme(gameState.currentLocationId);
     }
 
@@ -451,6 +460,7 @@ export class UIManager {
         
         this.cache.subNavBar.innerHTML = subNavsHtml;
 
+        // Auto-center navigation card if applicable
         if (activeScreen === SCREEN_IDS.NAVIGATION) {
             requestAnimationFrame(() => {
                 setTimeout(() => {
@@ -735,12 +745,14 @@ export class UIManager {
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
     showEconWeatherModal(gameState = this.lastKnownState) {
+        // --- PHASE 1 FIX: Toggle Logic & Duplicate Prevention ---
         const existingModal = document.getElementById('econ-weather-modal');
         if (existingModal && !existingModal.classList.contains('hidden')) {
             this.hideModal('econ-weather-modal');
             return;
         }
 
+        // Prevent duplicate queuing if one is already waiting to be popped
         const isQueued = this.modalEngine.modalQueue.some(m => m.modalId === 'econ-weather-modal');
         if (isQueued) return;
 
@@ -888,26 +900,28 @@ export class UIManager {
         const tooltip = this.cache.graphTooltip;
         if (!tooltip) return;
 
+        // Guard against listener spam
         if (tooltip.classList.contains('blur-fade-out')) return;
 
         if (this.activeGraphAnchor || tooltip.style.display !== 'none') {
             tooltip.classList.remove('blur-fade-in');
             
+            // Phase 1 Acceleration: Dynamically override the CSS animation duration
             tooltip.style.animationDuration = '0.15s';
             
-            void tooltip.offsetWidth; 
+            void tooltip.offsetWidth; // Force layout recalculation
             tooltip.classList.add('blur-fade-out');
             
             const cleanup = () => {
                 if (tooltip.classList.contains('blur-fade-out')) {
                     tooltip.style.display = 'none';
                     tooltip.classList.remove('blur-fade-out');
-                    tooltip.style.animationDuration = ''; 
+                    tooltip.style.animationDuration = ''; // Strip the override so entrance animations aren't broken
                 }
             };
             
             tooltip.addEventListener('animationend', cleanup, { once: true });
-            setTimeout(cleanup, 150); 
+            setTimeout(cleanup, 150); // Fallback reduced to match the 150ms acceleration
             
             this.activeGraphAnchor = null;
         }
@@ -927,12 +941,12 @@ export class UIManager {
         }
 
         tooltip.classList.remove('blur-fade-out');
-        tooltip.style.animationDuration = '0.15s'; 
+        tooltip.style.animationDuration = '0.15s'; // OVERRIDE TO 0.15s
         tooltip.style.display = 'block';
         this.updateGraphTooltipPosition();
         
         tooltip.classList.remove('blur-fade-in');
-        void tooltip.offsetWidth; 
+        void tooltip.offsetWidth; // Force layout recalculation
         tooltip.classList.add('blur-fade-in');
     }
 
@@ -961,12 +975,16 @@ export class UIManager {
         const tooltip = this.cache.genericTooltip;
         tooltip.innerHTML = content;
         
+        // Reset legacy styles that might interfere with calculations
         tooltip.style.transform = '';
         tooltip.style.right = 'auto';
         tooltip.style.bottom = 'auto';
         
+        // Ensure clean state before positioning
         tooltip.style.display = 'block';
         
+        // Force the browser to render the tooltip's text block on the next frame 
+        // before attempting to extract offsetWidth, completely bypassing WKWebView race conditions.
         requestAnimationFrame(() => {
             if (this.activeGenericTooltipAnchor === anchorEl) {
                 this.updateGenericTooltipPosition();
@@ -994,14 +1012,17 @@ export class UIManager {
         if (this.activePointerCoords && 
             typeof this.activePointerCoords.x === 'number' && !isNaN(this.activePointerCoords.x) &&
             typeof this.activePointerCoords.y === 'number' && !isNaN(this.activePointerCoords.y)) {
+            // Viewport-absolute coordinate anchoring
             const { x, y, isArtFrame } = this.activePointerCoords;
 
             if (this.activeGenericTooltipPosition === 'center') {
                 leftPos = x - (tooltipWidth / 2);
                 
                 if (isArtFrame) {
+                    // Lock dead-center over the calculated art frame coordinates
                     topPos = y - (tooltipHeight / 2);
                 } else {
+                    // Standard pointer: Shift up slightly so finger doesn't obscure text
                     topPos = y - tooltipHeight - 15; 
                     if (topPos < 10) {
                         topPos = y + 25;
@@ -1015,6 +1036,7 @@ export class UIManager {
                 topPos = y - (tooltipHeight / 2);
             }
         } else {
+            // Fallback: If no coords (e.g. forced trigger not originating from pointer event) or invalid coords
             const anchorRect = this.activeGenericTooltipAnchor.getBoundingClientRect();
 
             if (this.activeGenericTooltipPosition === 'center') {
@@ -1035,6 +1057,7 @@ export class UIManager {
             }
         }
 
+        // Standard Screen Clamping Fallbacks
         if (leftPos < 10) leftPos = 10;
         if (leftPos + tooltipWidth > window.innerWidth - 10) {
             leftPos = window.innerWidth - tooltipWidth - 10;
@@ -1263,128 +1286,6 @@ export class UIManager {
             this.logger.error('UIManager', `Act sequence failed: ${e}`);
         } finally {
             document.body.classList.remove('ui-cinematic-lock');
-        }
-    }
-
-    async triggerActIntermissionSequence(missionId, sequenceData) {
-        try {
-            // Lock UI and start standard visual blackout
-            document.body.classList.add('ui-cinematic-lock');
-            
-            const blackoutOverlay = document.createElement('div');
-            blackoutOverlay.className = 'fixed inset-0 bg-black pointer-events-auto';
-            blackoutOverlay.style.zIndex = '3400';
-            blackoutOverlay.style.opacity = '0';
-            blackoutOverlay.style.transition = 'opacity 1.5s ease-in-out';
-            document.body.appendChild(blackoutOverlay);
-
-            // Force layout reflow
-            void blackoutOverlay.offsetWidth;
-            blackoutOverlay.style.opacity = '1';
-
-            // Wait 2.5s (1.5s fade + 1.0s pure black)
-            await new Promise(r => setTimeout(r, 2500));
-
-            // Execute Video
-            if (sequenceData.videoPath) {
-                await new Promise((resolve) => {
-                    const filename = sequenceData.videoPath.split('/').pop().split('.')[0];
-
-                    if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
-                        console.log(`[UIManager] Triggering native iOS playback for: ${filename}`);
-                        window.onCinematicComplete = () => {
-                            delete window.onCinematicComplete;
-                            resolve();
-                        };
-                        window.webkit.messageHandlers.iosPlayCinematic.postMessage(filename);
-                    } else {
-                        console.log(`[UIManager] Triggering web fallback playback for: ${filename}`);
-                        
-                        const container = document.createElement('div');
-                        Object.assign(container.style, {
-                            position: 'fixed', top: '0', left: '0', width: '100vw', height: '100dvh',
-                            zIndex: '9999', backgroundColor: '#000', opacity: '0', transition: 'opacity 0.5s ease'
-                        });
-
-                        const videoEl = document.createElement('video');
-                        videoEl.src = sequenceData.videoPath;
-                        videoEl.autoplay = true;
-                        videoEl.playsInline = true;
-                        videoEl.disablePictureInPicture = true;
-                        videoEl.controls = false;
-                        Object.assign(videoEl.style, {
-                            width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none'
-                        });
-
-                        let isFinished = false;
-                        const finish = () => {
-                            if (isFinished) return;
-                            isFinished = true;
-                            
-                            container.style.opacity = '0';
-                            setTimeout(() => {
-                                videoEl.pause();
-                                videoEl.removeAttribute('src');
-                                videoEl.load();
-                                container.remove();
-                                resolve();
-                            }, 500);
-                        };
-
-                        videoEl.addEventListener('ended', finish);
-                        videoEl.addEventListener('error', finish); // Prevents hanging on Web 404
-
-                        container.appendChild(videoEl);
-                        document.body.appendChild(container);
-
-                        // Fade in immediately over the standard blackout
-                        void container.offsetWidth;
-                        container.style.opacity = '1';
-
-                        videoEl.play().catch(e => {
-                            console.warn('[UIManager] Web fallback video autoplay blocked/failed:', e);
-                            finish();
-                        });
-                    }
-                });
-            }
-
-            // Hold black for 1 second after video concludes
-            await new Promise(r => setTimeout(r, 1000));
-
-            // Initiate the standard CSS-driven text overlay (which handles its own fades)
-            const actPromise = sequenceData.actText ? this.playActSequence(sequenceData.actText) : Promise.resolve();
-
-            // After the text overlay's black screen reaches full opacity (3s mark),
-            // silently tear down our foundation tracking layer to prevent fade-out collisions.
-            setTimeout(() => {
-                if (blackoutOverlay.parentNode) {
-                    blackoutOverlay.parentNode.removeChild(blackoutOverlay);
-                }
-            }, 3000);
-
-            // Wait for the full 12s text sequence to conclude naturally
-            await actPromise;
-
-            document.body.classList.remove('ui-cinematic-lock');
-
-            // Set flags and render modal
-            if (this.simulationService && this.simulationService.gameState) {
-                const liveState = this.simulationService.gameState;
-                if (!liveState.player.storyFlags) liveState.player.storyFlags = {};
-                liveState.player.storyFlags[sequenceData.flag] = true;
-                liveState.setState({}); 
-            } else if (this.lastKnownState) {
-                if (!this.lastKnownState.player.storyFlags) this.lastKnownState.player.storyFlags = {};
-                this.lastKnownState.player.storyFlags[sequenceData.flag] = true;
-            }
-
-            this.showMissionModal(missionId);
-
-        } catch (error) {
-            this.logger.error('UIManager', `Act Intermission Sequence failed: ${error}`);
-            document.body.classList.remove('ui-cinematic-lock');
-            this.showMissionModal(missionId);
         }
     }
 }
