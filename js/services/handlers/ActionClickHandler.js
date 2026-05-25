@@ -9,6 +9,7 @@ import { DB } from '../../data/database.js';
 import { ACTION_IDS, NAV_IDS, SCREEN_IDS, APP_FEEDBACK_URL } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
+import { startLicenseAnimation, endLicenseAnimation, playBlockingAnimationAndRemove } from '../ui/AnimationService.js';
 
 export class ActionClickHandler {
     /**
@@ -243,9 +244,9 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
+                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                     if (actionTarget) {
-                        actionTarget.classList.add('is-glowing-green');
-                        setTimeout(() => actionTarget.classList.remove('is-glowing-green'), 500);
+                        playBlockingAnimationAndRemove(actionTarget, 'is-glowing-green');
                     }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.buyShip(shipId);
@@ -324,9 +325,9 @@ export class ActionClickHandler {
                 }
 
                 this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
+                    // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                     if (actionTarget) {
-                        actionTarget.classList.add('is-glowing-red');
-                        setTimeout(() => actionTarget.classList.remove('is-glowing-red'), 500);
+                        playBlockingAnimationAndRemove(actionTarget, 'is-glowing-red');
                     }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.sellShip(shipId);
@@ -346,11 +347,11 @@ export class ActionClickHandler {
                     return;
                 }
 
+                // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                 if (actionTarget) {
                     const sellButton = actionTarget.closest('.grid')?.querySelector(`[data-action="${ACTION_IDS.SELL_SHIP}"]`);
                     if (sellButton) sellButton.disabled = true;
-                    actionTarget.classList.add('is-glowing-button');
-                    setTimeout(() => actionTarget.classList.remove('is-glowing-button'), 500);
+                    playBlockingAnimationAndRemove(actionTarget, 'is-glowing-button');
                 }
 
                 await this.simulationService.boardShip(shipId); 
@@ -411,6 +412,7 @@ export class ActionClickHandler {
                 const activeShipStatic = DB.SHIPS[activeShipId];
                 const shipState = player.shipStates[activeShipId];
 
+                // FIX F & C: Calculate hardwareCost correctly so totalCost is not NaN
                 const hardwareCost = GameAttributes.getUpgradeHardwareCost(upgradeDef.tier || 1, activeShipStatic ? activeShipStatic.price : 0);
                 const laborFee = GameAttributes.getInstallationFee(activeShipStatic ? activeShipStatic.price : 0);
                 const totalCost = hardwareCost + laborFee;
@@ -575,6 +577,7 @@ export class ActionClickHandler {
                 
                 const hullRatio = shipState.health / maxHealth;
 
+                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
                 if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
                     this.uiManager.modalEngine.destroyModalInstant('launch-modal');
                 } else {
@@ -596,6 +599,7 @@ export class ActionClickHandler {
                 const { locationId } = dataset;
                 if (!locationId) return;
 
+                // VIRTUAL WORKBENCH: Bypass CSS fade-out for instant queue unlock
                 const mapModal = document.getElementById('map-detail-modal');
                 if (mapModal) {
                     mapModal.classList.remove('is-glowing');
@@ -605,6 +609,7 @@ export class ActionClickHandler {
                 if (this.uiManager.modalEngine && typeof this.uiManager.modalEngine.destroyModalInstant === 'function') {
                     this.uiManager.modalEngine.destroyModalInstant('map-detail-modal');
                 } else {
+                    // Fallback to safety if engine lacks instant destroy hook
                     if (typeof this.uiManager.hideMapDetailModal === 'function') {
                         this.uiManager.hideMapDetailModal();
                     } else {
@@ -675,29 +680,9 @@ export class ActionClickHandler {
                 this.uiManager.handleShowIntelDetails(actionTarget);
                 break;
 
-            case 'show-mission-modal': {
-                const missionId = dataset.missionId;
-                
-                // --- PHASE 2: INTERCEPT ACT MILESTONES ---
-                const ACT_SEQUENCES = {
-                    'mission_tutorial_01': { flag: 'seen_act_0', videoPath: 'assets/images/video/act_0_audita.mp4', actText: '2220 - The Century of Stagnation' },
-                    'mission_10': { flag: 'seen_act_1', videoPath: 'assets/images/video/act_1_begin.mp4', actText: 'Act I - The Trade' },
-                    'mission_18': { flag: 'seen_act_2', videoPath: 'assets/images/video/act_1_kiern.mp4', actText: 'Act II - The Intel' }
-                };
-
-                const sequenceData = ACT_SEQUENCES[missionId];
-                const storyFlags = state.player.storyFlags || {};
-
-                // If this is an Act milestone mission and the sequence hasn't fired yet...
-                if (sequenceData && !storyFlags[sequenceData.flag]) {
-                    if (e) e.stopPropagation();
-                    
-                    this.uiManager.triggerActIntermissionSequence(missionId, sequenceData);
-                } else {
-                    this.uiManager.showMissionModal(missionId);
-                }
+            case 'show-mission-modal':
+                this.uiManager.showMissionModal(dataset.missionId);
                 break;
-            }
             case 'show_cargo_detail':
                 this.uiManager.showCargoDetailModal(state, dataset.goodId);
                 break;
