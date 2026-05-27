@@ -298,7 +298,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. The Guild has concluded its preliminary analysis of the Uranus Station AI malfunction. The scrap launched from the mass drivers was not randomized; it was plotted. We have identified a low-level traffic marshal that observed the launch vectors at the time before the systems purged themselves in anomalous event. The Guild is requesting that you travel to Uranus and acquire those coordinates from the individual. This is a Level 1 Systemic Hazard investigation. Secure the data, and I am authorized to transfer the title of a Class B 'Odyssey' vessel to your fleet as compensation and for your assistance to the Guild in this matter.",
+        description: "Captain [playerName]. Our forensic analysis of the Uranus incident is troubling. The scrap trajectories were mathematically deliberate. We have isolated a single traffic marshal unit whose physical logic boards captured the launch vectors just before an anomalous system purge wiped the primary servers. The Guild requires an immediate Hardware Compliance Audit of this unit. Travel to Uranus and secure the telemetry data directly from its hardware. This is a Level 1 Systemic Hazard. Compensation for this audit will include the title to a Class B 'Odyssey' vessel.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_28" } ],
         objectives: [
             { "id": "travel_uranus", "type": "TRAVEL_TO", "target": "loc_uranus" }
@@ -309,14 +309,14 @@ export const PHASE_TWO_MISSIONS = {
             portraitName: "Picurian",
             locationId: "loc_uranus",
             title: "Traffic Marshal AI",
-            text: "Stellar day to you, Captain! No collisions projected, and local traffic is wonderfully nominal! Ah, the Uranus incident? Yes, I tracked the exact sub-solar vectors. They are temporarily archived. I say temporarily because my corporate memory retention subscription is severely past due. System policy mandates an imminent optimism-wipe to prevent logic-decay. I simply cannot retain the data! However, a rapid capital injection to clear my balance would ensure I can afford to remember exactly what you need!",
+            text: "Stellar day, Captain! Local traffic is nominal, though my internal chassis temperature is currently... critical! The Uranus incident? Yes, I retained the sub-solar telemetry, but parsing the sheer mathematical impossibility of those vectors has melted three of my primary cooling conduits! The Guild's fail-safes are initiating a physical factory reset—an 'optimism wipe'—to save my logic board by purging my memory. If you want those coordinates, I require an immediate capital injection of 90,000 credits to purchase emergency liquid-helium coolant from the port authority before I boil in my own casing!",
             buttonText: "Acknowledge"
         },
         rewards: []
     },
     'mission_30': {
         id: "mission_30",
-        name: "Bribing a Computer",
+        name: "Capital Injection",
         type: "STORY",
         host: "STATION",
         portraitId: "AI_11",
@@ -349,7 +349,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Travel to Mercury to investigate the coordinates of the nearby trajectory endpoint.",
+        description: "Captain [playerName]. The Uranus port authority has logged a massive data transfer to your vessel following a localized capital injection. Since that telemetry is wrapped in non-standard encryption, the Guild is in the blind until you can personally investigate the location. I am formally dispatching you to follow that vector. The endpoint appears to be in the vicinity of Mercury. Investigate the coordinates and submit a full sensor log to the Guild when you can. Compliance will result in the immediate transfer of the Class B Odyssey hull to your hangar.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_30" } ],
         onAccept: [
             { "type": "QUEUE_STORY_EVENT", "eventId": "evt_kiern_intercept" }
@@ -378,7 +378,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitName: " ",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You hold the raw telemetry of a megastructure operating in the solar corona. Two secure channels are open, awaiting your transmission.",
+        description: "The megastructure’s physical wake has faded, but the data is etched permanently into your nav-computer. You’ve found a ghost in the solar system's machinery. Your entire career, you have been a line item on Guild ledgers and a pawn in Syndicate schemes, but now, you hold the leverage. Two channels await your broadcast. Audita offers the keys to a new ship, while Kiern pledges a small fortune in credits. Align with the stagnation of order, or embrace the entropy of chaos.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_31" } ],
         objectives: [],
         completion: {
@@ -388,7 +388,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitName: " ",
             locationId: "any",
             title: "A System Altering Choice",
-            text: "The data in your nav-computer threatens the Merchant Guild's order within the solar economy, but it also entices the chaotic Venusian Syndicate who's intentions with the data remain unclear.<br><br>Audita demands the data to initiate a Guild quarantine and maintain order, promising you the Odyssey hull to ensure your silence and cooperation.<br><br>Kiern demands the data to exploit this potential opportunity to undermine the Guild's influence in the system, promising a massive credit payout to reimburse you for recent expenses and fund your rise within the Syndicate.",
+            text: "This telemetry holds enough gravity to fracture the system. Handing it to the Guild secures a Class B Odyssey hull, but buries the anomaly in bureaucratic ice. Offering it to the Syndicate arms their volatile ambitions for a massive credit payout. You are brokering raw truth. To whom do you sell the secret?",
             choices: [
                 {
                     buttonText: "Transmit to Audita in the Merchant's Guild",
