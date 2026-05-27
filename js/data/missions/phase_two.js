@@ -269,13 +269,11 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Dockworker_11",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hail, Captain. This is an emergency contract being sent out to all capable haulers with a Tier 2 License. The automated cargo loader AIs on Uranus Station have gone completely berserk. They aren't just malfunctioning; they're actively tearing apart their own docking bays. The Guild is officially blaming a Syndicate cyber-attack, while the Syndicate claims it's the result of cheap Guild coding algorithms deteriorating.<br><br>Regardless of the politics, the station is bleeding atmosphere and structurally compromised. Uranus Station Authority is urgently requesting plasteel, cybernetics, hydroponics, and water ice to stabilize the outer ring before it collapses.",
+        description: "Hail, Captain. This is an emergency contract being sent out to all capable haulers with a Tier 2 License. The automated cargo loader AIs on Uranus Station have gone completely berserk. They aren't just malfunctioning; they're actively tearing apart their own docking bays. The Guild is officially blaming a Syndicate cyber-attack, while the Syndicate claims it's the result of cheap Guild coding algorithms deteriorating.<br><br>Regardless of the politics, the station is bleeding atmosphere and structurally compromised. Uranus Station Authority is urgently requesting plasteel and cybernetics to stabilize the outer ring before it collapses.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_25" } ],
         objectives: [
-            { "id": "deliver_plasteel", "type": "DELIVER_ITEM", "goodId": "plasteel", "quantity": 50, "target": "loc_uranus" },
-            { "id": "deliver_cybernetics", "type": "DELIVER_ITEM", "goodId": "cybernetics", "quantity": 10, "target": "loc_uranus" },
-            { "id": "deliver_hydroponics", "type": "DELIVER_ITEM", "goodId": "hydroponics", "quantity": 10, "target": "loc_uranus" },
-            { "id": "deliver_water_ice", "type": "DELIVER_ITEM", "goodId": "water_ice", "quantity": 25, "target": "loc_uranus" }
+            { "id": "deliver_plasteel", "type": "DELIVER_ITEM", "goodId": "plasteel", "quantity": 52, "target": "loc_uranus" },
+            { "id": "deliver_cybernetics", "type": "DELIVER_ITEM", "goodId": "cybernetics", "quantity": 19, "target": "loc_uranus" }
         ],
         completion: {
             host: "STATION",
@@ -405,7 +403,7 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-white font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #f97316 100%); border: 1px solid #c084fc; box-shadow: 0 0 15px rgba(139,92,246,0.6);",
                     rewards: [
-                        { "type": "credits", "amount": 135000 },
+                        { "type": "credits", "amount": 165000 },
                         { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" },
                         { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true }
                     ]
