@@ -59,6 +59,26 @@ class CinematicService {
      */
     static playVideo(videoPath) {
         return new Promise((resolve) => {
+            // --- NATIVE iOS BRIDGE INTERCEPT ---
+            // If running inside the Xcode WKWebView wrapper, delegate playback to Swift's AVPlayerViewController
+            if (window.webkit && window.webkit.messageHandlers && window.webkit.messageHandlers.iosPlayCinematic) {
+                console.log(`[CinematicService] Delegating playback to native iOS layer: ${videoPath}`);
+                
+                // Extract filename without extension (e.g., "./assets/images/video/act_1_begin.mp4" -> "act_1_begin")
+                const fileName = videoPath.split('/').pop().replace('.mp4', '');
+                
+                window.onCinematicComplete = () => {
+                    delete window.onCinematicComplete;
+                    resolve();
+                };
+                
+                window.webkit.messageHandlers.iosPlayCinematic.postMessage(fileName);
+                return; // Abort web DOM rendering entirely
+            }
+
+            // --- WEB FALLBACK (For browser-based Live Server testing) ---
+            console.log(`[CinematicService] Executing web fallback playback: ${videoPath}`);
+
             // 1. Construct the Dynamic DOM Infrastructure
             const container = document.createElement('div');
             container.id = 'dynamic-cinematic-overlay';
@@ -74,21 +94,22 @@ class CinematicService {
                 transition: 'opacity 0.5s ease-in-out'
             });
 
-            // Dynamic CSS injection to aggressively suppress native OS media player controls bleeding into the UI
+            // Dynamic CSS injection
             const styleBlock = document.createElement('style');
             styleBlock.textContent = `
-                #dynamic-cinematic-overlay video::-webkit-media-controls {
+                #dynamic-cinematic-overlay video::-webkit-media-controls,
+                #dynamic-cinematic-overlay video::-webkit-media-controls-enclosure,
+                #dynamic-cinematic-overlay video::-webkit-media-controls-panel {
                     display: none !important;
+                    -webkit-appearance: none !important;
                 }
             `;
             container.appendChild(styleBlock);
 
-            // Explicit WKWebView attributes force inline playback, preventing the native iOS 
-            // media player from taking full-screen control and breaking the SPA context.
             const video = document.createElement('video');
             video.src = videoPath;
-            video.controls = false; // Strictly enforce no native media controls
-            video.playsInline = true; // Hard-lock property
+            video.controls = false;
+            video.playsInline = true;
             video.setAttribute('playsinline', '');
             video.setAttribute('webkit-playsinline', '');
             video.setAttribute('disablePictureInPicture', '');
@@ -96,7 +117,15 @@ class CinematicService {
                 width: '100%',
                 height: '100%',
                 objectFit: 'cover',
-                pointerEvents: 'none' // Let interactions pass to the wrapper for skip detection
+                pointerEvents: 'none'
+            });
+
+            const touchShield = document.createElement('div');
+            Object.assign(touchShield.style, {
+                position: 'absolute',
+                inset: '0',
+                zIndex: '10',
+                background: 'rgba(0,0,0,0.01)' // Invisible wall to block touches
             });
 
             const skipBtn = document.createElement('button');
@@ -115,40 +144,36 @@ class CinematicService {
             });
 
             container.appendChild(video);
+            container.appendChild(touchShield);
             container.appendChild(skipBtn);
             document.body.appendChild(container);
 
-            // Force reflow and initiate CSS fade-in
             void container.offsetWidth;
             container.style.opacity = '1';
 
-            // Mutex to prevent double-resolutions if multiple events fire concurrently
             let isResolved = false;
             let skipTimeout;
             let lastTapTime = 0;
             let tapCount = 0;
 
-            // 2. Garbage Collection & Resolution Protocol (ADR-048)
+            // 2. Garbage Collection & Resolution Protocol
             const cleanupAndResolve = () => {
                 if (isResolved) return;
                 isResolved = true;
 
                 clearTimeout(skipTimeout);
 
-                // Initiate CSS fade out sequence
                 container.style.opacity = '0';
                 skipBtn.style.opacity = '0';
 
-                // Await CSS transition completion before hardware wipe
                 setTimeout(() => {
-                    // Aggressive iOS WKWebView hardware decoder wipe
                     video.pause();
                     video.removeAttribute('src');
-                    video.load(); // Flushes the active video buffer from RAM
-                    video.remove(); // Severs the DOM node completely
+                    video.load();
+                    video.remove();
                     
-                    // Listener teardown to prevent memory leaks
-                    container.removeEventListener('pointerdown', handleOverlayTap);
+                    touchShield.removeEventListener('pointerdown', handleOverlayTap);
+                    touchShield.removeEventListener('click', handleOverlayTap);
                     skipBtn.removeEventListener('click', handleSkipClick);
                     
                     if (container.parentNode) {
@@ -161,8 +186,9 @@ class CinematicService {
 
             // 3. Event Handlers
             const handleOverlayTap = (e) => {
-                // Ignore taps directly on the skip button to prevent event overlap,
-                // utilize a double-tap requirement to prevent accidental UI triggers.
+                e.preventDefault();
+                e.stopPropagation();
+
                 if (e.target !== skipBtn && skipBtn.style.opacity === '0') {
                     const now = Date.now();
                     if (now - lastTapTime < 3000) {
@@ -179,20 +205,21 @@ class CinematicService {
                         skipTimeout = setTimeout(() => {
                             skipBtn.style.opacity = '0';
                             skipBtn.style.pointerEvents = 'none';
-                            tapCount = 0; // Reset internal tap registry on fade
+                            tapCount = 0; 
                         }, 3000);
                     }
                 }
             };
 
             const handleSkipClick = (e) => {
-                e.stopPropagation(); // Halt bubbling to prevent triggering handleOverlayTap
-                e.preventDefault();  // Safety protocol (ADR-026)
+                e.stopPropagation();
+                e.preventDefault();
                 cleanupAndResolve();
             };
 
             // Bind contextual listeners
-            container.addEventListener('pointerdown', handleOverlayTap);
+            touchShield.addEventListener('pointerdown', handleOverlayTap);
+            touchShield.addEventListener('click', handleOverlayTap); // Catch simulated clicks
             skipBtn.addEventListener('click', handleSkipClick);
             video.addEventListener('ended', cleanupAndResolve);
             video.addEventListener('error', () => {
@@ -201,8 +228,6 @@ class CinematicService {
             });
 
             // 4. Execution Sequence
-            // A catch block is mandatory; if iOS strictly blocks playback due to an unfulfilled 
-            // user-gesture policy, it will throw an error. Resolving immediately prevents an infinite hang.
             video.play().catch(error => {
                 console.warn('[CinematicService] Playback rejected by OS. Missing user gesture context?', error);
                 cleanupAndResolve();

@@ -3,6 +3,13 @@
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
 
+# [38.58] - 2026-5-25
+-  updated intermission sequence
+-  added intermission cinematics
+-  added prologue cinematic
+-  added act I cinematic
+-  added act II cinematic
+
 # [38.53] - 2026-5-22
 -  updated characters.doc
 -  updated mission log.doc

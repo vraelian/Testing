@@ -45,7 +45,7 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
         portraitId: 'Venusian_Syndicate_4',
         repeatable: false,
         title: 'Syndicate Intercept',
-        text: "Captain. I see the Guild has you chasing ghosts on your own dime. The Syndicate is highly interested in whatever that Uranus scrap was aiming at. Do not give the telemetry to the Guild. Transmit it to me instead, and I will personally reimburse your recent bribe with 50% interest, plus a new level of Syndicate clearance. It's your choice, Captain. Order, or opportunity.",
+        text: "Hello, Captain. The Syndicate's market analysts noted a sudden, massive capital injection at Uranus, followed by the Guild scrambling local recon assets.<b><b>This is related to the anomalous AI event at Uranus, isn't it? Did you find out where that scrap was being thrown to? I'm assuming the guild needs you to look into it or else they'd do it themselves.<br><br>Whatever is sitting out by Mercury is clearly valuable. If you relay to the Syndicate what you find I will personally reimburse your recent credit expense... with interest.",
         confirmText: 'Close Channel',
         choices: [] 
     }

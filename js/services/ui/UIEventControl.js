@@ -12,9 +12,9 @@ import { AssetService } from '../AssetService.js';
 import CinematicService from './CinematicService.js';
 
 export const ACT_CINEMATIC_CONFIG = {
-    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: 'The Century of Stagnation', actLabel: 'PROLOGUE' },
-    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'The Trade', actLabel: 'ACT I' },
-    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'The Intel', actLabel: 'ACT II' }
+    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: 'Wealth is Sovereignty', actLabel: 'BEGIN TUTORIAL' },
+    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'Act I: Debtor', actLabel: 'ACT I' },
+    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'Act II: Alliance', actLabel: 'ACT II' }
 };
 
 export class UIEventControl {
