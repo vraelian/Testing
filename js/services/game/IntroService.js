@@ -106,6 +106,24 @@ export class IntroService {
             return;
         }
 
+        // Block skip activation during cinematic or active modal transitions
+        if (this._transitioning) {
+            return;
+        }
+
+        // Strict Phase Lock: Skip is ONLY allowed on the very first modal (step 0).
+        if (this.gameState.player.introStep > 0) {
+            document.body.removeEventListener('pointerdown', this._skipListener);
+            this._hideSkipButton();
+            return;
+        }
+
+        // Secondary Guard: Lock out re-activation if already skipped
+        if (this.hasSkipped) {
+            this._hideSkipButton();
+            return;
+        }
+
         // Prevent activation if interacting with actual UI elements
         if (e.target.closest('.modal-content') || 
             e.target.closest('.sev-term-panel') || 
@@ -179,9 +197,10 @@ export class IntroService {
         for (const interval of this._intervals) clearInterval(interval);
         this._intervals.clear();
 
-        // Destroy generic modals
+        // Destroy generic modals securely
         this.uiManager.hideModal('event-modal');
         this.uiManager.hideModal('charter-modal');
+        this.uiManager.hideModal('signature-modal');
         
         // Destroy specialized intro DOM elements
         const elementsToRemove = [
