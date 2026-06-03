@@ -41920,6 +41920,24 @@ export class IntroService {
             return;
         }
 
+        // Block skip activation during cinematic or active modal transitions
+        if (this._transitioning) {
+            return;
+        }
+
+        // Strict Phase Lock: Skip is ONLY allowed on the very first modal (step 0).
+        if (this.gameState.player.introStep > 0) {
+            document.body.removeEventListener('pointerdown', this._skipListener);
+            this._hideSkipButton();
+            return;
+        }
+
+        // Secondary Guard: Lock out re-activation if already skipped
+        if (this.hasSkipped) {
+            this._hideSkipButton();
+            return;
+        }
+
         // Prevent activation if interacting with actual UI elements
         if (e.target.closest('.modal-content') || 
             e.target.closest('.sev-term-panel') || 
@@ -41993,9 +42011,10 @@ export class IntroService {
         for (const interval of this._intervals) clearInterval(interval);
         this._intervals.clear();
 
-        // Destroy generic modals
+        // Destroy generic modals securely
         this.uiManager.hideModal('event-modal');
         this.uiManager.hideModal('charter-modal');
+        this.uiManager.hideModal('signature-modal');
         
         // Destroy specialized intro DOM elements
         const elementsToRemove = [
@@ -54111,6 +54130,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [38.61] - 2026-5-27
+-  intro skip bug fix
 
 # [38.60] - 2026-5-27
 -  updated mission writing
