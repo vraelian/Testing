@@ -590,6 +590,9 @@ export class TravelService {
                 if (arrivalHealthPct === 1) achievementService.increment('arriveCriticalHull', 1);
             }
 
+            // --- ACT III: LOCATION-TRIGGERED CINEMATICS HOOK ---
+            document.dispatchEvent(new CustomEvent('EVENT_PLAYER_ARRIVED', { detail: { locationId } }));
+
             if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                 this.gameState.pendingEventChains.forEach(chain => {
                     chain.tripsRemaining--;

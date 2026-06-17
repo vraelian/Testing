@@ -4,6 +4,7 @@
  * Determines the current progress and completion status of a given objective against the GameState.
  */
 import { DB } from '../../data/database.js';
+import { GameAttributes } from '../GameAttributes.js';
 
 export class MissionObjectiveEvaluator {
     /**
@@ -21,6 +22,7 @@ export class MissionObjectiveEvaluator {
         const currentProgress = objProgress.current || 0;
         const deposited = objProgress.deposited || 0;
         const collected = objProgress.collected || 0;
+        const stepIndex = objProgress.stepIndex || 0;
         
         // Allow 0 as a valid target (e.g. Empty Hold = 0 items)
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
@@ -155,6 +157,55 @@ export class MissionObjectiveEvaluator {
             }
 
             // --- SHIP STATE CHECKS ---
+            case 'has_ship_class':
+            case 'HAS_SHIP_CLASS': {
+                const activeShipId = gameState.player.activeShipId;
+                const shipDef = getShipStats(activeShipId);
+                const requiredClass = objective.target;
+                const classRanks = { 'C': 1, 'B': 2, 'A': 3, 'S': 4, 'O': 5, 'Z': 6, 'F': 0 };
+                const reqRank = classRanks[requiredClass ? requiredClass.toUpperCase() : 'C'] || 1;
+                
+                let currentRank = 0;
+                if (shipDef && shipDef.class) {
+                    currentRank = classRanks[shipDef.class.toUpperCase()] || 0;
+                }
+                
+                current = currentRank;
+                target = reqRank;
+                comparator = '>=';
+                break;
+            }
+
+            case 'has_upgrade_rank':
+            case 'HAS_UPGRADE_RANK': {
+                const activeShipId = gameState.player.activeShipId;
+                const shipState = gameState.player.shipStates[activeShipId];
+                const reqRank = objective.quantity || objective.value || parseInt(objective.target, 10) || 1;
+                let highestRank = 0;
+                
+                if (shipState && shipState.upgrades && Array.isArray(shipState.upgrades)) {
+                    for (const upgradeId of shipState.upgrades) {
+                        let upgradeDef = (DB.ITEMS && DB.ITEMS[upgradeId]) || (DB.UPGRADES && DB.UPGRADES[upgradeId]);
+                        
+                        if (!upgradeDef && GameAttributes && typeof GameAttributes.getDefinition === 'function') {
+                            upgradeDef = GameAttributes.getDefinition(upgradeId);
+                        }
+
+                        if (upgradeDef) {
+                            const rank = upgradeDef.rank || upgradeDef.tier || 1;
+                            if (rank > highestRank) {
+                                highestRank = rank;
+                            }
+                        }
+                    }
+                }
+                
+                current = highestRank;
+                target = reqRank;
+                comparator = '>=';
+                break;
+            }
+
             case 'have_fuel_tank':
             case 'HAVE_FUEL_TANK': {
                 const activeShipId = gameState.player.activeShipId;
@@ -214,6 +265,25 @@ export class MissionObjectiveEvaluator {
                 const atLocation = gameState.currentLocationId === targetLoc;
                 current = atLocation ? 1 : 0;
                 break;
+
+            case 'sequential_travel':
+            case 'SEQUENTIAL_TRAVEL': {
+                const targetArray = objective.targetArray || [];
+                let currentStep = stepIndex;
+
+                if (currentStep < targetArray.length) {
+                    const expectedLocation = targetArray[currentStep];
+                    if (gameState.currentLocationId === expectedLocation) {
+                        currentStep++;
+                        objProgress.stepIndex = currentStep; // Mutate the reference directly to latch step completion
+                    }
+                }
+
+                current = currentStep;
+                target = targetArray.length;
+                comparator = '>=';
+                break;
+            }
 
             // --- PLAYER STATE CHECKS ---
             case 'have_ship':

@@ -5,7 +5,7 @@ export const SYSTEM_STATE_REGISTRY = {
     'NEUTRAL': {
         name: 'Stable Economy',
         archetype: 'Neutral',
-        durationBounds: [240, 1387], // 8 months to 3.8 years
+        durationBounds: [240, 1387], // 8 months to 3.8 years[cite: 3]
         varietals: [
             "System-wide markets are stable. Trade lanes are clear.",
             "Standard macroeconomic conditions apply. No major disruptions reported.",
@@ -56,8 +56,8 @@ export const SYSTEM_STATE_REGISTRY = {
         ],
         quantitativeDisplay: "<span style=\"color: var(--color-profit);\">All station services and repairs are 40% cheaper, and your ship takes 25% less damage when traveling.</span>",
         modifiers: {
-            serviceCostMod: 0.60, // 40% discount
-            travelHullDecayMitigation: 0.75 // Mitigated by 25%
+            serviceCostMod: 0.60, // 40% discount[cite: 3]
+            travelHullDecayMitigation: 0.75 // Mitigated by 25%[cite: 3]
         }
     },
     'SYSTEMIC_INFRASTRUCTURE_PUSH': {
@@ -148,7 +148,7 @@ export const SYSTEM_STATE_REGISTRY = {
         quantitativeDisplay: "<span style=\"color: var(--color-loss);\">Stations have 40% less market capacity for purchasing cargo, and any price spikes will drop back down to normal twice as fast.</span>",
         modifiers: {
             meanReversionMod: 2.0,
-            targetStockMod: 0.60 // -40%
+            targetStockMod: 0.60 // -40%[cite: 3]
         }
     },
     'PLANETARY_GOLD_RUSH': {
@@ -198,7 +198,7 @@ export const SYSTEM_STATE_REGISTRY = {
         modifiers: {
             requiresLocationTarget: true,
             locationCount: 1,
-            localUpgradeCostMod: 0.25, // 75% off
+            localUpgradeCostMod: 0.25, // 75% off[cite: 3]
             localIntelFree: true
         }
     },
@@ -215,8 +215,41 @@ export const SYSTEM_STATE_REGISTRY = {
         modifiers: {
             requiresLocationTarget: true,
             locationCount: 3,
-            localTargetStockMod: 0.20, // -80%
+            localTargetStockMod: 0.20, // -80%[cite: 3]
             localBasePriceMod: 0.50
+        }
+    },
+    'SHADOW_MOBILIZATION': {
+        name: 'Shadow Mobilization',
+        archetype: 'Bull Market (Targeted Expansion)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "An inexplicable, massive surge in demand for high-tier computational and energetic assets has gripped the system. Anonymous corporate shells are buying up processors and propellant at highly inflated rates.",
+            "Rumors of a clandestine dreadnought program have spooked the markets. Station quartermasters have received blind directives to hoard Refined Propellant and Neural Processors, regardless of the premium.",
+            "A sudden, aggressive shift in macro-faction logistics has triggered a localized boom. The Guild and the Syndicate are engaged in a silent bidding war over advanced electronics and volatile fuels."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Demand for Neural Processors and Refined Propellant has skyrocketed. They are selling for 50% more, and market capacities for these goods have more than doubled.</span>",
+        modifiers: {
+            affectedCommodities: [COMMODITY_IDS.NEURAL_PROCESSORS, COMMODITY_IDS.REFINED_PROPELLANT],
+            basePriceInflate: 1.50,
+            targetStockMod: 2.5
+        }
+    },
+    'ECONOMIC_SABOTAGE': {
+        name: 'Targeted Economic Sabotage',
+        archetype: 'Extreme (Single-Location Bear Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A devastating surplus of high-tier assets has been maliciously dumped onto the markets at [Loc]. The sudden saturation has completely broken local profit margins, bankrupting regional proxies overnight.",
+            "[Loc] is reeling from a surgical economic strike. A massive influx of unregistered commodities has shattered the local scarcity metrics. Their purchasing algorithms are frozen in panic.",
+            "Rival faction interference has caused a total market collapse at [Loc]. The local economy has been flooded with contraband, dropping the value of all standard inventory to historic lows."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">The market at [Loc] has been intentionally crashed. Their purchasing capacity is decimated, and the value of all goods there has plummeted by 70%.</span>",
+        modifiers: {
+            requiresLocationTarget: true,
+            locationCount: 1,
+            localTargetStockMod: 0.15,
+            localBasePriceMod: 0.30
         }
     }
 };

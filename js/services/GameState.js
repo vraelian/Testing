@@ -182,6 +182,7 @@ export class GameState {
             hangarShipyardToggleState: 'shipyard',
             hangarActiveIndex: 0,
             shipyardActiveIndex: 0,
+            activeFleetIndex: 0,
             activeIntelTab: 'intel-codex-content',
             servicesTab: 'supply',
             activeMissionTab: 'terminal',
@@ -266,6 +267,7 @@ export class GameState {
 
         // --- PHASE 4: SCHEMA NORMALIZATION & PRUNING ---
         this._normalizeShipData();
+        this._normalizeMissionProgress();
         this._pruneObsoleteData();
 
         // 4. Regenerate derived arrays to guarantee map accuracy across patches
@@ -309,6 +311,29 @@ export class GameState {
                 }
             });
         });
+    }
+
+    /**
+     * Ensures all active mission progress objects conform to the latest objective schema.
+     * Patches in missing stepIndex trackers for Sequential Travel objectives across legacy saves.
+     * @private
+     */
+    _normalizeMissionProgress() {
+        if (!this.missions || !this.missions.missionProgress) return;
+        
+        for (const missionId in this.missions.missionProgress) {
+            const progress = this.missions.missionProgress[missionId];
+            if (progress && progress.objectives) {
+                for (const objKey in progress.objectives) {
+                    const objProgress = progress.objectives[objKey];
+                    if (objProgress && typeof objProgress === 'object') {
+                        if (objProgress.stepIndex === undefined) {
+                            objProgress.stepIndex = 0;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -544,15 +569,11 @@ export class GameState {
                 }
             },
             missions: {
-                // --- MISSION SYSTEM 2.0 (Phase 1) ---
-                // Renamed from activeMissionId to activeMissionIds (Array)
-                // Removed activeMissionObjectivesMet (now tracked per mission in missionProgress)
+                // --- MISSION SYSTEM 2.0 (Phase 1 & 2) ---
                 activeMissionIds: [], 
                 completedMissionIds: [],
-                missionProgress: {},
-                // [[NEW]] Phase 3: Tracked Mission ID for HUD
+                missionProgress: {}, // Act III: Integrates .stepIndex support for multi-node SEQUENTIAL_TRAVEL routes
                 trackedMissionId: null
-                // --- END MISSION SYSTEM 2.0 ---
             },
 
             // --- ACHIEVEMENTS SYSTEM DATA LEDGER ---

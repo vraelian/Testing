@@ -24144,7 +24144,7 @@ export const SYSTEM_STATE_REGISTRY = {
     'NEUTRAL': {
         name: 'Stable Economy',
         archetype: 'Neutral',
-        durationBounds: [240, 1387], // 8 months to 3.8 years
+        durationBounds: [240, 1387], // 8 months to 3.8 years[cite: 3]
         varietals: [
             "System-wide markets are stable. Trade lanes are clear.",
             "Standard macroeconomic conditions apply. No major disruptions reported.",
@@ -24195,8 +24195,8 @@ export const SYSTEM_STATE_REGISTRY = {
         ],
         quantitativeDisplay: "<span style=\"color: var(--color-profit);\">All station services and repairs are 40% cheaper, and your ship takes 25% less damage when traveling.</span>",
         modifiers: {
-            serviceCostMod: 0.60, // 40% discount
-            travelHullDecayMitigation: 0.75 // Mitigated by 25%
+            serviceCostMod: 0.60, // 40% discount[cite: 3]
+            travelHullDecayMitigation: 0.75 // Mitigated by 25%[cite: 3]
         }
     },
     'SYSTEMIC_INFRASTRUCTURE_PUSH': {
@@ -24287,7 +24287,7 @@ export const SYSTEM_STATE_REGISTRY = {
         quantitativeDisplay: "<span style=\"color: var(--color-loss);\">Stations have 40% less market capacity for purchasing cargo, and any price spikes will drop back down to normal twice as fast.</span>",
         modifiers: {
             meanReversionMod: 2.0,
-            targetStockMod: 0.60 // -40%
+            targetStockMod: 0.60 // -40%[cite: 3]
         }
     },
     'PLANETARY_GOLD_RUSH': {
@@ -24337,7 +24337,7 @@ export const SYSTEM_STATE_REGISTRY = {
         modifiers: {
             requiresLocationTarget: true,
             locationCount: 1,
-            localUpgradeCostMod: 0.25, // 75% off
+            localUpgradeCostMod: 0.25, // 75% off[cite: 3]
             localIntelFree: true
         }
     },
@@ -24354,8 +24354,41 @@ export const SYSTEM_STATE_REGISTRY = {
         modifiers: {
             requiresLocationTarget: true,
             locationCount: 3,
-            localTargetStockMod: 0.20, // -80%
+            localTargetStockMod: 0.20, // -80%[cite: 3]
             localBasePriceMod: 0.50
+        }
+    },
+    'SHADOW_MOBILIZATION': {
+        name: 'Shadow Mobilization',
+        archetype: 'Bull Market (Targeted Expansion)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "An inexplicable, massive surge in demand for high-tier computational and energetic assets has gripped the system. Anonymous corporate shells are buying up processors and propellant at highly inflated rates.",
+            "Rumors of a clandestine dreadnought program have spooked the markets. Station quartermasters have received blind directives to hoard Refined Propellant and Neural Processors, regardless of the premium.",
+            "A sudden, aggressive shift in macro-faction logistics has triggered a localized boom. The Guild and the Syndicate are engaged in a silent bidding war over advanced electronics and volatile fuels."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Demand for Neural Processors and Refined Propellant has skyrocketed. They are selling for 50% more, and market capacities for these goods have more than doubled.</span>",
+        modifiers: {
+            affectedCommodities: [COMMODITY_IDS.NEURAL_PROCESSORS, COMMODITY_IDS.REFINED_PROPELLANT],
+            basePriceInflate: 1.50,
+            targetStockMod: 2.5
+        }
+    },
+    'ECONOMIC_SABOTAGE': {
+        name: 'Targeted Economic Sabotage',
+        archetype: 'Extreme (Single-Location Bear Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A devastating surplus of high-tier assets has been maliciously dumped onto the markets at [Loc]. The sudden saturation has completely broken local profit margins, bankrupting regional proxies overnight.",
+            "[Loc] is reeling from a surgical economic strike. A massive influx of unregistered commodities has shattered the local scarcity metrics. Their purchasing algorithms are frozen in panic.",
+            "Rival faction interference has caused a total market collapse at [Loc]. The local economy has been flooded with contraband, dropping the value of all standard inventory to historic lows."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">The market at [Loc] has been intentionally crashed. Their purchasing capacity is decimated, and the value of all goods there has plummeted by 70%.</span>",
+        modifiers: {
+            requiresLocationTarget: true,
+            locationCount: 1,
+            localTargetStockMod: 0.15,
+            localBasePriceMod: 0.30
         }
     }
 };
@@ -35263,6 +35296,7 @@ export class GameState {
             hangarShipyardToggleState: 'shipyard',
             hangarActiveIndex: 0,
             shipyardActiveIndex: 0,
+            activeFleetIndex: 0,
             activeIntelTab: 'intel-codex-content',
             servicesTab: 'supply',
             activeMissionTab: 'terminal',
@@ -35347,6 +35381,7 @@ export class GameState {
 
         // --- PHASE 4: SCHEMA NORMALIZATION & PRUNING ---
         this._normalizeShipData();
+        this._normalizeMissionProgress();
         this._pruneObsoleteData();
 
         // 4. Regenerate derived arrays to guarantee map accuracy across patches
@@ -35390,6 +35425,29 @@ export class GameState {
                 }
             });
         });
+    }
+
+    /**
+     * Ensures all active mission progress objects conform to the latest objective schema.
+     * Patches in missing stepIndex trackers for Sequential Travel objectives across legacy saves.
+     * @private
+     */
+    _normalizeMissionProgress() {
+        if (!this.missions || !this.missions.missionProgress) return;
+        
+        for (const missionId in this.missions.missionProgress) {
+            const progress = this.missions.missionProgress[missionId];
+            if (progress && progress.objectives) {
+                for (const objKey in progress.objectives) {
+                    const objProgress = progress.objectives[objKey];
+                    if (objProgress && typeof objProgress === 'object') {
+                        if (objProgress.stepIndex === undefined) {
+                            objProgress.stepIndex = 0;
+                        }
+                    }
+                }
+            }
+        }
     }
 
     /**
@@ -35625,15 +35683,11 @@ export class GameState {
                 }
             },
             missions: {
-                // --- MISSION SYSTEM 2.0 (Phase 1) ---
-                // Renamed from activeMissionId to activeMissionIds (Array)
-                // Removed activeMissionObjectivesMet (now tracked per mission in missionProgress)
+                // --- MISSION SYSTEM 2.0 (Phase 1 & 2) ---
                 activeMissionIds: [], 
                 completedMissionIds: [],
-                missionProgress: {},
-                // [[NEW]] Phase 3: Tracked Mission ID for HUD
+                missionProgress: {}, // Act III: Integrates .stepIndex support for multi-node SEQUENTIAL_TRAVEL routes
                 trackedMissionId: null
-                // --- END MISSION SYSTEM 2.0 ---
             },
 
             // --- ACHIEVEMENTS SYSTEM DATA LEDGER ---
@@ -36973,12 +37027,14 @@ export class SolStationService {
  * @fileoverview Manages the state and flow of player missions.
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
  * UPDATED: Includes COLLECT_ITEM logistics injection and strict DB optional chaining.
+ * UPDATED: Act III Location-Triggered Cinematics architecture deployed.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
 import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.js';
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 import { SystemStateService } from './world/SystemStateService.js';
+import { cinematicService } from './ui/CinematicService.js';
 
 export class MissionService {
     /**
@@ -37001,6 +37057,61 @@ export class MissionService {
         
         // Dynamic set to force-allow specific missions to appear in the terminal
         this._forcedTerminalMissions = new Set();
+
+        // --- ACT III: Location-Triggered Cinematics Listener ---
+        document.addEventListener('EVENT_PLAYER_ARRIVED', (e) => {
+            if (e.detail && e.detail.locationId) {
+                this._handlePlayerArrived(e.detail.locationId);
+            }
+        });
+    }
+
+    /**
+     * Hook to seamlessly trigger visual sequences immediately upon arrival at specific locations.
+     * Evaluates active missions for onArrivalCinematic requirements.
+     * @param {string} locationId - The ID of the location the player just arrived at.
+     */
+    _handlePlayerArrived(locationId) {
+        const { activeMissionIds } = this.gameState.missions;
+        if (!activeMissionIds || activeMissionIds.length === 0) return;
+
+        let stateChanged = false;
+
+        activeMissionIds.forEach(missionId => {
+            const mission = DB.MISSIONS?.[missionId];
+            if (!mission || !mission.onArrivalCinematic) return;
+
+            // Check if cinematic is tied to this location
+            if (mission.onArrivalCinematic.locationId === locationId) {
+                // Ensure progress object exists
+                if (!this.gameState.missions.missionProgress[missionId]) {
+                    this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                }
+                
+                const progress = this.gameState.missions.missionProgress[missionId];
+                
+                // Fire only if it hasn't been fired yet
+                if (!progress.cinematicFired) {
+                    progress.cinematicFired = true;
+                    stateChanged = true;
+                    
+                    this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${mission.onArrivalCinematic.sequenceId} upon arrival at ${locationId} for mission ${missionId}.`);
+                    
+                    // Invoke CinematicService directly (or through known fallback pathways)
+                    if (cinematicService && typeof cinematicService.playSequence === 'function') {
+                        cinematicService.playSequence(mission.onArrivalCinematic.sequenceId);
+                    } else if (this.simulationService && this.simulationService.cinematicService) {
+                        this.simulationService.cinematicService.playSequence(mission.onArrivalCinematic.sequenceId);
+                    } else {
+                        this.logger.warn('MissionService', `CinematicService is unavailable or missing playSequence method for ${mission.onArrivalCinematic.sequenceId}`);
+                    }
+                }
+            }
+        });
+
+        if (stateChanged) {
+            this.gameState.setState({});
+        }
     }
 
     /**
@@ -41009,6 +41120,9 @@ export class TravelService {
                 if (arrivalHealthPct === 1) achievementService.increment('arriveCriticalHull', 1);
             }
 
+            // --- ACT III: LOCATION-TRIGGERED CINEMATICS HOOK ---
+            document.dispatchEvent(new CustomEvent('EVENT_PLAYER_ARRIVED', { detail: { locationId } }));
+
             if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                 this.gameState.pendingEventChains.forEach(chain => {
                     chain.tripsRemaining--;
@@ -42850,6 +42964,7 @@ export class IntroService {
  * Determines the current progress and completion status of a given objective against the GameState.
  */
 import { DB } from '../../data/database.js';
+import { GameAttributes } from '../GameAttributes.js';
 
 export class MissionObjectiveEvaluator {
     /**
@@ -42867,6 +42982,7 @@ export class MissionObjectiveEvaluator {
         const currentProgress = objProgress.current || 0;
         const deposited = objProgress.deposited || 0;
         const collected = objProgress.collected || 0;
+        const stepIndex = objProgress.stepIndex || 0;
         
         // Allow 0 as a valid target (e.g. Empty Hold = 0 items)
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
@@ -43001,6 +43117,55 @@ export class MissionObjectiveEvaluator {
             }
 
             // --- SHIP STATE CHECKS ---
+            case 'has_ship_class':
+            case 'HAS_SHIP_CLASS': {
+                const activeShipId = gameState.player.activeShipId;
+                const shipDef = getShipStats(activeShipId);
+                const requiredClass = objective.target;
+                const classRanks = { 'C': 1, 'B': 2, 'A': 3, 'S': 4, 'O': 5, 'Z': 6, 'F': 0 };
+                const reqRank = classRanks[requiredClass ? requiredClass.toUpperCase() : 'C'] || 1;
+                
+                let currentRank = 0;
+                if (shipDef && shipDef.class) {
+                    currentRank = classRanks[shipDef.class.toUpperCase()] || 0;
+                }
+                
+                current = currentRank;
+                target = reqRank;
+                comparator = '>=';
+                break;
+            }
+
+            case 'has_upgrade_rank':
+            case 'HAS_UPGRADE_RANK': {
+                const activeShipId = gameState.player.activeShipId;
+                const shipState = gameState.player.shipStates[activeShipId];
+                const reqRank = objective.quantity || objective.value || parseInt(objective.target, 10) || 1;
+                let highestRank = 0;
+                
+                if (shipState && shipState.upgrades && Array.isArray(shipState.upgrades)) {
+                    for (const upgradeId of shipState.upgrades) {
+                        let upgradeDef = (DB.ITEMS && DB.ITEMS[upgradeId]) || (DB.UPGRADES && DB.UPGRADES[upgradeId]);
+                        
+                        if (!upgradeDef && GameAttributes && typeof GameAttributes.getDefinition === 'function') {
+                            upgradeDef = GameAttributes.getDefinition(upgradeId);
+                        }
+
+                        if (upgradeDef) {
+                            const rank = upgradeDef.rank || upgradeDef.tier || 1;
+                            if (rank > highestRank) {
+                                highestRank = rank;
+                            }
+                        }
+                    }
+                }
+                
+                current = highestRank;
+                target = reqRank;
+                comparator = '>=';
+                break;
+            }
+
             case 'have_fuel_tank':
             case 'HAVE_FUEL_TANK': {
                 const activeShipId = gameState.player.activeShipId;
@@ -43060,6 +43225,25 @@ export class MissionObjectiveEvaluator {
                 const atLocation = gameState.currentLocationId === targetLoc;
                 current = atLocation ? 1 : 0;
                 break;
+
+            case 'sequential_travel':
+            case 'SEQUENTIAL_TRAVEL': {
+                const targetArray = objective.targetArray || [];
+                let currentStep = stepIndex;
+
+                if (currentStep < targetArray.length) {
+                    const expectedLocation = targetArray[currentStep];
+                    if (gameState.currentLocationId === expectedLocation) {
+                        currentStep++;
+                        objProgress.stepIndex = currentStep; // Mutate the reference directly to latch step completion
+                    }
+                }
+
+                current = currentStep;
+                target = targetArray.length;
+                comparator = '>=';
+                break;
+            }
 
             // --- PLAYER STATE CHECKS ---
             case 'have_ship':
@@ -54130,6 +54314,10 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [38.63] - 2026-6-15
+-  added system state SHADOW_MOBILIZATION
+-  added system state ECONOMIC_SABOTAGE
 
 # [38.61] - 2026-5-27
 -  intro skip bug fix
