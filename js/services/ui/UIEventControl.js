@@ -306,6 +306,140 @@ export class UIEventControl {
         });
     }
 
+    /**
+     * Executes the CRT instantiation and resolution sequence for Ship Encounter Story Events (Act III).
+     * Bypasses the standard UIModalEngine queue to take direct control over the Z-axis breaking modal.
+     */
+    async showShipEncounterModal(eventDef, choicesCallback) {
+        if (eventDef.cinematicPath) {
+            try {
+                this.manager.logger.info('UIEventControl', `Initiating cinematic sequence for ship encounter: ${eventDef.cinematicPath}`);
+                await CinematicService.playVideo(eventDef.cinematicPath);
+            } catch (err) {
+                this.manager.logger.warn('UIEventControl', 'Cinematic playback interrupted or failed. Proceeding to modal fallback.', err);
+            }
+        }
+
+        const modal = document.getElementById('story-ship-modal');
+        const modalContent = modal.querySelector('.story-ship-modal-container');
+        const titleEl = document.getElementById('story-ship-title');
+        const textEl = document.getElementById('story-ship-text');
+        const imgEl = document.getElementById('story-ship-portrait-img');
+        const btnContainer = document.getElementById('story-ship-button-container');
+
+        if (!modal || !modalContent || !titleEl || !textEl || !imgEl || !btnContainer) {
+            this.manager.logger.error('UIEventControl', 'Ship encounter modal DOM elements missing.');
+            return;
+        }
+
+        // Path Resolution Logic
+        let imgPath = 'assets/images/characters/unknown.webp'; // fallback
+        if (eventDef.hostImage) {
+            // e.g., "Engine_of_Recursion_C.webp" -> "Engine of Recursion"
+            // Extract base name by removing the trailing variant identifier (e.g., "_C.webp", ".webp")
+            const baseMatch = eventDef.hostImage.match(/^(.*?)(?:_[A-Z])?\.webp$/);
+            if (baseMatch && baseMatch[1]) {
+                const shipFolderName = baseMatch[1].replace(/_/g, ' ');
+                imgPath = `assets/images/ships/${shipFolderName}/${eventDef.hostImage}`;
+            } else {
+                imgPath = `assets/images/ships/${eventDef.hostImage.replace('.webp', '')}/${eventDef.hostImage}`;
+            }
+        }
+
+        // Populate Data
+        titleEl.innerHTML = eventDef.title || 'UNKNOWN VESSEL DETECTED';
+        textEl.innerHTML = eventDef.text || '';
+        imgEl.src = imgPath;
+        
+        // Clean instantiation and start CRT animation
+        modal.classList.remove('hidden');
+        // Force a reflow
+        void modal.offsetWidth;
+        modal.classList.add('modal-visible');
+        modal.classList.remove('opacity-0');
+
+        // Apply theme if provided
+        if (eventDef.theme) {
+            modalContent.className = `modal-content sci-fi-frame story-ship-modal-container relative modal-theme-${eventDef.theme}`;
+        } else {
+            modalContent.className = 'modal-content sci-fi-frame story-ship-modal-container relative';
+        }
+
+        modalContent.classList.remove('sev-crt-shutdown');
+        modalContent.classList.add('sev-crt-turn-on');
+        modalContent.style.animationDuration = '0.4s';
+        
+        if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+        modalContent._crtTimeout = setTimeout(() => {
+            modalContent.classList.remove('sev-crt-turn-on');
+            modalContent.style.animationDuration = '';
+        }, 400);
+
+        // Generate Buttons
+        btnContainer.innerHTML = '';
+        const choices = (eventDef.choices && eventDef.choices.length > 0) ? eventDef.choices : [{ id: 'dismiss', text: 'Log Event' }];
+
+        const crtCloseHandler = (choiceId = null) => {
+            // Lock inputs immediately
+            const allBtns = btnContainer.querySelectorAll('.event-choice-btn');
+            allBtns.forEach(b => b.style.pointerEvents = 'none');
+
+            modalContent.classList.remove('sev-crt-turn-on');
+            modalContent.classList.add('sev-crt-shutdown');
+            modalContent.style.animationDuration = '0.35s';
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+                modal.classList.remove('modal-visible');
+                
+                requestAnimationFrame(() => {
+                    setTimeout(() => {
+                        choicesCallback(choiceId);
+                    }, 10);
+                });
+            }, 340);
+        };
+
+        choices.forEach((choice) => {
+            const button = document.createElement('button');
+            // Strict adherence: Removed hover classes entirely for pure touch behavior
+            button.className = 'btn w-full p-4 mb-2 event-choice-btn transition-colors';
+            if (choice.disabled) {
+                button.disabled = true;
+                button.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+            
+            const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
+            const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
+            const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
+
+            let colorClass = 'text-gray-400'; 
+            if (subText) {
+                const lower = subText.toLowerCase();
+                if (lower.includes('space')) {
+                    colorClass = 'text-req-yellow';
+                } else if (lower.includes('delay')) {
+                    colorClass = 'text-delay-blue';
+                } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium', 'damage', 'drain', 'stress'].some(k => lower.includes(k))) {
+                    colorClass = 'text-cost-orange';
+                }
+            }
+
+            button.innerHTML = `
+                <span class="choice-header">${headerText}</span>
+                ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
+            `;
+            
+            if (choice.tooltip) button.setAttribute('title', choice.tooltip);
+
+            button.onclick = (e) => {
+                e.preventDefault();
+                crtCloseHandler(choice.id);
+            };
+            btnContainer.appendChild(button);
+        });
+    }
+
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
          const description = event.template?.description || event.scenario || 'No description available.';
@@ -328,7 +462,7 @@ export class UIEventControl {
                 
                 event.choices.forEach((choice) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full p-4 hover:bg-slate-700 mb-2 event-choice-btn';
+                    button.className = 'btn w-full p-4 mb-2 event-choice-btn transition-colors';
                     
                     if (choice.disabled) {
                         button.disabled = true;
@@ -674,7 +808,7 @@ export class UIEventControl {
         
         // Example implementation for contextual UI generation based on narrative state
         if (locationId === 'loc_exchange' && storyFlags['has_syndicate_access'] === true) {
-            storyActionsHtml += `<div class="btn map-navigate-btn mt-2 !text-cost-orange !border-cost-orange hover:bg-cost-orange/20" data-action="trigger_story_event" data-event-id="evt_syndicate_boss">CONTACT SYNDICATE BOSS</div>`;
+            storyActionsHtml += `<div class="btn map-navigate-btn mt-2 !text-cost-orange !border-cost-orange" data-action="trigger_story_event" data-event-id="evt_syndicate_boss">CONTACT SYNDICATE BOSS</div>`;
         }
         
         if (storyActionsHtml !== '') {

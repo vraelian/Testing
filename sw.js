@@ -9,8 +9,8 @@ const CACHE_NAME = 'orbital-trading-v1';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
-    '/style.css',
-    '/bundle.min.js',
+    '/css/global.css',
+    '/js/main.js',
     '/manifest.json',
     '/favicon.svg'
 ];

@@ -20,6 +20,7 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 import { playActCinematic } from './ui/AnimationService.js';
+import CinematicService from './ui/CinematicService.js';
 
 // --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';

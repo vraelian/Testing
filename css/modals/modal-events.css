@@ -415,3 +415,46 @@
     animation: econ-weather-fade-out 0.5s ease-in forwards;
     pointer-events: none;
 }
+
+/* ========================================================================= */
+/* --- SHIP ENCOUNTER STORY MODAL (ACT III) ---                              */
+/* ========================================================================= */
+
+.story-ship-modal-container {
+    position: relative;
+    width: 95% !important;
+    max-width: 650px !important;
+    margin-top: 100px; /* Provides top buffer for the Z-axis overlap */
+    padding-top: 220px !important; /* Forces internal flow below the absolute portrait */
+}
+
+.story-ship-portrait-wrapper {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translate(-50%, -33%);
+    width: 300px;
+    height: 300px;
+    border-radius: 12px;
+    border: 2px solid var(--comm-color, #38bdf8);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px var(--comm-color-glow-mid, rgba(56, 189, 248, 0.5));
+    background-color: #000;
+    overflow: hidden;
+    z-index: 10;
+}
+
+/* Override Tailwind margin to rely on padding-top structural integrity */
+.story-ship-modal-container #story-ship-title {
+    margin-top: 0 !important;
+}
+
+/* Native Mobile Constraints */
+@media (max-width: 380px) {
+    .story-ship-modal-container {
+        padding-top: 180px !important;
+    }
+    .story-ship-portrait-wrapper {
+        width: 240px;
+        height: 240px;
+    }
+}
