@@ -10,7 +10,7 @@ import { formatCredits } from '../utils.js';
 import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.js';
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 import { SystemStateService } from './world/SystemStateService.js';
-import { cinematicService } from './ui/CinematicService.js';
+import CinematicService from './ui/CinematicService.js';
 
 export class MissionService {
     /**
@@ -74,12 +74,12 @@ export class MissionService {
                     this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${mission.onArrivalCinematic.sequenceId} upon arrival at ${locationId} for mission ${missionId}.`);
                     
                     // Invoke CinematicService directly (or through known fallback pathways)
-                    if (cinematicService && typeof cinematicService.playSequence === 'function') {
-                        cinematicService.playSequence(mission.onArrivalCinematic.sequenceId);
-                    } else if (this.simulationService && this.simulationService.cinematicService) {
-                        this.simulationService.cinematicService.playSequence(mission.onArrivalCinematic.sequenceId);
+                    if (CinematicService && typeof CinematicService.playVideo === 'function') {
+                        CinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
+                    } else if (this.simulationService && this.simulationService.cinematicService && typeof this.simulationService.cinematicService.playVideo === 'function') {
+                        this.simulationService.cinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
                     } else {
-                        this.logger.warn('MissionService', `CinematicService is unavailable or missing playSequence method for ${mission.onArrivalCinematic.sequenceId}`);
+                        this.logger.warn('MissionService', `CinematicService is unavailable or missing playVideo method for ${mission.onArrivalCinematic.sequenceId}`);
                     }
                 }
             }

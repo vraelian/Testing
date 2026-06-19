@@ -314,6 +314,17 @@
         </div>
     </div>
     
+    <div id="story-ship-modal" class="modal-backdrop hidden opacity-0">
+        <div class="modal-content sci-fi-frame story-ship-modal-container relative">
+            <div class="story-ship-portrait-wrapper absolute">
+                <img id="story-ship-portrait-img" src="" alt="Ship Encounter" class="w-full h-full object-cover" />
+            </div>
+            <h3 id="story-ship-title" class="text-2xl font-orbitron mb-4 text-cyan-300 text-center mt-12"></h3>
+            <div id="story-ship-text" class="mb-6 text-lg text-gray-300 text-center px-4"></div>
+            <div id="story-ship-button-container" class="mt-6 flex flex-col justify-center gap-4 w-full"></div>
+        </div>
+    </div>
+
     <div id="age-event-modal" class="modal-backdrop hidden age-event-modal">
         <div class="modal-content">
             <h3 id="age-event-title" class="text-2xl font-orbitron mb-2"></h3>
@@ -6501,6 +6512,87 @@ card.
 #econ-weather-modal.modal-hiding {
     animation: econ-weather-fade-out 0.5s ease-in forwards;
     pointer-events: none;
+}
+
+/* ========================================================================= */
+/* --- SHIP ENCOUNTER STORY MODAL (ACT III) ---                              */
+/* ========================================================================= */
+
+#story-ship-modal .modal-content.story-ship-modal-container {
+    position: relative;
+    width: 95% !important;
+    max-width: 650px !important;
+    margin-top: 200px; /* Buffer for the Z-axis overhang */
+    padding-top: 0 !important; 
+    max-height: 75vh; 
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    overflow: visible !important; /* CRITICAL: Releases the Z-axis portrait overhang */
+}
+
+.story-ship-portrait-wrapper {
+    position: relative !important; /* Overrides Tailwind .absolute in the DOM */
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    flex-shrink: 0;
+    width: 384px; /* 3x the 128px character portrait spec */
+    height: 384px;
+    margin-top: -192px !important; /* Precisely 50% overhang */
+    margin-bottom: 1rem;
+    border-radius: 12px;
+    border: 2px solid var(--comm-color, #38bdf8);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px var(--comm-color-glow-mid, rgba(56, 189, 248, 0.5));
+    background-color: #000;
+    overflow: hidden;
+    z-index: 10;
+}
+
+/* Override Tailwind margin to rely on flex structural integrity */
+.story-ship-modal-container #story-ship-title {
+    margin-top: 0 !important;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.story-ship-modal-container #story-ship-text {
+    overflow-y: auto;
+    flex-shrink: 1;
+    margin-bottom: 1rem !important;
+    padding-right: 0.5rem; /* Prevent text clipping on scrollbar */
+    width: 100%;
+}
+
+/* Custom Scrollbar for Story Text */
+.story-ship-modal-container #story-ship-text::-webkit-scrollbar {
+    width: 4px;
+}
+.story-ship-modal-container #story-ship-text::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+.story-ship-modal-container #story-ship-text::-webkit-scrollbar-thumb {
+    background: var(--comm-color, #38bdf8);
+    border-radius: 4px;
+}
+
+.story-ship-modal-container #story-ship-button-container {
+    flex-shrink: 0;
+    margin-top: auto !important; /* Push buttons to bottom */
+    width: 100%;
+}
+
+/* Native Mobile Constraints */
+@media (max-width: 450px) {
+    .story-ship-portrait-wrapper {
+        width: 280px; 
+        height: 280px;
+        margin-top: -140px !important; /* 50% overhang */
+    }
+    #story-ship-modal .modal-content.story-ship-modal-container {
+        margin-top: 150px;
+    }
 }
 --- END OF FILE: ./css/modals/modal-events.css ---
 
@@ -23178,6 +23270,17 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
         text: "Hello, Captain. The Syndicate's market analysts noted a sudden, massive capital injection at Uranus, followed by the Guild scrambling local recon assets.<b><b>This is related to the anomalous AI event at Uranus, isn't it? Did you find out where that scrap was being thrown to? I'm assuming the guild needs you to look into it or else they'd do it themselves.<br><br>Whatever is sitting out by Mercury is clearly valuable. If you relay to the Syndicate what you find I will personally reimburse your recent credit expense... with interest.",
         confirmText: 'Close Channel',
         choices: [] 
+    },
+    'evt_encounter_recursion': {
+        id: 'evt_encounter_recursion',
+        theme: 'anomaly',
+        hostImage: 'Engine_of_Recursion_C.webp',
+        repeatable: false,
+        title: 'Unidentified Z Class Vessel',
+        text: 'Telemetry displays localized gravitational shear. Visual sensors resolve a vessel of staggering proportions eclipsing the background starfield. The Engine of Recursion drifts in complete silence, its hull bearing the scars of forgotten cosmic epochs.',
+        choices: [
+            { id: 'dismiss', text: 'Log Telemetry Data' }
+        ]
     }
 };
 --- END OF FILE: ./js/data/events/storyEventsRegistry.js ---
@@ -26514,6 +26617,141 @@ export class UIEventControl {
         });
     }
 
+    /**
+     * Executes the CRT instantiation and resolution sequence for Ship Encounter Story Events (Act III).
+     * Now correctly interfaces with the central queue to capture proper keyframe timings.
+     */
+    async showShipEncounterModal(eventDef, choicesCallback) {
+        if (eventDef.cinematicPath) {
+            try {
+                this.manager.logger.info('UIEventControl', `Initiating cinematic sequence for ship encounter: ${eventDef.cinematicPath}`);
+                await CinematicService.playVideo(eventDef.cinematicPath);
+            } catch (err) {
+                this.manager.logger.warn('UIEventControl', 'Cinematic playback interrupted or failed. Proceeding to modal fallback.', err);
+            }
+        }
+
+        const title = eventDef.title || 'UNKNOWN VESSEL DETECTED';
+        const description = eventDef.text || '';
+
+        // Path Resolution Logic
+        let imgPath = 'assets/images/characters/unknown.webp'; // fallback
+        if (eventDef.hostImage) {
+            const baseMatch = eventDef.hostImage.match(/^(.*?)(?:_[A-Z])?\.webp$/);
+            if (baseMatch && baseMatch[1]) {
+                const shipFolderName = baseMatch[1].replace(/_/g, ' ');
+                imgPath = `assets/images/ships/${shipFolderName}/${eventDef.hostImage}`;
+            } else {
+                imgPath = `assets/images/ships/${eventDef.hostImage.replace('.webp', '')}/${eventDef.hostImage}`;
+            }
+        }
+
+        const targetModal = document.getElementById('story-ship-modal');
+        if (targetModal) {
+            targetModal.style.transition = 'none';
+        }
+
+        this.manager.queueModal('story-ship-modal', title, description, null, {
+            nonDismissible: true,
+            noModalVisible: true, // Bypass standard CSS fade-in
+            customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('.story-ship-modal-container');
+                const imgEl = modal.querySelector('#story-ship-portrait-img');
+                const textEl = modal.querySelector('#story-ship-text');
+                const btnContainer = modal.querySelector('#story-ship-button-container');
+
+                if (imgEl) imgEl.src = imgPath;
+                if (textEl) textEl.innerHTML = description;
+
+                // Apply theme if provided
+                if (eventDef.theme) {
+                    modalContent.className = `modal-content sci-fi-frame story-ship-modal-container relative modal-theme-${eventDef.theme}`;
+                } else {
+                    modalContent.className = 'modal-content sci-fi-frame story-ship-modal-container relative';
+                }
+
+                // Clean instantiation and start CRT animation
+                modalContent.classList.remove('sev-crt-shutdown');
+                modalContent.classList.add('sev-crt-turn-on');
+                modalContent.style.animationDuration = '0.4s';
+                
+                if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+                modalContent._crtTimeout = setTimeout(() => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.style.animationDuration = '';
+                }, 400);
+
+                // Generate Buttons
+                if (btnContainer) btnContainer.innerHTML = '';
+                const choices = (eventDef.choices && eventDef.choices.length > 0) ? eventDef.choices : [{ id: 'dismiss', text: 'Log Event' }];
+
+                const crtCloseHandler = (choiceId = null) => {
+                    // Lock inputs immediately
+                    if (btnContainer) {
+                        const allBtns = btnContainer.querySelectorAll('.event-choice-btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+                    }
+
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.classList.add('sev-crt-shutdown');
+                    modalContent.style.animationDuration = '0.35s';
+                    
+                    setTimeout(() => {
+                        if (this.manager.modalEngine && this.manager.modalEngine.destroyModalInstant) {
+                            this.manager.modalEngine.destroyModalInstant('story-ship-modal');
+                        } else {
+                            modal.classList.add('hidden');
+                        }
+                        
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                choicesCallback(choiceId);
+                            }, 10);
+                        });
+                    }, 340);
+                };
+
+                choices.forEach((choice) => {
+                    const button = document.createElement('button');
+                    button.className = 'btn w-full p-4 mb-2 event-choice-btn transition-colors';
+                    if (choice.disabled) {
+                        button.disabled = true;
+                        button.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
+                    const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
+                    const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
+
+                    let colorClass = 'text-gray-400'; 
+                    if (subText) {
+                        const lower = subText.toLowerCase();
+                        if (lower.includes('space')) {
+                            colorClass = 'text-req-yellow';
+                        } else if (lower.includes('delay')) {
+                            colorClass = 'text-delay-blue';
+                        } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium', 'damage', 'drain', 'stress'].some(k => lower.includes(k))) {
+                            colorClass = 'text-cost-orange';
+                        }
+                    }
+
+                    button.innerHTML = `
+                        <span class="choice-header">${headerText}</span>
+                        ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
+                    `;
+                    
+                    if (choice.tooltip) button.setAttribute('title', choice.tooltip);
+
+                    button.onclick = (e) => {
+                        e.preventDefault();
+                        crtCloseHandler(choice.id);
+                    };
+                    if (btnContainer) btnContainer.appendChild(button);
+                });
+            }
+        });
+    }
+
     showRandomEventModal(event, choicesCallback) {
          const title = event.template?.title || event.title || 'Unknown Event';
          const description = event.template?.description || event.scenario || 'No description available.';
@@ -26536,7 +26774,7 @@ export class UIEventControl {
                 
                 event.choices.forEach((choice) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full p-4 hover:bg-slate-700 mb-2 event-choice-btn';
+                    button.className = 'btn w-full p-4 mb-2 event-choice-btn transition-colors';
                     
                     if (choice.disabled) {
                         button.disabled = true;
@@ -26882,7 +27120,7 @@ export class UIEventControl {
         
         // Example implementation for contextual UI generation based on narrative state
         if (locationId === 'loc_exchange' && storyFlags['has_syndicate_access'] === true) {
-            storyActionsHtml += `<div class="btn map-navigate-btn mt-2 !text-cost-orange !border-cost-orange hover:bg-cost-orange/20" data-action="trigger_story_event" data-event-id="evt_syndicate_boss">CONTACT SYNDICATE BOSS</div>`;
+            storyActionsHtml += `<div class="btn map-navigate-btn mt-2 !text-cost-orange !border-cost-orange" data-action="trigger_story_event" data-event-id="evt_syndicate_boss">CONTACT SYNDICATE BOSS</div>`;
         }
         
         if (storyActionsHtml !== '') {
@@ -37034,7 +37272,7 @@ import { formatCredits } from '../utils.js';
 import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.js';
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 import { SystemStateService } from './world/SystemStateService.js';
-import { cinematicService } from './ui/CinematicService.js';
+import CinematicService from './ui/CinematicService.js';
 
 export class MissionService {
     /**
@@ -37098,12 +37336,12 @@ export class MissionService {
                     this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${mission.onArrivalCinematic.sequenceId} upon arrival at ${locationId} for mission ${missionId}.`);
                     
                     // Invoke CinematicService directly (or through known fallback pathways)
-                    if (cinematicService && typeof cinematicService.playSequence === 'function') {
-                        cinematicService.playSequence(mission.onArrivalCinematic.sequenceId);
-                    } else if (this.simulationService && this.simulationService.cinematicService) {
-                        this.simulationService.cinematicService.playSequence(mission.onArrivalCinematic.sequenceId);
+                    if (CinematicService && typeof CinematicService.playVideo === 'function') {
+                        CinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
+                    } else if (this.simulationService && this.simulationService.cinematicService && typeof this.simulationService.cinematicService.playVideo === 'function') {
+                        this.simulationService.cinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
                     } else {
-                        this.logger.warn('MissionService', `CinematicService is unavailable or missing playSequence method for ${mission.onArrivalCinematic.sequenceId}`);
+                        this.logger.warn('MissionService', `CinematicService is unavailable or missing playVideo method for ${mission.onArrivalCinematic.sequenceId}`);
                     }
                 }
             }
@@ -40730,7 +40968,8 @@ export class TravelService {
         const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[locationId]?.time || 7;
         this.gameState.setState({ pendingTravel: { destinationId: locationId, days: baseTime } });
 
-        this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+        // --- INTELLIGENT PROXY ROUTING: Delegate to the UIManager to handle correct modal rendering
+        this.uiManager.showStoryEventModal(eventDef, (choiceId) => {
             if (choiceId && eventDef.choices) {
                 const choiceDef = eventDef.choices.find(c => c.id === choiceId);
                 if (choiceDef && choiceDef.resolution) {
@@ -40872,7 +41111,7 @@ export class TravelService {
             }
 
             if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
-                const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+                const fromDist = DB.MARKETS.find(m => m.id === state.currentLocationId)?.distance || 0;
                 const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
                 if (toDist < fromDist) {
                     travelInfo.fuelCost = 0;
@@ -43596,9 +43835,15 @@ export class SimulationService {
         }
         
         if (DB.STORY_EVENTS && DB.STORY_EVENTS[eventId]) {
-            this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
-                if (choiceId) this.resolveEventChoice(eventId, choiceId);
-            });
+            if (eventDef.hostImage) {
+                this.uiManager.eventControl.showShipEncounterModal(eventDef, (choiceId) => {
+                    if (choiceId) this.resolveEventChoice(eventId, choiceId);
+                });
+            } else {
+                this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+                    if (choiceId) this.resolveEventChoice(eventId, choiceId);
+                });
+            }
         } else {
             this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
                 this.resolveEventChoice(eventId, choiceId);
@@ -46765,6 +47010,7 @@ import { TravelAnimationService } from './ui/TravelAnimationService.js';
 import { AssetService } from './AssetService.js';
 import { GameAttributes } from './GameAttributes.js';
 import { playActCinematic } from './ui/AnimationService.js';
+import CinematicService from './ui/CinematicService.js';
 
 // --- Domain Controllers ---
 import { UIModalEngine } from './ui/UIModalEngine.js';
@@ -47479,6 +47725,16 @@ export class UIManager {
 
     showHotIntelModal(...args) { this.eventControl.showHotIntelModal(...args); }
     showRandomEventModal(...args) { this.eventControl.showRandomEventModal(...args); }
+    
+    // NEW: Intelligent routing proxy for Story Events
+    showStoryEventModal(eventDef, callback) { 
+        if (eventDef && eventDef.hostImage) {
+            this.eventControl.showShipEncounterModal(eventDef, callback);
+        } else {
+            this.eventControl.showStoryEventModal(eventDef, callback);
+        }
+    }
+
     showAgeEventModal(...args) { this.eventControl.showAgeEventModal(...args); }
     showLoreModal(...args) { this.eventControl.showLoreModal(...args); }
     showEulaModal(...args) { this.eventControl.showEulaModal(...args); }
@@ -59751,8 +60007,8 @@ const CACHE_NAME = 'orbital-trading-v1';
 const ASSETS_TO_CACHE = [
     '/',
     '/index.html',
-    '/style.css',
-    '/bundle.min.js',
+    '/css/global.css',
+    '/js/main.js',
     '/manifest.json',
     '/favicon.svg'
 ];

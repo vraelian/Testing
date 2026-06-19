@@ -200,7 +200,8 @@ export class TravelService {
         const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[locationId]?.time || 7;
         this.gameState.setState({ pendingTravel: { destinationId: locationId, days: baseTime } });
 
-        this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+        // --- INTELLIGENT PROXY ROUTING: Delegate to the UIManager to handle correct modal rendering
+        this.uiManager.showStoryEventModal(eventDef, (choiceId) => {
             if (choiceId && eventDef.choices) {
                 const choiceDef = eventDef.choices.find(c => c.id === choiceId);
                 if (choiceDef && choiceDef.resolution) {
@@ -342,7 +343,7 @@ export class TravelService {
             }
 
             if (shipAttributes.includes('ATTR_SOLAR_HARMONY')) {
-                const fromDist = DB.MARKETS.find(m => m.id === fromId)?.distance || 0;
+                const fromDist = DB.MARKETS.find(m => m.id === state.currentLocationId)?.distance || 0;
                 const toDist = DB.MARKETS.find(m => m.id === locationId)?.distance || 0;
                 if (toDist < fromDist) {
                     travelInfo.fuelCost = 0;

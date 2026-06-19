@@ -48,5 +48,16 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
         text: "Hello, Captain. The Syndicate's market analysts noted a sudden, massive capital injection at Uranus, followed by the Guild scrambling local recon assets.<b><b>This is related to the anomalous AI event at Uranus, isn't it? Did you find out where that scrap was being thrown to? I'm assuming the guild needs you to look into it or else they'd do it themselves.<br><br>Whatever is sitting out by Mercury is clearly valuable. If you relay to the Syndicate what you find I will personally reimburse your recent credit expense... with interest.",
         confirmText: 'Close Channel',
         choices: [] 
+    },
+    'evt_encounter_recursion': {
+        id: 'evt_encounter_recursion',
+        theme: 'anomaly',
+        hostImage: 'Engine_of_Recursion_C.webp',
+        repeatable: false,
+        title: 'Unidentified Z Class Vessel',
+        text: 'Telemetry displays localized gravitational shear. Visual sensors resolve a vessel of staggering proportions eclipsing the background starfield. The Engine of Recursion drifts in complete silence, its hull bearing the scars of forgotten cosmic epochs.',
+        choices: [
+            { id: 'dismiss', text: 'Log Telemetry Data' }
+        ]
     }
 };

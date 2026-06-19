@@ -308,7 +308,7 @@ export class UIEventControl {
 
     /**
      * Executes the CRT instantiation and resolution sequence for Ship Encounter Story Events (Act III).
-     * Bypasses the standard UIModalEngine queue to take direct control over the Z-axis breaking modal.
+     * Now correctly interfaces with the central queue to capture proper keyframe timings.
      */
     async showShipEncounterModal(eventDef, choicesCallback) {
         if (eventDef.cinematicPath) {
@@ -320,23 +320,12 @@ export class UIEventControl {
             }
         }
 
-        const modal = document.getElementById('story-ship-modal');
-        const modalContent = modal.querySelector('.story-ship-modal-container');
-        const titleEl = document.getElementById('story-ship-title');
-        const textEl = document.getElementById('story-ship-text');
-        const imgEl = document.getElementById('story-ship-portrait-img');
-        const btnContainer = document.getElementById('story-ship-button-container');
-
-        if (!modal || !modalContent || !titleEl || !textEl || !imgEl || !btnContainer) {
-            this.manager.logger.error('UIEventControl', 'Ship encounter modal DOM elements missing.');
-            return;
-        }
+        const title = eventDef.title || 'UNKNOWN VESSEL DETECTED';
+        const description = eventDef.text || '';
 
         // Path Resolution Logic
         let imgPath = 'assets/images/characters/unknown.webp'; // fallback
         if (eventDef.hostImage) {
-            // e.g., "Engine_of_Recursion_C.webp" -> "Engine of Recursion"
-            // Extract base name by removing the trailing variant identifier (e.g., "_C.webp", ".webp")
             const baseMatch = eventDef.hostImage.match(/^(.*?)(?:_[A-Z])?\.webp$/);
             if (baseMatch && baseMatch[1]) {
                 const shipFolderName = baseMatch[1].replace(/_/g, ' ');
@@ -346,97 +335,109 @@ export class UIEventControl {
             }
         }
 
-        // Populate Data
-        titleEl.innerHTML = eventDef.title || 'UNKNOWN VESSEL DETECTED';
-        textEl.innerHTML = eventDef.text || '';
-        imgEl.src = imgPath;
-        
-        // Clean instantiation and start CRT animation
-        modal.classList.remove('hidden');
-        // Force a reflow
-        void modal.offsetWidth;
-        modal.classList.add('modal-visible');
-        modal.classList.remove('opacity-0');
-
-        // Apply theme if provided
-        if (eventDef.theme) {
-            modalContent.className = `modal-content sci-fi-frame story-ship-modal-container relative modal-theme-${eventDef.theme}`;
-        } else {
-            modalContent.className = 'modal-content sci-fi-frame story-ship-modal-container relative';
+        const targetModal = document.getElementById('story-ship-modal');
+        if (targetModal) {
+            targetModal.style.transition = 'none';
         }
 
-        modalContent.classList.remove('sev-crt-shutdown');
-        modalContent.classList.add('sev-crt-turn-on');
-        modalContent.style.animationDuration = '0.4s';
-        
-        if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
-        modalContent._crtTimeout = setTimeout(() => {
-            modalContent.classList.remove('sev-crt-turn-on');
-            modalContent.style.animationDuration = '';
-        }, 400);
+        this.manager.queueModal('story-ship-modal', title, description, null, {
+            nonDismissible: true,
+            noModalVisible: true, // Bypass standard CSS fade-in
+            customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('.story-ship-modal-container');
+                const imgEl = modal.querySelector('#story-ship-portrait-img');
+                const textEl = modal.querySelector('#story-ship-text');
+                const btnContainer = modal.querySelector('#story-ship-button-container');
 
-        // Generate Buttons
-        btnContainer.innerHTML = '';
-        const choices = (eventDef.choices && eventDef.choices.length > 0) ? eventDef.choices : [{ id: 'dismiss', text: 'Log Event' }];
+                if (imgEl) imgEl.src = imgPath;
+                if (textEl) textEl.innerHTML = description;
 
-        const crtCloseHandler = (choiceId = null) => {
-            // Lock inputs immediately
-            const allBtns = btnContainer.querySelectorAll('.event-choice-btn');
-            allBtns.forEach(b => b.style.pointerEvents = 'none');
-
-            modalContent.classList.remove('sev-crt-turn-on');
-            modalContent.classList.add('sev-crt-shutdown');
-            modalContent.style.animationDuration = '0.35s';
-            
-            setTimeout(() => {
-                modal.classList.add('hidden');
-                modal.classList.remove('modal-visible');
-                
-                requestAnimationFrame(() => {
-                    setTimeout(() => {
-                        choicesCallback(choiceId);
-                    }, 10);
-                });
-            }, 340);
-        };
-
-        choices.forEach((choice) => {
-            const button = document.createElement('button');
-            // Strict adherence: Removed hover classes entirely for pure touch behavior
-            button.className = 'btn w-full p-4 mb-2 event-choice-btn transition-colors';
-            if (choice.disabled) {
-                button.disabled = true;
-                button.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-            
-            const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
-            const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
-            const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
-
-            let colorClass = 'text-gray-400'; 
-            if (subText) {
-                const lower = subText.toLowerCase();
-                if (lower.includes('space')) {
-                    colorClass = 'text-req-yellow';
-                } else if (lower.includes('delay')) {
-                    colorClass = 'text-delay-blue';
-                } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium', 'damage', 'drain', 'stress'].some(k => lower.includes(k))) {
-                    colorClass = 'text-cost-orange';
+                // Apply theme if provided
+                if (eventDef.theme) {
+                    modalContent.className = `modal-content sci-fi-frame story-ship-modal-container relative modal-theme-${eventDef.theme}`;
+                } else {
+                    modalContent.className = 'modal-content sci-fi-frame story-ship-modal-container relative';
                 }
+
+                // Clean instantiation and start CRT animation
+                modalContent.classList.remove('sev-crt-shutdown');
+                modalContent.classList.add('sev-crt-turn-on');
+                modalContent.style.animationDuration = '0.4s';
+                
+                if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+                modalContent._crtTimeout = setTimeout(() => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.style.animationDuration = '';
+                }, 400);
+
+                // Generate Buttons
+                if (btnContainer) btnContainer.innerHTML = '';
+                const choices = (eventDef.choices && eventDef.choices.length > 0) ? eventDef.choices : [{ id: 'dismiss', text: 'Log Event' }];
+
+                const crtCloseHandler = (choiceId = null) => {
+                    // Lock inputs immediately
+                    if (btnContainer) {
+                        const allBtns = btnContainer.querySelectorAll('.event-choice-btn');
+                        allBtns.forEach(b => b.style.pointerEvents = 'none');
+                    }
+
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.classList.add('sev-crt-shutdown');
+                    modalContent.style.animationDuration = '0.35s';
+                    
+                    setTimeout(() => {
+                        if (this.manager.modalEngine && this.manager.modalEngine.destroyModalInstant) {
+                            this.manager.modalEngine.destroyModalInstant('story-ship-modal');
+                        } else {
+                            modal.classList.add('hidden');
+                        }
+                        
+                        requestAnimationFrame(() => {
+                            setTimeout(() => {
+                                choicesCallback(choiceId);
+                            }, 10);
+                        });
+                    }, 340);
+                };
+
+                choices.forEach((choice) => {
+                    const button = document.createElement('button');
+                    button.className = 'btn w-full p-4 mb-2 event-choice-btn transition-colors';
+                    if (choice.disabled) {
+                        button.disabled = true;
+                        button.classList.add('opacity-50', 'cursor-not-allowed');
+                    }
+                    
+                    const textMatch = (choice.text || choice.title || 'Option').match(/^(.*?)\s*(\(.*\))?$/);
+                    const headerText = textMatch ? textMatch[1] : (choice.text || choice.title);
+                    const subText = (textMatch && textMatch[2]) ? textMatch[2] : '';
+
+                    let colorClass = 'text-gray-400'; 
+                    if (subText) {
+                        const lower = subText.toLowerCase();
+                        if (lower.includes('space')) {
+                            colorClass = 'text-req-yellow';
+                        } else if (lower.includes('delay')) {
+                            colorClass = 'text-delay-blue';
+                        } else if (['credit', 'hull', 'fuel', 'ice', 'plasteel', 'processor', 'propellant', 'cybernetic', 'wealth', 'scrap', 'premium', 'damage', 'drain', 'stress'].some(k => lower.includes(k))) {
+                            colorClass = 'text-cost-orange';
+                        }
+                    }
+
+                    button.innerHTML = `
+                        <span class="choice-header">${headerText}</span>
+                        ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
+                    `;
+                    
+                    if (choice.tooltip) button.setAttribute('title', choice.tooltip);
+
+                    button.onclick = (e) => {
+                        e.preventDefault();
+                        crtCloseHandler(choice.id);
+                    };
+                    if (btnContainer) btnContainer.appendChild(button);
+                });
             }
-
-            button.innerHTML = `
-                <span class="choice-header">${headerText}</span>
-                ${subText ? `<span class="choice-subtext ${colorClass}">${subText}</span>` : ''}
-            `;
-            
-            if (choice.tooltip) button.setAttribute('title', choice.tooltip);
-
-            button.onclick = (e) => {
-                e.preventDefault();
-                crtCloseHandler(choice.id);
-            };
-            btnContainer.appendChild(button);
         });
     }
 

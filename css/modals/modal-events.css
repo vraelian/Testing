@@ -420,21 +420,29 @@
 /* --- SHIP ENCOUNTER STORY MODAL (ACT III) ---                              */
 /* ========================================================================= */
 
-.story-ship-modal-container {
+#story-ship-modal .modal-content.story-ship-modal-container {
     position: relative;
     width: 95% !important;
     max-width: 650px !important;
-    margin-top: 100px; /* Provides top buffer for the Z-axis overlap */
-    padding-top: 220px !important; /* Forces internal flow below the absolute portrait */
+    margin-top: 200px; /* Buffer for the Z-axis overhang */
+    padding-top: 0 !important; 
+    max-height: 75vh; 
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    overflow: visible !important; /* CRITICAL: Releases the Z-axis portrait overhang */
 }
 
 .story-ship-portrait-wrapper {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translate(-50%, -33%);
-    width: 300px;
-    height: 300px;
+    position: relative !important; /* Overrides Tailwind .absolute in the DOM */
+    top: auto !important;
+    left: auto !important;
+    transform: none !important;
+    flex-shrink: 0;
+    width: 384px; /* 3x the 128px character portrait spec */
+    height: 384px;
+    margin-top: -192px !important; /* Precisely 50% overhang */
+    margin-bottom: 1rem;
     border-radius: 12px;
     border: 2px solid var(--comm-color, #38bdf8);
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 20px var(--comm-color-glow-mid, rgba(56, 189, 248, 0.5));
@@ -443,18 +451,48 @@
     z-index: 10;
 }
 
-/* Override Tailwind margin to rely on padding-top structural integrity */
+/* Override Tailwind margin to rely on flex structural integrity */
 .story-ship-modal-container #story-ship-title {
     margin-top: 0 !important;
+    flex-shrink: 0;
+    width: 100%;
+}
+
+.story-ship-modal-container #story-ship-text {
+    overflow-y: auto;
+    flex-shrink: 1;
+    margin-bottom: 1rem !important;
+    padding-right: 0.5rem; /* Prevent text clipping on scrollbar */
+    width: 100%;
+}
+
+/* Custom Scrollbar for Story Text */
+.story-ship-modal-container #story-ship-text::-webkit-scrollbar {
+    width: 4px;
+}
+.story-ship-modal-container #story-ship-text::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+.story-ship-modal-container #story-ship-text::-webkit-scrollbar-thumb {
+    background: var(--comm-color, #38bdf8);
+    border-radius: 4px;
+}
+
+.story-ship-modal-container #story-ship-button-container {
+    flex-shrink: 0;
+    margin-top: auto !important; /* Push buttons to bottom */
+    width: 100%;
 }
 
 /* Native Mobile Constraints */
-@media (max-width: 380px) {
-    .story-ship-modal-container {
-        padding-top: 180px !important;
-    }
+@media (max-width: 450px) {
     .story-ship-portrait-wrapper {
-        width: 240px;
-        height: 240px;
+        width: 280px; 
+        height: 280px;
+        margin-top: -140px !important; /* 50% overhang */
+    }
+    #story-ship-modal .modal-content.story-ship-modal-container {
+        margin-top: 150px;
     }
 }

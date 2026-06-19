@@ -735,6 +735,16 @@ export class UIManager {
 
     showHotIntelModal(...args) { this.eventControl.showHotIntelModal(...args); }
     showRandomEventModal(...args) { this.eventControl.showRandomEventModal(...args); }
+    
+    // NEW: Intelligent routing proxy for Story Events
+    showStoryEventModal(eventDef, callback) { 
+        if (eventDef && eventDef.hostImage) {
+            this.eventControl.showShipEncounterModal(eventDef, callback);
+        } else {
+            this.eventControl.showStoryEventModal(eventDef, callback);
+        }
+    }
+
     showAgeEventModal(...args) { this.eventControl.showAgeEventModal(...args); }
     showLoreModal(...args) { this.eventControl.showLoreModal(...args); }
     showEulaModal(...args) { this.eventControl.showEulaModal(...args); }

@@ -168,9 +168,15 @@ export class SimulationService {
         }
         
         if (DB.STORY_EVENTS && DB.STORY_EVENTS[eventId]) {
-            this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
-                if (choiceId) this.resolveEventChoice(eventId, choiceId);
-            });
+            if (eventDef.hostImage) {
+                this.uiManager.eventControl.showShipEncounterModal(eventDef, (choiceId) => {
+                    if (choiceId) this.resolveEventChoice(eventId, choiceId);
+                });
+            } else {
+                this.uiManager.eventControl.showStoryEventModal(eventDef, (choiceId) => {
+                    if (choiceId) this.resolveEventChoice(eventId, choiceId);
+                });
+            }
         } else {
             this.uiManager.showRandomEventModal(eventDef, (choiceId) => {
                 this.resolveEventChoice(eventId, choiceId);
