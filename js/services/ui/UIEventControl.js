@@ -121,6 +121,12 @@ export class UIEventControl {
             }
         }
 
+        // If the event is strictly cinematic, resolve and bypass standard modal rendering
+        if (eventDef.cinematicOnly) {
+            if (choicesCallback) choicesCallback(null);
+            return; 
+        }
+
         const title = eventDef.title || 'Incoming Transmission';
         const description = eventDef.text || '';
 
@@ -318,6 +324,12 @@ export class UIEventControl {
             } catch (err) {
                 this.manager.logger.warn('UIEventControl', 'Cinematic playback interrupted or failed. Proceeding to modal fallback.', err);
             }
+        }
+
+        // If the event is strictly cinematic, resolve and bypass standard modal rendering
+        if (eventDef.cinematicOnly) {
+            if (choicesCallback) choicesCallback(null);
+            return; 
         }
 
         const title = eventDef.title || 'UNKNOWN VESSEL DETECTED';

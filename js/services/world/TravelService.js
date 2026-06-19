@@ -4,6 +4,7 @@
  * initiating trips, calculating costs, and managing the random event system.
  * UPDATED: Re-routes modal resolution specifically to UIEventControl intercept hook.
  * UPDATED: Cleaned up Starfield handling to allow persistence during Story Events.
+ * UPDATED: Systemic Arrival Event Queue logic implemented.
  */
 import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
@@ -157,13 +158,55 @@ export class TravelService {
     }
 
     /**
+     * Helper to resolve the outcome of story events cleanly and progress the recursive loop.
+     * @private
+     */
+    _resolveStoryEventAndContinue(eventId, choiceId, eventDef, continueCallback) {
+        if (choiceId && eventDef.choices) {
+            const choiceDef = eventDef.choices.find(c => c.id === choiceId);
+            if (choiceDef && choiceDef.resolution) {
+                const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
+                if (result && result.effects && result.effects.length > 0) {
+                    const showResult = this.uiManager.eventControl?.showEventResultModal || this.uiManager.showEventResultModal;
+                    if (showResult) {
+                        showResult.call(
+                            this.uiManager.eventControl || this.uiManager,
+                            result.title,
+                            result.text,
+                            result.effects,
+                            continueCallback
+                        );
+                        return; // Halt recursion until result modal resolves
+                    }
+                }
+            }
+        }
+        // Immediately recurse if no complex resolution was required
+        continueCallback();
+    }
+
+    /**
      * Recursively processes the pending story events queue up to a limit of 2 per trip.
-     * Persists the starfield background and overrides standard random events.
+     * Migrates events marked for 'triggerOnArrival' into the pendingArrivalEvents queue.
      * @private
      */
     _processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount = 0) {
         if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
+        if (!this.gameState.pendingArrivalEvents) this.gameState.pendingArrivalEvents = [];
         
+        // Sift out arrival-gated events and persist them safely
+        const immediateEvents = [];
+        while (this.gameState.pendingStoryEvents.length > 0) {
+            const id = this.gameState.pendingStoryEvents.shift();
+            const def = DB.STORY_EVENTS[id];
+            if (def && def.triggerOnArrival) {
+                this.gameState.pendingArrivalEvents.push(id);
+            } else {
+                immediateEvents.push(id);
+            }
+        }
+        this.gameState.pendingStoryEvents = immediateEvents;
+
         if (eventsResolvedCount >= 2 || this.gameState.pendingStoryEvents.length === 0) {
             // Processing complete. Hand off to actual travel sequence.
             if (eventsResolvedCount > 0) {
@@ -185,7 +228,7 @@ export class TravelService {
             return;
         }
 
-        this.logger.info.system('Event', this.gameState.day, 'STORY_EVENT_TRIGGER', `Triggered story event: ${eventDef.title}`);
+        this.logger.info.system('Event', this.gameState.day, 'STORY_EVENT_TRIGGER', `Triggered story event: ${eventDef.title || eventId}`);
 
         // --- PHASE 4: Initiate Warp Background early for Story Events ---
         if (eventsResolvedCount === 0) {
@@ -200,35 +243,54 @@ export class TravelService {
         const baseTime = this.gameState.TRAVEL_DATA[this.gameState.currentLocationId]?.[locationId]?.time || 7;
         this.gameState.setState({ pendingTravel: { destinationId: locationId, days: baseTime } });
 
-        // --- INTELLIGENT PROXY ROUTING: Delegate to the UIManager to handle correct modal rendering
-        this.uiManager.showStoryEventModal(eventDef, (choiceId) => {
-            if (choiceId && eventDef.choices) {
-                const choiceDef = eventDef.choices.find(c => c.id === choiceId);
-                if (choiceDef && choiceDef.resolution) {
-                    const result = this.randomEventService.resolveChoice(eventId, choiceId, this.gameState, this.simulationService);
-                    if (result && result.effects && result.effects.length > 0) {
-                        if (this.uiManager.eventControl && this.uiManager.eventControl.showEventResultModal) {
-                            this.uiManager.eventControl.showEventResultModal(
-                                result.title,
-                                result.text,
-                                result.effects,
-                                () => this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1)
-                            );
-                        } else if (this.uiManager.showEventResultModal) {
-                            this.uiManager.showEventResultModal(
-                                result.title,
-                                result.text,
-                                result.effects,
-                                () => this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1)
-                            );
-                        }
-                        return; // Halt recursion until result modal resolves
-                    }
-                }
-            }
-            // If linear event (no choices) or effectless choice, immediately recurse
-            this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1);
+        // --- INTELLIGENT PROXY ROUTING: Delegate to the appropriate DOM Controller
+        const handleChoice = (choiceId) => {
+            this._resolveStoryEventAndContinue(eventId, choiceId, eventDef, () => {
+                this._processStoryEvents(locationId, useFoldedDrive, eventsResolvedCount + 1);
+            });
+        };
+
+        if (eventDef.hostImage) {
+            this.uiManager.showShipEncounterModal(eventDef, handleChoice);
+        } else {
+            this.uiManager.showStoryEventModal(eventDef, handleChoice);
+        }
+    }
+
+    /**
+     * Evaluates and executes any pending events queued specifically to fire upon 
+     * arriving at a target destination before mission completion checks occur.
+     * @private
+     */
+    _processArrivalEvents(locationId, callback, eventsResolvedCount = 0) {
+        if (!this.gameState.pendingArrivalEvents) this.gameState.pendingArrivalEvents = [];
+
+        const eventIndex = this.gameState.pendingArrivalEvents.findIndex(id => {
+            const def = DB.STORY_EVENTS[id];
+            return def && (def.triggerOnArrival === locationId || def.triggerOnArrival === 'any');
         });
+
+        if (eventsResolvedCount >= 2 || eventIndex === -1) {
+            callback();
+            return;
+        }
+
+        const eventId = this.gameState.pendingArrivalEvents.splice(eventIndex, 1)[0];
+        const eventDef = DB.STORY_EVENTS[eventId];
+
+        this.logger.info.system('Event', this.gameState.day, 'ARRIVAL_EVENT_TRIGGER', `Triggered arrival event: ${eventDef.title || eventId}`);
+
+        const handleChoice = (choiceId) => {
+            this._resolveStoryEventAndContinue(eventId, choiceId, eventDef, () => {
+                this._processArrivalEvents(locationId, callback, eventsResolvedCount + 1);
+            });
+        };
+
+        if (eventDef.hostImage) {
+            this.uiManager.showShipEncounterModal(eventDef, handleChoice);
+        } else {
+            this.uiManager.showStoryEventModal(eventDef, handleChoice);
+        }
     }
 
     initiateTravel(locationId, eventMods = {}) {
@@ -294,7 +356,7 @@ export class TravelService {
         const hasStatus = (id) => statusEffects.some(s => s.id === id);
 
         const systemState = state.systemState;
-        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[activeStateDef.activeId] : null;
 
         if (!eventMods.useFoldedDrive) {
             if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.travelFuelBurnMod) {
@@ -594,49 +656,54 @@ export class TravelService {
             // --- ACT III: LOCATION-TRIGGERED CINEMATICS HOOK ---
             document.dispatchEvent(new CustomEvent('EVENT_PLAYER_ARRIVED', { detail: { locationId } }));
 
-            if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
-                this.gameState.pendingEventChains.forEach(chain => {
-                    chain.tripsRemaining--;
-                });
-            }
-            
-            if (this.simulationService.missionService) {
-                this.simulationService.missionService.checkTriggers();
-            }
-
-            if (this.simulationService.intelService) {
-                this.simulationService.intelService.evaluateHotIntelTrigger();
-            }
-
-            if (this.simulationService.toastService) {
-                this.simulationService.toastService.evaluateArrivalTriggers();
-            }
-
-            // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
-            if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
-                this.gameState.deferredModals.forEach(m => {
-                    this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
-                });
-                this.gameState.deferredModals = [];
-            }
-
-            if (locationId === 'sol' && this.timeService.solStationService) {
-                if (typeof this.timeService.solStationService.catchUpDays === 'function') {
-                    this.timeService.solStationService.catchUpDays(this.gameState.day);
-                    this.timeService.solStationService.startLocalLiveLoop();
+            // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL CINEMATICS 
+            this._processArrivalEvents(locationId, () => {
+                
+                if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
+                    this.gameState.pendingEventChains.forEach(chain => {
+                        chain.tripsRemaining--;
+                    });
                 }
-            }
+                
+                if (this.simulationService.missionService) {
+                    this.simulationService.missionService.checkTriggers();
+                }
 
-            this.simulationService.saveGame();
+                if (this.simulationService.intelService) {
+                    this.simulationService.intelService.evaluateHotIntelTrigger();
+                }
 
-            const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
-            if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
-                this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-            } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
-                this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-            } else {
-                this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
-            }
+                if (this.simulationService.toastService) {
+                    this.simulationService.toastService.evaluateArrivalTriggers();
+                }
+
+                // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
+                if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                    this.gameState.deferredModals.forEach(m => {
+                        this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
+                    });
+                    this.gameState.deferredModals = [];
+                }
+
+                if (locationId === 'sol' && this.timeService.solStationService) {
+                    if (typeof this.timeService.solStationService.catchUpDays === 'function') {
+                        this.timeService.solStationService.catchUpDays(this.gameState.day);
+                        this.timeService.solStationService.startLocalLiveLoop();
+                    }
+                }
+
+                this.simulationService.saveGame();
+
+                const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
+                if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
+                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+                } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
+                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+                } else {
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+                }
+
+            }); // End _processArrivalEvents
         };
         
         this.uiManager.showTravelAnimation(fromLocation, destination, travelInfo, totalHullDamagePercentForDisplay, finalCallback);

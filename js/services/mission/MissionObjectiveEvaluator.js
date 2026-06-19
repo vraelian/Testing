@@ -180,7 +180,8 @@ export class MissionObjectiveEvaluator {
             case 'HAS_UPGRADE_RANK': {
                 const activeShipId = gameState.player.activeShipId;
                 const shipState = gameState.player.shipStates[activeShipId];
-                const reqRank = objective.quantity || objective.value || parseInt(objective.target, 10) || 1;
+                // Added parsing for objective.rank to map to Mission 34's parameters
+                const reqRank = objective.rank || objective.quantity || objective.value || parseInt(objective.target, 10) || 1;
                 let highestRank = 0;
                 
                 if (shipState && shipState.upgrades && Array.isArray(shipState.upgrades)) {

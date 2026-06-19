@@ -49,15 +49,40 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
         confirmText: 'Close Channel',
         choices: [] 
     },
-    'evt_encounter_recursion': {
-        id: 'evt_encounter_recursion',
+    
+    // --- ACT III CINEMATIC EVENT TRIGGERS ---
+    
+    'evt_folded_space_ghost': {
+        id: 'evt_folded_space_ghost',
         theme: 'anomaly',
         hostImage: 'Engine_of_Recursion_C.webp',
+        cinematicPath: 'assets/images/video/alien_ship_encounter.mp4',
         repeatable: false,
         title: 'Unidentified Z Class Vessel',
         text: 'Telemetry displays localized gravitational shear. Visual sensors resolve a vessel of staggering proportions eclipsing the background starfield. The Engine of Recursion drifts in complete silence, its hull bearing the scars of forgotten cosmic epochs.',
         choices: [
             { id: 'dismiss', text: 'Log Telemetry Data' }
         ]
+    },
+    'evt_keplers_eye_reveal': {
+        id: 'evt_keplers_eye_reveal',
+        cinematicPath: 'assets/images/video/kepler_arrival.mp4',
+        cinematicOnly: true,
+        triggerOnArrival: 'loc_keplers_eye',
+        repeatable: false
+    },
+    'evt_arbiter_reveal': {
+        id: 'evt_arbiter_reveal',
+        cinematicPath: 'assets/images/video/arbiter_reveal.mp4',
+        cinematicOnly: true,
+        triggerOnArrival: 'loc_earth',
+        repeatable: false
+    },
+    'evt_vrael_reveal': {
+        id: 'evt_vrael_reveal',
+        cinematicPath: 'assets/images/video/vrael_reveal.mp4',
+        cinematicOnly: true,
+        triggerOnArrival: 'loc_venus',
+        repeatable: false
     }
 };
