@@ -1185,7 +1185,7 @@ ${logHistory}
             });
         
         const sortedMissions = Object.values(DB.MISSIONS).map(m => {
-            const match = m.id.match(/\d+$/);
+            const match = m.id.match(/\d+/);
             const prefix = match ? `${match[0].padStart(2, '0')} ` : '';
             return { label: `${prefix}${m.name}`, id: m.id };
         }).sort((a, b) => a.label.localeCompare(b.label));

@@ -19,7 +19,7 @@ export const PHASE_THREE_MISSIONS = {
         description: "Transmission received and decrypted. The telemetry is highly... irregular. It outlines an unregistered anomaly of unprecedented scale orbiting between Mercury and the Sun. Trajectory logs suggest this structure intercepted the mass briefly shunted during the anomalous Uranus AI incident. This aligns with no sanctioned Guild operations. I am escalating this file for immediate, classified analysis.",
         triggers: [ 
             { "type": "mission_completed", "missionId": "mission_32" },
-            { "type": "flag_set", "flagId": "faction_aligned_guild", "value": true }
+            { "type": "flag_is_true", "flag": "faction_aligned_guild" }
         ],
         objectives: [],
         completion: {
@@ -30,8 +30,7 @@ export const PHASE_THREE_MISSIONS = {
         },
         rewards: [
             { "type": "GRANT_SHIP", "shipId": "Odyssey.Ship" },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" },
-            { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" }
         ]
     },
     'mission_33_syndicate': {
@@ -45,7 +44,7 @@ export const PHASE_THREE_MISSIONS = {
         description: "Transmission verified. The Syndicate remembers loyalty, Captain [playerName], thank you. This data is very interesting... The math points to a massive, unregistered mega-structure hiding near the Sun, catching covert supply lines like that anomalous shunt from Uranus. Anything the Guild can't regulate is an asset we can weaponize. The Syndicate has begun a deep investigation into the matter.",
         triggers: [ 
             { "type": "mission_completed", "missionId": "mission_32" },
-            { "type": "flag_set", "flagId": "faction_aligned_syndicate", "value": true }
+            { "type": "flag_is_true", "flag": "faction_aligned_syndicate" }
         ],
         objectives: [],
         completion: {
@@ -56,8 +55,7 @@ export const PHASE_THREE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 165000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" },
-            { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" }
         ]
     },
 
@@ -75,7 +73,6 @@ export const PHASE_THREE_MISSIONS = {
         description: "Greetings, Captain. Audita forwarded your profile. I oversee the heavy transit operations. If you intend to continue contracting with the Guild, your hardware must match the environment. The baseline requirement for this division is a Class A hull and a minimum of one Rank 3 system enhancement. Visit the shipyards and a mechanic, then come and see me for work. Get it done.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_33_guild" } ],
         objectives: [
-            { "id": "acquire_class_a", "type": "OWN_SHIP_CLASS", "target": "A" },
             { "id": "acquire_rank_3", "type": "HAS_UPGRADE_RANK", "rank": 3 }
         ],
         completion: {
@@ -97,7 +94,6 @@ export const PHASE_THREE_MISSIONS = {
         description: "Hey Captain, Kiern vouched for you and forwarded your information. While the Syndicate is scaling up our data collection on that anomaly you were working on, we have more work for you down the line. However, I need you in a Class A chassis with a Rank 3 upgrade humming in the bay. If you want in on more work, upgrade your fleet. Make it happen.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_33_syndicate" } ],
         objectives: [
-            { "id": "acquire_class_a", "type": "OWN_SHIP_CLASS", "target": "A" },
             { "id": "acquire_rank_3", "type": "HAS_UPGRADE_RANK", "rank": 3 }
         ],
         completion: {
@@ -172,7 +168,7 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain [playerName]. The investigation into the solar anomaly has stalled. The telemetry you provided to Audita cannot be validated without deep-field optical correlation. Since your manifest indicates clearance at Kepler's Eye, you are directed to requisition the station's Ocularium lens array for observation. Execute a high-density scan of the solar corona and report what you find. Lens rental expenses have been pre-approved for reimbursement.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_35_guild" } ],
-        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_keplers_eye_reveal" } ],
+        onArrivalCinematic: { locationId: 'loc_keplers_eye', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
         objectives: [
             { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_keplers_eye" }
         ],
@@ -194,7 +190,7 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain, the hunt for our solar ghost has stalled. The telemetry you supplied Kiern is inert; it cannot be validated without deep-field optical correlation to give it a pulse. Now that you hold the keys to Kepler's Eye, purchase some time on the Ocularium. Force a high-density scan through the solar corona and report whatever anomalies you capture. I will ensure your lens rental costs are fully reimbursed.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_35_syndicate" } ],
-        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_keplers_eye_reveal" } ],
+        onArrivalCinematic: { locationId: 'loc_keplers_eye', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
         objectives: [
             { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_keplers_eye" }
         ],
@@ -272,7 +268,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. The telemetry from your Pluto run is frustrating. An isolated Expert System running a localized labor cult to launch scrap into the corona is esoteric noise to my department. However, the upper administration seized your report instantly. Rather than providing an explanation, they handed down a massive logistical directive. We are to stockpile high-tier computational hardware immediately. Purchase and deliver 100 units of Neural Processors to Earth. I don't see the connection to the solar anomaly, but the Arbiter's office expects this done flawlessly.",
+        description: "Captain [playerName]. The telemetry from your Pluto run is frustrating. An isolated Expert System running a localized labor cult to launch scrap into the corona is esoteric noise to my department. However, the upper administration seized your report instantly. Rather than providing an explanation, they handed down a massive logistical directive. We are to stockpile high-tier computational hardware immediately. Purchase and deliver Neural Processors to Earth. I don't see the connection to the solar anomaly, but the Arbiter's office expects this done flawlessly.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_guild" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
@@ -294,7 +290,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "I'll be honest, Captain. That Pluto expedition feels like a dead end. A deranged AI paying augmented scrap-haulers isn't actionable leverage for my network. Yet, the moment your report hit the system, Syndicate leadership locked it down. Now, I have orders to hoard industrial energy reserves. Secure 100 units of Refined Propellant and haul them to Venus. The Syndicate is making a very sudden, very large move based on your data, and we are the leverage.",
+        description: "I'll be honest, Captain. That Pluto expedition feels like a dead end. A deranged AI paying augmented scrap-haulers isn't actionable leverage for my network. Yet, the moment your report hit the system, Syndicate leadership locked it down. Now, I have orders to hoard industrial energy reserves. Secure Refined Propellant and haul it to Venus. The Syndicate is making a very sudden, very large move based on your data, and we are the leverage.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_syndicate" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
@@ -371,8 +367,8 @@ export const PHASE_THREE_MISSIONS = {
         description: "Captain [playerName]. With your Class A vessel registered, you are cleared for heavy industrial contracts. Earth's industrial sectors are facing a critical shortage of raw chemical assets. I need you to source Refined Propellant from the Jovian orbital refineries and haul it to the Earth surface stations. Remember, this is volatile cargo meant for market distribution and manufacturing, so handle the logistics carefully. Deliver the shipment, and I will personally authorize your Tier 4 trading license.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_guild" } ],
         objectives: [
-            { "id": "collect_propellant", "type": "COLLECT_ITEM", "goodId": "refined_propellant", "quantity": 80, "target": "loc_jupiter" },
-            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "refined_propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "collect_propellant" }
+            { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" },
+            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "refined_propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "travel_jupiter" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -393,8 +389,8 @@ export const PHASE_THREE_MISSIONS = {
         description: "Now that you're flying heavy gear, we can put you on the prime routes. The Venusian Syndicate is bringing a massive new market analysis lab online in the cloud cities. We need raw computational power, freshly minted. Head out to the Neptunian orbital stations, secure Neural Processors, and haul them back to Venus. Pull this off, and I'll push through an order of a Tier 4 License for you.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_syndicate" } ],
         objectives: [
-            { "id": "collect_processors", "type": "COLLECT_ITEM", "goodId": "neural_processors", "quantity": 40, "target": "loc_neptune" },
-            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 40, "target": "loc_venus", "dependsOn": "collect_processors" }
+            { "id": "travel_neptune", "type": "TRAVEL_TO", "target": "loc_neptune" },
+            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 40, "target": "loc_venus", "dependsOn": "travel_neptune" }
         ],
         completion: {
             locationId: "loc_venus",
@@ -525,8 +521,8 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "The organics running the Guild are fragile. They buy decades of life by freezing themselves in cryogenics which supplement their cybernetic prostheses. The Arbiter's inner circle does not tolerate delays in their longevity treatments. Deliver the cryogenic pods to Luna immediately.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_42_guild" } ],
-        onAccept: [
-            { "type": "GRANT_ITEM", "items": [{ "goodId": "cryo_sleep_pods", "quantity": 40 }] }
+        grantedCargo: [
+            { "goodId": "cryo_sleep_pods", "quantity": 40 }
         ],
         objectives: [
             { "id": "deliver_cryo_pods", "type": "DELIVER_ITEM", "goodId": "cryo_sleep_pods", "quantity": 40, "target": "loc_luna" }
@@ -549,8 +545,8 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Building unregistered dreadnoughts in the dark takes serious materials. We need sixty crates of graphene lattices pulled to the Neptunian orbital shipyards promptly. Maintain a low profile.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_42_syndicate" } ],
-        onAccept: [
-            { "type": "GRANT_ITEM", "items": [{ "goodId": "graphene_lattices", "quantity": 70 }] }
+        grantedCargo: [
+            { "goodId": "graphene_lattices", "quantity": 70 }
         ],
         objectives: [
             { "id": "deliver_graphene", "type": "DELIVER_ITEM", "goodId": "graphene_lattices", "quantity": 70, "target": "loc_neptune" }
@@ -683,7 +679,7 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain. The Syndicate's shadow fleet initiative is compromised, and their market share is hemorrhaging. The Arbiter has requested a direct audience with you. This is unprecedented for an independent contractor. Proceed immediately to the surface stations of Earth. The Arbiter is waiting.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_45_guild" } ],
-        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_arbiter_reveal" } ],
+        onArrivalCinematic: { locationId: 'loc_earth', sequenceId: 'assets/images/video/arbiter_reveal.mp4' },
         objectives: [
             { "id": "travel_earth_arbiter", "type": "TRAVEL_TO", "target": "loc_earth" }
         ],
@@ -708,7 +704,7 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain. The Guild is experiencing severe systemic panic. Their elites face a deficit in life extension, and their grip on the market is compromised. You have accomplished the improbable: you secured Vrael’s direct attention. He requires an audience with the pilot dismantling the Guild's ledgers. Navigate your vessel to the cloud cities on Venus. Do not delay.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_45_syndicate" } ],
-        onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_vrael_reveal" } ],
+        onArrivalCinematic: { locationId: 'loc_venus', sequenceId: 'assets/images/video/vrael_reveal.mp4' },
         objectives: [
             { "id": "travel_venus_vrael", "type": "TRAVEL_TO", "target": "loc_venus" }
         ],
