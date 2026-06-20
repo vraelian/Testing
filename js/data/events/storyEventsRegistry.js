@@ -68,7 +68,7 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
         id: 'evt_keplers_eye_reveal',
         cinematicPath: 'assets/images/video/kepler_arrival.mp4',
         cinematicOnly: true,
-        triggerOnArrival: 'loc_keplers_eye',
+        triggerOnArrival: 'loc_kepler',
         repeatable: false
     },
     'evt_arbiter_reveal': {

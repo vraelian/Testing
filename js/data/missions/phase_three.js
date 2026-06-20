@@ -129,7 +129,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "We made it... Thank you, Captain. Before I go under... take this key. This is my clearance for the Kepler's Eye observatory. I was training to be an astrologer before my condition worsened. The doctor has indicated my memories will be altered so I won't be needing the observatory anymore. It's yours now. It will open up their economy to your fleet. Again, thank you for the help, [playerName].",
             buttonText: "Accept Clearance"
         },
-        rewards: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_keplers_eye" } ]
+        rewards: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ]
     },
     'mission_35_syndicate': {
         id: "mission_35_syndicate",
@@ -152,7 +152,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "We made it... Thank you, Captain. Before I go under... take this key. This is my clearance for the Kepler's Eye observatory. I was training to be an astrologer before my condition worsened. The doctor has indicated my memories will be altered so I won't be needing the observatory anymore. It's yours now. It will open up their economy to your fleet. Again, thank you for the help, [playerName].",
             buttonText: "Accept Clearance"
         },
-        rewards: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_keplers_eye" } ]
+        rewards: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ]
     },
 
     // =========================================================================================
@@ -168,12 +168,13 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain [playerName]. The investigation into the solar anomaly has stalled. The telemetry you provided to Audita cannot be validated without deep-field optical correlation. Since your manifest indicates clearance at Kepler's Eye, you are directed to requisition the station's Ocularium lens array for observation. Execute a high-density scan of the solar corona and report what you find. Lens rental expenses have been pre-approved for reimbursement.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_35_guild" } ],
-        onArrivalCinematic: { locationId: 'loc_keplers_eye', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
+        onAccept: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ],
+        onArrivalCinematic: { locationId: 'loc_kepler', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
         objectives: [
-            { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_keplers_eye" }
+            { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_kepler" }
         ],
         completion: {
-            locationId: "loc_keplers_eye",
+            locationId: "loc_kepler",
             title: "Optical Confirmation",
             text: "Visual confirmation of the primary target is inconclusive; however, we have still gained actionable intelligence. Your scan with the Ocularium tracked an irregular stream of mass intersecting the coronal layer, kinetically delivered at an industrial scale. Unregistered material is deliberately being shunted into the sun. The launch trajectory has been mathematically traced to a fixed point on Pluto. The Guild requires you to investigate the source of this kinetic delivery system on the ice world.",
             buttonText: "Accept Payment"
@@ -190,14 +191,15 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain, the hunt for our solar ghost has stalled. The telemetry you supplied Kiern is inert; it cannot be validated without deep-field optical correlation to give it a pulse. Now that you hold the keys to Kepler's Eye, purchase some time on the Ocularium. Force a high-density scan through the solar corona and report whatever anomalies you capture. I will ensure your lens rental costs are fully reimbursed.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_35_syndicate" } ],
-        onArrivalCinematic: { locationId: 'loc_keplers_eye', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
+        onAccept: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ],
+        onArrivalCinematic: { locationId: 'loc_kepler', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
         objectives: [
-            { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_keplers_eye" }
+            { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_kepler" }
         ],
         completion: {
-            locationId: "loc_keplers_eye",
+            locationId: "loc_kepler",
             title: "Optical Confirmation",
-            text: "Visual confirmation of the primary target is inconclusive, yet the scan reveal something interesting. The Ocularium spotted an irregular stream of mass piercing the coronal layer, delivered via kinetic means at an incredible scale. Someone is feeding raw material straight into the area. This time, the launch trajectory originates from a fixed point on Pluto. The Syndicate requires you to head out to the frozen fringe and investigate the source of this delivery system.",
+            text: "Visual confirmation of the primary target is inconclusive, yet the scan revealed something interesting. The Ocularium spotted an irregular stream of mass piercing the coronal layer, delivered via kinetic means at an incredible scale. Someone is feeding raw material straight into the area. This time, the launch trajectory originates from a fixed point on Pluto. The Syndicate requires you to head out to the frozen fringe and investigate the source of this delivery system.",
             buttonText: "Accept Payment"
         },
         rewards: [ { "type": "credits", "amount": 40000 } ]
