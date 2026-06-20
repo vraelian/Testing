@@ -13,3 +13,16 @@ dist/
 dist*/
 Obfuscation Tooling V2/dist/
 Obfuscation Tooling V2/dist*/
+
+# Media and Binary Assets
+*.mp4
+*.wav
+*.mp3
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.gif
+*.ico
+*.ttf
+*.otf

@@ -1,3 +1,197 @@
+================================================================
+DIRECTORY STRUCTURE
+================================================================
+.
+|____index.html
+|____.DS_Store
+|____story_timeline.html
+|____css
+| |____.DS_Store
+| |____missions.css
+| |____debug.css
+| |____hud.css
+| |____global.css
+| |____achievements.css
+| |____news-ticker.css
+| |____modals
+| | |____modal-core.css
+| | |____modal-events.css
+| | |____modal-cinematics.css
+| | |____modal-sol-station.css
+| | |____modal-utility.css
+| |____screens
+| | |____services-screen.css
+| | |____map-screen.css
+| | |____market-screen.css
+| | |____intel-screen.css
+| | |____cargo-screen.css
+| | |____finance-screen.css
+| | |____hangar-screen.css
+| | |____navigation-screen.css
+| |____navigation.css
+| |____help-system.css
+| |____fonts
+| | |____Oxanium-Regular.ttf
+| | |____Oxanium-Light.ttf
+| | |____Oxanium-ExtraBold.ttf
+| | |____Oxanium-Bold.ttf
+| | |____Oxanium-Medium.ttf
+| | |____Zorque.otf
+| | |____Oxanium-ExtraLight.ttf
+| | |____Oxanium-SemiBold.ttf
+| |____orientation.css
+|____js
+| |____ui
+| | |____renderers
+| | | |____IntelMarketRenderer.js
+| | |____components
+| | | |____MapScreen.js
+| | | |____HangarScreen.js
+| | | |____IntelScreen.js
+| | | |____NavigationScreen.js
+| | | |____MissionsScreen.js
+| | | |____FinanceScreen.js
+| | | |____ServicesScreen.js
+| | | |____CargoScreen.js
+| | | |____MarketScreen.js
+| |____.DS_Store
+| |____main.js
+| |____workers
+| | |____saveWorker.js
+| |____utils.js
+| |____effects
+| | |____BaseEffect.js
+| | |____EffectsManager.js
+| |____data
+| | |____constants.js
+| | |____database.js
+| | |____events.js
+| | |____achievementRegistry.js
+| | |____.DS_Store
+| | |____solProgressionRegistry.js
+| | |____news_flavor.js
+| | |____missions
+| | | |____tutorial_missions.js
+| | | |____license_missions.js
+| | | |____missionRegistry.js
+| | | |____phase_one.js
+| | | |____phase_three.js
+| | | |____phase_two.js
+| | |____officers.js
+| | |____lore
+| | | |____lore_broadstrokes.js
+| | | |____loreRegistry.js
+| | |____intelMessages.js
+| | |____intelContent.js
+| | |____ship_database.js
+| | |____flavorAds.js
+| | |____characters.js
+| | |____items.js
+| | |____assets_config.js
+| | |____events
+| | | |____events_entropy.js
+| | | |____events_traffic.js
+| | | |____events_bureaucracy.js
+| | | |____events_opportunity.js
+| | | |____storyEventsRegistry.js
+| | | |____events_salvage.js
+| | | |____events_story.js
+| | | |____events_logistics.js
+| | | |____events_hazards.js
+| | |____eulaContent.js
+| | |____systemStateRegistry.js
+| | |____helpRegistry.js
+| |____services
+| | |____ui
+| | | |____UIMissionControl.js
+| | | |____UIEventControl.js
+| | | |____UIAchievementControl.js
+| | | |____UIMarketControl.js
+| | | |____UIHelpManager.js
+| | | |____TravelAnimationService.js
+| | | |____UIHangarControl.js
+| | | |____CinematicService.js
+| | | |____StarfieldService.js
+| | | |____UISolStationControl.js
+| | | |____UIModalEngine.js
+| | | |____AnimationService.js
+| | | |____UIToastManager.js
+| | |____DynamicValueResolver.js
+| | |____AssetStorageService.js
+| | |____DebugService.js
+| | |____ToastService.js
+| | |____.DS_Store
+| | |____RandomEventService.js
+| | |____GameState.js
+| | |____BankruptcyService.js
+| | |____SolStationService.js
+| | |____MissionService.js
+| | |____NewsTickerService.js
+| | |____AssetService.js
+| | |____simulation
+| | | |____MarketService.js
+| | |____world
+| | | |____SystemStateService.js
+| | | |____TravelService.js
+| | | |____TimeService.js
+| | |____game
+| | | |____IntroService.js
+| | |____mission
+| | | |____MissionObjectiveEvaluator.js
+| | | |____MissionTriggerEvaluator.js
+| | |____SimulationService.js
+| | |____event-effects
+| | | |____effectAdriftPassenger.js
+| | | |____effectSpaceRace.js
+| | |____OutcomeResolver.js
+| | |____ConditionEvaluator.js
+| | |____EventManager.js
+| | |____GameAttributes.js
+| | |____LoggingService.js
+| | |____eventEffectResolver.js
+| | |____UIManager.js
+| | |____bot
+| | | |____TelemetryService.js
+| | | |____AutomatedPlayerService.js
+| | |____SaveStorageService.js
+| | |____IntelService.js
+| | |____TelemetryStorageService.js
+| | |____handlers
+| | | |____MarketEventHandler.js
+| | | |____HoldEventHandler.js
+| | | |____ActionClickHandler.js
+| | | |____TooltipHandler.js
+| | | |____CarouselEventHandler.js
+| | |____AchievementService.js
+| | |____player
+| | | |____PlayerActionService.js
+|____meta
+| |____CHANGELOG.md
+| |____LORE_COMPENDIUM.md
+| |____MATH_REGISTRY.md
+| |____UI_LIBRARY.md
+| |____CODING_STANDARDS.md
+| |____ECONOMIC_BEHAVIOR.md
+| |____lexicon.json
+| |____BALANCELOG.md
+| |____ROADMAP.md
+| |____SERVICES.md
+| |____ARCHITECTURAL_DECISIONS.md
+| |____DATA_FLOW.md
+| |____STATE_SCHEMA.md
+|____publish_game.sh
+|____combined_code.txt
+|____.gitignore
+|____manifest.json
+|____combine.sh
+|____favicon.svg
+|____sw.js
+
+
+
+================================================================
+FILE CONTENTS
+================================================================
 --- START OF FILE: ./index.html ---
 <!DOCTYPE html>
 <html lang="en">
