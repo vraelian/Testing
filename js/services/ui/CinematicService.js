@@ -229,8 +229,17 @@ class CinematicService {
 
             // 4. Execution Sequence
             video.play().catch(error => {
-                console.warn('[CinematicService] Playback rejected by OS. Missing user gesture context?', error);
-                cleanupAndResolve();
+                if (error.name === 'NotAllowedError') {
+                    console.warn('[CinematicService] Playback rejected by OS. Attempting muted fallback playback.', error);
+                    video.muted = true;
+                    video.play().catch(fallbackError => {
+                        console.error('[CinematicService] Muted fallback playback also failed.', fallbackError);
+                        cleanupAndResolve();
+                    });
+                } else {
+                    console.warn('[CinematicService] Playback failed.', error);
+                    cleanupAndResolve();
+                }
             });
         });
     }

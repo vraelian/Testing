@@ -977,7 +977,54 @@ ${logHistory}
                 }
             }},
             forceCompleteMission: { name: 'Force Complete Mission', type: 'button', handler: () => {
-                 this.simulationService.missionService.completeActiveMission(true); 
+                const activeIds = [...this.gameState.missions.activeMissionIds];
+                if (activeIds.length === 0) {
+                    this.uiManager.createFloatingText('No Active Missions', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+                
+                activeIds.forEach(missionId => {
+                    const mission = DB.MISSIONS[missionId];
+                    const progress = this.gameState.missions.missionProgress[missionId];
+                    if (mission && progress) {
+                        // Override completion location
+                        if (mission.completion) {
+                            mission.completion.locationId = 'any';
+                        }
+                        
+                        // Max out objectives
+                        if (mission.objectives) {
+                            mission.objectives.forEach(obj => {
+                                const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                                if (!progress.objectives[objKey]) {
+                                    progress.objectives[objKey] = { current: 0, target: obj.quantity || obj.value || 1, deposited: 0, collected: 0 };
+                                }
+                                const targetVal = obj.quantity || obj.value || 1;
+                                progress.objectives[objKey].current = targetVal;
+                                progress.objectives[objKey].target = targetVal;
+                                
+                                if (obj.type === 'DELIVER_ITEM' || obj.type === 'deliver_item') {
+                                    progress.objectives[objKey].deposited = targetVal;
+                                }
+                                if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                                    progress.objectives[objKey].collected = targetVal;
+                                }
+                            });
+                        }
+                        
+                        // Flip isCompletable
+                        progress.isCompletable = true;
+                        progress.cargoLoaded = true;
+                        
+                        // Force Complete
+                        if (this.simulationService && this.simulationService.missionService) {
+                            this.simulationService.missionService.completeMission(missionId, true);
+                        }
+                    }
+                });
+                
+                this.uiManager.createFloatingText('Missions Force Completed', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
             }},
 
             triggerSystemToast: { name: 'Toast: System', type: 'button', handler: () => this.triggerToast('system') },
@@ -1187,7 +1234,10 @@ ${logHistory}
         const sortedMissions = Object.values(DB.MISSIONS).map(m => {
             const match = m.id.match(/\d+/);
             const prefix = match ? `${match[0].padStart(2, '0')} ` : '';
-            return { label: `${prefix}${m.name}`, id: m.id };
+            let suffix = '';
+            if (m.id.endsWith('_guild')) suffix = ' (G)';
+            else if (m.id.endsWith('_syndicate')) suffix = ' (S)';
+            return { label: `${prefix}${m.name}${suffix}`, id: m.id };
         }).sort((a, b) => a.label.localeCompare(b.label));
 
         const missionOptions = {};
