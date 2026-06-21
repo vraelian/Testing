@@ -155,6 +155,15 @@ export class MissionObjectiveEvaluator {
                 current = Math.max(currentProgress, tradeCount);
                 break;
             }
+            
+            case 'action':
+            case 'ACTION': {
+                // Actions are binary switches driven directly by UI triggers.
+                // It relies on current being mutated to 1 by the button click.
+                current = currentProgress; 
+                target = target;
+                break;
+            }
 
             // --- SHIP STATE CHECKS ---
             case 'has_ship_class':
@@ -261,11 +270,13 @@ export class MissionObjectiveEvaluator {
 
             // --- WORLD STATE CHECKS ---
             case 'travel_to':
-            case 'TRAVEL_TO':
+            case 'TRAVEL_TO': {
                 const targetLoc = objective.target;
                 const atLocation = gameState.currentLocationId === targetLoc;
-                current = atLocation ? 1 : 0;
+                // Latch progress: Once arrived, the travel objective remains completed
+                current = Math.max(currentProgress, atLocation ? 1 : 0);
                 break;
+            }
 
             case 'sequential_travel':
             case 'SEQUENTIAL_TRAVEL': {

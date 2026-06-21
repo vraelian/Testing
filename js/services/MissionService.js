@@ -1150,6 +1150,11 @@ export class MissionService {
                 } else if (reward.type === 'SET_FLAG') {
                     if (!this.gameState.storyFlags) this.gameState.storyFlags = {};
                     this.gameState.storyFlags[reward.flagId] = reward.value;
+                } else if (reward.type === 'UNLOCK_LOCATION') {
+                    if (!this.gameState.player.unlockedLocationIds.includes(reward.locationId)) {
+                        this.gameState.player.unlockedLocationIds.push(reward.locationId);
+                        this.logger.info.player(this.gameState.day, 'LOCATION_UNLOCKED', `Unlocked location: ${reward.locationId} via mission reward.`);
+                    }
                 } else if (reward.type.toLowerCase() === 'grant_upgrade') {
                     const upgradeId = reward.upgradeId || reward.id || reward.target;
                     const activeShipId = this.gameState.player.activeShipId;

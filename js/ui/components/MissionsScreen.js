@@ -152,6 +152,10 @@ export function renderMissionsScreen(gameState, missionService) {
                     const flagText = r.flagId === 'helped_belt_family' ? 'GRATITUDE' : 'REPUTATION';
                     rewardTextParts.push(`<span class="text-purple-400 font-bold" style="-webkit-text-stroke: 1px black;">${flagText}</span>`);
                 }
+                else if(r.type.toLowerCase() === 'unlock_location') {
+                    const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
+                    rewardTextParts.push(`<span class="text-purple-400 font-bold" style="-webkit-text-stroke: 1px black;">ACCESS: ${locName.toUpperCase()}</span>`);
+                }
                 else rewardTextParts.push(r.type.toUpperCase());
             });
         }
@@ -173,9 +177,9 @@ export function renderMissionsScreen(gameState, missionService) {
                     <span class="mission-host-label">${mission.host}</span>
                 </div>
                 
-                <div class="mission-main-row">
-                    <div class="mission-title">${parseMissionText(mission.name, gameState)}</div>
-                    <div class="mission-reward-data">${rewardText}</div>
+                <div class="mission-main-row" style="align-items: flex-start;">
+                    <div class="mission-title" style="flex: 1; padding-right: 0.5rem;">${parseMissionText(mission.name, gameState)}</div>
+                    <div class="mission-reward-data" style="max-width: 15ch; text-align: right; white-space: normal; line-height: 1.25; flex-shrink: 0; word-wrap: break-word;">${rewardText}</div>
                 </div>
             </div>`;
     };
@@ -262,6 +266,14 @@ export function renderMissionsScreen(gameState, missionService) {
         } else if (mission.objectives && mission.objectives.length > 0) {
             objectivesHtml = '<div class="mission-objectives-list">';
             mission.objectives.forEach(obj => {
+                // SEQUENTIAL GATING: Hide objective if its dependency isn't met
+                if (obj.dependsOn) {
+                    const depProgress = progress.objectives[obj.dependsOn];
+                    if (!depProgress || depProgress.current < depProgress.target) {
+                        return; // Skip rendering
+                    }
+                }
+
                 const objKey = obj.id || obj.goodId;
                 const pObj = progress.objectives[objKey];
                 const current = pObj ? pObj.current : 0;
@@ -357,6 +369,11 @@ export function renderMissionsScreen(gameState, missionService) {
                     desc = `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
                     displayStr = current === 1 ? 'COMPLETE' : 'PENDING';
                     percent = current * 100;
+                }
+                else if (obj.type === 'action' || obj.type === 'ACTION') {
+                    desc = (obj.target || 'COMPLETE ACTION').toUpperCase();
+                    displayStr = current >= target ? 'COMPLETE' : 'PENDING';
+                    percent = Math.min(100, Math.floor((current / target) * 100));
                 }
 
                 const tallClass = !progress.isCompletable ? 'objective-row-tall' : '';

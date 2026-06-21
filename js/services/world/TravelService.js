@@ -658,8 +658,16 @@ export class TravelService {
             const { activeMissionIds } = this.gameState.missions;
             let cinematicSequence = null;
             let triggeredMissionId = null;
-            
-            if (activeMissionIds && activeMissionIds.length > 0) {
+
+            // 1. Standalone Location Cinematics
+            if (locationId === 'loc_kepler' && 
+                this.gameState.player.unlockedLocationIds.includes('loc_kepler') && 
+                !this.gameState.player.storyFlags.kepler_cinematic_fired) {
+                
+                cinematicSequence = 'assets/images/video/keplers_eye_reveal.mp4';
+            }
+            // 2. Mission-Bound Cinematics
+            else if (activeMissionIds && activeMissionIds.length > 0) {
                 for (const missionId of activeMissionIds) {
                     const mission = DB.MISSIONS?.[missionId];
                     if (mission && mission.onArrivalCinematic && mission.onArrivalCinematic.locationId === locationId) {
@@ -681,6 +689,11 @@ export class TravelService {
                 if (triggeredMissionId) {
                     this.gameState.missions.missionProgress[triggeredMissionId].cinematicFired = true;
                     this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${cinematicSequence} upon arrival at ${locationId} for mission ${triggeredMissionId}.`);
+                    this.gameState.setState({});
+                } else if (cinematicSequence === 'assets/images/video/keplers_eye_reveal.mp4') {
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags.kepler_cinematic_fired = true;
+                    this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered standalone ${cinematicSequence} upon first arrival at ${locationId}.`);
                     this.gameState.setState({});
                 }
 

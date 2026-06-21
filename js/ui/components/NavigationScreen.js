@@ -137,14 +137,25 @@ export function renderNavigationScreen(gameState) {
                                 break;
                             }
                             
-                            if (!isLogisticsPickupPhase && mission.completion?.locationId === location.id) {
+                            // Check completion destination (only if completable)
+                            if (!isLogisticsPickupPhase && progress.isCompletable && mission.completion?.locationId === location.id) {
                                 isMissionTarget = true;
                                 break;
                             }
                             
+                            // Check individual objectives
                             if (mission.objectives) {
                                 const hasObjectiveHere = mission.objectives.some(obj => {
-                                    if (obj.target !== location.id) return false;
+                                    if (obj.target !== location.id && obj.targetLoc !== location.id) return false;
+                                    
+                                    // DEPENDENCY GATE: If an objective has a dependency that is not met, do not show it
+                                    if (obj.dependsOn) {
+                                        const depProgress = progress.objectives?.[obj.dependsOn];
+                                        if (!depProgress || depProgress.current < depProgress.target) {
+                                            return false; 
+                                        }
+                                    }
+                                    
                                     const objKey = obj.id || obj.goodId || obj.target;
                                     const pObj = progress.objectives?.[objKey];
                                     const current = pObj ? pObj.current : 0;

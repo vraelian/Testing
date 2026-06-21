@@ -296,6 +296,9 @@ export class UIMissionControl {
         if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
             return `Acquire Class ${obj.target} Vessel`;
         }
+        if (obj.type === 'action' || obj.type === 'ACTION') {
+            return (obj.target || 'Complete Action').toUpperCase();
+        }
         
         return `Objective`;
     }
@@ -551,6 +554,9 @@ export class UIMissionControl {
                             } else if (r.type.toLowerCase() === 'grant_ship') {
                                 const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
+                            } else if (r.type.toLowerCase() === 'unlock_location') {
+                                const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
+                                content = `<span class="t-subject text-purple-400">ACCESS: ${locName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
@@ -593,7 +599,16 @@ export class UIMissionControl {
 
                 // 3. DIRECTIVE
                 if (mission.objectives && mission.objectives.length > 0) {
-                    const obsList = mission.objectives.map(obj => {
+                    const obsList = mission.objectives.filter(obj => {
+                        // SEQUENTIAL GATING: Hide objective if its dependency isn't met
+                        if (obj.dependsOn) {
+                            const depProgress = progress.objectives[obj.dependsOn];
+                            if (!depProgress || depProgress.current < depProgress.target) {
+                                return false; // Skip rendering
+                            }
+                        }
+                        return true;
+                    }).map(obj => {
                         const delay = animDelayIdx++ * 0.05;
                         let text = this._getObjectiveDescription(obj, false);
                         
@@ -712,6 +727,7 @@ export class UIMissionControl {
                     let navButtonHtml = '';
                     let depositButtonHtml = '';
                     let collectButtonHtml = '';
+                    let actionButtonHtml = '';
                     
                     if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any' && !isLogisticsPickupPhase) {
                         navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.completion.locationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
@@ -742,7 +758,6 @@ export class UIMissionControl {
                                     let isUnlocked = true;
                                     if (obj.dependsOn) {
                                         const depProgress = progress?.objectives?.[obj.dependsOn];
-                                        // CHANGED: Allow partial deposits as long as we have collected more than we have deposited
                                         if (!depProgress || depProgress.current <= depositedAmt) {
                                             isUnlocked = false;
                                         }
@@ -783,6 +798,41 @@ export class UIMissionControl {
                                         canCollect = true;
                                     }
                                 }
+
+                                // EVALUATE ACTION UI
+                                if (obj.type === 'ACTION' || obj.type === 'action') {
+                                    const objKey = obj.id || obj.target;
+                                    const targetQty = obj.quantity || obj.value || 1;
+                                    const completedAmt = progress?.objectives?.[objKey]?.current || 0;
+                                    
+                                    let isUnlocked = true;
+                                    let requiredLocId = null;
+                                    
+                                    if (obj.dependsOn) {
+                                        const depProgress = progress.objectives[obj.dependsOn];
+                                        if (!depProgress || depProgress.current < depProgress.target) {
+                                            isUnlocked = false;
+                                        }
+                                        
+                                        // Infer location from a TRAVEL_TO dependency if present
+                                        const depObj = mission.objectives.find(o => (o.id === obj.dependsOn || o.target === obj.dependsOn));
+                                        if (depObj && (depObj.type === 'TRAVEL_TO' || depObj.type === 'travel_to')) {
+                                            requiredLocId = depObj.target;
+                                        }
+                                    }
+                                    
+                                    // Explicit location override if provided
+                                    if (obj.targetLoc) requiredLocId = obj.targetLoc;
+                                    
+                                    if (requiredLocId && requiredLocId !== gameState.currentLocationId) {
+                                        isUnlocked = false;
+                                    }
+
+                                    if (isUnlocked && (targetQty - completedAmt > 0)) {
+                                        const btnLabel = (obj.target || 'EXECUTE ACTION').toUpperCase();
+                                        actionButtonHtml += `<button id="mission-action-execute-btn-${objKey}" data-action-id="${objKey}" class="btn w-full mt-2 bg-purple-600/80 hover:bg-purple-500/80 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.6)] text-white font-bold mission-action-execute-btn" style="${btnStyles}">${btnLabel}</button>`;
+                                    }
+                                }
                             });
                         }
                         
@@ -799,7 +849,36 @@ export class UIMissionControl {
                         depositButtonHtml = `<button id="mission-load-cargo-btn" data-mission-id="${mission.id}" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">LOAD CARGO</button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${navButtonHtml}`;
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${actionButtonHtml}${navButtonHtml}`;
+
+                    // Bind ACTION button listeners dynamically
+                    const actionBtns = modal.querySelectorAll('.mission-action-execute-btn');
+                    actionBtns.forEach(btn => {
+                        btn.addEventListener('click', (e) => {
+                            if (this.manager.simulationService && this.manager.simulationService.gameState) {
+                                const coreState = this.manager.simulationService.gameState;
+                                const prog = coreState.missions.missionProgress[mission.id];
+                                const actionId = btn.dataset.actionId;
+                                const objDef = mission.objectives.find(o => o.id === actionId || o.target === actionId);
+                                
+                                if (!prog.objectives[actionId]) {
+                                    prog.objectives[actionId] = { current: 0, target: objDef ? (objDef.quantity || objDef.value || 1) : 1 };
+                                }
+                                prog.objectives[actionId].current = objDef ? (objDef.quantity || objDef.value || 1) : 1; 
+                                
+                                const rect = btn.getBoundingClientRect();
+                                const x = e.clientX || rect.left + (rect.width / 2);
+                                const y = e.clientY || rect.top;
+                                this.manager.createFloatingText(`ACTION COMPLETED`, x, y, '#c084fc');
+                                
+                                this.manager.simulationService.missionService.checkTriggers();
+                                coreState.setState({}); 
+                                this.manager.render();
+                                closeHandler();
+                            }
+                        });
+                    });
+
                 } else {
                      let btnText = 'Accept';
                      if (isShipClassGated) {
@@ -940,6 +1019,9 @@ export class UIMissionControl {
         }
         if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
             return `ACQUIRE CLASS ${obj.target} VESSEL`;
+        }
+        if (obj.type === 'action' || obj.type === 'ACTION') {
+            return (obj.target || 'COMPLETE ACTION').toUpperCase();
         }
         return `COMPLETE OBJECTIVE`;
     }
@@ -1093,6 +1175,9 @@ export class UIMissionControl {
                             } else if (r.type.toLowerCase() === 'grant_ship') {
                                 const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
+                            } else if (r.type.toLowerCase() === 'unlock_location') {
+                                const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
+                                content = `<span class="t-subject text-purple-400">ACCESS: ${locName.toUpperCase()}</span>`;
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }

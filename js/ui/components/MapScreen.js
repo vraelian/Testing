@@ -139,6 +139,7 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
     // Retrieve active game states for indicator calculation
     const activeIntelLocationId = uiManager.lastKnownState.activeIntelDeal?.locationId;
     const activeMissionIds = uiManager.lastKnownState.missions?.activeMissionIds || [];
+    const missionProgress = uiManager.lastKnownState.missions?.missionProgress || {};
 
     // Create the final data array with all calculated pixel coordinates and state flags
     const poiData = allPoiData.map((d, i) => {
@@ -153,10 +154,38 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
         const hasMission = activeMissionIds.some(missionId => {
             const mission = DB.MISSIONS[missionId];
             if (!mission) return false;
-            // Check completion destination
-            if (mission.completion && mission.completion.locationId === d.id) return true;
+            
+            const progress = missionProgress[missionId] || {};
+            
+            // Check completion destination (only if the mission is actually ready to turn in)
+            if (progress.isCompletable && mission.completion && mission.completion.locationId === d.id) return true;
+            
             // Check specific objectives targets
-            if (mission.objectives && mission.objectives.some(obj => obj.target === d.id)) return true;
+            if (mission.objectives) {
+                return mission.objectives.some(obj => {
+                    if (obj.target !== d.id && obj.targetLoc !== d.id) return false;
+                    
+                    // DEPENDENCY GATE: If an objective has a dependency that is not met, do not show it on the map
+                    if (obj.dependsOn) {
+                        const depProgress = progress.objectives?.[obj.dependsOn];
+                        if (!depProgress || depProgress.current < depProgress.target) {
+                            return false; 
+                        }
+                    }
+                    
+                    const objKey = obj.id || obj.goodId || obj.target;
+                    const pObj = progress.objectives?.[objKey];
+                    const current = pObj ? pObj.current : 0;
+                    const target = pObj ? pObj.target : (obj.quantity || obj.value || 1);
+                    
+                    return current < target;
+                });
+            }
+            
+            // Check logistics phase pickup location
+            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+            if (isLogisticsPickupPhase && mission.pickupLocationId === d.id) return true;
+            
             return false;
         });
 

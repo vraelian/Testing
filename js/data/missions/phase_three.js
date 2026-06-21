@@ -81,7 +81,9 @@ export const PHASE_THREE_MISSIONS = {
             text: "Your new tonnage meets Guild compliance. I've verified the shipyard logs and your refit is approved and registered. Great work. I see that you have acquired the [shipName]. It's a pragmatic refit. It will survive the tonnage we are about to put it through.",
             buttonText: "Acknowledge"
         },
-        rewards: []
+        rewards: [
+            { "type": "SET_FLAG", "flagId": "mission_34_complete", "value": true }
+        ]
     },
     'mission_34_syndicate': {
         id: "mission_34_syndicate",
@@ -102,14 +104,16 @@ export const PHASE_THREE_MISSIONS = {
             text: "That's a serious piece of hardware, the [shipName]. Nice work, it also has a highly practical refit. It will serve you well in the work we have planned for you.",
             buttonText: "Acknowledge"
         },
-        rewards: []
+        rewards: [
+            { "type": "SET_FLAG", "flagId": "mission_34_complete", "value": true }
+        ]
     },
 
     // =========================================================================================
     // MISSION 35: SENSORY ECLIPSE
     // =========================================================================================
-    'mission_35_guild': {
-        id: "mission_35_guild",
+    'mission_35': {
+        id: "mission_35",
         name: "Sensory Eclipse",
         type: "STORY",
         host: "STATION",
@@ -118,33 +122,11 @@ export const PHASE_THREE_MISSIONS = {
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain! I finally managed to hail you, thank Sol. My name is Myst, and I need immediate extraction. When I was a child, my transport was caught in the radiation wake of a folded space drive. The fallout shredded my genetics, leaving me entirely dependent on heavy cybernetics to survive. But my hardware is turning on me.<br><br>It is intercepting a colossal, anomalous frequency echoing out from the Sun. Raw telemetry is flooding my thoughts, whispering about a scattered awareness coalescing. A golden joining. The data density is burning through my nervous system. I need you to transport me to Dr. Droysia at Saturn's Clandestine Ring Station Medical Bay. She is performing an experimental gene therapy that can detach me from this nightmare. Please, hurry.",
-        triggers: [ { "type": "mission_completed", "missionId": "mission_34_guild" } ],
+        triggers: [ { "type": "flag_is_true", "flag": "mission_34_complete" } ],
         objectives: [
             { "id": "travel_neptune", "type": "TRAVEL_TO", "target": "loc_neptune" },
-            { "id": "travel_saturn", "type": "TRAVEL_TO", "target": "loc_saturn", "dependsOn": "travel_neptune" }
-        ],
-        completion: {
-            locationId: "loc_saturn",
-            title: "Safe Harbor",
-            text: "We made it... Thank you, Captain. Before I go under... take this key. This is my clearance for the Kepler's Eye observatory. I was training to be an astrologer before my condition worsened. The doctor has indicated my memories will be altered so I won't be needing the observatory anymore. It's yours now. It will open up their economy to your fleet. Again, thank you for the help, [playerName].",
-            buttonText: "Accept Clearance"
-        },
-        rewards: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ]
-    },
-    'mission_35_syndicate': {
-        id: "mission_35_syndicate",
-        name: "Sensory Eclipse",
-        type: "STORY",
-        host: "STATION",
-        portraitId: "Heavily_Augmented_11",
-        portraitName: "Myst",
-        isRepeatable: false,
-        isAbandonable: false,
-        description: "Captain! I finally managed to hail you, thank Sol. My name is Myst, and I need immediate extraction. When I was a child, my transport was caught in the radiation wake of a folded space drive. The fallout shredded my genetics, leaving me entirely dependent on heavy cybernetics to survive. But my hardware is turning on me.<br><br>It is intercepting a colossal, anomalous frequency echoing out from the Sun. Raw telemetry is flooding my thoughts, whispering about a scattered awareness coalescing. A golden joining. The data density is burning through my nervous system. I need you to transport me to Dr. Droysia at Saturn's Clandestine Ring Station Medical Bay. She is performing an experimental gene therapy that can detach me from this nightmare. Please, hurry.",
-        triggers: [ { "type": "mission_completed", "missionId": "mission_34_syndicate" } ],
-        objectives: [
-            { "id": "travel_neptune", "type": "TRAVEL_TO", "target": "loc_neptune" },
-            { "id": "travel_saturn", "type": "TRAVEL_TO", "target": "loc_saturn", "dependsOn": "travel_neptune" }
+            { "id": "pickup_myst", "type": "ACTION", "target": "Pick up Myst", "dependsOn": "travel_neptune" },
+            { "id": "travel_saturn", "type": "TRAVEL_TO", "target": "loc_saturn", "dependsOn": "pickup_myst" }
         ],
         completion: {
             locationId: "loc_saturn",
@@ -167,9 +149,8 @@ export const PHASE_THREE_MISSIONS = {
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain [playerName]. The investigation into the solar anomaly has stalled. The telemetry you provided to Audita cannot be validated without deep-field optical correlation. Since your manifest indicates clearance at Kepler's Eye, you are directed to requisition the station's Ocularium lens array for observation. Execute a high-density scan of the solar corona and report what you find. Lens rental expenses have been pre-approved for reimbursement.",
-        triggers: [ { "type": "mission_completed", "missionId": "mission_35_guild" } ],
+        triggers: [ { "type": "mission_completed", "missionId": "mission_35" } ],
         onAccept: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ],
-        onArrivalCinematic: { locationId: 'loc_kepler', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
         objectives: [
             { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_kepler" }
         ],
@@ -190,9 +171,8 @@ export const PHASE_THREE_MISSIONS = {
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain, the hunt for our solar ghost has stalled. The telemetry you supplied Kiern is inert; it cannot be validated without deep-field optical correlation to give it a pulse. Now that you hold the keys to Kepler's Eye, purchase some time on the Ocularium. Force a high-density scan through the solar corona and report whatever anomalies you capture. I will ensure your lens rental costs are fully reimbursed.",
-        triggers: [ { "type": "mission_completed", "missionId": "mission_35_syndicate" } ],
+        triggers: [ { "type": "mission_completed", "missionId": "mission_35" } ],
         onAccept: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ],
-        onArrivalCinematic: { locationId: 'loc_kepler', sequenceId: 'assets/images/video/kepler_arrival.mp4' },
         objectives: [
             { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_kepler" }
         ],
@@ -535,7 +515,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "The shipment is accepted and the cryogenics are secured. You continue to distinguish yourself well. When you're ready, I have another job for you.",
             buttonText: "Acknowledge"
         },
-        rewards: [ { "type": "credits", "amount": 200000 } ]
+        rewards: [ { "type": "credits", "amount": 20000 } ]
     },
     'mission_43_syndicate': {
         id: "mission_43_syndicate",
