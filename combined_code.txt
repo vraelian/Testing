@@ -14376,6 +14376,9 @@ export function renderMissionsScreen(gameState, missionService) {
                 else if(r.type.toLowerCase() === 'fill_fleet_fuel') {
                     rewardTextParts.push(`<span class="text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`);
                 }
+                else if(r.type.toLowerCase() === 'fill_fleet_repair') {
+                    rewardTextParts.push(`<span class="text-green-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`);
+                }
                 else if(r.type.toLowerCase() === 'set_flag') {
                     const flagText = r.flagId === 'helped_belt_family' ? 'GRATITUDE' : 'REPUTATION';
                     rewardTextParts.push(`<span class="text-purple-400 font-bold" style="-webkit-text-stroke: 1px black;">${flagText}</span>`);
@@ -20264,7 +20267,7 @@ export const PHASE_THREE_MISSIONS = {
         name: "The Call",
         type: "STORY",
         host: "GUILD",
-        portraitId: "Arbiter_1",
+        portraitId: "Merchants_Guild_17",
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain. The Syndicate's shadow fleet initiative is compromised, and their market share is hemorrhaging. The Arbiter has requested a direct audience with you. This is unprecedented for an independent contractor. Proceed immediately to the surface stations of Earth. The Arbiter is waiting.",
@@ -20275,6 +20278,7 @@ export const PHASE_THREE_MISSIONS = {
         ],
         completion: {
             locationId: "loc_earth",
+            portraitId: "Arbiter_1",
             title: "The Arbiter's Truth",
             text: "Most perceive the Guild as a mere mercantile institution, but it is so much more. Every light, every life, is sustained by the mathematical order that the Merchant's Guild enforces. A million variables shift every second to prevent humanity from consuming itself, and I am the fulcrum of that equilibrium, the Arbiter. You have wielded that order as a weapon, breaking the Syndicate's industrial backbone with absolute precision. You have starved their clandestine shipyards of graphene, rendering their shadow fleet inert.<br><br>But our true concern lies inward, at the very center of the system. The kinetic launches you witnessed from that eccentric machine on Pluto are supplying a leviathan hidden in the corona. A ghost structure gathering mass in the dark, bypassing our authority. Furthermore, the telemetry you uploaded regarding a Z Class vessel utilizing a folded space drive is a mathematical impossibility. That technology is extinct, yet it moves freely in our space. Maintain your fleet's readiness. The board is resetting, and your role is about to escalate significantly. Between the leviathan at the center and these ancient anomalies returning to the fringe, the coming cycles will require unprecedented intervention to maintain control.",
             buttonText: "Act III Complete"
@@ -20289,7 +20293,7 @@ export const PHASE_THREE_MISSIONS = {
         name: "The Call",
         type: "STORY",
         host: "SYNDICATE",
-        portraitId: "Vrael_1",
+        portraitId: "Venusian_Syndicate_2",
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain. The Guild is experiencing severe systemic panic. Their elites face a deficit in life extension, and their grip on the market is compromised. You have accomplished the improbable: you secured Vrael’s direct attention. He requires an audience with the pilot dismantling the Guild's ledgers. Navigate your vessel to the cloud cities on Venus. Do not delay.",
@@ -20300,6 +20304,7 @@ export const PHASE_THREE_MISSIONS = {
         ],
         completion: {
             locationId: "loc_venus",
+            portraitId: "Vrael_1",
             title: "Vrael's Truth",
             text: "It is fitting we meet here, suspended in the extravagance of the Venusian atmosphere, far above the Guild's rigid domain. I am Vrael. The mathematical order of the Guild is a fragile illusion, as you have so eloquently proven by interring their cryo sleep pods on the Plutonian fringe. You have weaponized time itself against their ruling class, forcing their gerontocracy to face the sudden reality of their own mortality. Yet, the Syndicate's subversion of their hierarchy is merely a prelude.<br><br>The true locus of power has shifted. The telemetry you secured from that enigmatic machine intelligence on Pluto launching its continuous harvest directly into the sun's gravity well confirms a truth the Guild cannot quantify. It has revealed an uncontrolled anomalous silhouette within the corona. A colossal, unregistered megastructure hides there, silently consuming that kinetic tribute.<br><br>But it is not the only shadow moving in the dark. Your encounter with a Z Class dreadnought folding spacetime proves that the old limitations are dead. Ancient, terrifying power is returning to the board, completely independent of Guild regulation and our own designs. See to your fleet's readiness. The established order is fracturing, and we are going to harness this chaos.",
             buttonText: "Act III Complete"
@@ -26059,6 +26064,8 @@ export class UIMissionControl {
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
+                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -26599,6 +26606,8 @@ export class UIMissionControl {
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
+                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -27244,7 +27253,7 @@ export class UIMissionControl {
         if (parsedText.includes('[shipName]')) {
             const activeId = gameState.player?.activeShipId;
             const shipName = activeId && DB.SHIPS[activeId] ? DB.SHIPS[activeId].name : 'Vessel';
-            parsedText = parsedText.replace(/\\[shipName\\]/g, shipName);
+            parsedText = parsedText.replace(/\[shipName\]/g, shipName);
         }
         
         return parsedText;
@@ -38287,7 +38296,6 @@ import { formatCredits } from '../utils.js';
 import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.js';
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 import { SystemStateService } from './world/SystemStateService.js';
-import CinematicService from './ui/CinematicService.js';
 
 export class MissionService {
     /**
@@ -38310,61 +38318,6 @@ export class MissionService {
         
         // Dynamic set to force-allow specific missions to appear in the terminal
         this._forcedTerminalMissions = new Set();
-
-        // --- ACT III: Location-Triggered Cinematics Listener ---
-        document.addEventListener('EVENT_PLAYER_ARRIVED', (e) => {
-            if (e.detail && e.detail.locationId) {
-                this._handlePlayerArrived(e.detail.locationId);
-            }
-        });
-    }
-
-    /**
-     * Hook to seamlessly trigger visual sequences immediately upon arrival at specific locations.
-     * Evaluates active missions for onArrivalCinematic requirements.
-     * @param {string} locationId - The ID of the location the player just arrived at.
-     */
-    _handlePlayerArrived(locationId) {
-        const { activeMissionIds } = this.gameState.missions;
-        if (!activeMissionIds || activeMissionIds.length === 0) return;
-
-        let stateChanged = false;
-
-        activeMissionIds.forEach(missionId => {
-            const mission = DB.MISSIONS?.[missionId];
-            if (!mission || !mission.onArrivalCinematic) return;
-
-            // Check if cinematic is tied to this location
-            if (mission.onArrivalCinematic.locationId === locationId) {
-                // Ensure progress object exists
-                if (!this.gameState.missions.missionProgress[missionId]) {
-                    this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
-                }
-                
-                const progress = this.gameState.missions.missionProgress[missionId];
-                
-                // Fire only if it hasn't been fired yet
-                if (!progress.cinematicFired) {
-                    progress.cinematicFired = true;
-                    stateChanged = true;
-                    
-                    this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${mission.onArrivalCinematic.sequenceId} upon arrival at ${locationId} for mission ${missionId}.`);
-                    
-                    // Invoke CinematicService directly (or through known fallback pathways)
-                    if (CinematicService && typeof CinematicService.playVideo === 'function') {
-                        CinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
-                    } else if (this.simulationService && this.simulationService.cinematicService && typeof this.simulationService.cinematicService.playVideo === 'function') {
-                        this.simulationService.cinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
-                    } else {
-                        this.logger.warn('MissionService', `CinematicService is unavailable or missing playVideo method for ${mission.onArrivalCinematic.sequenceId}`);
-                    }
-                }
-            }
-        });
-
-        if (stateChanged) {
-            this.gameState.setState({});
-        }
     }
 
     /**
@@ -41792,10 +41745,11 @@ export class SystemStateService {
 import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
-import { GameAttributes } from '../../services/GameAttributes.js';
+import { GameAttributes } from '../GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { starfieldService } from '../ui/StarfieldService.js';
+import CinematicService from '../ui/CinematicService.js';
 
 export class TravelService {
     constructor(gameState, uiManager, timeService, logger, simulationServiceFacade) {
@@ -42437,17 +42391,53 @@ export class TravelService {
             }
 
             // --- ACT III: LOCATION-TRIGGERED CINEMATICS HOOK ---
-            document.dispatchEvent(new CustomEvent('EVENT_PLAYER_ARRIVED', { detail: { locationId } }));
+            const { activeMissionIds } = this.gameState.missions;
+            let cinematicSequence = null;
+            let triggeredMissionId = null;
+            
+            if (activeMissionIds && activeMissionIds.length > 0) {
+                for (const missionId of activeMissionIds) {
+                    const mission = DB.MISSIONS?.[missionId];
+                    if (mission && mission.onArrivalCinematic && mission.onArrivalCinematic.locationId === locationId) {
+                        if (!this.gameState.missions.missionProgress[missionId]) {
+                            this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                        }
+                        const progress = this.gameState.missions.missionProgress[missionId];
+                        
+                        if (!progress.cinematicFired) {
+                            cinematicSequence = mission.onArrivalCinematic.sequenceId;
+                            triggeredMissionId = missionId;
+                            break; 
+                        }
+                    }
+                }
+            }
 
-            // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL CINEMATICS 
-            this._processArrivalEvents(locationId, () => {
-                
+            const executePostTravelStateAndModals = () => {
+                if (triggeredMissionId) {
+                    this.gameState.missions.missionProgress[triggeredMissionId].cinematicFired = true;
+                    this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${cinematicSequence} upon arrival at ${locationId} for mission ${triggeredMissionId}.`);
+                    this.gameState.setState({});
+                }
+
                 if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                     this.gameState.pendingEventChains.forEach(chain => {
                         chain.tripsRemaining--;
                     });
                 }
                 
+                // Route Screen Immediately to Background Layer
+                const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
+                if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
+                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+                } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
+                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+                } else {
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+                }
+
+                document.dispatchEvent(new CustomEvent('EVENT_PLAYER_ARRIVED', { detail: { locationId } }));
+
                 if (this.simulationService.missionService) {
                     this.simulationService.missionService.checkTriggers();
                 }
@@ -42460,33 +42450,63 @@ export class TravelService {
                     this.simulationService.toastService.evaluateArrivalTriggers();
                 }
 
-                // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
-                if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
-                    this.gameState.deferredModals.forEach(m => {
-                        this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
-                    });
-                    this.gameState.deferredModals = [];
-                }
-
-                if (locationId === 'sol' && this.timeService.solStationService) {
-                    if (typeof this.timeService.solStationService.catchUpDays === 'function') {
-                        this.timeService.solStationService.catchUpDays(this.gameState.day);
-                        this.timeService.solStationService.startLocalLiveLoop();
-                    }
-                }
-
                 this.simulationService.saveGame();
 
-                const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
-                if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
-                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-                } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
-                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-                } else {
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
-                }
+                // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL EVENTS
+                this._processArrivalEvents(locationId, () => {
+                    
+                    // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
+                    if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                        this.gameState.deferredModals.forEach(m => {
+                            this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
+                        });
+                        this.gameState.deferredModals = [];
+                    }
 
-            }); // End _processArrivalEvents
+                    if (locationId === 'sol' && this.timeService.solStationService) {
+                        if (typeof this.timeService.solStationService.catchUpDays === 'function') {
+                            this.timeService.solStationService.catchUpDays(this.gameState.day);
+                            this.timeService.solStationService.startLocalLiveLoop();
+                        }
+                    }
+
+                }); // End _processArrivalEvents
+            };
+
+            // Execute Cinematic OR proceed directly
+            // Synchronous execution block to explicitly pass native iOS user-gesture tokens.
+            if (cinematicSequence && CinematicService && typeof CinematicService.playVideo === 'function') {
+                
+                // Spawn an explicit DOM transition layer on the Z-Axis between the app UI and the cinematic video.
+                const blackOverlay = document.createElement('div');
+                blackOverlay.className = 'fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-1000 bg-black opacity-100';
+                document.body.appendChild(blackOverlay);
+
+                CinematicService.playVideo(cinematicSequence).then(async () => {
+                    // Force a 1s artificial pause on the black screen for narrative pacing
+                    await new Promise(r => setTimeout(r, 1000));
+                    
+                    // Update the state and DOM silently behind the transition layer
+                    executePostTravelStateAndModals();
+                    
+                    // Force a rapid reflow context to ensure components render correctly 
+                    void document.body.offsetWidth;
+
+                    // Fade back into the standard UI
+                    blackOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        blackOverlay.remove();
+                    }, 1000); 
+
+                }).catch(err => {
+                    this.logger.error('TravelService', 'Cinematic playback failed', err);
+                    executePostTravelStateAndModals();
+                    blackOverlay.style.opacity = '0';
+                    setTimeout(() => blackOverlay.remove(), 1000);
+                });
+            } else {
+                executePostTravelStateAndModals();
+            }
         };
         
         this.uiManager.showTravelAnimation(fromLocation, destination, travelInfo, totalHullDamagePercentForDisplay, finalCallback);
@@ -45435,6 +45455,26 @@ export class SimulationService {
                     this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REFUEL', `Fully refueled all ships in the fleet. Restored ${Math.round(totalFuelRestored)} fuel.`);
                     if (totalFuelRestored > 0 && this.uiManager) {
                         this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', 2000);
+                    }
+                    break;
+                case 'fill_fleet_repair':
+                    let totalHullRestored = 0;
+                    this.gameState.player.ownedShipIds.forEach(shipId => {
+                        if (this.gameState.player.shipStates[shipId]) {
+                            const stats = this.getEffectiveShipStats(shipId) || DB.SHIPS[shipId];
+                            if (stats) {
+                                const currentHealth = this.gameState.player.shipStates[shipId].health;
+                                const maxHealth = stats.maxHealth;
+                                if (currentHealth < maxHealth) {
+                                    totalHullRestored += (maxHealth - currentHealth);
+                                    this.gameState.player.shipStates[shipId].health = maxHealth;
+                                }
+                            }
+                        }
+                    });
+                    this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REPAIR', `Fully repaired all ships in the fleet. Restored ${Math.round(totalHullRestored)} hull.`);
+                    if (totalHullRestored > 0 && this.uiManager) {
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
                     }
                     break;
                 case 'upgrade':
@@ -55653,6 +55693,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+
+# [38.67] - 2026-6-20
+-  added phase_three.js
+-  added Act III missions
+-  added on-arrival cinematics
 
 # [38.64] - 2026-6-18
 -  added ship-art story event modal

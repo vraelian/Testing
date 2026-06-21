@@ -9,10 +9,11 @@
 import { DB } from '../../data/database.js';
 import { GAME_RULES, SCREEN_IDS, NAV_IDS, PERK_IDS, LOCATION_IDS, ATTRIBUTE_TYPES, EVENT_CONSTANTS, COMMODITY_IDS } from '../../data/constants.js';
 import { applyEffect } from '../eventEffectResolver.js';
-import { GameAttributes } from '../../services/GameAttributes.js';
+import { GameAttributes } from '../GameAttributes.js';
 import { RandomEventService } from '../RandomEventService.js';
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { starfieldService } from '../ui/StarfieldService.js';
+import CinematicService from '../ui/CinematicService.js';
 
 export class TravelService {
     constructor(gameState, uiManager, timeService, logger, simulationServiceFacade) {
@@ -654,17 +655,53 @@ export class TravelService {
             }
 
             // --- ACT III: LOCATION-TRIGGERED CINEMATICS HOOK ---
-            document.dispatchEvent(new CustomEvent('EVENT_PLAYER_ARRIVED', { detail: { locationId } }));
+            const { activeMissionIds } = this.gameState.missions;
+            let cinematicSequence = null;
+            let triggeredMissionId = null;
+            
+            if (activeMissionIds && activeMissionIds.length > 0) {
+                for (const missionId of activeMissionIds) {
+                    const mission = DB.MISSIONS?.[missionId];
+                    if (mission && mission.onArrivalCinematic && mission.onArrivalCinematic.locationId === locationId) {
+                        if (!this.gameState.missions.missionProgress[missionId]) {
+                            this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                        }
+                        const progress = this.gameState.missions.missionProgress[missionId];
+                        
+                        if (!progress.cinematicFired) {
+                            cinematicSequence = mission.onArrivalCinematic.sequenceId;
+                            triggeredMissionId = missionId;
+                            break; 
+                        }
+                    }
+                }
+            }
 
-            // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL CINEMATICS 
-            this._processArrivalEvents(locationId, () => {
-                
+            const executePostTravelStateAndModals = () => {
+                if (triggeredMissionId) {
+                    this.gameState.missions.missionProgress[triggeredMissionId].cinematicFired = true;
+                    this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${cinematicSequence} upon arrival at ${locationId} for mission ${triggeredMissionId}.`);
+                    this.gameState.setState({});
+                }
+
                 if (!eventMods.useFoldedDrive && this.gameState.pendingEventChains && this.gameState.pendingEventChains.length > 0) {
                     this.gameState.pendingEventChains.forEach(chain => {
                         chain.tripsRemaining--;
                     });
                 }
                 
+                // Route Screen Immediately to Background Layer
+                const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
+                if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
+                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+                } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
+                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+                } else {
+                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+                }
+
+                document.dispatchEvent(new CustomEvent('EVENT_PLAYER_ARRIVED', { detail: { locationId } }));
+
                 if (this.simulationService.missionService) {
                     this.simulationService.missionService.checkTriggers();
                 }
@@ -677,33 +714,63 @@ export class TravelService {
                     this.simulationService.toastService.evaluateArrivalTriggers();
                 }
 
-                // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
-                if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
-                    this.gameState.deferredModals.forEach(m => {
-                        this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
-                    });
-                    this.gameState.deferredModals = [];
-                }
-
-                if (locationId === 'sol' && this.timeService.solStationService) {
-                    if (typeof this.timeService.solStationService.catchUpDays === 'function') {
-                        this.timeService.solStationService.catchUpDays(this.gameState.day);
-                        this.timeService.solStationService.startLocalLiveLoop();
-                    }
-                }
-
                 this.simulationService.saveGame();
 
-                const isTut5Active = this.gameState.missions?.activeMissionIds?.includes('mission_tutorial_05');
-                if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
-                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-                } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
-                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
-                } else {
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
-                }
+                // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL EVENTS
+                this._processArrivalEvents(locationId, () => {
+                    
+                    // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
+                    if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                        this.gameState.deferredModals.forEach(m => {
+                            this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
+                        });
+                        this.gameState.deferredModals = [];
+                    }
 
-            }); // End _processArrivalEvents
+                    if (locationId === 'sol' && this.timeService.solStationService) {
+                        if (typeof this.timeService.solStationService.catchUpDays === 'function') {
+                            this.timeService.solStationService.catchUpDays(this.gameState.day);
+                            this.timeService.solStationService.startLocalLiveLoop();
+                        }
+                    }
+
+                }); // End _processArrivalEvents
+            };
+
+            // Execute Cinematic OR proceed directly
+            // Synchronous execution block to explicitly pass native iOS user-gesture tokens.
+            if (cinematicSequence && CinematicService && typeof CinematicService.playVideo === 'function') {
+                
+                // Spawn an explicit DOM transition layer on the Z-Axis between the app UI and the cinematic video.
+                const blackOverlay = document.createElement('div');
+                blackOverlay.className = 'fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-1000 bg-black opacity-100';
+                document.body.appendChild(blackOverlay);
+
+                CinematicService.playVideo(cinematicSequence).then(async () => {
+                    // Force a 1s artificial pause on the black screen for narrative pacing
+                    await new Promise(r => setTimeout(r, 1000));
+                    
+                    // Update the state and DOM silently behind the transition layer
+                    executePostTravelStateAndModals();
+                    
+                    // Force a rapid reflow context to ensure components render correctly 
+                    void document.body.offsetWidth;
+
+                    // Fade back into the standard UI
+                    blackOverlay.style.opacity = '0';
+                    setTimeout(() => {
+                        blackOverlay.remove();
+                    }, 1000); 
+
+                }).catch(err => {
+                    this.logger.error('TravelService', 'Cinematic playback failed', err);
+                    executePostTravelStateAndModals();
+                    blackOverlay.style.opacity = '0';
+                    setTimeout(() => blackOverlay.remove(), 1000);
+                });
+            } else {
+                executePostTravelStateAndModals();
+            }
         };
         
         this.uiManager.showTravelAnimation(fromLocation, destination, travelInfo, totalHullDamagePercentForDisplay, finalCallback);

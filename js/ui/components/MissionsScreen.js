@@ -145,6 +145,9 @@ export function renderMissionsScreen(gameState, missionService) {
                 else if(r.type.toLowerCase() === 'fill_fleet_fuel') {
                     rewardTextParts.push(`<span class="text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`);
                 }
+                else if(r.type.toLowerCase() === 'fill_fleet_repair') {
+                    rewardTextParts.push(`<span class="text-green-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`);
+                }
                 else if(r.type.toLowerCase() === 'set_flag') {
                     const flagText = r.flagId === 'helped_belt_family' ? 'GRATITUDE' : 'REPUTATION';
                     rewardTextParts.push(`<span class="text-purple-400 font-bold" style="-webkit-text-stroke: 1px black;">${flagText}</span>`);

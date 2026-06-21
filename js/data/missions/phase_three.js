@@ -676,7 +676,7 @@ export const PHASE_THREE_MISSIONS = {
         name: "The Call",
         type: "STORY",
         host: "GUILD",
-        portraitId: "Arbiter_1",
+        portraitId: "Merchants_Guild_17",
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain. The Syndicate's shadow fleet initiative is compromised, and their market share is hemorrhaging. The Arbiter has requested a direct audience with you. This is unprecedented for an independent contractor. Proceed immediately to the surface stations of Earth. The Arbiter is waiting.",
@@ -687,6 +687,7 @@ export const PHASE_THREE_MISSIONS = {
         ],
         completion: {
             locationId: "loc_earth",
+            portraitId: "Arbiter_1",
             title: "The Arbiter's Truth",
             text: "Most perceive the Guild as a mere mercantile institution, but it is so much more. Every light, every life, is sustained by the mathematical order that the Merchant's Guild enforces. A million variables shift every second to prevent humanity from consuming itself, and I am the fulcrum of that equilibrium, the Arbiter. You have wielded that order as a weapon, breaking the Syndicate's industrial backbone with absolute precision. You have starved their clandestine shipyards of graphene, rendering their shadow fleet inert.<br><br>But our true concern lies inward, at the very center of the system. The kinetic launches you witnessed from that eccentric machine on Pluto are supplying a leviathan hidden in the corona. A ghost structure gathering mass in the dark, bypassing our authority. Furthermore, the telemetry you uploaded regarding a Z Class vessel utilizing a folded space drive is a mathematical impossibility. That technology is extinct, yet it moves freely in our space. Maintain your fleet's readiness. The board is resetting, and your role is about to escalate significantly. Between the leviathan at the center and these ancient anomalies returning to the fringe, the coming cycles will require unprecedented intervention to maintain control.",
             buttonText: "Act III Complete"
@@ -701,7 +702,7 @@ export const PHASE_THREE_MISSIONS = {
         name: "The Call",
         type: "STORY",
         host: "SYNDICATE",
-        portraitId: "Vrael_1",
+        portraitId: "Venusian_Syndicate_2",
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain. The Guild is experiencing severe systemic panic. Their elites face a deficit in life extension, and their grip on the market is compromised. You have accomplished the improbable: you secured Vrael’s direct attention. He requires an audience with the pilot dismantling the Guild's ledgers. Navigate your vessel to the cloud cities on Venus. Do not delay.",
@@ -712,6 +713,7 @@ export const PHASE_THREE_MISSIONS = {
         ],
         completion: {
             locationId: "loc_venus",
+            portraitId: "Vrael_1",
             title: "Vrael's Truth",
             text: "It is fitting we meet here, suspended in the extravagance of the Venusian atmosphere, far above the Guild's rigid domain. I am Vrael. The mathematical order of the Guild is a fragile illusion, as you have so eloquently proven by interring their cryo sleep pods on the Plutonian fringe. You have weaponized time itself against their ruling class, forcing their gerontocracy to face the sudden reality of their own mortality. Yet, the Syndicate's subversion of their hierarchy is merely a prelude.<br><br>The true locus of power has shifted. The telemetry you secured from that enigmatic machine intelligence on Pluto launching its continuous harvest directly into the sun's gravity well confirms a truth the Guild cannot quantify. It has revealed an uncontrolled anomalous silhouette within the corona. A colossal, unregistered megastructure hides there, silently consuming that kinetic tribute.<br><br>But it is not the only shadow moving in the dark. Your encounter with a Z Class dreadnought folding spacetime proves that the old limitations are dead. Ancient, terrifying power is returning to the board, completely independent of Guild regulation and our own designs. See to your fleet's readiness. The established order is fracturing, and we are going to harness this chaos.",
             buttonText: "Act III Complete"

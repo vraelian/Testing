@@ -540,6 +540,8 @@ export class UIMissionControl {
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
+                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -1080,6 +1082,8 @@ export class UIMissionControl {
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
                                 content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                            } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
+                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -1725,7 +1729,7 @@ export class UIMissionControl {
         if (parsedText.includes('[shipName]')) {
             const activeId = gameState.player?.activeShipId;
             const shipName = activeId && DB.SHIPS[activeId] ? DB.SHIPS[activeId].name : 'Vessel';
-            parsedText = parsedText.replace(/\\[shipName\\]/g, shipName);
+            parsedText = parsedText.replace(/\[shipName\]/g, shipName);
         }
         
         return parsedText;

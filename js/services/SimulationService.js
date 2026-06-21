@@ -687,6 +687,26 @@ export class SimulationService {
                         this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', 2000);
                     }
                     break;
+                case 'fill_fleet_repair':
+                    let totalHullRestored = 0;
+                    this.gameState.player.ownedShipIds.forEach(shipId => {
+                        if (this.gameState.player.shipStates[shipId]) {
+                            const stats = this.getEffectiveShipStats(shipId) || DB.SHIPS[shipId];
+                            if (stats) {
+                                const currentHealth = this.gameState.player.shipStates[shipId].health;
+                                const maxHealth = stats.maxHealth;
+                                if (currentHealth < maxHealth) {
+                                    totalHullRestored += (maxHealth - currentHealth);
+                                    this.gameState.player.shipStates[shipId].health = maxHealth;
+                                }
+                            }
+                        }
+                    });
+                    this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REPAIR', `Fully repaired all ships in the fleet. Restored ${Math.round(totalHullRestored)} hull.`);
+                    if (totalHullRestored > 0 && this.uiManager) {
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
+                    }
+                    break;
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState) {

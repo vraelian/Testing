@@ -10,7 +10,6 @@ import { formatCredits } from '../utils.js';
 import { MissionObjectiveEvaluator } from './mission/MissionObjectiveEvaluator.js';
 import { MissionTriggerEvaluator } from './mission/MissionTriggerEvaluator.js';
 import { SystemStateService } from './world/SystemStateService.js';
-import CinematicService from './ui/CinematicService.js';
 
 export class MissionService {
     /**
@@ -33,61 +32,6 @@ export class MissionService {
         
         // Dynamic set to force-allow specific missions to appear in the terminal
         this._forcedTerminalMissions = new Set();
-
-        // --- ACT III: Location-Triggered Cinematics Listener ---
-        document.addEventListener('EVENT_PLAYER_ARRIVED', (e) => {
-            if (e.detail && e.detail.locationId) {
-                this._handlePlayerArrived(e.detail.locationId);
-            }
-        });
-    }
-
-    /**
-     * Hook to seamlessly trigger visual sequences immediately upon arrival at specific locations.
-     * Evaluates active missions for onArrivalCinematic requirements.
-     * @param {string} locationId - The ID of the location the player just arrived at.
-     */
-    _handlePlayerArrived(locationId) {
-        const { activeMissionIds } = this.gameState.missions;
-        if (!activeMissionIds || activeMissionIds.length === 0) return;
-
-        let stateChanged = false;
-
-        activeMissionIds.forEach(missionId => {
-            const mission = DB.MISSIONS?.[missionId];
-            if (!mission || !mission.onArrivalCinematic) return;
-
-            // Check if cinematic is tied to this location
-            if (mission.onArrivalCinematic.locationId === locationId) {
-                // Ensure progress object exists
-                if (!this.gameState.missions.missionProgress[missionId]) {
-                    this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
-                }
-                
-                const progress = this.gameState.missions.missionProgress[missionId];
-                
-                // Fire only if it hasn't been fired yet
-                if (!progress.cinematicFired) {
-                    progress.cinematicFired = true;
-                    stateChanged = true;
-                    
-                    this.logger.info.player(this.gameState.day, 'CINEMATIC_TRIGGERED', `Triggered ${mission.onArrivalCinematic.sequenceId} upon arrival at ${locationId} for mission ${missionId}.`);
-                    
-                    // Invoke CinematicService directly (or through known fallback pathways)
-                    if (CinematicService && typeof CinematicService.playVideo === 'function') {
-                        CinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
-                    } else if (this.simulationService && this.simulationService.cinematicService && typeof this.simulationService.cinematicService.playVideo === 'function') {
-                        this.simulationService.cinematicService.playVideo(mission.onArrivalCinematic.sequenceId);
-                    } else {
-                        this.logger.warn('MissionService', `CinematicService is unavailable or missing playVideo method for ${mission.onArrivalCinematic.sequenceId}`);
-                    }
-                }
-            }
-        });
-
-        if (stateChanged) {
-            this.gameState.setState({});
-        }
     }
 
     /**
