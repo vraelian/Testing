@@ -1418,11 +1418,13 @@
 import { TUTORIAL_MISSIONS } from './js/data/missions/tutorial_missions.js';
 import { PHASE_ONE_MISSIONS } from './js/data/missions/phase_one.js';
 import { PHASE_TWO_MISSIONS } from './js/data/missions/phase_two.js';
+import { PHASE_THREE_MISSIONS } from './js/data/missions/phase_three.js';
 
 const storyData = [
     { phase: "Tutorial: Guild Induction", missions: Object.values(TUTORIAL_MISSIONS) },
     { phase: "Phase One: Act 1 (The Cog)", missions: Object.values(PHASE_ONE_MISSIONS) },
-    { phase: "Phase Two: Syndicate Emergence", missions: Object.values(PHASE_TWO_MISSIONS) }
+    { phase: "Phase Two: Syndicate Emergence", missions: Object.values(PHASE_TWO_MISSIONS) },
+    { phase: "Phase Three: The Operator", missions: Object.values(PHASE_THREE_MISSIONS) }
 ];
 
 let globalLedgerData = [];
@@ -1431,6 +1433,26 @@ let globalPhaseTransitions = [];
 let currentSort = { column: 'id', asc: true };
 
 // --- UTILITIES ---
+
+function formatMissionId(id) {
+    if (!id) return '00';
+    const strId = String(id);
+    const numMatch = strId.match(/\d+/);
+    const num = numMatch ? numMatch[0].padStart(2, '0') : '00';
+    
+    let branch = '';
+    if (strId.toLowerCase().includes('guild')) branch = 'G';
+    else if (strId.toLowerCase().includes('syndicate')) branch = 'S';
+    else if (strId.toLowerCase().includes('station')) branch = 'ST';
+    
+    return branch ? `${num}${branch}` : num;
+}
+
+function getMissionNumber(id) {
+    const strId = String(id);
+    const numMatch = strId.match(/\d+/);
+    return numMatch ? parseInt(numMatch[0]) : 0;
+}
 
 function getPortraitStyle(portraitId) {
     if (!window.PortraitRegistry) return '';
@@ -1474,6 +1496,18 @@ function parseObjective(obj) {
         case 'HAVE_ITEM': 
             str = `Procure and hold <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b> in your cargo.`;
             break;
+        case 'OWN_SHIP_CLASS': 
+            str = `Acquire a <b>Class ${obj.class}</b> vessel.`;
+            break;
+        case 'COLLECT_ITEM': 
+            str = `Collect <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b>.`;
+            break;
+        case 'HAS_UPGRADE_RANK': 
+            str = `Attain Rank <b>${obj.rank}</b> for upgrade <b>${formatName(obj.upgradeId)}</b>.`;
+            break;
+        case 'ACTION': 
+            str = `Perform action: <b>${formatName(obj.actionId)}</b>.`;
+            break;
         default: 
             str = `Complete Task: ${obj.type}`;
     }
@@ -1482,11 +1516,14 @@ function parseObjective(obj) {
 
 function parseTriggers(triggers) {
     if (!triggers || triggers.length === 0) return 'Available Immediately';
-    const reqs = triggers.filter(t => t.type === 'mission_completed').map(t => formatName(t.missionId));
+    const reqs = [];
+    triggers.forEach(t => {
+        if (t.type === 'mission_completed') reqs.push(`M_${formatMissionId(t.missionId)}`);
+        if (t.type === 'flag_is_true') reqs.push(`Flag: ${formatName(t.flagId)}`);
+        if (t.type === 'location') reqs.push(`Loc: ${formatName(t.target)}`);
+    });
     if (reqs.length === 0) return 'Custom Requirements';
-    if (reqs.length === 1) return `Unlocked after ${reqs[0]}`;
-    const last = reqs.pop();
-    return `Unlocked after ${reqs.join(', ')} and ${last}`;
+    return `Requires: ${reqs.join(', ')}`;
 }
 
 function parseDialog(text) {
@@ -1498,9 +1535,15 @@ function formatRewardsStr(rewardsArr) {
     if (!rewardsArr || rewardsArr.length === 0) return 'NO REWARD';
     return rewardsArr.map(r => {
         if (r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
-        if (r.type === 'UPGRADE') return `UPGRADE`;
-        if (r.type === 'license') return `LICENSE`;
+        if (r.type === 'DEDUCT_CREDITS') return `⌬ -${r.amount.toLocaleString()}`;
+        if (r.type === 'UPGRADE' || r.type === 'GRANT_UPGRADE') return `UPGRADE`;
+        if (r.type === 'license' || r.type === 'UNLOCK_TIER') return `LICENSE`;
         if (r.type === 'fill_fleet_fuel') return `FUEL VOUCHER`;
+        if (r.type === 'GRANT_SHIP') return `SHIP HULL`;
+        if (r.type === 'SET_FLAG') return `META FLAG`;
+        if (r.type === 'TRIGGER_SYSTEM_STATE') return `SYS EVENT`;
+        if (r.type === 'UNLOCK_LOCATION') return `LOCATION`;
+        if (r.type === 'QUEUE_STORY_EVENT') return `STORY EVENT`;
         return r.type.toUpperCase();
     }).join('\n');
 }
@@ -1637,7 +1680,7 @@ function createCanvasChart(dataArray, containerId, transitions = []) {
         
         if (hoverIndex > -1) {
             const p = points[hoverIndex];
-            tooltip.innerHTML = `<b>Mission M_${p.id.padStart(2,'0')}</b><br>Cumulative: ⌬ ${p.total.toLocaleString()}`;
+            tooltip.innerHTML = `<b>Mission M_${p.id}</b><br>Cumulative: ⌬ ${p.total.toLocaleString()}`;
             tooltip.style.opacity = '1';
         } else {
             tooltip.style.opacity = '0';
@@ -1729,18 +1772,22 @@ function initApp() {
 
     let isLeftNode = true;
     let stats = { credits: 0, upgrades: 0, licenses: 0, phases: [] };
-    let cumulativeCredits = 0;
     
     globalLedgerData = [];
     globalChartData = [];
     globalPhaseTransitions = [];
+    
+    let cumulativeCredits = 0;
+    let chartDataMap = new Map();
 
     storyData.forEach((phaseData, phaseIndex) => {
         let phaseStats = { name: phaseData.phase, credits: 0, rewards: 0 };
         
+        let firstMissionNum = phaseData.missions.length > 0 ? getMissionNumber(phaseData.missions[0].id) : 0;
         globalPhaseTransitions.push({
             name: phaseData.phase,
-            index: globalChartData.length
+            missionNum: firstMissionNum,
+            index: 0
         });
         
         // Sidebar Phase Header (Collapsible)
@@ -1753,18 +1800,19 @@ function initApp() {
 
         phaseData.missions.forEach(mission => {
             const hostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
+            const fId = formatMissionId(mission.id);
 
             // --- 1. MISSIONS TAB ---
             const item = document.createElement('div');
             item.className = `timeline-item ${hostClass}`;
-            item.dataset.searchString = `${mission.id} ${mission.name} ${mission.host}`.toLowerCase();
+            item.dataset.searchString = `${mission.id} ${fId} ${mission.name} ${mission.host}`.toLowerCase();
             item.dataset.host = mission.host || 'NONE';
             
             const rwds = formatRewardsStr(mission.rewards);
             const isCreditsStr = rwds.includes('⌬') ? 'is-credits' : '';
             
             item.innerHTML = `
-                <div class="mission-id">ID_${mission.id.padStart(3, '0')}</div>
+                <div class="mission-id">M_${fId}</div>
                 <div class="mission-name">${mission.name}</div>
                 <div class="item-reward ${isCreditsStr}">${rwds}</div>
             `;
@@ -1781,7 +1829,7 @@ function initApp() {
             node.innerHTML = `
                 <div class="t-dot"></div>
                 <div class="t-content">
-                    <div class="t-phase">M_${mission.id.padStart(2,'0')} // ${mission.host || 'NONE'}</div>
+                    <div class="t-phase">M_${fId} // ${mission.host || 'NONE'}</div>
                     <div class="t-title">${mission.name}</div>
                 </div>
             `;
@@ -1803,39 +1851,71 @@ function initApp() {
 
             // --- 3. REWARDS LEDGER DATA GATHERING ---
             let earnedCreditsThisMission = 0;
+            let deductedCreditsThisMission = 0;
+            
             if (mission.rewards && mission.rewards.length > 0) {
                 let rwdHtml = '';
                 mission.rewards.forEach(r => {
                     if (r.type === 'credits') { 
-                        earnedCreditsThisMission = r.amount; phaseStats.credits += r.amount; stats.credits += r.amount; 
+                        earnedCreditsThisMission += r.amount; phaseStats.credits += r.amount; stats.credits += r.amount; 
                         rwdHtml += `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
                     }
-                    if (r.type === 'UPGRADE') { 
+                    else if (r.type === 'DEDUCT_CREDITS') { 
+                        deductedCreditsThisMission += r.amount;
+                        rwdHtml += `<div class="payout-tag credits" style="color:#ef4444; border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.08);">[-] ⌬ ${r.amount.toLocaleString()}</div>`; 
+                    }
+                    else if (r.type === 'UPGRADE' || r.type === 'GRANT_UPGRADE') { 
                         phaseStats.rewards++; stats.upgrades++; 
                         rwdHtml += `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
                     }
-                    if (r.type === 'license') { 
+                    else if (r.type === 'GRANT_SHIP') { 
+                        phaseStats.rewards++; stats.upgrades++; 
+                        rwdHtml += `<div class="payout-tag upgrade">SHIP: ${r.shipId}</div>`; 
+                    }
+                    else if (r.type === 'license' || r.type === 'UNLOCK_TIER') { 
                         phaseStats.rewards++; stats.licenses++; 
                         rwdHtml += `<div class="payout-tag license">LICENSE Granted</div>`; 
                     }
-                    if (r.type === 'fill_fleet_fuel') { 
+                    else if (r.type === 'SET_FLAG') { 
+                        phaseStats.rewards++; 
+                        rwdHtml += `<div class="payout-tag license">FLAG: ${r.flagId}</div>`; 
+                    }
+                    else if (r.type === 'QUEUE_STORY_EVENT') { 
+                        phaseStats.rewards++; 
+                        rwdHtml += `<div class="payout-tag license">STORY EVENT QUEUED</div>`; 
+                    }
+                    else if (r.type === 'TRIGGER_SYSTEM_STATE') { 
+                        phaseStats.rewards++; 
+                        rwdHtml += `<div class="payout-tag" style="color:#a855f7; border-color:#a855f7;">EVENT: ${r.stateId}</div>`; 
+                    }
+                    else if (r.type === 'UNLOCK_LOCATION') { 
+                        phaseStats.rewards++; 
+                        rwdHtml += `<div class="payout-tag" style="color:#10b981; border-color:#10b981;">LOC: ${r.locationId}</div>`; 
+                    }
+                    else if (r.type === 'fill_fleet_fuel') { 
                         phaseStats.rewards++; 
                         rwdHtml += `<div class="payout-tag credits">FUEL VOUCHER</div>`; 
                     }
                 });
 
                 globalLedgerData.push({
-                    id: mission.id,
-                    numId: parseInt(mission.id.replace(/\D/g, '') || 0),
+                    id: fId,
+                    numId: getMissionNumber(mission.id),
                     name: mission.name,
                     hostClass: hostClass,
-                    credits: earnedCreditsThisMission,
+                    credits: earnedCreditsThisMission - deductedCreditsThisMission,
                     html: rwdHtml
                 });
             }
 
-            cumulativeCredits += earnedCreditsThisMission;
-            globalChartData.push({ id: mission.id, total: cumulativeCredits });
+            let numId = getMissionNumber(mission.id);
+            let netCredits = earnedCreditsThisMission - deductedCreditsThisMission;
+
+            if(!chartDataMap.has(numId)) {
+                chartDataMap.set(numId, { idStr: fId, creditsArr: [netCredits] });
+            } else {
+                chartDataMap.get(numId).creditsArr.push(netCredits);
+            }
 
             isLeftNode = !isLeftNode;
         });
@@ -1852,6 +1932,20 @@ function initApp() {
         });
 
         stats.phases.push(phaseStats);
+    });
+
+    // Chart Data Generation (Averaging Branches)
+    let sortedIds = Array.from(chartDataMap.keys()).sort((a,b) => a - b);
+    sortedIds.forEach(numId => {
+        let data = chartDataMap.get(numId);
+        let avgCredits = data.creditsArr.reduce((a, b) => a + b, 0) / data.creditsArr.length;
+        cumulativeCredits += avgCredits;
+        globalChartData.push({ id: data.idStr, numId: numId, total: Math.max(0, cumulativeCredits) });
+    });
+
+    globalPhaseTransitions.forEach(tr => {
+        let idx = globalChartData.findIndex(d => d.numId >= tr.missionNum);
+        tr.index = idx !== -1 ? idx : 0;
     });
 
     // Search and Filter Logic
@@ -1910,7 +2004,8 @@ function initApp() {
         let allMissions = [];
         storyData.forEach(p => allMissions = allMissions.concat(p.missions));
         const found = allMissions.find(m => m.id === state.id);
-        const itemEl = Array.from(document.querySelectorAll('.timeline-item')).find(el => el.querySelector('.mission-id').textContent === `ID_${state.id.padStart(3, '0')}`);
+        const fId = formatMissionId(state.id);
+        const itemEl = Array.from(document.querySelectorAll('.timeline-item')).find(el => el.querySelector('.mission-id').textContent === `M_${fId}`);
         if(found && itemEl) loadMission(found, itemEl);
     }
 
@@ -1936,7 +2031,7 @@ function renderLedger() {
         const rNode = document.createElement('div');
         rNode.className = `ledger-row ${d.hostClass}`;
         rNode.innerHTML = `
-            <div class="ledger-id">M_${d.id.padStart(2,'0')}</div>
+            <div class="ledger-id">M_${d.id}</div>
             <div class="ledger-name">${d.name}</div>
             <div class="ledger-payouts">${d.html}</div>
         `;
@@ -2012,10 +2107,15 @@ function loadMission(mission, element) {
 
     // Meta Flags & Triggers
     const flagsEl = document.getElementById('detail-flags');
-    flagsEl.innerHTML = `
+    let metaHtml = `
         <span class="flag">${mission.repeatable ? '✔' : '✗'} Repeatable</span>
         <span class="flag">${mission.abandonable ? '✔' : '✗'} Abandonable</span>
     `;
+    if(mission.grantedIntel) metaHtml += `<span class="flag" style="color:#a855f7">✔ Hot Intel</span>`;
+    if(mission.grantedCargo) metaHtml += `<span class="flag" style="color:#f59e0b">✔ Cargo Provided</span>`;
+    if(mission.onArrivalCinematic) metaHtml += `<span class="flag" style="color:#3b82f6">✔ Cinematic</span>`;
+    flagsEl.innerHTML = metaHtml;
+
     document.getElementById('detail-trigger').textContent = parseTriggers(mission.triggers);
 
     const objEl = document.getElementById('detail-objectives');
@@ -2040,11 +2140,29 @@ function loadMission(mission, element) {
             if (r.type === 'credits') { 
                 rwdHtml += `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
             }
-            else if (r.type === 'UPGRADE') { 
+            else if (r.type === 'DEDUCT_CREDITS') { 
+                rwdHtml += `<div class="payout-tag credits" style="color:#ef4444; border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.08);">[-] ⌬ ${r.amount.toLocaleString()}</div>`; 
+            }
+            else if (r.type === 'UPGRADE' || r.type === 'GRANT_UPGRADE') { 
                 rwdHtml += `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
             }
-            else if (r.type === 'license') { 
+            else if (r.type === 'GRANT_SHIP') { 
+                rwdHtml += `<div class="payout-tag upgrade">SHIP: ${r.shipId}</div>`; 
+            }
+            else if (r.type === 'license' || r.type === 'UNLOCK_TIER') { 
                 rwdHtml += `<div class="payout-tag license">LICENSE Granted</div>`; 
+            }
+            else if (r.type === 'SET_FLAG') { 
+                rwdHtml += `<div class="payout-tag license">FLAG: ${r.flagId}</div>`; 
+            }
+            else if (r.type === 'QUEUE_STORY_EVENT') { 
+                rwdHtml += `<div class="payout-tag license">STORY EVENT QUEUED</div>`; 
+            }
+            else if (r.type === 'TRIGGER_SYSTEM_STATE') { 
+                rwdHtml += `<div class="payout-tag" style="color:#a855f7; border-color:#a855f7;">EVENT: ${r.stateId}</div>`; 
+            }
+            else if (r.type === 'UNLOCK_LOCATION') { 
+                rwdHtml += `<div class="payout-tag" style="color:#10b981; border-color:#10b981;">LOC: ${r.locationId}</div>`; 
             }
             else if (r.type === 'fill_fleet_fuel') { 
                 rwdHtml += `<div class="payout-tag credits">FUEL VOUCHER</div>`; 

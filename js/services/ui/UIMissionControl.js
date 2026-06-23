@@ -7,6 +7,7 @@ import { GameAttributes } from '../GameAttributes.js';
 import { OFFICERS } from '../../data/officers.js';
 import { startLicenseAnimation, endLicenseAnimation } from './AnimationService.js';
 import { ACT_CINEMATIC_CONFIG } from './UIEventControl.js';
+import CinematicService from './CinematicService.js';
 
 function getOfficerRarityHex(rarity) {
     switch (rarity) {
@@ -1026,6 +1027,12 @@ export class UIMissionControl {
         return `COMPLETE OBJECTIVE`;
     }
 
+    /**
+     * Instantiates and queues the mission completion modal, handling dynamic rewards, 
+     * cinematic intercepts, and custom UI sequences.
+     * @param {Object} mission - The mission definition object from the database.
+     * @sideeffects Mutates the DOM via ModalEngine, triggers CinematicService playback for specific missions.
+     */
     _showMissionCompletionModal(mission) {
         const gameState = this.manager.lastKnownState;
         
@@ -1543,9 +1550,70 @@ export class UIMissionControl {
                    completeBtn.style.cssText = btnStyles;
                    completeBtn.disabled = !hasSpace;
 
-                   completeBtn.onclick = (e) => {
+                   completeBtn.onclick = async (e) => {
                        completeBtn.disabled = true;
-                       executeCompletion(e);
+                       
+                       if (mission.id === 'mission_41_guild' || mission.id === 'mission_41_syndicate') {
+                           
+                           // 1. Prepare UI Teardown Helpers
+                           const toggleBackgroundUI = (opacity, pointerEvents) => {
+                               const elements = [
+                                   document.getElementById('mission-sticky-bar'),
+                                   document.getElementById('btn-econ-weather'),
+                                   document.getElementById('global-help-anchor'),
+                                   document.getElementById('btn-game-menu'),
+                                   document.getElementById('btn-achievements')
+                               ];
+                               elements.forEach(el => {
+                                   if (el) {
+                                       el.style.transition = 'opacity 0.2s ease';
+                                       el.style.opacity = opacity;
+                                       el.style.pointerEvents = pointerEvents;
+                                   }
+                               });
+                           };
+
+                           toggleBackgroundUI('0', 'none');
+
+                           // Force close generic tooltips if open
+                           const tooltip = document.getElementById('generic-tooltip');
+                           if (tooltip) tooltip.style.opacity = '0';
+
+                           // 2. Instantly create the absolute blackout overlay
+                           const blackOverlay = document.createElement('div');
+                           blackOverlay.className = 'fixed inset-0 flex flex-col items-center justify-center bg-black pointer-events-auto opacity-0';
+                           blackOverlay.style.zIndex = '99999'; // Safely under CinematicService's 100000
+                           document.body.appendChild(blackOverlay);
+
+                           // 3. Fade in overlay using Web Animations API for guaranteed synchronization
+                           const fadeIn = blackOverlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1500, fill: 'forwards', easing: 'ease-in-out' });
+                           
+                           fadeIn.finished.then(() => {
+                               // 4. Trigger UI teardown behind the black screen
+                               executeCompletion(e);
+                               
+                               // 5. Invoke CinematicService precisely
+                               CinematicService.playVideo('sol_station_ silhouette').then(async () => {
+                                   
+                                   // Ensure teardown has processed (1.5s is the executeCompletion internal timer)
+                                   await new Promise(r => setTimeout(r, 1500));
+                                   
+                                   // 6. Crossfade the black mask back out to reveal the resolved UI state
+                                   const fadeOut = blackOverlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 2000, fill: 'forwards', easing: 'ease-in-out' });
+                                   await fadeOut.finished;
+                                   
+                                   blackOverlay.remove();
+                                   toggleBackgroundUI('1', 'auto');
+                                   
+                               }).catch(err => {
+                                   blackOverlay.remove();
+                                   toggleBackgroundUI('1', 'auto');
+                               });
+                           });
+
+                       } else {
+                           executeCompletion(e);
+                       }
                    };
                    buttonsEl.appendChild(completeBtn);
                }
