@@ -230,3 +230,41 @@
 .sol-station-modal {
     z-index: 105 !important;
 }
+
+/* ========================================================================= */
+/* --- BIRTHDAY MODAL ANIMATIONS ---                                         */
+/* ========================================================================= */
+
+.birthday-blur-in {
+    animation: bdayBlurIn 0.5s ease-out forwards;
+}
+
+.birthday-blur-out {
+    animation: bdayBlurOut 0.3s ease-in forwards;
+}
+
+@keyframes bdayBlurIn {
+    0% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+}
+
+@keyframes bdayBlurOut {
+    0% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(1.05);
+    }
+}

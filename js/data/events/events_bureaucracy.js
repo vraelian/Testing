@@ -304,8 +304,8 @@ export const EVENTS_BUREAUCRACY = [
                 effects: []
             },
             'out_run_fail': {
-                title: 'Warning Shots',
-                text: 'They spot you immediately. Warning shots rake your hull, forcing you to abort the jump and flee to the nearest safe port.',
+                title: 'Automated EMP Wash',
+                text: 'They lock onto your thermal signature immediately. An automated electronic warfare barrage washes over your vessel, violently resetting the nav-computer and over-stressing the hull. You are forced to abort the jump and limp to the nearest port.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -25 },
                     { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },

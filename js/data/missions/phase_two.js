@@ -393,7 +393,9 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-black font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #ffffff 0%, #eab308 100%); border: 1px solid #ca8a04; box-shadow: 0 0 15px rgba(234,179,8,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true },
+                        { "type": "ship", "target": "Odyssey.Ship" },
+                        { "type": "upgrade", "target": "UPG_GUILD_BADGE_2" }
                     ]
                 },
                 {
@@ -401,7 +403,9 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-white font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #f97316 100%); border: 1px solid #c084fc; box-shadow: 0 0 15px rgba(139,92,246,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true },
+                        { "type": "credits", "amount": 150000 },
+                        { "type": "upgrade", "target": "UPG_SYNDICATE_BADGE_2" }
                     ]
                 }
             ]

@@ -91,11 +91,11 @@ export class TimeService {
         // Update visual seed for procedural rotations
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
 
-        // Phase 2: Static Modifier Pre-Calculation Hoisting
+        // Phase 2: Static Modifier Pre-Calculation Hoisting (Fleet Array)
         const activeShipId = this.gameState.player.activeShipId;
         const activeShipState = this.gameState.player.shipStates[activeShipId];
-        const activeUpgrades = activeShipState ? (activeShipState.upgrades || []) : [];
-        const activeShipAttributes = GameAttributes.getShipAttributes(activeShipId);
+        const activeUpgrades = this.simulationService ? this.simulationService.getFleetUpgrades() : [];
+        const activeShipAttributes = this.simulationService ? this.simulationService.getFleetAttributes() : GameAttributes.getShipAttributes(activeShipId);
         
         let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
         if (activeShipAttributes.includes('ATTR_SELF_ASSEMBLY')) {
@@ -334,7 +334,8 @@ export class TimeService {
             this.gameState.deferredModals.push({
                 id: 'event-modal',
                 title: title,
-                body: `${desc} ${bonusText}`
+                body: `${desc} ${bonusText}`,
+                options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
             });
         }
 
@@ -363,7 +364,8 @@ export class TimeService {
                 this.gameState.deferredModals.push({
                     id: 'event-modal',
                     title: title,
-                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`
+                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`,
+                    options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
                 });
             }
         }
@@ -396,7 +398,8 @@ export class TimeService {
                 this.gameState.deferredModals.push({
                     id: 'event-modal',
                     title: title,
-                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`
+                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`,
+                    options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
                 });
             }
         }

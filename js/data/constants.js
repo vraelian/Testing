@@ -376,7 +376,7 @@ export const GAME_RULES = Object.freeze({
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
-    RANDOM_EVENT_CHANCE: 0.10, // Phase 1: Reduced from 0.15 to 0.10
+    RANDOM_EVENT_CHANCE: 0.06, // Phase 1: Reduced from 0.10 to 0.06
 });
 
 /**

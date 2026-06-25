@@ -56,9 +56,9 @@ export class TravelService {
 
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const effectiveMaxFuel = effectiveStats.maxFuel;
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const shipAttributes = this.simulationService.getFleetAttributes();
         const shipState = state.player.shipStates[activeShip.id];
-        const upgrades = shipState.upgrades || [];
+        const upgrades = this.simulationService.getFleetUpgrades();
 
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
@@ -350,8 +350,8 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
-        const upgrades = activeShipState.upgrades || [];
+        const shipAttributes = this.simulationService.getFleetAttributes();
+        const upgrades = this.simulationService.getFleetUpgrades();
         const statusEffects = activeShipState.statusEffects || [];
 
         const hasStatus = (id) => statusEffects.some(s => s.id === id);
@@ -509,6 +509,10 @@ export class TravelService {
                 if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
                     this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                     this.gameState.deferredModals = [];
+                }
+                if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                    this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.birthdayQueue = [];
                 }
             };
 
@@ -732,12 +736,39 @@ export class TravelService {
                 // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL EVENTS
                 this._processArrivalEvents(locationId, () => {
                     
-                    // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
+                    // --- VIRTUAL WORKBENCH: Process Deferred Modals & Birthday Queues ---
                     if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                        if (!this.gameState.birthdayQueue) this.gameState.birthdayQueue = [];
+                        const immediateModals = [];
+
                         this.gameState.deferredModals.forEach(m => {
+                            if (m.options && m.options.isBirthday) {
+                                this.gameState.birthdayQueue.push(m);
+                            } else {
+                                immediateModals.push(m);
+                            }
+                        });
+
+                        // Instantly fire any non-birthday events
+                        immediateModals.forEach(m => {
                             this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
                         });
                         this.gameState.deferredModals = [];
+                    }
+
+                    // Start the 10-second queue specifically for Birthday modesty checks
+                    if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                        const arrivalLoc = locationId;
+                        setTimeout(() => {
+                            const currState = this.gameState.getState();
+                            // If the player hasn't launched again and is still docked where they landed
+                            if (!currState.isTraveling && !currState.pendingTravel && currState.currentLocationId === arrivalLoc) {
+                                while (this.gameState.birthdayQueue.length > 0) {
+                                    const bModal = this.gameState.birthdayQueue.shift();
+                                    this.uiManager.queueModal(bModal.id, bModal.title, bModal.body, bModal.callback, bModal.options);
+                                }
+                            }
+                        }, 10000);
                     }
 
                     if (locationId === 'sol' && this.timeService.solStationService) {
@@ -829,8 +860,8 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         const shipState = this.gameState.player.shipStates[activeShip.id];
-        const upgrades = shipState.upgrades || [];
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const upgrades = this.simulationService.getFleetUpgrades();
+        const shipAttributes = this.simulationService.getFleetAttributes();
         const statusEffects = shipState.statusEffects || [];
         const currentLoc = this.gameState.currentLocationId;
         
@@ -970,6 +1001,10 @@ export class TravelService {
                     this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                     this.gameState.deferredModals = [];
                 }
+                if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                    this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.birthdayQueue = [];
+                }
             }
         );
     }
@@ -1051,6 +1086,10 @@ export class TravelService {
                     if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
                         this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                         this.gameState.deferredModals = [];
+                    }
+                    if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                        this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                        this.gameState.birthdayQueue = [];
                     }
                 }, { dismissOutside: false });
 

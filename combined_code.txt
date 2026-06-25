@@ -6406,6 +6406,44 @@ card.
 .sol-station-modal {
     z-index: 105 !important;
 }
+
+/* ========================================================================= */
+/* --- BIRTHDAY MODAL ANIMATIONS ---                                         */
+/* ========================================================================= */
+
+.birthday-blur-in {
+    animation: bdayBlurIn 0.5s ease-out forwards;
+}
+
+.birthday-blur-out {
+    animation: bdayBlurOut 0.3s ease-in forwards;
+}
+
+@keyframes bdayBlurIn {
+    0% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(0.95);
+    }
+    100% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+}
+
+@keyframes bdayBlurOut {
+    0% {
+        opacity: 1;
+        filter: blur(0px);
+        transform: scale(1);
+    }
+    100% {
+        opacity: 0;
+        filter: blur(10px);
+        transform: scale(1.05);
+    }
+}
 --- END OF FILE: ./css/modals/modal-core.css ---
 
 --- START OF FILE: ./css/modals/modal-events.css ---
@@ -17821,7 +17859,7 @@ export const GAME_RULES = Object.freeze({
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
-    RANDOM_EVENT_CHANCE: 0.10, // Phase 1: Reduced from 0.15 to 0.10
+    RANDOM_EVENT_CHANCE: 0.06, // Phase 1: Reduced from 0.10 to 0.06
 });
 
 /**
@@ -20869,7 +20907,9 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-black font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #ffffff 0%, #eab308 100%); border: 1px solid #ca8a04; box-shadow: 0 0 15px rgba(234,179,8,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true },
+                        { "type": "ship", "target": "Odyssey.Ship" },
+                        { "type": "upgrade", "target": "UPG_GUILD_BADGE_2" }
                     ]
                 },
                 {
@@ -20877,7 +20917,9 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-white font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #f97316 100%); border: 1px solid #c084fc; box-shadow: 0 0 15px rgba(139,92,246,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true },
+                        { "type": "credits", "amount": 150000 },
+                        { "type": "upgrade", "target": "UPG_SYNDICATE_BADGE_2" }
                     ]
                 }
             ]
@@ -23979,8 +24021,8 @@ export const EVENTS_BUREAUCRACY = [
                 effects: []
             },
             'out_run_fail': {
-                title: 'Warning Shots',
-                text: 'They spot you immediately. Warning shots rake your hull, forcing you to abort the jump and flee to the nearest safe port.',
+                title: 'Automated EMP Wash',
+                text: 'They lock onto your thermal signature immediately. An automated electronic warfare barrage washes over your vessel, violently resetting the nav-computer and over-stressing the hull. You are forced to abort the jump and limp to the nearest port.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -25 },
                     { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
@@ -40836,6 +40878,7 @@ export class MarketService {
         this.gameState = gameState;
         this._currentSystemState = null;
         this._systemStateExpirationDay = 0;
+        this.simulationService = null;
         
         // Phase 1: O(1) Dictionary Caching Lookups
         this._marketMap = null;
@@ -40994,11 +41037,22 @@ export class MarketService {
         // Station Quirks (Price Boosts)
         price = this._applyStationQuirks(price, locationId, commodityId);
 
-        // 2. Upgrade Modifiers (Signal Hacker, etc.)
+        // 2. Upgrade Modifiers (Signal Hacker, etc.) - Fleet Aggregation Added
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
-                 const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
+                 let upgrades = [];
+                 if (this.simulationService && typeof this.simulationService.getFleetUpgrades === 'function') {
+                     upgrades = this.simulationService.getFleetUpgrades();
+                 } else {
+                     // Direct fallback to explicitly aggregate upgrades across the fleet if Facade is not injected
+                     this.gameState.player.ownedShipIds.forEach(id => {
+                         const shipState = this.gameState.player.shipStates[id];
+                         if (shipState && shipState.upgrades) {
+                             upgrades.push(...shipState.upgrades);
+                         }
+                     });
+                 }
                  const mod = GameAttributes.getPriceModifier(upgrades, tradeType);
                  price = price * mod;
              }
@@ -42106,9 +42160,9 @@ export class TravelService {
 
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const effectiveMaxFuel = effectiveStats.maxFuel;
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const shipAttributes = this.simulationService.getFleetAttributes();
         const shipState = state.player.shipStates[activeShip.id];
-        const upgrades = shipState.upgrades || [];
+        const upgrades = this.simulationService.getFleetUpgrades();
 
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
@@ -42400,8 +42454,8 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
-        const upgrades = activeShipState.upgrades || [];
+        const shipAttributes = this.simulationService.getFleetAttributes();
+        const upgrades = this.simulationService.getFleetUpgrades();
         const statusEffects = activeShipState.statusEffects || [];
 
         const hasStatus = (id) => statusEffects.some(s => s.id === id);
@@ -42559,6 +42613,10 @@ export class TravelService {
                 if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
                     this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                     this.gameState.deferredModals = [];
+                }
+                if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                    this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.birthdayQueue = [];
                 }
             };
 
@@ -42782,12 +42840,39 @@ export class TravelService {
                 // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL EVENTS
                 this._processArrivalEvents(locationId, () => {
                     
-                    // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
+                    // --- VIRTUAL WORKBENCH: Process Deferred Modals & Birthday Queues ---
                     if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
+                        if (!this.gameState.birthdayQueue) this.gameState.birthdayQueue = [];
+                        const immediateModals = [];
+
                         this.gameState.deferredModals.forEach(m => {
+                            if (m.options && m.options.isBirthday) {
+                                this.gameState.birthdayQueue.push(m);
+                            } else {
+                                immediateModals.push(m);
+                            }
+                        });
+
+                        // Instantly fire any non-birthday events
+                        immediateModals.forEach(m => {
                             this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
                         });
                         this.gameState.deferredModals = [];
+                    }
+
+                    // Start the 10-second queue specifically for Birthday modesty checks
+                    if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                        const arrivalLoc = locationId;
+                        setTimeout(() => {
+                            const currState = this.gameState.getState();
+                            // If the player hasn't launched again and is still docked where they landed
+                            if (!currState.isTraveling && !currState.pendingTravel && currState.currentLocationId === arrivalLoc) {
+                                while (this.gameState.birthdayQueue.length > 0) {
+                                    const bModal = this.gameState.birthdayQueue.shift();
+                                    this.uiManager.queueModal(bModal.id, bModal.title, bModal.body, bModal.callback, bModal.options);
+                                }
+                            }
+                        }, 10000);
                     }
 
                     if (locationId === 'sol' && this.timeService.solStationService) {
@@ -42879,8 +42964,8 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         const shipState = this.gameState.player.shipStates[activeShip.id];
-        const upgrades = shipState.upgrades || [];
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const upgrades = this.simulationService.getFleetUpgrades();
+        const shipAttributes = this.simulationService.getFleetAttributes();
         const statusEffects = shipState.statusEffects || [];
         const currentLoc = this.gameState.currentLocationId;
         
@@ -43020,6 +43105,10 @@ export class TravelService {
                     this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                     this.gameState.deferredModals = [];
                 }
+                if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                    this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                    this.gameState.birthdayQueue = [];
+                }
             }
         );
     }
@@ -43101,6 +43190,10 @@ export class TravelService {
                     if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
                         this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                         this.gameState.deferredModals = [];
+                    }
+                    if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
+                        this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
+                        this.gameState.birthdayQueue = [];
                     }
                 }, { dismissOutside: false });
 
@@ -43210,11 +43303,11 @@ export class TimeService {
         // Update visual seed for procedural rotations
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
 
-        // Phase 2: Static Modifier Pre-Calculation Hoisting
+        // Phase 2: Static Modifier Pre-Calculation Hoisting (Fleet Array)
         const activeShipId = this.gameState.player.activeShipId;
         const activeShipState = this.gameState.player.shipStates[activeShipId];
-        const activeUpgrades = activeShipState ? (activeShipState.upgrades || []) : [];
-        const activeShipAttributes = GameAttributes.getShipAttributes(activeShipId);
+        const activeUpgrades = this.simulationService ? this.simulationService.getFleetUpgrades() : [];
+        const activeShipAttributes = this.simulationService ? this.simulationService.getFleetAttributes() : GameAttributes.getShipAttributes(activeShipId);
         
         let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
         if (activeShipAttributes.includes('ATTR_SELF_ASSEMBLY')) {
@@ -43453,7 +43546,8 @@ export class TimeService {
             this.gameState.deferredModals.push({
                 id: 'event-modal',
                 title: title,
-                body: `${desc} ${bonusText}`
+                body: `${desc} ${bonusText}`,
+                options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
             });
         }
 
@@ -43482,7 +43576,8 @@ export class TimeService {
                 this.gameState.deferredModals.push({
                     id: 'event-modal',
                     title: title,
-                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`
+                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`,
+                    options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
                 });
             }
         }
@@ -43515,7 +43610,8 @@ export class TimeService {
                 this.gameState.deferredModals.push({
                     id: 'event-modal',
                     title: title,
-                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`
+                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`,
+                    options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
                 });
             }
         }
@@ -45499,6 +45595,42 @@ export class SimulationService {
             maxFuel: Math.round(ship.maxFuel + fuelMod),
             cargoCapacity: Math.round(ship.cargoCapacity + cargoMod)
         };
+    }
+
+    /**
+     * Aggregates all installed upgrades across the entire fleet.
+     * Used for operational and economic calculations that scale with fleet size.
+     * @returns {string[]} An array of all installed upgrade IDs across all owned ships.
+     */
+    getFleetUpgrades() {
+        const state = this.gameState.getState();
+        if (!state.player || !state.player.ownedShipIds) return [];
+        let allUpgrades = [];
+        state.player.ownedShipIds.forEach(shipId => {
+            const shipState = state.player.shipStates[shipId];
+            if (shipState && shipState.upgrades) {
+                allUpgrades.push(...shipState.upgrades);
+            }
+        });
+        return allUpgrades;
+    }
+
+    /**
+     * Aggregates all innate ship attributes across the entire fleet.
+     * Used for operational and economic calculations that scale with fleet size.
+     * @returns {string[]} An array of all innate mechanic IDs across all owned ships.
+     */
+    getFleetAttributes() {
+        const state = this.gameState.getState();
+        if (!state.player || !state.player.ownedShipIds) return [];
+        let allAttributes = [];
+        state.player.ownedShipIds.forEach(shipId => {
+            const shipDef = DB.SHIPS[shipId];
+            if (shipDef && shipDef.mechanicIds) {
+                allAttributes.push(...shipDef.mechanicIds);
+            }
+        });
+        return allAttributes;
     }
 
     addShipToHangar(shipId) {
@@ -51885,7 +52017,6 @@ export class IntelService {
         const state = this.gameState.getState();
         const playerCredits = state.player.credits;
         const currentLocationId = state.currentLocationId;
-        const activeShip = state.player.activeShipId;
         
         let base = playerCredits * (0.10 + Math.random() * 0.10); 
 
@@ -51904,9 +52035,9 @@ export class IntelService {
         }
 
         // Z-CLASS LOGIC
-        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip);
-        if (shipAttributes.includes('ATTR_WHISPER_NETWORK')) {
+        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount (Mapped to Fleet)
+        const fleetAttributes = state.player.ownedShipIds.flatMap(id => GameAttributes.getShipAttributes(id));
+        if (fleetAttributes.includes('ATTR_WHISPER_NETWORK')) {
             finalPrice *= 0.5;
         }
 
@@ -52153,14 +52284,14 @@ export class IntelService {
     }
 
     /**
-     * Evaluates trigger conditions (10% chance, 365-day cooldown) upon arrival.
+     * Evaluates trigger conditions (6% chance, 365-day cooldown) upon arrival.
      * Fires the generation logic and sequences the delayed UI modal.
      * @JSDoc
      */
     evaluateHotIntelTrigger() {
         const state = this.gameState.getState();
         
-        if (Math.random() <= 0.10 && (state.day - state.lastHotIntelDay >= 365)) {
+        if (Math.random() <= 0.06 && (state.day - state.lastHotIntelDay >= 365)) {
             // Update cooldown and mutate state
             this.gameState.setState({ lastHotIntelDay: state.day });
             this.generateHotIntel();
@@ -55795,7 +55926,7 @@ export class PlayerActionService {
         if (currentFuel >= effectiveStats.maxFuel) return 0;
 
         const shipState = state.player.shipStates[ship.id];
-        const upgrades = shipState.upgrades || [];
+        const upgrades = this.simulationService.getFleetUpgrades();
         const statusEffects = shipState.statusEffects || []; 
         const shipDef = DB.SHIPS[ship.id];
 
@@ -55892,10 +56023,10 @@ export class PlayerActionService {
 
         const shipDef = DB.SHIPS[ship.id];
         const shipState = state.player.shipStates[ship.id];
-        const upgrades = shipState.upgrades || [];
+        const upgrades = this.simulationService.getFleetUpgrades();
         const statusEffects = shipState.statusEffects || [];
 
-        const shipAttributes = GameAttributes.getShipAttributes(ship.id);
+        const shipAttributes = this.simulationService.getFleetAttributes();
         if (shipAttributes.includes('ATTR_BESPOKE')) {
             return 0; 
         }

@@ -196,7 +196,6 @@ export class IntelService {
         const state = this.gameState.getState();
         const playerCredits = state.player.credits;
         const currentLocationId = state.currentLocationId;
-        const activeShip = state.player.activeShipId;
         
         let base = playerCredits * (0.10 + Math.random() * 0.10); 
 
@@ -215,9 +214,9 @@ export class IntelService {
         }
 
         // Z-CLASS LOGIC
-        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount
-        const shipAttributes = GameAttributes.getShipAttributes(activeShip);
-        if (shipAttributes.includes('ATTR_WHISPER_NETWORK')) {
+        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount (Mapped to Fleet)
+        const fleetAttributes = state.player.ownedShipIds.flatMap(id => GameAttributes.getShipAttributes(id));
+        if (fleetAttributes.includes('ATTR_WHISPER_NETWORK')) {
             finalPrice *= 0.5;
         }
 
@@ -464,14 +463,14 @@ export class IntelService {
     }
 
     /**
-     * Evaluates trigger conditions (10% chance, 365-day cooldown) upon arrival.
+     * Evaluates trigger conditions (6% chance, 365-day cooldown) upon arrival.
      * Fires the generation logic and sequences the delayed UI modal.
      * @JSDoc
      */
     evaluateHotIntelTrigger() {
         const state = this.gameState.getState();
         
-        if (Math.random() <= 0.10 && (state.day - state.lastHotIntelDay >= 365)) {
+        if (Math.random() <= 0.06 && (state.day - state.lastHotIntelDay >= 365)) {
             // Update cooldown and mutate state
             this.gameState.setState({ lastHotIntelDay: state.day });
             this.generateHotIntel();

@@ -393,6 +393,42 @@ export class SimulationService {
         };
     }
 
+    /**
+     * Aggregates all installed upgrades across the entire fleet.
+     * Used for operational and economic calculations that scale with fleet size.
+     * @returns {string[]} An array of all installed upgrade IDs across all owned ships.
+     */
+    getFleetUpgrades() {
+        const state = this.gameState.getState();
+        if (!state.player || !state.player.ownedShipIds) return [];
+        let allUpgrades = [];
+        state.player.ownedShipIds.forEach(shipId => {
+            const shipState = state.player.shipStates[shipId];
+            if (shipState && shipState.upgrades) {
+                allUpgrades.push(...shipState.upgrades);
+            }
+        });
+        return allUpgrades;
+    }
+
+    /**
+     * Aggregates all innate ship attributes across the entire fleet.
+     * Used for operational and economic calculations that scale with fleet size.
+     * @returns {string[]} An array of all innate mechanic IDs across all owned ships.
+     */
+    getFleetAttributes() {
+        const state = this.gameState.getState();
+        if (!state.player || !state.player.ownedShipIds) return [];
+        let allAttributes = [];
+        state.player.ownedShipIds.forEach(shipId => {
+            const shipDef = DB.SHIPS[shipId];
+            if (shipDef && shipDef.mechanicIds) {
+                allAttributes.push(...shipDef.mechanicIds);
+            }
+        });
+        return allAttributes;
+    }
+
     addShipToHangar(shipId) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
