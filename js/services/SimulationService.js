@@ -393,42 +393,6 @@ export class SimulationService {
         };
     }
 
-    /**
-     * Aggregates all installed upgrades across the entire fleet.
-     * Used for operational and economic calculations that scale with fleet size.
-     * @returns {string[]} An array of all installed upgrade IDs across all owned ships.
-     */
-    getFleetUpgrades() {
-        const state = this.gameState.getState();
-        if (!state.player || !state.player.ownedShipIds) return [];
-        let allUpgrades = [];
-        state.player.ownedShipIds.forEach(shipId => {
-            const shipState = state.player.shipStates[shipId];
-            if (shipState && shipState.upgrades) {
-                allUpgrades.push(...shipState.upgrades);
-            }
-        });
-        return allUpgrades;
-    }
-
-    /**
-     * Aggregates all innate ship attributes across the entire fleet.
-     * Used for operational and economic calculations that scale with fleet size.
-     * @returns {string[]} An array of all innate mechanic IDs across all owned ships.
-     */
-    getFleetAttributes() {
-        const state = this.gameState.getState();
-        if (!state.player || !state.player.ownedShipIds) return [];
-        let allAttributes = [];
-        state.player.ownedShipIds.forEach(shipId => {
-            const shipDef = DB.SHIPS[shipId];
-            if (shipDef && shipDef.mechanicIds) {
-                allAttributes.push(...shipDef.mechanicIds);
-            }
-        });
-        return allAttributes;
-    }
-
     addShipToHangar(shipId) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
@@ -678,17 +642,12 @@ export class SimulationService {
                         }
                     }
                     break;
-                case 'grant_ship':
                 case 'ship':
-                    const targetShipId = reward.target || reward.shipId;
+                    const targetShipId = reward.target;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
-                        this.addShipToHangar(targetShipId); // Uses the integrated method to populate inventory properly
+                        this.gameState.player.ownedShipIds.push(targetShipId);
+                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
-                        
-                        const shipName = DB.SHIPS[targetShipId]?.name || 'NEW VESSEL';
-                        if (this.uiManager) {
-                            this.uiManager.createFloatingText(`+ ${shipName.toUpperCase()}`, window.innerWidth / 2, window.innerHeight / 2 + 60, '#60a5fa', 2450);
-                        }
                     }
                     break;
                 case 'teleport':
@@ -748,22 +707,20 @@ export class SimulationService {
                         this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
                     }
                     break;
-                case 'grant_upgrade':
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState) {
-                         const upgradeId = reward.target || reward.id || reward.upgradeId;
                          if (this.uiManager && this.uiManager.hangarControl) {
                              this.uiManager.hangarControl.showUpgradeInstallationModal(
-                                 upgradeId, 
+                                 reward.target || reward.id, 
                                  { source: 'mission' }, 
                                  shipState, 
                                  async (idxToRemove) => {
                                      if (idxToRemove !== -1) {
                                          shipState.upgrades.splice(idxToRemove, 1);
                                      }
-                                     shipState.upgrades.push(upgradeId);
-                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${upgradeId}`);
+                                     shipState.upgrades.push(reward.target || reward.id);
+                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${reward.target || reward.id}`);
                                      
                                      this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                                      const shipIndex = this.gameState.player.ownedShipIds.indexOf(this.gameState.player.activeShipId);
@@ -781,11 +738,11 @@ export class SimulationService {
                              // Fallback
                              shipState.upgrades = shipState.upgrades || [];
                              if (shipState.upgrades.length < 3) {
-                                 shipState.upgrades.push(upgradeId);
+                                 shipState.upgrades.push(reward.target || reward.id);
                              } else {
-                                 shipState.upgrades[2] = upgradeId; 
+                                 shipState.upgrades[2] = reward.target || reward.id; 
                              }
-                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${upgradeId}`);
+                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
                          }
                      }
                      break;

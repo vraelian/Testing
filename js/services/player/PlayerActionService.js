@@ -829,7 +829,7 @@ export class PlayerActionService {
         if (currentFuel >= effectiveStats.maxFuel) return 0;
 
         const shipState = state.player.shipStates[ship.id];
-        const upgrades = this.simulationService.getFleetUpgrades();
+        const upgrades = shipState.upgrades || [];
         const statusEffects = shipState.statusEffects || []; 
         const shipDef = DB.SHIPS[ship.id];
 
@@ -926,10 +926,10 @@ export class PlayerActionService {
 
         const shipDef = DB.SHIPS[ship.id];
         const shipState = state.player.shipStates[ship.id];
-        const upgrades = this.simulationService.getFleetUpgrades();
+        const upgrades = shipState.upgrades || [];
         const statusEffects = shipState.statusEffects || [];
 
-        const shipAttributes = this.simulationService.getFleetAttributes();
+        const shipAttributes = GameAttributes.getShipAttributes(ship.id);
         if (shipAttributes.includes('ATTR_BESPOKE')) {
             return 0; 
         }

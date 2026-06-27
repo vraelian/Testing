@@ -23,7 +23,6 @@ export class MarketService {
         this.gameState = gameState;
         this._currentSystemState = null;
         this._systemStateExpirationDay = 0;
-        this.simulationService = null;
         
         // Phase 1: O(1) Dictionary Caching Lookups
         this._marketMap = null;
@@ -182,22 +181,11 @@ export class MarketService {
         // Station Quirks (Price Boosts)
         price = this._applyStationQuirks(price, locationId, commodityId);
 
-        // 2. Upgrade Modifiers (Signal Hacker, etc.) - Fleet Aggregation Added
+        // 2. Upgrade Modifiers (Signal Hacker, etc.)
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
-                 let upgrades = [];
-                 if (this.simulationService && typeof this.simulationService.getFleetUpgrades === 'function') {
-                     upgrades = this.simulationService.getFleetUpgrades();
-                 } else {
-                     // Direct fallback to explicitly aggregate upgrades across the fleet if Facade is not injected
-                     this.gameState.player.ownedShipIds.forEach(id => {
-                         const shipState = this.gameState.player.shipStates[id];
-                         if (shipState && shipState.upgrades) {
-                             upgrades.push(...shipState.upgrades);
-                         }
-                     });
-                 }
+                 const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
                  const mod = GameAttributes.getPriceModifier(upgrades, tradeType);
                  price = price * mod;
              }

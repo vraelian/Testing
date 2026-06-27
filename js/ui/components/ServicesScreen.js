@@ -84,7 +84,6 @@ export function renderServicesScreen(gameState, simulationService) {
     const shipState = gameState.player.shipStates[player.activeShipId];
     const shipName = shipStatic?.name || 'NO ACTIVE SHIP';
     const upgrades = shipState.upgrades || [];
-    const fleetUpgrades = simulationService && simulationService.getFleetUpgrades ? simulationService.getFleetUpgrades() : upgrades;
     const statusEffects = shipState.statusEffects || []; 
     const shipClassColorVar = shipStatic ? `var(--class-${shipStatic.class.toLowerCase()}-color)` : '#f0f0f0';
 
@@ -162,7 +161,7 @@ export function renderServicesScreen(gameState, simulationService) {
         fuelUnitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
     
-    const fuelAttrMod = GameAttributes.getServiceCostModifier(fleetUpgrades, 'refuel');
+    const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
     fuelUnitCost *= fuelAttrMod;
     
     const ageFuelDiscount = player.statModifiers?.fuelCost || 0;
@@ -205,7 +204,7 @@ export function renderServicesScreen(gameState, simulationService) {
         repairUnitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
     }
 
-    const repairAttrMod = GameAttributes.getServiceCostModifier(fleetUpgrades, 'repair');
+    const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
     repairUnitCost *= repairAttrMod;
 
     const ageRepairDiscount = player.statModifiers?.repairCost || 0;

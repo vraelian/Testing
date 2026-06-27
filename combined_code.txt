@@ -6406,44 +6406,6 @@ card.
 .sol-station-modal {
     z-index: 105 !important;
 }
-
-/* ========================================================================= */
-/* --- BIRTHDAY MODAL ANIMATIONS ---                                         */
-/* ========================================================================= */
-
-.birthday-blur-in {
-    animation: bdayBlurIn 0.5s ease-out forwards;
-}
-
-.birthday-blur-out {
-    animation: bdayBlurOut 0.3s ease-in forwards;
-}
-
-@keyframes bdayBlurIn {
-    0% {
-        opacity: 0;
-        filter: blur(10px);
-        transform: scale(0.95);
-    }
-    100% {
-        opacity: 1;
-        filter: blur(0px);
-        transform: scale(1);
-    }
-}
-
-@keyframes bdayBlurOut {
-    0% {
-        opacity: 1;
-        filter: blur(0px);
-        transform: scale(1);
-    }
-    100% {
-        opacity: 0;
-        filter: blur(10px);
-        transform: scale(1.05);
-    }
-}
 --- END OF FILE: ./css/modals/modal-core.css ---
 
 --- START OF FILE: ./css/modals/modal-events.css ---
@@ -15304,7 +15266,6 @@ export function renderServicesScreen(gameState, simulationService) {
     const shipState = gameState.player.shipStates[player.activeShipId];
     const shipName = shipStatic?.name || 'NO ACTIVE SHIP';
     const upgrades = shipState.upgrades || [];
-    const fleetUpgrades = simulationService && simulationService.getFleetUpgrades ? simulationService.getFleetUpgrades() : upgrades;
     const statusEffects = shipState.statusEffects || []; 
     const shipClassColorVar = shipStatic ? `var(--class-${shipStatic.class.toLowerCase()}-color)` : '#f0f0f0';
 
@@ -15382,7 +15343,7 @@ export function renderServicesScreen(gameState, simulationService) {
         fuelUnitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].fuelDiscount);
     }
     
-    const fuelAttrMod = GameAttributes.getServiceCostModifier(fleetUpgrades, 'refuel');
+    const fuelAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'refuel');
     fuelUnitCost *= fuelAttrMod;
     
     const ageFuelDiscount = player.statModifiers?.fuelCost || 0;
@@ -15425,7 +15386,7 @@ export function renderServicesScreen(gameState, simulationService) {
         repairUnitCost *= (1 - DB.PERKS[PERK_IDS.VENETIAN_SYNDICATE].repairDiscount);
     }
 
-    const repairAttrMod = GameAttributes.getServiceCostModifier(fleetUpgrades, 'repair');
+    const repairAttrMod = GameAttributes.getServiceCostModifier(upgrades, 'repair');
     repairUnitCost *= repairAttrMod;
 
     const ageRepairDiscount = player.statModifiers?.repairCost || 0;
@@ -17484,7 +17445,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.69 - Act III';
+export const APP_VERSION = '38.72 - Act III';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -17860,7 +17821,7 @@ export const GAME_RULES = Object.freeze({
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
-    RANDOM_EVENT_CHANCE: 0.06, // Phase 1: Reduced from 0.10 to 0.06
+    RANDOM_EVENT_CHANCE: 0.10, // Phase 1: Reduced from 0.15 to 0.10
 });
 
 /**
@@ -20908,9 +20869,7 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-black font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #ffffff 0%, #eab308 100%); border: 1px solid #ca8a04; box-shadow: 0 0 15px rgba(234,179,8,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true },
-                        { "type": "ship", "target": "Odyssey.Ship" },
-                        { "type": "upgrade", "target": "UPG_GUILD_BADGE_2" }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true }
                     ]
                 },
                 {
@@ -20918,9 +20877,7 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-white font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #f97316 100%); border: 1px solid #c084fc; box-shadow: 0 0 15px rgba(139,92,246,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true },
-                        { "type": "credits", "amount": 150000 },
-                        { "type": "upgrade", "target": "UPG_SYNDICATE_BADGE_2" }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true }
                     ]
                 }
             ]
@@ -24022,8 +23979,8 @@ export const EVENTS_BUREAUCRACY = [
                 effects: []
             },
             'out_run_fail': {
-                title: 'Automated EMP Wash',
-                text: 'They lock onto your thermal signature immediately. An automated electronic warfare barrage washes over your vessel, violently resetting the nav-computer and over-stressing the hull. You are forced to abort the jump and limp to the nearest port.',
+                title: 'Warning Shots',
+                text: 'They spot you immediately. Warning shots rake your hull, forcing you to abort the jump and flee to the nearest safe port.',
                 effects: [
                     { type: EVENT_CONSTANTS.EFFECTS.MODIFY_HULL, isCurrentPercent: true, value: -25 },
                     { type: EVENT_CONSTANTS.EFFECTS.REDIRECT_TRAVEL, value: 1 },
@@ -26275,8 +26232,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
-                            } else if (r.type.toLowerCase() === 'grant_ship' || r.type.toLowerCase() === 'ship') {
-                                const shipName = DB.SHIPS[r.shipId || r.target]?.name || 'NEW VESSEL';
+                            } else if (r.type.toLowerCase() === 'grant_ship') {
+                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else if (r.type.toLowerCase() === 'unlock_location') {
                                 const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -26760,20 +26717,7 @@ export class UIMissionControl {
         const gameState = this.manager.lastKnownState;
         
         let rewardVolume = 0;
-        
-        // UPGRADE DETECTION ENHANCEMENT: Checks base rewards and choice-based branching rewards
-        let hasUpgradeReward = false;
-        if (mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade')) {
-            hasUpgradeReward = true;
-        }
-        if (mission.completion && mission.completion.choices) {
-            mission.completion.choices.forEach(c => {
-                if (c.rewards && c.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade')) {
-                    hasUpgradeReward = true;
-                }
-            });
-        }
-        
+        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade');
         const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier') : null;
 
         if (mission.rewards) {
@@ -26915,8 +26859,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
-                            } else if (r.type.toLowerCase() === 'grant_ship' || r.type.toLowerCase() === 'ship') {
-                                const shipName = DB.SHIPS[r.shipId || r.target]?.name || 'NEW VESSEL';
+                            } else if (r.type.toLowerCase() === 'grant_ship') {
+                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else if (r.type.toLowerCase() === 'unlock_location') {
                                 const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -27057,6 +27001,10 @@ export class UIMissionControl {
                        delete modal.dataset.dismissInside;
                        delete modal.dataset.dismissOutside;
 
+                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                           this.manager.modalEngine.processModalQueue();
+                       }
+
                        const uiManager = this.manager;
                        const originalRender = uiManager.render;
                        
@@ -27174,22 +27122,16 @@ export class UIMissionControl {
                            }
                            
                        } else if (hasUpgradeReward && this.manager.simulationService) {
-                           // Switch to Hangar Screen first so the orchestration logic has a viable visual target
-                           this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.HANGAR);
-                           
+                           // Standard upgrade sequence transition
                            if (stickyBarEl) {
                                stickyBarEl.style.transition = 'none';
                                stickyBarEl.style.filter = 'none';
                                stickyBarEl.style.webkitFilter = 'none';
                            }
                            
+                           // Bypassed direct sequence orchestration. SimulationService._grantRewards handles it upon resolution.
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
-                           }
-
-                           // FIX: Explicitly tell the Modal Engine to process its queue so the Upgrade Installation Modal appears instantly
-                           if (uiManager.modalEngine && uiManager.modalEngine.modalQueue.length > 0) {
-                               uiManager.modalEngine.processModalQueue();
                            }
                        } else {
                            // Standard unblur and render loop
@@ -27200,11 +27142,6 @@ export class UIMissionControl {
                            }
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
-                           }
-                           
-                           // Ensure any miscellaneous queued items are flushed
-                           if (uiManager.modalEngine && uiManager.modalEngine.modalQueue.length > 0) {
-                               uiManager.modalEngine.processModalQueue();
                            }
                        }
 
@@ -27268,9 +27205,7 @@ export class UIMissionControl {
                                });
                                
                                setTimeout(() => {
-                                   // Deep copy to securely prevent reference loss or mutations during timeouts
-                                   const delayedRewards = JSON.parse(JSON.stringify(choice.rewards || []));
-                                   mission.rewards = []; // Clear immediate rewards to delay floats
+                                   mission.rewards = choice.rewards;
                                    executeCompletion(e);
                                    
                                    setTimeout(() => {
@@ -27278,23 +27213,6 @@ export class UIMissionControl {
                                        whiteOverlay.style.opacity = '0';
                                        setTimeout(() => {
                                            whiteOverlay.remove();
-                                           if (this.manager.simulationService) {
-                                               // Target navigation to Hangar so the modal & robot arm animations have valid DOM targets
-                                               this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.HANGAR);
-                                               
-                                               // Ensure Hangar DOM is fully painted synchronously BEFORE injecting the modal
-                                               this.manager.simulationService.gameState.setState({});
-                                               
-                                               // Grant rewards (injects the upgrade modal into the freshly built DOM)
-                                               this.manager.simulationService._grantRewards(delayedRewards, mission.name);
-                                               
-                                               // CRITICAL FIX: Removed trailing setState({}) here so it doesn't immediately wipe out the injected modal.
-                                               
-                                               // EXPLICITLY process the modal queue so the Upgrade Installation Modal triggers instantly
-                                               if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
-                                                   this.manager.modalEngine.processModalQueue();
-                                               }
-                                           }
                                        }, 2000);
                                    }, 2000);
                                }, 3000);
@@ -40918,7 +40836,6 @@ export class MarketService {
         this.gameState = gameState;
         this._currentSystemState = null;
         this._systemStateExpirationDay = 0;
-        this.simulationService = null;
         
         // Phase 1: O(1) Dictionary Caching Lookups
         this._marketMap = null;
@@ -41077,22 +40994,11 @@ export class MarketService {
         // Station Quirks (Price Boosts)
         price = this._applyStationQuirks(price, locationId, commodityId);
 
-        // 2. Upgrade Modifiers (Signal Hacker, etc.) - Fleet Aggregation Added
+        // 2. Upgrade Modifiers (Signal Hacker, etc.)
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
-                 let upgrades = [];
-                 if (this.simulationService && typeof this.simulationService.getFleetUpgrades === 'function') {
-                     upgrades = this.simulationService.getFleetUpgrades();
-                 } else {
-                     // Direct fallback to explicitly aggregate upgrades across the fleet if Facade is not injected
-                     this.gameState.player.ownedShipIds.forEach(id => {
-                         const shipState = this.gameState.player.shipStates[id];
-                         if (shipState && shipState.upgrades) {
-                             upgrades.push(...shipState.upgrades);
-                         }
-                     });
-                 }
+                 const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
                  const mod = GameAttributes.getPriceModifier(upgrades, tradeType);
                  price = price * mod;
              }
@@ -42200,9 +42106,9 @@ export class TravelService {
 
         const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
         const effectiveMaxFuel = effectiveStats.maxFuel;
-        const shipAttributes = this.simulationService.getFleetAttributes();
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const shipState = state.player.shipStates[activeShip.id];
-        const upgrades = this.simulationService.getFleetUpgrades();
+        const upgrades = shipState.upgrades || [];
 
         const travelInfo = state.TRAVEL_DATA[state.currentLocationId][locationId];
         let requiredFuel = travelInfo.fuelCost;
@@ -42494,8 +42400,8 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         const activeShipState = this.gameState.player.shipStates[activeShip.id];
-        const shipAttributes = this.simulationService.getFleetAttributes();
-        const upgrades = this.simulationService.getFleetUpgrades();
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
+        const upgrades = activeShipState.upgrades || [];
         const statusEffects = activeShipState.statusEffects || [];
 
         const hasStatus = (id) => statusEffects.some(s => s.id === id);
@@ -42653,10 +42559,6 @@ export class TravelService {
                 if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
                     this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                     this.gameState.deferredModals = [];
-                }
-                if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
-                    this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
-                    this.gameState.birthdayQueue = [];
                 }
             };
 
@@ -42880,39 +42782,12 @@ export class TravelService {
                 // INTERCEPT POST-TRAVEL FLOW TO EVALUATE ARRIVAL EVENTS
                 this._processArrivalEvents(locationId, () => {
                     
-                    // --- VIRTUAL WORKBENCH: Process Deferred Modals & Birthday Queues ---
+                    // --- VIRTUAL WORKBENCH: Process Deferred Modals (Birthdays) ---
                     if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
-                        if (!this.gameState.birthdayQueue) this.gameState.birthdayQueue = [];
-                        const immediateModals = [];
-
                         this.gameState.deferredModals.forEach(m => {
-                            if (m.options && m.options.isBirthday) {
-                                this.gameState.birthdayQueue.push(m);
-                            } else {
-                                immediateModals.push(m);
-                            }
-                        });
-
-                        // Instantly fire any non-birthday events
-                        immediateModals.forEach(m => {
                             this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options);
                         });
                         this.gameState.deferredModals = [];
-                    }
-
-                    // Start the 10-second queue specifically for Birthday modesty checks
-                    if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
-                        const arrivalLoc = locationId;
-                        setTimeout(() => {
-                            const currState = this.gameState.getState();
-                            // If the player hasn't launched again and is still docked where they landed
-                            if (!currState.isTraveling && !currState.pendingTravel && currState.currentLocationId === arrivalLoc) {
-                                while (this.gameState.birthdayQueue.length > 0) {
-                                    const bModal = this.gameState.birthdayQueue.shift();
-                                    this.uiManager.queueModal(bModal.id, bModal.title, bModal.body, bModal.callback, bModal.options);
-                                }
-                            }
-                        }, 10000);
                     }
 
                     if (locationId === 'sol' && this.timeService.solStationService) {
@@ -43004,8 +42879,8 @@ export class TravelService {
 
         const activeShip = this.simulationService._getActiveShip();
         const shipState = this.gameState.player.shipStates[activeShip.id];
-        const upgrades = this.simulationService.getFleetUpgrades();
-        const shipAttributes = this.simulationService.getFleetAttributes();
+        const upgrades = shipState.upgrades || [];
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip.id);
         const statusEffects = shipState.statusEffects || [];
         const currentLoc = this.gameState.currentLocationId;
         
@@ -43145,10 +43020,6 @@ export class TravelService {
                     this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                     this.gameState.deferredModals = [];
                 }
-                if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
-                    this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
-                    this.gameState.birthdayQueue = [];
-                }
             }
         );
     }
@@ -43230,10 +43101,6 @@ export class TravelService {
                     if (this.gameState.deferredModals && this.gameState.deferredModals.length > 0) {
                         this.gameState.deferredModals.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
                         this.gameState.deferredModals = [];
-                    }
-                    if (this.gameState.birthdayQueue && this.gameState.birthdayQueue.length > 0) {
-                        this.gameState.birthdayQueue.forEach(m => this.uiManager.queueModal(m.id, m.title, m.body, m.callback, m.options));
-                        this.gameState.birthdayQueue = [];
                     }
                 }, { dismissOutside: false });
 
@@ -43343,11 +43210,11 @@ export class TimeService {
         // Update visual seed for procedural rotations
         this.gameState.player.visualSeed = (this.gameState.player.visualSeed || 0) + 1;
 
-        // Phase 2: Static Modifier Pre-Calculation Hoisting (Fleet Array)
+        // Phase 2: Static Modifier Pre-Calculation Hoisting
         const activeShipId = this.gameState.player.activeShipId;
         const activeShipState = this.gameState.player.shipStates[activeShipId];
-        const activeUpgrades = this.simulationService ? this.simulationService.getFleetUpgrades() : [];
-        const activeShipAttributes = this.simulationService ? this.simulationService.getFleetAttributes() : GameAttributes.getShipAttributes(activeShipId);
+        const activeUpgrades = activeShipState ? (activeShipState.upgrades || []) : [];
+        const activeShipAttributes = GameAttributes.getShipAttributes(activeShipId);
         
         let passiveRepairRate = GameAttributes.getPassiveRepairRate(activeUpgrades);
         if (activeShipAttributes.includes('ATTR_SELF_ASSEMBLY')) {
@@ -43586,8 +43453,7 @@ export class TimeService {
             this.gameState.deferredModals.push({
                 id: 'event-modal',
                 title: title,
-                body: `${desc} ${bonusText}`,
-                options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
+                body: `${desc} ${bonusText}`
             });
         }
 
@@ -43616,8 +43482,7 @@ export class TimeService {
                 this.gameState.deferredModals.push({
                     id: 'event-modal',
                     title: title,
-                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`,
-                    options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
+                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`
                 });
             }
         }
@@ -43650,8 +43515,7 @@ export class TimeService {
                 this.gameState.deferredModals.push({
                     id: 'event-modal',
                     title: title,
-                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`,
-                    options: { isBirthday: true, noModalVisible: true, specialClass: 'birthday-blur-in', exitClass: 'birthday-blur-out' }
+                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`
                 });
             }
         }
@@ -45637,42 +45501,6 @@ export class SimulationService {
         };
     }
 
-    /**
-     * Aggregates all installed upgrades across the entire fleet.
-     * Used for operational and economic calculations that scale with fleet size.
-     * @returns {string[]} An array of all installed upgrade IDs across all owned ships.
-     */
-    getFleetUpgrades() {
-        const state = this.gameState.getState();
-        if (!state.player || !state.player.ownedShipIds) return [];
-        let allUpgrades = [];
-        state.player.ownedShipIds.forEach(shipId => {
-            const shipState = state.player.shipStates[shipId];
-            if (shipState && shipState.upgrades) {
-                allUpgrades.push(...shipState.upgrades);
-            }
-        });
-        return allUpgrades;
-    }
-
-    /**
-     * Aggregates all innate ship attributes across the entire fleet.
-     * Used for operational and economic calculations that scale with fleet size.
-     * @returns {string[]} An array of all innate mechanic IDs across all owned ships.
-     */
-    getFleetAttributes() {
-        const state = this.gameState.getState();
-        if (!state.player || !state.player.ownedShipIds) return [];
-        let allAttributes = [];
-        state.player.ownedShipIds.forEach(shipId => {
-            const shipDef = DB.SHIPS[shipId];
-            if (shipDef && shipDef.mechanicIds) {
-                allAttributes.push(...shipDef.mechanicIds);
-            }
-        });
-        return allAttributes;
-    }
-
     addShipToHangar(shipId) {
         const ship = DB.SHIPS[shipId];
         if (!ship) return;
@@ -45922,17 +45750,12 @@ export class SimulationService {
                         }
                     }
                     break;
-                case 'grant_ship':
                 case 'ship':
-                    const targetShipId = reward.target || reward.shipId;
+                    const targetShipId = reward.target;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
-                        this.addShipToHangar(targetShipId); // Uses the integrated method to populate inventory properly
+                        this.gameState.player.ownedShipIds.push(targetShipId);
+                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
-                        
-                        const shipName = DB.SHIPS[targetShipId]?.name || 'NEW VESSEL';
-                        if (this.uiManager) {
-                            this.uiManager.createFloatingText(`+ ${shipName.toUpperCase()}`, window.innerWidth / 2, window.innerHeight / 2 + 60, '#60a5fa', 2450);
-                        }
                     }
                     break;
                 case 'teleport':
@@ -45992,22 +45815,20 @@ export class SimulationService {
                         this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
                     }
                     break;
-                case 'grant_upgrade':
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState) {
-                         const upgradeId = reward.target || reward.id || reward.upgradeId;
                          if (this.uiManager && this.uiManager.hangarControl) {
                              this.uiManager.hangarControl.showUpgradeInstallationModal(
-                                 upgradeId, 
+                                 reward.target || reward.id, 
                                  { source: 'mission' }, 
                                  shipState, 
                                  async (idxToRemove) => {
                                      if (idxToRemove !== -1) {
                                          shipState.upgrades.splice(idxToRemove, 1);
                                      }
-                                     shipState.upgrades.push(upgradeId);
-                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${upgradeId}`);
+                                     shipState.upgrades.push(reward.target || reward.id);
+                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${reward.target || reward.id}`);
                                      
                                      this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                                      const shipIndex = this.gameState.player.ownedShipIds.indexOf(this.gameState.player.activeShipId);
@@ -46025,11 +45846,11 @@ export class SimulationService {
                              // Fallback
                              shipState.upgrades = shipState.upgrades || [];
                              if (shipState.upgrades.length < 3) {
-                                 shipState.upgrades.push(upgradeId);
+                                 shipState.upgrades.push(reward.target || reward.id);
                              } else {
-                                 shipState.upgrades[2] = upgradeId; 
+                                 shipState.upgrades[2] = reward.target || reward.id; 
                              }
-                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${upgradeId}`);
+                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
                          }
                      }
                      break;
@@ -52064,6 +51885,7 @@ export class IntelService {
         const state = this.gameState.getState();
         const playerCredits = state.player.credits;
         const currentLocationId = state.currentLocationId;
+        const activeShip = state.player.activeShipId;
         
         let base = playerCredits * (0.10 + Math.random() * 0.10); 
 
@@ -52082,9 +51904,9 @@ export class IntelService {
         }
 
         // Z-CLASS LOGIC
-        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount (Mapped to Fleet)
-        const fleetAttributes = state.player.ownedShipIds.flatMap(id => GameAttributes.getShipAttributes(id));
-        if (fleetAttributes.includes('ATTR_WHISPER_NETWORK')) {
+        // ATTR_WHISPER_NETWORK (The Listener): 50% Discount
+        const shipAttributes = GameAttributes.getShipAttributes(activeShip);
+        if (shipAttributes.includes('ATTR_WHISPER_NETWORK')) {
             finalPrice *= 0.5;
         }
 
@@ -52331,14 +52153,14 @@ export class IntelService {
     }
 
     /**
-     * Evaluates trigger conditions (6% chance, 365-day cooldown) upon arrival.
+     * Evaluates trigger conditions (10% chance, 365-day cooldown) upon arrival.
      * Fires the generation logic and sequences the delayed UI modal.
      * @JSDoc
      */
     evaluateHotIntelTrigger() {
         const state = this.gameState.getState();
         
-        if (Math.random() <= 0.06 && (state.day - state.lastHotIntelDay >= 365)) {
+        if (Math.random() <= 0.10 && (state.day - state.lastHotIntelDay >= 365)) {
             // Update cooldown and mutate state
             this.gameState.setState({ lastHotIntelDay: state.day });
             this.generateHotIntel();
@@ -56008,7 +55830,7 @@ export class PlayerActionService {
         if (currentFuel >= effectiveStats.maxFuel) return 0;
 
         const shipState = state.player.shipStates[ship.id];
-        const upgrades = this.simulationService.getFleetUpgrades();
+        const upgrades = shipState.upgrades || [];
         const statusEffects = shipState.statusEffects || []; 
         const shipDef = DB.SHIPS[ship.id];
 
@@ -56105,10 +55927,10 @@ export class PlayerActionService {
 
         const shipDef = DB.SHIPS[ship.id];
         const shipState = state.player.shipStates[ship.id];
-        const upgrades = this.simulationService.getFleetUpgrades();
+        const upgrades = shipState.upgrades || [];
         const statusEffects = shipState.statusEffects || [];
 
-        const shipAttributes = this.simulationService.getFleetAttributes();
+        const shipAttributes = GameAttributes.getShipAttributes(ship.id);
         if (shipAttributes.includes('ATTR_BESPOKE')) {
             return 0; 
         }
@@ -56243,6 +56065,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [38.72] - 2026-6-27
+-  bug fixes
 
 # [38.70] - 2026-6-22
 -  added sol station silhouette cinematic to mission 41

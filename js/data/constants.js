@@ -1,6 +1,6 @@
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.69 - Act III';
+export const APP_VERSION = '38.72 - Act III';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -376,7 +376,7 @@ export const GAME_RULES = Object.freeze({
     LOCAL_PRICE_MOD_STRENGTH: 0.5,
     LOAN_GARNISHMENT_DAYS: 1095,
     LOAN_GARNISHMENT_PERCENT: 0.14,
-    RANDOM_EVENT_CHANCE: 0.06, // Phase 1: Reduced from 0.10 to 0.06
+    RANDOM_EVENT_CHANCE: 0.10, // Phase 1: Reduced from 0.15 to 0.10
 });
 
 /**
