@@ -28,10 +28,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release the Odyssey hull to your command, as promised.",
             buttonText: "Accept Rewards"
         },
-        rewards: [
-            { "type": "GRANT_SHIP", "shipId": "Odyssey.Ship" },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" }
-        ]
+        rewards: []
     },
     'mission_33_syndicate': {
         id: "mission_33_syndicate",
@@ -53,10 +50,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant the full credit payout, as promised.",
             buttonText: "Accept Rewards"
         },
-        rewards: [
-            { "type": "credits", "amount": 165000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" }
-        ]
+        rewards: []
     },
 
     // =========================================================================================

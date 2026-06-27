@@ -642,11 +642,12 @@ export class SimulationService {
                         }
                     }
                     break;
+                case 'grant_ship':
                 case 'ship':
-                    const targetShipId = reward.target;
+                    const targetShipId = reward.shipId || reward.target;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
-                        this.gameState.player.ownedShipIds.push(targetShipId);
-                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
+                        // Route through addShipToHangar to ensure inventories state map is initialized
+                        this.addShipToHangar(targetShipId);
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
                     }
                     break;

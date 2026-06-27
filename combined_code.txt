@@ -19795,10 +19795,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release the Odyssey hull to your command, as promised.",
             buttonText: "Accept Rewards"
         },
-        rewards: [
-            { "type": "GRANT_SHIP", "shipId": "Odyssey.Ship" },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" }
-        ]
+        rewards: []
     },
     'mission_33_syndicate': {
         id: "mission_33_syndicate",
@@ -19820,10 +19817,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant the full credit payout, as promised.",
             buttonText: "Accept Rewards"
         },
-        rewards: [
-            { "type": "credits", "amount": 165000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" }
-        ]
+        rewards: []
     },
 
     // =========================================================================================
@@ -20869,7 +20863,9 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-black font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #ffffff 0%, #eab308 100%); border: 1px solid #ca8a04; box-shadow: 0 0 15px rgba(234,179,8,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_guild", "value": true },
+                        { "type": "GRANT_SHIP", "shipId": "Odyssey.Ship" },
+                        { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" }
                     ]
                 },
                 {
@@ -20877,7 +20873,9 @@ export const PHASE_TWO_MISSIONS = {
                     buttonClass: "text-white font-bold",
                     buttonStyle: "background: linear-gradient(135deg, #8b5cf6 0%, #f97316 100%); border: 1px solid #c084fc; box-shadow: 0 0 15px rgba(139,92,246,0.6);",
                     rewards: [
-                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true }
+                        { "type": "SET_FLAG", "flagId": "faction_aligned_syndicate", "value": true },
+                        { "type": "credits", "amount": 165000 },
+                        { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" }
                     ]
                 }
             ]
@@ -25835,7 +25833,7 @@ export class UIMissionControl {
                 
                 // Synthesize travel objective if all objectives are met but we are at the wrong location
                 if (!firstObj) {
-                    const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
+                    const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === gameState.currentLocationId;
                     
                     if (!isAtCorrectLocation) {
                         firstObj = { type: 'travel_to', target: mission.completion.locationId };
@@ -25906,7 +25904,7 @@ export class UIMissionControl {
 
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
             
-            const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === gameState.currentLocationId;
+            const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === gameState.currentLocationId;
             const isReady = progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase;
             
             let turnInClass = isReady ? 'mission-turn-in' : '';
@@ -26005,7 +26003,7 @@ export class UIMissionControl {
         const progress = missions.missionProgress[missionId];
         const isCompletable = progress ? progress.isCompletable : false;
 
-        const isLocationValid = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
+        const isLocationValid = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
 
         // --- ACT INTERMISSION INTERCEPT (PHASE 3) ---
@@ -26063,7 +26061,7 @@ export class UIMissionControl {
         const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
         const isAtPickupLocation = isLogisticsPickupPhase && mission.pickupLocationId === currentLocationId;
         
-        const isAtCorrectLocation = !mission.completion.locationId || mission.completion.locationId === 'any' || mission.completion.locationId === currentLocationId;
+        const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === currentLocationId;
         
         let shouldBeDisabled = false;
         let isShipClassGated = false;
@@ -26073,7 +26071,7 @@ export class UIMissionControl {
             shouldBeDisabled = true;
         }
 
-        if (mission.id === 'mission_tutorial_02' && tutorials.activeBatchId === 'intro_missions' && tutorials.activeStepId !== 'mission_2_4') {
+        if (mission.id === 'mission_tutorial_02' && tutorials?.activeBatchId === 'intro_missions' && tutorials?.activeStepId !== 'mission_2_4') {
             shouldBeDisabled = true;
         }
 
@@ -26410,8 +26408,8 @@ export class UIMissionControl {
                     let collectButtonHtml = '';
                     let actionButtonHtml = '';
                     
-                    if (isCompletable && !isAtCorrectLocation && mission.completion.locationId !== 'any' && !isLogisticsPickupPhase) {
-                        navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.completion.locationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
+                    if (isCompletable && !isAtCorrectLocation && mission.completion?.locationId !== 'any' && !isLogisticsPickupPhase) {
+                        navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.completion?.locationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
                     }
                     else if (isLogisticsPickupPhase && !isAtPickupLocation) {
                         navButtonHtml = `<button id="mission-navigate-btn" data-target-loc="${mission.pickupLocationId}" class="btn w-full mt-2 btn-pulse-green" style="${btnStyles}">NAVIGATE >></button>`;
@@ -26642,7 +26640,7 @@ export class UIMissionControl {
                 }
             }
         };
-        if (mission.id === 'mission_tutorial_01' && tutorials.activeStepId === 'mission_1_1') {
+        if (mission.id === 'mission_tutorial_01' && tutorials?.activeStepId === 'mission_1_1') {
             shouldBeDisabled = true;
         }
         this.manager.queueModal('mission-modal', parsedTitle, parsedDescription, null, options);
@@ -26762,16 +26760,16 @@ export class UIMissionControl {
             }
         }
 
-        const parsedTitle = this._parseMissionText(mission.completion.title, gameState);
-        const parsedText = this._parseMissionText(mission.completion.text, gameState);
+        const parsedTitle = this._parseMissionText(mission.completion?.title || mission.name, gameState);
+        const parsedText = this._parseMissionText(mission.completion?.text || mission.description, gameState);
 
-        const activePortraitId = mission.completion.portraitId || mission.portraitId;
-        const activePortraitName = mission.completion.portraitName !== undefined ? mission.completion.portraitName : mission.portraitName;
+        const activePortraitId = mission.completion?.portraitId || mission.portraitId;
+        const activePortraitName = mission.completion?.portraitName !== undefined ? mission.completion.portraitName : mission.portraitName;
 
         const options = {
            portraitId: activePortraitId,
            portraitName: activePortraitName,
-           portraitFilter: mission.completion.portraitFilter,
+           portraitFilter: mission.completion?.portraitFilter,
            dismissOutside: true,
            customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
@@ -26780,7 +26778,7 @@ export class UIMissionControl {
                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-               const activeHost = mission.completion.host || mission.host;
+               const activeHost = mission.completion?.host || mission.host || 'UNKNOWN';
                const hostClass = `host-${activeHost.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                modalContent.classList.add(hostClass);
                
@@ -27174,7 +27172,7 @@ export class UIMissionControl {
                };
 
                // --- LOGIC FOR BRANCHING COMPLETION CHOICES ---
-               if (mission.completion.choices && mission.completion.choices.length > 0) {
+               if (mission.completion?.choices && mission.completion.choices.length > 0) {
                    mission.completion.choices.forEach((choice) => {
                        const choiceBtn = document.createElement('button');
                        choiceBtn.className = `btn w-full mb-2 ${choice.buttonClass || 'mission-action-btn host-btn-pulse'}`;
@@ -27204,16 +27202,97 @@ export class UIMissionControl {
                                    whiteOverlay.style.opacity = '1';
                                });
                                
+                               // Immediately initiate the UI teardown sequence visually
+                               modal.dataset.dismissOutside = 'false';
+                               modal.classList.add('dismiss-disabled');
+                               modalContent.classList.add('modal-blur-fade-out');
+                               modal.classList.add('backdrop-fade-out-slow');
+
+                               const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
+                               const stickyBarEl = this.manager.cache.missionStickyBar;
+
+                               if (stickyBarEl && stickyBarEl.style.display !== 'none') {
+                                   stickyBarEl.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out';
+                                   stickyBarEl.style.opacity = '0';
+                                   stickyBarEl.style.filter = 'blur(5px)';
+                                   stickyBarEl.style.webkitFilter = 'blur(5px)';
+                               }
+
+                               if (card) {
+                                   card.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out, transform 1.5s ease-out';
+                                   card.style.opacity = '0';
+                                   card.style.filter = 'blur(5px)';
+                                   card.style.webkitFilter = 'blur(5px)';
+                                   card.style.transform = 'scale(0.95)';
+                               }
+
                                setTimeout(() => {
-                                   mission.rewards = choice.rewards;
-                                   executeCompletion(e);
+                                   // Mask the DOM instantly under the opaque white screen
+                                   modal.classList.add('hidden');
+                                   modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                                   delete modal.dataset.theme;
+                                   delete modal.dataset.dismissInside;
+                                   delete modal.dataset.dismissOutside;
+
+                                   if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                                       this.manager.modalEngine.processModalQueue();
+                                   }
+
+                                   if (card) card.remove();
+                                   
+                                   // Begin fading out the white screen
+                                   whiteOverlay.style.transition = 'opacity 2s ease-in-out';
+                                   whiteOverlay.style.opacity = '0';
                                    
                                    setTimeout(() => {
-                                       whiteOverlay.style.transition = 'opacity 2s ease-in-out';
-                                       whiteOverlay.style.opacity = '0';
-                                       setTimeout(() => {
-                                           whiteOverlay.remove();
-                                       }, 2000);
+                                       whiteOverlay.remove();
+                                       
+                                       mission.rewards = choice.rewards;
+                                       
+                                       if (this.manager.simulationService) {
+                                           const uiManager = this.manager;
+                                           const originalRender = uiManager.render;
+                                           
+                                           // Temporarily hijack render to intercept sticky bar artifacts
+                                           uiManager.render = function(...args) {
+                                               const newState = args[0] || uiManager.lastKnownState;
+                                               uiManager.lastKnownState = newState;
+                                               if (uiManager.missionControl) {
+                                                   uiManager.missionControl.renderStickyBar(newState);
+                                               }
+                                           };
+                                           
+                                           // Complete the mission to trigger the delayed rewards
+                                           this.manager.simulationService.missionService.completeMission(mission.id);
+                                           
+                                           uiManager.render = originalRender;
+                                           
+                                           // Manually inject specific blue 'Ship Acquired' floating text adjacent to the credit text
+                                           const hasOdyssey = choice.rewards.some(r => r.type === 'GRANT_SHIP' && r.shipId === 'Odyssey.Ship');
+                                           if (hasOdyssey) {
+                                               const btn = e.target ? (e.target.closest('button') || e.target) : document.body;
+                                               const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0 };
+                                               const x = e.clientX || rect.left + (rect.width / 2);
+                                               const y = e.clientY || rect.top;
+
+                                               // Adjacent to the credit text (+ 40y)
+                                               this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa');
+                                           }
+                                           
+                                           if (stickyBarEl) {
+                                               stickyBarEl.style.transition = 'none';
+                                               stickyBarEl.style.filter = 'none';
+                                               stickyBarEl.style.webkitFilter = 'none';
+                                           }
+                                           
+                                           // Explicit render pass with the newly mutated state to guarantee the navigation bar updates instantly
+                                           if (this.manager.simulationService && this.manager.simulationService.gameState) {
+                                               this.manager.render(this.manager.simulationService.gameState.getState());
+                                           } else {
+                                               this.manager.render();
+                                           }
+                                       }
+                                       closeHandler(); // Resolve modal closure cleanly
                                    }, 2000);
                                }, 3000);
                            } else {
@@ -27226,7 +27305,7 @@ export class UIMissionControl {
                } else {
                    const completeBtn = document.createElement('button');
                    completeBtn.className = hasSpace ? 'btn w-full mission-action-btn host-btn-pulse' : 'btn w-full bg-slate-700 text-gray-400 border-gray-600';
-                   completeBtn.textContent = hasSpace ? mission.completion.buttonText : 'INSUFFICIENT CARGO SPACE';
+                   completeBtn.textContent = hasSpace ? (mission.completion?.buttonText || 'Complete') : 'INSUFFICIENT CARGO SPACE';
                    completeBtn.style.cssText = btnStyles;
                    completeBtn.disabled = !hasSpace;
 
@@ -27377,7 +27456,7 @@ export class UIMissionControl {
         }
 
         const vagueText = (msg?.sample || "Intel available at [location name].")
-            .replace('[location name]', locationName); 
+            .replaceAll('[location name]', locationName); 
         
         const priceNum = parseInt(price, 10);
         
@@ -27524,12 +27603,12 @@ export class UIMissionControl {
         }
         
         let result = template
-             .replace(/\[location name\]/g, locationName)
-            .replace(/\[commodity name\]/g, commodityName)
-            .replace(/\[discount amount %\]/g, discountStr);
+             .replaceAll('[location name]', locationName)
+            .replaceAll('[commodity name]', commodityName)
+            .replaceAll('[discount amount %]', discountStr);
 
         result = result.replace(/\[durationDays\]\s*days/g, durationStr); 
-        result = result.replace(/\[durationDays\]/g, durationStr); 
+        result = result.replaceAll('[durationDays]', durationStr); 
         
         if (!price || price === 0) {
             // Gracefully replace pricing statements with "nothing" narratives.
@@ -27539,12 +27618,12 @@ export class UIMissionControl {
             
             // Standard tag replacements just in case
             result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, 'nothing');
-            result = result.replace(/\[⌬ credit price\]/g, 'nothing');
+            result = result.replaceAll('[⌬ credit price]', 'nothing');
         } else {
             // Normal pricing string handling
             const priceStr = formatCredits(-price, true);
             result = result.replace(/<span class="credits-text-pulsing">⌬ \[credit price\]<\/span>/g, `<span class="text-glow-red">${priceStr}</span>`);
-            result = result.replace(/\[⌬ credit price\]/g, `<span class="text-glow-red">${priceStr}</span>`);
+            result = result.replaceAll('[⌬ credit price]', `<span class="text-glow-red">${priceStr}</span>`);
         }
 
          return result;
@@ -27556,13 +27635,13 @@ export class UIMissionControl {
         
         if (parsedText.includes('[playerName]')) {
             const pName = gameState.player?.name || 'Captain';
-            parsedText = parsedText.replace(/\[playerName\]/g, pName);
+            parsedText = parsedText.replaceAll('[playerName]', pName);
         }
         
         if (parsedText.includes('[shipName]')) {
             const activeId = gameState.player?.activeShipId;
             const shipName = activeId && DB.SHIPS[activeId] ? DB.SHIPS[activeId].name : 'Vessel';
-            parsedText = parsedText.replace(/\[shipName\]/g, shipName);
+            parsedText = parsedText.replaceAll('[shipName]', shipName);
         }
         
         return parsedText;
@@ -45750,11 +45829,12 @@ export class SimulationService {
                         }
                     }
                     break;
+                case 'grant_ship':
                 case 'ship':
-                    const targetShipId = reward.target;
+                    const targetShipId = reward.shipId || reward.target;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
-                        this.gameState.player.ownedShipIds.push(targetShipId);
-                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
+                        // Route through addShipToHangar to ensure inventories state map is initialized
+                        this.addShipToHangar(targetShipId);
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
                     }
                     break;
