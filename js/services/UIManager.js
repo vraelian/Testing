@@ -731,7 +731,7 @@ export class UIManager {
     updateHangarScreen(...args) { this.hangarControl.updateHangarScreen(...args); }
     showShipDetailModal(...args) { this.hangarControl.showShipDetailModal(...args); }
     showUpgradeInstallationModal(...args) { this.hangarControl.showUpgradeInstallationModal(...args); }
-    runShipTransactionAnimation(...args) { this.hangarControl.runShipTransactionAnimation(...args); }
+    runShipTransactionAnimation(...args) { return this.hangarControl.runShipTransactionAnimation(...args); }
 
     showHotIntelModal(...args) { this.eventControl.showHotIntelModal(...args); }
     showRandomEventModal(...args) { this.eventControl.showRandomEventModal(...args); }
@@ -1135,9 +1135,9 @@ export class UIManager {
              const confirmBtn = modal.querySelector('#confirm-transaction-btn');
                 const cancelBtn = modal.querySelector('#cancel-transaction-btn');
                 
-                confirmBtn.onclick = () => {
+                confirmBtn.onclick = (event) => {
                     closeHandler();
-                    setTimeout(onConfirm, 50); 
+                    setTimeout(() => onConfirm(event), 300); 
                 };
                 
                 cancelBtn.onclick = closeHandler;

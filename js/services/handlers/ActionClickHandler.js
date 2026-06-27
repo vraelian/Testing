@@ -6,7 +6,7 @@
  * more complex interactions are handled by other specialized handlers.
  */
 import { DB } from '../../data/database.js';
-import { ACTION_IDS, NAV_IDS, SCREEN_IDS, APP_FEEDBACK_URL } from '../../data/constants.js';
+import { ACTION_IDS, NAV_IDS, SCREEN_IDS, APP_FEEDBACK_URL, GAME_RULES } from '../../data/constants.js';
 import { formatCredits } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js'; 
 import { startLicenseAnimation, endLicenseAnimation, playBlockingAnimationAndRemove } from '../ui/AnimationService.js';
@@ -243,13 +243,18 @@ export class ActionClickHandler {
                     return;
                 }
 
-                this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async () => {
+                this.uiManager.showShipTransactionConfirmation(shipId, 'buy', null, async (confirmEvent) => {
                     // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                     if (actionTarget) {
                         playBlockingAnimationAndRemove(actionTarget, 'is-glowing-green');
                     }
+                    if (confirmEvent) {
+                        const shipStatic = DB.SHIPS[shipId];
+                        this.uiManager.createFloatingText(`-${formatCredits(shipStatic.price, false)}`, confirmEvent.clientX, confirmEvent.clientY, '#f87171');
+                    }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.buyShip(shipId);
+                    this.uiManager.hideModal('ship-detail-modal');
                 });
                 break;
             }
@@ -324,13 +329,29 @@ export class ActionClickHandler {
                     return;
                 }
 
-                this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async () => {
+                this.uiManager.showShipTransactionConfirmation(shipId, 'sell', validation.forfeitMessage, async (confirmEvent) => {
                     // FIX: Unblock Promise chain by avoiding await on CSS-only class transition
                     if (actionTarget) {
                         playBlockingAnimationAndRemove(actionTarget, 'is-glowing-red');
                     }
+                    if (confirmEvent) {
+                        const shipStatic = DB.SHIPS[shipId];
+                        const shipState = state.player.shipStates[shipId];
+                        let upgradeValue = 0;
+                        if (shipState && shipState.upgrades) {
+                            shipState.upgrades.forEach(uId => {
+                                const def = GameAttributes.getDefinition(uId);
+                                if (def) {
+                                    upgradeValue += GameAttributes.getUpgradeHardwareCost(def.tier || 1, shipStatic.price);
+                                }
+                            });
+                        }
+                        const salePrice = Math.floor((shipStatic.price + upgradeValue) * GAME_RULES.SHIP_SELL_MODIFIER);
+                        this.uiManager.createFloatingText(`+${formatCredits(salePrice, false)}`, confirmEvent.clientX, confirmEvent.clientY, '#4ade80');
+                    }
                     await this.uiManager.runShipTransactionAnimation(shipId);
                     await this.simulationService.sellShip(shipId);
+                    this.uiManager.hideModal('ship-detail-modal');
                 });
                 break;
             }

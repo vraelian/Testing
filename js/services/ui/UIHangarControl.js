@@ -660,6 +660,14 @@ export class UIHangarControl {
             return; 
         } 
         await playBlockingAnimation(elementToAnimate, animationClass);
+        
+        // Smoothly collapse the carousel gap horizontally to slide neighboring cards over
+        if (animationClass === 'is-dematerializing') {
+            const parentPage = elementToAnimate.closest('.carousel-page');
+            if (parentPage) {
+                await playBlockingAnimation(parentPage, 'is-exiting-carousel');
+            }
+        }
     }
     
     /**
