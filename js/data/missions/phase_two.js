@@ -254,7 +254,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitId: "Affluent_13",
             portraitFilter: "greyscale",
             title: "The Disappearing Artist",
-            text: "You deposited the final load of plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.",
+            text: "<span class='pov-narration'>You deposited the final load of plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.</span>",
             buttonText: "Accept Ship Mod"
         },
         rewards: [
@@ -362,7 +362,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitName: " ",
             locationId: "loc_mercury",
             title: "The Ghost Wake",
-            text: "The coordinates are completely empty. However, the [shipName]'s sensors are quite vocal. You are sitting in the epicenter of a massive, slowly dissipating gravitational wake. The scrap from Uranus didn't burn up in the sun; it rendezvoused with an unregistered, colossal object that passed through this exact point in space and continued its orbit. You are staring at the ghost-wake of a hidden megastructure.",
+            text: "<span class='pov-narration'>The coordinates are completely empty. However, the [shipName]'s sensors are quite vocal. You are sitting in the epicenter of a massive, slowly dissipating gravitational wake. The scrap from Uranus didn't burn up in the sun; it rendezvoused with an unregistered, colossal object that passed through this exact point in space and continued its orbit. You are staring at the ghost-wake of a hidden megastructure.</span>",
             buttonText: "Log Telemetry"
         },
         rewards: []
@@ -376,7 +376,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitName: " ",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The megastructure’s physical wake has faded, but the data is etched permanently into your nav-computer. You’ve found a ghost in the solar system's machinery. Your entire career, you have been a line item on Guild ledgers and a pawn in Syndicate schemes, but now, you hold the leverage. Two channels await your broadcast. Audita offers the keys to a new ship, while Kiern pledges a small fortune in credits. Align with the stagnation of order, or embrace the entropy of chaos.",
+        description: "<span class='pov-narration'>The megastructure’s physical wake has faded, but the data is etched permanently into your nav-computer. You’ve found a ghost in the solar system's machinery. Your entire career, you have been a line item on Guild ledgers and a pawn in Syndicate schemes, but now, you hold the leverage. Two channels await your broadcast. Audita offers the keys to a new ship, while Kiern pledges a small fortune in credits. Align with the stagnation of order, or embrace the entropy of chaos.</span>",
         triggers: [ { "type": "mission_completed", "missionId": "mission_31" } ],
         objectives: [],
         completion: {
@@ -386,7 +386,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitName: " ",
             locationId: "any",
             title: "A System Altering Choice",
-            text: "This telemetry holds enough gravity to fracture the system. Handing it to the Guild secures a Class B Odyssey hull, but buries the anomaly in bureaucratic ice. Offering it to the Syndicate arms their volatile ambitions for a massive credit payout. You are brokering raw truth. To whom do you sell the secret?",
+            text: "<span class='pov-narration'>This telemetry holds enough gravity to fracture the system. Handing it to the Guild secures a Class B Odyssey hull, but buries the anomaly in bureaucratic ice. Offering it to the Syndicate arms their volatile ambitions for a massive credit payout. You are brokering raw truth. To whom do you sell the secret?</span>",
             choices: [
                 {
                     buttonText: "Transmit to Audita in the Merchant's Guild",

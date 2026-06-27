@@ -1,9 +1,10 @@
 /* css/global.css */
 /**
- * @fileoverview This file contains the global styles, font 
-definitions,
+ * @fileoverview This file contains the global styles, font definitions,
  * utility classes, and base layout for the entire application.
  */
+
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
 
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
@@ -21,8 +22,7 @@ definitions,
 
 @font-face {
   font-family: 'Zorque'; /* Name for the Zorque font */
-  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file 
-*/
+  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file */
   font-weight: normal;
   font-style: normal;
 }
@@ -142,6 +142,10 @@ a *, button *, [data-action] *, .tab * {
 
 .font-roboto-mono {
     font-family: 'Roboto Mono', monospace;
+}
+
+.pov-narration {
+    font-family: 'Righteous', sans-serif;
 }
 
 .game-container {

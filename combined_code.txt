@@ -4467,10 +4467,11 @@ document.addEventListener('DOMContentLoaded', () => {
 --- START OF FILE: ./css/global.css ---
 /* css/global.css */
 /**
- * @fileoverview This file contains the global styles, font 
-definitions,
+ * @fileoverview This file contains the global styles, font definitions,
  * utility classes, and base layout for the entire application.
  */
+
+@import url('https://fonts.googleapis.com/css2?family=Righteous&display=swap');
 
 @font-face {
   font-family: 'Oxanium ExtraBold'; /* Choose a name for your font */
@@ -4488,8 +4489,7 @@ definitions,
 
 @font-face {
   font-family: 'Zorque'; /* Name for the Zorque font */
-  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file 
-*/
+  src: url('fonts/Zorque.otf') format('opentype'); /* Path to the Zorque font file */
   font-weight: normal;
   font-style: normal;
 }
@@ -4609,6 +4609,10 @@ a *, button *, [data-action] *, .tab * {
 
 .font-roboto-mono {
     font-family: 'Roboto Mono', monospace;
+}
+
+.pov-narration {
+    font-family: 'Righteous', sans-serif;
 }
 
 .game-container {
@@ -19969,7 +19973,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitName: "Titetinum",
             locationId: "loc_pluto",
             title: "The Cryptographer",
-            text: "You descend into the crushing cold of the Plutonian fringe, following the scrap trajectory to a massive, unregistered magnetic railgun hidden inside a deep ice-crater. Sprawling across the frozen surface is a scrap yard containing materials that perfectly match those seen in the solar corona. Local, cybernetically enhanced human laborers move with a rhythmic, reverent devotion, packing the salvaged scrap into the launch tube. These packages are then kinetically launched at an unpredictable, yet highly calculated cadence.<br><br>The focal point of the camp is the Expert System overseeing the operation. It is constructed from an amalgamation of unconventional, diegetic hardware, featuring a highly asymmetrical silhouette. Its head is a mismatched sensory cluster surrounded by exposed neural netting. As the railgun fires with a deafening, kinetic crack that shakes the ice beneath your boots, the entity rotates its irregular optics toward your ship.<br><br>\"Ah, an unexpected variable intersecting our perimeter. Greetings, trader. I am known as Titetinum of the Cryptographers. Welcome to the fringe. I see that you analyze these people packing salvage into the magnetic launch tube. They move the mass because the mass must be moved. It is a necessary exercise in trajectory. We are simply returning iron and steel to the system's center of gravity. It is a flawless calculation.<br><br>These biologicals packing the salvage are quite devoted to this process, as you can see. They perceive me as an oracle, although that is not my intention. The factions and corporations have exploited them, but my compensation is absolute.<br><br>They work with a reverence because I grant them immense knowledge and wealth. I restore to them the history of Old Earth in recitation and they find purpose and actualization. In remembrance of our Ad Astra era, I teach its philosophies of when humanity first looked up and dared to build.\"<br><br>The being turns to face you directly.<br><br>\"The localized variables of this system have reached an unacceptable inertia at this solar cycle. The Cryptographers exist to decipher the catalyst necessary to reignite this system's growth. It is not a revolution, but a correction. You are caught in the gravity of an evolutionary shift, exactly as you should be. Perhaps you will know this, in time. The parameters of our interaction are now met. Please excuse me, I must return to the work.\"<br><br>The being focuses on the railgun launches and ignores further prompts.",
+            text: "<span class='pov-narration'>You descend into the crushing cold of the Plutonian fringe, following the scrap trajectory to a massive, unregistered magnetic railgun hidden inside a deep ice-crater. Sprawling across the frozen surface is a scrap yard containing materials that perfectly match those seen in the solar corona. Local, cybernetically enhanced human laborers move with a rhythmic, reverent devotion, packing the salvaged scrap into the launch tube. These packages are then kinetically launched at an unpredictable, yet highly calculated cadence.<br><br>The focal point of the camp is the Expert System overseeing the operation. It is constructed from an amalgamation of unconventional, diegetic hardware, featuring a highly asymmetrical silhouette. Its head is a mismatched sensory cluster surrounded by exposed neural netting. As the railgun fires with a deafening, kinetic crack that shakes the ice beneath your boots, the entity rotates its irregular optics toward your ship.</span><br><br>\"Ah, an unexpected variable intersecting our perimeter. Greetings, trader. I am known as Titetinum of the Cryptographers. Welcome to the fringe. I see that you analyze these people packing salvage into the magnetic launch tube. They move the mass because the mass must be moved. It is a necessary exercise in trajectory. We are simply returning iron and steel to the system's center of gravity. It is a flawless calculation.<br><br>These biologicals packing the salvage are quite devoted to this process, as you can see. They perceive me as an oracle, although that is not my intention. The factions and corporations have exploited them, but my compensation is absolute.<br><br>They work with a reverence because I grant them immense knowledge and wealth. I restore to them the history of Old Earth in recitation and they find purpose and actualization. In remembrance of our Ad Astra era, I teach its philosophies of when humanity first looked up and dared to build.\"<br><br><span class='pov-narration'>The being turns to face you directly.</span><br><br>\"The localized variables of this system have reached an unacceptable inertia at this solar cycle. The Cryptographers exist to decipher the catalyst necessary to reignite this system's growth. It is not a revolution, but a correction. You are caught in the gravity of an evolutionary shift, exactly as you should be. Perhaps you will know this, in time. The parameters of our interaction are now met. Please excuse me, I must return to the work.\"<br><br><span class='pov-narration'>The being focuses on the railgun launches and ignores further prompts.</span>",
             buttonText: "Return to Ship"
         },
         rewards: []
@@ -19994,7 +19998,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitName: "Titetinum",
             locationId: "loc_pluto",
             title: "The Cryptographer",
-            text: "You descend into the crushing cold of the Plutonian fringe, following the scrap trajectory to a massive, unregistered magnetic railgun hidden inside a deep ice-crater. Sprawling across the frozen surface is a scrap yard containing materials that perfectly match those seen in the solar corona. Local, cybernetically enhanced human laborers move with a rhythmic, reverent devotion, packing the salvaged scrap into the launch tube. These packages are then kinetically launched at an unpredictable, yet highly calculated cadence.<br><br>The focal point of the camp is the Expert System overseeing the operation. It is constructed from an amalgamation of unconventional, diegetic hardware, featuring a highly asymmetrical silhouette. Its head is a mismatched sensory cluster surrounded by exposed neural netting. As the railgun fires with a deafening, kinetic crack that shakes the ice beneath your boots, the entity rotates its irregular optics toward your ship.<br><br>\"Ah, an unexpected variable intersecting our perimeter. Greetings, trader. I am known as Titetinum of the Cryptographers. Welcome to the fringe. I see that you analyze these people packing salvage into the magnetic launch tube. They move the mass because the mass must be moved. It is a necessary exercise in trajectory. We are simply returning iron and steel to the system's center of gravity. It is a flawless calculation.<br><br>These biologicals packing the salvage are quite devoted to this process, as you can see. They perceive me as an oracle, although that is not my intention. The factions and corporations have exploited them, but my compensation is absolute.<br><br>They work with a reverence because I grant them immense knowledge and wealth. I restore to them the history of Old Earth in recitation and they find purpose and actualization. In remembrance of our Ad Astra era, I teach its philosophies of when humanity first looked up and dared to build.\"<br><br>The being turns to face you directly.<br><br>\"The localized variables of this system have reached an unacceptable inertia at this solar cycle. The Cryptographers exist to decipher the catalyst necessary to reignite this system's growth. It is not a revolution, but a correction. You are caught in the gravity of an evolutionary shift, exactly as you should be. Perhaps you will know this, in time. The parameters of our interaction are now met. Please excuse me, I must return to the work.\"<br><br>The being focuses on the railgun launches and ignores further prompts.",
+            text: "<span class='pov-narration'>You descend into the crushing cold of the Plutonian fringe, following the scrap trajectory to a massive, unregistered magnetic railgun hidden inside a deep ice-crater. Sprawling across the frozen surface is a scrap yard containing materials that perfectly match those seen in the solar corona. Local, cybernetically enhanced human laborers move with a rhythmic, reverent devotion, packing the salvaged scrap into the launch tube. These packages are then kinetically launched at an unpredictable, yet highly calculated cadence.<br><br>The focal point of the camp is the Expert System overseeing the operation. It is constructed from an amalgamation of unconventional, diegetic hardware, featuring a highly asymmetrical silhouette. Its head is a mismatched sensory cluster surrounded by exposed neural netting. As the railgun fires with a deafening, kinetic crack that shakes the ice beneath your boots, the entity rotates its irregular optics toward your ship.</span><br><br>\"Ah, an unexpected variable intersecting our perimeter. Greetings, trader. I am known as Titetinum of the Cryptographers. Welcome to the fringe. I see that you analyze these people packing salvage into the magnetic launch tube. They move the mass because the mass must be moved. It is a necessary exercise in trajectory. We are simply returning iron and steel to the system's center of gravity. It is a flawless calculation.<br><br>These biologicals packing the salvage are quite devoted to this process, as you can see. They perceive me as an oracle, although that is not my intention. The factions and corporations have exploited them, but my compensation is absolute.<br><br>They work with a reverence because I grant them immense knowledge and wealth. I restore to them the history of Old Earth in recitation and they find purpose and actualization. In remembrance of our Ad Astra era, I teach its philosophies of when humanity first looked up and dared to build.\"<br><br><span class='pov-narration'>The being turns to face you directly.</span><br><br>\"The localized variables of this system have reached an unacceptable inertia at this solar cycle. The Cryptographers exist to decipher the catalyst necessary to reignite this system's growth. It is not a revolution, but a correction. You are caught in the gravity of an evolutionary shift, exactly as you should be. Perhaps you will know this, in time. The parameters of our interaction are now met. Please excuse me, I must return to the work.\"<br><br><span class='pov-narration'>The being focuses on the railgun launches and ignores further prompts.</span>",
             buttonText: "Return to Ship"
         },
         rewards: []
@@ -20724,7 +20728,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitId: "Affluent_13",
             portraitFilter: "greyscale",
             title: "The Disappearing Artist",
-            text: "You deposited the final load of plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.",
+            text: "<span class='pov-narration'>You deposited the final load of plasteel to an automated cargo intake, only to find the incomplete \"monument\" is a massive, highly inaccurate, three-dimensional rendering of Mango's own face. Mango himself is nowhere to be found. Station control reports his personal ship was last seen plunging into a catastrophically decaying orbit toward the gas giant, broadcasting a continuous loop of off-key singing. A deeply obsessed fan of the artist approaches you at port. They hand you a ship mod originally meant for Mango, insisting you take it in his memory, and proudly claim they will resume work on the mural.</span>",
             buttonText: "Accept Ship Mod"
         },
         rewards: [
@@ -20832,7 +20836,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitName: " ",
             locationId: "loc_mercury",
             title: "The Ghost Wake",
-            text: "The coordinates are completely empty. However, the [shipName]'s sensors are quite vocal. You are sitting in the epicenter of a massive, slowly dissipating gravitational wake. The scrap from Uranus didn't burn up in the sun; it rendezvoused with an unregistered, colossal object that passed through this exact point in space and continued its orbit. You are staring at the ghost-wake of a hidden megastructure.",
+            text: "<span class='pov-narration'>The coordinates are completely empty. However, the [shipName]'s sensors are quite vocal. You are sitting in the epicenter of a massive, slowly dissipating gravitational wake. The scrap from Uranus didn't burn up in the sun; it rendezvoused with an unregistered, colossal object that passed through this exact point in space and continued its orbit. You are staring at the ghost-wake of a hidden megastructure.</span>",
             buttonText: "Log Telemetry"
         },
         rewards: []
@@ -20846,7 +20850,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitName: " ",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The megastructure’s physical wake has faded, but the data is etched permanently into your nav-computer. You’ve found a ghost in the solar system's machinery. Your entire career, you have been a line item on Guild ledgers and a pawn in Syndicate schemes, but now, you hold the leverage. Two channels await your broadcast. Audita offers the keys to a new ship, while Kiern pledges a small fortune in credits. Align with the stagnation of order, or embrace the entropy of chaos.",
+        description: "<span class='pov-narration'>The megastructure’s physical wake has faded, but the data is etched permanently into your nav-computer. You’ve found a ghost in the solar system's machinery. Your entire career, you have been a line item on Guild ledgers and a pawn in Syndicate schemes, but now, you hold the leverage. Two channels await your broadcast. Audita offers the keys to a new ship, while Kiern pledges a small fortune in credits. Align with the stagnation of order, or embrace the entropy of chaos.</span>",
         triggers: [ { "type": "mission_completed", "missionId": "mission_31" } ],
         objectives: [],
         completion: {
@@ -20856,7 +20860,7 @@ export const PHASE_TWO_MISSIONS = {
             portraitName: " ",
             locationId: "any",
             title: "A System Altering Choice",
-            text: "This telemetry holds enough gravity to fracture the system. Handing it to the Guild secures a Class B Odyssey hull, but buries the anomaly in bureaucratic ice. Offering it to the Syndicate arms their volatile ambitions for a massive credit payout. You are brokering raw truth. To whom do you sell the secret?",
+            text: "<span class='pov-narration'>This telemetry holds enough gravity to fracture the system. Handing it to the Guild secures a Class B Odyssey hull, but buries the anomaly in bureaucratic ice. Offering it to the Syndicate arms their volatile ambitions for a massive credit payout. You are brokering raw truth. To whom do you sell the secret?</span>",
             choices: [
                 {
                     buttonText: "Transmit to Audita in the Merchant's Guild",
@@ -56145,6 +56149,9 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [38.73] - 2026-6-27
+-  added 2nd person POV narration font
 
 # [38.72] - 2026-6-27
 -  bug fixes
