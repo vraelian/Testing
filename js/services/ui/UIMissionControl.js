@@ -552,8 +552,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
-                            } else if (r.type.toLowerCase() === 'grant_ship') {
-                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
+                            } else if (r.type.toLowerCase() === 'grant_ship' || r.type.toLowerCase() === 'ship') {
+                                const shipName = DB.SHIPS[r.shipId || r.target]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else if (r.type.toLowerCase() === 'unlock_location') {
                                 const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -1037,7 +1037,20 @@ export class UIMissionControl {
         const gameState = this.manager.lastKnownState;
         
         let rewardVolume = 0;
-        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade');
+        
+        // UPGRADE DETECTION ENHANCEMENT: Checks base rewards and choice-based branching rewards
+        let hasUpgradeReward = false;
+        if (mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade')) {
+            hasUpgradeReward = true;
+        }
+        if (mission.completion && mission.completion.choices) {
+            mission.completion.choices.forEach(c => {
+                if (c.rewards && c.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade')) {
+                    hasUpgradeReward = true;
+                }
+            });
+        }
+        
         const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier') : null;
 
         if (mission.rewards) {
@@ -1179,8 +1192,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
-                            } else if (r.type.toLowerCase() === 'grant_ship') {
-                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
+                            } else if (r.type.toLowerCase() === 'grant_ship' || r.type.toLowerCase() === 'ship') {
+                                const shipName = DB.SHIPS[r.shipId || r.target]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else if (r.type.toLowerCase() === 'unlock_location') {
                                 const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -1321,10 +1334,6 @@ export class UIMissionControl {
                        delete modal.dataset.dismissInside;
                        delete modal.dataset.dismissOutside;
 
-                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
-                           this.manager.modalEngine.processModalQueue();
-                       }
-
                        const uiManager = this.manager;
                        const originalRender = uiManager.render;
                        
@@ -1442,16 +1451,22 @@ export class UIMissionControl {
                            }
                            
                        } else if (hasUpgradeReward && this.manager.simulationService) {
-                           // Standard upgrade sequence transition
+                           // Switch to Hangar Screen first so the orchestration logic has a viable visual target
+                           this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.HANGAR);
+                           
                            if (stickyBarEl) {
                                stickyBarEl.style.transition = 'none';
                                stickyBarEl.style.filter = 'none';
                                stickyBarEl.style.webkitFilter = 'none';
                            }
                            
-                           // Bypassed direct sequence orchestration. SimulationService._grantRewards handles it upon resolution.
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
+                           }
+
+                           // FIX: Explicitly tell the Modal Engine to process its queue so the Upgrade Installation Modal appears instantly
+                           if (uiManager.modalEngine && uiManager.modalEngine.modalQueue.length > 0) {
+                               uiManager.modalEngine.processModalQueue();
                            }
                        } else {
                            // Standard unblur and render loop
@@ -1462,6 +1477,11 @@ export class UIMissionControl {
                            }
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
+                           }
+                           
+                           // Ensure any miscellaneous queued items are flushed
+                           if (uiManager.modalEngine && uiManager.modalEngine.modalQueue.length > 0) {
+                               uiManager.modalEngine.processModalQueue();
                            }
                        }
 
@@ -1525,7 +1545,9 @@ export class UIMissionControl {
                                });
                                
                                setTimeout(() => {
-                                   mission.rewards = choice.rewards;
+                                   // Deep copy to securely prevent reference loss or mutations during timeouts
+                                   const delayedRewards = JSON.parse(JSON.stringify(choice.rewards || []));
+                                   mission.rewards = []; // Clear immediate rewards to delay floats
                                    executeCompletion(e);
                                    
                                    setTimeout(() => {
@@ -1533,6 +1555,23 @@ export class UIMissionControl {
                                        whiteOverlay.style.opacity = '0';
                                        setTimeout(() => {
                                            whiteOverlay.remove();
+                                           if (this.manager.simulationService) {
+                                               // Target navigation to Hangar so the modal & robot arm animations have valid DOM targets
+                                               this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.HANGAR);
+                                               
+                                               // Ensure Hangar DOM is fully painted synchronously BEFORE injecting the modal
+                                               this.manager.simulationService.gameState.setState({});
+                                               
+                                               // Grant rewards (injects the upgrade modal into the freshly built DOM)
+                                               this.manager.simulationService._grantRewards(delayedRewards, mission.name);
+                                               
+                                               // CRITICAL FIX: Removed trailing setState({}) here so it doesn't immediately wipe out the injected modal.
+                                               
+                                               // EXPLICITLY process the modal queue so the Upgrade Installation Modal triggers instantly
+                                               if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                                                   this.manager.modalEngine.processModalQueue();
+                                               }
+                                           }
                                        }, 2000);
                                    }, 2000);
                                }, 3000);

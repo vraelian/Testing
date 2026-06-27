@@ -26275,8 +26275,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
-                            } else if (r.type.toLowerCase() === 'grant_ship') {
-                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
+                            } else if (r.type.toLowerCase() === 'grant_ship' || r.type.toLowerCase() === 'ship') {
+                                const shipName = DB.SHIPS[r.shipId || r.target]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else if (r.type.toLowerCase() === 'unlock_location') {
                                 const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -26760,7 +26760,20 @@ export class UIMissionControl {
         const gameState = this.manager.lastKnownState;
         
         let rewardVolume = 0;
-        const hasUpgradeReward = mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade');
+        
+        // UPGRADE DETECTION ENHANCEMENT: Checks base rewards and choice-based branching rewards
+        let hasUpgradeReward = false;
+        if (mission.rewards && mission.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade')) {
+            hasUpgradeReward = true;
+        }
+        if (mission.completion && mission.completion.choices) {
+            mission.completion.choices.forEach(c => {
+                if (c.rewards && c.rewards.some(r => r.type.toLowerCase() === 'upgrade' || r.type.toLowerCase() === 'grant_upgrade')) {
+                    hasUpgradeReward = true;
+                }
+            });
+        }
+        
         const licenseReward = mission.rewards ? mission.rewards.find(r => r.type.toLowerCase() === 'license' || r.type.toLowerCase() === 'unlock_tier') : null;
 
         if (mission.rewards) {
@@ -26902,8 +26915,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
-                            } else if (r.type.toLowerCase() === 'grant_ship') {
-                                const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
+                            } else if (r.type.toLowerCase() === 'grant_ship' || r.type.toLowerCase() === 'ship') {
+                                const shipName = DB.SHIPS[r.shipId || r.target]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
                             } else if (r.type.toLowerCase() === 'unlock_location') {
                                 const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -27044,10 +27057,6 @@ export class UIMissionControl {
                        delete modal.dataset.dismissInside;
                        delete modal.dataset.dismissOutside;
 
-                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
-                           this.manager.modalEngine.processModalQueue();
-                       }
-
                        const uiManager = this.manager;
                        const originalRender = uiManager.render;
                        
@@ -27165,16 +27174,22 @@ export class UIMissionControl {
                            }
                            
                        } else if (hasUpgradeReward && this.manager.simulationService) {
-                           // Standard upgrade sequence transition
+                           // Switch to Hangar Screen first so the orchestration logic has a viable visual target
+                           this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.HANGAR);
+                           
                            if (stickyBarEl) {
                                stickyBarEl.style.transition = 'none';
                                stickyBarEl.style.filter = 'none';
                                stickyBarEl.style.webkitFilter = 'none';
                            }
                            
-                           // Bypassed direct sequence orchestration. SimulationService._grantRewards handles it upon resolution.
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
+                           }
+
+                           // FIX: Explicitly tell the Modal Engine to process its queue so the Upgrade Installation Modal appears instantly
+                           if (uiManager.modalEngine && uiManager.modalEngine.modalQueue.length > 0) {
+                               uiManager.modalEngine.processModalQueue();
                            }
                        } else {
                            // Standard unblur and render loop
@@ -27185,6 +27200,11 @@ export class UIMissionControl {
                            }
                            if (uiManager.lastKnownState) {
                                uiManager.render(uiManager.lastKnownState);
+                           }
+                           
+                           // Ensure any miscellaneous queued items are flushed
+                           if (uiManager.modalEngine && uiManager.modalEngine.modalQueue.length > 0) {
+                               uiManager.modalEngine.processModalQueue();
                            }
                        }
 
@@ -27248,7 +27268,9 @@ export class UIMissionControl {
                                });
                                
                                setTimeout(() => {
-                                   mission.rewards = choice.rewards;
+                                   // Deep copy to securely prevent reference loss or mutations during timeouts
+                                   const delayedRewards = JSON.parse(JSON.stringify(choice.rewards || []));
+                                   mission.rewards = []; // Clear immediate rewards to delay floats
                                    executeCompletion(e);
                                    
                                    setTimeout(() => {
@@ -27256,6 +27278,23 @@ export class UIMissionControl {
                                        whiteOverlay.style.opacity = '0';
                                        setTimeout(() => {
                                            whiteOverlay.remove();
+                                           if (this.manager.simulationService) {
+                                               // Target navigation to Hangar so the modal & robot arm animations have valid DOM targets
+                                               this.manager.simulationService.setScreen(NAV_IDS.SHIP, SCREEN_IDS.HANGAR);
+                                               
+                                               // Ensure Hangar DOM is fully painted synchronously BEFORE injecting the modal
+                                               this.manager.simulationService.gameState.setState({});
+                                               
+                                               // Grant rewards (injects the upgrade modal into the freshly built DOM)
+                                               this.manager.simulationService._grantRewards(delayedRewards, mission.name);
+                                               
+                                               // CRITICAL FIX: Removed trailing setState({}) here so it doesn't immediately wipe out the injected modal.
+                                               
+                                               // EXPLICITLY process the modal queue so the Upgrade Installation Modal triggers instantly
+                                               if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                                                   this.manager.modalEngine.processModalQueue();
+                                               }
+                                           }
                                        }, 2000);
                                    }, 2000);
                                }, 3000);
@@ -30840,7 +30879,7 @@ export class UIHangarControl {
                 const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
                 if (!def) return '';
                 const cssClass = def.gradientClasses || 'bg-gray-500 border-gray-400 text-white';
-                return `<span class="status-effect-pill ${cssClass} cursor-help" data-action="show-lore-tooltip" data-tooltip="${def.name}: Expires in ${daysLeft} days">${def.name}</span>`;
+                return `<button type="button" class="status-effect-pill ${cssClass} cursor-help" data-action="show-lore-tooltip" data-tooltip="${def.name}: Expires in ${daysLeft} days">${def.name}</button>`;
             }).join('');
 
             const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
@@ -30865,11 +30904,11 @@ export class UIHangarControl {
                     backgroundStyle = `linear-gradient(45deg, ${baseColor}, ${this._adjustColor(baseColor, 40)})`;
                 }
 
-                return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
+                return `<button type="button" class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
                               data-action="show-attribute-tooltip" data-attribute-id="${id}"
                               style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5);">
                             ${label}
-                        </span>`;
+                        </button>`;
             }).join('');
             
             const combinedPillsHtml = upgradesHtml + statusEffectsHtml;
@@ -45883,12 +45922,17 @@ export class SimulationService {
                         }
                     }
                     break;
+                case 'grant_ship':
                 case 'ship':
-                    const targetShipId = reward.target;
+                    const targetShipId = reward.target || reward.shipId;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
-                        this.gameState.player.ownedShipIds.push(targetShipId);
-                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
+                        this.addShipToHangar(targetShipId); // Uses the integrated method to populate inventory properly
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
+                        
+                        const shipName = DB.SHIPS[targetShipId]?.name || 'NEW VESSEL';
+                        if (this.uiManager) {
+                            this.uiManager.createFloatingText(`+ ${shipName.toUpperCase()}`, window.innerWidth / 2, window.innerHeight / 2 + 60, '#60a5fa', 2450);
+                        }
                     }
                     break;
                 case 'teleport':
@@ -45948,20 +45992,22 @@ export class SimulationService {
                         this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
                     }
                     break;
+                case 'grant_upgrade':
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState) {
+                         const upgradeId = reward.target || reward.id || reward.upgradeId;
                          if (this.uiManager && this.uiManager.hangarControl) {
                              this.uiManager.hangarControl.showUpgradeInstallationModal(
-                                 reward.target || reward.id, 
+                                 upgradeId, 
                                  { source: 'mission' }, 
                                  shipState, 
                                  async (idxToRemove) => {
                                      if (idxToRemove !== -1) {
                                          shipState.upgrades.splice(idxToRemove, 1);
                                      }
-                                     shipState.upgrades.push(reward.target || reward.id);
-                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${reward.target || reward.id}`);
+                                     shipState.upgrades.push(upgradeId);
+                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${upgradeId}`);
                                      
                                      this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                                      const shipIndex = this.gameState.player.ownedShipIds.indexOf(this.gameState.player.activeShipId);
@@ -45979,11 +46025,11 @@ export class SimulationService {
                              // Fallback
                              shipState.upgrades = shipState.upgrades || [];
                              if (shipState.upgrades.length < 3) {
-                                 shipState.upgrades.push(reward.target || reward.id);
+                                 shipState.upgrades.push(upgradeId);
                              } else {
-                                 shipState.upgrades[2] = reward.target || reward.id; 
+                                 shipState.upgrades[2] = upgradeId; 
                              }
-                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
+                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${upgradeId}`);
                          }
                      }
                      break;
@@ -54483,8 +54529,14 @@ export class TooltipHandler {
             this.activeStatusTooltip.classList.remove('visible');
             this.activeStatusTooltip = null;
         }
-        if (this.uiManager.isClickInside(e, '#graph-tooltip, #generic-tooltip')) {
+        
+        if (this.uiManager.isClickInside(e, '#generic-tooltip')) {
             this.hideAllTooltips();
+            return;
+        }
+        
+        if (this.uiManager.isClickInside(e, '#graph-tooltip')) {
+            // Allows the click to propagate to the graph for inline interactions (like expanding)
             return;
         }
         
@@ -54573,9 +54625,30 @@ export class TooltipHandler {
      */
     handleMouseOver(e) {
         if (this.uiManager.isMobile) return;
+        
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.showGraph(graphTarget, this.gameState.getState());
+            return;
+        }
+
+        const actionTarget = e.target.closest('[data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]');
+        if (actionTarget) {
+            const { action } = actionTarget.dataset;
+            if (action === 'show-attribute-tooltip') {
+                const attrId = actionTarget.dataset.attributeId;
+                const definition = GameAttributes.getDefinition(attrId);
+                if (definition) {
+                    const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
+                    const coords = this._getArtFrameCenter(actionTarget, e);
+                    this.uiManager.showGenericTooltip(actionTarget, content, 'center', coords);
+                    this.activeTooltipTarget = actionTarget;
+                }
+            } else if (action === 'show-lore-tooltip') {
+                const coords = this._getArtFrameCenter(actionTarget, e);
+                this.uiManager.showGenericTooltip(actionTarget, actionTarget.dataset.tooltip, 'center', coords);
+                this.activeTooltipTarget = actionTarget;
+            }
         }
     }
 
@@ -54585,9 +54658,17 @@ export class TooltipHandler {
      */
     handleMouseOut(e) {
         if (this.uiManager.isMobile) return;
+        
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.hideGraph();
+            return;
+        }
+
+        const actionTarget = e.target.closest('[data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]');
+        if (actionTarget) {
+            this.uiManager.hideGenericTooltip();
+            this.activeTooltipTarget = null;
         }
     }
 

@@ -289,7 +289,7 @@ export class UIHangarControl {
                 const def = Object.values(STATUS_EFFECTS).find(s => s.id === effect.id);
                 if (!def) return '';
                 const cssClass = def.gradientClasses || 'bg-gray-500 border-gray-400 text-white';
-                return `<span class="status-effect-pill ${cssClass} cursor-help" data-action="show-lore-tooltip" data-tooltip="${def.name}: Expires in ${daysLeft} days">${def.name}</span>`;
+                return `<button type="button" class="status-effect-pill ${cssClass} cursor-help" data-action="show-lore-tooltip" data-tooltip="${def.name}: Expires in ${daysLeft} days">${def.name}</button>`;
             }).join('');
 
             const upgradesHtml = (shipDynamic.upgrades || []).map(id => {
@@ -314,11 +314,11 @@ export class UIHangarControl {
                     backgroundStyle = `linear-gradient(45deg, ${baseColor}, ${this._adjustColor(baseColor, 40)})`;
                 }
 
-                return `<span class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
+                return `<button type="button" class="attribute-pill inline-block px-2 py-0.5 rounded text-xs font-bold mr-1 mb-1 cursor-help" 
                               data-action="show-attribute-tooltip" data-attribute-id="${id}"
                               style="background: ${backgroundStyle}; border: ${borderStyle}; color: #0f172a; box-shadow: 0 1px 2px rgba(0,0,0,0.5);">
                             ${label}
-                        </span>`;
+                        </button>`;
             }).join('');
             
             const combinedPillsHtml = upgradesHtml + statusEffectsHtml;

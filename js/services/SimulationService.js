@@ -678,12 +678,17 @@ export class SimulationService {
                         }
                     }
                     break;
+                case 'grant_ship':
                 case 'ship':
-                    const targetShipId = reward.target;
+                    const targetShipId = reward.target || reward.shipId;
                     if (!this.gameState.player.ownedShipIds.includes(targetShipId)) {
-                        this.gameState.player.ownedShipIds.push(targetShipId);
-                        this.gameState.player.shipStates[targetShipId] = this._initializeShipState(targetShipId);
+                        this.addShipToHangar(targetShipId); // Uses the integrated method to populate inventory properly
                         this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired ship: ${targetShipId}`);
+                        
+                        const shipName = DB.SHIPS[targetShipId]?.name || 'NEW VESSEL';
+                        if (this.uiManager) {
+                            this.uiManager.createFloatingText(`+ ${shipName.toUpperCase()}`, window.innerWidth / 2, window.innerHeight / 2 + 60, '#60a5fa', 2450);
+                        }
                     }
                     break;
                 case 'teleport':
@@ -743,20 +748,22 @@ export class SimulationService {
                         this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
                     }
                     break;
+                case 'grant_upgrade':
                 case 'upgrade':
                      const shipState = this.gameState.player.shipStates[this.gameState.player.activeShipId];
                      if (shipState) {
+                         const upgradeId = reward.target || reward.id || reward.upgradeId;
                          if (this.uiManager && this.uiManager.hangarControl) {
                              this.uiManager.hangarControl.showUpgradeInstallationModal(
-                                 reward.target || reward.id, 
+                                 upgradeId, 
                                  { source: 'mission' }, 
                                  shipState, 
                                  async (idxToRemove) => {
                                      if (idxToRemove !== -1) {
                                          shipState.upgrades.splice(idxToRemove, 1);
                                      }
-                                     shipState.upgrades.push(reward.target || reward.id);
-                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${reward.target || reward.id}`);
+                                     shipState.upgrades.push(upgradeId);
+                                     this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Installed mission upgrade: ${upgradeId}`);
                                      
                                      this.gameState.uiState.hangarShipyardToggleState = 'hangar';
                                      const shipIndex = this.gameState.player.ownedShipIds.indexOf(this.gameState.player.activeShipId);
@@ -774,11 +781,11 @@ export class SimulationService {
                              // Fallback
                              shipState.upgrades = shipState.upgrades || [];
                              if (shipState.upgrades.length < 3) {
-                                 shipState.upgrades.push(reward.target || reward.id);
+                                 shipState.upgrades.push(upgradeId);
                              } else {
-                                 shipState.upgrades[2] = reward.target || reward.id; 
+                                 shipState.upgrades[2] = upgradeId; 
                              }
-                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${reward.target || reward.id}`);
+                             this.logger.info.player(this.gameState.day, 'REWARD_UPGRADE', `Forced installed upgrade: ${upgradeId}`);
                          }
                      }
                      break;

@@ -57,8 +57,14 @@ export class TooltipHandler {
             this.activeStatusTooltip.classList.remove('visible');
             this.activeStatusTooltip = null;
         }
-        if (this.uiManager.isClickInside(e, '#graph-tooltip, #generic-tooltip')) {
+        
+        if (this.uiManager.isClickInside(e, '#generic-tooltip')) {
             this.hideAllTooltips();
+            return;
+        }
+        
+        if (this.uiManager.isClickInside(e, '#graph-tooltip')) {
+            // Allows the click to propagate to the graph for inline interactions (like expanding)
             return;
         }
         
@@ -147,9 +153,30 @@ export class TooltipHandler {
      */
     handleMouseOver(e) {
         if (this.uiManager.isMobile) return;
+        
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.showGraph(graphTarget, this.gameState.getState());
+            return;
+        }
+
+        const actionTarget = e.target.closest('[data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]');
+        if (actionTarget) {
+            const { action } = actionTarget.dataset;
+            if (action === 'show-attribute-tooltip') {
+                const attrId = actionTarget.dataset.attributeId;
+                const definition = GameAttributes.getDefinition(attrId);
+                if (definition) {
+                    const content = `<span class="font-roboto-mono text-xs text-gray-200 leading-tight">${definition.description}</span>`;
+                    const coords = this._getArtFrameCenter(actionTarget, e);
+                    this.uiManager.showGenericTooltip(actionTarget, content, 'center', coords);
+                    this.activeTooltipTarget = actionTarget;
+                }
+            } else if (action === 'show-lore-tooltip') {
+                const coords = this._getArtFrameCenter(actionTarget, e);
+                this.uiManager.showGenericTooltip(actionTarget, actionTarget.dataset.tooltip, 'center', coords);
+                this.activeTooltipTarget = actionTarget;
+            }
         }
     }
 
@@ -159,9 +186,17 @@ export class TooltipHandler {
      */
     handleMouseOut(e) {
         if (this.uiManager.isMobile) return;
+        
         const graphTarget = e.target.closest(`[data-action="${ACTION_IDS.SHOW_PRICE_GRAPH}"], [data-action="${ACTION_IDS.SHOW_FINANCE_GRAPH}"]`);
         if (graphTarget) {
             this.uiManager.hideGraph();
+            return;
+        }
+
+        const actionTarget = e.target.closest('[data-action="show-attribute-tooltip"], [data-action="show-lore-tooltip"]');
+        if (actionTarget) {
+            this.uiManager.hideGenericTooltip();
+            this.activeTooltipTarget = null;
         }
     }
 
