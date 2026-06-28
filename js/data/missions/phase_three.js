@@ -28,7 +28,10 @@ export const PHASE_THREE_MISSIONS = {
             text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release the Odyssey hull to your command, as promised.",
             buttonText: "Accept Rewards"
         },
-        rewards: []
+        rewards: [
+            { "type": "GRANT_SHIP", "shipId": "ship_odyssey" },
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" }
+        ]
     },
     'mission_33_syndicate': {
         id: "mission_33_syndicate",
@@ -50,7 +53,10 @@ export const PHASE_THREE_MISSIONS = {
             text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant the full credit payout, as promised.",
             buttonText: "Accept Rewards"
         },
-        rewards: []
+        rewards: [
+            { "type": "credits", "amount": 80000 },
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" }
+        ]
     },
 
     // =========================================================================================
@@ -76,7 +82,8 @@ export const PHASE_THREE_MISSIONS = {
             buttonText: "Acknowledge"
         },
         rewards: [
-            { "type": "SET_FLAG", "flagId": "mission_34_complete", "value": true }
+            { "type": "SET_FLAG", "flagId": "mission_34_complete", "value": true },
+            { "type": "TEXT", "text": "+ REPUTATION" }
         ]
     },
     'mission_34_syndicate': {
@@ -99,7 +106,8 @@ export const PHASE_THREE_MISSIONS = {
             buttonText: "Acknowledge"
         },
         rewards: [
-            { "type": "SET_FLAG", "flagId": "mission_34_complete", "value": true }
+            { "type": "SET_FLAG", "flagId": "mission_34_complete", "value": true },
+            { "type": "TEXT", "text": "+ REPUTATION" }
         ]
     },
 
@@ -143,7 +151,10 @@ export const PHASE_THREE_MISSIONS = {
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain [playerName]. The investigation into the solar anomaly has stalled. The telemetry you provided to Audita cannot be validated without deep-field optical correlation. Since your manifest indicates clearance at Kepler's Eye, you are directed to requisition the station's Ocularium lens array for observation. Execute a high-density scan of the solar corona and report what you find. Lens rental expenses have been pre-approved for reimbursement.",
-        triggers: [ { "type": "mission_completed", "missionId": "mission_35" } ],
+        triggers: [ 
+            { "type": "mission_completed", "missionId": "mission_35" },
+            { "type": "flag_is_true", "flag": "faction_aligned_guild" }
+        ],
         onAccept: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ],
         objectives: [
             { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_kepler" }
@@ -165,7 +176,10 @@ export const PHASE_THREE_MISSIONS = {
         isRepeatable: false,
         isAbandonable: false,
         description: "Captain, the hunt for our solar ghost has stalled. The telemetry you supplied Kiern is inert; it cannot be validated without deep-field optical correlation to give it a pulse. Now that you hold the keys to Kepler's Eye, purchase some time on the Ocularium. Force a high-density scan through the solar corona and report whatever anomalies you capture. I will ensure your lens rental costs are fully reimbursed.",
-        triggers: [ { "type": "mission_completed", "missionId": "mission_35" } ],
+        triggers: [ 
+            { "type": "mission_completed", "missionId": "mission_35" },
+            { "type": "flag_is_true", "flag": "faction_aligned_syndicate" }
+        ],
         onAccept: [ { "type": "UNLOCK_LOCATION", "locationId": "loc_kepler" } ],
         objectives: [
             { "id": "travel_keplers_eye", "type": "TRAVEL_TO", "target": "loc_kepler" }

@@ -1148,8 +1148,8 @@ export class MissionService {
                     this.gameState.player.revealedTier = newTier;
                     this.logger.info.player(this.gameState.day, 'TIER_UNLOCKED', `Unlocked Trade Tier ${newTier}.`);
                 } else if (reward.type === 'SET_FLAG') {
-                    if (!this.gameState.storyFlags) this.gameState.storyFlags = {};
-                    this.gameState.storyFlags[reward.flagId] = reward.value;
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags[reward.flagId] = reward.value;
                 } else if (reward.type === 'UNLOCK_LOCATION') {
                     if (!this.gameState.player.unlockedLocationIds.includes(reward.locationId)) {
                         this.gameState.player.unlockedLocationIds.push(reward.locationId);
