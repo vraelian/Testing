@@ -749,8 +749,22 @@ export class UIModalEngine {
             modal.classList.add('modal-visible');
 
             setTimeout(() => {
-                textEl.textContent = 'Ship upgrade complete!';
-                resolve();
+                // Update 1: Change text to uppercase per design requirement
+                textEl.textContent = 'SHIP UPGRADE COMPLETE!';
+                
+                // Update 2: Introduce a 1000ms linger delay before cleanup
+                setTimeout(() => {
+                    // Update 3: Explicitly hide the modal
+                    modal.classList.remove('modal-visible');
+                    modal.classList.add('hidden');
+                    
+                    // Update 4: Release the global UI lock
+                    document.body.classList.remove('ui-locked');
+                    
+                    // Update 5: Resolve the Promise to allow game logic to continue
+                    resolve();
+                }, 1000);
+
             }, 2000);
         });
     }

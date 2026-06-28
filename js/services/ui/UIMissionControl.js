@@ -294,10 +294,13 @@ export class UIMissionControl {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `Visit ${screenTarget} Screen`;
         }
-        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+        if (['own_ship_class', 'OWN_SHIP_CLASS'].includes(obj.type)) {
             return `Acquire Class ${obj.target} Vessel`;
         }
-        if (obj.type === 'action' || obj.type === 'ACTION') {
+        if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
+            return `Install Rank ${obj.rank} Upgrade`;
+        }
+        if (['action', 'ACTION'].includes(obj.type)) {
             return (obj.target || 'Complete Action').toUpperCase();
         }
         
@@ -469,7 +472,14 @@ export class UIMissionControl {
                 let flexColumns = [];
                 let animDelayIdx = 0;
 
-                const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+                // Filter out backend flags and negative credits for visual presentation
+                const visibleRewards = mission.rewards ? mission.rewards.filter(r => {
+                    const t = r.type.toLowerCase();
+                    if (t === 'deduct_credits') return false;
+                    if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                    return true;
+                }) : [];
+                
                 const hasPayout = visibleRewards.length > 0 || !!mission.officerReward;
 
                 // 1. GRANTED
@@ -552,6 +562,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
+                            } else if (r.type.toLowerCase() === 'text') {
+                                content = `<span class="t-subject font-bold text-emerald-400">${r.text}</span>`;
                             } else if (r.type.toLowerCase() === 'grant_ship') {
                                 const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
@@ -1018,10 +1030,13 @@ export class UIMissionControl {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
         }
-        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+        if (['own_ship_class', 'OWN_SHIP_CLASS'].includes(obj.type)) {
             return `ACQUIRE CLASS ${obj.target} VESSEL`;
         }
-        if (obj.type === 'action' || obj.type === 'ACTION') {
+        if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
+            return `INSTALL RANK ${obj.rank} SHIP UPGRADE`;
+        }
+        if (['action', 'ACTION'].includes(obj.type)) {
             return (obj.target || 'COMPLETE ACTION').toUpperCase();
         }
         return `COMPLETE OBJECTIVE`;
@@ -1139,7 +1154,15 @@ export class UIMissionControl {
                objectivesEl.style.display = 'none';
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-               const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+               
+               // Filter out backend flags and negative credits for visual presentation
+               const visibleRewards = mission.rewards ? mission.rewards.filter(r => {
+                   const t = r.type.toLowerCase();
+                   if (t === 'deduct_credits') return false;
+                   if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                   return true;
+               }) : [];
+
                const hasStandardRewards = visibleRewards.length > 0;
                const hasOfficerReward = !!mission.officerReward;
                
@@ -1179,6 +1202,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
+                            } else if (r.type.toLowerCase() === 'text') {
+                                content = `<span class="t-subject font-bold text-emerald-400">${r.text}</span>`;
                             } else if (r.type.toLowerCase() === 'grant_ship') {
                                 const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;

@@ -25,12 +25,11 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "A Steadfast Friend",
-            text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release the Odyssey hull to your command, as promised.",
+            text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release your Guild Badge Rank II, as promised.",
             buttonText: "Accept Rewards"
         },
         rewards: [
-            { "type": "GRANT_SHIP", "shipId": "ship_odyssey" },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_SELL_2" }
         ]
     },
     'mission_33_syndicate': {
@@ -50,12 +49,11 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "A Lucrative Secret",
-            text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant the full credit payout, as promised.",
+            text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant your Syndicate Badge Rank II, as promised.",
             buttonText: "Accept Rewards"
         },
         rewards: [
-            { "type": "credits", "amount": 80000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_2" }
         ]
     },
 
@@ -262,7 +260,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_guild" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
-            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 40, "target": "loc_earth" }
+            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_earth" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -270,7 +268,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "The delivery is logged. Whatever Central Command is building or analyzing, it requires an absurd amount of processing power. Listen closely. Our operations are escalating rapidly, and the orders coming from the top are getting heavier. Your current tonnage isn't going to cut it much longer. The Guild is finalizing their analysis of the Pluto report. While we wait, ensure your fleet is ready. If you want to keep taking these contracts, you will need a larger, much more capable ship soon.",
             buttonText: "Acknowledge"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_CARGO_2" } ] // Exp. Hold II
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_CARGO_2" } ] // Exp. Hold II
     },
     'mission_38_syndicate': {
         id: "mission_38_syndicate",
@@ -284,7 +282,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_syndicate" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
-            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "refined_propellant", "quantity": 80, "target": "loc_venus" }
+            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_venus" }
         ],
         completion: {
             locationId: "loc_venus",
@@ -292,7 +290,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "Delivery confirmed. You got it done. The upper echelon is moving fast. Whatever they saw in your Pluto report, it has triggered a massive shift in our operational scale. Things are about to get highly volatile, and small-time freighters are going to get crushed in the wake. If you want to stay on this payroll and see this through, you need to up-scale. Start looking into acquiring a larger, more capable ship. You are going to need the cargo space for what is to come.",
             buttonText: "Acknowledge"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_FUEL_2" } ] // Aux Tank II
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_FUEL_2" } ] // Aux Tank II
     },
 
     // =========================================================================================
@@ -318,7 +316,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "Your new hull classification is registered. That is a serious piece of industrial engineering. Now, regarding the telemetry you just uploaded... A Z-Class vessel utilizing a Folded-Space Drive? Those drives are theoretical, single-use anomalies that warp local spacetime. The Guild doesn't even have prototypes. I am classifying this sensor log immediately. Speak of this to no one. We have larger concerns right now.",
             buttonText: "Understood"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_INJECTOR_2" } ]
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ENG_SPEED_2" } ]
     },
     'mission_39_syndicate': {
         id: "mission_39_syndicate",
@@ -340,7 +338,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "Now that is a heavy asset. Good choice. But let's talk about this sensor ghost you just reported. A Z-Class dreadnought? Using a Folded-Space Drive? You realize those drives are restricted, single-use tech that burns out massive amounts of energy to warp spacetime? If someone is folding space out here, the game just changed completely. Keep your scanners tight, [playerName]. It's getting dark out there.",
             buttonText: "Understood"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_INJECTOR_2" } ]
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ENG_SPEED_2" } ]
     },
 
     // =========================================================================================
@@ -358,7 +356,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_guild" } ],
         objectives: [
             { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" },
-            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "refined_propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "travel_jupiter" }
+            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "travel_jupiter" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -380,7 +378,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_syndicate" } ],
         objectives: [
             { "id": "travel_neptune", "type": "TRAVEL_TO", "target": "loc_neptune" },
-            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 40, "target": "loc_venus", "dependsOn": "travel_neptune" }
+            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_venus", "dependsOn": "travel_neptune" }
         ],
         completion: {
             locationId: "loc_venus",
@@ -512,10 +510,10 @@ export const PHASE_THREE_MISSIONS = {
         description: "The organics running the Guild are fragile. They buy decades of life by freezing themselves in cryogenics which supplement their cybernetic prostheses. The Arbiter's inner circle does not tolerate delays in their longevity treatments. Deliver the cryogenic pods to Luna immediately.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_42_guild" } ],
         grantedCargo: [
-            { "goodId": "cryo_sleep_pods", "quantity": 40 }
+            { "goodId": "cryo_pods", "quantity": 40 }
         ],
         objectives: [
-            { "id": "deliver_cryo_pods", "type": "DELIVER_ITEM", "goodId": "cryo_sleep_pods", "quantity": 40, "target": "loc_luna" }
+            { "id": "deliver_cryo_pods", "type": "DELIVER_ITEM", "goodId": "cryo_pods", "quantity": 40, "target": "loc_luna" }
         ],
         completion: {
             locationId: "loc_luna",
@@ -564,7 +562,7 @@ export const PHASE_THREE_MISSIONS = {
         description: "Captain. The Arbiter has mandated a direct economic offensive against Syndicate assets and is mobilizing its full institutional weight. We are targeting the Syndicate's terrestrial foothold. You are to move an influx of neural processors to Earth's surface stations. The Syndicate relies on Earth's processor scarcity to fund their shadow fleet. You will break that scarcity. It is an immense volume, yes, but your compensation will be unprecedented.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_43_guild" } ],
         objectives: [
-            { "id": "deliver_processors_earth", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 90, "target": "loc_earth" }
+            { "id": "deliver_processors_earth", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 90, "target": "loc_earth" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -575,7 +573,7 @@ export const PHASE_THREE_MISSIONS = {
         rewards: [
             { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 480000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_3" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_SELL_3" }
         ]
     },
     'mission_44_syndicate': {
@@ -600,7 +598,7 @@ export const PHASE_THREE_MISSIONS = {
         rewards: [
             { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 340000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_3" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_3" }
         ]
     },
 
@@ -628,7 +626,7 @@ export const PHASE_THREE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 630000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_HACKER_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_BUY_2" }
         ]
     },
     'mission_45_syndicate': {
@@ -642,7 +640,7 @@ export const PHASE_THREE_MISSIONS = {
         description: "Hello, Captain [playerName]. I am Jaxylum, lieutenant proxy for Vrael. Your operations in the Belt caused significant systemic disruption. We will now exploit a critical vulnerability. The Guild's elite hierarchy requires cryogenic technology to sustain their artificially extended lifespans. We intend to intercept this supply chain. Procure cryo-sleep pods and transport them to the surface stations on Pluto. By hoarding their longevity assets on the fringe, we subjugate their leadership. Execute this order and your compensation will reflect the strategic value of this maneuver.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_44_syndicate" } ],
         objectives: [
-            { "id": "deliver_cryo_pluto", "type": "DELIVER_ITEM", "goodId": "cryo_sleep_pods", "quantity": 40, "target": "loc_pluto" }
+            { "id": "deliver_cryo_pluto", "type": "DELIVER_ITEM", "goodId": "cryo_pods", "quantity": 40, "target": "loc_pluto" }
         ],
         completion: {
             locationId: "loc_pluto",
@@ -652,7 +650,7 @@ export const PHASE_THREE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 630000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_HACKER_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_BUY_2" }
         ]
     },
 

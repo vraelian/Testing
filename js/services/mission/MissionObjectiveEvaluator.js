@@ -210,8 +210,8 @@ export class MissionObjectiveEvaluator {
                     }
                 }
                 
-                current = highestRank;
-                target = reqRank;
+                current = highestRank >= reqRank ? 1 : 0;
+                target = 1;
                 comparator = '>=';
                 break;
             }

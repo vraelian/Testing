@@ -1,0 +1,82 @@
+{
+  "_meta": {
+    "purpose": "Comprehensive routing directory, AI constraint ledger, and relational map for the Virtual Workbench methodology.",
+    "architecture_pattern": "Strict Unidirectional Data Flow: Input -> Logic (Service) -> State (Mutation) -> Output (Render)",
+    "environment": "MacBook Air, VSCode Live Server (Web), Xcode Simulator (iOS WKWebView)"
+  },
+  "ai_directives": {
+    "workflow": [
+      "Operate strictly using the Virtual Workbench methodology. Identify virtual blocks, perform surgical modifications, and leave stable blocks untouched.",
+      "Adopt a strict Append/Merge strategy for all file updates. Never truncate code for convenience.",
+      "Output the final result as a single, complete, and immediately executable file.",
+      "Maintain strict phase-isolation. Consolidate changes into a single file update per phase.",
+      "Never use video game analogies to explain non-gaming technical concepts."
+    ],
+    "game_logic_and_lore": [
+      "Character Name spelling is strictly 'Kiern' (never 'Keirn').",
+      "Mission 21 is a 'delivery' mission (requires objective location to trigger modal immediately).",
+      "Mission 32 requires 'Badge II' ship upgrades to be awarded strictly AFTER the white screen transition sequence, not before.",
+      "Mission 34 requires a Rank III upgrade.",
+      "Commodities (trade goods) are strictly distinct from Consumables (usable items). Do not cross-reference them.",
+      "Orbital Trading UI Abbreviations: pop = popup, toast = toast window modal, fbt = floating battle text, TT = tutorial toast, intro = entire introduction sequence."
+    ],
+    "design_and_style": [
+      "Aesthetic: Gritty industrial sci-fi.",
+      "Never implement hover-over design or features (iOS touch screen primary).",
+      "CSS variable updates in .css files must be perfectly synchronized with initial values in this.state and this.defaults within js/services/DebugService.js."
+    ],
+    "relational_bindings": {
+      "data_registry_mapping": {
+        "commodities_and_trade_goods": ["js/data/database.js", "js/data/constants.js"],
+        "consumables": ["js/data/items.js"],
+        "ship_modular_upgrades": ["js/services/GameAttributes.js"],
+        "ship_base_chassis_stats": ["js/data/ship_database.js"]
+      },
+      "state_mutations": {
+        "player.credits": ["PlayerActionService.js", "BankruptcyService.js", "IntelService.js", "AchievementService.js"],
+        "player.shipStates": ["TravelService.js", "PlayerActionService.js", "BankruptcyService.js"],
+        "player.debt": ["BankruptcyService.js", "PlayerActionService.js", "TimeService.js", "IntroService.js"],
+        "market.prices": ["MarketService.js", "TimeService.js"],
+        "systemStates": ["SystemStateService.js", "TimeService.js"],
+        "solStation": ["SolStationService.js", "TimeService.js"]
+      },
+      "ui_to_data": {
+        "UIHangarControl": ["ship_database.js", "GameAttributes.js", "AssetService.js"],
+        "UIEventControl": ["events.js", "loreRegistry.js", "storyEventsRegistry.js"],
+        "UIMissionControl": ["missionRegistry.js", "intelContent.js"],
+        "UIMarketControl": ["MarketService.js", "database.js", "items.js"]
+      }
+    }
+  },
+  "file_tree": {
+    "root": [ "index.html", "manifest.json", "sw.js", ".gitignore", "publish_game.sh", "story_timeline.html", "favicon.svg" ],
+    "meta": [ "meta/ARCHITECTURAL_DECISIONS.md", "meta/BALANCELOG.md", "meta/CHANGELOG.md", "meta/CODING_STANDARDS.md", "meta/DATA_FLOW.md", "meta/ECONOMIC_BEHAVIOR.md", "meta/LORE_COMPENDIUM.md", "meta/MATH_REGISTRY.md", "meta/ROADMAP.md", "meta/SERVICES.md", "meta/STATE_SCHEMA.md", "meta/UI_LIBRARY.md", "meta/lexicon.json" ],
+    "css": {
+      "core": [ "css/global.css", "css/achievements.css", "css/debug.css", "css/help-system.css", "css/hud.css", "css/missions.css", "css/navigation.css", "css/news-ticker.css", "css/orientation.css" ],
+      "modals": [ "css/modals/modal-cinematics.css", "css/modals/modal-core.css", "css/modals/modal-events.css", "css/modals/modal-sol-station.css", "css/modals/modal-utility.css" ],
+      "screens": [ "css/screens/cargo-screen.css", "css/screens/finance-screen.css", "css/screens/hangar-screen.css", "css/screens/intel-screen.css", "css/screens/map-screen.css", "css/screens/market-screen.css", "css/screens/navigation-screen.css", "css/screens/services-screen.css" ]
+    },
+    "js_data": {
+      "core": [ "js/data/constants.js", "js/data/database.js", "js/data/assets_config.js", "js/data/systemStateRegistry.js", "js/data/eulaContent.js", "js/data/flavorAds.js", "js/data/news_flavor.js", "js/data/helpRegistry.js" ],
+      "entities": [ "js/data/characters.js", "js/data/officers.js", "js/data/ship_database.js", "js/data/items.js" ],
+      "progression": [ "js/data/achievementRegistry.js", "js/data/solProgressionRegistry.js", "js/data/intelContent.js", "js/data/intelMessages.js" ],
+      "missions": [ "js/data/missions/missionRegistry.js", "js/data/missions/phase_one.js", "js/data/missions/phase_two.js", "js/data/missions/phase_three.js", "js/data/missions/license_missions.js", "js/data/missions/tutorial_missions.js" ],
+      "events_and_lore": [ "js/data/events.js", "js/data/events/storyEventsRegistry.js", "js/data/events/events_story.js", "js/data/events/events_bureaucracy.js", "js/data/events/events_entropy.js", "js/data/events/events_hazards.js", "js/data/events/events_logistics.js", "js/data/events/events_opportunity.js", "js/data/events/events_salvage.js", "js/data/events/events_traffic.js", "js/data/lore/loreRegistry.js", "js/data/lore/lore_broadstrokes.js" ]
+    },
+    "js_services": {
+      "core_engine": [ "js/services/GameState.js", "js/services/SimulationService.js", "js/services/EventManager.js", "js/services/SaveStorageService.js", "js/services/AssetService.js", "js/services/AssetStorageService.js", "js/services/LoggingService.js", "js/services/DebugService.js", "js/services/TelemetryStorageService.js", "js/services/ConditionEvaluator.js", "js/services/DynamicValueResolver.js" ],
+      "economy_and_player": [ "js/services/player/PlayerActionService.js", "js/services/simulation/MarketService.js", "js/services/BankruptcyService.js", "js/services/IntelService.js", "js/services/AchievementService.js" ],
+      "world_and_events": [ "js/services/world/TimeService.js", "js/services/world/TravelService.js", "js/services/world/SystemStateService.js", "js/services/SolStationService.js", "js/services/RandomEventService.js", "js/services/OutcomeResolver.js", "js/services/eventEffectResolver.js", "js/services/event-effects/effectAdriftPassenger.js", "js/services/event-effects/effectSpaceRace.js" ],
+      "missions_and_game": [ "js/services/MissionService.js", "js/services/mission/MissionTriggerEvaluator.js", "js/services/mission/MissionObjectiveEvaluator.js", "js/services/GameAttributes.js", "js/services/game/IntroService.js" ],
+      "ui_controllers": [ "js/services/UIManager.js", "js/services/ui/UIModalEngine.js", "js/services/ui/UIMarketControl.js", "js/services/ui/UIHangarControl.js", "js/services/ui/UIMissionControl.js", "js/services/ui/UIEventControl.js", "js/services/ui/UISolStationControl.js", "js/services/ui/UIAchievementControl.js", "js/services/ui/UIToastManager.js", "js/services/ui/UIHelpManager.js", "js/services/ui/AnimationService.js", "js/services/ui/TravelAnimationService.js", "js/services/ui/CinematicService.js", "js/services/ui/StarfieldService.js" ],
+      "handlers": [ "js/services/handlers/ActionClickHandler.js", "js/services/handlers/CarouselEventHandler.js", "js/services/handlers/HoldEventHandler.js", "js/services/handlers/MarketEventHandler.js", "js/services/handlers/TooltipHandler.js" ],
+      "bot": [ "js/services/bot/AutomatedPlayerService.js", "js/services/bot/TelemetryService.js" ]
+    },
+    "js_ui": {
+      "components": [ "js/ui/components/CargoScreen.js", "js/ui/components/FinanceScreen.js", "js/ui/components/HangarScreen.js", "js/ui/components/IntelScreen.js", "js/ui/components/MapScreen.js", "js/ui/components/MarketScreen.js", "js/ui/components/MissionsScreen.js", "js/ui/components/NavigationScreen.js", "js/ui/components/ServicesScreen.js" ],
+      "renderers": [ "js/ui/renderers/IntelMarketRenderer.js" ]
+    },
+    "js_core": [ "js/main.js", "js/utils.js" ],
+    "js_workers": [ "js/workers/saveWorker.js" ]
+  }
+}

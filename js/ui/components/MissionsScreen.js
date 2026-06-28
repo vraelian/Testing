@@ -118,7 +118,12 @@ export function renderMissionsScreen(gameState, missionService) {
         // Format Rewards
         const rewardTextParts = [];
         if (mission.rewards) {
-            const visibleRewards = mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits');
+            const visibleRewards = mission.rewards.filter(r => {
+                const t = r.type.toLowerCase();
+                if (t === 'deduct_credits') return false;
+                if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                return true;
+            });
             
             visibleRewards.forEach(r => {
                 if(r.type.toLowerCase() === 'credits') rewardTextParts.push(`<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`);
@@ -150,7 +155,11 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
                 else if(r.type.toLowerCase() === 'set_flag') {
                     const flagText = r.flagId === 'helped_belt_family' ? 'GRATITUDE' : 'REPUTATION';
-                    rewardTextParts.push(`<span class="text-purple-400 font-bold" style="-webkit-text-stroke: 1px black;">${flagText}</span>`);
+                    const colorClass = flagText === 'REPUTATION' ? 'text-emerald-400' : 'text-purple-400';
+                    rewardTextParts.push(`<span class="${colorClass} font-bold" style="-webkit-text-stroke: 1px black;">${flagText}</span>`);
+                }
+                else if (r.type.toLowerCase() === 'text') {
+                    rewardTextParts.push(`<span class="text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">${r.text}</span>`);
                 }
                 else if(r.type.toLowerCase() === 'unlock_location') {
                     const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -329,6 +338,11 @@ export function renderMissionsScreen(gameState, missionService) {
                     const currentClassStr = classMap[current] || 'C';
                     const targetClassStr = classMap[target] || obj.target;
                     displayStr = `CLASS ${currentClassStr} / CLASS ${targetClassStr}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
+                else if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
+                    desc = `INSTALL RANK ${obj.rank} UPGRADE`;
+                    displayStr = `${current} / ${target}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {

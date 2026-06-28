@@ -4,6 +4,7 @@
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
  * UPDATED: Includes COLLECT_ITEM logistics injection and strict DB optional chaining.
  * UPDATED: Act III Location-Triggered Cinematics architecture deployed.
+ * UPDATED: Unified mission upgrade routing to UIHangarControl for standard animation sequences.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -1159,9 +1160,13 @@ export class MissionService {
                     const upgradeId = reward.upgradeId || reward.id || reward.target;
                     const activeShipId = this.gameState.player.activeShipId;
                     const shipState = this.gameState.player.shipStates[activeShipId];
+                    
                     if (shipState && shipState.upgrades && upgradeId) {
-                        if (this.uiManager && this.uiManager.hangarControl) {
-                            this.uiManager.hangarControl.showUpgradeInstallationModal(
+                        const hangarCtrl = this.uiManager && (this.uiManager.uiHangarControl || this.uiManager.hangarControl);
+                        
+                        if (hangarCtrl) {
+                            // UNIFIED ROUTING: Let UIHangarControl handle both empty and full capacity states natively.
+                            hangarCtrl.showUpgradeInstallationModal(
                                 upgradeId,
                                 { source: 'mission' },
                                 shipState,
@@ -1184,8 +1189,9 @@ export class MissionService {
                                 }
                             );
                         } else {
+                            // Silent fallback if no UI controller is found
                             if (shipState.upgrades.length >= 3) {
-                                shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                                shipState.upgrades.shift(); 
                             }
                             shipState.upgrades.push(upgradeId);
                             this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);

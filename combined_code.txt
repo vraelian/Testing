@@ -171,6 +171,7 @@ DIRECTORY STRUCTURE
 | |____LORE_COMPENDIUM.md
 | |____MATH_REGISTRY.md
 | |____UI_LIBRARY.md
+| |____workbench_routing.json
 | |____CODING_STANDARDS.md
 | |____ECONOMIC_BEHAVIOR.md
 | |____lexicon.json
@@ -14512,7 +14513,12 @@ export function renderMissionsScreen(gameState, missionService) {
         // Format Rewards
         const rewardTextParts = [];
         if (mission.rewards) {
-            const visibleRewards = mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits');
+            const visibleRewards = mission.rewards.filter(r => {
+                const t = r.type.toLowerCase();
+                if (t === 'deduct_credits') return false;
+                if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                return true;
+            });
             
             visibleRewards.forEach(r => {
                 if(r.type.toLowerCase() === 'credits') rewardTextParts.push(`<span class="credits-text-pulsing">${formatCredits(r.amount, true)}</span>`);
@@ -14544,7 +14550,11 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
                 else if(r.type.toLowerCase() === 'set_flag') {
                     const flagText = r.flagId === 'helped_belt_family' ? 'GRATITUDE' : 'REPUTATION';
-                    rewardTextParts.push(`<span class="text-purple-400 font-bold" style="-webkit-text-stroke: 1px black;">${flagText}</span>`);
+                    const colorClass = flagText === 'REPUTATION' ? 'text-emerald-400' : 'text-purple-400';
+                    rewardTextParts.push(`<span class="${colorClass} font-bold" style="-webkit-text-stroke: 1px black;">${flagText}</span>`);
+                }
+                else if (r.type.toLowerCase() === 'text') {
+                    rewardTextParts.push(`<span class="text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">${r.text}</span>`);
                 }
                 else if(r.type.toLowerCase() === 'unlock_location') {
                     const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
@@ -14723,6 +14733,11 @@ export function renderMissionsScreen(gameState, missionService) {
                     const currentClassStr = classMap[current] || 'C';
                     const targetClassStr = classMap[target] || obj.target;
                     displayStr = `CLASS ${currentClassStr} / CLASS ${targetClassStr}`;
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
+                else if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
+                    desc = `INSTALL RANK ${obj.rank} UPGRADE`;
+                    displayStr = `${current} / ${target}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
@@ -19796,12 +19811,11 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "A Steadfast Friend",
-            text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release the Odyssey hull to your command, as promised.",
+            text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release your Guild Badge Rank II, as promised.",
             buttonText: "Accept Rewards"
         },
         rewards: [
-            { "type": "GRANT_SHIP", "shipId": "ship_odyssey" },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_SELL_2" }
         ]
     },
     'mission_33_syndicate': {
@@ -19821,12 +19835,11 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "A Lucrative Secret",
-            text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant the full credit payout, as promised.",
+            text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant your Syndicate Badge Rank II, as promised.",
             buttonText: "Accept Rewards"
         },
         rewards: [
-            { "type": "credits", "amount": 80000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_2" }
         ]
     },
 
@@ -20033,7 +20046,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_guild" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
-            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 40, "target": "loc_earth" }
+            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_earth" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -20041,7 +20054,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "The delivery is logged. Whatever Central Command is building or analyzing, it requires an absurd amount of processing power. Listen closely. Our operations are escalating rapidly, and the orders coming from the top are getting heavier. Your current tonnage isn't going to cut it much longer. The Guild is finalizing their analysis of the Pluto report. While we wait, ensure your fleet is ready. If you want to keep taking these contracts, you will need a larger, much more capable ship soon.",
             buttonText: "Acknowledge"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_CARGO_2" } ] // Exp. Hold II
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_CARGO_2" } ] // Exp. Hold II
     },
     'mission_38_syndicate': {
         id: "mission_38_syndicate",
@@ -20055,7 +20068,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_syndicate" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
-            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "refined_propellant", "quantity": 80, "target": "loc_venus" }
+            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_venus" }
         ],
         completion: {
             locationId: "loc_venus",
@@ -20063,7 +20076,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "Delivery confirmed. You got it done. The upper echelon is moving fast. Whatever they saw in your Pluto report, it has triggered a massive shift in our operational scale. Things are about to get highly volatile, and small-time freighters are going to get crushed in the wake. If you want to stay on this payroll and see this through, you need to up-scale. Start looking into acquiring a larger, more capable ship. You are going to need the cargo space for what is to come.",
             buttonText: "Acknowledge"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_FUEL_2" } ] // Aux Tank II
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_FUEL_2" } ] // Aux Tank II
     },
 
     // =========================================================================================
@@ -20089,7 +20102,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "Your new hull classification is registered. That is a serious piece of industrial engineering. Now, regarding the telemetry you just uploaded... A Z-Class vessel utilizing a Folded-Space Drive? Those drives are theoretical, single-use anomalies that warp local spacetime. The Guild doesn't even have prototypes. I am classifying this sensor log immediately. Speak of this to no one. We have larger concerns right now.",
             buttonText: "Understood"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_INJECTOR_2" } ]
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ENG_SPEED_2" } ]
     },
     'mission_39_syndicate': {
         id: "mission_39_syndicate",
@@ -20111,7 +20124,7 @@ export const PHASE_THREE_MISSIONS = {
             text: "Now that is a heavy asset. Good choice. But let's talk about this sensor ghost you just reported. A Z-Class dreadnought? Using a Folded-Space Drive? You realize those drives are restricted, single-use tech that burns out massive amounts of energy to warp spacetime? If someone is folding space out here, the game just changed completely. Keep your scanners tight, [playerName]. It's getting dark out there.",
             buttonText: "Understood"
         },
-        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_INJECTOR_2" } ]
+        rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ENG_SPEED_2" } ]
     },
 
     // =========================================================================================
@@ -20129,7 +20142,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_guild" } ],
         objectives: [
             { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" },
-            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "refined_propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "travel_jupiter" }
+            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "travel_jupiter" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -20151,7 +20164,7 @@ export const PHASE_THREE_MISSIONS = {
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_syndicate" } ],
         objectives: [
             { "id": "travel_neptune", "type": "TRAVEL_TO", "target": "loc_neptune" },
-            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 40, "target": "loc_venus", "dependsOn": "travel_neptune" }
+            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_venus", "dependsOn": "travel_neptune" }
         ],
         completion: {
             locationId: "loc_venus",
@@ -20283,10 +20296,10 @@ export const PHASE_THREE_MISSIONS = {
         description: "The organics running the Guild are fragile. They buy decades of life by freezing themselves in cryogenics which supplement their cybernetic prostheses. The Arbiter's inner circle does not tolerate delays in their longevity treatments. Deliver the cryogenic pods to Luna immediately.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_42_guild" } ],
         grantedCargo: [
-            { "goodId": "cryo_sleep_pods", "quantity": 40 }
+            { "goodId": "cryo_pods", "quantity": 40 }
         ],
         objectives: [
-            { "id": "deliver_cryo_pods", "type": "DELIVER_ITEM", "goodId": "cryo_sleep_pods", "quantity": 40, "target": "loc_luna" }
+            { "id": "deliver_cryo_pods", "type": "DELIVER_ITEM", "goodId": "cryo_pods", "quantity": 40, "target": "loc_luna" }
         ],
         completion: {
             locationId: "loc_luna",
@@ -20335,7 +20348,7 @@ export const PHASE_THREE_MISSIONS = {
         description: "Captain. The Arbiter has mandated a direct economic offensive against Syndicate assets and is mobilizing its full institutional weight. We are targeting the Syndicate's terrestrial foothold. You are to move an influx of neural processors to Earth's surface stations. The Syndicate relies on Earth's processor scarcity to fund their shadow fleet. You will break that scarcity. It is an immense volume, yes, but your compensation will be unprecedented.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_43_guild" } ],
         objectives: [
-            { "id": "deliver_processors_earth", "type": "DELIVER_ITEM", "goodId": "neural_processors", "quantity": 90, "target": "loc_earth" }
+            { "id": "deliver_processors_earth", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 90, "target": "loc_earth" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -20346,7 +20359,7 @@ export const PHASE_THREE_MISSIONS = {
         rewards: [
             { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 480000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_GUILD_BADGE_3" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_SELL_3" }
         ]
     },
     'mission_44_syndicate': {
@@ -20371,7 +20384,7 @@ export const PHASE_THREE_MISSIONS = {
         rewards: [
             { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 340000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_SYNDICATE_BADGE_3" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_3" }
         ]
     },
 
@@ -20399,7 +20412,7 @@ export const PHASE_THREE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 630000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_HACKER_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_BUY_2" }
         ]
     },
     'mission_45_syndicate': {
@@ -20413,7 +20426,7 @@ export const PHASE_THREE_MISSIONS = {
         description: "Hello, Captain [playerName]. I am Jaxylum, lieutenant proxy for Vrael. Your operations in the Belt caused significant systemic disruption. We will now exploit a critical vulnerability. The Guild's elite hierarchy requires cryogenic technology to sustain their artificially extended lifespans. We intend to intercept this supply chain. Procure cryo-sleep pods and transport them to the surface stations on Pluto. By hoarding their longevity assets on the fringe, we subjugate their leadership. Execute this order and your compensation will reflect the strategic value of this maneuver.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_44_syndicate" } ],
         objectives: [
-            { "id": "deliver_cryo_pluto", "type": "DELIVER_ITEM", "goodId": "cryo_sleep_pods", "quantity": 40, "target": "loc_pluto" }
+            { "id": "deliver_cryo_pluto", "type": "DELIVER_ITEM", "goodId": "cryo_pods", "quantity": 40, "target": "loc_pluto" }
         ],
         completion: {
             locationId: "loc_pluto",
@@ -20423,7 +20436,7 @@ export const PHASE_THREE_MISSIONS = {
         },
         rewards: [
             { "type": "credits", "amount": 630000 },
-            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_HACKER_2" }
+            { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_BUY_2" }
         ]
     },
 
@@ -25990,10 +26003,13 @@ export class UIMissionControl {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `Visit ${screenTarget} Screen`;
         }
-        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+        if (['own_ship_class', 'OWN_SHIP_CLASS'].includes(obj.type)) {
             return `Acquire Class ${obj.target} Vessel`;
         }
-        if (obj.type === 'action' || obj.type === 'ACTION') {
+        if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
+            return `Install Rank ${obj.rank} Upgrade`;
+        }
+        if (['action', 'ACTION'].includes(obj.type)) {
             return (obj.target || 'Complete Action').toUpperCase();
         }
         
@@ -26165,7 +26181,14 @@ export class UIMissionControl {
                 let flexColumns = [];
                 let animDelayIdx = 0;
 
-                const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+                // Filter out backend flags and negative credits for visual presentation
+                const visibleRewards = mission.rewards ? mission.rewards.filter(r => {
+                    const t = r.type.toLowerCase();
+                    if (t === 'deduct_credits') return false;
+                    if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                    return true;
+                }) : [];
+                
                 const hasPayout = visibleRewards.length > 0 || !!mission.officerReward;
 
                 // 1. GRANTED
@@ -26248,6 +26271,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
+                            } else if (r.type.toLowerCase() === 'text') {
+                                content = `<span class="t-subject font-bold text-emerald-400">${r.text}</span>`;
                             } else if (r.type.toLowerCase() === 'grant_ship') {
                                 const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
@@ -26714,10 +26739,13 @@ export class UIMissionControl {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
         }
-        if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
+        if (['own_ship_class', 'OWN_SHIP_CLASS'].includes(obj.type)) {
             return `ACQUIRE CLASS ${obj.target} VESSEL`;
         }
-        if (obj.type === 'action' || obj.type === 'ACTION') {
+        if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
+            return `INSTALL RANK ${obj.rank} SHIP UPGRADE`;
+        }
+        if (['action', 'ACTION'].includes(obj.type)) {
             return (obj.target || 'COMPLETE ACTION').toUpperCase();
         }
         return `COMPLETE OBJECTIVE`;
@@ -26835,7 +26863,15 @@ export class UIMissionControl {
                objectivesEl.style.display = 'none';
 
                const rewardsEl = modal.querySelector('#mission-modal-rewards');
-               const visibleRewards = mission.rewards ? mission.rewards.filter(r => r.type.toLowerCase() !== 'deduct_credits') : [];
+               
+               // Filter out backend flags and negative credits for visual presentation
+               const visibleRewards = mission.rewards ? mission.rewards.filter(r => {
+                   const t = r.type.toLowerCase();
+                   if (t === 'deduct_credits') return false;
+                   if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                   return true;
+               }) : [];
+
                const hasStandardRewards = visibleRewards.length > 0;
                const hasOfficerReward = !!mission.officerReward;
                
@@ -26875,6 +26911,8 @@ export class UIMissionControl {
                                 } else {
                                     content = `<span class="t-subject">REPUTATION</span>`;
                                 }
+                            } else if (r.type.toLowerCase() === 'text') {
+                                content = `<span class="t-subject font-bold text-emerald-400">${r.text}</span>`;
                             } else if (r.type.toLowerCase() === 'grant_ship') {
                                 const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
@@ -34040,8 +34078,22 @@ export class UIModalEngine {
             modal.classList.add('modal-visible');
 
             setTimeout(() => {
-                textEl.textContent = 'Ship upgrade complete!';
-                resolve();
+                // Update 1: Change text to uppercase per design requirement
+                textEl.textContent = 'SHIP UPGRADE COMPLETE!';
+                
+                // Update 2: Introduce a 1000ms linger delay before cleanup
+                setTimeout(() => {
+                    // Update 3: Explicitly hide the modal
+                    modal.classList.remove('modal-visible');
+                    modal.classList.add('hidden');
+                    
+                    // Update 4: Release the global UI lock
+                    document.body.classList.remove('ui-locked');
+                    
+                    // Update 5: Resolve the Promise to allow game logic to continue
+                    resolve();
+                }, 1000);
+
             }, 2000);
         });
     }
@@ -38704,6 +38756,7 @@ export class SolStationService {
  * Orchestrates the MissionObjectiveEvaluator and MissionTriggerEvaluator.
  * UPDATED: Includes COLLECT_ITEM logistics injection and strict DB optional chaining.
  * UPDATED: Act III Location-Triggered Cinematics architecture deployed.
+ * UPDATED: Unified mission upgrade routing to UIHangarControl for standard animation sequences.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -39859,9 +39912,13 @@ export class MissionService {
                     const upgradeId = reward.upgradeId || reward.id || reward.target;
                     const activeShipId = this.gameState.player.activeShipId;
                     const shipState = this.gameState.player.shipStates[activeShipId];
+                    
                     if (shipState && shipState.upgrades && upgradeId) {
-                        if (this.uiManager && this.uiManager.hangarControl) {
-                            this.uiManager.hangarControl.showUpgradeInstallationModal(
+                        const hangarCtrl = this.uiManager && (this.uiManager.uiHangarControl || this.uiManager.hangarControl);
+                        
+                        if (hangarCtrl) {
+                            // UNIFIED ROUTING: Let UIHangarControl handle both empty and full capacity states natively.
+                            hangarCtrl.showUpgradeInstallationModal(
                                 upgradeId,
                                 { source: 'mission' },
                                 shipState,
@@ -39884,8 +39941,9 @@ export class MissionService {
                                 }
                             );
                         } else {
+                            // Silent fallback if no UI controller is found
                             if (shipState.upgrades.length >= 3) {
-                                shipState.upgrades.shift(); // Remove the oldest upgrade to make room if full
+                                shipState.upgrades.shift(); 
                             }
                             shipState.upgrades.push(upgradeId);
                             this.logger.info.player(this.gameState.day, 'MISSION_REWARD', `Granted ship upgrade ${upgradeId} to ship ${activeShipId}.`);
@@ -44943,8 +45001,8 @@ export class MissionObjectiveEvaluator {
                     }
                 }
                 
-                current = highestRank;
-                target = reqRank;
+                current = highestRank >= reqRank ? 1 : 0;
+                target = 1;
                 comparator = '>=';
                 break;
             }
@@ -56193,6 +56251,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [38.75] - 2026-6-28
+-  mission polish and fixes
+
 # [38.74] - 2026-6-27
 -  added 2nd person POV narration font
 -  bug fixes
@@ -58095,6 +58156,91 @@ The mission system modals require a distinct visual hierarchy to guide the playe
     * *Classes:* `bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold`
     * *Behavior:* A solid, bright amber background with a static gold drop-shadow. No pulse animation. This creates a distinct "Transaction/Turn-in" aesthetic that stands out without distracting the eye via animation.
 --- END OF FILE: ./meta/UI_LIBRARY.md ---
+
+--- START OF FILE: ./meta/workbench_routing.json ---
+{
+  "_meta": {
+    "purpose": "Comprehensive routing directory, AI constraint ledger, and relational map for the Virtual Workbench methodology.",
+    "architecture_pattern": "Strict Unidirectional Data Flow: Input -> Logic (Service) -> State (Mutation) -> Output (Render)",
+    "environment": "MacBook Air, VSCode Live Server (Web), Xcode Simulator (iOS WKWebView)"
+  },
+  "ai_directives": {
+    "workflow": [
+      "Operate strictly using the Virtual Workbench methodology. Identify virtual blocks, perform surgical modifications, and leave stable blocks untouched.",
+      "Adopt a strict Append/Merge strategy for all file updates. Never truncate code for convenience.",
+      "Output the final result as a single, complete, and immediately executable file.",
+      "Maintain strict phase-isolation. Consolidate changes into a single file update per phase.",
+      "Never use video game analogies to explain non-gaming technical concepts."
+    ],
+    "game_logic_and_lore": [
+      "Character Name spelling is strictly 'Kiern' (never 'Keirn').",
+      "Mission 21 is a 'delivery' mission (requires objective location to trigger modal immediately).",
+      "Mission 32 requires 'Badge II' ship upgrades to be awarded strictly AFTER the white screen transition sequence, not before.",
+      "Mission 34 requires a Rank III upgrade.",
+      "Commodities (trade goods) are strictly distinct from Consumables (usable items). Do not cross-reference them.",
+      "Orbital Trading UI Abbreviations: pop = popup, toast = toast window modal, fbt = floating battle text, TT = tutorial toast, intro = entire introduction sequence."
+    ],
+    "design_and_style": [
+      "Aesthetic: Gritty industrial sci-fi.",
+      "Never implement hover-over design or features (iOS touch screen primary).",
+      "CSS variable updates in .css files must be perfectly synchronized with initial values in this.state and this.defaults within js/services/DebugService.js."
+    ],
+    "relational_bindings": {
+      "data_registry_mapping": {
+        "commodities_and_trade_goods": ["js/data/database.js", "js/data/constants.js"],
+        "consumables": ["js/data/items.js"],
+        "ship_modular_upgrades": ["js/services/GameAttributes.js"],
+        "ship_base_chassis_stats": ["js/data/ship_database.js"]
+      },
+      "state_mutations": {
+        "player.credits": ["PlayerActionService.js", "BankruptcyService.js", "IntelService.js", "AchievementService.js"],
+        "player.shipStates": ["TravelService.js", "PlayerActionService.js", "BankruptcyService.js"],
+        "player.debt": ["BankruptcyService.js", "PlayerActionService.js", "TimeService.js", "IntroService.js"],
+        "market.prices": ["MarketService.js", "TimeService.js"],
+        "systemStates": ["SystemStateService.js", "TimeService.js"],
+        "solStation": ["SolStationService.js", "TimeService.js"]
+      },
+      "ui_to_data": {
+        "UIHangarControl": ["ship_database.js", "GameAttributes.js", "AssetService.js"],
+        "UIEventControl": ["events.js", "loreRegistry.js", "storyEventsRegistry.js"],
+        "UIMissionControl": ["missionRegistry.js", "intelContent.js"],
+        "UIMarketControl": ["MarketService.js", "database.js", "items.js"]
+      }
+    }
+  },
+  "file_tree": {
+    "root": [ "index.html", "manifest.json", "sw.js", ".gitignore", "publish_game.sh", "story_timeline.html", "favicon.svg" ],
+    "meta": [ "meta/ARCHITECTURAL_DECISIONS.md", "meta/BALANCELOG.md", "meta/CHANGELOG.md", "meta/CODING_STANDARDS.md", "meta/DATA_FLOW.md", "meta/ECONOMIC_BEHAVIOR.md", "meta/LORE_COMPENDIUM.md", "meta/MATH_REGISTRY.md", "meta/ROADMAP.md", "meta/SERVICES.md", "meta/STATE_SCHEMA.md", "meta/UI_LIBRARY.md", "meta/lexicon.json" ],
+    "css": {
+      "core": [ "css/global.css", "css/achievements.css", "css/debug.css", "css/help-system.css", "css/hud.css", "css/missions.css", "css/navigation.css", "css/news-ticker.css", "css/orientation.css" ],
+      "modals": [ "css/modals/modal-cinematics.css", "css/modals/modal-core.css", "css/modals/modal-events.css", "css/modals/modal-sol-station.css", "css/modals/modal-utility.css" ],
+      "screens": [ "css/screens/cargo-screen.css", "css/screens/finance-screen.css", "css/screens/hangar-screen.css", "css/screens/intel-screen.css", "css/screens/map-screen.css", "css/screens/market-screen.css", "css/screens/navigation-screen.css", "css/screens/services-screen.css" ]
+    },
+    "js_data": {
+      "core": [ "js/data/constants.js", "js/data/database.js", "js/data/assets_config.js", "js/data/systemStateRegistry.js", "js/data/eulaContent.js", "js/data/flavorAds.js", "js/data/news_flavor.js", "js/data/helpRegistry.js" ],
+      "entities": [ "js/data/characters.js", "js/data/officers.js", "js/data/ship_database.js", "js/data/items.js" ],
+      "progression": [ "js/data/achievementRegistry.js", "js/data/solProgressionRegistry.js", "js/data/intelContent.js", "js/data/intelMessages.js" ],
+      "missions": [ "js/data/missions/missionRegistry.js", "js/data/missions/phase_one.js", "js/data/missions/phase_two.js", "js/data/missions/phase_three.js", "js/data/missions/license_missions.js", "js/data/missions/tutorial_missions.js" ],
+      "events_and_lore": [ "js/data/events.js", "js/data/events/storyEventsRegistry.js", "js/data/events/events_story.js", "js/data/events/events_bureaucracy.js", "js/data/events/events_entropy.js", "js/data/events/events_hazards.js", "js/data/events/events_logistics.js", "js/data/events/events_opportunity.js", "js/data/events/events_salvage.js", "js/data/events/events_traffic.js", "js/data/lore/loreRegistry.js", "js/data/lore/lore_broadstrokes.js" ]
+    },
+    "js_services": {
+      "core_engine": [ "js/services/GameState.js", "js/services/SimulationService.js", "js/services/EventManager.js", "js/services/SaveStorageService.js", "js/services/AssetService.js", "js/services/AssetStorageService.js", "js/services/LoggingService.js", "js/services/DebugService.js", "js/services/TelemetryStorageService.js", "js/services/ConditionEvaluator.js", "js/services/DynamicValueResolver.js" ],
+      "economy_and_player": [ "js/services/player/PlayerActionService.js", "js/services/simulation/MarketService.js", "js/services/BankruptcyService.js", "js/services/IntelService.js", "js/services/AchievementService.js" ],
+      "world_and_events": [ "js/services/world/TimeService.js", "js/services/world/TravelService.js", "js/services/world/SystemStateService.js", "js/services/SolStationService.js", "js/services/RandomEventService.js", "js/services/OutcomeResolver.js", "js/services/eventEffectResolver.js", "js/services/event-effects/effectAdriftPassenger.js", "js/services/event-effects/effectSpaceRace.js" ],
+      "missions_and_game": [ "js/services/MissionService.js", "js/services/mission/MissionTriggerEvaluator.js", "js/services/mission/MissionObjectiveEvaluator.js", "js/services/GameAttributes.js", "js/services/game/IntroService.js" ],
+      "ui_controllers": [ "js/services/UIManager.js", "js/services/ui/UIModalEngine.js", "js/services/ui/UIMarketControl.js", "js/services/ui/UIHangarControl.js", "js/services/ui/UIMissionControl.js", "js/services/ui/UIEventControl.js", "js/services/ui/UISolStationControl.js", "js/services/ui/UIAchievementControl.js", "js/services/ui/UIToastManager.js", "js/services/ui/UIHelpManager.js", "js/services/ui/AnimationService.js", "js/services/ui/TravelAnimationService.js", "js/services/ui/CinematicService.js", "js/services/ui/StarfieldService.js" ],
+      "handlers": [ "js/services/handlers/ActionClickHandler.js", "js/services/handlers/CarouselEventHandler.js", "js/services/handlers/HoldEventHandler.js", "js/services/handlers/MarketEventHandler.js", "js/services/handlers/TooltipHandler.js" ],
+      "bot": [ "js/services/bot/AutomatedPlayerService.js", "js/services/bot/TelemetryService.js" ]
+    },
+    "js_ui": {
+      "components": [ "js/ui/components/CargoScreen.js", "js/ui/components/FinanceScreen.js", "js/ui/components/HangarScreen.js", "js/ui/components/IntelScreen.js", "js/ui/components/MapScreen.js", "js/ui/components/MarketScreen.js", "js/ui/components/MissionsScreen.js", "js/ui/components/NavigationScreen.js", "js/ui/components/ServicesScreen.js" ],
+      "renderers": [ "js/ui/renderers/IntelMarketRenderer.js" ]
+    },
+    "js_core": [ "js/main.js", "js/utils.js" ],
+    "js_workers": [ "js/workers/saveWorker.js" ]
+  }
+}
+--- END OF FILE: ./meta/workbench_routing.json ---
 
 --- START OF FILE: ./meta/CODING_STANDARDS.md ---
 // meta/CODING_STANDARDS.md
