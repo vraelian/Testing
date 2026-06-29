@@ -179,8 +179,8 @@ export class MissionObjectiveEvaluator {
                     currentRank = classRanks[shipDef.class.toUpperCase()] || 0;
                 }
                 
-                current = currentRank;
-                target = reqRank;
+                current = currentRank >= reqRank ? 1 : 0;
+                target = 1;
                 comparator = '>=';
                 break;
             }
@@ -321,8 +321,8 @@ export class MissionObjectiveEvaluator {
                     }
                 }
                 
-                current = highestRank;
-                target = reqRank;
+                current = highestRank >= reqRank ? 1 : 0;
+                target = 1;
                 comparator = '>=';
                 break;
             }

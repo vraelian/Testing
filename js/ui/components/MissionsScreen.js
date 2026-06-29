@@ -88,6 +88,16 @@ export function renderMissionsScreen(gameState, missionService) {
 
     // Resolve Theme Class
     const themeClass = THEME_MAP[currentLocationId] || DEFAULT_THEME;
+    
+    // Inject localized animation keyframes for objective scrolling
+    const styleInjection = `
+        <style>
+            @keyframes missionObjTicker {
+                0% { transform: translateX(0%); }
+                100% { transform: translateX(-50%); }
+            }
+        </style>
+    `;
 
     // --- SUB-COMPONENTS ---
 
@@ -244,12 +254,21 @@ export function renderMissionsScreen(gameState, missionService) {
             const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
             
             if (isAtPickupLocation) {
+                const descText = 'LOAD FREIGHT';
+                const valueText = 'AWAITING';
+                const isLong = descText.length > 25;
+                const displayDesc = isLong ? `${descText} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${descText}` : descText;
+                
                 objectivesHtml += `
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 100%; background: rgba(245, 158, 11, 0.2);"></div>
                         <div class="objective-text" style="color: #f59e0b;">
-                            <span>LOAD FREIGHT</span>
-                            <span>AWAITING</span>
+                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                    ${displayDesc}
+                                </span>
+                            </div>
+                            <span style="flex-shrink: 0; white-space: nowrap; text-align: right;">${valueText}</span>
                         </div>
                     </div>
                 `;
@@ -261,12 +280,21 @@ export function renderMissionsScreen(gameState, missionService) {
                     </div>
                 `;
             } else {
+                const descText = `TRAVEL TO ${locName.toUpperCase()}`;
+                const valueText = 'EN ROUTE';
+                const isLong = descText.length > 25;
+                const displayDesc = isLong ? `${descText} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${descText}` : descText;
+                
                 objectivesHtml += `
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 0%"></div>
                         <div class="objective-text">
-                            <span>TRAVEL TO ${locName.toUpperCase()}</span>
-                            <span>EN ROUTE</span>
+                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                    ${displayDesc}
+                                </span>
+                            </div>
+                            <span style="flex-shrink: 0; white-space: nowrap; text-align: right;">${valueText}</span>
                         </div>
                     </div>
                 `;
@@ -334,10 +362,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
                 else if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
                     desc = `ACQUIRE CLASS ${obj.target} VESSEL`;
-                    const classMap = {0: 'F', 1: 'C', 2: 'B', 3: 'A', 4: 'S', 5: 'O', 6: 'Z'};
-                    const currentClassStr = classMap[current] || 'C';
-                    const targetClassStr = classMap[target] || obj.target;
-                    displayStr = `CLASS ${currentClassStr} / CLASS ${targetClassStr}`;
+                    displayStr = `${current} / ${target}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
@@ -391,13 +416,19 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
 
                 const tallClass = !progress.isCompletable ? 'objective-row-tall' : '';
+                const isLongText = desc.length > 25;
+                const displayDesc = isLongText ? `${desc} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${desc}` : desc;
 
                 objectivesHtml += `
                     <div class="objective-row-filled ${tallClass}">
                         <div class="objective-fill-bar" style="width: ${percent}%"></div>
                         <div class="objective-text">
-                            <span>${desc}</span>
-                            <span>${displayStr}</span>
+                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                                <span style="display: inline-block; ${isLongText ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                    ${displayDesc}
+                                </span>
+                            </div>
+                            <span style="flex-shrink: 0; white-space: nowrap; text-align: right;">${displayStr}</span>
                         </div>
                     </div>
                 `;
@@ -487,6 +518,7 @@ export function renderMissionsScreen(gameState, missionService) {
     }
 
     return `
+        ${styleInjection}
         <div class="flex flex-col h-full ${themeClass} missions-screen-container">
             ${renderTabs()}
             <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">

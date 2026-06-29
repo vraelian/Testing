@@ -14483,6 +14483,16 @@ export function renderMissionsScreen(gameState, missionService) {
 
     // Resolve Theme Class
     const themeClass = THEME_MAP[currentLocationId] || DEFAULT_THEME;
+    
+    // Inject localized animation keyframes for objective scrolling
+    const styleInjection = `
+        <style>
+            @keyframes missionObjTicker {
+                0% { transform: translateX(0%); }
+                100% { transform: translateX(-50%); }
+            }
+        </style>
+    `;
 
     // --- SUB-COMPONENTS ---
 
@@ -14639,12 +14649,21 @@ export function renderMissionsScreen(gameState, missionService) {
             const locName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'UNKNOWN';
             
             if (isAtPickupLocation) {
+                const descText = 'LOAD FREIGHT';
+                const valueText = 'AWAITING';
+                const isLong = descText.length > 25;
+                const displayDesc = isLong ? `${descText} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${descText}` : descText;
+                
                 objectivesHtml += `
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 100%; background: rgba(245, 158, 11, 0.2);"></div>
                         <div class="objective-text" style="color: #f59e0b;">
-                            <span>LOAD FREIGHT</span>
-                            <span>AWAITING</span>
+                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                    ${displayDesc}
+                                </span>
+                            </div>
+                            <span style="flex-shrink: 0; white-space: nowrap; text-align: right;">${valueText}</span>
                         </div>
                     </div>
                 `;
@@ -14656,12 +14675,21 @@ export function renderMissionsScreen(gameState, missionService) {
                     </div>
                 `;
             } else {
+                const descText = `TRAVEL TO ${locName.toUpperCase()}`;
+                const valueText = 'EN ROUTE';
+                const isLong = descText.length > 25;
+                const displayDesc = isLong ? `${descText} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${descText}` : descText;
+                
                 objectivesHtml += `
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 0%"></div>
                         <div class="objective-text">
-                            <span>TRAVEL TO ${locName.toUpperCase()}</span>
-                            <span>EN ROUTE</span>
+                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                    ${displayDesc}
+                                </span>
+                            </div>
+                            <span style="flex-shrink: 0; white-space: nowrap; text-align: right;">${valueText}</span>
                         </div>
                     </div>
                 `;
@@ -14729,10 +14757,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
                 else if (obj.type === 'own_ship_class' || obj.type === 'OWN_SHIP_CLASS') {
                     desc = `ACQUIRE CLASS ${obj.target} VESSEL`;
-                    const classMap = {0: 'F', 1: 'C', 2: 'B', 3: 'A', 4: 'S', 5: 'O', 6: 'Z'};
-                    const currentClassStr = classMap[current] || 'C';
-                    const targetClassStr = classMap[target] || obj.target;
-                    displayStr = `CLASS ${currentClassStr} / CLASS ${targetClassStr}`;
+                    displayStr = `${current} / ${target}`;
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
                 else if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
@@ -14786,13 +14811,19 @@ export function renderMissionsScreen(gameState, missionService) {
                 }
 
                 const tallClass = !progress.isCompletable ? 'objective-row-tall' : '';
+                const isLongText = desc.length > 25;
+                const displayDesc = isLongText ? `${desc} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${desc}` : desc;
 
                 objectivesHtml += `
                     <div class="objective-row-filled ${tallClass}">
                         <div class="objective-fill-bar" style="width: ${percent}%"></div>
                         <div class="objective-text">
-                            <span>${desc}</span>
-                            <span>${displayStr}</span>
+                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                                <span style="display: inline-block; ${isLongText ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                    ${displayDesc}
+                                </span>
+                            </div>
+                            <span style="flex-shrink: 0; white-space: nowrap; text-align: right;">${displayStr}</span>
                         </div>
                     </div>
                 `;
@@ -14882,6 +14913,7 @@ export function renderMissionsScreen(gameState, missionService) {
     }
 
     return `
+        ${styleInjection}
         <div class="flex flex-col h-full ${themeClass} missions-screen-container">
             ${renderTabs()}
             <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">
@@ -20140,9 +20172,11 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain [playerName]. With your Class A vessel registered, you are cleared for heavy industrial contracts. Earth's industrial sectors are facing a critical shortage of raw chemical assets. I need you to source Refined Propellant from the Jovian orbital refineries and haul it to the Earth surface stations. Remember, this is volatile cargo meant for market distribution and manufacturing, so handle the logistics carefully. Deliver the shipment, and I will personally authorize your Tier 4 trading license.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_guild" } ],
+        deferredCargo: [ { "goodId": "propellant", "quantity": 80 } ],
+        pickupLocationId: "loc_jupiter",
+        purchaseDeferredCargo: true,
         objectives: [
-            { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" },
-            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "travel_jupiter" }
+            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_earth" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -20160,11 +20194,13 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Now that you're flying heavy gear, we can put you on the prime routes. The Venusian Syndicate is bringing a massive new market analysis lab online in the cloud cities. We need raw computational power, freshly minted. Head out to the Neptunian orbital stations, secure Neural Processors, and haul them back to Venus. Pull this off, and I'll push through an order of a Tier 4 License for you.",
+        description: "Now that you're flying heavy gear, we can put you on the prime routes. The Venusian Syndicate is bringing a massive new market analysis lab online in the cloud cities. We need raw computational power, freshly minted. Head out to the Neptunian orbital stations, purchase a bulk order of Neural Processors, and haul them back to Venus. Pull this off, and I'll push through an order of a Tier 4 License for you.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_syndicate" } ],
+        deferredCargo: [ { "goodId": "processors", "quantity": 40 } ],
+        pickupLocationId: "loc_neptune",
+        purchaseDeferredCargo: true,
         objectives: [
-            { "id": "travel_neptune", "type": "TRAVEL_TO", "target": "loc_neptune" },
-            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_venus", "dependsOn": "travel_neptune" }
+            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_venus" }
         ],
         completion: {
             locationId: "loc_venus",
@@ -38757,6 +38793,7 @@ export class SolStationService {
  * UPDATED: Includes COLLECT_ITEM logistics injection and strict DB optional chaining.
  * UPDATED: Act III Location-Triggered Cinematics architecture deployed.
  * UPDATED: Unified mission upgrade routing to UIHangarControl for standard animation sequences.
+ * UPDATED: Integrated Point-of-Sale logistics functionality.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -39236,7 +39273,7 @@ export class MissionService {
 
     /**
      * Attempts to load deferred cargo for a Logistics mission.
-     * Evaluates fleet-wide capacity and distributes the cargo dynamically.
+     * Evaluates fleet-wide capacity and dynamic Point-of-Sale wholesale costs.
      * @param {string} missionId 
      */
     loadDeferredCargo(missionId) {
@@ -39252,7 +39289,30 @@ export class MissionService {
         let totalRequiredSpace = 0;
         mission.deferredCargo.forEach(cargo => totalRequiredSpace += cargo.quantity);
 
-        // 2. Calculate Fleet-Wide Available Space
+        // 2. Calculate Purchase Cost (If Applicable)
+        let totalCost = 0;
+        if (mission.purchaseDeferredCargo) {
+            mission.deferredCargo.forEach(c => {
+                const commodity = DB.COMMODITIES?.find(comm => comm.id === c.goodId);
+                let basePrice = this.gameState.market.galacticAverages?.[c.goodId];
+                if (!basePrice && commodity && commodity.basePriceRange) {
+                    basePrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
+                }
+                totalCost += (basePrice || 0) * c.quantity * 0.80; // Apply 80% wholesale rate
+            });
+            totalCost = Math.round(totalCost); 
+            
+            // Validate Credits
+            if (this.gameState.player.credits < totalCost) {
+                const errorMsg = `Cannot load freight: Insufficient credits. This wholesale contract requires ⌬ ${formatCredits(totalCost, false)} upfront.`;
+                if (this.uiManager) {
+                    this.uiManager.queueModal('event-modal', 'Insufficient Credits', errorMsg);
+                }
+                return; // Abort
+            }
+        }
+
+        // 3. Calculate Fleet-Wide Available Space
         let fleetAvailableSpace = 0;
         const shipCapacities = []; 
 
@@ -39274,16 +39334,22 @@ export class MissionService {
             shipCapacities.push({ shipId, availableSpace });
         }
 
-        // 3. Evaluate Capacity Threshold
+        // 4. Evaluate Capacity Threshold
         if (fleetAvailableSpace < totalRequiredSpace) {
-            const errorMsg = `Cannot accept freight: Insufficient cargo space. You need space in your cargo hold for ${totalRequiredSpace} units.`;
+            const errorMsg = `Cannot load freight: Insufficient cargo space. You need space in your fleet for the full shipment of ${totalRequiredSpace} units.`;
             if (this.uiManager) {
                 this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
             }
-            return;
+            return; // Abort
+        }
+        
+        // 5. Execute Transaction
+        if (mission.purchaseDeferredCargo && totalCost > 0) {
+            this.gameState.player.credits -= totalCost;
+            this.logger.info.player(this.gameState.day, 'MISSION_PURCHASE', `Paid ⌬ ${formatCredits(totalCost, false)} for deferred cargo on mission ${missionId}.`);
         }
 
-        // 4. Distribute Cargo Across Fleet (Prioritize Active Ship)
+        // 6. Distribute Cargo Across Fleet (Prioritize Active Ship)
         const activeShipId = this.gameState.player.activeShipId;
         shipCapacities.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
@@ -39316,11 +39382,11 @@ export class MissionService {
             }
         });
 
-        // 5. Update State
+        // 7. Update State
         progress.cargoLoaded = true;
         this.logger.info.player(this.gameState.day, 'MISSION_CARGO_LOADED', `Loaded ${totalRequiredSpace} units of deferred cargo for mission ${missionId}.`);
 
-        // 6. Trigger re-evaluation and flush state
+        // 8. Trigger re-evaluation and flush state
         this.checkTriggers();
         this.gameState.setState({});
         if (this.uiManager && typeof this.uiManager.render === 'function') {
@@ -44970,8 +45036,8 @@ export class MissionObjectiveEvaluator {
                     currentRank = classRanks[shipDef.class.toUpperCase()] || 0;
                 }
                 
-                current = currentRank;
-                target = reqRank;
+                current = currentRank >= reqRank ? 1 : 0;
+                target = 1;
                 comparator = '>=';
                 break;
             }
@@ -45112,8 +45178,8 @@ export class MissionObjectiveEvaluator {
                     }
                 }
                 
-                current = highestRank;
-                target = reqRank;
+                current = highestRank >= reqRank ? 1 : 0;
+                target = 1;
                 comparator = '>=';
                 break;
             }
@@ -56251,8 +56317,9 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [38.75] - 2026-6-28
+# [38.76] - 2026-6-28
 -  mission polish and fixes
+-  added text scrolling to mission cards
 
 # [38.74] - 2026-6-27
 -  added 2nd person POV narration font

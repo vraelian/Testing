@@ -5,6 +5,7 @@
  * UPDATED: Includes COLLECT_ITEM logistics injection and strict DB optional chaining.
  * UPDATED: Act III Location-Triggered Cinematics architecture deployed.
  * UPDATED: Unified mission upgrade routing to UIHangarControl for standard animation sequences.
+ * UPDATED: Integrated Point-of-Sale logistics functionality.
  */
 import { DB } from '../data/database.js';
 import { formatCredits } from '../utils.js';
@@ -484,7 +485,7 @@ export class MissionService {
 
     /**
      * Attempts to load deferred cargo for a Logistics mission.
-     * Evaluates fleet-wide capacity and distributes the cargo dynamically.
+     * Evaluates fleet-wide capacity and dynamic Point-of-Sale wholesale costs.
      * @param {string} missionId 
      */
     loadDeferredCargo(missionId) {
@@ -500,7 +501,30 @@ export class MissionService {
         let totalRequiredSpace = 0;
         mission.deferredCargo.forEach(cargo => totalRequiredSpace += cargo.quantity);
 
-        // 2. Calculate Fleet-Wide Available Space
+        // 2. Calculate Purchase Cost (If Applicable)
+        let totalCost = 0;
+        if (mission.purchaseDeferredCargo) {
+            mission.deferredCargo.forEach(c => {
+                const commodity = DB.COMMODITIES?.find(comm => comm.id === c.goodId);
+                let basePrice = this.gameState.market.galacticAverages?.[c.goodId];
+                if (!basePrice && commodity && commodity.basePriceRange) {
+                    basePrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
+                }
+                totalCost += (basePrice || 0) * c.quantity * 0.80; // Apply 80% wholesale rate
+            });
+            totalCost = Math.round(totalCost); 
+            
+            // Validate Credits
+            if (this.gameState.player.credits < totalCost) {
+                const errorMsg = `Cannot load freight: Insufficient credits. This wholesale contract requires ⌬ ${formatCredits(totalCost, false)} upfront.`;
+                if (this.uiManager) {
+                    this.uiManager.queueModal('event-modal', 'Insufficient Credits', errorMsg);
+                }
+                return; // Abort
+            }
+        }
+
+        // 3. Calculate Fleet-Wide Available Space
         let fleetAvailableSpace = 0;
         const shipCapacities = []; 
 
@@ -522,16 +546,22 @@ export class MissionService {
             shipCapacities.push({ shipId, availableSpace });
         }
 
-        // 3. Evaluate Capacity Threshold
+        // 4. Evaluate Capacity Threshold
         if (fleetAvailableSpace < totalRequiredSpace) {
-            const errorMsg = `Cannot accept freight: Insufficient cargo space. You need space in your cargo hold for ${totalRequiredSpace} units.`;
+            const errorMsg = `Cannot load freight: Insufficient cargo space. You need space in your fleet for the full shipment of ${totalRequiredSpace} units.`;
             if (this.uiManager) {
                 this.uiManager.queueModal('event-modal', 'Insufficient Cargo Space', errorMsg);
             }
-            return;
+            return; // Abort
+        }
+        
+        // 5. Execute Transaction
+        if (mission.purchaseDeferredCargo && totalCost > 0) {
+            this.gameState.player.credits -= totalCost;
+            this.logger.info.player(this.gameState.day, 'MISSION_PURCHASE', `Paid ⌬ ${formatCredits(totalCost, false)} for deferred cargo on mission ${missionId}.`);
         }
 
-        // 4. Distribute Cargo Across Fleet (Prioritize Active Ship)
+        // 6. Distribute Cargo Across Fleet (Prioritize Active Ship)
         const activeShipId = this.gameState.player.activeShipId;
         shipCapacities.sort((a, b) => {
             if (a.shipId === activeShipId) return -1;
@@ -564,11 +594,11 @@ export class MissionService {
             }
         });
 
-        // 5. Update State
+        // 7. Update State
         progress.cargoLoaded = true;
         this.logger.info.player(this.gameState.day, 'MISSION_CARGO_LOADED', `Loaded ${totalRequiredSpace} units of deferred cargo for mission ${missionId}.`);
 
-        // 6. Trigger re-evaluation and flush state
+        // 8. Trigger re-evaluation and flush state
         this.checkTriggers();
         this.gameState.setState({});
         if (this.uiManager && typeof this.uiManager.render === 'function') {

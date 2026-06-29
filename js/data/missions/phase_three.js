@@ -354,9 +354,11 @@ export const PHASE_THREE_MISSIONS = {
         isAbandonable: false,
         description: "Captain [playerName]. With your Class A vessel registered, you are cleared for heavy industrial contracts. Earth's industrial sectors are facing a critical shortage of raw chemical assets. I need you to source Refined Propellant from the Jovian orbital refineries and haul it to the Earth surface stations. Remember, this is volatile cargo meant for market distribution and manufacturing, so handle the logistics carefully. Deliver the shipment, and I will personally authorize your Tier 4 trading license.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_guild" } ],
+        deferredCargo: [ { "goodId": "propellant", "quantity": 80 } ],
+        pickupLocationId: "loc_jupiter",
+        purchaseDeferredCargo: true,
         objectives: [
-            { "id": "travel_jupiter", "type": "TRAVEL_TO", "target": "loc_jupiter" },
-            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_earth", "dependsOn": "travel_jupiter" }
+            { "id": "deliver_propellant", "type": "DELIVER_ITEM", "goodId": "propellant", "quantity": 80, "target": "loc_earth" }
         ],
         completion: {
             locationId: "loc_earth",
@@ -374,11 +376,13 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Now that you're flying heavy gear, we can put you on the prime routes. The Venusian Syndicate is bringing a massive new market analysis lab online in the cloud cities. We need raw computational power, freshly minted. Head out to the Neptunian orbital stations, secure Neural Processors, and haul them back to Venus. Pull this off, and I'll push through an order of a Tier 4 License for you.",
+        description: "Now that you're flying heavy gear, we can put you on the prime routes. The Venusian Syndicate is bringing a massive new market analysis lab online in the cloud cities. We need raw computational power, freshly minted. Head out to the Neptunian orbital stations, purchase a bulk order of Neural Processors, and haul them back to Venus. Pull this off, and I'll push through an order of a Tier 4 License for you.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_syndicate" } ],
+        deferredCargo: [ { "goodId": "processors", "quantity": 40 } ],
+        pickupLocationId: "loc_neptune",
+        purchaseDeferredCargo: true,
         objectives: [
-            { "id": "travel_neptune", "type": "TRAVEL_TO", "target": "loc_neptune" },
-            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_venus", "dependsOn": "travel_neptune" }
+            { "id": "deliver_processors", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 40, "target": "loc_venus" }
         ],
         completion: {
             locationId: "loc_venus",
