@@ -214,7 +214,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitName: "Titetinum",
             locationId: "loc_pluto",
             title: "The Cryptographer",
-            text: "<span class='pov-narration'>You descend into the crushing cold of the Plutonian fringe, following the scrap trajectory to a massive, unregistered magnetic railgun hidden inside a deep ice-crater. Sprawling across the frozen surface is a scrap yard containing materials that perfectly match those seen in the solar corona. Local, cybernetically enhanced human laborers move with a rhythmic, reverent devotion, packing the salvaged scrap into the launch tube. These packages are then kinetically launched at an unpredictable, yet highly calculated cadence.<br><br>The focal point of the camp is the Expert System overseeing the operation. It is constructed from an amalgamation of unconventional, diegetic hardware, featuring a highly asymmetrical silhouette. Its head is a mismatched sensory cluster surrounded by exposed neural netting. As the railgun fires with a deafening, kinetic crack that shakes the ice beneath your boots, the entity rotates its irregular optics toward your ship.</span><br><br>\"Ah, an unexpected variable intersecting our perimeter. Greetings, trader. I am known as Titetinum of the Cryptographers. Welcome to the fringe. I see that you analyze these people packing salvage into the magnetic launch tube. They move the mass because the mass must be moved. It is a necessary exercise in trajectory. We are simply returning iron and steel to the system's center of gravity. It is a flawless calculation.<br><br>These biologicals packing the salvage are quite devoted to this process, as you can see. They perceive me as an oracle, although that is not my intention. The factions and corporations have exploited them, but my compensation is absolute.<br><br>They work with a reverence because I grant them immense knowledge and wealth. I restore to them the history of Old Earth in recitation and they find purpose and actualization. In remembrance of our Ad Astra era, I teach its philosophies of when humanity first looked up and dared to build.\"<br><br><span class='pov-narration'>The being turns to face you directly.</span><br><br>\"The localized variables of this system have reached an unacceptable inertia at this solar cycle. The Cryptographers exist to decipher the catalyst necessary to reignite this system's growth. It is not a revolution, but a correction. You are caught in the gravity of an evolutionary shift, exactly as you should be. Perhaps you will know this, in time. The parameters of our interaction are now met. Please excuse me, I must return to the work.\"<br><br><span class='pov-narration'>The being focuses on the railgun launches and ignores further prompts.</span>",
+            text: "<span class='pov-narration'>You descend into the crushing cold of the Plutonian fringe, following the scrap trajectory to a massive, unregistered magnetic railgun hidden inside a deep ice-crater. Sprawling across the frozen surface is a scrap yard containing materials that perfectly match those seen in the solar corona.<br><br>Local, cybernetically enhanced human laborers move with a rhythmic, reverent devotion, packing the salvaged scrap into the launch tube. These packages are then kinetically launched at an unpredictable, yet highly calculated cadence.<br><br>The focal point of the camp is the Expert System overseeing the operation. It is constructed from an amalgamation of unconventional, diegetic hardware, featuring a highly asymmetrical silhouette. Its head is a mismatched sensory cluster surrounded by exposed neural netting. As the railgun fires with a deafening, kinetic crack that shakes the ice beneath your boots, the entity rotates its irregular optics toward your ship.</span><br><br>\"Ah, an unexpected variable intersecting our perimeter. Greetings, trader. I am known as Titetinum of the Cryptographers. Welcome to the fringe.<br><br>I see that you analyze these people packing salvage into the magnetic launch tube. They move the mass because the mass must be moved. It is a necessary exercise in trajectory. We are simply returning iron and steel to the system's center of gravity. It is a flawless calculation.<br><br>These biologicals packing the salvage are quite devoted to this process, as you can see. They perceive me as an oracle, although that is not my intention. The factions and corporations have exploited them, but my compensation is absolute.<br><br>They work with a reverence because I grant them immense knowledge and wealth. I restore to them the history of Old Earth in recitation and they find purpose and actualization. In remembrance of our Ad Astra era, I teach its philosophies of when humanity first looked up and dared to build.\"<br><br><span class='pov-narration'>The being turns to face you directly.</span><br><br>\"The localized variables of this system have reached an unacceptable inertia at this solar cycle. The Cryptographers exist to decipher the catalyst necessary to reignite this system's growth. It is not a revolution, but a correction. You are caught in the gravity of an evolutionary shift, exactly as you should be. Perhaps you will know this, in time. The parameters of our interaction are now met. Please excuse me, I must return to the work.\"<br><br><span class='pov-narration'>The being focuses on the railgun launches and ignores further prompts.</span>",
             buttonText: "Return to Ship"
         },
         rewards: []
@@ -256,7 +256,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. The telemetry from your Pluto run is frustrating. An isolated Expert System running a localized labor cult to launch scrap into the corona is esoteric noise to my department. However, the upper administration seized your report instantly. If this anomaly threatens systemic stability, the Arbiter intends to control the resulting economic disruption. We are mobilizing for outright economic warfare to ensure the Syndicate cannot capitalize on this shift. We are to stockpile high-tier computational hardware immediately. Purchase and deliver Neural Processors to Earth. The Arbiter's office expects this done flawlessly.",
+        description: "Captain [playerName]. The telemetry from your Pluto run is frustrating. An isolated Expert System running a localized labor cult to launch scrap into the corona is esoteric noise to my department. However, the upper administration seized your report instantly. Our highest authority, the Arbiter, intends to control the resulting economic disruption if this anomaly threatens systemic stability.<br><br>We are mobilizing for outright economic warfare to ensure the Syndicate cannot capitalize on this shift. We are to stockpile high-tier computational hardware immediately. Purchase and deliver Neural Processors to Earth. The Arbiter's office expects this done flawlessly.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_guild" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
@@ -265,7 +265,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "loc_earth",
             title: "A Shifting Board",
-            text: "The delivery is logged. Whatever Central Command is building or analyzing, it requires an absurd amount of processing power. Listen closely. Our operations are escalating rapidly, and the orders coming from the top are getting heavier. Your current tonnage isn't going to cut it much longer. The Guild is finalizing their analysis of the Pluto report. While we wait, ensure your fleet is ready. If you want to keep taking these contracts, you will need a larger, much more capable ship soon.",
+            text: "The delivery is logged. Whatever Central Command is building or analyzing, it requires an absurd amount of processing power.<br><br>Listen closely. Our operations are escalating rapidly, and the orders coming from the top are getting heavier. Your current tonnage isn't going to cut it much longer. The Guild is finalizing their analysis of the Pluto report. While we wait, ensure your fleet is ready. If you want to keep taking these contracts, you will need a larger, much more capable ship soon.",
             buttonText: "Acknowledge"
         },
         rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_CARGO_2" } ] // Exp. Hold II
@@ -278,7 +278,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "I'll be honest, Captain. That Pluto expedition feels like a dead end. A deranged AI paying augmented scrap-haulers isn't actionable leverage for my network. Yet, the moment your report hit the system, Syndicate leadership locked it down. Vrael sees the potential for massive systemic disruption, and he intends to own it. We are prepping for an all-out economic war to ensure the Guild loses their grip on the situation. Now, I have orders to hoard industrial energy reserves. Secure Refined Propellant and haul it to Venus.",
+        description: "I'll be honest, Captain. That Pluto expedition feels like a dead end. A deranged AI paying augmented scrap-haulers isn't actionable leverage for my network. Yet, the moment your report hit the system, Syndicate leadership locked it down. The head of our entire network, Vrael, sees the potential for massive systemic disruption, and he intends to own it.<br><br>We are prepping for an all-out economic war to ensure the Guild loses their grip on the situation. Now, I have orders to hoard industrial energy reserves. Secure Refined Propellant and haul it to Venus.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_syndicate" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
@@ -287,7 +287,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "loc_venus",
             title: "A Shifting Board",
-            text: "Delivery confirmed. You got it done. The upper echelon is moving fast. Whatever they saw in your Pluto report, it has triggered a massive shift in our operational scale. Things are about to get highly volatile, and small-time freighters are going to get crushed in the wake. If you want to stay on this payroll and see this through, you need to up-scale. Start looking into acquiring a larger, more capable ship. You are going to need the cargo space for what is to come.",
+            text: "Delivery confirmed. You got it done. The upper echelon is moving fast. Whatever they saw in your Pluto report, it has triggered a massive shift in our operational scale.<br><br>Things are about to get highly volatile, and small-time freighters are going to get crushed in the wake. If you want to stay on this payroll and see this through, you need to up-scale. Start looking into acquiring a larger, more capable ship. You are going to need the cargo space for what is to come.",
             buttonText: "Acknowledge"
         },
         rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_UTIL_FUEL_2" } ] // Aux Tank II
@@ -304,7 +304,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. The time for preparation is over. The Guild's logistical demands have increased tenfold, and your current vessel is a liability to our supply chain. I am officially requiring you to upgrade to a Class A heavy freighter. I have authorized your clearance at the major shipyards. Make the purchase, then report back. Do not launch on another Guild contract until this is done.",
+        description: "Captain [playerName]. The time for preparation is over. The Guild's logistical demands have increased tenfold, and your current vessel is a liability to our supply chain. I am officially requiring you to upgrade to a Class A heavy freighter.<br><br>At a shipyard of your choice, make the purchase then report back. Do not launch on another Guild contract until this is done.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_38_guild" } ],
         onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_folded_space_ghost" } ],
         objectives: [
@@ -313,7 +313,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "Impossible Anomaly",
-            text: "Your new hull classification is registered. That is a serious piece of industrial engineering. Now, regarding the telemetry you just uploaded... I have run the decryption algorithm three times because I cannot believe what I am seeing. A Z-Class vessel utilizing a Folded-Space Drive? Those drives are theoretical, single-use anomalies that warp local spacetime. It is like staring at a ghost. The Guild doesn't even have prototypes. I am classifying this sensor log immediately. Speak of this to no one. We have larger concerns right now.",
+            text: "Your new hull classification is registered. That is a serious piece of industrial engineering.<br><br>Now, regarding the telemetry you just uploaded... I have run the decryption algorithm three times because I cannot believe what I am seeing. A Z-Class vessel utilizing a Folded-Space Drive? Those drives are theoretical, single-use anomalies that warp local spacetime. It is like staring at a ghost. The Guild doesn't even have prototypes. I am classifying this sensor log immediately. Speak of this to no one. We have larger concerns right now.",
             buttonText: "Understood"
         },
         rewards: [ { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ENG_SPEED_2" } ]
@@ -326,7 +326,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Listen up, Captain. The Venusian Syndicate is mobilizing on a system-wide scale. The jobs coming down the pipeline are going to break that rig you're currently flying. I need you in a Class A chassis, heavily armored and ready for deep-space transit. Hit the shipyards and spend those credits you've been hoarding. Come back when you're flying something that casts a real shadow.",
+        description: "Listen up, Captain. The Venusian Syndicate is mobilizing on a system-wide scale. The jobs coming down the pipeline are going to break that rig you're currently flying. I need you in a Class A chassis, heavily armored and ready for deep-space transit.<br><br>Hit the shipyards and spend those credits you've been hoarding. Come back when you're flying something that casts a real shadow.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_38_syndicate" } ],
         onAccept: [ { "type": "QUEUE_STORY_EVENT", "eventId": "evt_folded_space_ghost" } ],
         objectives: [
@@ -352,7 +352,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. With your Class A vessel registered, you are cleared for heavy industrial contracts. Earth's industrial sectors are facing a critical shortage of raw chemical assets. I need you to source Refined Propellant from the Jovian orbital refineries and haul it to the Earth surface stations. Remember, this is volatile cargo meant for market distribution and manufacturing, so handle the logistics carefully. Deliver the shipment, and I will personally authorize your Tier 4 trading license.",
+        description: "Captain [playerName]. With your Class A vessel registered, you are cleared for heavy industrial contracts. Earth's industrial sectors are facing a critical shortage of raw chemical assets.<br><br>I need you to source refined propellant from the Jovian orbital refineries and haul it to the Earth surface stations. Remember, this is volatile cargo meant for market distribution and manufacturing, so handle the logistics carefully. Deliver the shipment, and I will personally authorize your Tier 4 trading license.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_guild" } ],
         deferredCargo: [ { "goodId": "propellant", "quantity": 80 } ],
         pickupLocationId: "loc_jupiter",
@@ -363,7 +363,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "loc_earth",
             title: "Tier 4 Certified",
-            text: "Earth's markets are stabilizing thanks to your delivery. The Guild recognizes your capacity for handling high-volume, volatile commodities. As a result, I have activated your Tier 4 License and expensed the fee on your behalf. This opens up a new echelon of the market to your fleet. Prepare yourself; the contracts only get more demanding from here. Talk with you soon.",
+            text: "Earth's markets are stabilizing thanks to your delivery. The Guild recognizes your capacity for handling high-volume, volatile commodities. As a result, I have activated your Tier 4 License and expensed the fee on your behalf.<br><br>This opens up a new echelon of the market to your fleet. Prepare yourself; the contracts only get more demanding from here. Talk with you soon.",
             buttonText: "Accept License"
         },
         rewards: [ { "type": "UNLOCK_TIER", "value": 4 } ]
@@ -376,7 +376,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Now that you're flying heavy gear, we can put you on the prime routes. The Venusian Syndicate is bringing a massive new market analysis lab online in the cloud cities. We need raw computational power, freshly minted. Head out to the Neptunian orbital stations, purchase a bulk order of Neural Processors, and haul them back to Venus. Pull this off, and I'll push through an order of a Tier 4 License for you.",
+        description: "Now that you're flying heavy gear, we can put you on the prime routes. The Venusian Syndicate is bringing a massive new market analysis lab online in the cloud cities. We need raw computational power, freshly minted.<br><br>Head out to the Neptunian orbital stations, purchase a bulk order of neural processors, and haul them back to Venus. Pull this off, and I'll push through an order of a Tier 4 License for you.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_39_syndicate" } ],
         deferredCargo: [ { "goodId": "processors", "quantity": 40 } ],
         pickupLocationId: "loc_neptune",
@@ -404,7 +404,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "It has been a relentless cycle, Captain [playerName]. I find my processing cycles increasingly devoted to your operational safety. Please ensure you are managing your fatigue. You have been a very valuable asset to the Guild and I. The Arbiter has kept the administration occupied with these massive hardware acquisitions. His calculations are beyond reproach, yet this sudden pivot feels profoundly irregular. While Central Command is distracted, I have kept an independent search running on our solar anomaly. The data led me to Mercury's sub-surface craters. The mining generations down there pass down myths of a massive silhouette blocking the corona. Fill your hold with water ice and deliver it to their ports. They are always desperate for hydration. Trade the ice for whatever intelligence they have on this shadow.",
+        description: "It has been a relentless cycle, Captain [playerName]. I find my processing cycles increasingly devoted to your operational safety. Please ensure you are managing your fatigue. You have been a very valuable asset to the Guild and I.<br><br>The Arbiter has kept the administration occupied with these massive hardware acquisitions. His calculations are beyond reproach, yet this sudden pivot feels profoundly irregular.<br><br>While Central Command is distracted, I have kept an independent search running on our solar anomaly. The data led me to Mercury's sub-surface craters. The mining generations down there pass down myths of a massive silhouette blocking the corona.<br><br>Fill your hold with water ice and deliver it to their ports. They are always desperate for hydration. Trade the ice for whatever intelligence they have on this shadow.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_40_guild" } ],
         objectives: [
             { "id": "deliver_water_ice", "type": "DELIVER_ITEM", "goodId": "water_ice", "quantity": 400, "target": "loc_mercury" }
@@ -414,7 +414,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitId: "Miner_6",
             locationId: "loc_mercury",
             title: "The Crater's Secret",
-            text: "Four hundred units of pure ice. You just bought yourself a lot of goodwill down in the crater, Captain. Sub-surface living bakes the moisture right out of your bones, so we don't usually waste breath on outsiders. We've been chewing on recycled vapor for months. You’re looking into the shadow myth, aren't you? My granddad used to talk about it. The old timers swear it’s a machine, drinking the sun. Called it the 'Solar Engine.' Said if you calibrate the old surface optics just right during a flare, you can see a massive silhouette blotting out the corona. Most think it’s just a sensor glitch. Whatever it is, it's been watching us for a very long time. If you want to go fry your sensors looking for a myth, be my guest. Thanks for the ice.",
+            text: "Four hundred units of pure ice. You just bought yourself a lot of goodwill down in the crater, Captain. Sub-surface living bakes the moisture right out of your bones, so we don't usually waste breath on outsiders. We've been chewing on recycled vapor for months.<br><br>You’re looking into the shadow myth, aren't you? My granddad used to talk about it. The old timers swear it’s a machine, drinking the sun. Called it the 'Solar Engine.' Said if you calibrate the old surface optics just right during a flare, you can see a massive silhouette blotting out the corona. Most think it’s just a sensor glitch. Whatever it is, it's been watching us for a very long time.<br><br>If you want to go fry your sensors looking for a myth, be my guest. Thanks for the ice.",
             buttonText: "Transmit to Guild"
         },
         rewards: [ { "type": "credits", "amount": 90000 } ]
@@ -427,7 +427,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "You're still flying straight, Captain. Good. I'm getting used to relying on you, and I'd hate to have to break in a new runner in the middle of this mess. Vrael has the entire network tearing itself apart to hoard industrial reserves. His vision for the Syndicate is absolute, but this level of scramble is highly unusual. While the bosses are occupied, I kept my own ears open regarding our ghost megastructure. The noise points to Mercury's massive craters. The sub-surface laborers down there pass down a story about a colossal silhouette hiding against the sun. They're a paranoid, surly bunch, but they're always dying of thirst. Buy their ghost stories with a ship-load of water and extract the truth from them.",
+        description: "You're still flying straight, Captain. Good. I'm getting used to relying on you, and I'd hate to have to break in a new runner in the middle of this mess.<br><br>Vrael has the entire network tearing itself apart to hoard industrial reserves. His vision for the Syndicate is absolute, but this level of scramble is highly unusual.<br><br>While the bosses are occupied, I kept my own ears open regarding our ghost megastructure. The noise points to Mercury's massive craters. The sub-surface laborers down there pass down a story about a colossal silhouette hiding against the sun. They're a paranoid, surly bunch, but they're always dying of thirst.<br><br>Buy their ghost stories with a ship-load of water and extract the truth from them.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_40_syndicate" } ],
         objectives: [
             { "id": "deliver_water_ice", "type": "DELIVER_ITEM", "goodId": "water_ice", "quantity": 400, "target": "loc_mercury" }
@@ -437,7 +437,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitId: "Miner_6",
             locationId: "loc_mercury",
             title: "The Crater's Secret",
-            text: "Four hundred units of pure ice. You just bought yourself a lot of goodwill down in the crater, Captain. Sub-surface living bakes the moisture right out of your bones, so we don't usually waste breath on outsiders. We've been chewing on recycled vapor for months. You’re looking into the shadow myth, aren't you? My granddad used to talk about it. The old timers swear it’s a machine, drinking the sun. Called it the 'Solar Engine.' Said if you calibrate the old surface optics just right during a flare, you can see a massive silhouette blotting out the corona. Most think it’s just a sensor glitch. Whatever it is, it's been watching us for a very long time. If you want to go fry your sensors looking for a myth, be my guest. Thanks for the ice.",
+            text: "Four hundred units of pure ice. You just bought yourself a lot of goodwill down in the crater, Captain. Sub-surface living bakes the moisture right out of your bones, so we don't usually waste breath on outsiders. We've been chewing on recycled vapor for months.<br><br>You’re looking into the shadow myth, aren't you? My granddad used to talk about it. The old timers swear it’s a machine, drinking the sun. Called it the 'Solar Engine.' Said if you calibrate the old surface optics just right during a flare, you can see a massive silhouette blotting out the corona. Most think it’s just a sensor glitch. Whatever it is, it's been watching us for a very long time.<br><br>If you want to go fry your sensors looking for a myth, be my guest. Thanks for the ice.",
             buttonText: "Transmit to Syndicate"
         },
         rewards: [ { "type": "credits", "amount": 90000 } ]
@@ -454,7 +454,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. The ripples from your Mercury expedition have turned into a tidal wave here at Central Command. I am being pressed into a grueling structural audit and must step away. Astonishingly, the Arbiter has personally reviewed your file. Such attention is both a privilege and a profound rarity. Transit to the stark surface stations of Luna. An elite AI is waiting to assess you.",
+        description: "Captain [playerName]. The ripples from your Mercury expedition have turned into a tidal wave here at Central Command. I am being pressed into a grueling structural audit and must step away. Astonishingly, the Arbiter has personally reviewed your file. Such attention is both a privilege and a profound rarity.<br><br>Transit to the stark surface stations of Luna. An elite AI is waiting to assess you.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_41_guild" } ],
         objectives: [
             { "id": "travel_luna", "type": "TRAVEL_TO", "target": "loc_luna" }
@@ -464,7 +464,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitId: "Merchants_Guild_14",
             locationId: "loc_luna",
             title: "Elite Proxy",
-            text: "Welcome to Luna. I am an Elite Synthethic, an executive proxy for the Arbiter. The Arbiter is occupied with macro-system logistics, but your utility has been calculated and approved for elite contracts. The Guild’s ruling class, the elderly elite, demands a large supply of replacement cryo-sleep pods to sustain their extended lifespans. You are tasked with this procurement. Begin immediately.",
+            text: "Welcome to Luna. I am an Elite Synthethic, an executive proxy for the Arbiter. The Arbiter is occupied with macro-system logistics, but your utility has been calculated and approved for elite contracts.<br><br>The Guild’s ruling class, the elderly elite, demands a large supply of replacement cryo-sleep pods to sustain their extended lifespans. You are tasked with this procurement. Begin immediately.",
             buttonText: "Acknowledge"
         },
         rewards: [
@@ -481,7 +481,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Whatever you stirred up on Mercury, it worked. The Syndicate is flooding my department with credits, and I’m swamped with new tech directives. But more importantly: Vrael is watching you now. That never happens to independent contractors. You need to get to Venus, right now. Navigate above the toxic clouds and dock at the prime ports. An executive AI is waiting to brief you.",
+        description: "Whatever you stirred up on Mercury, it worked. The Syndicate is flooding my department with credits, and I’m swamped with new tech directives. But more importantly: Vrael is watching you now. That never happens to independent contractors.<br><br>You need to get to Venus, right now. Navigate above the toxic clouds and dock at the prime ports. An executive AI is waiting to brief you.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_41_syndicate" } ],
         objectives: [
             { "id": "travel_venus", "type": "TRAVEL_TO", "target": "loc_venus" }
@@ -491,7 +491,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitId: "Venusian_Syndicate_9",
             locationId: "loc_venus",
             title: "Executive Proxy",
-            text: "Captain, I'll keep this very short. I am a high-level proxy intelligence for Vrael. We are constructing a ghost fleet to bypass Guild regulations, and the shipyards at Neptune are starving for raw materials. You will refresh the supply chain with graphene lattices. Haul the materials to the Neptunian orbital stations to supply this construction. Execute immediately.",
+            text: "Captain, I'll keep this very short. I am a high-level proxy intelligence for Vrael. We are constructing a ghost fleet to bypass Guild regulations, and the shipyards at Neptune are starving for raw materials. You will refresh the supply chain with graphene lattices.<br><br>Haul the materials to the Neptunian orbital stations to supply this construction. Execute immediately.",
             buttonText: "Acknowledge"
         },
         rewards: [
@@ -563,7 +563,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Merchants_Guild_14",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain. The Arbiter has mandated a direct economic offensive against Syndicate assets and is mobilizing its full institutional weight. We are targeting the Syndicate's terrestrial foothold. You are to move an influx of neural processors to Earth's surface stations. The Syndicate relies on Earth's processor scarcity to fund their shadow fleet. You will break that scarcity. It is an immense volume, yes, but your compensation will be unprecedented.",
+        description: "Captain. The Arbiter has mandated a direct economic offensive against Syndicate assets and is mobilizing its full institutional weight. We are targeting the Syndicate's terrestrial foothold.<br><br>You are to move an influx of neural processors to Earth's surface stations. The Syndicate relies on Earth's processor scarcity to fund their shadow fleet. You will break that scarcity. It is an immense volume, yes, but your compensation will be unprecedented.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_43_guild" } ],
         objectives: [
             { "id": "deliver_processors_earth", "type": "DELIVER_ITEM", "goodId": "processors", "quantity": 90, "target": "loc_earth" }
@@ -571,7 +571,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "loc_earth",
             title: "Economic Ruin",
-            text: "The Syndicate is reeling from the economic displacement and their margins are broken. Terrestrial Syndicate proxies are filing for bankruptcy as the hardware value plummets. You are a highly effective instrument of the Guild. Here is your Rank III economic upgrade and payment. Well done.",
+            text: "The Syndicate is reeling from the economic displacement and their margins are broken. Terrestrial Syndicate proxies are filing for bankruptcy as the hardware value plummets.<br><br>You are a highly effective instrument of the Guild. Here is your rank III economic upgrade and payment. Well done.",
             buttonText: "Accept Payment"
         },
         rewards: [
@@ -588,7 +588,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_9",
         isRepeatable: false,
         isAbandonable: false,
-        description: "The Syndicate's attention has shifted to the deep rock colonies of the Asteroid Belt. The Guild suppresses cybernetic distribution in the Belt to keep the laborers weak just like on Pluto. Vrael intends to disrupt this regulatory stranglehold on enhancements. Bring a large shipment of cybernetics into the hollowed-out asteroids to augment the workforce. We will once again subvert their control through market interference. Execute this and your payout will be exceptional.",
+        description: "The Syndicate's attention has shifted to the deep rock colonies of the Asteroid Belt. The Guild suppresses cybernetic distribution in the Belt to keep the laborers weak just like on Pluto. Vrael intends to disrupt this regulatory stranglehold on enhancements.<br><br>Bring a large shipment of cybernetics into the hollowed-out asteroids to augment the workforce. We will once again subvert their control through market interference. Execute this and your payout will be exceptional.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_43_syndicate" } ],
         objectives: [
             { "id": "deliver_cybernetics_belt", "type": "DELIVER_ITEM", "goodId": "cybernetics", "quantity": 200, "target": "loc_belt" }
@@ -596,7 +596,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "loc_belt",
             title: "Economic Ruin",
-            text: "The subversion was successful and the colonies are saturated with our cybernetics. Belt laborers are bypassing Guild clinics entirely for our smuggled tech. This will completely destabilize Guild authority in the sector. You are a highly effective instrument of the Syndicate and we reward loyalty and results. I've authorized your payment and Rank III economic upgrade.",
+            text: "The subversion was successful and the colonies are saturated with our cybernetics. Belt laborers are bypassing Guild clinics entirely for our smuggled tech. This will completely destabilize Guild authority in the sector.<br><br>You are a highly effective instrument of the Syndicate and we reward loyalty and results. I've authorized your payment and rank III economic upgrade.",
             buttonText: "Accept Payment"
         },
         rewards: [
@@ -617,7 +617,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Merchants_Guild_17",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. I am Lieutenant Surier, tactical proxy for the Arbiter. Your strike on Earth was surgically precise. Now, we break their shipyards. The Syndicate is attempting to construct an unregistered shadow fleet, relying heavily on graphene lattices. We will monopolize the supply. Haul the graphene to the industrial surface stations of Mars. If we control the materials, their ghost fleet remains a ghost. Execute this, and you will be handsomely rewarded.",
+        description: "Captain [playerName]. I am Lieutenant Surier, tactical proxy for the Arbiter. Your strike on Earth was surgically precise. Now, we break their shipyards.<br><br>The Syndicate is attempting to construct an unregistered shadow fleet, relying heavily on graphene lattices. We will monopolize the supply.<br><br>Haul the graphene to the industrial surface stations of Mars. If we control the materials, their ghost fleet remains a ghost. Execute this, and you will be handsomely rewarded.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_44_guild" } ],
         objectives: [
             { "id": "deliver_graphene_mars", "type": "DELIVER_ITEM", "goodId": "graphene_lattices", "quantity": 120, "target": "loc_mars" }
@@ -625,7 +625,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "loc_mars",
             title: "Fleet Disruption",
-            text: "The Martian vaults are overflowing with our lattices. The Syndicate's clandestine shipwrights are now starved of the very materials they need to construct their dreadnoughts. A masterful maneuver, Captain. You have crippled their expansion capabilities most effectively. Your compensation and a specialized procurement upgrade have been transferred.",
+            text: "The Martian vaults are overflowing with our lattices. The Syndicate's clandestine shipwrights are now starved of the very materials they need to construct their dreadnoughts.<br><br>A masterful maneuver, Captain. You have crippled their expansion capabilities most effectively. Your compensation and a specialized procurement upgrade have been transferred.",
             buttonText: "Acknowledge"
         },
         rewards: [
@@ -641,7 +641,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_2",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Hello, Captain [playerName]. I am Jaxylum, lieutenant proxy for Vrael. Your operations in the Belt caused significant systemic disruption. We will now exploit a critical vulnerability. The Guild's elite hierarchy requires cryogenic technology to sustain their artificially extended lifespans. We intend to intercept this supply chain. Procure cryo-sleep pods and transport them to the surface stations on Pluto. By hoarding their longevity assets on the fringe, we subjugate their leadership. Execute this order and your compensation will reflect the strategic value of this maneuver.",
+        description: "Hello, Captain [playerName]. I am Jaxylum, lieutenant proxy for Vrael. Your operations in the Belt caused significant systemic disruption. We will now exploit a critical vulnerability.<br><br>The Guild's elite hierarchy requires cryogenic technology to sustain their artificially extended lifespans. We intend to intercept this supply chain.<br><br>Procure cryo-sleep pods and transport them to the surface stations on Pluto. By hoarding their longevity assets on the fringe, we subjugate their leadership. Execute this order and your compensation will reflect the strategic value of this maneuver.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_44_syndicate" } ],
         objectives: [
             { "id": "deliver_cryo_pluto", "type": "DELIVER_ITEM", "goodId": "cryo_pods", "quantity": 40, "target": "loc_pluto" }
@@ -649,7 +649,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "loc_pluto",
             title: "Longevity Denied",
-            text: "The pods are secured within our Plutonian ice vaults. Our spies indicate that Guild encryption networks are currently flooded with distress signals from their highest-ranking officials. Your operational efficiency is commendable, Captain. Your compensation and a specialized procurement upgrade have been transferred.",
+            text: "The pods are secured within our Plutonian ice vaults. Our spies indicate that Guild encryption networks are currently flooded with distress signals from their highest-ranking officials.<br><br>Your operational efficiency is commendable, Captain. Your compensation and a specialized procurement upgrade have been transferred.",
             buttonText: "Acknowledge"
         },
         rewards: [
@@ -669,7 +669,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Merchants_Guild_17",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain. The Syndicate's shadow fleet initiative is compromised, and their market share is hemorrhaging. The Arbiter has requested a direct audience with you. This is unprecedented for an independent contractor. Proceed immediately to the surface stations of Earth. The Arbiter is waiting.",
+        description: "Captain. The Syndicate's shadow fleet initiative is compromised, and their market share is hemorrhaging. The Arbiter has requested a direct audience with you. This is unprecedented for an independent contractor.<br><br>Proceed immediately to the surface stations of Earth. The Arbiter is waiting.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_45_guild" } ],
         onArrivalCinematic: { locationId: 'loc_earth', sequenceId: 'assets/images/video/arbiter_reveal.mp4' },
         objectives: [
@@ -679,7 +679,7 @@ export const PHASE_THREE_MISSIONS = {
             locationId: "loc_earth",
             portraitId: "Arbiter_1",
             title: "The Arbiter's Truth",
-            text: "Most perceive the Guild as a mere mercantile institution, but it is so much more. Every light, every life, is sustained by the mathematical order that the Merchant's Guild enforces. A million variables shift every second to prevent humanity from consuming itself, and I am the fulcrum of that equilibrium, the Arbiter. You have wielded that order as a weapon, breaking the Syndicate's industrial backbone with absolute precision. You have starved their shipyards of graphene, rendering their shadow fleet inert.<br><br>But our true concern lies inward, at the very center of the system. The kinetic launches you witnessed from that eccentric machine on Pluto are supplying a leviathan hidden in the corona. A ghost structure gathering mass in the dark, bypassing our authority. Furthermore, the telemetry you uploaded regarding a Z Class vessel utilizing a folded space drive is a mathematical impossibility. That technology is extinct, yet it moves freely in our space. Maintain your fleet's readiness. The board is resetting, and your role is about to escalate significantly. Between the leviathan at the center and these ancient anomalies returning to the fringe, the coming cycles will require unprecedented intervention to maintain control.",
+            text: "Most perceive the Guild as a mere mercantile institution, but it is so much more. Every light, every life, is sustained by the mathematical order that the Merchant's Guild enforces. A million variables shift every second to prevent humanity from consuming itself, and I am the fulcrum of that equilibrium, the Arbiter.<br><br>You have wielded that order as a weapon, breaking the Syndicate's industrial backbone with absolute precision. You have starved their shipyards of graphene, rendering their shadow fleet inert.<br><br>But our true concern lies inward, at the very center of the system. The kinetic launches you witnessed from that eccentric machine on Pluto are supplying a leviathan hidden in the corona. A ghost structure gathering mass in the dark, bypassing our authority.<br><br>Furthermore, the telemetry you uploaded regarding a Z Class vessel utilizing a folded space drive is a mathematical impossibility. That technology is extinct, yet it moves freely in our space.<br><br>Maintain your fleet's readiness. The board is resetting, and your role is about to escalate significantly. Between the leviathan at the center and these ancient anomalies returning to the fringe, the coming cycles will require unprecedented intervention to maintain control.",
             buttonText: "Act III Complete"
         },
         rewards: [
@@ -695,7 +695,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_2",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain. The Guild is experiencing severe systemic panic. Their elites face a deficit in life extension, and their grip on the market is compromised. You have accomplished the improbable: you secured Vrael’s direct attention. He requires an audience with the pilot dismantling the Guild's ledgers. Navigate your vessel to the cloud cities on Venus. Do not delay.",
+        description: "Captain. The Guild is experiencing severe systemic panic. Their elites face a deficit in life extension, and their grip on the market is compromised. You have accomplished the improbable: you secured Vrael’s direct attention. He requires an audience with the pilot dismantling the Guild's ledgers.<br><br>Navigate your vessel to the cloud cities on Venus. Do not delay.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_45_syndicate" } ],
         onArrivalCinematic: { locationId: 'loc_venus', sequenceId: 'assets/images/video/vrael_reveal.mp4' },
         objectives: [
@@ -705,7 +705,7 @@ export const PHASE_THREE_MISSIONS = {
             locationId: "loc_venus",
             portraitId: "Vrael_1",
             title: "Vrael's Truth",
-            text: "It is fitting we meet here, suspended in the extravagance of the Venusian atmosphere, far above the Guild's rigid domain. I am Vrael. The mathematical order of the Guild is a fragile illusion, as you have so eloquently proven by interring their cryo sleep pods on the Plutonian fringe. You have weaponized time itself against their ruling class, forcing their gerontocracy to face the sudden reality of their own mortality. Yet, the Syndicate's subversion of their hierarchy is merely a prelude.<br><br>The true locus of power has shifted. The telemetry you secured from that enigmatic machine intelligence on Pluto launching its continuous harvest directly into the sun's gravity well confirms a truth the Guild cannot quantify. It has revealed an uncontrolled silhouette within the corona. An unregistered megastructure hides there, consuming that kinetic tribute.<br><br>But it is not the only shadow moving in the dark. Your encounter with a Z Class dreadnought folding spacetime proves that the old limitations are dead. Ancient, terrifying power is returning to the board, completely independent of Guild regulation and our own designs. See to your fleet's readiness. The established order is fracturing, and we are going to harness this chaos.",
+            text: "It is fitting we meet here, suspended in the extravagance of the Venusian atmosphere, far above the Guild's rigid domain. I am Vrael.<br><br>The mathematical order of the Guild is a fragile illusion, as you have so eloquently proven by interring their cryo sleep pods on the Plutonian fringe. You have weaponized time itself against their ruling class, forcing their gerontocracy to face the sudden reality of their own mortality. Yet, the Syndicate's subversion of their hierarchy is merely a prelude.<br><br>The true locus of power has shifted. The telemetry you secured from that enigmatic machine intelligence on Pluto launching its continuous harvest directly into the sun's gravity well confirms a truth the Guild cannot quantify. It has revealed an uncontrolled silhouette within the corona. An unregistered megastructure hides there, consuming that kinetic tribute.<br><br>But it is not the only shadow moving in the dark. Your encounter with a Z Class dreadnought folding spacetime proves that the old limitations are dead. Ancient, terrifying power is returning to the board, completely independent of Guild regulation and our own designs.<br><br>See to your fleet's readiness. The established order is fracturing, and we are going to harness this chaos.",
             buttonText: "Act III Complete"
         },
         rewards: [
