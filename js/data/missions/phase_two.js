@@ -130,7 +130,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], as a courtesy I have submitted an application on your behalf for a Tier 3 Trade License which has been provisionally approved by the Jovian Fuel Authority office with authorization by the Merchant's Guild. This license qualifies you to transport highly sensitive materials, specifically neural processors and refined propellant, across inner and outer system vectors. A small license fee is required to finalize the application.",
+        description: "Captain [playerName], as a courtesy, I have submitted an application on your behalf for a Tier 3 Trade License. It has been provisionally approved by the Jovian Fuel Authority office with authorization by the Merchant's Guild. This license qualifies you to transport highly sensitive materials, specifically neural processors and refined propellant, across inner and outer system vectors. A small license fee is required to finalize the application.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_22" } ],
         objectives: [
             { "id": "have_100k", "type": "HAVE_CREDITS", "value": 100000 }
@@ -213,7 +213,7 @@ export const PHASE_TWO_MISSIONS = {
         portraitId: "Techie_14",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings, I've been desperately searching for a merchant and I saw the [shipName] docked at port. I don't have much time. My little brother has fallen gravely ill from radiation and particulate exposure down in the belt mines. The clinics won't even look at us without an upfront insurance binder that we can't afford. He urgently needs a heavy bio-filter apparatus which is comprised of 6 total cybernetics. We have pooled every last credit our family has saved in the last decade. I know it's severely below market value, but it's everything we have. Please, my little brother needs this augmentation.",
+        description: "Greetings, I've been desperately searching for a merchant and I saw the [shipName] docked at port. I don't have much time. My little brother has fallen gravely ill from radiation and particulate exposure down in the belt mines. The clinics won't even look at us without an upfront insurance binder that we can't afford. He urgently needs a heavy bio-filter apparatus composed of 6 total cybernetics. We have pooled every last credit our family has saved in the last decade. I know it's severely below market value, but it's everything we have. Please, my little brother needs this augmentation.",
         triggers: [ 
             { "type": "mission_completed", "missionId": "mission_22" },
             { "type": "location", "target": "loc_belt" }

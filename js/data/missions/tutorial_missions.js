@@ -35,7 +35,7 @@ export const TUTORIAL_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Your financial obligations and transaction history are logged in the <b>Finance</b> tab. Note that your debt is due within three years. The Guild does not grant extensions and your <i>credits will be garnished</i> eventually if you fail to pay in time.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
+        description: "Your financial obligations and transaction history are logged in the <b>Finance</b> tab. Note that your debt is due within three years. The Guild does not grant extensions. Your <i>credits will be garnished</i> eventually if you fail to pay in time.<br><br>Take a look at the finance screen to satisfy this mission objective, then return here to the mission screen to complete it.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_01" }
         ],

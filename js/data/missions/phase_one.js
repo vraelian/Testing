@@ -13,7 +13,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when travel takes months!<br><br><b>Do not wait</b> - repay your debt to the Merchant’s Guild <i>as soon as possible</i>. To help, I have some valuable intelligence to share that you might find to be lucrative.<br><br>Review the intel in the Data tab and <b>leverage a unique opportunity on Earth to your benefit</b>. Your success will reflect well on me with the guild.",
+        description: "Captain [playerName], I must remind you that your <b>loan deadline is in three short years</b>. This is no time at all when travel takes months!<br><br><b>Do not wait</b> - repay your debt to the Merchant’s Guild <i>as soon as possible</i>. To help, I have some valuable intelligence to share that you might find lucrative.<br><br>Review the intel in the Data tab and <b>leverage a unique opportunity on Earth to your benefit</b>. Your success will reflect well on me with the guild.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_tutorial_09" }
         ],
@@ -98,7 +98,7 @@ export const PHASE_ONE_MISSIONS = {
         portraitId: "AI_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Greetings, Captain.<br><br>I represent a medical manufacturing collective on Earth. We are experiencing a critical shortage of plasteel which is required for high-end cybernetic enhancements.<br><br>My client is seeking a reliable supplier. If you can <b>procure the plasteel yourself and deliver it to our Earth facilities,</b> you will be generously compensated.<br><br>We will have more work for you if you prove to be reliable.",
+        description: "Greetings, Captain.<br><br>I represent a medical manufacturing collective on Earth. We are experiencing a critical shortage of plasteel, which is required for high-end cybernetic enhancements.<br><br>My client is seeking a reliable supplier. If you can <b>procure the plasteel yourself and deliver it to our Earth facilities,</b> you will be generously compensated.<br><br>We will have more work for you if you prove to be reliable.",
         triggers: [
             { "type": "mission_completed", "missionId": "mission_10" }
         ],
