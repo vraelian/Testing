@@ -80,7 +80,6 @@ export class UIMissionControl {
     renderStickyBar(gameState) {
         const stickyBarEl = this.manager.cache.missionStickyBar;
 
-        // Task B Fix: Global suppression lock based on body class - bypasses 600ms fade entirely
         if (document.body.classList.contains('cinematic-active')) {
             if (stickyBarEl) {
                 stickyBarEl.style.transition = 'none';
@@ -95,7 +94,6 @@ export class UIMissionControl {
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
 
-        // Hide if a travel sequence is active, launch modal is open, or on hangar screen
         const launchModal = this.manager.cache.launchModal;
         const isLaunchModalOpen = launchModal && !launchModal.classList.contains('hidden');
 
@@ -112,46 +110,77 @@ export class UIMissionControl {
             
             const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
             
-            // Immediately initiate fade out if the mission has no objectives (and isn't in pickup phase)
-            if (!isLogisticsPickupPhase && (!mission.objectives || mission.objectives.length === 0)) {
+            if (!isLogisticsPickupPhase && (!mission.objectives || mission.objectives.length === 0) && !progress.isCompletable) {
                 this._hideStickyBarWithFade(stickyBarEl);
                 return;
             }
-            
-            let objKey;
-            let current = 0;
-            let target = 1;
-            let firstObj = null;
-            let customObjectiveLabel = null;
-            
-            // Logistics Phase Intercept
+
+            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+
+            // 1. IS READY TO COMPLETE
+            // Completely intercepts logic rendering loop to force specific syntax
+            if (progress.isCompletable && !isLogisticsPickupPhase) {
+                const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === gameState.currentLocationId;
+                
+                if (isAtCorrectLocation) {
+                    objectiveTextEl.innerHTML = `READY TO COMPLETE!`;
+                    objectiveTextEl.style.width = '100%';
+                    objectiveTextEl.style.textAlign = 'center';
+                    objectiveProgressEl.innerHTML = ``;
+                    objectiveProgressEl.style.display = 'none';
+                    contentEl.className = `sticky-content ${hostClass} mission-turn-in flex items-center justify-center`;
+                    contentEl.style.setProperty('--sticky-progress', `100%`);
+                } else {
+                    const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
+                    objectiveTextEl.innerHTML = `RETURN TO ${locName.toUpperCase()}`;
+                    objectiveTextEl.style.width = '100%';
+                    objectiveTextEl.style.textAlign = 'center';
+                    objectiveProgressEl.innerHTML = ``;
+                    objectiveProgressEl.style.display = 'none';
+                    contentEl.className = `sticky-content ${hostClass} flex items-center justify-center`;
+                    contentEl.style.setProperty('--sticky-progress', `100%`);
+                }
+                stickyBarEl.style.transition = 'none';
+                stickyBarEl.style.display = 'block';
+                stickyBarEl.style.opacity = '1';
+                return; // EARLY EXIT: Halts further objective evaluation
+            }
+
+            // 2. IS LOGISTICS PICKUP PHASE
             if (isLogisticsPickupPhase) {
                 const pickupLocName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'Unknown';
-                let totalCargo = 0;
-                mission.deferredCargo.forEach(c => totalCargo += c.quantity);
-
                 if (gameState.currentLocationId === mission.pickupLocationId) {
-                    firstObj = { type: 'LOGISTICS_LOAD' };
-                    customObjectiveLabel = `Load up cargo for delivery`;
-                    current = 0;
-                    target = totalCargo;
+                    objectiveTextEl.innerHTML = `Load up cargo for delivery`;
+                    objectiveProgressEl.innerHTML = `[AWAITING]`;
                 } else {
-                    firstObj = { type: 'TRAVEL_TO', target: mission.pickupLocationId };
-                    customObjectiveLabel = `Travel to ${pickupLocName}`;
-                    current = 0;
-                    target = 1;
+                    objectiveTextEl.innerHTML = `Travel to ${pickupLocName}`;
+                    objectiveProgressEl.innerHTML = `[EN ROUTE]`;
                 }
-            } else if (mission.objectives) {
-                // Find first uncompleted AND UNLOCKED objective
+                
+                // RESET ALIGNMENT
+                objectiveTextEl.style.width = '';
+                objectiveTextEl.style.textAlign = '';
+                objectiveProgressEl.style.display = '';
+
+                contentEl.className = `sticky-content ${hostClass}`;
+                contentEl.style.setProperty('--sticky-progress', `0%`);
+                
+                stickyBarEl.style.transition = 'none';
+                stickyBarEl.style.display = 'block';
+                stickyBarEl.style.opacity = '1';
+                return;
+            }
+
+            // 3. INCOMPLETE OBJECTIVE
+            let firstObj = null;
+            if (mission.objectives && mission.objectives.length > 0) {
                 firstObj = mission.objectives.find(obj => {
-                    // Check for Sequential Dependency Gating
                     if (obj.dependsOn) {
                         const depProgress = progress.objectives[obj.dependsOn];
                         if (!depProgress || depProgress.current < depProgress.target) {
-                            return false; // Objective is locked, skip rendering it to the sticky bar
+                            return false; 
                         }
                     }
-
                     const localKey = obj.id || obj.goodId || obj.target;
                     const pObj = progress.objectives[localKey];
                     const locCurrent = pObj ? pObj.current : 0;
@@ -164,50 +193,28 @@ export class UIMissionControl {
                     }
                     return locCurrent < locTarget;
                 });
-                
-                // Synthesize travel objective if all objectives are met but we are at the wrong location
-                if (!firstObj) {
-                    const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === gameState.currentLocationId;
-                    
-                    if (!isAtCorrectLocation) {
-                        firstObj = { type: 'travel_to', target: mission.completion.locationId };
-                        objKey = 'travel_fallback';
-                        current = 0;
-                        target = 1;
-                    } else {
-                        // Fully ready to turn in
-                        firstObj = mission.objectives[mission.objectives.length - 1];
-                    }
-                }
-
-                if (objKey !== 'travel_fallback') {
-                    objKey = firstObj.id || firstObj.goodId || firstObj.target;
-                    if (progress.objectives[objKey]) {
-                        current = progress.objectives[objKey].current;
-                        target = progress.objectives[objKey].target;
-                    } else {
-                         current = 0;
-                         target = firstObj.quantity || firstObj.value || 1;
-                    }
-                }
             }
 
-            const objectiveLabel = customObjectiveLabel || this._getObjectiveLabel(firstObj);
-            
-            let displayStr = `[${current}/${target}]`;
-            let percent = 0;
-            
             if (firstObj) {
-                if (firstObj.type === 'LOGISTICS_LOAD') {
-                    percent = 0;
+                const objKey = firstObj.id || firstObj.goodId || firstObj.target;
+                let current = 0;
+                let target = firstObj.quantity || firstObj.value || 1;
+                
+                if (progress.objectives[objKey]) {
+                    current = progress.objectives[objKey].current;
+                    target = progress.objectives[objKey].target;
                 }
-                else if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
+                
+                const objectiveLabel = this._getObjectiveLabel(firstObj);
+                let displayStr = `[${current}/${target}]`;
+                let percent = Math.min(100, (current / target) * 100);
+
+                if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(firstObj.type)) {
                     displayStr = `[${current}/${target}]`;
                     percent = Math.min(100, (current / (target || 100)) * 100);
                 }
                 else if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(firstObj.type)) {
                     displayStr = `[ <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(current)} / ${formatShortCredits(target)}</span> ]`;
-                    percent = Math.min(100, (current / target) * 100);
                 }
                 else if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(firstObj.type)) {
                     const comparator = firstObj.comparator || '>=';
@@ -227,33 +234,23 @@ export class UIMissionControl {
                     displayStr = `[${formatCredits(current)}]`;
                     percent = current <= target ? 100 : 0;
                 }
-                else {
-                    percent = Math.min(100, (current / target) * 100);
-                }
+
+                // RESET ALIGNMENT
+                objectiveTextEl.style.width = '';
+                objectiveTextEl.style.textAlign = '';
+                objectiveProgressEl.style.display = '';
+
+                objectiveTextEl.innerHTML = `${objectiveLabel}`;
+                objectiveProgressEl.innerHTML = displayStr;
+                contentEl.className = `sticky-content ${hostClass}`;
+                contentEl.style.setProperty('--sticky-progress', `${percent}%`);
+                
+                stickyBarEl.style.transition = 'none';
+                stickyBarEl.style.display = 'block';
+                stickyBarEl.style.opacity = '1';
+            } else {
+                this._hideStickyBarWithFade(stickyBarEl);
             }
-
-            // Inject as HTML to support the cyan credit styling
-            objectiveTextEl.innerHTML = `${objectiveLabel}`;
-            objectiveProgressEl.innerHTML = displayStr;
-
-            const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
-            
-            const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === gameState.currentLocationId;
-            const isReady = progress.isCompletable && isAtCorrectLocation && !isLogisticsPickupPhase;
-            
-            let turnInClass = isReady ? 'mission-turn-in' : '';
-            
-            contentEl.className = `sticky-content ${hostClass} ${turnInClass}`;
-            contentEl.style.background = '';
-            contentEl.style.setProperty('--sticky-progress', `${percent}%`);
-
-            // Apply solid visibility settings
-            stickyBarEl.style.transition = 'none';
-            stickyBarEl.style.opacity = '1';
-            stickyBarEl.style.filter = 'none';
-            stickyBarEl.style.webkitFilter = 'none';
-            stickyBarEl.style.display = 'block';
-            stickyBarEl.style.pointerEvents = 'auto';
         } else {
             this._hideStickyBarWithFade(stickyBarEl);
         }
@@ -291,7 +288,7 @@ export class UIMissionControl {
              return `${action} ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-             if (omitLocation) return `ESTABLISH PRESENCE`;
+             if (typeof omitLocation !== 'undefined' && omitLocation) return `ESTABLISH PRESENCE`;
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
@@ -311,6 +308,9 @@ export class UIMissionControl {
         }
         if (['own_ship_class', 'OWN_SHIP_CLASS'].includes(obj.type)) {
             return `Acquire Class ${obj.target} Vessel`;
+        }
+        if (['own_spare_ships', 'OWN_SPARE_SHIPS'].includes(obj.type)) {
+            return `Acquire Reserve Hull`;
         }
         if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
             return `Install Rank ${obj.rank} SHIP UPGRADE`;
@@ -638,7 +638,7 @@ export class UIMissionControl {
                         return true;
                     }).map(obj => {
                         const delay = animDelayIdx++ * 0.05;
-                        let text = this._getObjectiveDescription(obj, false);
+                        let text = this._getObjectiveLabel(obj);
                         
                         if (!['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
                             text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
@@ -877,7 +877,7 @@ export class UIMissionControl {
                         depositButtonHtml = `<button id="mission-load-cargo-btn" data-mission-id="${mission.id}" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">LOAD CARGO</button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${actionButtonHtml}${navButtonHtml}`;
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-800/80" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${actionButtonHtml}${navButtonHtml}`;
 
                     // Bind ACTION button listeners dynamically
                     const actionBtns = modal.querySelectorAll('.mission-action-execute-btn');

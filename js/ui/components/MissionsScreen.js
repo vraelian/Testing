@@ -90,10 +90,11 @@ export function renderMissionsScreen(gameState, missionService) {
     const themeClass = THEME_MAP[currentLocationId] || DEFAULT_THEME;
     
     // Inject localized animation keyframes for objective scrolling
+    // Keyframes mathematically calculated for a 1-second pause at 0% out of a 10.9-second duration
     const styleInjection = `
         <style>
             @keyframes missionObjTicker {
-                0% { transform: translateX(0%); }
+                0%, 9.17% { transform: translateX(0%); }
                 100% { transform: translateX(-50%); }
             }
         </style>
@@ -249,6 +250,7 @@ export function renderMissionsScreen(gameState, missionService) {
         // --- OBJECTIVES LOGIC ---
         let objectivesHtml = '';
         let actionButtonHtml = '';
+        const scrollSpacer = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;'; // Seamless alignment spacer
 
         if (isLogisticsPickupPhase) {
             objectivesHtml = '<div class="mission-objectives-list">';
@@ -258,14 +260,14 @@ export function renderMissionsScreen(gameState, missionService) {
                 const descText = 'LOAD FREIGHT';
                 const valueText = 'AWAITING';
                 const isLong = descText.length > 25;
-                const displayDesc = isLong ? `${descText} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${descText}` : descText;
+                const displayDesc = isLong ? `${descText}${scrollSpacer}${descText}${scrollSpacer}` : descText;
                 
                 objectivesHtml += `
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 100%; background: rgba(245, 158, 11, 0.2);"></div>
                         <div class="objective-text" style="color: #f59e0b;">
                             <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
-                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 10.9s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
                                     ${displayDesc}
                                 </span>
                             </div>
@@ -284,14 +286,14 @@ export function renderMissionsScreen(gameState, missionService) {
                 const descText = `TRAVEL TO ${locName.toUpperCase()}`;
                 const valueText = 'EN ROUTE';
                 const isLong = descText.length > 25;
-                const displayDesc = isLong ? `${descText} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${descText}` : descText;
+                const displayDesc = isLong ? `${descText}${scrollSpacer}${descText}${scrollSpacer}` : descText;
                 
                 objectivesHtml += `
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 0%"></div>
                         <div class="objective-text">
                             <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
-                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 10.9s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
                                     ${displayDesc}
                                 </span>
                             </div>
@@ -303,6 +305,10 @@ export function renderMissionsScreen(gameState, missionService) {
             objectivesHtml += '</div>';
         } else if (mission.objectives && mission.objectives.length > 0) {
             objectivesHtml = '<div class="mission-objectives-list">';
+            
+            let completedObjHtml = '';
+            let pendingObjHtml = '';
+
             mission.objectives.forEach(obj => {
                 // SEQUENTIAL GATING: Hide objective if its dependency isn't met
                 if (obj.dependsOn) {
@@ -416,16 +422,17 @@ export function renderMissionsScreen(gameState, missionService) {
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
 
+                const isCompleted = percent >= 100;
                 const tallClass = !progress.isCompletable ? 'objective-row-tall' : '';
                 const isLongText = desc.length > 25;
-                const displayDesc = isLongText ? `${desc} &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; ${desc}` : desc;
+                const displayDesc = isLongText ? `${desc}${scrollSpacer}${desc}${scrollSpacer}` : desc;
 
-                objectivesHtml += `
-                    <div class="objective-row-filled ${tallClass}">
+                const objRowHtml = `
+                    <div class="objective-row-filled ${tallClass} ${isCompleted ? 'objective-completed' : ''}">
                         <div class="objective-fill-bar" style="width: ${percent}%"></div>
                         <div class="objective-text">
                             <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
-                                <span style="display: inline-block; ${isLongText ? 'animation: missionObjTicker 12s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
+                                <span style="display: inline-block; ${isLongText ? 'animation: missionObjTicker 10.9s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
                                     ${displayDesc}
                                 </span>
                             </div>
@@ -433,7 +440,15 @@ export function renderMissionsScreen(gameState, missionService) {
                         </div>
                     </div>
                 `;
+
+                if (isCompleted) {
+                    completedObjHtml += objRowHtml;
+                } else {
+                    pendingObjHtml += objRowHtml;
+                }
             });
+            
+            objectivesHtml += completedObjHtml + pendingObjHtml;
             objectivesHtml += '</div>';
         }
 
@@ -522,7 +537,7 @@ export function renderMissionsScreen(gameState, missionService) {
         ${styleInjection}
         <div class="flex flex-col h-full ${themeClass} missions-screen-container">
             ${renderTabs()}
-            <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar px-2">
+            <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar">
                 ${contentHtml}
             </div>
         </div>
