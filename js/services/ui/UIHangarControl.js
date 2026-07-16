@@ -460,7 +460,14 @@ export class UIHangarControl {
             setTimeout(() => {
                 clearThemeFromModal();
                 closeHandler();
-                if (onConfirm) onConfirm(indexToRemove);
+                
+                // Force DOM layout recalculation and paint before resolving the sequence.
+                // This prevents batched CSS transition calculations from skipping the installation progress bar animation.
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (onConfirm) onConfirm(indexToRemove);
+                    });
+                });
             }, 500);
         };
 

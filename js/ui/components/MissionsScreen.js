@@ -132,6 +132,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 const t = r.type.toLowerCase();
                 if (t === 'deduct_credits') return false;
                 if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                if (t === 'trigger_system_state' || t === 'end_system_state') return false;
                 return true;
             });
             
@@ -187,7 +188,7 @@ export function renderMissionsScreen(gameState, missionService) {
             }
         }
         
-        const rewardText = rewardTextParts.join(', ');
+        const rewardText = rewardTextParts.join(',<br>');
 
         return `
             <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">

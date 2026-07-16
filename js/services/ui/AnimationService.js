@@ -181,6 +181,9 @@ export async function playBankruptcyBlackout(callback) {
  * @returns {Promise<void>} Resolves when the 2-second fade-in completes.
  */
 export async function startLicenseAnimation(tierNum = 2) {
+    // Engage global DOM lock for background elements
+    document.body.classList.add('cinematic-active');
+
     let overlay = document.getElementById('license-cinematic-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -190,7 +193,7 @@ export async function startLicenseAnimation(tierNum = 2) {
         document.body.appendChild(overlay);
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor', 'mission-sticky-bar'];
 
     const hideAndCache = (el) => {
         if (el && el.style.display !== 'none') {
@@ -285,7 +288,7 @@ export async function endLicenseAnimation(tierNum = 2) {
         licenseUIObserver = null;
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor', 'mission-sticky-bar'];
     sideUIElements.forEach(id => {
         const el = document.getElementById(id);
         if (el && el.dataset.cachedDisplay !== undefined) {
@@ -302,6 +305,9 @@ export async function endLicenseAnimation(tierNum = 2) {
             delete btn.dataset.isDynamicHelpBtn;
         }
     });
+
+    // Release global DOM lock before final fade
+    document.body.classList.remove('cinematic-active');
 
     // Fade out the white flash to transparent over 1 second
     const fadeOut = whiteFlash.animate(

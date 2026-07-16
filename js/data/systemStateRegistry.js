@@ -251,5 +251,19 @@ export const SYSTEM_STATE_REGISTRY = {
             localTargetStockMod: 0.15,
             localBasePriceMod: 0.30
         }
+    },
+    'SYSTEMIC_BLOCKADE': {
+        name: 'Systemic Blockade',
+        archetype: 'Extreme (System-Wide Bear Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A total system-wide blockade has been established. Standard market traffic is frozen, and heavy interceptor patrols are sweeping all major flight vectors."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">All standard commodity prices have crashed by 40%, and hostile encounter rates are doubled system-wide.</span>",
+        modifiers: {
+            basePriceMod: 0.60,
+            hostileEncounterMod: 2.0,
+            excludeTier: 5
+        }
     }
 };

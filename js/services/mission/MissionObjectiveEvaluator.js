@@ -298,6 +298,15 @@ export class MissionObjectiveEvaluator {
             }
 
             // --- PLAYER STATE CHECKS ---
+            case 'own_spare_ships':
+            case 'OWN_SPARE_SHIPS': {
+                const spareCount = Math.max(0, gameState.player.ownedShipIds.length - 1);
+                current = spareCount;
+                target = val !== undefined ? val : 1;
+                comparator = '>=';
+                break;
+            }
+
             case 'have_ship':
             case 'OWN_SHIP': {
                 const requiredShipId = objective.target;

@@ -135,8 +135,8 @@ export class MarketService {
 
     /**
      * Gets the base unit price for a commodity at a location without volumetric slippage.
-     * Checks for active intel deal overrides, applies delays to extreme states, 
-     * and optionally applies player-specific modifiers (e.g. Signal Hacker).
+     * Checks for active intel deal overrides, applies instantaneous System State filters, 
+     * applies extreme pressure delays, and optionally applies player-specific modifiers (e.g. Signal Hacker).
      * @param {string} locationId The ID of the location.
      * @param {string} commodityId The ID of the commodity.
      * @param {boolean} [applyModifiers=false] If true, applies active ship upgrade modifiers.
@@ -163,25 +163,44 @@ export class MarketService {
                 basePrice *= 0.25;
             }
         }
-        
-        // Direct System State commodity price overrides
-        if (this._currentSystemState?.modifiers?.commodity?.[commodityId]?.price) {
-            basePrice *= this._currentSystemState.modifiers.commodity[commodityId].price;
-        }
 
         let price = basePrice;
 
         // 1. Intel Deal Override Check
+        let hasIntelOverride = false;
         if (deal &&
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
             price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+            hasIntelOverride = true;
+        }
+
+        // 2. V3 System State Immediate Application (Bypassed if under strict Intel Deal)
+        if (!hasIntelOverride) {
+            const systemState = this.gameState.systemStates || this.gameState.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+            const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
+
+            if (activeStateDef && activeStateDef.modifiers) {
+                const mods = activeStateDef.modifiers;
+                
+                // Global Commodity Specific Inflation
+                if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
+                    price *= mods.basePriceInflate;
+                }
+                
+                // Targeted Location Modifiers (Crash, Boom, etc.)
+                if (isTargetLocation) {
+                    if (mods.localBasePriceInflate) price *= mods.localBasePriceInflate;
+                    if (mods.localBasePriceMod) price *= mods.localBasePriceMod;
+                }
+            }
         }
 
         // Station Quirks (Price Boosts)
         price = this._applyStationQuirks(price, locationId, commodityId);
 
-        // 2. Upgrade Modifiers (Signal Hacker, etc.)
+        // 3. Upgrade Modifiers (Signal Hacker, etc.)
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
@@ -300,11 +319,8 @@ export class MarketService {
         const activeDeal = this.gameState.activeIntelDeal;
         const systemState = this.gameState.systemStates || this.gameState.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-        const targetLocationsSet = new Set(systemState?.targetLocations || []);
         
         DB.MARKETS.forEach(location => {
-            const isTargetLocation = targetLocationsSet.has(location.id);
-            
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
@@ -328,8 +344,8 @@ export class MarketService {
                     const finalOverridePrice = Math.max(1, Math.round(fluctuatedPrice));
                     this.gameState.market.prices[location.id][commodity.id] = finalOverridePrice;
                     
-                    // Phase 4: Inline History Tracking (Bypasses redundant getPrice execution)
-                    this._logInlineHistory(location.id, commodity.id, this._applyStationQuirks(finalOverridePrice, location.id, commodity.id));
+                    // Phase 4: Inline History Tracking (Uses the pure execution logic for history)
+                    this._logInlineHistory(location.id, commodity.id, this.getPrice(location.id, commodity.id, false));
                     return; 
                 }
 
@@ -338,24 +354,16 @@ export class MarketService {
                 const avg = this.gameState.market.galacticAverages[commodity.id];
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
 
-                let basePriceMod = 1.0;
                 let activeStateMeanReversionMod = 1.0;
 
                 if (activeStateDef && activeStateDef.modifiers) {
                     const mods = activeStateDef.modifiers;
                     if (mods.meanReversionMod) activeStateMeanReversionMod = mods.meanReversionMod;
-                    
-                    if (mods.affectedCommodities?.includes(commodity.id) && mods.basePriceInflate) {
-                        basePriceMod *= mods.basePriceInflate;
-                    }
-                    if (isTargetLocation) {
-                        if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
-                        if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
-                    }
                 }
 
                 const targetPriceOffset = (1.0 - modifier) * avg;
-                const localBaseline = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+                // Core baseline remains un-modified by states to allow snapping back to reality when states end
+                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
                 if (location.id === LOCATION_IDS.EXCHANGE) volatility *= 3.0; 
@@ -403,8 +411,9 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = finalRoundedPrice;
                 
-                // Phase 4: Inline History Tracking (Bypasses redundant getPrice execution)
-                this._logInlineHistory(location.id, commodity.id, this._applyStationQuirks(finalRoundedPrice, location.id, commodity.id));
+                // Fetch the true display price (fully augmented by states and quirks) for the chart history
+                const displayPrice = this.getPrice(location.id, commodity.id, false);
+                this._logInlineHistory(location.id, commodity.id, displayPrice);
 
                 // TELEMETRY: Gated execution
                 if (this.gameState.uiState?.enableEconomicTelemetry) {
@@ -764,6 +773,9 @@ export class MarketService {
         });
     }
 
+    /**
+     * Gets the pure, un-modified baseline price for the commodity at a location.
+     */
     getLocalTargetPrice(locationId, commodityId) {
         const location = this._getMarket(locationId);
         if (!location) return 0;
@@ -771,25 +783,8 @@ export class MarketService {
         const avg = this.gameState.market.galacticAverages[commodityId] || 0;
         const modifier = location.availabilityModifier?.[commodityId] ?? 1.0;
         
-        // Evaluate System States
-        const systemState = this.gameState.systemStates || this.gameState.systemState;
-        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-        const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
-
-        let basePriceMod = 1.0;
-        if (activeStateDef && activeStateDef.modifiers) {
-            const mods = activeStateDef.modifiers;
-            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
-                basePriceMod *= mods.basePriceInflate;
-            }
-            if (isTargetLocation) {
-                if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
-                if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
-            }
-        }
-
         const targetPriceOffset = (1.0 - modifier) * avg;
-        return (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+        return avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
     }
 
     getGlutThreshold(locationId, commodityId) {
@@ -833,16 +828,31 @@ export class MarketService {
             historicalData.push({ day: currentDay, price: liveDisplayPrice, isLocked: false });
         }
         
-        const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
+        const underlyingBaseline = this.getLocalTargetPrice(locationId, commodityId);
         const location = this._getMarket(locationId);
         
-        // Extract systemic mods for forward-simulation
+        // Calculate the EFFECTIVE baseline that the true display price is targeting
+        let effectiveBaseline = underlyingBaseline;
+        
         const systemState = this.gameState.systemStates || this.gameState.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
+
         let activeStateMeanReversionMod = 1.0;
-        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.meanReversionMod) {
-            activeStateMeanReversionMod = activeStateDef.modifiers.meanReversionMod;
+
+        if (activeStateDef && activeStateDef.modifiers) {
+            const mods = activeStateDef.modifiers;
+            if (mods.meanReversionMod) activeStateMeanReversionMod = mods.meanReversionMod;
+            
+            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
+                effectiveBaseline *= mods.basePriceInflate;
+            }
+            if (isTargetLocation) {
+                if (mods.localBasePriceInflate) effectiveBaseline *= mods.localBasePriceInflate;
+                if (mods.localBasePriceMod) effectiveBaseline *= mods.localBasePriceMod;
+            }
         }
+        effectiveBaseline = this._applyStationQuirks(effectiveBaseline, locationId, commodityId);
 
         let meanReversion = (GAME_RULES.MEAN_REVERSION_STRENGTH || 0.05) * activeStateMeanReversionMod;
         if (location?.ecoProfile?.meanReversionMod) meanReversion *= location.ecoProfile.meanReversionMod;
@@ -852,7 +862,7 @@ export class MarketService {
         // Holt's Double Exponential Smoothing (Baseline trend anchor)
         const alpha = 0.3;
         const beta = 0.15;
-        let S = historicalData.length > 0 ? historicalData[0].price : localBaseline;
+        let S = historicalData.length > 0 ? historicalData[0].price : effectiveBaseline;
         let T = historicalData.length > 1 ? historicalData[1].price - historicalData[0].price : 0;
         
         for (let i = 1; i < historicalData.length; i++) {
@@ -875,7 +885,20 @@ export class MarketService {
         const commodity = this._getCommodity(commodityId);
         const baseMin = commodity ? commodity.basePriceRange[0] : 1;
         const tier = commodity ? commodity.tier : 1;
-        const intrinsicFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
+        
+        // Floor should technically be modified by states and quirks so lines don't cross zero visually
+        let effectiveFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
+        if (activeStateDef && activeStateDef.modifiers) {
+            const mods = activeStateDef.modifiers;
+            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
+                effectiveFloor *= mods.basePriceInflate;
+            }
+            if (isTargetLocation) {
+                if (mods.localBasePriceInflate) effectiveFloor *= mods.localBasePriceInflate;
+                if (mods.localBasePriceMod) effectiveFloor *= mods.localBasePriceMod;
+            }
+        }
+        effectiveFloor = this._applyStationQuirks(effectiveFloor, locationId, commodityId);
         
         let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY || 0.05;
         if (commodityMods && commodityMods.volatility_mult) {
@@ -891,10 +914,10 @@ export class MarketService {
             // Forward simulate market pressure impacts explicitly 7 days out
             let pressureEffect = 0;
             if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
-                 pressureEffect = (localBaseline * simPressure * -1) * 0.50; // PLAYER_PRESSURE_STRENGTH
+                 pressureEffect = (effectiveBaseline * simPressure * -1) * 0.50; // PLAYER_PRESSURE_STRENGTH
             }
 
-            let reversionEffect = (localBaseline - simPrice) * meanReversion;
+            let reversionEffect = (effectiveBaseline - simPrice) * meanReversion;
 
             simPrice += (reversionEffect + pressureEffect + currentT);
             
@@ -911,25 +934,20 @@ export class MarketService {
             }
             
             // Widening variance for the cone
-            let variance = (volatility * localBaseline * Math.pow(i, 1.2)) * 0.25; 
+            let variance = (volatility * effectiveBaseline * Math.pow(i, 1.2)) * 0.25; 
             
             let upper = simPrice + variance;
             let lower = simPrice - variance;
             
             // Absolute economic limit clamping for the lower bound cone
-            if (lower < intrinsicFloor) lower = intrinsicFloor;
-            let clampedMedianPrice = Math.max(intrinsicFloor, simPrice);
-
-            // Ensure the SVG projected data matches the visual quirk modifications
-            let displayProjPrice = this._applyStationQuirks(clampedMedianPrice, locationId, commodityId);
-            let displayUpper = this._applyStationQuirks(upper, locationId, commodityId);
-            let displayLower = this._applyStationQuirks(lower, locationId, commodityId);
+            if (lower < effectiveFloor) lower = effectiveFloor;
+            let clampedMedianPrice = Math.max(effectiveFloor, simPrice);
             
             projection.push({
                 day: projDay,
-                price: Math.round(displayProjPrice),
-                upper: Math.round(displayUpper),
-                lower: Math.round(displayLower),
+                price: Math.round(clampedMedianPrice),
+                upper: Math.round(upper),
+                lower: Math.round(lower),
                 isLocked: false
             });
         }

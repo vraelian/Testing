@@ -150,6 +150,38 @@ export class TravelService {
         }
 
         const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
+        
+        // --- MISSION 53 ON-ROUTE INTERCEPTION HOOK ---
+        const activeMissions = state.missions.activeMissionIds || [];
+        if (activeMissions.includes('mission_53_guild') || activeMissions.includes('mission_53_syndicate')) {
+            const mId = activeMissions.includes('mission_53_guild') ? 'mission_53_guild' : 'mission_53_syndicate';
+            const mDef = DB.MISSIONS[mId];
+            const mProg = state.missions.missionProgress[mId];
+            
+            if (mDef && mProg && (!this.gameState.player.storyFlags || !this.gameState.player.storyFlags.mission_53_intercepted)) {
+                let completedCount = 0;
+                let finalTarget = null;
+                mDef.objectives.forEach(obj => {
+                    const objKey = obj.id || obj.goodId || obj.target;
+                    const oProg = mProg.objectives[objKey];
+                    if (oProg && oProg.current >= oProg.target) {
+                        completedCount++;
+                    } else {
+                        finalTarget = obj.target;
+                    }
+                });
+                
+                if (completedCount === mDef.objectives.length - 1 && locationId === finalTarget) {
+                    if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
+                    // Insert the Kintsugi event at the front of the queue so it resolves immediately during transit
+                    this.gameState.pendingStoryEvents.unshift('evt_kintsugi_intercept_final');
+                    
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags.mission_53_intercepted = true;
+                }
+            }
+        }
+        
         if (!isFirstTutorialFlight && !useFoldedDrive) { 
             this._processStoryEvents(locationId, useFoldedDrive, 0);
             return;

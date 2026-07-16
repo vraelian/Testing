@@ -574,8 +574,10 @@ export const PHASE_THREE_MISSIONS = {
             text: "The Syndicate is reeling from the economic displacement and their margins are broken. Terrestrial Syndicate proxies are filing for bankruptcy as the hardware value plummets.<br><br>You are a highly effective instrument of the Guild. Here is your rank III economic upgrade and payment. Well done.",
             buttonText: "Accept Payment"
         },
+        onComplete: [
+            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" }
+        ],
         rewards: [
-            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 480000 },
             { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_SELL_3" }
         ]
@@ -599,8 +601,10 @@ export const PHASE_THREE_MISSIONS = {
             text: "The subversion was successful and the colonies are saturated with our cybernetics. Belt laborers are bypassing Guild clinics entirely for our smuggled tech. This will completely destabilize Guild authority in the sector.<br><br>You are a highly effective instrument of the Syndicate and we reward loyalty and results. I've authorized your payment and rank III economic upgrade.",
             buttonText: "Accept Payment"
         },
+        onComplete: [
+            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" }
+        ],
         rewards: [
-            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 340000 },
             { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_3" }
         ]

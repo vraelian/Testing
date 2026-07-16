@@ -13,6 +13,7 @@ export class UIModalEngine {
         this._injectBankruptcyModals();
         this._injectUpgradeProgressModal();
         this._injectStoryEventModal();
+        this._injectReserveHullModal();
     }
 
     /**
@@ -125,6 +126,32 @@ export class UIModalEngine {
                         <div id="story-event-choices-container" class="flex flex-col gap-3 mt-6"></div>
                     </div>
                     <div id="story-event-button-container" class="mt-auto pt-6 pb-0 mb-0 flex justify-center gap-4"></div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Injects the static DOM template for the Reserve Hull Selection Modal.
+     * @private
+     */
+    _injectReserveHullModal() {
+        if (document.getElementById('reserve-hull-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="reserve-hull-modal" class="modal-backdrop hidden z-[100] dismiss-disabled">
+                <div class="modal-content sci-fi-frame" style="max-width: 450px;">
+                    <h3 class="text-xl font-orbitron mb-2 text-center text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]">SELECT RESERVE HULL</h3>
+                    <div class="mb-4 text-gray-300 text-center text-sm">Select an inactive vessel from your fleet to permanently transfer.</div>
+                    <div id="reserve-hull-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto custom-scrollbar mb-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <div class="flex justify-center gap-4 mt-4">
+                        <button id="reserve-hull-cancel-btn" class="btn border-gray-600 text-gray-400 hover:text-white px-4 py-2">Cancel</button>
+                        <button id="reserve-hull-confirm-btn" class="btn bg-purple-700/80 hover:bg-purple-600/80 border-purple-400 text-white font-bold px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed">Confirm Transfer</button>
+                    </div>
                 </div>
             </div>
         `;

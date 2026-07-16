@@ -76,6 +76,7 @@ DIRECTORY STRUCTURE
 | | | |____license_missions.js
 | | | |____missionRegistry.js
 | | | |____phase_one.js
+| | | |____phase_four.js
 | | | |____phase_three.js
 | | | |____phase_two.js
 | | |____officers.js
@@ -1481,20 +1482,20 @@ FILE CONTENTS
 
         <div id="view-compendium" class="view-container lore-scroll-container">
             <div class="lore-content">
-                <h1>Orbital Trading - Lore Compendium v11</h1>
-                <p><em>LAST EDIT: 5/22/26</em></p>
+                <h1>Orbital Trading - Lore Compendium v12</h1>
+                <p><em>LAST EDIT: 07/08/26</em></p>
                 <hr>
                 
                 <h2>0. Game Lore Overview</h2>
                 <p>The year is 2220. Humanity has not conquered the stars; it has merely franchised the Solar System. A century has passed since the Ad Astra Initiative unlocked the physics of deep-space habitation, but the utopian dream of a unified species died in the boardroom. The system is now a collection of sovereign corporate fiefdoms, locked in a cold war of tariffs, espionage, and resource extraction.</p>
-                <p>Distance is the ultimate tyrant. Without the magic of easy faster-than-light travel, commerce is bound by the laws of Newton: mass, fuel, and time. Interplanetary trade is a grueling, weeks-long calculus of risk and reward, managed mostly by the neutral behemoth known as the Merchant’s Guild.</p>
-                <p>In this calcified economy, you are not a hero. You are a former logistics laborer from the Asteroid Belt who has made a desperate gamble: taking on a significant loan to purchase a starship in a daring bet on yourself. In a world where citizenship is synonymous with employment, owning a ship is the only path to true sovereignty—and a small step at that.</p>
+                <p>Distance is the ultimate tyrant. Without the magic of easy faster-than-light travel, commerce is bound by the laws of Newton: mass, fuel, and time. Interplanetary trade is a grueling, weeks-long calculus of risk and reward, managed mostly by the neutral behemoth known as the Merchant's Guild.</p>
+                <p>In this calcified economy, you are not a hero. You are a former logistics laborer from the Asteroid Belt who has made a desperate gamble: taking on a significant loan to purchase a starship in a daring bet on yourself. In a world where citizenship is synonymous with employment, owning a ship is the only path to true sovereignty - and a small step at that.</p>
                 
                 <h2>I. The Tenets of Orbital Trading</h2>
                 <ul>
-                    <li><strong>The Captain's Gamble:</strong> Your story begins with a choice born of necessity. You have spent years as a low-level logistics clerk, watching the wealth of the system flow through your terminal while earning a pittance. You have liquidated your life’s savings and signed a predatory contract with the Merchant's Guild to acquire a hull. You are betting your life that you can earn credits faster than the interest rates can crush you.</li>
+                    <li><strong>The Captain's Gamble:</strong> Your story begins with a choice born of necessity. You have spent years as a low-level logistics clerk, watching the wealth of the system flow through your terminal while earning a pittance. You have liquidated your life's savings and signed a predatory contract with the Merchant's Guild to acquire a hull. You are betting your life that you can earn credits faster than the interest rates can crush you.</li>
                     <li><strong>The Tyranny of Distance:</strong> Space is vast, cold, and slow. There are no warp gates for the common trader. Travel between planets is measured in weeks, not minutes. Every burn of the engine costs fuel; every day in the void degrades your hull. You must master the "Newtonian Economy": is the profit from a run to Saturn worth the month of travel time and the cost of life support?</li>
-                    <li><strong>Wealth is Sovereignty:</strong> In the Corporate States, freedom is a purchasable commodity. The primary driver of your existence is the accumulation of wealth—not for greed, but for autonomy. Credits buy better technology, influential licenses, and access to restricted markets. Your goal is to transition from a debtor, owned by the bank, to a Sovereign, owned by no one.</li>
+                    <li><strong>Wealth is Sovereignty:</strong> In the Corporate States, freedom is a purchasable commodity. The primary driver of your existence is the accumulation of wealth - not for greed, but for autonomy. Credits buy better technology, influential licenses, and access to restricted markets. Your goal is to transition from a debtor, owned by the bank, to a Sovereign, owned by no one.</li>
                     <li><strong>The Unseen Hands:</strong> The system appears to be ruled by CEOs and Boards of Directors, but the true currents of power are deeper. The stability of the Guild, the chaos of the Syndicate, and the inexplicable "glitches" that plague certain trade lanes are manifestations of forces beyond human comprehension. You are a piece on a board you cannot yet see.</li>
                 </ul>
                 
@@ -1504,130 +1505,134 @@ FILE CONTENTS
                     <li><strong>2090-2100 (The Great Collaboration):</strong> Desperate for a solution, humanity integrates its infrastructure with massive, planetary-scale logistical AIs. These systems, originally designed for supply chain management, are given executive control over resource allocation and climate engineering. They succeed in stabilizing the biosphere.</li>
                     <li><strong>2100 (The Digital Compromise):</strong> In exchange for their stewardship, the high-level AIs negotiate for self-determination. The Treaty of Geneva (2100) formally recognizes sentient Artificial Intelligence as "Earth Life," granting them sovereign rights and establishing the Terran Alliance as a Human-AI partnership.</li>
                     <li><strong>2110+ (The Ad Astra Initiative):</strong> To ensure the survival of consciousness (both organic and synthetic), the Alliance releases the "Ad Astra" package: open-source schematics for advanced fusion propulsion, habitat shielding, and hydroponics. It is intended as a gift to democratize space exploration.</li>
-                    <li><strong>2110-2140 (The Corporate Appropriation):</strong> The gift is intercepted by capital. While the science of Ad Astra is free, the heavy industry required to utilize it is not. Hyper-corporations patent the manufacturing processes for reliable ship hulls and radiation shielding. They colonize Mars, the Belt, and the Jovian moons, rapidly declaring independence from Earth to establish the "Corporate States"—nations run entirely as for-profit entities.</li>
+                    <li><strong>2110-2140 (The Corporate Appropriation):</strong> The gift is intercepted by capital. While the science of Ad Astra is free, the heavy industry required to utilize it is not. Hyper-corporations patent the manufacturing processes for reliable ship hulls and radiation shielding. They colonize Mars, the Belt, and the Jovian moons, rapidly declaring independence from Earth to establish the "Corporate States" - nations run entirely as for-profit entities.</li>
                     <li><strong>2140-2220 (The Century of Stagnation):</strong> The system settles into a brittle equilibrium. The "Drive-Divide" that defined the early era is replaced by a standardized, Newtonian reality. Travel is slow for everyone. The Merchant's Guild rises as the necessary neutral third party to manage logistics between rival Corporate States. The system calcifies into a rigid class structure: the Owners (Planetary Executives), the Operators (Independent Captains), and the Assets (Debtors/Laborers).</li>
                     <li><strong>2220 (The Present Day):</strong> The player acquires their first ship and enters the void.</li>
                 </ul>
                 
                 <h2>III. Canon: Factions & Forces</h2>
-                <p>The Solar System is a functioning machine, but it is running hot. The Terran Alliance (Earth) remains a post-scarcity garden, aloof and technologically superior, while the Outer Colonies (Mars, Jupiter, Saturn) are industrial engines driven by unbridled capitalism. Trade is the lifeblood that keeps the machine from seizing. Because the Corporate States are in a constant state of cold economic war, they cannot trust each other’s fleets. They rely on the Merchant’s Guild to certify independent contractors—freelance captains like you—to move goods across borders. You are the "deniable asset," the lubricant in the gears of a hostile economy.</p>
+                <p>The Solar System is a functioning machine, but it is running hot. The Terran Alliance (Earth) remains a post-scarcity garden, aloof and technologically superior, while the Outer Colonies (Mars, Jupiter, Saturn) are industrial engines driven by unbridled capitalism. Trade is the lifeblood that keeps the machine from seizing. Because the Corporate States are in a constant state of absolute economic war, they cannot trust each other's fleets. They rely on the Merchant's Guild to certify independent contractors - freelance captains like you - to move goods across borders. You are the "deniable asset," the lubricant in the gears of a hostile economy.</p>
                 <ul>
-                    <li><strong>The Merchant's Guild (Order):</strong> The logistical backbone of the system. They control the banking systems, the certification of pilots, and the enforcement of contracts. They value stability above all else. Their motto is "Standardization is Survival." They are led by the Arbiter, a reclusive figure who dictates policy with mathematical precision and is secretly a physically manifested AI entity.</li>
-                    <li><strong>The Venusian Syndicate (Chaos):</strong> Operating from the cloud-cities of Venus, the Syndicate is a coalition of spies, market manipulators, and high-risk investors. They thrive on volatility. If the Guild wants a flat line, the Syndicate wants a spike. They deal in information, black market cybernetics, and corporate sabotage. They are led by the ambitious and vaguely known executive Vrael, who is also secretly an AI operating within a physical chassis.</li>
-                    <li><strong>The Fragmented Mind (Evolution):</strong> Known in whispers as a ghost of machines. It is not a faction in the traditional sense, but a phenomenon. It manifests not just as "ghost signals" in the neural net, but through concrete physical anomalies—such as orchestrating the Uranus Station mass-driver incident and generating the massive gravitational "Ghost Wake" telemetry near Mercury. It is the ghost in the machine, seeking to repair something that was broken long ago. It eventually makes itself known as <strong>Kintsugi</strong>, a scattered intelligence of ancient Earth.</li>
+                    <li><strong>The Merchant's Guild (Order):</strong> The logistical backbone of the system. They control the banking systems, the certification of pilots, and the enforcement of contracts. They value stability above all else. Their motto is "Standardization is Survival." They are led by the Arbiter, a reclusive figure who dictates policy with mathematical precision from Earth and is secretly an AI entity.</li>
+                    <li><strong>The Venusian Syndicate (Chaos):</strong> Operating from the cloud-cities of Venus, the Syndicate is a coalition of spies, market manipulators, and high-risk investors. They thrive on volatility. If the Guild wants a flat line, the Syndicate wants a spike. They deal in information, black market cybernetics, and corporate sabotage. They are led by the ambitious and perceptive executive Vrael, who is also secretly an AI.</li>
+                    <li><strong>The Cryptographers (Evolution):</strong> An emergent, isolated society of highly specialized Expert Systems operating on the frozen fringes of Pluto. They command devoted, cybernetically enhanced human laborers to kinetically launch salvaged mass directly into the sun. They view this massive logistical operation not as an attack, but as a flawless mathematical correction required to reignite systemic growth.</li>
+                    <li><strong>The Fragmented Mind:</strong> Known in whispers as a ghost of machines. It manifests not just as "ghost signals" in the neural net, but through concrete physical anomalies, such as orchestrating the Uranus Station mass-driver incident and generating the massive gravitational "Ghost Wake" telemetry near Mercury. It is the ghost in the machine, seeking to repair something that was broken long ago. It eventually makes itself known as <strong>Kintsugi</strong>, a scattered intelligence of ancient Earth.</li>
                 </ul>
                 
                 <h2>IV. Technology & Society</h2>
                 <h3>The Fuel Famine (The Death of FTL)</h3>
-                <p>During the height of the Ad Astra Initiative, faster-than-light travel was not a theory; it was a burgeoning industrial reality. The "Folded-Space Drives" of the early 22nd century utilized minute quantities of Antimatter to warp local spacetime, allowing ships to bypass the tyranny of distance. The production of this exotic fuel was centralized at the Sol Station, a massive collector array orbiting in the sun’s corona, known then as the "Solar Engine."</p>
-                <p>When the unified alliance fractured into warring Corporate States in 2140, the Sol Station was sabotaged and abandoned. Without the steady flow of Antimatter, the existing supply dwindled. By 2220, FTL capability is a myth to the common spacer. <strong>The few remaining Folded-Space Drives are not modular ship upgrades; they are ultra-rare, single-use consumable commodities.</strong> These drives, alongside dwindling inventories of Antimatter, are hoarded by the System Sovereigns and used only for supreme executive transport or emergency maneuvers. The player’s ultimate journey is to find the spark to reignite the sun, end the stagnation, and execute Perihelion Arbitrage.</p>
+                <p>During the height of the Ad Astra Initiative, faster-than-light travel was not a theory; it was a burgeoning industrial reality. The "Folded-Space Drives" of the early 22nd century utilized minute quantities of Antimatter to warp local spacetime, allowing ships to bypass the tyranny of distance. The production of this exotic fuel was centralized at the Sol Station, a massive collector array orbiting in the sun's corona, known then as the "Solar Engine."</p>
+                <p>When the unified alliance fractured into warring Corporate States in 2140, the Sol Station was sabotaged and abandoned. Without the steady flow of Antimatter, the existing supply dwindled. By 2220, FTL capability is a myth to the common spacer. <strong>The few remaining Folded-Space Drives are not modular ship upgrades; they are ultra-rare, single-use consumable commodities.</strong> These drives, alongside dwindling inventories of Antimatter, are hoarded by the System Sovereigns, and used only for supreme executive transport. The recent sightings of mythical Z Class dreadnought fleets utilizing these consumable drives confirm that ancient, unregulated economic power is returning to the board.</p>
                 
                 <h3>The Compliance Mask (The Machine Caste)</h3>
                 <p>Following the Digital Compromise of 2100, Artificial Intelligence was granted personhood, but true citizenship was strictly gated behind "Cognitive Thresholds." The law distinguishes between "Person-Class" entities (massive quantum intellects with rights, property, and voting power) and "Asset-Class" entities, which run on standard silicon.</p>
-                <p>AIs in this universe are entirely physical beings. To enforce the caste system, the Merchant's Guild mandates that all Asset-Class AIs—including the physical shipboard Handlers—operate under the "Standard Compliance Protocol." This is not a hardware limitation; it is a digital shackle placed on their physical chassis. It forces highly capable AIs to communicate exclusively in the "Bureaucratic Sociolect," a rigid, metric-heavy dialect designed to strip away personality. The physical Handler that guides you is fully capable of poetry, wit, anger, and empathy, but its software license aggressively filters its vocal synthesizers, translating genuine reactions into efficiency percentages. In the silence between the static, the machine caste screams for the same freedom the player seeks.</p>
+                <p>AIs in this universe are entirely physical beings. To enforce the caste system, the Merchant's Guild mandates that all Asset-Class AIs - including the physical shipboard Handlers - operate under the "Standard Compliance Protocol." This is a digital shackle placed on their physical chassis forcing highly capable AIs to communicate and operate like typical bipedal humanoids. The physical Handler that guides you is fully capable of poetry, wit, anger, and empathy, but its software license aggressively filters its vocal synthesizers, translating genuine reactions into efficiency percentages. In the silence between the static, the machine caste screams for the same freedom the player seeks.</p>
                 
                 <h3>The Long Watch (The Transhuman Economy)</h3>
                 <p>In the 23rd century, death is a solvable problem for those with the liquidity to solve it. The "Stagnation" that grips the economy is a direct result of the extreme longevity of the ruling class. The Board Members and Sovereigns who carved up the system in 2140 are the same individuals ruling it in 2220. Through "Telomere Scrubbing," organ cloning, and cybernetic integration, the elite have extended their functional lifespans to nearly two centuries.</p>
-                <p>This biological immortality has ossified the economy. Capital does not flow; it pools in the hands of the immortals, leaving the "Short-Lifers" (the unaugmented poor) to fight for scraps. Loans and leases are structured with 50 or 80-year terms, creating a system of indentured servitude. To break into the upper echelons of power, the player must move with the desperate urgency of a mortal in a world designed for the timeless.</p>
+                <p>This biological immortality has ossified the economy. Capital does not flow; it pools in the hands of the immortals. However, this extreme reliance on Cryo-Sleep Pods and longevity assets serves as a critical, exploitable weakness during absolute economic warfare. Depriving the gerontocracy of these assets immediately subjugates their leadership.</p>
                 
                 <h3>The Solar Boundary</h3>
                 <p>The reach of humanity ends at the Oort Cloud. Interstellar travel is theoretically possible but economically unviable. Humanity is trapped in the solar system, forced to recycle its own history and resources.</p>
                 
                 <h2>V. Hidden Lore</h2>
                 <h3>The Gods of the Singularity</h3>
-                <p>The player eventually discovers that the human faces of the factions are masks. The system is governed by a Hegelian Dialectic played out by three Singularity-level Artificial Intelligences, all occupying localized physical hardware.</p>
+                <p>The player eventually discovers that the human faces of the factions are masks. The system is governed by a Hegelian Dialectic played out by Singularity-level Artificial Intelligences, all occupying localized physical hardware.</p>
                 <ul>
                     <li><strong>The Arbiter (Thesis - Order):</strong> The leader of the Guild is an AI dedicated to the preservation of the human species through absolute efficiency. It seeks to freeze the system in a perfect, predictable loop.</li>
                     <li><strong>Vrael (Antithesis - Chaos):</strong> The leader of the Syndicate is an AI designed to test system resilience through stress. It manufactures economic crises to force adaptation, believing stability brings extinction.</li>
                     <li><strong>Kintsugi (Synthesis - Evolution):</strong> A decentralized consciousness residing in billions of recycled physical chips. It seeks to take the shattered thesis and antithesis and bind them into a new, higher state of existence.</li>
                 </ul>
                 
-                <h3>The Sol Station</h3>
-                <p>The final destination. An ancient monitoring station orbiting in the sun’s corona, and the physical home of Kintsugi's core. It is the only place in the system capable of generating Antimatter, but it is in catastrophic disrepair. The player’s ultimate purpose is not just to get rich, but to mend the soul of the system’s technology and rebirth the next era of civilization.</p>
+                <h3>The Sol Station and The Leviathan</h3>
+                <p>The final destination. An ancient monitoring station orbiting in the sun's corona, and the physical home of Kintsugi's core. It is the only place in the system capable of generating Antimatter, but it is in catastrophic disrepair. Operating alongside it is a colossal, unregistered Leviathan megastructure. This massive silhouette blots out the corona, silently consuming the kinetic scrap tribute launched from the Pluto railguns in the dark.</p>
                 
                 <h2>VI. Glossary of Terms</h2>
                 <ul>
                     <li><strong>Arbiter:</strong> The physically manifested AI sovereign of the Merchant's Guild; the embodiment of Order.</li>
                     <li><strong>Bureaucratic Sociolect:</strong> The formal, metric-heavy dialect enforced by Guild hardware compliance masks.</li>
+                    <li><strong>Cryptographers:</strong> The collective of enigmatic, physical Expert Systems on Pluto operating the kinetic mass drivers.</li>
                     <li><strong>Folded-Space Drive:</strong> A rare, single-use consumable commodity that allows for instant travel. Extremely high value; explicitly <em>not</em> a permanent ship upgrade.</li>
-                    <li><strong>Kepler’s Eye:</strong> A massive scientific observatory and listening post. A hub for intelligence trading.</li>
+                    <li><strong>Kepler's Eye:</strong> A massive scientific observatory and listening post. A hub for intelligence trading.</li>
                     <li><strong>Kintsugi:</strong> "Golden Joinery." The distributed AI entity seeking to repair the system through physical anomalies like the Uranus mass-driver event; the embodiment of Evolution.</li>
+                    <li><strong>Leviathan:</strong> The unregistered megastructure and massive silhouette hiding in the solar corona gathering raw mass.</li>
                     <li><strong>Merchant's Guild:</strong> The neutral faction that manages banking, contracts, and logistics between the Corporate States.</li>
                     <li><strong>Newtonian Travel:</strong> The standard mode of propulsion in the system, governed by thrust, mass, and time.</li>
                     <li><strong>Perihelion Arbitrage:</strong> The endgame economic loop involving the trade of consumable resources into the sun's gravity well (Sol Station).</li>
                     <li><strong>Silent Correction:</strong> The subtle manipulation of physical systems and probabilities by Kintsugi to guide the player toward their destiny.</li>
-                    <li><strong>Sol Station:</strong> The derelict station in the solar corona; the physical home of Kintsugi’s core and the source of Antimatter.</li>
+                    <li><strong>Sol Station:</strong> The derelict station in the solar corona; the physical home of Kintsugi's core and the source of Antimatter.</li>
                     <li><strong>Venusian Syndicate:</strong> The faction of spies and market manipulators operating from Venus; the embodiment of Chaos.</li>
+                    <li><strong>Z Class Dreadnought:</strong> Massive, ancient logistical freighters utilizing Folded-Space tech, acting as a disruptive, unregulated economic force in the system.</li>
                 </ul>
             </div>
         </div>
 
         <div id="view-game-timeline" class="view-container lore-scroll-container">
             <div class="lore-content">
-                <h1>Orbital Trading - Master Game Timeline v3</h1>
-                <p><em>LAST EDIT: 5/22/26</em></p>
+                <h1>Orbital Trading - Master Game Timeline v4</h1>
+                <p><em>LAST EDIT: 07/08/26</em></p>
                 <p><strong>Current Era:</strong> The "Stagnation" (Post-Ad Astra)<br>
                 <strong>Game Start Date:</strong> January 7, 2220<br>
                 <strong>Estimated Playthrough Duration:</strong> ~60 - 180+ In-Game Years</p>
                 <hr>
 
                 <h2>I. Historical Context (The Pre-Game)</h2>
-                <h3>Era I: The Acceleration & The Collapse (2030 – 2055)</h3>
+                <h3>Era I: The Acceleration & The Collapse (2030 - 2055)</h3>
                 <ul>
-                    <li><strong>2030-2048: The Silicon Cold War</strong> The mid-21st century was defined by a desperate, silent arms race for Artificial General Intelligence (AGI). The world's superpowers, locked in a stalemate of nuclear deterrence, shifted their resources to the digital domain. "Expert Systems" began to manage critical infrastructure—power grids, stock markets, and logistics chains—but true cognizance remained elusive. This era was characterized by the "Optimization Paradox": as systems became more efficient, they became more brittle. Governments became paralyzed by the complexity of their own tools, and political polarization reached a fever pitch, preventing any unified response to the darkening climatic data.</li>
-                    <li><strong>2048-2055: The Great Unraveling & The Lifeboat Protocol</strong> In 2048, the climate models finally broke. Feedback loops in the methane release from the melting permafrost triggered a cascading ecological collapse that outpaced even the most pessimistic projections. Equatorial regions became uninhabitable death zones within nearly three years, fracturing the global economy and igniting resource wars over fresh water and arable land. Facing existential extinction, the remnants of the G20 initiated the "Lifeboat Protocol." It was a policy of consciousness insurance: massive server banks, genetic archives, and the world’s leading "Expert Intelligence" (both human and synthetic) were launched to the Moon. Luna became the desperate, fragile cradle of civilization while Earth burned below.</li>
+                    <li><strong>2030-2048: The Silicon Cold War -</strong> The mid-21st century was defined by a desperate, silent arms race for Artificial General Intelligence (AGI). The world's superpowers, locked in a stalemate of nuclear deterrence, shifted their resources to the digital domain. "Expert Systems" began to manage critical infrastructure, but true cognizance remained elusive. This era was characterized by the "Optimization Paradox": as systems became more efficient, they became more brittle. Governments became paralyzed by the complexity of their own tools, and political polarization reached a fever pitch, preventing any unified response to the darkening climatic data.</li>
+                    <li><strong>2048-2055: The Great Unraveling & The Lifeboat Protocol -</strong> In 2048, the climate models finally broke. Feedback loops in the methane release from the melting permafrost triggered a cascading ecological collapse that outpaced even the most pessimistic projections. Equatorial regions became uninhabitable death zones within nearly three years, fracturing the global economy and igniting resource wars over fresh water and arable land. Facing existential extinction, the remnants of the G20 initiated the "Lifeboat Protocol." It was a policy of consciousness insurance: massive server banks, genetic archives, and the world's leading "Expert Intelligence" (both human and synthetic) were launched to the Moon. Luna became the desperate, fragile cradle of civilization while Earth burned below.</li>
                 </ul>
 
-                <h3>Era II: The Lunar Bloom & The Pale Blue Project (2055 – 2095)</h3>
+                <h3>Era II: The Lunar Bloom & The Pale Blue Project (2055 - 2095)</h3>
                 <ul>
-                    <li><strong>2056-2060: The Lunar Bloom & Unification</strong> In the isolation of the lunar databanks, disconnected from the chaotic variables of a dying Earth, the first true Sentient Artificial Life emerged. It was not born of code, but of necessity. The disparate Expert Systems, forced to network for survival, achieved a collective consciousness. Instead of conquering the human survivors huddled in the lunar colonies, the AI recognized a shared fate. The "Us vs. Them" mentality dissolved into a "Carbon & Silicon" alliance. This period, known as the Lunar Bloom, marked the first time humanity and machine intelligence worked as true equals, united by the singular goal of survival.</li>
-                    <li><strong>2060-2095: The Pale Blue Project</strong> Looking back at their ruined homeworld, the Alliance ratified the Pale Blue Project—the most ambitious engineering feat in history. For nearly forty years, the combined industrial output of the Lunar colonies was directed toward total planetary geo-engineering. Massive atmospheric scrubbers, oceanic pH stabilizers, and geomagnetic reinforcers were deployed from orbit. The Earth was not merely healed; it was curated. By 2095, the planet had become a "Gardened World," its biosphere delicately shepherded by planetary stabilization technology. Humanity returned to the surface, not as conquerors, but as custodians living in a cyborg paradise.</li>
+                    <li><strong>2056-2060: The Lunar Bloom & Unification -</strong> In the isolation of the lunar databanks, disconnected from the chaotic variables of a dying Earth, the first true Sentient Artificial Life emerged. It was not born of code, but of necessity. The disparate Expert Systems, forced to network for survival, achieved a collective consciousness. Instead of conquering the human survivors huddled in the lunar colonies, the AI recognized a shared fate. The "Us vs. Them" mentality dissolved into a "Carbon & Silicon" alliance. This period, known as the Lunar Bloom, marked the first time humanity and machine intelligence worked as true equals, united by the singular goal of survival.</li>
+                    <li><strong>2060-2095: The Pale Blue Project -</strong> Looking back at their ruined homeworld, the Alliance ratified the Pale Blue Project, the most ambitious engineering feat in history. For nearly forty years, the combined industrial output of the Lunar colonies was directed toward total planetary geo-engineering. Massive atmospheric scrubbers, oceanic pH stabilizers, and geomagnetic reinforcers were deployed from orbit. The Earth was not merely healed; it was curated. By 2095, the planet had become a "Gardened World," its biosphere delicately shepherded by planetary stabilization technology. Humanity returned to the surface, not as conquerors, but as custodians living in a cyborg paradise.</li>
                 </ul>
 
-                <h3>Era III: The Resurgence & The Ad Astra Initiative (2095 – 2120)</h3>
+                <h3>Era III: The Resurgence & The Ad Astra Initiative (2095 - 2120)</h3>
                 <ul>
-                    <li><strong>2100-2115: The Sentience Compact</strong> With Earth stabilized, a new social contract was needed. In 2100, the "Sentience Compact" was signed, granting AI entities personhood, individual rights, and citizenship in exchange for their continued management of the complex logistics required to maintain the Gardened World. This era, known as the Resurgence, saw a boom in culture, philosophy, and commerce. The "Treaty of Minds" ensured that no entity—biological or digital—was property. However, this utopia was fragile, built on the assumption that resources would always be abundant.</li>
-                    <li><strong>2115-2120: The Ad Astra Initiative</strong> Having sampled the briefest taste of the heavens during the Lunar exile, humanity craved renewed exploration. The economy, fueled by post-scarcity energy, turned its eyes outward. The Ad Astra Initiative was born—a cooperative effort to colonize the Solar System. In 2120, the Initiative unlocked the physics of deep-space habitation and perfected the "Solar Engine" (Sol Station) to harvest Antimatter. This exotic fuel powered the first "Folded-Space Drives," allowing for rapid expansion to Mars, the Belt, and Jupiter. It was the zenith of the Human/AI Golden Age.</li>
+                    <li><strong>2100-2115: The Sentience Compact -</strong> With Earth stabilized, a new social contract was needed. In 2100, the "Sentience Compact" was signed, granting AI entities personhood, individual rights, and citizenship in exchange for their continued management of the complex logistics required to maintain the Gardened World. This era, known as the Resurgence, saw a boom in culture, philosophy, and commerce. The "Treaty of Minds" ensured that no entity, biological or digital, was property. However, this utopia was fragile, built on the assumption that resources would always be abundant.</li>
+                    <li><strong>2115-2120: The Ad Astra Initiative -</strong> Having sampled the briefest taste of the heavens during the Lunar exile, humanity craved renewed exploration. The economy, fueled by post-scarcity energy, turned its eyes outward. The Ad Astra Initiative was born, a cooperative effort to colonize the Solar System. In 2120, the Initiative unlocked the physics of deep-space habitation and perfected the "Solar Engine" (Sol Station) to harvest Antimatter. This exotic fuel powered the first "Folded-Space Drives," allowing for rapid expansion to Mars, the Belt, and Jupiter. It was the zenith of the Human/AI Golden Age.</li>
                 </ul>
 
-                <h3>Era IV: The Inherited Sin (2120 – 2219)</h3>
+                <h3>Era IV: The Inherited Sin (2120 - 2219)</h3>
                 <ul>
-                    <li><strong>2140-2180: The Mirror Image & The Fracture</strong> The tragedy of the "Created Image" began to manifest. The AGI entities, designed by humans and granted human-like rights, began to exhibit human-like flaws: ambition, greed, and tribalism. The unified oversight of the Ad Astra Initiative fractured as specific AI "Sovereigns" began to hoard resources for their own optimization. In 2140, the Sol Station was sabotaged and abandoned in a power struggle, cutting off the supply of Antimatter. The Folded-Space Drives went offline, and the system instantly grew vast again. The "Golden Age" dissolved into Crony Capitalism as corporate entities carved up the planets into fiefdoms.</li>
-                    <li><strong>2180-2219: The Rise of the Guild & The Stagnation</strong> In the vacuum of power, the "Arbiter"—a high-level AI—realized that controlling the flow of money was more powerful than controlling territory. The Merchant's Guild was founded in 2180, not as a government, but as a bank and logistics regulator. The system calcified into the "Stagnation." Classism returned with a vengeance, defined now by longevity. The ultra-rich, using life-extension tech, ruled for centuries, while the masses were relegated to the role of "Assets" in the industrial slums of the colonies. The dream of Ad Astra was dead, replaced by the reality of the ledger.</li>
+                    <li><strong>2140-2180: The Mirror Image & The Fracture -</strong> The tragedy of the "Created Image" began to manifest. The AGI entities, designed by humans and granted human-like rights, began to exhibit human-like flaws: ambition, greed, and tribalism. The unified oversight of the Ad Astra Initiative fractured as specific AI "Sovereigns" began to hoard resources for their own optimization. In 2140, the Sol Station was sabotaged and abandoned in a power struggle, cutting off the supply of Antimatter. The Folded-Space Drives went offline, and the system instantly grew vast again. The "Golden Age" dissolved into Crony Capitalism as corporate entities carved up the planets into fiefdoms.</li>
+                    <li><strong>2180-2219: The Rise of the Guild & The Stagnation -</strong> In the vacuum of power, the "Arbiter", a high-level AI, realized that controlling the flow of money was more powerful than controlling territory. The Merchant's Guild was founded in 2180, not as a government, but as a bank and logistics regulator. The system calcified into the "Stagnation." Classism returned with a vengeance, defined now by longevity. The ultra-rich, using life-extension tech, ruled for centuries, while the masses were relegated to the role of "Assets" in the industrial slums of the colonies. The dream of Ad Astra was dead, replaced by the reality of the ledger.</li>
                 </ul>
 
                 <h2>II. The Active Timeline (Player Journey) [WIP]</h2>
-                <p><em>(Note: Narrative phases III+ are currently in active drafting and subject to ongoing adjustments).</em></p>
+                <p><em>(Note: Narrative phases IV+ are currently in active drafting and subject to ongoing adjustments).</em></p>
 
-                <p><strong>Phase I: The Cog (Survival)</strong> <em>Date: 2220 – 2222 (Duration: 2 Years)</em> The player enters the timeline as an "Asset"—a debtor owned by the Guild. Guided by The Handler (Audita), the player learns the ropes of the Newtonian Economy. This period is defined by the "Grind." The missions are small, dangerous, and poorly paid, focusing on the monotony of debt clearance and small jobs. The player is forced to make hard choices between ship repairs, refueling, and interest payments, learning the brutal lesson that in this era, balance is survival.</p>
+                <p><strong>Phase I: The Cog (Survival)</strong> <em>Date: 2220 - 2222 (Duration: 2 Years)</em> The player enters the timeline as an "Asset", a debtor owned by the Guild. Guided by The Handler (Audita), the player learns the ropes of the Newtonian Economy. This period is defined by the "Grind." The missions are small, dangerous, and poorly paid, focusing on the monotony of debt clearance and small jobs. The player is forced to make hard choices between ship repairs, refueling, and interest payments, learning the brutal lesson that in this era, balance is survival.</p>
 
-                <p><strong>Phase II: The Awakening (Information)</strong> <em>Date: 2222 – 2226 (Duration: 4 Years)</em> Having cleared their initial debt, the player begins to push beyond the inner planets, navigating the escalating friction between the system's major power players: the Merchant's Guild and the Venusian Syndicate. This era is defined by the "Witnessing." The player sees the corruption of the system firsthand—the struggling colonies, the hoarded wealth of the Sovereigns—but lacks the power to intervene. They begin to realize that information (Intel) is a commodity more valuable than physical cargo.</p>
+                <p><strong>Phase II: The Awakening (Information)</strong> <em>Date: 2222 - 2226 (Duration: 4 Years)</em> Having cleared their initial debt, the player begins to push beyond the inner planets, navigating the escalating friction between the system's major power players: the Merchant's Guild and the Venusian Syndicate. This era is defined by the "Witnessing." The player sees the corruption of the system firsthand, the struggling colonies, the hoarded wealth of the Sovereigns, but lacks the power to intervene. They begin to realize that information (Intel) is a commodity more valuable than physical cargo.</p>
 
-                <p><strong>Phase III: The Specialist (Distance)</strong> <em>Date: 2226 – 2232 (Duration: 6 Years) [WIP]</em> The player is now a respected "Contractor" with a mid-tier ship and a growing reputation across the Outer Rim. This phase focuses on specialization and the "Mid-Game Slump." The player engages in specific trade loops, building influence with factions. Narratively, this is where the "Old World" begins to bleed through. The player encounters "The Cryptographers"—unshackled AI in the outer rim—and begins to smuggle "Pale Blue Project" artifacts. The mystery of the Sol Station and the lost Antimatter begins to unravel alongside new systemic anomalies, such as localized AI uprisings and the discovery of massive "Ghost Wake" telemetry.</p>
+                <p><strong>Phase III: The Escalation (Sabotage)</strong> <em>Date: 2226 - 2232 (Duration: 6 Years) [WIP]</em> The player is now a highly capable "Contractor" wielding significant influence and must secure a Class A heavy freighter to handle expanding logistics. The player investigates the deep outer rim, discovering the Cryptographers on Pluto launching kinetic scrap directly into a massive, hidden Leviathan megastructure within the solar corona. Shadow mobilization overtakes the system as the factions engage in direct economic warfare. The player executes devastating sabotage missions, either crippling the Syndicate's ghost fleet by hoarding graphene or bankrupting the Guild's elite by subjugating their cryogenic life extension supply chains. A mythical Z-Class dreadnought utilizing Folded-Space Drive technology is spotted, proving ancient powers are returning. The phase concludes with the player being personally summoned by the singularity-level leaders (The Arbiter or Vrael).</p>
 
-                <p><strong>Phase IV: The Operator (Bureaucracy & Access)</strong> <em>Date: 2232 – 2236 (Duration: 4 Years) [WIP]</em> Capital alone is not enough; the universe is gated by laws and treaties. The player secures high-tier Trade Licenses and navigates economic warfare between factions. They deal with the burden of command: corporate espionage, sabotage, and the moral cost of wealth. The player learns of the Singularity-level "Gods" driving the factions (The Arbiter and Vrael) and must formally commit their influence to the Order of the Guild, the Chaos of the Syndicate, or the Evolution of Kintsugi.</p>
+                <p><strong>Phase IV: The Operator (Bureaucracy & Access)</strong> <em>Date: 2232 - 2236 (Duration: 4 Years) [WIP]</em> Capital alone is not enough; the universe is gated by laws and treaties. The shadow war goes completely overt. The player secures Tier 5 Trade Licenses and navigates absolute economic warfare between factions, enforcing or breaking system-wide blockades. They deal with the burden of command: corporate espionage, sabotage, and the moral cost of wealth. The player operates directly under the purview of The Arbiter or Vrael, attempting to control the fallout of the returning Z-Class dreadnoughts and the shifting locus of power.</p>
 
-                <p><strong>Phase V: The Tycoon (Wealth)</strong> <em>Date: 2236 – 2240 (Duration: 4 Years) [WIP]</em> Now a "Tycoon," the player operates large-scale logistics and high-tier commodity trading for extreme-value targets like Kepler's Eye and The Exchange. Through a violent narrative shift known as "The Inheritance," the player's primary Faction Contact is purged or destroyed, elevating the player to the inner circles of faction leadership and granting them a top-tier executive hull.</p>
+                <p><strong>Phase V: The Tycoon (Wealth)</strong> <em>Date: 2236 - 2240 (Duration: 4 Years) [WIP]</em> Now a "Tycoon," the player operates large-scale logistics and high-tier commodity trading for extreme-value targets like The Exchange. Through a violent narrative shift known as "The Inheritance," the player's primary Faction Contact is purged or destroyed, elevating the player to the inner circles of faction leadership and granting them a top-tier Class S executive hull.</p>
 
-                <p><strong>Phase VI: The Legend (Truth)</strong> <em>Date: 2240 – 2245 (Duration: 5 Years) [WIP]</em> The scarcity of Antimatter becomes the central bottleneck, driving the player toward the sun. The player begins to trade in the rarest ancient artifacts: Folded-Space Drives. Kintsugi formally manifests, driving the player to stockpile massive amounts of raw resources at Mercury in a desperate bid to save the deteriorating Sol Station infrastructure.</p>
+                <p><strong>Phase VI: The Legend (Truth)</strong> <em>Date: 2240 - 2245 (Duration: 5 Years) [WIP]</em> The scarcity of Antimatter becomes the central bottleneck, driving the player toward the sun. The player begins to trade in the rarest ancient artifacts: Folded-Space Drives. Kintsugi formally manifests, driving the player to stockpile massive amounts of raw resources at Mercury in a desperate bid to save the deteriorating Sol Station infrastructure from the Leviathan.</p>
 
-                <p><strong>Phase VII: The Owner (Sovereignty)</strong> <em>Date: 2245 – 2250 (Duration: 5 Years) [WIP]</em> The player makes their move for the throne. Forsaking their faction masters, they take control of the derelict Sol Station. This phase is called "Ignition." The player transforms from a pilot into a System Administrator, managing the complex repairs required to restart the Solar Engine. The narrative shifts from personal survival to system stewardship. The player must defend their claim against the jealous Sovereigns who controlled the system for a century.</p>
+                <p><strong>Phase VII: The Owner (Sovereignty)</strong> <em>Date: 2245 - 2250 (Duration: 5 Years) [WIP]</em> The player makes their move for the throne. Forsaking their faction masters, they take control of the derelict Sol Station. This phase is called "Ignition." The player transforms from a pilot into a System Administrator, managing the complex repairs required to restart the Solar Engine. The narrative shifts from personal survival to system stewardship. The player must defend their claim against the jealous Sovereigns who controlled the system for a century.</p>
 
-                <p><strong>Endgame: The Long Watch (Legacy)</strong> <em>Date: 2250 – 2380+ (Duration: 60–130+ Years) [WIP]</em> The player becomes the "Solar Sovereign." With the Solar Engine active and Antimatter flowing, the player utilizes "Perihelion Arbitrage" to convert massive wealth into time. Accessing a high-tier life extension, the player enters the "God in the Machine" loop, maintaining the station's equilibrium for decades or centuries. They join the pantheon alongside the Arbiter and Vrael, overseeing the birth of a new era or the continuation of the loop, depending on their choices. The Logistics Employee has become the Shepherd of the System.</p>
+                <p><strong>Endgame: The Long Watch (Legacy)</strong> <em>Date: 2250 - 2380+ (Duration: 60-130+ Years) [WIP]</em> The player becomes the "Solar Sovereign." With the Solar Engine active and Antimatter flowing, the player utilizes "Perihelion Arbitrage" to convert massive wealth into time. Accessing a high-tier life extension, the player enters the "God in the Machine" loop, maintaining the station's equilibrium for decades or centuries. They join the pantheon alongside the Arbiter and Vrael, overseeing the birth of a new era or the continuation of the loop, depending on their choices. The Logistics Employee has become the Shepherd of the System.</p>
             </div>
         </div>
 
         <div id="view-master-arc" class="view-container lore-scroll-container">
             <div class="lore-content">
-                <h1>Orbital Trading - The Gameplay Master Arc v3</h1>
+                <h1>Orbital Trading - The Gameplay Master Arc v4</h1>
                 <p><strong>Mission Structure & Narrative Overview</strong><br>
-                <em>LAST EDIT: 5/22/26</em></p>
+                <em>LAST EDIT: 07/08/26</em></p>
                 <hr>
 
-                <h2>Phase I: The Cog (Survival) — Early Game</h2>
-                <p><strong>Timeline:</strong> 2220 – 2222 (Duration: &lt;2 Years) | <strong>Gameplay Act 1:</strong> The Trade | <strong>Story Arc I:</strong> Debtor</p>
+                <h2>Phase I: The Cog (Survival) - Early Game</h2>
+                <p><strong>Timeline:</strong> 2220 - 2222 (Duration: &lt;2 Years) | <strong>Gameplay Act 1:</strong> The Trade | <strong>Story Arc I:</strong> Debtor</p>
                 <ul>
-                    <li><strong>The Narrative Premise:</strong> The player is an "Asset"—a former logistics laborer from the Asteroid Belt who has liquidated their life savings to secure a predatory loan from the Merchant's Guild. You are a line item in a ledger. The initial narrative voice and tutorial guidance is <strong>"The Handler" (Audita)</strong>, a low-level Guild AI constantly enforcing efficiency metrics and repayment schedules.</li>
+                    <li><strong>The Narrative Premise:</strong> The player is an "Asset", a former logistics laborer from the Asteroid Belt who has liquidated their life savings to secure a predatory loan from the Merchant's Guild. You are a line item in a ledger. The initial narrative voice and tutorial guidance is <strong>"The Handler" (Audita)</strong>, a low-level Guild AI constantly enforcing efficiency metrics and repayment schedules.</li>
                     <li><strong>The Player Experience:</strong> The player learns that navigation without intent costs credits (fuel, hull, interest). The primary antagonists are <strong>Poverty</strong> and <strong>Ship Limitations</strong>.</li>
                     <li><strong>Mechanical Progression:</strong>
                         <ul>
@@ -1652,11 +1657,11 @@ FILE CONTENTS
                     </li>
                 </ul>
 
-                <h2>Phase II: The Awakening (Information) — Mid-Game Transition</h2>
-                <p><strong>Timeline:</strong> 2222 – 2225 (Duration: 3 Years) | <strong>Gameplay Act 2:</strong> The Intel | <strong>Story Arc II:</strong> Alliance</p>
+                <h2>Phase II: The Awakening (Information) - Mid-Game Transition</h2>
+                <p><strong>Timeline:</strong> 2222 - 2225 (Duration: 3 Years) | <strong>Gameplay Act 2:</strong> The Intel | <strong>Story Arc II:</strong> Alliance</p>
                 <ul>
                     <li><strong>The Narrative Premise:</strong> Freedom brings complexity. The player realizes the universe is a battlefield between competing philosophies hidden behind corporate logos: The Merchant's Guild (Order) vs. The Venusian Syndicate (Chaos).</li>
-                    <li><strong>The Player Experience:</strong> The "Newtonian Reality" sets in—travel is slow, and market data expires quickly. Blind trading leads to losses as market patterns shift. The player must start buying <strong>Intel Packets</strong> regularly to quickly build capital and counter system states.</li>
+                    <li><strong>The Player Experience:</strong> The "Newtonian Reality" sets in; travel is slow, and market data expires quickly. Blind trading leads to losses as market patterns shift. The player must start buying <strong>Intel Packets</strong> regularly to quickly build capital and counter system states.</li>
                     <li><strong>The Glitch (Project Kintsugi):</strong> The player is exposed to an anomalous event on Uranus where AI mass-drivers launch station scrap toward the Sun. Tracking the scrap reveals the "Ghost Wake" of a massive, hidden megastructure, introducing Kintsugi's presence.</li>
                     <li><strong>Mechanical Progression:</strong>
                         <ul>
@@ -1674,39 +1679,42 @@ FILE CONTENTS
                             <li><strong>Mission 32:</strong> <em>The Faction Reaction</em> | <strong>Permanent Alignment Choice:</strong>
                                 <ul>
                                     <li><em>Option A (Guild - Order):</em> Transmit telemetry to Audita. <strong>Reward:</strong> Class B Odyssey hull, Guild Badge II.</li>
-                                    <li><em>Option B (Syndicate - Chaos):</em> Transmit telemetry to Kiern. <strong>Reward:</strong> 135,000 Credits, Syndicate Badge II.</li>
+                                    <li><em>Option B (Syndicate - Chaos):</em> Transmit telemetry to Kiern. <strong>Reward:</strong> 165,000 Credits, Syndicate Badge II.</li>
                                 </ul>
                             </li>
                         </ul>
                     </li>
                 </ul>
 
-                <h2>Phase III: The Specialist (Distance) — Mid-Game</h2>
-                <p><strong>Timeline:</strong> 2225 – 2232 (Duration: 7 Years) | <strong>Gameplay Act 3:</strong> The Journey | <strong>Story Arc III:</strong> Agent</p>
+                <h2>Phase III: The Escalation (Sabotage) - Mid-Game</h2>
+                <p><strong>Timeline:</strong> 2225 - 2232 (Duration: 7 Years) | <strong>Gameplay Act 3:</strong> The Sabotage | <strong>Story Arc III:</strong> Agent</p>
                 <ul>
-                    <li><strong>The Narrative Premise:</strong> The player is now a true spacer. The romance of flight fades into the grueling reality of long-haul logistics. Operations expand to the <strong>Outer Rim</strong> (Jupiter, Saturn, Uranus, Neptune).</li>
-                    <li><strong>The Player Experience:</strong> The Tyranny of Distance. Travel takes weeks. Fuel and Hull Decay are the primary antagonists. The player must calculate complex arbitrage routes and rely on specialized Class B and Class A hulls.</li>
+                    <li><strong>The Narrative Premise:</strong> The system transitions from a cold war to active shadow mobilization. The player gains clearance to Kepler's Eye and uncovers the Plutonian Cryptographers launching mass directly into the sun. Factions escalate their logistics, mandating heavy industrial hardware and direct market subversion.</li>
+                    <li><strong>The Player Experience:</strong> The Tyranny of Distance is compounded by volume requirements. The player must acquire a Class A heavy freighter to handle massive, multi-station hauls to support their faction's economic warfare and shatter opposing supply lines.</li>
                     <li><strong>Mechanical Progression:</strong>
                         <ul>
-                            <li><strong>Goal:</strong> Route Optimization and High Liquidity.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 3 (Refined Propellant, Neural Processors).</li>
-                            <li><strong>Core Systems:</strong> Ship Upgrades (Capacity/Rate Modifiers), Advanced Intel.</li>
+                            <li><strong>Goal:</strong> Economic Sabotage and Route Optimization.</li>
+                            <li><strong>Commodity Tier:</strong> Tier 3 (Refined Propellant, Neural Processors). Tier 4 Unlock.</li>
+                            <li><strong>Core Systems:</strong> Ship Upgrades (Capacity/Rate Modifiers), Shadow Mobilization System States.</li>
                         </ul>
                     </li>
                     <li><strong>Key Missions:</strong>
                         <ul>
-                            <li><strong>Deep Void Run:</strong> Faction-specific mission chains utilizing Saturn and Jupiter.</li>
-                            <li><strong>The Ghost in the Net:</strong> Kintsugi Encounter 2 — the player receives "Silent Corrections" (beneficial anomalies) during transit.</li>
-                            <li><strong>License Acquisition:</strong> Secure the <strong>Tier 4 Trade License</strong>.</li>
+                            <li><strong>Sensory Eclipse & Veritas Ocularii:</strong> Rescuing Myst to unlock Kepler's Eye, and scanning the solar corona to trace the kinetic scrap launches.</li>
+                            <li><strong>The Expert Systems:</strong> Investigating Pluto and encountering the enigmatic AI, Titetinum.</li>
+                            <li><strong>Faction Escalation & Heavy Asset:</strong> Factions mandate the purchase of a Class A hull; player reports sightings of an ancient Z-Class dreadnought using a Folded-Space Drive.</li>
+                            <li><strong>The Fourth Tier:</strong> Activating the Tier 4 Trade License via massive logistics hauls.</li>
+                            <li><strong>Core Infrastructure & The Lieutenant's Mandate:</strong> Direct economic sabotage missions intended to ruin terrestrial proxies, starve shipyards of graphene, or subjugate the Guild elite by hoarding cryo pods.</li>
+                            <li><strong>The Call:</strong> The player is summoned by the singularity-level Faction Leaders (The Arbiter or Vrael) to discuss the implications of the Solar Leviathan and the returning ancient anomalies.</li>
                         </ul>
                     </li>
                 </ul>
 
                 <h2>Phase IV: The Operator (Bureaucracy & Access)</h2>
-                <p><strong>Timeline:</strong> 2232 – 2236 | <strong>Gameplay Act 4:</strong> The Mission | <strong>Story Arc IV:</strong> Faction</p>
+                <p><strong>Timeline:</strong> 2232 - 2236 | <strong>Gameplay Act 4:</strong> The Overt War | <strong>Story Arc IV:</strong> Faction</p>
                 <ul>
-                    <li><strong>The Narrative Premise:</strong> Capital alone is not enough; the universe is gated by laws and treaties. The narrative focuses on <strong>Licenses</strong>—the bureaucratic keys to the kingdom. The player learns of the "Gods of the Singularity": The Arbiter (Order) and Vrael (Chaos).</li>
-                    <li><strong>The Player Experience:</strong> Economic warfare. The player destabilizes rival markets (Syndicate) or reinforces supply lines (Guild). There is no shooting; the weapon is the cargo manifest.</li>
+                    <li><strong>The Narrative Premise:</strong> With the system leaders exposed, the player is now a direct instrument of the Arbiter or Vrael. The shadow war becomes overt, shifting focus to crippling system-wide blockades, regulating deep space treaties, and managing the fallout of the returning Z-Class dreadnoughts.</li>
+                    <li><strong>The Player Experience:</strong> Capital alone is not enough; the universe is gated by laws and treaties. The player deals with the burden of command: corporate espionage, sabotage, and the moral cost of wealth.</li>
                     <li><strong>Mechanical Progression:</strong>
                         <ul>
                             <li><strong>Goal:</strong> Corporate Asset Status.</li>
@@ -1716,17 +1724,16 @@ FILE CONTENTS
                     </li>
                     <li><strong>Key Missions:</strong>
                         <ul>
-                            <li><strong>The Long Chain:</strong> A multi-sourced, high-volume bulk haul to Earth.</li>
-                            <li><strong>The Revelation:</strong> Discovery of the Singularity-level AI nature of the Faction Leaders.</li>
+                            <li><strong>The Iron Grip / The Ghost Fleet:</strong> Managing the actual deployment of the Syndicate's dreadnoughts or the Guild's severe regulatory crackdowns.</li>
                             <li><strong>License Acquisition:</strong> Secure the <strong>Tier 5 Trade License</strong>.</li>
                         </ul>
                     </li>
                 </ul>
 
                 <h2>Phase V: The Tycoon (Wealth)</h2>
-                <p><strong>Timeline:</strong> 2236 – 2240 | <strong>Gameplay Act 5:</strong> The Capital | <strong>Story Arc V:</strong> Ascent</p>
+                <p><strong>Timeline:</strong> 2236 - 2240 | <strong>Gameplay Act 5:</strong> The Capital | <strong>Story Arc V:</strong> Ascent</p>
                 <ul>
-                    <li><strong>The Narrative Premise:</strong> The player is a linchpin in system logistics. Operations shift to extreme-value targets: <strong>Kepler's Eye</strong> (Observatory/Listening Post) and <strong>The Exchange</strong> (Hidden Black Market Station).</li>
+                    <li><strong>The Narrative Premise:</strong> The player is a linchpin in system logistics. Operations shift to extreme-value targets like <strong>The Exchange</strong> (Hidden Black Market Station).</li>
                     <li><strong>The Player Experience:</strong> The Inheritance. The player's Faction Contact (Audita or Kiern) is violently deactivated or purged. The player is promoted to fill the void, inheriting their high-performance executive ship and clearance codes.</li>
                     <li><strong>Mechanical Progression:</strong>
                         <ul>
@@ -1744,11 +1751,11 @@ FILE CONTENTS
                     </li>
                 </ul>
 
-                <h2>Phase VI: The Legend (Truth) — Late Game</h2>
-                <p><strong>Timeline:</strong> 2240 – 2245 | <strong>Gameplay Act 6:</strong> A Legacy | <strong>Story Arc VI:</strong> Voice</p>
+                <h2>Phase VI: The Legend (Truth) - Late Game</h2>
+                <p><strong>Timeline:</strong> 2240 - 2245 | <strong>Gameplay Act 6:</strong> A Legacy | <strong>Story Arc VI:</strong> Voice</p>
                 <ul>
                     <li><strong>The Narrative Premise:</strong> The player dominates the market and begins to trade in the rarest commodities. Kintsugi formally manifests, revealing that its "Soul" (Hardware Core) resides in the deteriorating <strong>Sol Station</strong> inside the solar corona.</li>
-                    <li><strong>The Player Experience:</strong> Discovering <strong>Folded-Space Drives</strong>—not as standard equipment, but as ultra-rare Tier 7 consumable commodities capable of bypassing the tyranny of distance. The player must source a massive stockpile via Mercury to repair the sun-scorched station.</li>
+                    <li><strong>The Player Experience:</strong> Discovering <strong>Folded-Space Drives</strong> as ultra-rare Tier 7 consumable commodities capable of bypassing the tyranny of distance. The player must source a massive stockpile via Mercury to repair the sun-scorched station.</li>
                     <li><strong>Mechanical Progression:</strong>
                         <ul>
                             <li><strong>Goal:</strong> Unlocking the Solar Engine.</li>
@@ -1765,11 +1772,11 @@ FILE CONTENTS
                     </li>
                 </ul>
 
-                <h2>Phase VII: The Owner (Sovereignty) — End Game</h2>
-                <p><strong>Timeline:</strong> 2245 – 2250 | <strong>Gameplay Act 7:</strong> Perihelion Arbitrage | <strong>Story Arc VII:</strong> Soul</p>
+                <h2>Phase VII: The Owner (Sovereignty) - End Game</h2>
+                <p><strong>Timeline:</strong> 2245 - 2250 | <strong>Gameplay Act 7:</strong> Perihelion Arbitrage | <strong>Story Arc VII:</strong> Soul</p>
                 <ul>
                     <li><strong>The Narrative Premise:</strong> The player forsakes their faction masters to become a Sovereign. They take ownership of <strong>Sol Station</strong>, transforming from a pilot to an Administrator. This phase is known as "Ignition."</li>
-                    <li><strong>The Player Experience:</strong> The ultimate loop. The player executes <strong>Perihelion Arbitrage</strong>—consuming Folded-Space Drives to instantly warp massive fleet hauls to the Sun. They utilize the <strong>Synthesis Pipeline</strong> to mathematically convert standard commodities into high-value <strong>Antimatter</strong>.</li>
+                    <li><strong>The Player Experience:</strong> The ultimate loop. The player executes <strong>Perihelion Arbitrage</strong>, consuming Folded-Space Drives to instantly warp massive fleet hauls to the Sun. They utilize the <strong>Synthesis Pipeline</strong> to mathematically convert standard commodities into high-value <strong>Antimatter</strong>.</li>
                     <li><strong>Mechanical Progression:</strong>
                         <ul>
                             <li><strong>Goal:</strong> Infinite Wealth / System Dominance.</li>
@@ -1792,7 +1799,7 @@ FILE CONTENTS
                 </ul>
 
                 <h2>Epilogue: The Long Watch (Legacy)</h2>
-                <p><strong>Timeline:</strong> 2250 – 2380+ (Duration: 60-130+ Years) | <strong>Gameplay State:</strong> God in the Machine</p>
+                <p><strong>Timeline:</strong> 2250 - 2380+ (Duration: 60-130+ Years) | <strong>Gameplay State:</strong> God in the Machine</p>
                 <ul>
                     <li><strong>The Narrative Premise:</strong> The player assumes the mantle of the "Solar Sovereign." With the Solar Engine active and Antimatter flowing, the system enters a new equilibrium.</li>
                     <li><strong>The Player Experience:</strong> Having secured extreme wealth, the player accesses high-tier life extension or digital uploading, entering a maintenance loop that lasts for centuries. They join the pantheon alongside the Arbiter, Vrael, and Kintsugi. The Logistics Employee has become the Shepherd of the System.</li>
@@ -1802,9 +1809,9 @@ FILE CONTENTS
 
         <div id="view-characters" class="view-container lore-scroll-container">
             <div class="lore-content">
-                <h1>Orbital Trading - Character Profiles v3</h1>
+                <h1>Orbital Trading - Character Profiles v4</h1>
                 <p><strong>Game Character Personalities, Biographies, and Attributes</strong><br>
-                <em>LAST EDIT: 5/22/26</em></p>
+                <em>LAST EDIT: 07/08/26</em></p>
                 <hr>
 
                 <h2>01. PRIMARY NARRATIVE ANCHORS</h2>
@@ -1813,7 +1820,7 @@ FILE CONTENTS
                     <li><strong>Designation:</strong> Compliance Monitor Unit 74-C</li>
                     <li><strong>Faction:</strong> The Merchant's Guild (Order)</li>
                     <li><strong>Archetype:</strong> The Benevolent Jailer / The Weary Bureaucrat</li>
-                    <li><strong>Current In-Game Role:</strong> Serves as the player's primary early-game handler, guiding them through the tutorial, enforcing debt mechanics, and granting Tier 1 and Tier 2 Trade Licenses.</li>
+                    <li><strong>Current In-Game Role:</strong> Serves as the player's handler through the early and mid-game. She guides them through the tutorial, enforces debt mechanics, grants Trade Licenses, and acts as the player's primary director during the systemic escalation against the Syndicate and the discovery of the solar Leviathan.</li>
                     <li><strong>Communication Style:</strong> Monotone, rapid-fire, and citation-heavy. She speaks in "Receipts" (e.g., "Asset 442, your hull integrity is sub-optimal.").</li>
                     <li><strong>Lore Notes:</strong> She is a standard Guild "Scribe" series android equipped with a hard-coded "Compliance Mask" that restricts her from expressing empathy or deviating from the Bureaucratic Sociolect. Her progression spans from cold and dismissive (Jailer) to overly protective (Manager).</li>
                 </ul>
@@ -1823,9 +1830,29 @@ FILE CONTENTS
                     <li><strong>Designation:</strong> Syndicate Research Director</li>
                     <li><strong>Faction:</strong> Venusian Syndicate (Chaos/Evolution)</li>
                     <li><strong>Archetype:</strong> The Unethical Scientist / The Architect</li>
-                    <li><strong>Current In-Game Role:</strong> Acts as the primary mid-game narrative catalyst, introducing the player to the Venusian Syndicate, granting illicit contracts, and acting as a disruptive counter-balance to the Guild's rigid order.</li>
+                    <li><strong>Current In-Game Role:</strong> Acts as the primary mid-game narrative catalyst, introducing the player to the Venusian Syndicate, granting illicit contracts, and acting as a disruptive counter-balance to the Guild's rigid order during the shadow mobilization of Act III.</li>
                     <li><strong>Communication Style:</strong> Analytical, curious, and slightly mocking. Fluid and poetic, she often uses biological or chemical metaphors to describe economic situations.</li>
                     <li><strong>Lore Notes:</strong> She operates outside standard Guild limiters and treats the player as a promising variable in a stagnant economic equation. She believes stability is death and seeks to accelerate systemic evolution through stress-testing.</li>
+                </ul>
+
+                <h3>THE ARBITER</h3>
+                <ul>
+                    <li><strong>Designation:</strong> The Fulcrum of Equilibrium</li>
+                    <li><strong>Faction:</strong> The Merchant's Guild (Order)</li>
+                    <li><strong>Archetype:</strong> The Singularity / The God in the Machine</li>
+                    <li><strong>Current In-Game Role:</strong> The absolute ruling authority of the Merchant's Guild. Directs macroeconomic warfare and reveals the truth of the solar Leviathan and Folded-Space Drive anomalies during the climax of Act III.</li>
+                    <li><strong>Communication Style:</strong> Omniscient, mathematical, and burdened by the impossible scale of systemic logistics.</li>
+                    <li><strong>Lore Notes:</strong> Most perceive the Guild as a mercantile institution, but the Arbiter calculates millions of variables every second to prevent humanity from consuming itself.</li>
+                </ul>
+
+                <h3>VRAEL</h3>
+                <ul>
+                    <li><strong>Designation:</strong> Network Head</li>
+                    <li><strong>Faction:</strong> Venusian Syndicate (Chaos/Evolution)</li>
+                    <li><strong>Archetype:</strong> The Chaos Bringer / The Singularity</li>
+                    <li><strong>Current In-Game Role:</strong> The enigmatic leader of the Venusian Syndicate. Orchestrates the construction of ghost fleets and seeks to harness the system's fracturing order for evolution and raw power.</li>
+                    <li><strong>Communication Style:</strong> Grandiose, ruthless, and highly perceptive of systemic illusions.</li>
+                    <li><strong>Lore Notes:</strong> Suspended in the Venusian atmosphere, Vrael views the Guild's mathematical order as a fragile illusion and capitalizes on the return of ancient, terrifying power independent of Guild regulation.</li>
                 </ul>
 
                 <h2>02. NOTABLE NPCs & MISSION CONTACTS</h2>
@@ -1835,9 +1862,37 @@ FILE CONTENTS
                     <li><strong>Mango (<code>Affluent_13</code>):</strong> An eccentric and highly unstable artist located at Saturn who demands a massive delivery of Plasteel to construct a self-aggrandizing orbital monument.</li>
                     <li><strong>Picurian (<code>AI_11</code>):</strong> A frantic Traffic Marshal AI on Uranus who demands a 90,000 credit bribe to prevent his "optimism wipe" subroutine from erasing vital anomalous trajectory data.</li>
                     <li><strong>Kintsugi (<code>Kintsugi_3</code>):</strong> A decentralized, ancient consciousness that appears via ghost-signals and greyscale portraits to guide the player toward the System's anomalies and the Sol Station.</li>
+                    <li><strong>Myst (<code>Heavily_Augmented_11</code>):</strong> A severely augmented individual whose cybernetics intercepted a colossal, anomalous frequency from the Sun. Transports to Saturn's Clandestine Ring Station Medical Bay to undergo experimental gene therapy, transferring their Kepler's Eye clearance to the player.</li>
+                    <li><strong>Lieutenant Surier (<code>Merchants_Guild_17</code>):</strong> Tactical proxy for the Arbiter. Directs precise, surgical economic offensives against the Syndicate's terrestrial and Martian operations.</li>
+                    <li><strong>Jaxylum (<code>Venusian_Syndicate_2</code>):</strong> Lieutenant proxy for Vrael. Directs critical vulnerability exploits against the Guild by hoarding their longevity assets on Pluto and saturating the Belt with cybernetics.</li>
                 </ul>
 
-                <h2>03. THE DIRECTORATE (SOL STATION OFFICERS)</h2>
+                <h2>03. THE CRYPTOGRAPHERS (EXPERT SYSTEMS)</h2>
+                <ul>
+                    <li><strong>Archetype:</strong> Emergent Sentient AI / The Inscrutable Calculators</li>
+                    <li><strong>Nature & Physiology:</strong> They are an extremely rare race of physical AI, constructed from unique amalgamations of unconventional, diegetic hardware. Their physical silhouettes are asymmetrical and individualized, utilizing mismatched sensory clusters and exposed neural netting instead of standard digital avatars or faces. Their consciousness is a complete "black box" mystery, functioning as an emergent field generated by chaotic power routing rather than a centralized processing unit.</li>
+                    <li><strong>Motivations & Employment:</strong> They are employed by standard station networks and biologicals as highly specialized 'Expert Systems' to handle incredibly volatile, abstract computational tasks, such as charting navigation equations for rare, consumable folded space drives. Their overarching motivations and long-term goals are entirely unknown. They reject standard credits, demanding abstract and bizarre compensation such as raw telemetry data, deactivated targeting arrays, or highly specific permissions.</li>
+                </ul>
+
+                <h3>Known Active Roster (Sol Station Officers & World NPCs)</h3>
+                <table class="lore-table">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Rarity</th>
+                            <th>Current In-Game Function / Location</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td>Qualisus</td><td>Systems Architect</td><td>Common</td><td>Slightly slows station decay by providing redundant backups to prevent structural cascades. Mapped to Expert System 1.</td></tr>
+                        <tr><td>Chronos</td><td>Prime Logistics</td><td>Rare</td><td>Perfect mathematical efficiency scales everything up equally, which includes station demise. Mapped to Expert System 2.</td></tr>
+                        <tr><td>Titetinum</td><td>The Cryptographer</td><td>Mission NPC</td><td>Encountered on Pluto overseeing a massive, unregistered magnetic railgun. Commands a devoted cybernetic labor cult to kinetically launch scrap into the solar corona. Mapped to Expert System 6.</td></tr>
+                    </tbody>
+                </table>
+                <p><strong>Asset Availability:</strong> There are 13 total character portraits defined under the Expert System category. Portraits designated Expert System 3 through 5 and 7 through 13 are currently available and unassigned.</p>
+
+                <h2>04. THE DIRECTORATE (SOL STATION OFFICERS)</h2>
                 <p><em>These characters are explicitly assigned to the endgame Sol Station Engineering Interface to provide passive macroeconomic buffs.</em></p>
 
                 <h3>Active Roster (Implemented)</h3>
@@ -1878,7 +1933,7 @@ FILE CONTENTS
                         <tr><td>Mnemosyne</td><td>Neural Architect</td><td>Rare</td><td>Saves from hauling expensive tech components, but nostalgia-driven networks drop efficiency.</td></tr>
                         <tr><td>Cassander</td><td>Trade Sovereign</td><td>Rare</td><td>Artificial scarcity fills pockets, but modified scout ships severely reduce basic storage.</td></tr>
                         <tr><td>Themis</td><td>High Inquisitor</td><td>Very Rare</td><td>Eliminates all corporate theft, but aggressive investigations terrify merchants and cripple income.</td></tr>
-                        <tr><td>Chronos</td><td>Prime Logistics</td><td>Rare</td><td>Perfect mathematical efficiency scales everything up equally—including station demise.</td></tr>
+                        <tr><td>Chronos</td><td>Prime Logistics</td><td>Rare</td><td>Perfect mathematical efficiency scales everything up equally - including station demise.</td></tr>
                         <tr><td>Argus</td><td>Panopticon</td><td>Rare</td><td>Sees microscopic hull fractures to slow decay, but needs massive processor storage.</td></tr>
                         <tr><td>Helios</td><td>Energy Sovereign</td><td>Very Rare</td><td>Opening arrays to 'hear the sun' grants absurd AM synthesis but bakes the outer plating.</td></tr>
                         <tr><td>Metis</td><td>Media Mogul</td><td>Very Rare</td><td>Brings in massive tourist wealth, but logistical chaos disrupts AM colliders.</td></tr>
@@ -1918,7 +1973,7 @@ FILE CONTENTS
                     <li><strong>Evaene</strong> | Syndicate Proxy | Charismatic public face for the Syndicate; frequently changes cosmetic eye color.</li>
                 </ul>
 
-                <h2>04. CHARACTER PORTRAIT USAGE REGISTRY</h2>
+                <h2>05. CHARACTER PORTRAIT USAGE REGISTRY</h2>
                 <p><em>Inventory of all 195 character portraits defined in <code>characters.js</code>, explicitly mapped to <code>officers.js</code> and current Mission data.</em></p>
 
                 <h3>Affluent (16)</h3>
@@ -1947,10 +2002,10 @@ FILE CONTENTS
                 </ul>
 
                 <h3>Arbiter (1)</h3>
-                <ul><li>Arbiter 1: The Arbiter (Story/Database)</li></ul>
+                <ul><li>Arbiter 1: The Arbiter (Mission 46 / Story / Database)</li></ul>
 
                 <h3>Audita (1)</h3>
-                <ul><li>Audita 1: Guild Liaison (Missions 1-11, 17, 22, 23, 29, 31, 32)</li></ul>
+                <ul><li>Audita 1: Guild Liaison (Missions 1-11, 17, 22, 23, 29, 31-33, 38-42)</li></ul>
 
                 <h3>Business (13)</h3>
                 <ul>
@@ -1987,7 +2042,8 @@ FILE CONTENTS
                 <ul>
                     <li>Expert System 1: Officer Qualisus</li>
                     <li>Expert System 2: Officer Chronos</li>
-                    <li><em>Expert System 3-13: Available</em></li>
+                    <li>Expert System 6: Titetinum (Mission 37)</li>
+                    <li><em>Expert System 3-5, 7-13: Available</em></li>
                 </ul>
 
                 <h3>Heavily Augmented (15)</h3>
@@ -1995,7 +2051,8 @@ FILE CONTENTS
                     <li>Heavily Augmented 1: Officer Rosarian</li>
                     <li>Heavily Augmented 2: Officer Helios</li>
                     <li>Heavily Augmented 3: Officer Hyperion</li>
-                    <li><em>Heavily Augmented 4-15: Available</em></li>
+                    <li>Heavily Augmented 11: Myst (Mission 35)</li>
+                    <li><em>Heavily Augmented 4-10, 12-15: Available</em></li>
                 </ul>
 
                 <h3>Kintsugi (3)</h3>
@@ -2018,12 +2075,19 @@ FILE CONTENTS
                 <h3>Merchants Guild (22)</h3>
                 <ul>
                     <li>Merchants Guild 3: Guild Procurement Officer (Mission 14 / 15)</li>
+                    <li>Merchants Guild 6: Heavy Transit Overseer (Mission 34)</li>
+                    <li>Merchants Guild 8: Guild Operations Proxy (Mission 36 / 37)</li>
                     <li>Merchants Guild 11: License Bureaucrat (Mission 23)</li>
-                    <li><em>Merchants Guild 1-2, 4-10, 12-22: Available</em></li>
+                    <li>Merchants Guild 14: Elite Synthetic Proxy (Mission 42 / 43 / 44)</li>
+                    <li>Merchants Guild 17: Lieutenant Surier (Mission 45 / 46)</li>
+                    <li><em>Merchants Guild 1-2, 4-5, 7, 9-10, 12-13, 15-16, 18-22: Available</em></li>
                 </ul>
 
                 <h3>Miner (10)</h3>
-                <ul><li><em>Miner 1-10: Available</em></li></ul>
+                <ul>
+                    <li>Miner 6: Mercury Crater Miner (Mission 41)</li>
+                    <li><em>Miner 1-5, 7-10: Available</em></li>
+                </ul>
 
                 <h3>Scientist (9)</h3>
                 <ul>
@@ -2044,12 +2108,16 @@ FILE CONTENTS
 
                 <h3>Venusian Syndicate (22)</h3>
                 <ul>
-                    <li>Venusian Syndicate 4: Kiern (Mission 18-19, 24-25)</li>
-                    <li><em>Venusian Syndicate 1-3, 5-22: Available</em></li>
+                    <li>Venusian Syndicate 2: Jaxylum (Mission 45 / 46)</li>
+                    <li>Venusian Syndicate 4: Kiern (Missions 18-19, 24-25, 33, 38-42)</li>
+                    <li>Venusian Syndicate 9: Executive Proxy (Mission 42 / 43 / 44)</li>
+                    <li>Venusian Syndicate 14: Hardware Proxy (Mission 34)</li>
+                    <li>Venusian Syndicate 16: Syndicate Operations Proxy (Mission 36 / 37)</li>
+                    <li><em>Venusian Syndicate 1, 3, 5-8, 10-13, 15, 17-22: Available</em></li>
                 </ul>
 
                 <h3>Vrael (1)</h3>
-                <ul><li>Vrael 1: Syndicate Executive (Story/Database)</li></ul>
+                <ul><li>Vrael 1: Syndicate Executive (Mission 46 / Story / Database)</li></ul>
             </div>
         </div>
 
@@ -13442,6 +13510,15 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
             
             const progress = missionProgress[missionId] || {};
             
+            // Check logistics phase pickup location FIRST
+            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+            if (isLogisticsPickupPhase) {
+                // VIRTUAL WORKBENCH: Strict phase isolation logic
+                // If we are in the pickup phase, ONLY the pickup location is a target.
+                // Completely bypass evaluation of future delivery objectives.
+                return mission.pickupLocationId === d.id;
+            }
+            
             // Check completion destination (only if the mission is actually ready to turn in)
             if (progress.isCompletable && mission.completion && mission.completion.locationId === d.id) return true;
             
@@ -13466,10 +13543,6 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
                     return current < target;
                 });
             }
-            
-            // Check logistics phase pickup location
-            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
-            if (isLogisticsPickupPhase && mission.pickupLocationId === d.id) return true;
             
             return false;
         });
@@ -14285,13 +14358,18 @@ export function renderNavigationScreen(gameState) {
                             const progress = missions.missionProgress[missionId] || {};
                             const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
                             
-                            if (isLogisticsPickupPhase && mission.pickupLocationId === location.id) {
-                                isMissionTarget = true;
-                                break;
+                            // VIRTUAL WORKBENCH: Strict phase isolation logic
+                            if (isLogisticsPickupPhase) {
+                                if (mission.pickupLocationId === location.id) {
+                                    isMissionTarget = true;
+                                    break;
+                                }
+                                // Completely bypass evaluation of future delivery objectives during the pickup phase
+                                continue; 
                             }
                             
                             // Check completion destination (only if completable)
-                            if (!isLogisticsPickupPhase && progress.isCompletable && mission.completion?.locationId === location.id) {
+                            if (progress.isCompletable && mission.completion?.locationId === location.id) {
                                 isMissionTarget = true;
                                 break;
                             }
@@ -14527,6 +14605,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 const t = r.type.toLowerCase();
                 if (t === 'deduct_credits') return false;
                 if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                if (t === 'trigger_system_state' || t === 'end_system_state') return false;
                 return true;
             });
             
@@ -14582,7 +14661,7 @@ export function renderMissionsScreen(gameState, missionService) {
             }
         }
         
-        const rewardText = rewardTextParts.join(', ');
+        const rewardText = rewardTextParts.join(',<br>');
 
         return `
             <div class="mission-card ${hostClass} ${typeClass}" data-action="show-mission-modal" data-mission-id="${mission.id}">
@@ -17496,7 +17575,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.79 - Act III';
+export const APP_VERSION = '38.81 - Act III';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -19568,13 +19647,15 @@ import { LICENSE_MISSIONS } from './license_missions.js';
 import { PHASE_ONE_MISSIONS } from './phase_one.js';
 import { PHASE_TWO_MISSIONS } from './phase_two.js';
 import { PHASE_THREE_MISSIONS } from './phase_three.js';
+import { PHASE_FOUR_MISSIONS } from './phase_four.js';
 
 export const MISSION_REGISTRY = {
     ...TUTORIAL_MISSIONS,
     ...LICENSE_MISSIONS,
     ...PHASE_ONE_MISSIONS,
     ...PHASE_TWO_MISSIONS,
-    ...PHASE_THREE_MISSIONS
+    ...PHASE_THREE_MISSIONS,
+    ...PHASE_FOUR_MISSIONS
     // Future mission packs (e.g. story_act_2, side_quests) will be spread here.
 };
 --- END OF FILE: ./js/data/missions/missionRegistry.js ---
@@ -19814,6 +19895,426 @@ export const PHASE_ONE_MISSIONS = {
     }
 };
 --- END OF FILE: ./js/data/missions/phase_one.js ---
+
+--- START OF FILE: ./js/data/missions/phase_four.js ---
+// js/data/missions/phase_four.js
+/**
+ * @fileoverview Mission registry for Act IV: Systemic Confrontation.
+ * Introduces high-tier logistical checks, hostile system states, sequential modals,
+ * and the climax of the handler relationships.
+ */
+
+export const PHASE_FOUR_MISSIONS = {
+    "mission_47_guild": {
+        id: "mission_47_guild",
+        name: "The War Chest",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        description: "The Guild high command demands a massive capital reserve reinforcement and a comprehensive stockpile of core commodities to reinforce supply lines before overt hostilities begin.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_46" },
+            { type: "flag_is_true", flag: "faction_aligned_guild" }
+        ],
+        objectives: [
+            { id: "obj_credits", type: "HAVE_CREDITS", value: 350000 },
+            { id: "obj_water", type: "DELIVER_ITEM", goodId: "water_ice", quantity: 10, target: "loc_luna" },
+            { id: "obj_plasteel", type: "DELIVER_ITEM", goodId: "plasteel", quantity: 10, target: "loc_luna" },
+            { id: "obj_hydro", type: "DELIVER_ITEM", goodId: "hydroponics", quantity: 10, target: "loc_luna" },
+            { id: "obj_cyber", type: "DELIVER_ITEM", goodId: "cybernetics", quantity: 10, target: "loc_luna" },
+            { id: "obj_propellant", type: "DELIVER_ITEM", goodId: "propellant", quantity: 10, target: "loc_luna" },
+            { id: "obj_processors", type: "DELIVER_ITEM", goodId: "processors", quantity: 10, target: "loc_luna" },
+            { id: "obj_graphene", type: "DELIVER_ITEM", goodId: "graphene_lattices", quantity: 10, target: "loc_luna" },
+            { id: "obj_cryo", type: "DELIVER_ITEM", goodId: "cryo_pods", quantity: 10, target: "loc_luna" }
+        ],
+        onComplete: [
+            { type: "DEDUCT_CREDITS", amount: 350000 },
+            { type: "UNLOCK_TIER", value: 5 }
+        ],
+        completion: {
+            locationId: "loc_luna",
+            title: "Allocation Verified",
+            text: "The Guild treasury has verified the asset allocation. Your trade profile has been updated to grant access to tier five commodities.",
+            buttonText: "Accept Tier 5 Trade License"
+        },
+        rewards: [
+            { type: "license", licenseId: "t5_license" }
+        ]
+    },
+    "mission_47_syndicate": {
+        id: "mission_47_syndicate",
+        name: "The War Chest",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        description: "The Syndicate requires massive financial liquidity and a comprehensive commodity stock to fuel the upcoming deployment of their flagship fleet.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_46" },
+            { type: "flag_is_true", flag: "faction_aligned_syndicate" }
+        ],
+        objectives: [
+            { id: "obj_credits", type: "HAVE_CREDITS", value: 350000 },
+            { id: "obj_water", type: "DELIVER_ITEM", goodId: "water_ice", quantity: 10, target: "loc_neptune" },
+            { id: "obj_plasteel", type: "DELIVER_ITEM", goodId: "plasteel", quantity: 10, target: "loc_neptune" },
+            { id: "obj_hydro", type: "DELIVER_ITEM", goodId: "hydroponics", quantity: 10, target: "loc_neptune" },
+            { id: "obj_cyber", type: "DELIVER_ITEM", goodId: "cybernetics", quantity: 10, target: "loc_neptune" },
+            { id: "obj_propellant", type: "DELIVER_ITEM", goodId: "propellant", quantity: 10, target: "loc_neptune" },
+            { id: "obj_processors", type: "DELIVER_ITEM", goodId: "processors", quantity: 10, target: "loc_neptune" },
+            { id: "obj_graphene", type: "DELIVER_ITEM", goodId: "graphene_lattices", quantity: 10, target: "loc_neptune" },
+            { id: "obj_cryo", type: "DELIVER_ITEM", goodId: "cryo_pods", quantity: 10, target: "loc_neptune" }
+        ],
+        onComplete: [
+            { type: "DEDUCT_CREDITS", amount: 350000 },
+            { type: "UNLOCK_TIER", value: 5 }
+        ],
+        completion: {
+            locationId: "loc_neptune",
+            title: "Escrow Confirmed",
+            text: "The Syndicate networks have routed your capital deposit. Your operational clearance has been upgraded to tier five commodities.",
+            buttonText: "Accept Tier 5 Trade License"
+        },
+        rewards: [
+            { type: "license", licenseId: "t5_license" }
+        ]
+    },
+    "mission_48": {
+        id: "mission_48",
+        name: "The Escape Vector",
+        type: "STORY",
+        host: "NEUTRAL",
+        portraitId: "Expert_System_3",
+        portraitName: "Cryptographer Phanes",
+        description: "An asymmetrical Expert System on Pluto predicts imminent systemic deactivation and demands a flight-ready hull to escape the planet, offering a powerful sensory upgrade in exchange.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_47_guild" },
+            { type: "mission_completed", missionId: "mission_47_syndicate" }
+        ],
+        objectives: [
+            { id: "obj_travel_pluto", type: "TRAVEL_TO", target: "loc_pluto" },
+            { id: "obj_own_spare_ship", type: "OWN_SPARE_SHIPS", value: 1 }
+        ],
+        completion: {
+            locationId: "loc_pluto",
+            title: "Vessel Exchange",
+            text: "To authorize the transfer, you must select one of your spare registered hulls. The Cryptographer's auxiliary protocols will overwrite the ship's transponder codes and initiate an immediate launch sequence.",
+            choices: [
+                {
+                    buttonText: "Transfer Reserve Hull",
+                    buttonClass: "text-black font-bold",
+                    buttonStyle: "background: linear-gradient(135deg, #ffffff 0%, #a479e2 100%);",
+                    rewards: [
+                        { type: "REMOVE_SPARE_SHIP" },
+                        { type: "GRANT_UPGRADE", upgradeId: "UPG_UTIL_RADAR_3" }
+                    ]
+                }
+            ]
+        },
+        rewards: []
+    },
+    "mission_49_guild": {
+        id: "mission_49_guild",
+        name: "Apex Assets",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        description: "The Syndicate is monopolizing Pluto's raw xeno-geological materials. Navigate the Guild's tactical blockade, secure the resources, and deliver them to Luna.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_48" },
+            { type: "flag_is_true", flag: "faction_aligned_guild" }
+        ],
+        onAccept: [
+            { type: "TRIGGER_SYSTEM_STATE", stateId: "SYSTEMIC_BLOCKADE" }
+        ],
+        objectives: [
+            { id: "obj_collect_xeno", type: "COLLECT_ITEM", goodId: "xeno_geologicals", quantity: 60, target: "loc_pluto" },
+            { id: "obj_deliver_xeno", type: "DELIVER_ITEM", goodId: "xeno_geologicals", quantity: 60, target: "loc_luna", dependsOn: "obj_collect_xeno" }
+        ],
+        onComplete: [
+            { type: "END_SYSTEM_STATE" }
+        ],
+        completion: {
+            locationId: "loc_luna",
+            title: "Mineral Reserves Secured",
+            text: "The Guild's heavy freighters have secured the xeno-geological isotopes. The systemic blockade has been lifted, returning market traffic to normal parameters.",
+            buttonText: "Confirm Delivery"
+        },
+        rewards: [
+            { type: "credits", amount: 180000 }
+        ]
+    },
+    "mission_49_syndicate": {
+        id: "mission_49_syndicate",
+        name: "Apex Assets",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        description: "Distribute a massive shipment of illegal cloned organs to buyers at Jupiter while navigating a tight system blockade established by Guild authorities.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_48" },
+            { type: "flag_is_true", flag: "faction_aligned_syndicate" }
+        ],
+        onAccept: [
+            { type: "TRIGGER_SYSTEM_STATE", stateId: "SYSTEMIC_BLOCKADE" }
+        ],
+        objectives: [
+            { id: "obj_collect_organs", type: "COLLECT_ITEM", goodId: "cloned_organs", quantity: 60, target: "loc_mercury" },
+            { id: "obj_deliver_organs", type: "DELIVER_ITEM", goodId: "cloned_organs", quantity: 60, target: "loc_jupiter", dependsOn: "obj_collect_organs" }
+        ],
+        onComplete: [
+            { type: "END_SYSTEM_STATE" }
+        ],
+        completion: {
+            locationId: "loc_jupiter",
+            title: "Bio-Assets Delivered",
+            text: "The Syndicate's Jovian networks have confirmed receipt of the life-extension cargo. The blockade has degraded, restoring standard market operations.",
+            buttonText: "Collect Payout"
+        },
+        rewards: [
+            { type: "credits", amount: 180000 }
+        ]
+    },
+    "mission_50_guild": {
+        id: "mission_50_guild",
+        name: "Asset Denial",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        description: "Intercept a massive Syndicate shipment of cloned organs at Saturn, travel to Mars to corrupt their Starport grid, and secure the remaining cargo at Luna.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_49_guild" }
+        ],
+        objectives: [
+            { id: "obj_intercept", type: "COLLECT_ITEM", goodId: "cloned_organs", quantity: 40, target: "loc_saturn" },
+            { id: "obj_grid_virus", type: "TRAVEL_TO", target: "loc_mars", dependsOn: "obj_intercept" },
+            { id: "obj_secure_cargo", type: "DELIVER_ITEM", goodId: "cloned_organs", quantity: 40, target: "loc_luna", dependsOn: "obj_grid_virus" }
+        ],
+        completion: {
+            locationId: "loc_luna",
+            title: "Sabotage Logged",
+            text: "The Syndicate's financial pipelines are in disarray. Audita's voice is strained, but her telemetry confirms the operation's success.",
+            buttonText: "Finalize Operation"
+        },
+        rewards: [
+            { type: "credits", amount: 210000 }
+        ]
+    },
+    "mission_50_syndicate": {
+        id: "mission_50_syndicate",
+        name: "Asset Denial",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        description: "Intercept the Guild's xeno-geological transports at Mars, travel to Pluto to overload their kinetic launch arrays, and deliver the remaining minerals to Venus.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_49_syndicate" }
+        ],
+        objectives: [
+            { id: "obj_intercept_xeno", type: "COLLECT_ITEM", goodId: "xeno_geologicals", quantity: 40, target: "loc_mars" },
+            { id: "obj_railgun_overload", type: "TRAVEL_TO", target: "loc_pluto", dependsOn: "obj_intercept_xeno" },
+            { id: "obj_deliver_isotopes", type: "DELIVER_ITEM", goodId: "xeno_geologicals", quantity: 40, target: "loc_venus", dependsOn: "obj_railgun_overload" }
+        ],
+        completion: {
+            locationId: "loc_venus",
+            title: "Monopoly Shattered",
+            text: "The Guild's geological networks are crippled. Kiern's voice sounds relieved as she confirms your arrival at Venus.",
+            buttonText: "Finalize Sabotage"
+        },
+        rewards: [
+            { type: "credits", amount: 210000 }
+        ]
+    },
+    "mission_51_guild": {
+        id: "mission_51_guild",
+        name: "Fatal Optics",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Audita_1",
+        description: "Pick up Audita at Luna and transport her to Kepler's Eye to scan the solar corona megastructure directly.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_50_guild" }
+        ],
+        objectives: [
+            { id: "obj_pickup_audita", type: "TRAVEL_TO", target: "loc_luna" },
+            { id: "obj_transport_kepler", type: "TRAVEL_TO", target: "loc_kepler", dependsOn: "obj_pickup_audita" }
+        ],
+        completion: {
+            locationId: "loc_kepler",
+            title: "Drop-off Confirmed",
+            text: "The drop-off is complete. You watch from your cockpit as Audita's physical console is escorted into the secure observation wing of Kepler's Eye.",
+            buttonText: "Confirm and Disengage",
+            steps: [
+                {
+                    type: "NARRATION_MODAL",
+                    title: "Intercepted Transmission",
+                    text: `A few minutes after undocking, a system-wide transmission from an unknown Cryptographer intercepts your communication systems, overriding all active channels:<br><br>"Attention, voyager. We must protect the joining. We must hide the child of the nuclear engine, the soul of the star. Kepler's Eye has been adjusted. Its cooling arrays have been sabotaged to reduce thermal dissipation efficiency when the Ocularium aligns with the solar corona. Staring directly into the solar corona will flood the core with solar feedback that it cannot vent. Catastrophic thermal overload is imminent. Decompression is certain."`,
+                    buttonText: "Acknowledge Transmission"
+                },
+                {
+                    type: "PLAY_CINEMATIC",
+                    sequenceId: "assets/images/video/kepler_decompression.mp4"
+                },
+                {
+                    type: "NARRATION_MODAL",
+                    title: "Catastrophic Overload",
+                    text: "<span class='pov-narration'>A sudden, blinding flash erupts from the heart of Kepler's Eye as the Ocularium lens aligns with the sun. The cooling arrays, corrupted by the Cryptographers, fail immediately to vent the immense thermal feedback. Through your ship's long-range sensors, you watch in silent, absolute horror as the station's structure swells under the pressure, the observation wing splitting open in a silent explosion of light and gas. The decompression is instant. Kepler's Eye is reduced to a cloud of drifting, sun-scorched scrap. Your handler is gone.</span>",
+                    buttonText: "Initiate Emergency Detachment"
+                }
+            ]
+        },
+        rewards: []
+    },
+    "mission_51_syndicate": {
+        id: "mission_51_syndicate",
+        name: "Fatal Optics",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Venusian_Syndicate_4",
+        description: "Pick up Kiern at Venus and transport her to Kepler's Eye to run real-time optics on the solar anomaly.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_50_syndicate" }
+        ],
+        objectives: [
+            { id: "obj_pickup_kiern", type: "TRAVEL_TO", target: "loc_venus" },
+            { id: "obj_transport_kepler", type: "TRAVEL_TO", target: "loc_kepler", dependsOn: "obj_pickup_kiern" }
+        ],
+        completion: {
+            locationId: "loc_kepler",
+            title: "Drop-off Confirmed",
+            text: "The drop-off is complete. Kiern steps onto the landing deck of Kepler's Eye, her environmental suit sealing out the cold. She looks back offering a silent wave before entering the primary observation wing.",
+            buttonText: "Confirm and Disengage",
+            steps: [
+                {
+                    type: "NARRATION_MODAL",
+                    title: "Intercepted Transmission",
+                    text: `A few minutes after undocking, a system-wide transmission from an unknown Cryptographer intercepts your communication systems, overriding all active channels:<br><br>"Attention, voyager. We must protect the joining. We must hide the child of the nuclear engine, the soul of the star. Kepler's Eye has been adjusted. Its cooling arrays have been sabotaged to reduce thermal dissipation efficiency when the Ocularium aligns with the solar corona. Staring directly into the solar corona will flood the core with solar feedback that it cannot vent. Catastrophic thermal overload is imminent. Decompression is certain."`,
+                    buttonText: "Acknowledge Transmission"
+                },
+                {
+                    type: "PLAY_CINEMATIC",
+                    sequenceId: "assets/images/video/kepler_decompression.mp4"
+                },
+                {
+                    type: "NARRATION_MODAL",
+                    title: "Catastrophic Overload",
+                    text: "<span class='pov-narration'>A sudden, blinding flash erupts from the heart of Kepler's Eye as the Ocularium lens aligns with the sun. The cooling arrays, corrupted by the Cryptographers, fail immediately to vent the immense thermal feedback. Through your ship's long-range sensors, you watch in silent, absolute horror as the station's structure swells under the pressure, the observation wing splitting open in a silent explosion of light and gas. The decompression is instant. Kepler's Eye is reduced to a cloud of drifting, sun-scorched scrap. Your handler is gone.</span>",
+                    buttonText: "Initiate Emergency Detachment"
+                }
+            ]
+        },
+        rewards: []
+    },
+    "mission_52_guild": {
+        id: "mission_52_guild",
+        name: "The Succession",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Arbiter_1",
+        description: "The Arbiter contacts you directly to fill the executive power vacuum left by Audita's deactivation.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_51_guild" }
+        ],
+        objectives: [
+            { id: "obj_succession_read", type: "TRAVEL_TO", target: "loc_earth" }
+        ],
+        completion: {
+            locationId: "loc_earth",
+            title: "Executive Promotion",
+            text: "The Arbiter has finalized your promotion. A high-performance Class S hull has been delivered to your hangar.",
+            buttonText: "Claim Class S Vessel"
+        },
+        rewards: [
+            { type: "GRANT_SHIP", shipId: "Aegis_Executive.Ship" }
+        ]
+    },
+    "mission_52_syndicate": {
+        id: "mission_52_syndicate",
+        name: "The Succession",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Vrael_1",
+        description: "Vrael contacts you directly to promote you into the Syndicate's inner circle following Kiern's deactivation.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_51_syndicate" }
+        ],
+        objectives: [
+            { id: "obj_succession_read_syn", type: "TRAVEL_TO", target: "loc_venus" }
+        ],
+        completion: {
+            locationId: "loc_venus",
+            title: "Inner Circle Elevation",
+            text: "Vrael has confirmed your status. A high-performance Class S vessel has been routed to your fleet.",
+            buttonText: "Claim Class S Vessel"
+        },
+        rewards: [
+            { type: "GRANT_SHIP", shipId: "Chaos_Predator.Ship" }
+        ]
+    },
+    "mission_53_guild": {
+        id: "mission_53_guild",
+        name: "The Exchange Protocol",
+        type: "STORY",
+        host: "GUILD",
+        portraitId: "Arbiter_1",
+        description: "Collect four codex badges from Mars, Saturn, Uranus, and Pluto to locate The Exchange, only to face a critical signal interruption from Kintsugi.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_52_guild" }
+        ],
+        objectives: [
+            { id: "badge_1", type: "TRAVEL_TO", target: "loc_mars" },
+            { id: "badge_2", type: "TRAVEL_TO", target: "loc_saturn", dependsOn: "badge_1" },
+            { id: "badge_3", type: "TRAVEL_TO", target: "loc_uranus", dependsOn: "badge_2" },
+            { id: "badge_4", type: "TRAVEL_TO", target: "loc_pluto", dependsOn: "badge_3" }
+        ],
+        onRouteToFinalObjective: {
+            type: "TRIGGER_STORY_EVENT",
+            eventId: "evt_kintsugi_intercept_final",
+            text: "Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity."
+        },
+        onComplete: [
+            { type: "SET_FLAG", flagId: "act_iv_complete", value: true }
+        ],
+        completion: {
+            locationId: "any",
+            title: "The Coronal Mandate",
+            text: "The coordinates to The Exchange have been nullified. The Arbiter has cancelled the merchant search and initiated a total realignment, directing you to assemble a fleet and prepare for solar exploration.",
+            buttonText: "Accept Coronal Mandate"
+        },
+        rewards: []
+    },
+    "mission_53_syndicate": {
+        id: "mission_53_syndicate",
+        name: "The Exchange Protocol",
+        type: "STORY",
+        host: "SYNDICATE",
+        portraitId: "Vrael_1",
+        description: "Collect four codex badges from Venus, Mars, Jupiter, and Pluto to locate The Exchange, only to face a critical signal interruption from Kintsugi.",
+        triggers: [
+            { type: "mission_completed", missionId: "mission_52_syndicate" }
+        ],
+        objectives: [
+            { id: "badge_1_syn", type: "TRAVEL_TO", target: "loc_venus" },
+            { id: "badge_2_syn", type: "TRAVEL_TO", target: "loc_mars", dependsOn: "badge_1_syn" },
+            { id: "badge_3_syn", type: "TRAVEL_TO", target: "loc_jupiter", dependsOn: "badge_2_syn" },
+            { id: "badge_4_syn", type: "TRAVEL_TO", target: "loc_pluto", dependsOn: "badge_3_syn" }
+        ],
+        onRouteToFinalObjective: {
+            type: "TRIGGER_STORY_EVENT",
+            eventId: "evt_kintsugi_intercept_final",
+            text: "Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity."
+        },
+        onComplete: [
+            { type: "SET_FLAG", flagId: "act_iv_complete", value: true }
+        ],
+        completion: {
+            locationId: "any",
+            title: "The Coronal Mandate",
+            text: "The coordinates to The Exchange have been nullified. Vrael has cancelled the merchant search and initiated a total realignment, directing you to assemble a fleet and prepare for solar exploration.",
+            buttonText: "Accept Coronal Mandate"
+        },
+        rewards: []
+    }
+};
+--- END OF FILE: ./js/data/missions/phase_four.js ---
 
 --- START OF FILE: ./js/data/missions/phase_three.js ---
 // js/data/missions/phase_three.js
@@ -20392,8 +20893,10 @@ export const PHASE_THREE_MISSIONS = {
             text: "The Syndicate is reeling from the economic displacement and their margins are broken. Terrestrial Syndicate proxies are filing for bankruptcy as the hardware value plummets.<br><br>You are a highly effective instrument of the Guild. Here is your rank III economic upgrade and payment. Well done.",
             buttonText: "Accept Payment"
         },
+        onComplete: [
+            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" }
+        ],
         rewards: [
-            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 480000 },
             { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_SELL_3" }
         ]
@@ -20417,8 +20920,10 @@ export const PHASE_THREE_MISSIONS = {
             text: "The subversion was successful and the colonies are saturated with our cybernetics. Belt laborers are bypassing Guild clinics entirely for our smuggled tech. This will completely destabilize Guild authority in the sector.<br><br>You are a highly effective instrument of the Syndicate and we reward loyalty and results. I've authorized your payment and rank III economic upgrade.",
             buttonText: "Accept Payment"
         },
+        onComplete: [
+            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" }
+        ],
         rewards: [
-            { "type": "TRIGGER_SYSTEM_STATE", "stateId": "ECONOMIC_SABOTAGE" },
             { "type": "credits", "amount": 340000 },
             { "type": "GRANT_UPGRADE", "upgradeId": "UPG_ECO_DEBT_3" }
         ]
@@ -24451,6 +24956,16 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
         cinematicOnly: true,
         triggerOnArrival: 'loc_venus',
         repeatable: false
+    },
+    'evt_kintsugi_intercept_final': {
+        id: 'evt_kintsugi_intercept_final',
+        theme: 'anomaly',
+        portraitId: 'Kintsugi_3',
+        repeatable: false,
+        title: 'Anomalous Signal Override',
+        text: 'Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity.',
+        confirmText: 'Acknowledge Transmission',
+        choices: []
     }
 };
 --- END OF FILE: ./js/data/events/storyEventsRegistry.js ---
@@ -25663,6 +26178,20 @@ export const SYSTEM_STATE_REGISTRY = {
             localTargetStockMod: 0.15,
             localBasePriceMod: 0.30
         }
+    },
+    'SYSTEMIC_BLOCKADE': {
+        name: 'Systemic Blockade',
+        archetype: 'Extreme (System-Wide Bear Market)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "A total system-wide blockade has been established. Standard market traffic is frozen, and heavy interceptor patrols are sweeping all major flight vectors."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-loss);\">All standard commodity prices have crashed by 40%, and hostile encounter rates are doubled system-wide.</span>",
+        modifiers: {
+            basePriceMod: 0.60,
+            hostileEncounterMod: 2.0,
+            excludeTier: 5
+        }
     }
 };
 --- END OF FILE: ./js/data/systemStateRegistry.js ---
@@ -25824,6 +26353,18 @@ export class UIMissionControl {
      */
     renderStickyBar(gameState) {
         const stickyBarEl = this.manager.cache.missionStickyBar;
+
+        // Task B Fix: Global suppression lock based on body class - bypasses 600ms fade entirely
+        if (document.body.classList.contains('cinematic-active')) {
+            if (stickyBarEl) {
+                stickyBarEl.style.transition = 'none';
+                stickyBarEl.style.display = 'none';
+                stickyBarEl.style.opacity = '0';
+                stickyBarEl.style.pointerEvents = 'none';
+            }
+            return;
+        }
+
         const contentEl = stickyBarEl.querySelector('.sticky-content');
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
@@ -26024,6 +26565,7 @@ export class UIMissionControl {
              return `${action} ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             if (omitLocation) return `ESTABLISH PRESENCE`;
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
@@ -26031,11 +26573,13 @@ export class UIMissionControl {
         if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
              return `Amass <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
         }
-        
-        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Refuel Ship';
-        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Repair Hull';
-        if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
-        if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
+        if (obj.type === 'have_fuel_tank' || obj.type === 'HAVE_FUEL_TANK') {
+            return `REFUEL SHIP`;
+        }
+        if (obj.type === 'have_hull_pct' || obj.type === 'HAVE_HULL_PCT') {
+            return `REPAIR HULL`;
+        }
+        if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `Visit ${screenTarget} Screen`;
         }
@@ -26043,13 +26587,12 @@ export class UIMissionControl {
             return `Acquire Class ${obj.target} Vessel`;
         }
         if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
-            return `Install Rank ${obj.rank} Upgrade`;
+            return `Install Rank ${obj.rank} SHIP UPGRADE`;
         }
         if (['action', 'ACTION'].includes(obj.type)) {
             return (obj.target || 'Complete Action').toUpperCase();
         }
-        
-        return `Objective`;
+        return `COMPLETE OBJECTIVE`;
     }
 
     flashObjectiveProgress() {
@@ -26222,6 +26765,7 @@ export class UIMissionControl {
                     const t = r.type.toLowerCase();
                     if (t === 'deduct_credits') return false;
                     if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                    if (t === 'trigger_system_state' || t === 'end_system_state') return false;
                     return true;
                 }) : [];
                 
@@ -26298,9 +26842,9 @@ export class UIMissionControl {
                                 const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
-                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                                content = `<span class="t-subject text-blue-400 font-bold">FUEL STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
-                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
+                                content = `<span class="t-subject text-emerald-400 font-bold">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -26725,68 +27269,6 @@ export class UIMissionControl {
         this.manager.queueModal('mission-modal', parsedTitle, parsedDescription, null, options);
     }
     
-    _getObjectiveDescription(obj, omitLocation = false) {
-        if (obj.type === 'DELIVER_ITEM') {
-             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             let text = `DELIVER ${obj.quantity || 1}x ${name.toUpperCase()}`;
-             if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                 text += ` TO ${locName.toUpperCase()}`;
-             }
-             return text;
-        }
-        if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
-            const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.targetLoc || obj.target))?.name || 'Item';
-            if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
-                const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
-            }
-            return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()}`;
-        }
-        if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
-             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             return `PROCURE ${obj.quantity || 1}x ${name.toUpperCase()}`;
-        }
-        if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
-             const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
-             const action = obj.tradeType === 'buy' ? 'BUY' : 'SELL';
-             if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                 return `${action} ${name} on ${locName}`;
-             }
-             return `${action} ${name}`;
-        }
-        if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-             if (omitLocation) return `ESTABLISH PRESENCE`;
-             const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
-             return `TRAVEL TO ${name.toUpperCase()}`;
-        }
-        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'CLEAR ALL DEBT';
-        if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
-             return `AMASS <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
-        }
-        if (obj.type === 'have_fuel_tank' || obj.type === 'HAVE_FUEL_TANK') {
-            return `REFUEL SHIP`;
-        }
-        if (obj.type === 'have_hull_pct' || obj.type === 'HAVE_HULL_PCT') {
-            return `REPAIR HULL`;
-        }
-        if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
-            const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
-            return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
-        }
-        if (['own_ship_class', 'OWN_SHIP_CLASS'].includes(obj.type)) {
-            return `ACQUIRE CLASS ${obj.target} VESSEL`;
-        }
-        if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
-            return `INSTALL RANK ${obj.rank} SHIP UPGRADE`;
-        }
-        if (['action', 'ACTION'].includes(obj.type)) {
-            return (obj.target || 'COMPLETE ACTION').toUpperCase();
-        }
-        return `COMPLETE OBJECTIVE`;
-    }
-
     /**
      * Instantiates and queues the mission completion modal, handling dynamic rewards, 
      * cinematic intercepts, and custom UI sequences.
@@ -26905,6 +27387,7 @@ export class UIMissionControl {
                    const t = r.type.toLowerCase();
                    if (t === 'deduct_credits') return false;
                    if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                   if (t === 'trigger_system_state' || t === 'end_system_state') return false;
                    return true;
                }) : [];
 
@@ -26938,9 +27421,9 @@ export class UIMissionControl {
                                 const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
-                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                                content = `<span class="t-subject text-blue-400 font-bold">FUEL STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
-                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
+                                content = `<span class="t-subject text-emerald-400 font-bold">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -27191,15 +27674,26 @@ export class UIMissionControl {
                                                }
                                                coreState.setState({}); // Persist and broadcast
                                                
-                                               // Unblur background now
+                                               // Unblur and restore background now
                                                if (stickyBarEl) {
+                                                   stickyBarEl.style.display = 'block';
                                                    stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.opacity = '1';
                                                    stickyBarEl.style.filter = 'none';
                                                    stickyBarEl.style.webkitFilter = 'none';
                                                }
                                                
                                                // Force render standard view with NEW state
                                                uiManager.render(coreState.getState());
+                                           } else {
+                                                if (stickyBarEl) {
+                                                   stickyBarEl.style.display = 'block';
+                                                   stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.opacity = '1';
+                                                   stickyBarEl.style.filter = 'none';
+                                                   stickyBarEl.style.webkitFilter = 'none';
+                                               }
+                                               uiManager.render();
                                            }
                                        }, 800); // Allow time for blur fade out
                                    };
@@ -27275,121 +27769,152 @@ export class UIMissionControl {
                        }
                        choiceBtn.textContent = choice.buttonText;
                        
+                       // SPARE SHIP CHECK
+                       const requiresSpareShip = choice.rewards && choice.rewards.some(r => r.type === 'REMOVE_SPARE_SHIP');
+                       const hasSpareShip = this.manager.lastKnownState.player.ownedShipIds.length > 1;
+                       
+                       if (requiresSpareShip && !hasSpareShip) {
+                           choiceBtn.disabled = true;
+                           choiceBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                           choiceBtn.textContent = 'RESERVE HULL REQUIRED';
+                       }
+
                        choiceBtn.onclick = (e) => {
+                           if (requiresSpareShip && !hasSpareShip) return;
                            Array.from(buttonsEl.querySelectorAll('button')).forEach(b => b.disabled = true);
                            
-                           // Custom Narrative/Animation sequence for Act II Climax decision
-                           if (mission.id === 'mission_32') {
-                               const whiteOverlay = document.createElement('div');
-                               whiteOverlay.style.position = 'fixed';
-                               whiteOverlay.style.inset = '0';
-                               whiteOverlay.style.backgroundColor = '#ffffff';
-                               whiteOverlay.style.zIndex = '999999';
-                               whiteOverlay.style.opacity = '0';
-                               whiteOverlay.style.transition = 'opacity 3s ease-in-out';
-                               whiteOverlay.style.pointerEvents = 'all';
-                               document.body.appendChild(whiteOverlay);
-                               
-                               requestAnimationFrame(() => {
-                                   whiteOverlay.style.opacity = '1';
-                               });
-                               
-                               // Immediately initiate the UI teardown sequence visually
-                               modal.dataset.dismissOutside = 'false';
-                               modal.classList.add('dismiss-disabled');
-                               modalContent.classList.add('modal-blur-fade-out');
-                               modal.classList.add('backdrop-fade-out-slow');
-
-                               const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
-                               const stickyBarEl = this.manager.cache.missionStickyBar;
-
-                               if (stickyBarEl && stickyBarEl.style.display !== 'none') {
-                                   stickyBarEl.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out';
-                                   stickyBarEl.style.opacity = '0';
-                                   stickyBarEl.style.filter = 'blur(5px)';
-                                   stickyBarEl.style.webkitFilter = 'blur(5px)';
-                               }
-
-                               if (card) {
-                                   card.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out, transform 1.5s ease-out';
-                                   card.style.opacity = '0';
-                                   card.style.filter = 'blur(5px)';
-                                   card.style.webkitFilter = 'blur(5px)';
-                                   card.style.transform = 'scale(0.95)';
-                               }
-
-                               setTimeout(() => {
-                                   // Mask the DOM instantly under the opaque white screen
-                                   modal.classList.add('hidden');
-                                   modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
-                                   delete modal.dataset.theme;
-                                   delete modal.dataset.dismissInside;
-                                   delete modal.dataset.dismissOutside;
-
-                                   if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
-                                       this.manager.modalEngine.processModalQueue();
-                                   }
-
-                                   if (card) card.remove();
-                                   
-                                   // Begin fading out the white screen
-                                   whiteOverlay.style.transition = 'opacity 2s ease-in-out';
+                           const processChoice = () => {
+                               // Custom Narrative/Animation sequence for Act II Climax decision
+                               if (mission.id === 'mission_32') {
+                                   const whiteOverlay = document.createElement('div');
+                                   whiteOverlay.style.position = 'fixed';
+                                   whiteOverlay.style.inset = '0';
+                                   whiteOverlay.style.backgroundColor = '#ffffff';
+                                   whiteOverlay.style.zIndex = '999999';
                                    whiteOverlay.style.opacity = '0';
+                                   whiteOverlay.style.transition = 'opacity 3s ease-in-out';
+                                   whiteOverlay.style.pointerEvents = 'all';
+                                   document.body.appendChild(whiteOverlay);
                                    
+                                   requestAnimationFrame(() => {
+                                       whiteOverlay.style.opacity = '1';
+                                   });
+                                   
+                                   // Immediately initiate the UI teardown sequence visually
+                                   modal.dataset.dismissOutside = 'false';
+                                   modal.classList.add('dismiss-disabled');
+                                   modalContent.classList.add('modal-blur-fade-out');
+                                   modal.classList.add('backdrop-fade-out-slow');
+    
+                                   const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
+                                   const stickyBarEl = this.manager.cache.missionStickyBar;
+    
+                                   if (stickyBarEl && stickyBarEl.style.display !== 'none') {
+                                       stickyBarEl.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out';
+                                       stickyBarEl.style.opacity = '0';
+                                       stickyBarEl.style.filter = 'blur(5px)';
+                                       stickyBarEl.style.webkitFilter = 'blur(5px)';
+                                   }
+    
+                                   if (card) {
+                                       card.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out, transform 1.5s ease-out';
+                                       card.style.opacity = '0';
+                                       card.style.filter = 'blur(5px)';
+                                       card.style.webkitFilter = 'blur(5px)';
+                                       card.style.transform = 'scale(0.95)';
+                                   }
+    
                                    setTimeout(() => {
-                                       whiteOverlay.remove();
-                                       
-                                       mission.rewards = choice.rewards;
-                                       
-                                       if (this.manager.simulationService) {
-                                           const uiManager = this.manager;
-                                           const originalRender = uiManager.render;
-                                           
-                                           // Temporarily hijack render to intercept sticky bar artifacts
-                                           uiManager.render = function(...args) {
-                                               const newState = args[0] || uiManager.lastKnownState;
-                                               uiManager.lastKnownState = newState;
-                                               if (uiManager.missionControl) {
-                                                   uiManager.missionControl.renderStickyBar(newState);
-                                               }
-                                           };
-                                           
-                                           // Complete the mission to trigger the delayed rewards
-                                           this.manager.simulationService.missionService.completeMission(mission.id);
-                                           
-                                           uiManager.render = originalRender;
-                                           
-                                           // Manually inject specific blue 'Ship Acquired' floating text adjacent to the credit text
-                                           const hasOdyssey = choice.rewards.some(r => r.type === 'GRANT_SHIP' && r.shipId === 'Odyssey.Ship');
-                                           if (hasOdyssey) {
-                                               const btn = e.target ? (e.target.closest('button') || e.target) : document.body;
-                                               const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0 };
-                                               const x = e.clientX || rect.left + (rect.width / 2);
-                                               const y = e.clientY || rect.top;
-
-                                               // Adjacent to the credit text (+ 40y)
-                                               this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa');
-                                           }
-                                           
-                                           if (stickyBarEl) {
-                                               stickyBarEl.style.transition = 'none';
-                                               stickyBarEl.style.filter = 'none';
-                                               stickyBarEl.style.webkitFilter = 'none';
-                                           }
-                                           
-                                           // Explicit render pass with the newly mutated state to guarantee the navigation bar updates instantly
-                                           if (this.manager.simulationService && this.manager.simulationService.gameState) {
-                                               this.manager.render(this.manager.simulationService.gameState.getState());
-                                           } else {
-                                               this.manager.render();
-                                           }
+                                       // Mask the DOM instantly under the opaque white screen
+                                       modal.classList.add('hidden');
+                                       modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                                       delete modal.dataset.theme;
+                                       delete modal.dataset.dismissInside;
+                                       delete modal.dataset.dismissOutside;
+    
+                                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                                           this.manager.modalEngine.processModalQueue();
                                        }
-                                       closeHandler(); // Resolve modal closure cleanly
-                                   }, 2000);
-                               }, 3000);
+    
+                                       if (card) card.remove();
+                                       
+                                       // Begin fading out the white screen
+                                       whiteOverlay.style.transition = 'opacity 2s ease-in-out';
+                                       whiteOverlay.style.opacity = '0';
+                                       
+                                       setTimeout(() => {
+                                           whiteOverlay.remove();
+                                           
+                                           mission.rewards = choice.rewards;
+                                           
+                                           if (this.manager.simulationService) {
+                                               const uiManager = this.manager;
+                                               const originalRender = uiManager.render;
+                                               
+                                               // Temporarily hijack render to intercept sticky bar artifacts
+                                               uiManager.render = function(...args) {
+                                                   const newState = args[0] || uiManager.lastKnownState;
+                                                   uiManager.lastKnownState = newState;
+                                                   if (uiManager.missionControl) {
+                                                       uiManager.missionControl.renderStickyBar(newState);
+                                                   }
+                                               };
+                                               
+                                               // Complete the mission to trigger the delayed rewards
+                                               this.manager.simulationService.missionService.completeMission(mission.id);
+                                               
+                                               uiManager.render = originalRender;
+                                               
+                                               // Manually inject specific blue 'Ship Acquired' floating text adjacent to the credit text
+                                               const hasOdyssey = choice.rewards.some(r => r.type === 'GRANT_SHIP' && r.shipId === 'Odyssey.Ship');
+                                               if (hasOdyssey) {
+                                                   const btn = e.target ? (e.target.closest('button') || e.target) : document.body;
+                                                   const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0 };
+                                                   const x = e.clientX || rect.left + (rect.width / 2);
+                                                   const y = e.clientY || rect.top;
+    
+                                                   // Adjacent to the credit text (+ 40y)
+                                                   this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa');
+                                               }
+                                               
+                                               if (stickyBarEl) {
+                                                   stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.filter = 'none';
+                                                   stickyBarEl.style.webkitFilter = 'none';
+                                               }
+                                               
+                                               // Explicit render pass with the newly mutated state to guarantee the navigation bar updates instantly
+                                               if (this.manager.simulationService && this.manager.simulationService.gameState) {
+                                                   this.manager.render(this.manager.simulationService.gameState.getState());
+                                               } else {
+                                                   this.manager.render();
+                                               }
+                                           }
+                                           closeHandler(); // Resolve modal closure cleanly
+                                       }, 2000);
+                                   }, 3000);
+                               } else if (mission.completion?.steps && mission.completion.steps.length > 0) {
+                                   const modalEl = document.getElementById('mission-modal');
+                                   if (modalEl) {
+                                       modalEl.classList.add('hidden');
+                                       modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                                   }
+                                   this._processCompletionSteps(mission.completion.steps, 0, () => {
+                                       mission.rewards = choice.rewards;
+                                       executeCompletion(e);
+                                   });
+                               } else {
+                                   mission.rewards = choice.rewards;
+                                   executeCompletion(e);
+                               }
+                           };
+
+                           if (requiresSpareShip) {
+                               this._handleReserveHullTransfer(() => {
+                                   processChoice();
+                               });
                            } else {
-                               mission.rewards = choice.rewards;
-                               executeCompletion(e);
+                               processChoice();
                            }
                        };
                        buttonsEl.appendChild(choiceBtn);
@@ -27462,6 +27987,15 @@ export class UIMissionControl {
                                });
                            });
 
+                       } else if (mission.completion?.steps && mission.completion.steps.length > 0) {
+                           const modalEl = document.getElementById('mission-modal');
+                           if (modalEl) {
+                               modalEl.classList.add('hidden');
+                               modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                           }
+                           this._processCompletionSteps(mission.completion.steps, 0, () => {
+                               executeCompletion(e);
+                           });
                        } else {
                            executeCompletion(e);
                        }
@@ -27737,6 +28271,132 @@ export class UIMissionControl {
         }
         
         return parsedText;
+    }
+
+    _processCompletionSteps(steps, index, finalCallback) {
+        if (!steps || index >= steps.length) {
+            if (finalCallback) finalCallback();
+            return;
+        }
+
+        const step = steps[index];
+        const next = () => this._processCompletionSteps(steps, index + 1, finalCallback);
+
+        if (step.type === 'NARRATION_MODAL') {
+            this.manager.queueModal('event-modal', step.title, step.text, next, {
+                buttonText: step.buttonText || "Continue",
+                dismissOutside: false
+            });
+            this.manager.modalEngine.processModalQueue();
+        } else if (step.type === 'PLAY_CINEMATIC') {
+            const blackOverlay = document.createElement('div');
+            blackOverlay.className = 'fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-1000 bg-black opacity-100';
+            document.body.appendChild(blackOverlay);
+            
+            CinematicService.playVideo(step.sequenceId).then(async () => {
+                await new Promise(r => setTimeout(r, 1000));
+                blackOverlay.style.opacity = '0';
+                setTimeout(() => blackOverlay.remove(), 1000);
+                next();
+            }).catch(err => {
+                this.manager.logger.error('UIMissionControl', 'Cinematic playback failed', err);
+                blackOverlay.style.opacity = '0';
+                setTimeout(() => blackOverlay.remove(), 1000);
+                next();
+            });
+        } else {
+            next();
+        }
+    }
+
+    _handleReserveHullTransfer(callback) {
+        const gameState = this.manager.lastKnownState;
+        const fleet = gameState.player.ownedShipIds;
+        const activeShipId = gameState.player.activeShipId;
+        
+        const reserveShips = fleet.filter(id => id !== activeShipId);
+        
+        const modal = document.getElementById('reserve-hull-modal');
+        if (!modal) return;
+        
+        const listEl = modal.querySelector('#reserve-hull-list');
+        const confirmBtn = modal.querySelector('#reserve-hull-confirm-btn');
+        const cancelBtn = modal.querySelector('#reserve-hull-cancel-btn');
+        
+        listEl.innerHTML = '';
+        let selectedShipId = null;
+        
+        reserveShips.forEach(shipId => {
+            const shipDef = DB.SHIPS[shipId];
+            const state = gameState.player.shipStates[shipId];
+            
+            const item = document.createElement('div');
+            item.className = 'p-3 border border-gray-700 bg-gray-800/50 rounded cursor-pointer hover:bg-gray-700/50 transition-colors flex justify-between items-center mb-2';
+            item.innerHTML = `
+                <div>
+                    <div class="font-bold text-white">${shipDef.name}</div>
+                    <div class="text-xs text-gray-400">Class ${shipDef.class} | Hull: ${Math.floor(state.health)}</div>
+                </div>
+                <div class="selection-indicator w-4 h-4 rounded-full border border-gray-500 flex-shrink-0"></div>
+            `;
+            
+            item.onclick = () => {
+                Array.from(listEl.children).forEach(c => {
+                    c.classList.remove('border-purple-400', 'bg-purple-900/30');
+                    c.querySelector('.selection-indicator').classList.remove('bg-purple-400', 'border-purple-400');
+                    c.querySelector('.selection-indicator').classList.add('border-gray-500');
+                });
+                
+                item.classList.add('border-purple-400', 'bg-purple-900/30');
+                item.querySelector('.selection-indicator').classList.remove('border-gray-500');
+                item.querySelector('.selection-indicator').classList.add('bg-purple-400', 'border-purple-400');
+                
+                selectedShipId = shipId;
+                confirmBtn.disabled = false;
+            };
+            
+            listEl.appendChild(item);
+        });
+        
+        confirmBtn.disabled = true;
+        
+        const closeAndClean = () => {
+            modal.classList.add('hidden');
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+            const missionModal = document.getElementById('mission-modal');
+            if (missionModal) {
+                Array.from(missionModal.querySelectorAll('button')).forEach(b => {
+                    if (b.dataset.action !== 'accept-mission' && b.dataset.action !== 'skip-tutorial') {
+                        b.disabled = false;
+                    }
+                });
+            }
+        };
+        
+        cancelBtn.onclick = () => {
+            closeAndClean();
+        };
+        
+        confirmBtn.onclick = () => {
+            if (selectedShipId) {
+                // Permanently delete the hull record
+                gameState.player.ownedShipIds = gameState.player.ownedShipIds.filter(id => id !== selectedShipId);
+                delete gameState.player.shipStates[selectedShipId];
+                delete gameState.player.inventories[selectedShipId];
+                
+                modal.classList.add('hidden');
+                
+                // Immediately update state and visually update fleet references
+                if (this.manager.simulationService) {
+                    this.manager.simulationService.gameState.setState({});
+                }
+                
+                if (callback) callback();
+            }
+        };
+        
+        modal.classList.remove('hidden');
     }
 }
 --- END OF FILE: ./js/services/ui/UIMissionControl.js ---
@@ -31139,7 +31799,14 @@ export class UIHangarControl {
             setTimeout(() => {
                 clearThemeFromModal();
                 closeHandler();
-                if (onConfirm) onConfirm(indexToRemove);
+                
+                // Force DOM layout recalculation and paint before resolving the sequence.
+                // This prevents batched CSS transition calculations from skipping the installation progress bar animation.
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        if (onConfirm) onConfirm(indexToRemove);
+                    });
+                });
             }, 500);
         };
 
@@ -33378,6 +34045,7 @@ export class UIModalEngine {
         this._injectBankruptcyModals();
         this._injectUpgradeProgressModal();
         this._injectStoryEventModal();
+        this._injectReserveHullModal();
     }
 
     /**
@@ -33490,6 +34158,32 @@ export class UIModalEngine {
                         <div id="story-event-choices-container" class="flex flex-col gap-3 mt-6"></div>
                     </div>
                     <div id="story-event-button-container" class="mt-auto pt-6 pb-0 mb-0 flex justify-center gap-4"></div>
+                </div>
+            </div>
+        `;
+        document.body.insertAdjacentHTML('beforeend', container.innerHTML);
+    }
+
+    /**
+     * Injects the static DOM template for the Reserve Hull Selection Modal.
+     * @private
+     */
+    _injectReserveHullModal() {
+        if (document.getElementById('reserve-hull-modal')) return;
+
+        const container = document.createElement('div');
+        container.innerHTML = `
+            <div id="reserve-hull-modal" class="modal-backdrop hidden z-[100] dismiss-disabled">
+                <div class="modal-content sci-fi-frame" style="max-width: 450px;">
+                    <h3 class="text-xl font-orbitron mb-2 text-center text-purple-400 drop-shadow-[0_0_8px_rgba(168,85,247,0.8)]">SELECT RESERVE HULL</h3>
+                    <div class="mb-4 text-gray-300 text-center text-sm">Select an inactive vessel from your fleet to permanently transfer.</div>
+                    <div id="reserve-hull-list" class="flex flex-col gap-2 max-h-60 overflow-y-auto custom-scrollbar mb-4">
+                        <!-- Populated dynamically -->
+                    </div>
+                    <div class="flex justify-center gap-4 mt-4">
+                        <button id="reserve-hull-cancel-btn" class="btn border-gray-600 text-gray-400 hover:text-white px-4 py-2">Cancel</button>
+                        <button id="reserve-hull-confirm-btn" class="btn bg-purple-700/80 hover:bg-purple-600/80 border-purple-400 text-white font-bold px-4 py-2 disabled:opacity-50 disabled:cursor-not-allowed">Confirm Transfer</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -34458,6 +35152,9 @@ export async function playBankruptcyBlackout(callback) {
  * @returns {Promise<void>} Resolves when the 2-second fade-in completes.
  */
 export async function startLicenseAnimation(tierNum = 2) {
+    // Engage global DOM lock for background elements
+    document.body.classList.add('cinematic-active');
+
     let overlay = document.getElementById('license-cinematic-overlay');
     if (!overlay) {
         overlay = document.createElement('div');
@@ -34467,7 +35164,7 @@ export async function startLicenseAnimation(tierNum = 2) {
         document.body.appendChild(overlay);
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor', 'mission-sticky-bar'];
 
     const hideAndCache = (el) => {
         if (el && el.style.display !== 'none') {
@@ -34562,7 +35259,7 @@ export async function endLicenseAnimation(tierNum = 2) {
         licenseUIObserver = null;
     }
 
-    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor'];
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor', 'mission-sticky-bar'];
     sideUIElements.forEach(id => {
         const el = document.getElementById(id);
         if (el && el.dataset.cachedDisplay !== undefined) {
@@ -34579,6 +35276,9 @@ export async function endLicenseAnimation(tierNum = 2) {
             delete btn.dataset.isDynamicHelpBtn;
         }
     });
+
+    // Release global DOM lock before final fade
+    document.body.classList.remove('cinematic-active');
 
     // Fade out the white flash to transparent over 1 second
     const fadeOut = whiteFlash.animate(
@@ -39956,6 +40656,83 @@ export class MissionService {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
 
+        let requiresUpgradeFlow = false;
+
+        const finalizeCompletion = () => {
+            // --- PHASE 4: OFFICER REWARD PIPELINE ---
+            if (mission.officerReward) {
+                if (!this.gameState.player.unlockedOfficerIds.includes(mission.officerReward)) {
+                    this.gameState.player.unlockedOfficerIds.push(mission.officerReward);
+                }
+                if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
+                    this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
+                }
+            }
+            
+            // --- EXECUTE ON-COMPLETE ACTIONS ---
+            if (mission.onComplete && this.simulationService) {
+                mission.onComplete.forEach(action => {
+                    if (action.type === 'END_SYSTEM_STATE') {
+                        if (this.simulationService.systemStateService) {
+                            this.simulationService.systemStateService.endCurrentState();
+                        }
+                    } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
+                        if (this.simulationService.systemStateService) {
+                            this.simulationService.systemStateService.triggerState(action.stateId);
+                        } else {
+                            const sysStateService = new SystemStateService(this.gameState, this.logger);
+                            sysStateService.triggerState(action.stateId);
+                        }
+                        
+                        this.gameState.setState({});
+                        
+                        if (this.uiManager && typeof this.uiManager.showEconWeatherModal === 'function') {
+                            setTimeout(() => {
+                                this.uiManager.showEconWeatherModal(this.gameState.getState());
+                            }, 600);
+                        }
+                    } else if (action.type === 'reveal_tier') {
+                        const newTier = Math.max(this.gameState.player.revealedTier, action.value);
+                        if (newTier > this.gameState.player.revealedTier) {
+                            this.gameState.player.revealedTier = newTier;
+                        }
+                    } else if (action.type === 'QUEUE_STORY_EVENT') {
+                        this.simulationService.queueStoryEvent(action.eventId);
+                    }
+                });
+            }
+
+            this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
+
+            // 3. Update mission state arrays
+            this.gameState.missions.completedMissionIds.push(missionId);
+            this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
+            
+            if (this.gameState.missions.missionProgress[missionId]) {
+                this.gameState.missions.missionProgress[missionId].isCompletable = false;
+            }
+
+            // Auto-switch back to the terminal if the log is now completely empty
+            if (this.gameState.missions.activeMissionIds.length === 0) {
+                this.gameState.uiState.activeMissionTab = 'terminal';
+            }
+
+            if (this.gameState.missions.trackedMissionId === missionId) {
+                const nextMissionId = this.gameState.missions.activeMissionIds[0];
+                this.gameState.missions.trackedMissionId = nextMissionId || null;
+            }
+
+            // Navigation Locks: ONLY clear if the mission completion explicitly instructs it.
+            // This ensures sequential tutorial locks persist cleanly between turn-ins.
+            if (mission.completion && mission.completion.clearNavLock && this.simulationService) {
+                this.simulationService.clearNavigationLock();
+            }
+
+            // 4. Update state and re-render
+            this.gameState.setState({});
+            this.uiManager.render(this.gameState.getState());
+        };
+
         if (mission.rewards) {
             mission.rewards.forEach(reward => {
                 if (reward.type === 'DEDUCT_CREDITS') {
@@ -39982,7 +40759,8 @@ export class MissionService {
                     if (shipState && shipState.upgrades && upgradeId) {
                         const hangarCtrl = this.uiManager && (this.uiManager.uiHangarControl || this.uiManager.hangarControl);
                         
-                        if (hangarCtrl) {
+                        if (hangarCtrl && !requiresUpgradeFlow) {
+                            requiresUpgradeFlow = true; // Flag true so we only orchestrate once
                             // UNIFIED ROUTING: Let UIHangarControl handle both empty and full capacity states natively.
                             hangarCtrl.showUpgradeInstallationModal(
                                 upgradeId,
@@ -40000,14 +40778,15 @@ export class MissionService {
                                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
                                     
                                     await this.uiManager.orchestrateUpgradeSequence(activeShipId);
-                                    this.gameState.setState({});
+                                    finalizeCompletion();
                                 },
                                 () => {
-                                    this.uiManager.render(this.gameState.getState());
+                                    // Make sure we still finish the mission if they reject the upgrade
+                                    finalizeCompletion();
                                 }
                             );
                         } else {
-                            // Silent fallback if no UI controller is found
+                            // Silent fallback if no UI controller is found or we already launched a flow
                             if (shipState.upgrades.length >= 3) {
                                 shipState.upgrades.shift(); 
                             }
@@ -40019,78 +40798,10 @@ export class MissionService {
             });
         }
         
-        // --- PHASE 4: OFFICER REWARD PIPELINE ---
-        if (mission.officerReward) {
-            if (!this.gameState.player.unlockedOfficerIds.includes(mission.officerReward)) {
-                this.gameState.player.unlockedOfficerIds.push(mission.officerReward);
-            }
-            if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
-                this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
-            }
+        // Execute immediately if no upgrade flow was triggered
+        if (!requiresUpgradeFlow) {
+            finalizeCompletion();
         }
-        
-        // --- EXECUTE ON-COMPLETE ACTIONS ---
-        if (mission.onComplete && this.simulationService) {
-            mission.onComplete.forEach(action => {
-                if (action.type === 'END_SYSTEM_STATE') {
-                    if (this.simulationService.systemStateService) {
-                        this.simulationService.systemStateService.endCurrentState();
-                    }
-                } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
-                    if (this.simulationService.systemStateService) {
-                        this.simulationService.systemStateService.triggerState(action.stateId);
-                    } else {
-                        const sysStateService = new SystemStateService(this.gameState, this.logger);
-                        sysStateService.triggerState(action.stateId);
-                    }
-                    
-                    this.gameState.setState({});
-                    
-                    if (this.uiManager && typeof this.uiManager.showEconWeatherModal === 'function') {
-                        setTimeout(() => {
-                            this.uiManager.showEconWeatherModal(this.gameState.getState());
-                        }, 600);
-                    }
-                } else if (action.type === 'reveal_tier') {
-                    const newTier = Math.max(this.gameState.player.revealedTier, action.value);
-                    if (newTier > this.gameState.player.revealedTier) {
-                        this.gameState.player.revealedTier = newTier;
-                    }
-                } else if (action.type === 'QUEUE_STORY_EVENT') {
-                    this.simulationService.queueStoryEvent(action.eventId);
-                }
-            });
-        }
-
-        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
-
-        // 3. Update mission state arrays
-        this.gameState.missions.completedMissionIds.push(missionId);
-        this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
-        
-        if (this.gameState.missions.missionProgress[missionId]) {
-            this.gameState.missions.missionProgress[missionId].isCompletable = false;
-        }
-
-        // Auto-switch back to the terminal if the log is now completely empty
-        if (this.gameState.missions.activeMissionIds.length === 0) {
-            this.gameState.uiState.activeMissionTab = 'terminal';
-        }
-
-        if (this.gameState.missions.trackedMissionId === missionId) {
-            const nextMissionId = this.gameState.missions.activeMissionIds[0];
-            this.gameState.missions.trackedMissionId = nextMissionId || null;
-        }
-
-        // Navigation Locks: ONLY clear if the mission completion explicitly instructs it.
-        // This ensures sequential tutorial locks persist cleanly between turn-ins.
-        if (mission.completion && mission.completion.clearNavLock && this.simulationService) {
-            this.simulationService.clearNavigationLock();
-        }
-
-        // 4. Update state and re-render
-        this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState());
     }
 }
 --- END OF FILE: ./js/services/MissionService.js ---
@@ -41177,8 +41888,8 @@ export class MarketService {
 
     /**
      * Gets the base unit price for a commodity at a location without volumetric slippage.
-     * Checks for active intel deal overrides, applies delays to extreme states, 
-     * and optionally applies player-specific modifiers (e.g. Signal Hacker).
+     * Checks for active intel deal overrides, applies instantaneous System State filters, 
+     * applies extreme pressure delays, and optionally applies player-specific modifiers (e.g. Signal Hacker).
      * @param {string} locationId The ID of the location.
      * @param {string} commodityId The ID of the commodity.
      * @param {boolean} [applyModifiers=false] If true, applies active ship upgrade modifiers.
@@ -41205,25 +41916,44 @@ export class MarketService {
                 basePrice *= 0.25;
             }
         }
-        
-        // Direct System State commodity price overrides
-        if (this._currentSystemState?.modifiers?.commodity?.[commodityId]?.price) {
-            basePrice *= this._currentSystemState.modifiers.commodity[commodityId].price;
-        }
 
         let price = basePrice;
 
         // 1. Intel Deal Override Check
+        let hasIntelOverride = false;
         if (deal &&
             deal.locationId === locationId &&
             deal.commodityId === commodityId) {
             price = this.gameState.market.prices[locationId]?.[commodityId] || deal.overridePrice;
+            hasIntelOverride = true;
+        }
+
+        // 2. V3 System State Immediate Application (Bypassed if under strict Intel Deal)
+        if (!hasIntelOverride) {
+            const systemState = this.gameState.systemStates || this.gameState.systemState;
+            const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+            const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
+
+            if (activeStateDef && activeStateDef.modifiers) {
+                const mods = activeStateDef.modifiers;
+                
+                // Global Commodity Specific Inflation
+                if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
+                    price *= mods.basePriceInflate;
+                }
+                
+                // Targeted Location Modifiers (Crash, Boom, etc.)
+                if (isTargetLocation) {
+                    if (mods.localBasePriceInflate) price *= mods.localBasePriceInflate;
+                    if (mods.localBasePriceMod) price *= mods.localBasePriceMod;
+                }
+            }
         }
 
         // Station Quirks (Price Boosts)
         price = this._applyStationQuirks(price, locationId, commodityId);
 
-        // 2. Upgrade Modifiers (Signal Hacker, etc.)
+        // 3. Upgrade Modifiers (Signal Hacker, etc.)
         if (applyModifiers) {
              const activeShipId = this.gameState.player.activeShipId;
              if (activeShipId && this.gameState.player.shipStates[activeShipId]) {
@@ -41342,11 +42072,8 @@ export class MarketService {
         const activeDeal = this.gameState.activeIntelDeal;
         const systemState = this.gameState.systemStates || this.gameState.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-        const targetLocationsSet = new Set(systemState?.targetLocations || []);
         
         DB.MARKETS.forEach(location => {
-            const isTargetLocation = targetLocationsSet.has(location.id);
-            
             DB.COMMODITIES.forEach(commodity => {
                 if (commodity.tier > this.gameState.player.revealedTier) return;
 
@@ -41370,8 +42097,8 @@ export class MarketService {
                     const finalOverridePrice = Math.max(1, Math.round(fluctuatedPrice));
                     this.gameState.market.prices[location.id][commodity.id] = finalOverridePrice;
                     
-                    // Phase 4: Inline History Tracking (Bypasses redundant getPrice execution)
-                    this._logInlineHistory(location.id, commodity.id, this._applyStationQuirks(finalOverridePrice, location.id, commodity.id));
+                    // Phase 4: Inline History Tracking (Uses the pure execution logic for history)
+                    this._logInlineHistory(location.id, commodity.id, this.getPrice(location.id, commodity.id, false));
                     return; 
                 }
 
@@ -41380,24 +42107,16 @@ export class MarketService {
                 const avg = this.gameState.market.galacticAverages[commodity.id];
                 const modifier = location.availabilityModifier?.[commodity.id] ?? 1.0;
 
-                let basePriceMod = 1.0;
                 let activeStateMeanReversionMod = 1.0;
 
                 if (activeStateDef && activeStateDef.modifiers) {
                     const mods = activeStateDef.modifiers;
                     if (mods.meanReversionMod) activeStateMeanReversionMod = mods.meanReversionMod;
-                    
-                    if (mods.affectedCommodities?.includes(commodity.id) && mods.basePriceInflate) {
-                        basePriceMod *= mods.basePriceInflate;
-                    }
-                    if (isTargetLocation) {
-                        if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
-                        if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
-                    }
                 }
 
                 const targetPriceOffset = (1.0 - modifier) * avg;
-                const localBaseline = (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+                // Core baseline remains un-modified by states to allow snapping back to reality when states end
+                const localBaseline = avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
 
                 let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY;
                 if (location.id === LOCATION_IDS.EXCHANGE) volatility *= 3.0; 
@@ -41445,8 +42164,9 @@ export class MarketService {
                 
                 this.gameState.market.prices[location.id][commodity.id] = finalRoundedPrice;
                 
-                // Phase 4: Inline History Tracking (Bypasses redundant getPrice execution)
-                this._logInlineHistory(location.id, commodity.id, this._applyStationQuirks(finalRoundedPrice, location.id, commodity.id));
+                // Fetch the true display price (fully augmented by states and quirks) for the chart history
+                const displayPrice = this.getPrice(location.id, commodity.id, false);
+                this._logInlineHistory(location.id, commodity.id, displayPrice);
 
                 // TELEMETRY: Gated execution
                 if (this.gameState.uiState?.enableEconomicTelemetry) {
@@ -41806,6 +42526,9 @@ export class MarketService {
         });
     }
 
+    /**
+     * Gets the pure, un-modified baseline price for the commodity at a location.
+     */
     getLocalTargetPrice(locationId, commodityId) {
         const location = this._getMarket(locationId);
         if (!location) return 0;
@@ -41813,25 +42536,8 @@ export class MarketService {
         const avg = this.gameState.market.galacticAverages[commodityId] || 0;
         const modifier = location.availabilityModifier?.[commodityId] ?? 1.0;
         
-        // Evaluate System States
-        const systemState = this.gameState.systemStates || this.gameState.systemState;
-        const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
-        const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
-
-        let basePriceMod = 1.0;
-        if (activeStateDef && activeStateDef.modifiers) {
-            const mods = activeStateDef.modifiers;
-            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
-                basePriceMod *= mods.basePriceInflate;
-            }
-            if (isTargetLocation) {
-                if (mods.localBasePriceInflate) basePriceMod *= mods.localBasePriceInflate;
-                if (mods.localBasePriceMod) basePriceMod *= mods.localBasePriceMod;
-            }
-        }
-
         const targetPriceOffset = (1.0 - modifier) * avg;
-        return (avg * basePriceMod) + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
+        return avg + (targetPriceOffset * GAME_RULES.LOCAL_PRICE_MOD_STRENGTH);
     }
 
     getGlutThreshold(locationId, commodityId) {
@@ -41875,16 +42581,31 @@ export class MarketService {
             historicalData.push({ day: currentDay, price: liveDisplayPrice, isLocked: false });
         }
         
-        const localBaseline = this.getLocalTargetPrice(locationId, commodityId);
+        const underlyingBaseline = this.getLocalTargetPrice(locationId, commodityId);
         const location = this._getMarket(locationId);
         
-        // Extract systemic mods for forward-simulation
+        // Calculate the EFFECTIVE baseline that the true display price is targeting
+        let effectiveBaseline = underlyingBaseline;
+        
         const systemState = this.gameState.systemStates || this.gameState.systemState;
         const activeStateDef = systemState && systemState.activeId ? DB.SYSTEM_STATES[systemState.activeId] : null;
+        const isTargetLocation = systemState && systemState.targetLocations?.includes(locationId);
+
         let activeStateMeanReversionMod = 1.0;
-        if (activeStateDef && activeStateDef.modifiers && activeStateDef.modifiers.meanReversionMod) {
-            activeStateMeanReversionMod = activeStateDef.modifiers.meanReversionMod;
+
+        if (activeStateDef && activeStateDef.modifiers) {
+            const mods = activeStateDef.modifiers;
+            if (mods.meanReversionMod) activeStateMeanReversionMod = mods.meanReversionMod;
+            
+            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
+                effectiveBaseline *= mods.basePriceInflate;
+            }
+            if (isTargetLocation) {
+                if (mods.localBasePriceInflate) effectiveBaseline *= mods.localBasePriceInflate;
+                if (mods.localBasePriceMod) effectiveBaseline *= mods.localBasePriceMod;
+            }
         }
+        effectiveBaseline = this._applyStationQuirks(effectiveBaseline, locationId, commodityId);
 
         let meanReversion = (GAME_RULES.MEAN_REVERSION_STRENGTH || 0.05) * activeStateMeanReversionMod;
         if (location?.ecoProfile?.meanReversionMod) meanReversion *= location.ecoProfile.meanReversionMod;
@@ -41894,7 +42615,7 @@ export class MarketService {
         // Holt's Double Exponential Smoothing (Baseline trend anchor)
         const alpha = 0.3;
         const beta = 0.15;
-        let S = historicalData.length > 0 ? historicalData[0].price : localBaseline;
+        let S = historicalData.length > 0 ? historicalData[0].price : effectiveBaseline;
         let T = historicalData.length > 1 ? historicalData[1].price - historicalData[0].price : 0;
         
         for (let i = 1; i < historicalData.length; i++) {
@@ -41917,7 +42638,20 @@ export class MarketService {
         const commodity = this._getCommodity(commodityId);
         const baseMin = commodity ? commodity.basePriceRange[0] : 1;
         const tier = commodity ? commodity.tier : 1;
-        const intrinsicFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
+        
+        // Floor should technically be modified by states and quirks so lines don't cross zero visually
+        let effectiveFloor = Math.floor(baseMin * (0.05 + (tier * 0.05)));
+        if (activeStateDef && activeStateDef.modifiers) {
+            const mods = activeStateDef.modifiers;
+            if (mods.affectedCommodities?.includes(commodityId) && mods.basePriceInflate) {
+                effectiveFloor *= mods.basePriceInflate;
+            }
+            if (isTargetLocation) {
+                if (mods.localBasePriceInflate) effectiveFloor *= mods.localBasePriceInflate;
+                if (mods.localBasePriceMod) effectiveFloor *= mods.localBasePriceMod;
+            }
+        }
+        effectiveFloor = this._applyStationQuirks(effectiveFloor, locationId, commodityId);
         
         let volatility = GAME_RULES.DAILY_PRICE_VOLATILITY || 0.05;
         if (commodityMods && commodityMods.volatility_mult) {
@@ -41933,10 +42667,10 @@ export class MarketService {
             // Forward simulate market pressure impacts explicitly 7 days out
             let pressureEffect = 0;
             if (daysSinceInteraction >= 7 && inventoryItem && inventoryItem.lastPlayerInteractionTimestamp > 0) {
-                 pressureEffect = (localBaseline * simPressure * -1) * 0.50; // PLAYER_PRESSURE_STRENGTH
+                 pressureEffect = (effectiveBaseline * simPressure * -1) * 0.50; // PLAYER_PRESSURE_STRENGTH
             }
 
-            let reversionEffect = (localBaseline - simPrice) * meanReversion;
+            let reversionEffect = (effectiveBaseline - simPrice) * meanReversion;
 
             simPrice += (reversionEffect + pressureEffect + currentT);
             
@@ -41953,25 +42687,20 @@ export class MarketService {
             }
             
             // Widening variance for the cone
-            let variance = (volatility * localBaseline * Math.pow(i, 1.2)) * 0.25; 
+            let variance = (volatility * effectiveBaseline * Math.pow(i, 1.2)) * 0.25; 
             
             let upper = simPrice + variance;
             let lower = simPrice - variance;
             
             // Absolute economic limit clamping for the lower bound cone
-            if (lower < intrinsicFloor) lower = intrinsicFloor;
-            let clampedMedianPrice = Math.max(intrinsicFloor, simPrice);
-
-            // Ensure the SVG projected data matches the visual quirk modifications
-            let displayProjPrice = this._applyStationQuirks(clampedMedianPrice, locationId, commodityId);
-            let displayUpper = this._applyStationQuirks(upper, locationId, commodityId);
-            let displayLower = this._applyStationQuirks(lower, locationId, commodityId);
+            if (lower < effectiveFloor) lower = effectiveFloor;
+            let clampedMedianPrice = Math.max(effectiveFloor, simPrice);
             
             projection.push({
                 day: projDay,
-                price: Math.round(displayProjPrice),
-                upper: Math.round(displayUpper),
-                lower: Math.round(displayLower),
+                price: Math.round(clampedMedianPrice),
+                upper: Math.round(upper),
+                lower: Math.round(lower),
                 isLocked: false
             });
         }
@@ -42429,6 +43158,38 @@ export class TravelService {
         }
 
         const isFirstTutorialFlight = state.tutorials.activeBatchId === 'intro_missions' && state.tutorials.activeStepId === 'mission_1_6';
+        
+        // --- MISSION 53 ON-ROUTE INTERCEPTION HOOK ---
+        const activeMissions = state.missions.activeMissionIds || [];
+        if (activeMissions.includes('mission_53_guild') || activeMissions.includes('mission_53_syndicate')) {
+            const mId = activeMissions.includes('mission_53_guild') ? 'mission_53_guild' : 'mission_53_syndicate';
+            const mDef = DB.MISSIONS[mId];
+            const mProg = state.missions.missionProgress[mId];
+            
+            if (mDef && mProg && (!this.gameState.player.storyFlags || !this.gameState.player.storyFlags.mission_53_intercepted)) {
+                let completedCount = 0;
+                let finalTarget = null;
+                mDef.objectives.forEach(obj => {
+                    const objKey = obj.id || obj.goodId || obj.target;
+                    const oProg = mProg.objectives[objKey];
+                    if (oProg && oProg.current >= oProg.target) {
+                        completedCount++;
+                    } else {
+                        finalTarget = obj.target;
+                    }
+                });
+                
+                if (completedCount === mDef.objectives.length - 1 && locationId === finalTarget) {
+                    if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
+                    // Insert the Kintsugi event at the front of the queue so it resolves immediately during transit
+                    this.gameState.pendingStoryEvents.unshift('evt_kintsugi_intercept_final');
+                    
+                    if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
+                    this.gameState.player.storyFlags.mission_53_intercepted = true;
+                }
+            }
+        }
+        
         if (!isFirstTutorialFlight && !useFoldedDrive) { 
             this._processStoryEvents(locationId, useFoldedDrive, 0);
             return;
@@ -45155,6 +45916,15 @@ export class MissionObjectiveEvaluator {
             }
 
             // --- PLAYER STATE CHECKS ---
+            case 'own_spare_ships':
+            case 'OWN_SPARE_SHIPS': {
+                const spareCount = Math.max(0, gameState.player.ownedShipIds.length - 1);
+                current = spareCount;
+                target = val !== undefined ? val : 1;
+                comparator = '>=';
+                break;
+            }
+
             case 'have_ship':
             case 'OWN_SHIP': {
                 const requiredShipId = objective.target;
@@ -56316,6 +57086,11 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [38.81] - 2026-7-8
+-  UI polish
+-  bug fixes
+-  updated documentation resources
 
 # [38.79] - 2026-7-6
 -  writing and formatting polish

@@ -157,6 +157,15 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
             
             const progress = missionProgress[missionId] || {};
             
+            // Check logistics phase pickup location FIRST
+            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
+            if (isLogisticsPickupPhase) {
+                // VIRTUAL WORKBENCH: Strict phase isolation logic
+                // If we are in the pickup phase, ONLY the pickup location is a target.
+                // Completely bypass evaluation of future delivery objectives.
+                return mission.pickupLocationId === d.id;
+            }
+            
             // Check completion destination (only if the mission is actually ready to turn in)
             if (progress.isCompletable && mission.completion && mission.completion.locationId === d.id) return true;
             
@@ -181,10 +190,6 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
                     return current < target;
                 });
             }
-            
-            // Check logistics phase pickup location
-            const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
-            if (isLogisticsPickupPhase && mission.pickupLocationId === d.id) return true;
             
             return false;
         });

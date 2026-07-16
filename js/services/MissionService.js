@@ -1168,6 +1168,83 @@ export class MissionService {
             this.simulationService._grantRewards(mission.rewards, mission.name);
         }
 
+        let requiresUpgradeFlow = false;
+
+        const finalizeCompletion = () => {
+            // --- PHASE 4: OFFICER REWARD PIPELINE ---
+            if (mission.officerReward) {
+                if (!this.gameState.player.unlockedOfficerIds.includes(mission.officerReward)) {
+                    this.gameState.player.unlockedOfficerIds.push(mission.officerReward);
+                }
+                if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
+                    this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
+                }
+            }
+            
+            // --- EXECUTE ON-COMPLETE ACTIONS ---
+            if (mission.onComplete && this.simulationService) {
+                mission.onComplete.forEach(action => {
+                    if (action.type === 'END_SYSTEM_STATE') {
+                        if (this.simulationService.systemStateService) {
+                            this.simulationService.systemStateService.endCurrentState();
+                        }
+                    } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
+                        if (this.simulationService.systemStateService) {
+                            this.simulationService.systemStateService.triggerState(action.stateId);
+                        } else {
+                            const sysStateService = new SystemStateService(this.gameState, this.logger);
+                            sysStateService.triggerState(action.stateId);
+                        }
+                        
+                        this.gameState.setState({});
+                        
+                        if (this.uiManager && typeof this.uiManager.showEconWeatherModal === 'function') {
+                            setTimeout(() => {
+                                this.uiManager.showEconWeatherModal(this.gameState.getState());
+                            }, 600);
+                        }
+                    } else if (action.type === 'reveal_tier') {
+                        const newTier = Math.max(this.gameState.player.revealedTier, action.value);
+                        if (newTier > this.gameState.player.revealedTier) {
+                            this.gameState.player.revealedTier = newTier;
+                        }
+                    } else if (action.type === 'QUEUE_STORY_EVENT') {
+                        this.simulationService.queueStoryEvent(action.eventId);
+                    }
+                });
+            }
+
+            this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
+
+            // 3. Update mission state arrays
+            this.gameState.missions.completedMissionIds.push(missionId);
+            this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
+            
+            if (this.gameState.missions.missionProgress[missionId]) {
+                this.gameState.missions.missionProgress[missionId].isCompletable = false;
+            }
+
+            // Auto-switch back to the terminal if the log is now completely empty
+            if (this.gameState.missions.activeMissionIds.length === 0) {
+                this.gameState.uiState.activeMissionTab = 'terminal';
+            }
+
+            if (this.gameState.missions.trackedMissionId === missionId) {
+                const nextMissionId = this.gameState.missions.activeMissionIds[0];
+                this.gameState.missions.trackedMissionId = nextMissionId || null;
+            }
+
+            // Navigation Locks: ONLY clear if the mission completion explicitly instructs it.
+            // This ensures sequential tutorial locks persist cleanly between turn-ins.
+            if (mission.completion && mission.completion.clearNavLock && this.simulationService) {
+                this.simulationService.clearNavigationLock();
+            }
+
+            // 4. Update state and re-render
+            this.gameState.setState({});
+            this.uiManager.render(this.gameState.getState());
+        };
+
         if (mission.rewards) {
             mission.rewards.forEach(reward => {
                 if (reward.type === 'DEDUCT_CREDITS') {
@@ -1194,7 +1271,8 @@ export class MissionService {
                     if (shipState && shipState.upgrades && upgradeId) {
                         const hangarCtrl = this.uiManager && (this.uiManager.uiHangarControl || this.uiManager.hangarControl);
                         
-                        if (hangarCtrl) {
+                        if (hangarCtrl && !requiresUpgradeFlow) {
+                            requiresUpgradeFlow = true; // Flag true so we only orchestrate once
                             // UNIFIED ROUTING: Let UIHangarControl handle both empty and full capacity states natively.
                             hangarCtrl.showUpgradeInstallationModal(
                                 upgradeId,
@@ -1212,14 +1290,15 @@ export class MissionService {
                                     this.gameState.uiState.hangarActiveIndex = shipIndex !== -1 ? shipIndex : 0;
                                     
                                     await this.uiManager.orchestrateUpgradeSequence(activeShipId);
-                                    this.gameState.setState({});
+                                    finalizeCompletion();
                                 },
                                 () => {
-                                    this.uiManager.render(this.gameState.getState());
+                                    // Make sure we still finish the mission if they reject the upgrade
+                                    finalizeCompletion();
                                 }
                             );
                         } else {
-                            // Silent fallback if no UI controller is found
+                            // Silent fallback if no UI controller is found or we already launched a flow
                             if (shipState.upgrades.length >= 3) {
                                 shipState.upgrades.shift(); 
                             }
@@ -1231,77 +1310,9 @@ export class MissionService {
             });
         }
         
-        // --- PHASE 4: OFFICER REWARD PIPELINE ---
-        if (mission.officerReward) {
-            if (!this.gameState.player.unlockedOfficerIds.includes(mission.officerReward)) {
-                this.gameState.player.unlockedOfficerIds.push(mission.officerReward);
-            }
-            if (this.uiManager && typeof this.uiManager.queueOfficerRecruitmentModal === 'function') {
-                this.uiManager.queueOfficerRecruitmentModal(mission.officerReward);
-            }
+        // Execute immediately if no upgrade flow was triggered
+        if (!requiresUpgradeFlow) {
+            finalizeCompletion();
         }
-        
-        // --- EXECUTE ON-COMPLETE ACTIONS ---
-        if (mission.onComplete && this.simulationService) {
-            mission.onComplete.forEach(action => {
-                if (action.type === 'END_SYSTEM_STATE') {
-                    if (this.simulationService.systemStateService) {
-                        this.simulationService.systemStateService.endCurrentState();
-                    }
-                } else if (action.type === 'TRIGGER_SYSTEM_STATE') {
-                    if (this.simulationService.systemStateService) {
-                        this.simulationService.systemStateService.triggerState(action.stateId);
-                    } else {
-                        const sysStateService = new SystemStateService(this.gameState, this.logger);
-                        sysStateService.triggerState(action.stateId);
-                    }
-                    
-                    this.gameState.setState({});
-                    
-                    if (this.uiManager && typeof this.uiManager.showEconWeatherModal === 'function') {
-                        setTimeout(() => {
-                            this.uiManager.showEconWeatherModal(this.gameState.getState());
-                        }, 600);
-                    }
-                } else if (action.type === 'reveal_tier') {
-                    const newTier = Math.max(this.gameState.player.revealedTier, action.value);
-                    if (newTier > this.gameState.player.revealedTier) {
-                        this.gameState.player.revealedTier = newTier;
-                    }
-                } else if (action.type === 'QUEUE_STORY_EVENT') {
-                    this.simulationService.queueStoryEvent(action.eventId);
-                }
-            });
-        }
-
-        this.logger.info.player(this.gameState.day, 'MISSION_COMPLETE', `Completed mission: ${missionId} ${force ? '(FORCED)' : ''}`);
-
-        // 3. Update mission state arrays
-        this.gameState.missions.completedMissionIds.push(missionId);
-        this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
-        
-        if (this.gameState.missions.missionProgress[missionId]) {
-            this.gameState.missions.missionProgress[missionId].isCompletable = false;
-        }
-
-        // Auto-switch back to the terminal if the log is now completely empty
-        if (this.gameState.missions.activeMissionIds.length === 0) {
-            this.gameState.uiState.activeMissionTab = 'terminal';
-        }
-
-        if (this.gameState.missions.trackedMissionId === missionId) {
-            const nextMissionId = this.gameState.missions.activeMissionIds[0];
-            this.gameState.missions.trackedMissionId = nextMissionId || null;
-        }
-
-        // Navigation Locks: ONLY clear if the mission completion explicitly instructs it.
-        // This ensures sequential tutorial locks persist cleanly between turn-ins.
-        if (mission.completion && mission.completion.clearNavLock && this.simulationService) {
-            this.simulationService.clearNavigationLock();
-        }
-
-        // 4. Update state and re-render
-        this.gameState.setState({});
-        this.uiManager.render(this.gameState.getState());
     }
 }

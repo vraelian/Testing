@@ -79,6 +79,18 @@ export class UIMissionControl {
      */
     renderStickyBar(gameState) {
         const stickyBarEl = this.manager.cache.missionStickyBar;
+
+        // Task B Fix: Global suppression lock based on body class - bypasses 600ms fade entirely
+        if (document.body.classList.contains('cinematic-active')) {
+            if (stickyBarEl) {
+                stickyBarEl.style.transition = 'none';
+                stickyBarEl.style.display = 'none';
+                stickyBarEl.style.opacity = '0';
+                stickyBarEl.style.pointerEvents = 'none';
+            }
+            return;
+        }
+
         const contentEl = stickyBarEl.querySelector('.sticky-content');
         const objectiveTextEl = this.manager.cache.stickyObjectiveText;
         const objectiveProgressEl = this.manager.cache.stickyObjectiveProgress;
@@ -279,6 +291,7 @@ export class UIMissionControl {
              return `${action} ${name}`;
         }
         if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
+             if (omitLocation) return `ESTABLISH PRESENCE`;
              const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
              return `Travel to ${name}`;
         }
@@ -286,11 +299,13 @@ export class UIMissionControl {
         if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
              return `Amass <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
         }
-        
-        if (['have_fuel_tank', 'HAVE_FUEL_TANK'].includes(obj.type)) return 'Refuel Ship';
-        if (['have_hull_pct', 'HAVE_HULL_PCT'].includes(obj.type)) return 'Repair Hull';
-        if (['have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) return 'Cargo Usage';
-        if (['visit_screen', 'VISIT_SCREEN'].includes(obj.type)) {
+        if (obj.type === 'have_fuel_tank' || obj.type === 'HAVE_FUEL_TANK') {
+            return `REFUEL SHIP`;
+        }
+        if (obj.type === 'have_hull_pct' || obj.type === 'HAVE_HULL_PCT') {
+            return `REPAIR HULL`;
+        }
+        if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
             const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
             return `Visit ${screenTarget} Screen`;
         }
@@ -298,13 +313,12 @@ export class UIMissionControl {
             return `Acquire Class ${obj.target} Vessel`;
         }
         if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
-            return `Install Rank ${obj.rank} Upgrade`;
+            return `Install Rank ${obj.rank} SHIP UPGRADE`;
         }
         if (['action', 'ACTION'].includes(obj.type)) {
             return (obj.target || 'Complete Action').toUpperCase();
         }
-        
-        return `Objective`;
+        return `COMPLETE OBJECTIVE`;
     }
 
     flashObjectiveProgress() {
@@ -477,6 +491,7 @@ export class UIMissionControl {
                     const t = r.type.toLowerCase();
                     if (t === 'deduct_credits') return false;
                     if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                    if (t === 'trigger_system_state' || t === 'end_system_state') return false;
                     return true;
                 }) : [];
                 
@@ -553,9 +568,9 @@ export class UIMissionControl {
                                 const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
-                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                                content = `<span class="t-subject text-blue-400 font-bold">FUEL STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
-                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
+                                content = `<span class="t-subject text-emerald-400 font-bold">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -980,68 +995,6 @@ export class UIMissionControl {
         this.manager.queueModal('mission-modal', parsedTitle, parsedDescription, null, options);
     }
     
-    _getObjectiveDescription(obj, omitLocation = false) {
-        if (obj.type === 'DELIVER_ITEM') {
-             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             let text = `DELIVER ${obj.quantity || 1}x ${name.toUpperCase()}`;
-             if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                 text += ` TO ${locName.toUpperCase()}`;
-             }
-             return text;
-        }
-        if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
-            const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.targetLoc || obj.target))?.name || 'Item';
-            if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
-                const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()} ON ${locName.toUpperCase()}`;
-            }
-            return `COLLECT ${obj.quantity || 1}x ${name.toUpperCase()}`;
-        }
-        if (obj.type === 'have_item' || obj.type === 'HAVE_ITEM') {
-             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
-             return `PROCURE ${obj.quantity || 1}x ${name.toUpperCase()}`;
-        }
-        if (obj.type === 'trade_item' || obj.type === 'TRADE_ITEM') {
-             const name = DB.COMMODITIES.find(c => c.id === obj.goodId)?.name || 'Item';
-             const action = obj.tradeType === 'buy' ? 'BUY' : 'SELL';
-             if (obj.target && !omitLocation && DB.MARKETS.find(m => m.id === obj.target)) {
-                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
-                 return `${action} ${name} on ${locName}`;
-             }
-             return `${action} ${name}`;
-        }
-        if (obj.type === 'travel_to' || obj.type === 'TRAVEL_TO') {
-             if (omitLocation) return `ESTABLISH PRESENCE`;
-             const name = DB.MARKETS.find(m => m.id === obj.target)?.name || 'Location';
-             return `TRAVEL TO ${name.toUpperCase()}`;
-        }
-        if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) return 'CLEAR ALL DEBT';
-        if (['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
-             return `AMASS <span class="text-cyan-400 font-bold">⌬ ${formatShortCredits(obj.value || obj.quantity)}</span>`;
-        }
-        if (obj.type === 'have_fuel_tank' || obj.type === 'HAVE_FUEL_TANK') {
-            return `REFUEL SHIP`;
-        }
-        if (obj.type === 'have_hull_pct' || obj.type === 'HAVE_HULL_PCT') {
-            return `REPAIR HULL`;
-        }
-        if (obj.type === 'visit_screen' || obj.type === 'VISIT_SCREEN') {
-            const screenTarget = obj.screenId ? obj.screenId.charAt(0).toUpperCase() + obj.screenId.slice(1).toLowerCase() : 'Screen';
-            return `VISIT THE ${screenTarget.toUpperCase()} SCREEN`;
-        }
-        if (['own_ship_class', 'OWN_SHIP_CLASS'].includes(obj.type)) {
-            return `ACQUIRE CLASS ${obj.target} VESSEL`;
-        }
-        if (['has_upgrade_rank', 'HAS_UPGRADE_RANK'].includes(obj.type)) {
-            return `INSTALL RANK ${obj.rank} SHIP UPGRADE`;
-        }
-        if (['action', 'ACTION'].includes(obj.type)) {
-            return (obj.target || 'COMPLETE ACTION').toUpperCase();
-        }
-        return `COMPLETE OBJECTIVE`;
-    }
-
     /**
      * Instantiates and queues the mission completion modal, handling dynamic rewards, 
      * cinematic intercepts, and custom UI sequences.
@@ -1160,6 +1113,7 @@ export class UIMissionControl {
                    const t = r.type.toLowerCase();
                    if (t === 'deduct_credits') return false;
                    if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                   if (t === 'trigger_system_state' || t === 'end_system_state') return false;
                    return true;
                }) : [];
 
@@ -1193,9 +1147,9 @@ export class UIMissionControl {
                                 const colorClass = tierVal === 2 ? 'text-green-400' : (tierVal === 3 ? 'text-blue-400' : 'text-emerald-400');
                                 content = `<span class="t-subject ${colorClass}">TIER ${tierVal} LICENSE</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_fuel') {
-                                content = `<span class="t-subject text-blue-400 font-bold" style="-webkit-text-stroke: 1px black;">FUEL STIPEND</span>`;
+                                content = `<span class="t-subject text-blue-400 font-bold">FUEL STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'fill_fleet_repair') {
-                                content = `<span class="t-subject text-emerald-400 font-bold" style="-webkit-text-stroke: 1px black;">MAINTENANCE STIPEND</span>`;
+                                content = `<span class="t-subject text-emerald-400 font-bold">MAINTENANCE STIPEND</span>`;
                             } else if (r.type.toLowerCase() === 'set_flag') {
                                 if (r.flagId === 'helped_belt_family') {
                                     content = `<span class="t-subject">GRATITUDE</span>`;
@@ -1446,15 +1400,26 @@ export class UIMissionControl {
                                                }
                                                coreState.setState({}); // Persist and broadcast
                                                
-                                               // Unblur background now
+                                               // Unblur and restore background now
                                                if (stickyBarEl) {
+                                                   stickyBarEl.style.display = 'block';
                                                    stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.opacity = '1';
                                                    stickyBarEl.style.filter = 'none';
                                                    stickyBarEl.style.webkitFilter = 'none';
                                                }
                                                
                                                // Force render standard view with NEW state
                                                uiManager.render(coreState.getState());
+                                           } else {
+                                                if (stickyBarEl) {
+                                                   stickyBarEl.style.display = 'block';
+                                                   stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.opacity = '1';
+                                                   stickyBarEl.style.filter = 'none';
+                                                   stickyBarEl.style.webkitFilter = 'none';
+                                               }
+                                               uiManager.render();
                                            }
                                        }, 800); // Allow time for blur fade out
                                    };
@@ -1530,121 +1495,152 @@ export class UIMissionControl {
                        }
                        choiceBtn.textContent = choice.buttonText;
                        
+                       // SPARE SHIP CHECK
+                       const requiresSpareShip = choice.rewards && choice.rewards.some(r => r.type === 'REMOVE_SPARE_SHIP');
+                       const hasSpareShip = this.manager.lastKnownState.player.ownedShipIds.length > 1;
+                       
+                       if (requiresSpareShip && !hasSpareShip) {
+                           choiceBtn.disabled = true;
+                           choiceBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                           choiceBtn.textContent = 'RESERVE HULL REQUIRED';
+                       }
+
                        choiceBtn.onclick = (e) => {
+                           if (requiresSpareShip && !hasSpareShip) return;
                            Array.from(buttonsEl.querySelectorAll('button')).forEach(b => b.disabled = true);
                            
-                           // Custom Narrative/Animation sequence for Act II Climax decision
-                           if (mission.id === 'mission_32') {
-                               const whiteOverlay = document.createElement('div');
-                               whiteOverlay.style.position = 'fixed';
-                               whiteOverlay.style.inset = '0';
-                               whiteOverlay.style.backgroundColor = '#ffffff';
-                               whiteOverlay.style.zIndex = '999999';
-                               whiteOverlay.style.opacity = '0';
-                               whiteOverlay.style.transition = 'opacity 3s ease-in-out';
-                               whiteOverlay.style.pointerEvents = 'all';
-                               document.body.appendChild(whiteOverlay);
-                               
-                               requestAnimationFrame(() => {
-                                   whiteOverlay.style.opacity = '1';
-                               });
-                               
-                               // Immediately initiate the UI teardown sequence visually
-                               modal.dataset.dismissOutside = 'false';
-                               modal.classList.add('dismiss-disabled');
-                               modalContent.classList.add('modal-blur-fade-out');
-                               modal.classList.add('backdrop-fade-out-slow');
-
-                               const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
-                               const stickyBarEl = this.manager.cache.missionStickyBar;
-
-                               if (stickyBarEl && stickyBarEl.style.display !== 'none') {
-                                   stickyBarEl.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out';
-                                   stickyBarEl.style.opacity = '0';
-                                   stickyBarEl.style.filter = 'blur(5px)';
-                                   stickyBarEl.style.webkitFilter = 'blur(5px)';
-                               }
-
-                               if (card) {
-                                   card.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out, transform 1.5s ease-out';
-                                   card.style.opacity = '0';
-                                   card.style.filter = 'blur(5px)';
-                                   card.style.webkitFilter = 'blur(5px)';
-                                   card.style.transform = 'scale(0.95)';
-                               }
-
-                               setTimeout(() => {
-                                   // Mask the DOM instantly under the opaque white screen
-                                   modal.classList.add('hidden');
-                                   modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
-                                   delete modal.dataset.theme;
-                                   delete modal.dataset.dismissInside;
-                                   delete modal.dataset.dismissOutside;
-
-                                   if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
-                                       this.manager.modalEngine.processModalQueue();
-                                   }
-
-                                   if (card) card.remove();
-                                   
-                                   // Begin fading out the white screen
-                                   whiteOverlay.style.transition = 'opacity 2s ease-in-out';
+                           const processChoice = () => {
+                               // Custom Narrative/Animation sequence for Act II Climax decision
+                               if (mission.id === 'mission_32') {
+                                   const whiteOverlay = document.createElement('div');
+                                   whiteOverlay.style.position = 'fixed';
+                                   whiteOverlay.style.inset = '0';
+                                   whiteOverlay.style.backgroundColor = '#ffffff';
+                                   whiteOverlay.style.zIndex = '999999';
                                    whiteOverlay.style.opacity = '0';
+                                   whiteOverlay.style.transition = 'opacity 3s ease-in-out';
+                                   whiteOverlay.style.pointerEvents = 'all';
+                                   document.body.appendChild(whiteOverlay);
                                    
+                                   requestAnimationFrame(() => {
+                                       whiteOverlay.style.opacity = '1';
+                                   });
+                                   
+                                   // Immediately initiate the UI teardown sequence visually
+                                   modal.dataset.dismissOutside = 'false';
+                                   modal.classList.add('dismiss-disabled');
+                                   modalContent.classList.add('modal-blur-fade-out');
+                                   modal.classList.add('backdrop-fade-out-slow');
+    
+                                   const card = document.querySelector(`.mission-card[data-mission-id="${mission.id}"]`);
+                                   const stickyBarEl = this.manager.cache.missionStickyBar;
+    
+                                   if (stickyBarEl && stickyBarEl.style.display !== 'none') {
+                                       stickyBarEl.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out';
+                                       stickyBarEl.style.opacity = '0';
+                                       stickyBarEl.style.filter = 'blur(5px)';
+                                       stickyBarEl.style.webkitFilter = 'blur(5px)';
+                                   }
+    
+                                   if (card) {
+                                       card.style.transition = 'opacity 1.5s ease-out, filter 1.5s ease-out, -webkit-filter 1.5s ease-out, transform 1.5s ease-out';
+                                       card.style.opacity = '0';
+                                       card.style.filter = 'blur(5px)';
+                                       card.style.webkitFilter = 'blur(5px)';
+                                       card.style.transform = 'scale(0.95)';
+                                   }
+    
                                    setTimeout(() => {
-                                       whiteOverlay.remove();
-                                       
-                                       mission.rewards = choice.rewards;
-                                       
-                                       if (this.manager.simulationService) {
-                                           const uiManager = this.manager;
-                                           const originalRender = uiManager.render;
-                                           
-                                           // Temporarily hijack render to intercept sticky bar artifacts
-                                           uiManager.render = function(...args) {
-                                               const newState = args[0] || uiManager.lastKnownState;
-                                               uiManager.lastKnownState = newState;
-                                               if (uiManager.missionControl) {
-                                                   uiManager.missionControl.renderStickyBar(newState);
-                                               }
-                                           };
-                                           
-                                           // Complete the mission to trigger the delayed rewards
-                                           this.manager.simulationService.missionService.completeMission(mission.id);
-                                           
-                                           uiManager.render = originalRender;
-                                           
-                                           // Manually inject specific blue 'Ship Acquired' floating text adjacent to the credit text
-                                           const hasOdyssey = choice.rewards.some(r => r.type === 'GRANT_SHIP' && r.shipId === 'Odyssey.Ship');
-                                           if (hasOdyssey) {
-                                               const btn = e.target ? (e.target.closest('button') || e.target) : document.body;
-                                               const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0 };
-                                               const x = e.clientX || rect.left + (rect.width / 2);
-                                               const y = e.clientY || rect.top;
-
-                                               // Adjacent to the credit text (+ 40y)
-                                               this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa');
-                                           }
-                                           
-                                           if (stickyBarEl) {
-                                               stickyBarEl.style.transition = 'none';
-                                               stickyBarEl.style.filter = 'none';
-                                               stickyBarEl.style.webkitFilter = 'none';
-                                           }
-                                           
-                                           // Explicit render pass with the newly mutated state to guarantee the navigation bar updates instantly
-                                           if (this.manager.simulationService && this.manager.simulationService.gameState) {
-                                               this.manager.render(this.manager.simulationService.gameState.getState());
-                                           } else {
-                                               this.manager.render();
-                                           }
+                                       // Mask the DOM instantly under the opaque white screen
+                                       modal.classList.add('hidden');
+                                       modal.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                                       delete modal.dataset.theme;
+                                       delete modal.dataset.dismissInside;
+                                       delete modal.dataset.dismissOutside;
+    
+                                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                                           this.manager.modalEngine.processModalQueue();
                                        }
-                                       closeHandler(); // Resolve modal closure cleanly
-                                   }, 2000);
-                               }, 3000);
+    
+                                       if (card) card.remove();
+                                       
+                                       // Begin fading out the white screen
+                                       whiteOverlay.style.transition = 'opacity 2s ease-in-out';
+                                       whiteOverlay.style.opacity = '0';
+                                       
+                                       setTimeout(() => {
+                                           whiteOverlay.remove();
+                                           
+                                           mission.rewards = choice.rewards;
+                                           
+                                           if (this.manager.simulationService) {
+                                               const uiManager = this.manager;
+                                               const originalRender = uiManager.render;
+                                               
+                                               // Temporarily hijack render to intercept sticky bar artifacts
+                                               uiManager.render = function(...args) {
+                                                   const newState = args[0] || uiManager.lastKnownState;
+                                                   uiManager.lastKnownState = newState;
+                                                   if (uiManager.missionControl) {
+                                                       uiManager.missionControl.renderStickyBar(newState);
+                                                   }
+                                               };
+                                               
+                                               // Complete the mission to trigger the delayed rewards
+                                               this.manager.simulationService.missionService.completeMission(mission.id);
+                                               
+                                               uiManager.render = originalRender;
+                                               
+                                               // Manually inject specific blue 'Ship Acquired' floating text adjacent to the credit text
+                                               const hasOdyssey = choice.rewards.some(r => r.type === 'GRANT_SHIP' && r.shipId === 'Odyssey.Ship');
+                                               if (hasOdyssey) {
+                                                   const btn = e.target ? (e.target.closest('button') || e.target) : document.body;
+                                                   const rect = btn.getBoundingClientRect ? btn.getBoundingClientRect() : { left: window.innerWidth / 2, top: window.innerHeight / 2, width: 0 };
+                                                   const x = e.clientX || rect.left + (rect.width / 2);
+                                                   const y = e.clientY || rect.top;
+    
+                                                   // Adjacent to the credit text (+ 40y)
+                                                   this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa');
+                                               }
+                                               
+                                               if (stickyBarEl) {
+                                                   stickyBarEl.style.transition = 'none';
+                                                   stickyBarEl.style.filter = 'none';
+                                                   stickyBarEl.style.webkitFilter = 'none';
+                                               }
+                                               
+                                               // Explicit render pass with the newly mutated state to guarantee the navigation bar updates instantly
+                                               if (this.manager.simulationService && this.manager.simulationService.gameState) {
+                                                   this.manager.render(this.manager.simulationService.gameState.getState());
+                                               } else {
+                                                   this.manager.render();
+                                               }
+                                           }
+                                           closeHandler(); // Resolve modal closure cleanly
+                                       }, 2000);
+                                   }, 3000);
+                               } else if (mission.completion?.steps && mission.completion.steps.length > 0) {
+                                   const modalEl = document.getElementById('mission-modal');
+                                   if (modalEl) {
+                                       modalEl.classList.add('hidden');
+                                       modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                                   }
+                                   this._processCompletionSteps(mission.completion.steps, 0, () => {
+                                       mission.rewards = choice.rewards;
+                                       executeCompletion(e);
+                                   });
+                               } else {
+                                   mission.rewards = choice.rewards;
+                                   executeCompletion(e);
+                               }
+                           };
+
+                           if (requiresSpareShip) {
+                               this._handleReserveHullTransfer(() => {
+                                   processChoice();
+                               });
                            } else {
-                               mission.rewards = choice.rewards;
-                               executeCompletion(e);
+                               processChoice();
                            }
                        };
                        buttonsEl.appendChild(choiceBtn);
@@ -1717,6 +1713,15 @@ export class UIMissionControl {
                                });
                            });
 
+                       } else if (mission.completion?.steps && mission.completion.steps.length > 0) {
+                           const modalEl = document.getElementById('mission-modal');
+                           if (modalEl) {
+                               modalEl.classList.add('hidden');
+                               modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                           }
+                           this._processCompletionSteps(mission.completion.steps, 0, () => {
+                               executeCompletion(e);
+                           });
                        } else {
                            executeCompletion(e);
                        }
@@ -1992,5 +1997,131 @@ export class UIMissionControl {
         }
         
         return parsedText;
+    }
+
+    _processCompletionSteps(steps, index, finalCallback) {
+        if (!steps || index >= steps.length) {
+            if (finalCallback) finalCallback();
+            return;
+        }
+
+        const step = steps[index];
+        const next = () => this._processCompletionSteps(steps, index + 1, finalCallback);
+
+        if (step.type === 'NARRATION_MODAL') {
+            this.manager.queueModal('event-modal', step.title, step.text, next, {
+                buttonText: step.buttonText || "Continue",
+                dismissOutside: false
+            });
+            this.manager.modalEngine.processModalQueue();
+        } else if (step.type === 'PLAY_CINEMATIC') {
+            const blackOverlay = document.createElement('div');
+            blackOverlay.className = 'fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-1000 bg-black opacity-100';
+            document.body.appendChild(blackOverlay);
+            
+            CinematicService.playVideo(step.sequenceId).then(async () => {
+                await new Promise(r => setTimeout(r, 1000));
+                blackOverlay.style.opacity = '0';
+                setTimeout(() => blackOverlay.remove(), 1000);
+                next();
+            }).catch(err => {
+                this.manager.logger.error('UIMissionControl', 'Cinematic playback failed', err);
+                blackOverlay.style.opacity = '0';
+                setTimeout(() => blackOverlay.remove(), 1000);
+                next();
+            });
+        } else {
+            next();
+        }
+    }
+
+    _handleReserveHullTransfer(callback) {
+        const gameState = this.manager.lastKnownState;
+        const fleet = gameState.player.ownedShipIds;
+        const activeShipId = gameState.player.activeShipId;
+        
+        const reserveShips = fleet.filter(id => id !== activeShipId);
+        
+        const modal = document.getElementById('reserve-hull-modal');
+        if (!modal) return;
+        
+        const listEl = modal.querySelector('#reserve-hull-list');
+        const confirmBtn = modal.querySelector('#reserve-hull-confirm-btn');
+        const cancelBtn = modal.querySelector('#reserve-hull-cancel-btn');
+        
+        listEl.innerHTML = '';
+        let selectedShipId = null;
+        
+        reserveShips.forEach(shipId => {
+            const shipDef = DB.SHIPS[shipId];
+            const state = gameState.player.shipStates[shipId];
+            
+            const item = document.createElement('div');
+            item.className = 'p-3 border border-gray-700 bg-gray-800/50 rounded cursor-pointer hover:bg-gray-700/50 transition-colors flex justify-between items-center mb-2';
+            item.innerHTML = `
+                <div>
+                    <div class="font-bold text-white">${shipDef.name}</div>
+                    <div class="text-xs text-gray-400">Class ${shipDef.class} | Hull: ${Math.floor(state.health)}</div>
+                </div>
+                <div class="selection-indicator w-4 h-4 rounded-full border border-gray-500 flex-shrink-0"></div>
+            `;
+            
+            item.onclick = () => {
+                Array.from(listEl.children).forEach(c => {
+                    c.classList.remove('border-purple-400', 'bg-purple-900/30');
+                    c.querySelector('.selection-indicator').classList.remove('bg-purple-400', 'border-purple-400');
+                    c.querySelector('.selection-indicator').classList.add('border-gray-500');
+                });
+                
+                item.classList.add('border-purple-400', 'bg-purple-900/30');
+                item.querySelector('.selection-indicator').classList.remove('border-gray-500');
+                item.querySelector('.selection-indicator').classList.add('bg-purple-400', 'border-purple-400');
+                
+                selectedShipId = shipId;
+                confirmBtn.disabled = false;
+            };
+            
+            listEl.appendChild(item);
+        });
+        
+        confirmBtn.disabled = true;
+        
+        const closeAndClean = () => {
+            modal.classList.add('hidden');
+            confirmBtn.onclick = null;
+            cancelBtn.onclick = null;
+            const missionModal = document.getElementById('mission-modal');
+            if (missionModal) {
+                Array.from(missionModal.querySelectorAll('button')).forEach(b => {
+                    if (b.dataset.action !== 'accept-mission' && b.dataset.action !== 'skip-tutorial') {
+                        b.disabled = false;
+                    }
+                });
+            }
+        };
+        
+        cancelBtn.onclick = () => {
+            closeAndClean();
+        };
+        
+        confirmBtn.onclick = () => {
+            if (selectedShipId) {
+                // Permanently delete the hull record
+                gameState.player.ownedShipIds = gameState.player.ownedShipIds.filter(id => id !== selectedShipId);
+                delete gameState.player.shipStates[selectedShipId];
+                delete gameState.player.inventories[selectedShipId];
+                
+                modal.classList.add('hidden');
+                
+                // Immediately update state and visually update fleet references
+                if (this.manager.simulationService) {
+                    this.manager.simulationService.gameState.setState({});
+                }
+                
+                if (callback) callback();
+            }
+        };
+        
+        modal.classList.remove('hidden');
     }
 }

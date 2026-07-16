@@ -132,13 +132,18 @@ export function renderNavigationScreen(gameState) {
                             const progress = missions.missionProgress[missionId] || {};
                             const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
                             
-                            if (isLogisticsPickupPhase && mission.pickupLocationId === location.id) {
-                                isMissionTarget = true;
-                                break;
+                            // VIRTUAL WORKBENCH: Strict phase isolation logic
+                            if (isLogisticsPickupPhase) {
+                                if (mission.pickupLocationId === location.id) {
+                                    isMissionTarget = true;
+                                    break;
+                                }
+                                // Completely bypass evaluation of future delivery objectives during the pickup phase
+                                continue; 
                             }
                             
                             // Check completion destination (only if completable)
-                            if (!isLogisticsPickupPhase && progress.isCompletable && mission.completion?.locationId === location.id) {
+                            if (progress.isCompletable && mission.completion?.locationId === location.id) {
                                 isMissionTarget = true;
                                 break;
                             }

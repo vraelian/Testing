@@ -84,5 +84,15 @@ TRANSMISSION RECIEVED: // ERR_CODE: 0x0GLDJNRY_UNRECOGNIZED_HANDSHAKE<br><br>
         cinematicOnly: true,
         triggerOnArrival: 'loc_venus',
         repeatable: false
+    },
+    'evt_kintsugi_intercept_final': {
+        id: 'evt_kintsugi_intercept_final',
+        theme: 'anomaly',
+        portraitId: 'Kintsugi_3',
+        repeatable: false,
+        title: 'Anomalous Signal Override',
+        text: 'Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity.',
+        confirmText: 'Acknowledge Transmission',
+        choices: []
     }
 };
