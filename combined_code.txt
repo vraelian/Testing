@@ -17636,7 +17636,7 @@ export class EffectsManager {
 --- START OF FILE: ./js/data/constants.js ---
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.81 - Act III';
+export const APP_VERSION = '38.85 - Act IV';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -36134,6 +36134,64 @@ ${logHistory}
         this.gameState.setState({});
     }
 
+    _executePhasedMissionTest(credits, completedMissionMax, targetMissions, locationsToUnlock) {
+        if(this.logger && this.logger.warn) this.logger.warn('DebugService', `PHASE MISSION TEST ACTIVATED (Up to Mission ${completedMissionMax}).`);
+        this.gameState.introSequenceActive = false;
+        this.gameState.isDebugStart = true;
+        
+        this._markAllTutorialsSeen();
+
+        if (!this.gameState.missions) this.gameState.missions = { completedMissionIds: [], activeMissionIds: [], missionProgress: {} };
+        
+        const completed = [];
+        for (let i = 1; i <= 9; i++) {
+            completed.push(`mission_tutorial_0${i}`);
+        }
+        for (let i = 10; i <= completedMissionMax; i++) {
+            completed.push(`mission_${i}`);
+            completed.push(`mission_${i}_guild`);
+            completed.push(`mission_${i}_syndicate`);
+        }
+        this.gameState.missions.completedMissionIds = completed;
+
+        if (this.simulationService && typeof this.simulationService.clearNavigationLock === 'function') {
+            this.simulationService.clearNavigationLock();
+        }
+
+        this.gameState.player.credits = credits;
+
+        this.gameState.player.ownedShipIds = [];
+        const targetShipId = SHIP_IDS?.PTERODACTYL || 'Pterodactyl.Ship';
+        if (this.simulationService && typeof this.simulationService.addShipToHangar === 'function') {
+            this.simulationService.addShipToHangar(targetShipId);
+        } else {
+             this.gameState.player.ownedShipIds.push(targetShipId);
+        }
+        this.gameState.player.activeShipId = targetShipId;
+        
+        const seed = this.gameState.player.visualSeed || 0;
+        AssetService.hydrateAllShips(seed);
+        AssetService.hydrateAllCommodities(seed);
+
+        locationsToUnlock.forEach(locId => {
+            if (!this.gameState.player.unlockedLocationIds.includes(locId)) {
+                this.gameState.player.unlockedLocationIds.push(locId);
+            }
+        });
+
+        if (this.simulationService && this.simulationService.missionService) {
+            targetMissions.forEach(mId => {
+                this.simulationService.missionService.forceToTerminal(mId);
+            });
+            this.uiManager.createFloatingText('Test Phase Missions Injected', window.innerWidth/2, window.innerHeight/2, '#facc15');
+        }
+
+        this.uiManager.showGameContainer();
+        this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+        this.simulationService.timeService.advanceDays(7);
+        this.gameState.setState({});
+    }
+
     skipToStarterSelection() {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'SKIP TO STARTER SHIP SELECTION.');
         
@@ -36549,6 +36607,20 @@ ${logHistory}
             simpleStart: { name: 'Simple Start', type: 'button', handler: () => this.simpleStart() },
             skipToStarterSelection: { name: 'Skip to Ship Select (Intro)', type: 'button', handler: () => this.skipToStarterSelection() },
             skipToHangarTutorial: { name: 'Normal Start Skip', type: 'button', handler: () => this.skipToHangarTutorial() },
+            
+            phase1MissionTest: { name: 'Phase 1 Mission Test', type: 'button', handler: () => {
+                this._executePhasedMissionTest(8000, 9, ['mission_10'], []);
+            }},
+            phase2MissionTest: { name: 'Phase 2 Mission Test', type: 'button', handler: () => {
+                this._executePhasedMissionTest(500000, 17, ['mission_18'], [LOCATION_IDS.MERCURY || 'loc_mercury']);
+            }},
+            phase3MissionTest: { name: 'Phase 3 Mission Test', type: 'button', handler: () => {
+                this._executePhasedMissionTest(2000000, 32, ['mission_33_guild', 'mission_33_syndicate'], [LOCATION_IDS.MERCURY || 'loc_mercury', LOCATION_IDS.KEPLERS_EYE || 'loc_keplers_eye']);
+            }},
+            phase4MissionTest: { name: 'Phase 4 Mission Test', type: 'button', handler: () => {
+                this._executePhasedMissionTest(50000000, 46, ['mission_47_guild', 'mission_47_syndicate'], [LOCATION_IDS.MERCURY || 'loc_mercury', LOCATION_IDS.KEPLERS_EYE || 'loc_keplers_eye', LOCATION_IDS.EXCHANGE || 'loc_exchange']);
+            }},
+
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {
                 this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + this.debugState.creditsToAdd);
                 this.gameState.setState({});
@@ -36603,13 +36675,6 @@ ${logHistory}
                 this.gameState.currentLocationId = LOCATION_IDS.SUN;
                 this.gameState.setState({});
                 this.uiManager.createFloatingText('Sol Testing Initiated', window.innerWidth/2, window.innerHeight/2, '#facc15');
-            }},
-            
-            missionTest: { name: 'Mission Test', type: 'button', handler: () => {
-                if (this.simulationService && this.simulationService.missionService) {
-                    this.simulationService.missionService.injectTestMissions();
-                    this.uiManager.createFloatingText('Test Missions Injected', window.innerWidth/2, window.innerHeight/2, '#facc15');
-                }
             }},
             
             levelUpSolStation: { name: 'Level Up Sol Station', type: 'button', handler: () => {
@@ -36960,7 +37025,11 @@ ${logHistory}
         flowFolder.add(this.actions.skipToStarterSelection, 'handler').name(this.actions.skipToStarterSelection.name);
         flowFolder.add(this.actions.skipToHangarTutorial, 'handler').name(this.actions.skipToHangarTutorial.name);
         flowFolder.add(this.actions.unlockAll, 'handler').name('Unlock ALL');
-        flowFolder.add(this.actions.missionTest, 'handler').name('Mission Test');
+        
+        flowFolder.add(this.actions.phase1MissionTest, 'handler').name(this.actions.phase1MissionTest.name);
+        flowFolder.add(this.actions.phase2MissionTest, 'handler').name(this.actions.phase2MissionTest.name);
+        flowFolder.add(this.actions.phase3MissionTest, 'handler').name(this.actions.phase3MissionTest.name);
+        flowFolder.add(this.actions.phase4MissionTest, 'handler').name(this.actions.phase4MissionTest.name);
 
         const triggerFolder = this.gui.addFolder('Triggers');
         const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
@@ -57162,10 +57231,11 @@ export class PlayerActionService {
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [38.84] - 2026-7-16
+# [38.85] - 2026-7-16
 -  implemented ACT IV
 -  created phase_four.js
 -  mission card polish
+-  added debug mission options
 
 # [38.81] - 2026-7-8
 -  UI polish

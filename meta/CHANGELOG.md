@@ -2,10 +2,11 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
-# [38.84] - 2026-7-16
+# [38.85] - 2026-7-16
 -  implemented ACT IV
 -  created phase_four.js
 -  mission card polish
+-  added debug mission options
 
 # [38.81] - 2026-7-8
 -  UI polish
