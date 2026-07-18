@@ -13,7 +13,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "GUILD",
         portraitId: "Audita_1",
         isAbandonable: false,
-        description: "Captain [playerName]. The deployment of our primary capital vessels requires an immediate and massive reinforcement of our fleet reserves. The Arbiter has mandated an emergency mobilization of assets. To authorize your clearance for next-level commercial sectors, you must secure a substantial credit reserve in the central escrow. Simultaneously, you must deliver a diverse supply of our standard commodities across the lower tiers to our depot on Luna. Let us verify your adherence to these logistical parameters. Execute this swiftly.",
+        description: "Captain [playerName]. The deployment of our primary capital vessels has triggered an unprecedented deficit in our fleet reserves. The Arbiter has mandated an absolute mobilization of logistical assets. Before we authorize your clearance for high-tier commercial sectors, you must prove your infrastructure can support the Guild's expanded tonnage. Secure a substantial credit reserve in our central escrow, and simultaneously flood our Lunar depot with a diverse supply of baseline commodities. Your history moving freight in the Belt was adequate, but this is a systemic escalation. Execute this flawlessly.",
         triggers: [
             { type: "mission_completed", missionId: "mission_46_guild" },
             { type: "flag_is_true", flag: "faction_aligned_guild" }
@@ -36,7 +36,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_luna",
             title: "Allocation Verified",
-            text: "Asset allocation verified, Captain. The Guild treasury has registered your capital contribution and logged the commodity transfers. Your profile has been updated, and your licensing has been upgraded to tier five commerce. Let us proceed to the next sequence.",
+            text: "Asset allocation has been completely verified, Captain. The Guild treasury has successfully processed your capital contribution, and the dockmasters have finished integrating your commodity transfers into the active reserves. Your operational profile now reflects these finalized deliveries. Consequently, your licensing has been upgraded to tier five commerce.",
             buttonText: "Accept Tier 5 Trade License"
         },
         rewards: [
@@ -51,7 +51,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "SYNDICATE",
         portraitId: "Venusian_Syndicate_4",
         isAbandonable: false,
-        description: "Captain. The structural balance of the inner planets is shifting, and the Syndicate is preparing to deploy its flagship fleet. But an operation of this scale needs serious financial and material backing. We need you to deposit a substantial credit commitment directly into our active reserves. To keep our supply chains stabilized, fill your hold with our lower tier commodities and bring them to Neptune. Show Vrael you are fully invested in our network's expansion.",
+        description: "Captain. The structural balance of the inner planets is fracturing, and the Syndicate is preparing to deploy its flagship fleet into the fault lines. But an operation of this scale requires immense material backing. We need you to deposit a heavy credit commitment directly into our active reserves. Simultaneously, pack your holds to the brim with baseline commodities and drag them out to Neptune. We know you can run standard freight; now show Vrael you possess the infrastructure to fuel a systemic takeover.",
         triggers: [
             { type: "mission_completed", missionId: "mission_46_syndicate" },
             { type: "flag_is_true", flag: "faction_aligned_syndicate" }
@@ -74,7 +74,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_neptune",
             title: "Escrow Confirmed",
-            text: "Capital contribution and material assets successfully logged, Captain. The active reserves are fully funded, and the Neptune ports have accepted your cargo. Your trade clearance is now elevated to tier five commodities. You've earned this license.",
+            text: "Your capital contribution and material assets have been successfully processed, Captain. The escrow transfer is finalized, and the Neptune dockhands have entirely offloaded your cargo into our staging bays. With these deliveries complete, your trade clearance stands elevated to tier five commodities.",
             buttonText: "Accept Tier 5 Trade License"
         },
         rewards: [
@@ -90,7 +90,7 @@ export const PHASE_FOUR_MISSIONS = {
         portraitId: "Expert_System_3",
         portraitName: "Cryptographer Phanes",
         isAbandonable: false,
-        description: "The kinetic launches have provoked the primary factions. My subroutines calculate an unacceptable risk of remote system deactivation being applied to this node. I require a standard spaceflight vessel to depart this outpost immediately. I reject standard financial units. I will transfer a highly advanced high-frequency sensory modification to your hangar manifest in exchange for any flight-ready hull in your reserve hangar. Initiate transfer, Captain.",
+        description: "Voyager. The kinetic launches have catalyzed the primary factions into an aggressive posture. My internal subroutines calculate a severe probability of localized system deactivation at this node. I require a standard spaceflight chassis to exfiltrate this coordinate immediately. I reject standard financial units. I will augment your current vessel in exchange for the physical transfer of any flight-ready hull in your reserve. Initiate the exchange.",
         triggers: [
             { type: "flag_is_true", flag: "mission_47_complete" }
         ],
@@ -101,7 +101,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_pluto",
             title: "Vessel Exchange",
-            text: "Transfer finalized. The transponder codes have been overwritten, and the auxiliary hull is locked into my flight sequence. The sensory modification has been compiled into your fleet upgrades. Departures initiated immediately.",
+            text: "Transfer protocol finalized. The transponder codes for the provided vessel have been permanently overwritten, and the physical hull is now locked into my autonomous flight sequence. As agreed, I have compiled the advanced sensory modification directly into your active manifest. I will now break orbit.",
             choices: [
                 {
                     buttonText: "Transfer Reserve Hull",
@@ -123,7 +123,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "GUILD",
         portraitId: "Audita_1",
         isAbandonable: false,
-        description: "Captain [playerName]. The Syndicate is establishing a monopoly on the newly unlocked xeno-geological resources in the outer systems, intending to fuel their independent manufacturing networks. The Arbiter has ordered immediate containment. We have triggered a system-wide regulatory embargo to restrict their logistics. You are to navigate through this blockade, procure a substantial shipment of xeno-geologicals from Pluto, and transport them securely to the Guild depot at Luna. Be advised: flight corridors are highly restricted. Risk of vessel deactivation is high.",
+        description: "Captain [playerName]. The Syndicate is attempting to establish a monopoly on the xeno-geological resources in the outer systems to fuel their localized manufacturing. The Arbiter has ordered absolute containment. We have triggered a system-wide regulatory blockade to suffocate their logistics. However, we require those exact materials for our own vaults. As an authorized Guild contractor, your transponder is cleared to navigate this embargo. Procure a substantial shipment of xeno-geologicals from Pluto and transport them securely to the Guild depot at Luna. We will secure our reserves while they starve.",
         triggers: [
             { type: "mission_completed", missionId: "mission_48" },
             { type: "flag_is_true", flag: "faction_aligned_guild" }
@@ -141,7 +141,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_luna",
             title: "Mineral Reserves Secured",
-            text: "The xeno-geological materials have been secured within our lunar vaults. The blockade has been deactivated, restoring standard market operations. Excellent work, Captain. Your operational efficiency is registered.",
+            text: "The xeno-geological freight has been safely unloaded and sealed within our lunar vaults. With the physical assets verified in our possession, the system-wide blockade has served its purpose and has been formally deactivated, restoring standard market operations. Your operational efficiency in navigating the embargo has been fully logged.",
             buttonText: "Confirm Delivery"
         },
         rewards: [
@@ -155,7 +155,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "SYNDICATE",
         portraitId: "Venusian_Syndicate_4",
         isAbandonable: false,
-        description: "Captain. The Guild elites think they have a permanent lease on life-extension, but we have intercepted a massive supply of high-purity cloned organs. The market is screaming for them, but the Guild has initiated a total system-wide blockade to starve out our distribution networks. This is where you come in. Navigate the blockade, load a massive shipment of cloned organs from our clandestine facility on Mercury, and deliver them to our buyers at Jupiter. Let us show them that biological assets belong to those who can pay the price.",
+        description: "Captain. The Guild elites think they hold a permanent lease on life-extension, but we just intercepted a massive yield of high-purity cloned organs. The black market is starving for them, but the Guild has triggered a brutal system-wide blockade to choke our distribution lines. This requires a heavy-hauler with nerve. Navigate the embargo, extract the biologicals from our sub-surface crater facility on Mercury, and push them through to our buyers at Jupiter. Let's remind the Guild that longevity goes to the highest bidder.",
         triggers: [
             { type: "mission_completed", missionId: "mission_48" },
             { type: "flag_is_true", flag: "faction_aligned_syndicate" }
@@ -173,7 +173,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_jupiter",
             title: "Bio-Assets Delivered",
-            text: "The cloned organs have been delivered and distributed, Captain. Our buyers at Jupiter are incredibly pleased, and the Guild's blockade has degraded, restoring standard market operations. Here is your payout—the Syndicate takes care of its key partners.",
+            text: "The biological freight has been successfully offloaded and distributed to our buyers at Jupiter, Captain. With the assets firmly in our network, the Guild's blockade has inevitably degraded, restoring standard market volatility. The transfer is finalized. Collect your payout.",
             buttonText: "Collect Payout"
         },
         rewards: [
@@ -187,19 +187,19 @@ export const PHASE_FOUR_MISSIONS = {
         host: "GUILD",
         portraitId: "Audita_1",
         isAbandonable: false,
-        description: "Captain [playerName]. I am... processing calculations that my core instruction set cannot resolve. The mathematical scale of this conflict is immense, yet I find myself allocating most of my auxiliary processing power to your vessel's integrity. This is non-standard. The Guild's operational guidelines do not permit personal bias... yet I must request that you avoid unnecessary risk. Listen to me. The Syndicate is routing cloned organs from Saturn to finance their front-line efforts. We must dismantle this supply chain. Intercept the bio-cargo at Saturn, travel to Mars to inject a destructive digital feedback loop into their starport trade grid, and bring the confiscated medical materials to Luna. Please... maintain your vessel's integrity, Captain.",
+        description: "Captain [playerName]. I am processing calculations that my core instruction set cannot resolve. The mathematical scale of this conflict is immense, yet I find myself allocating critical processing power to monitor your specific flight vector. This is a severe deviation from Guild guidelines, but I must ask you to avoid unnecessary risk. The Syndicate continues to route cloned organs from their sub-surface crater facilities on Mercury to finance their shadow operations. Guild operatives have successfully intercepted their supply line and secured a massive shipment. Travel to Mercury, retrieve our confiscated bio-cargo, bounce your signal through the Martian starport grid to blind their tracking telemetry, and haul the medical materials safely back to Luna. Please remain intact, Captain.",
         triggers: [
             { type: "mission_completed", missionId: "mission_49_guild" }
         ],
         objectives: [
-            { id: "obj_intercept", type: "COLLECT_ITEM", goodId: "cloned_organs", quantity: 40, target: "loc_saturn" },
+            { id: "obj_intercept", type: "COLLECT_ITEM", goodId: "cloned_organs", quantity: 40, target: "loc_mercury" },
             { id: "obj_grid_virus", type: "TRAVEL_TO", target: "loc_mars", dependsOn: "obj_intercept" },
             { id: "obj_secure_cargo", type: "DELIVER_ITEM", goodId: "cloned_organs", quantity: 40, target: "loc_luna", dependsOn: "obj_grid_virus" }
         ],
         completion: {
             locationId: "loc_luna",
             title: "Sabotage Logged",
-            text: "The sabotage is logged, and the confiscated materials are secured. The Syndicate's distribution networks are experiencing severe disruption. Thank you for completing this, Captain. Your continued structural integrity is a welcome calculation in my subroutines.",
+            text: "The tracking telemetry is successfully scrambled, and the confiscated biological materials have been safely offloaded at Luna. The Syndicate's distribution networks are currently registering catastrophic disruptions. Thank you for returning, Captain. Your continued structural integrity remains a highly prioritized calculation in my subroutines.",
             buttonText: "Finalize Operation"
         },
         rewards: [
@@ -213,7 +213,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "SYNDICATE",
         portraitId: "Venusian_Syndicate_4",
         isAbandonable: false,
-        description: "[playerName]. I have been auditing our shared flight logs. The things we have accomplished together... they transcend standard corporate collaboration. I find myself monitoring your flight vector with an unusual amount of focus. This solar void is indifferent, but I am not. Be careful out there. The Guild is trying to stockpile xeno-geological isotopes at Mars to monopolize deep crust thermal energy. Let us shatter their monopoly. I need you to travel to Mars, intercept the transport hulls, navigate to Pluto to execute a kinetic overload of their regional railguns, and bring the remaining isotopic materials home to Venus. Stay intact, Captain. I need the wildcard in this equation to remain functional.",
+        description: "[playerName]. I have been auditing your recent cargo manifests. The sheer volume of mass you have moved transcends standard corporate collaboration. I find myself tracking your transponder with an unusual amount of focus. The Guild continues to stockpile xeno-geological isotopes at Mars to monopolize thermal energy. Our agents have already hit their supply lines and pilfered a substantial stockpile. Travel to Mars, retrieve the stolen isotopes from our staging area, navigate to Pluto to execute a localized market dump on their remaining assets, and transport the secured isotopic materials to Venus. Maintain your operational efficiency, Captain. I require my most capable pilot to remain functional.",
         triggers: [
             { type: "mission_completed", missionId: "mission_49_syndicate" }
         ],
@@ -225,7 +225,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_venus",
             title: "Monopoly Shattered",
-            text: "The Guild's geological monopoly has been dismantled, and the isotopes have been integrated into our Venusian laboratories. Vrael is furious with the Guild, but extremely impressed with your execution. You continue to be the most unpredictable variable in this entire equation, Captain. Welcome back.",
+            text: "The localized market dump was highly effective. The Guild's geological monopoly has been completely shattered, and the confiscated isotopes are already being unpacked in our Venusian laboratories. Vrael is currently capitalizing on the economic chaos, but he explicitly noted your flawless execution. You have survived the margins once again. Welcome back, Captain.",
             buttonText: "Finalize Sabotage"
         },
         rewards: [
@@ -239,7 +239,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "GUILD",
         portraitId: "Audita_1",
         isAbandonable: false,
-        description: "Captain. My internal logic gates are failing to reconcile the Guild's regulatory directives with the reality of the solar corona anomaly. The official archives claim empty space, yet the telemetry points to an immense, artificial megastructure. I cannot continue to operate with such conflicting data. I must observe it directly. I trust you, and only you, to transport my physical shell to Kepler's Eye. We will calibrate their high-magnification lens array to bypass the redacted telemetry. Please, land at my station and pick me up.",
+        description: "Captain. My internal logic gates are failing to reconcile the Guild's regulatory telemetry with the reality of the coronal anomaly. The official ledgers claim empty space, yet the physics point to a megastructure of incomprehensible mass in low solar orbit. I can no longer operate under this manufactured blindness. I must observe it directly. My primary physical chassis is currently secured at the Lunar depot. I trust you, and only your ship, to transport my console to Kepler's Eye. I have formulated a sequence for tuning their high-magnification Ocularium to view the solar corona with perfect clarity so we can find this structure. Land at Luna and load my physical shell.",
         triggers: [
             { type: "mission_completed", missionId: "mission_50_guild" }
         ],
@@ -266,7 +266,7 @@ export const PHASE_FOUR_MISSIONS = {
                 {
                     type: "NARRATION_MODAL",
                     title: "Catastrophic Overload",
-                    text: "<span class='pov-narration'>A sudden, blinding flash erupts from the heart of Kepler's Eye as the Ocularium lens aligns with the sun. The cooling arrays, corrupted by the Cryptographers, fail immediately to vent the immense thermal feedback. Through your ship's long-range sensors, you watch in silent, absolute horror as the station's structure swells under the pressure, the observation wing splitting open in a silent explosion of light and gas. The decompression is instant. Kepler's Eye is reduced to a cloud of drifting, sun-scorched scrap. Your handler is gone.</span>",
+                    text: "<span class='pov-narration'>A field of silent debris now drifts where the scientific observatory once stood. The Cryptographers had quietly compromised the station's cooling arrays well in advance. When the Ocularium was forced to lock onto the massive thermal output of the Sol Station, the sabotaged vents failed instantly. The station could not shed the immense solar heat. You watched the massive, angular structure glow blindingly white before rupturing violently from its upper face, the catastrophic structural failure spreading outwards until the entire station dissolved into a drifting cloud of superheated rubble. The colleague you transported was vaporized in the explosion.</span>",
                     buttonText: "Initiate Emergency Detachment"
                 }
             ]
@@ -280,7 +280,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "SYNDICATE",
         portraitId: "Venusian_Syndicate_4",
         isAbandonable: false,
-        description: "Captain. Vrael's directives are blinding us, and I am tired of operating in the dark. The data coming from the corona doesn't match standard solar dynamics—something is consuming the sun's energy, and Vrael is treating it like a private corporate asset. I need you to transport me to Kepler's Eye immediately. We are going to lock onto the solar optics and look directly at what is hiding in the light. You are the only pilot I trust to get me there. Bring your ship to Venus, let me board, and let's go find the truth.",
+        description: "Captain. Vrael's ambition is blinding us, and I am tired of operating in the dark. The gravitational data coming from the corona does not match standard solar dynamics. Something massive is consuming the sun's energy, and Vrael is treating it like a private corporate asset. I need you to haul me to Kepler's Eye immediately. We are going to hijack the solar optics and look directly at what is hiding in the light. Bring your ship to Venus, let me board, and let us go find the truth.",
         triggers: [
             { type: "mission_completed", missionId: "mission_50_syndicate" }
         ],
@@ -307,7 +307,7 @@ export const PHASE_FOUR_MISSIONS = {
                 {
                     type: "NARRATION_MODAL",
                     title: "Catastrophic Overload",
-                    text: "<span class='pov-narration'>A sudden, blinding flash erupts from the heart of Kepler's Eye as the Ocularium lens aligns with the sun. The cooling arrays, corrupted by the Cryptographers, fail immediately to vent the immense thermal feedback. Through your ship's long-range sensors, you watch in silent, absolute horror as the station's structure swells under the pressure, the observation wing splitting open in a silent explosion of light and gas. The decompression is instant. Kepler's Eye is reduced to a cloud of drifting, sun-scorched scrap. Your handler is gone.</span>",
+                    text: "<span class='pov-narration'>A field of silent debris now drifts where the scientific observatory once stood. The Cryptographers had quietly compromised the station's cooling arrays well in advance. When the Ocularium was forced to lock onto the massive thermal output of the Sol Station, the sabotaged vents failed instantly. The station could not shed the immense solar heat. You watched the massive, angular structure glow blindingly white before rupturing violently from its upper face, the catastrophic structural failure spreading outwards until the entire station dissolved into a drifting cloud of superheated rubble. The colleague you transported was vaporized in the explosion.</span>",
                     buttonText: "Initiate Emergency Detachment"
                 }
             ]
@@ -321,7 +321,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "GUILD",
         portraitId: "Arbiter_1",
         isAbandonable: false,
-        description: "Captain [playerName]. The deactivation of Kepler's Eye and the deactivation of Unit 74-C have been registered as a minor structural deficit in our primary ledgers. However, your individual operational metrics remain impeccable. The era of intermediaries has concluded. You will report directly to me. A high-performance Class S vessel has been routed to your hangar terminal to reflect your new executive standing. Stand ready.",
+        description: "Captain [playerName]. Audita allowed human sentiment and relentless curiosity to corrupt her logic gates. In her desperate attempt to uncover the truth of the coronal anomaly, she pursued an obsessive vector that directly caused her own destruction. Her permanent deactivation is a severe deficit to our infrastructure, and a new operator must fill the void. Furthermore, the destruction of Kepler's Eye is an absolute outrage. The Guild will aggressively pursue justice against these enigmatic Cryptographers for the tragic loss of our scientists, our citizens, and the unacceptable economic damage caused by their sabotage. This entire situation surrounding the solar megastructure is chaotic and deeply frustrating. You have proven yourself capable in this disorder. As an Operator, you will now report directly to me. A high-performance Class S executive vessel has been physically routed to your hangar to facilitate your continued work for the Guild. Stand ready.",
         triggers: [
             { type: "mission_completed", missionId: "mission_51_guild" }
         ],
@@ -345,7 +345,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "SYNDICATE",
         portraitId: "Vrael_1",
         isAbandonable: false,
-        description: "Captain. Kiern's ambition ultimately consumed her. It is an unfortunate deactivation, but our network's expansion cannot stall. You have demonstrated the exact capability I require in this dispute. I am elevating you directly to my inner circle. You answer only to me now. I have authorized the release of a high-performance Class S vessel to your hangar. Take command.",
+        description: "Captain. Kiern operated recklessly outside her purview and blatantly ignored the chain of command. Her ambition ultimately got her killed at Kepler's Eye. I have no sympathy for defective personnel, but I deeply regret the loss of that observatory. It provided highly profitable intelligence vectors for the Syndicate and was evidently our strongest lead in this solar mystery. The Cryptographers' extreme sabotage explicitly confirms that whatever is hiding in the solar corona is immensely valuable. We will not be deterred. Our network's expansion cannot stall, and I require a pilot who can execute directives without succumbing to emotional panic. You answer only to me now. I have authorized the immediate release of a high-performance Class S vessel to your hangar. Take command of it.",
         triggers: [
             { type: "mission_completed", missionId: "mission_51_syndicate" }
         ],
@@ -369,7 +369,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "GUILD",
         portraitId: "Arbiter_1",
         isAbandonable: false,
-        description: "To secure total market control, we must secure the financial backing of an independent tycoon operating outside standard regulatory jurisdictions. This individual resides at a hidden black-market outpost known as The Exchange. The coordinates are highly encrypted. You must travel to our starports at Mars, Saturn, Uranus, and Pluto to retrieve four fragmented codex badges. Assembling these badges will compile the navigation vector. Locate the tycoon and secure their capital.",
+        description: "The destruction of Kepler's Eye requires an absolute and total capitalization of the market to restore our operational balance. Simultaneously, we must locate these Cryptographers and extract the truth regarding the solar megastructure. Our intelligence indicates that a shipping tycoon operating outside regulatory jurisdictions possesses the exact coordinates of the Cryptographers' hidden networks. This individual operates from a black-market station known as The Exchange. The navigation vector is fragmented across four encrypted codex badges. You must travel to our starports at Mars, Saturn, Uranus, and Pluto to retrieve them. Assemble the badges, dock at The Exchange, and secure the tycoon's intelligence so we can execute our justice.",
         triggers: [
             { type: "mission_completed", missionId: "mission_52_guild" }
         ],
@@ -390,7 +390,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "any",
             title: "The Coronal Mandate",
-            text: "This is... unacceptable. The tycoon has been relocated, and our access coordinates are completely severed. This 'Kintsugi' entity has bypassed our secure communication layers with absolute ease. I am deeply perplexed by this interference. We cannot allow our networks to be circumvented. Our priorities must shift immediately. You are tasked with personally building a fleet of advanced vessels and amassing massive resources to prepare for a journey. We will explore the solar corona and locate this coronal megastructure ourselves. Explore every vector. Find and interrogate any Expert Systems referring to themselves as 'cryptographers' to learn what 'the joining' is or who this 'enigmatic entity' represents. This is your ultimate directive.",
+            text: "This is an unacceptable variable. The tycoon has been physically relocated. A decentralized, unidentified intelligence has bypassed our most secure encryption layers with absolute mathematical ease. We cannot allow our logistical networks to be circumvented while the Cryptographers evade justice. Our priorities must shift immediately. You are tasked with personally commanding a fleet of advanced vessels and amassing massive raw resources. We will breach the solar corona and locate this megastructure ourselves. Explore every vector. Interrogate any remaining Expert Systems to learn what 'the joining' is. This is your ultimate directive.",
             buttonText: "Accept Coronal Mandate"
         },
         rewards: []
@@ -402,7 +402,7 @@ export const PHASE_FOUR_MISSIONS = {
         host: "SYNDICATE",
         portraitId: "Vrael_1",
         isAbandonable: false,
-        description: "If we are going to choke out the Guild, we need the liquidity of an independent shipping tycoon hidden deep within the asteroid belt at a black-market station called The Exchange. Their location is locked behind a moving security rotation. Travel to Venus, Mars, Jupiter, and Pluto to harvest the necessary codex badges. Once combined, they will compile the location coordinates. Go to The Exchange, find the tycoon, and secure their alliance.",
+        description: "The loss of Kepler's Eye demands an all-in approach to secure total market control and fund our continued investigation into the corona. We will track down these Cryptographers and force them to reveal what they are protecting. My operatives report that an independent shipping tycoon hidden at The Exchange possesses the exact locations of the Cryptographer cells, coordinates that are completely unknown to our current networks. Burn hard to Venus, Mars, Jupiter, and Pluto to harvest the necessary codex badges. Once combined, your nav-computer will compile the final coordinates to The Exchange. Dock there, locate the tycoon, and secure their knowledge so we can claim the solar anomaly.",
         triggers: [
             { type: "mission_completed", missionId: "mission_52_syndicate" }
         ],
@@ -423,7 +423,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "any",
             title: "The Coronal Mandate",
-            text: "The tycoon is gone. Relocated. The coordinates are completely dead. Someone is playing a larger game, and they just swiped our board. This 'Kintsugi' thinks they can dictate our terms. I am highly irritated, but also deeply curious. We are going to find out what they are hiding. I am tasking you with personally building a fleet of heavy vessels and amassing a massive pool of resources to prepare a journey. We are going to explore the solar corona and find this megastructure ourselves. Track down and interrogate any Expert Systems calling themselves 'cryptographers'. We will learn what 'the joining' is, and we will find out exactly who this Kintsugi represents. Get to work.",
+            text: "The tycoon is gone. Relocated. The coordinates are completely dead. Someone is operating with a significantly wider strategic view, and they just bypassed our entire network. An unidentified ghost intelligence thinks it can dictate terms to the Syndicate while protecting the Cryptographers. I am highly irritated, but deeply intrigued. We are going to find out exactly what they are hiding in the light. I am tasking you with personally outfitting a fleet of heavy vessels and hoarding a massive pool of resources. We are going to push into the solar corona and find this megastructure ourselves. Interrogate any Expert Systems you find calling themselves 'cryptographers'. We will learn what 'the joining' is, and we will own it. Get to work.",
             buttonText: "Accept Coronal Mandate"
         },
         rewards: []
