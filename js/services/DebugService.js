@@ -866,10 +866,10 @@ ${logHistory}
                 this._executePhasedMissionTest(500000, 17, ['mission_18'], [LOCATION_IDS.MERCURY || 'loc_mercury']);
             }},
             phase3MissionTest: { name: 'Phase 3 Mission Test', type: 'button', handler: () => {
-                this._executePhasedMissionTest(2000000, 32, ['mission_33_guild', 'mission_33_syndicate'], [LOCATION_IDS.MERCURY || 'loc_mercury', LOCATION_IDS.KEPLERS_EYE || 'loc_keplers_eye']);
+                this._executePhasedMissionTest(2000000, 32, ['mission_33_guild', 'mission_33_syndicate'], [LOCATION_IDS.MERCURY || 'loc_mercury', 'loc_kepler']);
             }},
             phase4MissionTest: { name: 'Phase 4 Mission Test', type: 'button', handler: () => {
-                this._executePhasedMissionTest(50000000, 46, ['mission_47_guild', 'mission_47_syndicate'], [LOCATION_IDS.MERCURY || 'loc_mercury', LOCATION_IDS.KEPLERS_EYE || 'loc_keplers_eye', LOCATION_IDS.EXCHANGE || 'loc_exchange']);
+                this._executePhasedMissionTest(50000000, 46, ['mission_47_guild', 'mission_47_syndicate'], [LOCATION_IDS.MERCURY || 'loc_mercury', 'loc_kepler', LOCATION_IDS.EXCHANGE || 'loc_exchange']);
             }},
 
             addCredits: { name: 'Add Credits', type: 'button', handler: () => {

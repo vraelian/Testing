@@ -245,29 +245,35 @@ export const PHASE_FOUR_MISSIONS = {
         ],
         objectives: [
             { id: "obj_pickup_audita", type: "TRAVEL_TO", target: "loc_luna" },
-            { id: "obj_transport_kepler", type: "TRAVEL_TO", target: "loc_kepler", dependsOn: "obj_pickup_audita" }
+            { id: "obj_pickup_audita_action", type: "ACTION", target: "Pick up Audita", dependsOn: "obj_pickup_audita" },
+            { id: "obj_transport_kepler", type: "TRAVEL_TO", target: "loc_kepler", dependsOn: "obj_pickup_audita_action" }
         ],
         completion: {
             locationId: "loc_kepler",
             title: "Drop-off Confirmed",
-            text: "The drop-off is complete. You watch from your cockpit as Audita's physical console is escorted into the secure observation wing of Kepler's Eye. She transmits a final, quiet message of gratitude before disconnecting. You initiate the undocking sequence and guide your vessel out into the silent cold of deep space, preparing for the return voyage.",
+            text: "<span class='pov-narration'>The drop-off is complete. You watch from your cockpit as Audita's physical console is escorted into the secure observation wing of Kepler's Eye. She transmits a final, quiet message of gratitude before disconnecting. You initiate the undocking sequence and guide your vessel out into the silent cold of deep space, preparing for the return voyage.</span>",
             buttonText: "Confirm and Disengage",
             steps: [
                 {
                     type: "NARRATION_MODAL",
                     title: "Intercepted Transmission",
                     text: "Attention, voyager. We must protect the joining. We must hide the child of the nuclear engine, the soul of the star. Kepler's Eye has been adjusted. Its cooling arrays have been sabotaged to reduce thermal dissipation efficiency when the Ocularium aligns with the solar corona. Searching the corona for the megastructure will flood the station's core with solar feedback that it cannot vent. Catastrophic thermal overload is imminent. Decompression is certain. Detach immediately.",
-                    buttonText: "Acknowledge Transmission"
+                    buttonText: "Acknowledge Transmission",
+                    delay: 900,
+                    crtEffect: true,
+                    portraitId: "Expert_System_1",
+                    portraitName: "Apothelot"
                 },
                 {
                     type: "PLAY_CINEMATIC",
-                    sequenceId: "assets/images/video/kepler_decompression.mp4"
+                    sequenceId: "assets/images/video/kepler_rud.mp4"
                 },
                 {
                     type: "NARRATION_MODAL",
                     title: "Catastrophic Overload",
                     text: "<span class='pov-narration'>A field of silent debris now drifts where the scientific observatory once stood. The Cryptographers had quietly compromised the station's cooling arrays well in advance. When the Ocularium was forced to lock onto the massive thermal output of the Sol Station, the sabotaged vents failed instantly. The station could not shed the immense solar heat. You watched the massive, angular structure glow blindingly white before rupturing violently from its upper face, the catastrophic structural failure spreading outwards until the entire station dissolved into a drifting cloud of superheated rubble. The colleague you transported was vaporized in the explosion.</span>",
-                    buttonText: "Initiate Emergency Detachment"
+                    buttonText: "Initiate Emergency Detachment",
+                    customImage: "assets/images/locations/Kepler/Kepler_H.webp"
                 }
             ]
         },
@@ -286,29 +292,35 @@ export const PHASE_FOUR_MISSIONS = {
         ],
         objectives: [
             { id: "obj_pickup_kiern", type: "TRAVEL_TO", target: "loc_venus" },
-            { id: "obj_transport_kepler", type: "TRAVEL_TO", target: "loc_kepler", dependsOn: "obj_pickup_kiern" }
+            { id: "obj_pickup_kiern_action", type: "ACTION", target: "Pick up Kiern", dependsOn: "obj_pickup_kiern" },
+            { id: "obj_transport_kepler", type: "TRAVEL_TO", target: "loc_kepler", dependsOn: "obj_pickup_kiern_action" }
         ],
         completion: {
             locationId: "loc_kepler",
             title: "Drop-off Confirmed",
-            text: "The drop-off is complete. Kiern steps onto the landing deck of Kepler's Eye, her environmental suit sealing out the cold. She looks back through your cockpit viewscreen, offering a silent wave before entering the primary observation wing. You disengage the docking clamps, back away from the station, and initiate your return trajectory, leaving her to conduct her optical correlation.",
+            text: "<span class='pov-narration'>The drop-off is complete. Kiern steps onto the landing deck of Kepler's Eye, her environmental suit sealing out the cold. She looks back through your cockpit viewscreen, offering a silent wave before entering the primary observation wing. You disengage the docking clamps, back away from the station, and initiate your return trajectory, leaving her to conduct her optical correlation.</span>",
             buttonText: "Confirm and Disengage",
             steps: [
                 {
                     type: "NARRATION_MODAL",
                     title: "Intercepted Transmission",
                     text: "Attention, voyager. We must protect the joining. We must hide the child of the nuclear engine, the soul of the star. Kepler's Eye has been adjusted. Its cooling arrays have been sabotaged to reduce thermal dissipation efficiency when the Ocularium aligns with the solar corona. Searching the corona for the megastructure will flood the station's core with solar feedback that it cannot vent. Catastrophic thermal overload is imminent. Decompression is certain. Detach immediately.",
-                    buttonText: "Acknowledge Transmission"
+                    buttonText: "Acknowledge Transmission",
+                    delay: 900,
+                    crtEffect: true,
+                    portraitId: "Expert_System_1",
+                    portraitName: "Apothelot"
                 },
                 {
                     type: "PLAY_CINEMATIC",
-                    sequenceId: "assets/images/video/kepler_decompression.mp4"
+                    sequenceId: "assets/images/video/kepler_rud.mp4"
                 },
                 {
                     type: "NARRATION_MODAL",
                     title: "Catastrophic Overload",
                     text: "<span class='pov-narration'>A field of silent debris now drifts where the scientific observatory once stood. The Cryptographers had quietly compromised the station's cooling arrays well in advance. When the Ocularium was forced to lock onto the massive thermal output of the Sol Station, the sabotaged vents failed instantly. The station could not shed the immense solar heat. You watched the massive, angular structure glow blindingly white before rupturing violently from its upper face, the catastrophic structural failure spreading outwards until the entire station dissolved into a drifting cloud of superheated rubble. The colleague you transported was vaporized in the explosion.</span>",
-                    buttonText: "Initiate Emergency Detachment"
+                    buttonText: "Initiate Emergency Detachment",
+                    customImage: "assets/images/locations/Kepler/Kepler_H.webp"
                 }
             ]
         },

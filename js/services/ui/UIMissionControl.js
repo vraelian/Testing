@@ -118,56 +118,65 @@ export class UIMissionControl {
             const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
 
             // 1. IS READY TO COMPLETE
-            // Completely intercepts logic rendering loop to force specific syntax
             if (progress.isCompletable && !isLogisticsPickupPhase) {
                 const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === gameState.currentLocationId;
                 
+                const expectedClass = `sticky-content ${hostClass} mission-turn-in flex items-center justify-center`;
+                if (contentEl.className !== expectedClass) contentEl.className = expectedClass;
+
                 if (isAtCorrectLocation) {
-                    objectiveTextEl.innerHTML = `READY TO COMPLETE!`;
-                    objectiveTextEl.style.width = '100%';
-                    objectiveTextEl.style.textAlign = 'center';
-                    objectiveProgressEl.innerHTML = ``;
-                    objectiveProgressEl.style.display = 'none';
-                    contentEl.className = `sticky-content ${hostClass} mission-turn-in flex items-center justify-center`;
-                    contentEl.style.setProperty('--sticky-progress', `100%`);
+                    if (objectiveTextEl.innerHTML !== `READY TO COMPLETE!`) {
+                        objectiveTextEl.innerHTML = `READY TO COMPLETE!`;
+                        objectiveTextEl.style.width = '100%';
+                        objectiveTextEl.style.textAlign = 'center';
+                        objectiveProgressEl.innerHTML = ``;
+                        objectiveProgressEl.style.display = 'none';
+                        contentEl.style.setProperty('--sticky-progress', `100%`);
+                    }
                 } else {
                     const locName = DB.MARKETS.find(m => m.id === mission.completion.locationId)?.name || 'UNKNOWN';
-                    objectiveTextEl.innerHTML = `RETURN TO ${locName.toUpperCase()}`;
-                    objectiveTextEl.style.width = '100%';
-                    objectiveTextEl.style.textAlign = 'center';
-                    objectiveProgressEl.innerHTML = ``;
-                    objectiveProgressEl.style.display = 'none';
-                    contentEl.className = `sticky-content ${hostClass} flex items-center justify-center`;
-                    contentEl.style.setProperty('--sticky-progress', `100%`);
+                    const expectedText = `RETURN TO ${locName.toUpperCase()}`;
+                    if (objectiveTextEl.innerHTML !== expectedText) {
+                        objectiveTextEl.innerHTML = expectedText;
+                        objectiveTextEl.style.width = '100%';
+                        objectiveTextEl.style.textAlign = 'center';
+                        objectiveProgressEl.innerHTML = ``;
+                        objectiveProgressEl.style.display = 'none';
+                        contentEl.style.setProperty('--sticky-progress', `100%`);
+                    }
                 }
-                stickyBarEl.style.transition = 'none';
-                stickyBarEl.style.display = 'block';
-                stickyBarEl.style.opacity = '1';
-                return; // EARLY EXIT: Halts further objective evaluation
+
+                if (stickyBarEl.style.display !== 'block') {
+                    stickyBarEl.style.transition = 'none';
+                    stickyBarEl.style.display = 'block';
+                    stickyBarEl.style.opacity = '1';
+                }
+                return; 
             }
 
             // 2. IS LOGISTICS PICKUP PHASE
             if (isLogisticsPickupPhase) {
+                const expectedClass = `sticky-content ${hostClass}`;
+                if (contentEl.className !== expectedClass) contentEl.className = expectedClass;
+
                 const pickupLocName = DB.MARKETS.find(m => m.id === mission.pickupLocationId)?.name || 'Unknown';
-                if (gameState.currentLocationId === mission.pickupLocationId) {
-                    objectiveTextEl.innerHTML = `Load up cargo for delivery`;
-                    objectiveProgressEl.innerHTML = `[AWAITING]`;
-                } else {
-                    objectiveTextEl.innerHTML = `Travel to ${pickupLocName}`;
-                    objectiveProgressEl.innerHTML = `[EN ROUTE]`;
+                const expectedText = (gameState.currentLocationId === mission.pickupLocationId) ? `Load up cargo for delivery` : `Travel to ${pickupLocName}`;
+                const expectedProgress = (gameState.currentLocationId === mission.pickupLocationId) ? `[AWAITING]` : `[EN ROUTE]`;
+
+                if (objectiveTextEl.innerHTML !== expectedText || objectiveProgressEl.innerHTML !== expectedProgress) {
+                    objectiveTextEl.innerHTML = expectedText;
+                    objectiveProgressEl.innerHTML = expectedProgress;
+                    objectiveTextEl.style.width = '';
+                    objectiveTextEl.style.textAlign = '';
+                    objectiveProgressEl.style.display = '';
+                    contentEl.style.setProperty('--sticky-progress', `0%`);
                 }
                 
-                // RESET ALIGNMENT
-                objectiveTextEl.style.width = '';
-                objectiveTextEl.style.textAlign = '';
-                objectiveProgressEl.style.display = '';
-
-                contentEl.className = `sticky-content ${hostClass}`;
-                contentEl.style.setProperty('--sticky-progress', `0%`);
-                
-                stickyBarEl.style.transition = 'none';
-                stickyBarEl.style.display = 'block';
-                stickyBarEl.style.opacity = '1';
+                if (stickyBarEl.style.display !== 'block') {
+                    stickyBarEl.style.transition = 'none';
+                    stickyBarEl.style.display = 'block';
+                    stickyBarEl.style.opacity = '1';
+                }
                 return;
             }
 
@@ -235,19 +244,24 @@ export class UIMissionControl {
                     percent = current <= target ? 100 : 0;
                 }
 
-                // RESET ALIGNMENT
-                objectiveTextEl.style.width = '';
-                objectiveTextEl.style.textAlign = '';
-                objectiveProgressEl.style.display = '';
+                const expectedClass = `sticky-content ${hostClass}`;
+                if (contentEl.className !== expectedClass) contentEl.className = expectedClass;
 
-                objectiveTextEl.innerHTML = `${objectiveLabel}`;
-                objectiveProgressEl.innerHTML = displayStr;
-                contentEl.className = `sticky-content ${hostClass}`;
-                contentEl.style.setProperty('--sticky-progress', `${percent}%`);
+                if (objectiveTextEl.innerHTML !== objectiveLabel || objectiveProgressEl.innerHTML !== displayStr) {
+                    objectiveTextEl.style.width = '';
+                    objectiveTextEl.style.textAlign = '';
+                    objectiveProgressEl.style.display = '';
+
+                    objectiveTextEl.innerHTML = objectiveLabel;
+                    objectiveProgressEl.innerHTML = displayStr;
+                    contentEl.style.setProperty('--sticky-progress', `${percent}%`);
+                }
                 
-                stickyBarEl.style.transition = 'none';
-                stickyBarEl.style.display = 'block';
-                stickyBarEl.style.opacity = '1';
+                if (stickyBarEl.style.display !== 'block') {
+                    stickyBarEl.style.transition = 'none';
+                    stickyBarEl.style.display = 'block';
+                    stickyBarEl.style.opacity = '1';
+                }
             } else {
                 this._hideStickyBarWithFade(stickyBarEl);
             }
@@ -316,7 +330,7 @@ export class UIMissionControl {
             return `Install Rank ${obj.rank} SHIP UPGRADE`;
         }
         if (['action', 'ACTION'].includes(obj.type)) {
-            return (obj.target || 'Complete Action').toUpperCase();
+            return obj.target || 'Complete Action';
         }
         return `COMPLETE OBJECTIVE`;
     }
@@ -897,7 +911,9 @@ export class UIMissionControl {
                                 const rect = btn.getBoundingClientRect();
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
-                                this.manager.createFloatingText(`ACTION COMPLETED`, x, y, '#c084fc');
+                                
+                                const actionLabel = (objDef && objDef.target && objDef.target.toLowerCase().includes('pick up')) ? 'PASSENGER BOARDED' : 'ACTION COMPLETED';
+                                this.manager.createFloatingText(actionLabel, x, y, '#c084fc');
                                 
                                 this.manager.simulationService.missionService.checkTriggers();
                                 coreState.setState({}); 
@@ -1558,7 +1574,7 @@ export class UIMissionControl {
                                        delete modal.dataset.dismissInside;
                                        delete modal.dataset.dismissOutside;
     
-                                       if (this.manager.modalEngine && this.manager.modalEngine.modalQueue.length > 0) {
+                                       if (this.manager.modalEngine && this.manager.modalEngine.processModalQueue) {
                                            this.manager.modalEngine.processModalQueue();
                                        }
     
@@ -1620,12 +1636,16 @@ export class UIMissionControl {
                                        }, 2000);
                                    }, 3000);
                                } else if (mission.completion?.steps && mission.completion.steps.length > 0) {
-                                   const modalEl = document.getElementById('mission-modal');
-                                   if (modalEl) {
-                                       modalEl.classList.add('hidden');
-                                       modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                                   if (this.manager.modalEngine && typeof this.manager.modalEngine.destroyModalInstant === 'function') {
+                                       this.manager.modalEngine.destroyModalInstant('mission-modal');
+                                   } else {
+                                       const modalEl = document.getElementById('mission-modal');
+                                       if (modalEl) {
+                                           modalEl.classList.add('hidden');
+                                           modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                                       }
                                    }
-                                   this._processCompletionSteps(mission.completion.steps, 0, () => {
+                                   this._processCompletionSteps(mission, mission.completion.steps, 0, () => {
                                        mission.rewards = choice.rewards;
                                        executeCompletion(e);
                                    });
@@ -1714,12 +1734,16 @@ export class UIMissionControl {
                            });
 
                        } else if (mission.completion?.steps && mission.completion.steps.length > 0) {
-                           const modalEl = document.getElementById('mission-modal');
-                           if (modalEl) {
-                               modalEl.classList.add('hidden');
-                               modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                           if (this.manager.modalEngine && typeof this.manager.modalEngine.destroyModalInstant === 'function') {
+                               this.manager.modalEngine.destroyModalInstant('mission-modal');
+                           } else {
+                               const modalEl = document.getElementById('mission-modal');
+                               if (modalEl) {
+                                   modalEl.classList.add('hidden');
+                                   modalEl.classList.remove('modal-visible', 'dismiss-disabled', 'modal-blur-fade-out', 'backdrop-fade-out-slow');
+                               }
                            }
-                           this._processCompletionSteps(mission.completion.steps, 0, () => {
+                           this._processCompletionSteps(mission, mission.completion.steps, 0, () => {
                                executeCompletion(e);
                            });
                        } else {
@@ -1999,39 +2023,191 @@ export class UIMissionControl {
         return parsedText;
     }
 
-    _processCompletionSteps(steps, index, finalCallback) {
+    _processCompletionSteps(mission, steps, index, finalCallback) {
         if (!steps || index >= steps.length) {
             if (finalCallback) finalCallback();
             return;
         }
 
         const step = steps[index];
-        const next = () => this._processCompletionSteps(steps, index + 1, finalCallback);
+        const next = () => this._processCompletionSteps(mission, steps, index + 1, finalCallback);
 
-        if (step.type === 'NARRATION_MODAL') {
-            this.manager.queueModal('event-modal', step.title, step.text, next, {
-                buttonText: step.buttonText || "Continue",
-                dismissOutside: false
-            });
-            this.manager.modalEngine.processModalQueue();
-        } else if (step.type === 'PLAY_CINEMATIC') {
-            const blackOverlay = document.createElement('div');
-            blackOverlay.className = 'fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-1000 bg-black opacity-100';
-            document.body.appendChild(blackOverlay);
-            
-            CinematicService.playVideo(step.sequenceId).then(async () => {
-                await new Promise(r => setTimeout(r, 1000));
-                blackOverlay.style.opacity = '0';
-                setTimeout(() => blackOverlay.remove(), 1000);
+        const executeStep = () => {
+            if (step.type === 'NARRATION_MODAL') {
+                this.manager.queueModal('mission-modal', step.title, step.text, next, {
+                    portraitId: step.portraitId || mission.portraitId,
+                    portraitName: step.portraitName || mission.portraitName,
+                    dismissOutside: false,
+                    noModalVisible: !!step.crtEffect, // Bypass standard fade-in for CRT sequence
+                    customSetup: (modal, closeHandler) => {
+                        const modalContent = modal.querySelector('.modal-content');
+                        
+                        modalContent.classList.remove('modal-blur-fade-out');
+                        modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
+
+                        modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
+                        const activeHost = mission.completion?.host || mission.host || 'UNKNOWN';
+                        const hostClass = `host-${activeHost.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                        modalContent.classList.add(hostClass);
+
+                        // Hide unnecessary mission parts
+                        const typeEl = modal.querySelector('#mission-modal-type');
+                        if (typeEl) typeEl.style.display = 'none';
+
+                        const objectivesEl = modal.querySelector('#mission-modal-objectives');
+                        if (objectivesEl) objectivesEl.style.display = 'none';
+
+                        const rewardsEl = modal.querySelector('#mission-modal-rewards');
+                        if (rewardsEl) rewardsEl.style.display = 'none';
+
+                        // Populate Title and Description FIRST before touching the wrapper
+                        modal.querySelector('#mission-modal-title').textContent = step.title;
+                        const targetDescEl = modal.querySelector('#mission-modal-description');
+                        if (targetDescEl) {
+                            targetDescEl.innerHTML = step.text;
+                        }
+
+                        // Handle CRT Effect Invocation
+                        if (step.crtEffect) {
+                            modalContent.classList.remove('sev-crt-shutdown');
+                            modalContent.classList.add('sev-crt-turn-on');
+                            modalContent.style.animationDuration = '0.4s';
+                            if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+                            modalContent._crtTimeout = setTimeout(() => {
+                                modalContent.classList.remove('sev-crt-turn-on');
+                                modalContent.style.animationDuration = '';
+                            }, 400);
+                        }
+
+                        // Scroll Wrapper Configuration
+                        let outerWrapper = modal.querySelector('.mission-scroll-outer');
+                        let indicator = modal.querySelector('.scroll-indicator-arrow');
+
+                        // Safely rescue the target text block from the old wrapper before purging
+                        if (outerWrapper && targetDescEl && outerWrapper.contains(targetDescEl)) {
+                            outerWrapper.parentNode.insertBefore(targetDescEl, outerWrapper);
+                        }
+
+                        if (outerWrapper) outerWrapper.remove();
+                        if (indicator) indicator.remove();
+
+                        if (targetDescEl) {
+                            outerWrapper = document.createElement('div');
+                            outerWrapper.className = 'mission-scroll-outer w-full relative mb-2 mt-2';
+                            
+                            let wrapper = document.createElement('div');
+                            wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2 flex flex-col items-center';
+                            wrapper.style.maxHeight = '304px'; // Match standard mission details height
+                            
+                            targetDescEl.parentNode.insertBefore(outerWrapper, targetDescEl);
+                            outerWrapper.appendChild(wrapper);
+
+                            // Inject Custom Image securely into the scroll wrapper
+                            if (step.customImage) {
+                                const imgDiv = document.createElement('div');
+                                imgDiv.className = 'w-full flex justify-center mb-4 mt-1 shrink-0';
+                                imgDiv.innerHTML = `<img src="${step.customImage}" class="rounded border border-gray-600 shadow-[0_0_15px_rgba(0,0,0,0.8)]" style="max-height: 160px; object-fit: cover; width: 100%;">`;
+                                wrapper.appendChild(imgDiv);
+                            }
+
+                            wrapper.appendChild(targetDescEl);
+                            
+                            indicator = document.createElement('div');
+                            indicator.className = 'scroll-indicator-arrow';
+                            indicator.innerHTML = '&#8964;';
+                            indicator.style.transition = 'opacity 0.2s ease-in-out';
+                            outerWrapper.appendChild(indicator);
+
+                            // Bind scroll indicator logic
+                            wrapper.onscroll = () => {
+                                const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                                indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                            };
+                            
+                            wrapper.scrollTop = 0; 
+                            setTimeout(() => {
+                                wrapper.scrollTop = 0; 
+                                if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                                    indicator.style.display = 'block';
+                                    const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                                    indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                                } else {
+                                    indicator.style.display = 'none';
+                                    indicator.style.opacity = '0';
+                                }
+                            }, 150); 
+                        }
+
+                        // Buttons setup
+                        const buttonsEl = modal.querySelector('#mission-modal-buttons');
+                        const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
+                        const btnText = step.buttonText || "Understood";
+                        
+                        buttonsEl.innerHTML = '';
+                        
+                        const confirmBtn = document.createElement('button');
+                        confirmBtn.className = 'btn w-full mission-action-btn host-btn-pulse';
+                        confirmBtn.style.cssText = btnStyles;
+                        confirmBtn.textContent = btnText;
+                        
+                        confirmBtn.onclick = (e) => {
+                            e.preventDefault();
+                            confirmBtn.disabled = true;
+                            
+                            if (step.crtEffect) {
+                                modalContent.classList.remove('sev-crt-turn-on');
+                                modalContent.classList.add('sev-crt-shutdown');
+                                modalContent.style.animationDuration = '0.35s';
+                                setTimeout(() => {
+                                    if (this.manager.modalEngine && typeof this.manager.modalEngine.destroyModalInstant === 'function') {
+                                        this.manager.modalEngine.destroyModalInstant('mission-modal');
+                                    }
+                                    closeHandler();
+                                }, 340);
+                            } else {
+                                modalContent.classList.add('modal-blur-fade-out');
+                                modal.classList.add('backdrop-fade-out-slow');
+                                setTimeout(() => {
+                                    if (this.manager.modalEngine && typeof this.manager.modalEngine.destroyModalInstant === 'function') {
+                                        this.manager.modalEngine.destroyModalInstant('mission-modal');
+                                    }
+                                    closeHandler();
+                                }, 800);
+                            }
+                        };
+                        
+                        buttonsEl.appendChild(confirmBtn);
+                    }
+                });
+                
+                this.manager.modalEngine.processModalQueue();
+                
+            } else if (step.type === 'PLAY_CINEMATIC') {
+                const blackOverlay = document.createElement('div');
+                blackOverlay.className = 'fixed inset-0 z-[99999] pointer-events-none transition-opacity duration-1000 bg-black opacity-100';
+                document.body.appendChild(blackOverlay);
+                
+                CinematicService.playVideo(step.sequenceId).then(async () => {
+                    await new Promise(r => setTimeout(r, 1000));
+                    blackOverlay.style.opacity = '0';
+                    setTimeout(() => blackOverlay.remove(), 1000);
+                    next();
+                }).catch(err => {
+                    this.manager.logger.error('UIMissionControl', 'Cinematic playback failed', err);
+                    blackOverlay.style.opacity = '0';
+                    setTimeout(() => blackOverlay.remove(), 1000);
+                    next();
+                });
+            } else {
                 next();
-            }).catch(err => {
-                this.manager.logger.error('UIMissionControl', 'Cinematic playback failed', err);
-                blackOverlay.style.opacity = '0';
-                setTimeout(() => blackOverlay.remove(), 1000);
-                next();
-            });
+            }
+        };
+
+        // Delay execution if specified (e.g., waiting for cinematic fade-ins)
+        if (step.delay) {
+            setTimeout(executeStep, step.delay);
         } else {
-            next();
+            executeStep();
         }
     }
 

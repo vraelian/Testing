@@ -15,7 +15,6 @@
     "game_logic_and_lore": [
       "Character Name spelling is strictly 'Kiern' (never 'Keirn').",
       "Mission 21 is a 'delivery' mission (requires objective location to trigger modal immediately).",
-      "Mission 32 requires 'Badge II' ship upgrades to be awarded strictly AFTER the white screen transition sequence, not before.",
       "Mission 34 requires a Rank III upgrade.",
       "Commodities (trade goods) are strictly distinct from Consumables (usable items). Do not cross-reference them.",
       "Orbital Trading UI Abbreviations: pop = popup, toast = toast window modal, fbt = floating battle text, TT = tutorial toast, intro = entire introduction sequence."
