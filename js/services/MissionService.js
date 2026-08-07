@@ -386,6 +386,20 @@ export class MissionService {
                     });
                 }
 
+                // Check items collected via COLLECT_ITEM objectives
+                if (mission.objectives) {
+                    mission.objectives.forEach(obj => {
+                        if ((obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') && (obj.goodId === goodId || obj.target === goodId)) {
+                            const objKey = obj.id || obj.goodId || obj.target;
+                            const collected = progress.objectives[objKey]?.collected || 0;
+                            if (collected > 0) {
+                                missionRequiresThisGood = true;
+                                protectedQuantity += collected;
+                            }
+                        }
+                    });
+                }
+
                 if (missionRequiresThisGood) {
                     // Reduce protection by what has already been deposited for this mission
                     let deposited = 0;
@@ -438,6 +452,19 @@ export class MissionService {
             });
         }
         
+        if (mission.objectives) {
+            mission.objectives.forEach(obj => {
+                if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
+                    const objKey = obj.id || obj.goodId || obj.target;
+                    const progress = this.gameState.missions.missionProgress[missionId];
+                    const collected = progress?.objectives?.[objKey]?.collected || 0;
+                    if (collected > 0) {
+                        cargoArrays.push({ goodId: obj.goodId || obj.target, quantity: collected });
+                    }
+                }
+            });
+        }
+        
         cargoArrays.forEach(c => {
             const commodity = DB.COMMODITIES?.find(comm => comm.id === c.goodId);
             let basePrice = this.gameState.market.galacticAverages[c.goodId];
@@ -465,22 +492,14 @@ export class MissionService {
                 this.gameState.player.monthlyInterestAmount = (this.gameState.player.monthlyInterestAmount || 0) + interestAmount;
             }
             this.logger.warn('MissionService', `Third-Party Cargo Infraction! Added ⌬${formatCredits(penaltyValue)} to debt for mission ${missionId}.`);
+            
+            if (this.simulationService && typeof this.simulationService._logTransaction === 'function') {
+                this.simulationService._logTransaction('debt', -penaltyValue, "Debt for stolen cargo");
+            }
         }
 
-        // Force Abandonment Sequence (HARD WIPE STATE TO ALLOW TERMINAL RE-ENTRY)
-        this.gameState.missions.activeMissionIds = this.gameState.missions.activeMissionIds.filter(id => id !== missionId);
-        if (this.gameState.missions.missionProgress[missionId]) {
-            delete this.gameState.missions.missionProgress[missionId];
-        }
-        if (this.gameState.missions.trackedMissionId === missionId) {
-            const nextMission = this.gameState.missions.activeMissionIds[0];
-            this.gameState.missions.trackedMissionId = nextMission || null;
-        }
-        if (mission.navLock && this.simulationService) {
-            this.simulationService.clearNavigationLock();
-        }
-        
-        this.gameState.setState({});
+        // Force Abandonment Sequence
+        this.abandonMission(missionId);
     }
 
     /**

@@ -73,7 +73,7 @@ function getModeDescription(mode) {
     switch (mode) {
         case 'STABILITY': return "<span style='color: #9ca3af;'>Low Entropy, Slow Generation</span>";
         case 'COMMERCE': return "<span style='color: #fbbf24;'>High Entropy, High Income</span>";
-        case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max Antimatter</span>";
+        case 'PRODUCTION': return "<span style='color: #a855f7;'>Max Entropy, Max antimatter</span>";
         case 'SYNTHESIS': return "<span style='color: #b87333;'>Manufacture Folded Space Drives.</span>";
         default: return "";
     }
@@ -1092,11 +1092,11 @@ export class UISolStationControl {
         const stockpile = station.stockpile;
         const playerVisualSeed = gameState.player.visualSeed;
 
-        const amBgImage = AssetService.getCommodityImage("Antimatter", playerVisualSeed);
+        const amBgImage = AssetService.getCommodityImage("antimatter", playerVisualSeed);
         const amBgStyle = amBgImage ? `background-image: url('${amBgImage}'); opacity: 1; filter: none;` : '';
 
         // Dynamic fetch of Folded Space Drive visual
-        const fsdBgImage = AssetService.getCommodityImage("Folded-Space Drives", playerVisualSeed);
+        const fsdBgImage = AssetService.getCommodityImage("folded-space drives", playerVisualSeed);
         const fsdBgStyle = fsdBgImage ? `background-image: url('${fsdBgImage}'); opacity: 1; filter: none;` : '';
 
         const textShadow = '0 4px 6px rgba(0,0,0,0.9), 1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000';
@@ -1298,7 +1298,7 @@ export class UISolStationControl {
             <div class="sol-cache-row-bg" style="${amBgStyle}; border-radius: 8px;"></div>
             
             <div class="sol-cache-content-left" style="z-index: 2; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; margin-right: 0.5rem;">
-                <div class="sol-row-name" title="Antimatter" style="text-align: left; font-size: 1.0rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: var(--tier-7-color, #a855f7); font-weight: bold;">ANTIMATTER</div>
+                <div class="sol-row-name" title="antimatter" style="text-align: left; font-size: 1.0rem; margin-bottom: 4px; text-shadow: ${textShadow}; white-space: nowrap; overflow: visible; color: var(--tier-7-color, #a855f7); font-weight: bold;">ANTIMATTER</div>
                 
                 <div class="sol-row-track-container" style="width: 100%;">
                     <div class="sol-progress-track" style="border: 1px solid #000; box-shadow: 0 0 4px rgba(0,0,0,0.5); border-radius: 8px; overflow: hidden;">

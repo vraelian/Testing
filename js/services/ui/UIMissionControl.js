@@ -121,7 +121,8 @@ export class UIMissionControl {
             if (progress.isCompletable && !isLogisticsPickupPhase) {
                 const isAtCorrectLocation = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === gameState.currentLocationId;
                 
-                const expectedClass = `sticky-content ${hostClass} mission-turn-in flex items-center justify-center`;
+                const turnInClass = isAtCorrectLocation ? ' mission-turn-in' : '';
+                const expectedClass = `sticky-content ${hostClass}${turnInClass} flex items-center justify-center`;
                 if (contentEl.className !== expectedClass) contentEl.className = expectedClass;
 
                 if (isAtCorrectLocation) {
@@ -150,6 +151,7 @@ export class UIMissionControl {
                     stickyBarEl.style.transition = 'none';
                     stickyBarEl.style.display = 'block';
                     stickyBarEl.style.opacity = '1';
+                    stickyBarEl.style.pointerEvents = 'auto';
                 }
                 return; 
             }
@@ -176,6 +178,7 @@ export class UIMissionControl {
                     stickyBarEl.style.transition = 'none';
                     stickyBarEl.style.display = 'block';
                     stickyBarEl.style.opacity = '1';
+                    stickyBarEl.style.pointerEvents = 'auto';
                 }
                 return;
             }
@@ -261,6 +264,7 @@ export class UIMissionControl {
                     stickyBarEl.style.transition = 'none';
                     stickyBarEl.style.display = 'block';
                     stickyBarEl.style.opacity = '1';
+                    stickyBarEl.style.pointerEvents = 'auto';
                 }
             } else {
                 this._hideStickyBarWithFade(stickyBarEl);
@@ -272,6 +276,8 @@ export class UIMissionControl {
 
     _getObjectiveLabel(obj) {
         if (!obj) return 'Objective';
+        if (obj.text) return obj.text;
+        
         if (obj.type === 'DELIVER_ITEM') {
              const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.target))?.name || 'Item';
              if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
@@ -279,6 +285,13 @@ export class UIMissionControl {
                  return `Deliver ${name} to ${locName}`;
              }
              return `Deliver ${name}`;
+        }
+        if (obj.type === 'DELIVER_SHIP' || obj.type === 'deliver_ship') {
+             if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                 const locName = DB.MARKETS.find(m => m.id === obj.target).name;
+                 return `Deliver ship to ${locName}`;
+             }
+             return `Deliver ship`;
         }
         if (obj.type === 'collect_item' || obj.type === 'COLLECT_ITEM') {
             const name = DB.COMMODITIES.find(c => c.id === (obj.goodId || obj.targetLoc || obj.target))?.name || 'Item';
@@ -631,7 +644,7 @@ export class UIMissionControl {
                 let uniqueDestinations = new Set();
                 if (mission.objectives) {
                     mission.objectives.forEach(obj => {
-                        if (['DELIVER_ITEM', 'travel_to', 'TRAVEL_TO', 'trade_item', 'TRADE_ITEM', 'COLLECT_ITEM', 'collect_item'].includes(obj.type)) {
+                        if (['DELIVER_ITEM', 'DELIVER_SHIP', 'deliver_ship', 'travel_to', 'TRAVEL_TO', 'trade_item', 'TRADE_ITEM', 'COLLECT_ITEM', 'collect_item'].includes(obj.type)) {
                             if (obj.target && DB.MARKETS.some(m => m.id === obj.target)) {
                                 uniqueDestinations.add(obj.target);
                             }
@@ -721,7 +734,7 @@ export class UIMissionControl {
                 let wrapper = modal.querySelector('.mission-scroll-wrapper');
                 let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                if (!wrapper && descEl && objectivesEl) {
+                if (!wrapper && descEl) {
                     outerWrapper = document.createElement('div');
                     outerWrapper.className = 'mission-scroll-outer w-full relative mb-2';
                     
@@ -731,8 +744,6 @@ export class UIMissionControl {
                     
                     descEl.parentNode.insertBefore(outerWrapper, descEl);
                     outerWrapper.appendChild(wrapper);
-                    wrapper.appendChild(descEl);
-                    wrapper.appendChild(objectivesEl);
                     
                     indicator = document.createElement('div');
                     indicator.className = 'scroll-indicator-arrow';
@@ -741,7 +752,12 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                 }
 
-                if (wrapper && indicator) {
+                // Uniform wrapper construction block guaranteeing child un-orphaning
+                if (wrapper) {
+                    if (descEl) wrapper.appendChild(descEl);
+                    if (objectivesEl) wrapper.appendChild(objectivesEl);
+                    if (rewardsEl) wrapper.appendChild(rewardsEl);
+
                     wrapper.onscroll = () => {
                         const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                         indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
@@ -779,6 +795,8 @@ export class UIMissionControl {
                     }
                     
                     let canCollect = false;
+                    let canTransferVessel = false;
+                    let transferVesselObjKey = null;
 
                     if (isAtCorrectLocation || true) {
                         let canDeposit = false;
@@ -875,6 +893,30 @@ export class UIMissionControl {
                                         actionButtonHtml += `<button id="mission-action-execute-btn-${objKey}" data-action-id="${objKey}" class="btn w-full mt-2 bg-purple-600/80 hover:bg-purple-500/80 border-purple-400 shadow-[0_0_15px_rgba(168,85,247,0.6)] text-white font-bold mission-action-execute-btn" style="${btnStyles}">${btnLabel}</button>`;
                                     }
                                 }
+                                
+                                if (obj.type === 'DELIVER_SHIP' || obj.type === 'deliver_ship') {
+                                    const objKey = obj.id || obj.target;
+                                    const targetQty = obj.quantity || obj.value || 1;
+                                    const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
+                                    
+                                    const isObjLocationSpecific = obj.target && DB.MARKETS.some(m => m.id === obj.target);
+                                    if (isObjLocationSpecific && obj.target !== gameState.currentLocationId) {
+                                        return; 
+                                    }
+                                    
+                                    let isUnlocked = true;
+                                    if (obj.dependsOn) {
+                                        const depProgress = progress?.objectives?.[obj.dependsOn];
+                                        if (!depProgress || depProgress.current <= depositedAmt) {
+                                            isUnlocked = false;
+                                        }
+                                    }
+                                    
+                                    if (isUnlocked && (targetQty - depositedAmt > 0)) {
+                                        canTransferVessel = true;
+                                        transferVesselObjKey = objKey;
+                                    }
+                                }
                             });
                         }
                         
@@ -887,11 +929,17 @@ export class UIMissionControl {
                         collectButtonHtml = `<button id="mission-collect-btn" class="btn w-full mt-2 bg-blue-600/80 hover:bg-blue-500/80 border-blue-400 shadow-[0_0_15px_rgba(59,130,246,0.6)] text-white font-bold" style="${btnStyles}">COLLECT FREIGHT</button>`;
                     }
                     
+                    let transferVesselButtonHtml = '';
+                    if (canTransferVessel) {
+                        const hasSpare = gameState.player.ownedShipIds.length > 1;
+                        transferVesselButtonHtml = `<button id="mission-transfer-vessel-btn" data-mission-id="${mission.id}" data-obj-key="${transferVesselObjKey}" class="btn w-full mt-2 bg-cyan-600/80 hover:bg-cyan-500/80 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)] text-white font-bold disabled:opacity-50 disabled:cursor-not-allowed" style="${btnStyles}" ${!hasSpare ? 'disabled' : ''}>Transfer Vessel</button>`;
+                    }
+                    
                     if (isLogisticsPickupPhase && isAtPickupLocation) {
                         depositButtonHtml = `<button id="mission-load-cargo-btn" data-mission-id="${mission.id}" class="btn w-full mt-2 bg-amber-600/80 hover:bg-amber-500/80 border-amber-400 shadow-[0_0_15px_rgba(251,191,36,0.6)] text-white font-bold" style="${btnStyles}">LOAD CARGO</button>`;
                     }
                     
-                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-800/80" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${actionButtonHtml}${navButtonHtml}`;
+                    buttonsEl.innerHTML = `<button class="btn w-full bg-red-800/80 hover:bg-red-700/80 border-red-500 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-red-800/80" style="${btnStyles}" data-action="abandon-mission" data-mission-id="${mission.id}" ${!isAbandonable ? 'disabled' : ''}>Abandon Mission</button>${depositButtonHtml}${collectButtonHtml}${transferVesselButtonHtml}${actionButtonHtml}${navButtonHtml}`;
 
                     // Bind ACTION button listeners dynamically
                     const actionBtns = modal.querySelectorAll('.mission-action-execute-btn');
@@ -912,7 +960,7 @@ export class UIMissionControl {
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
                                 
-                                const actionLabel = (objDef && objDef.target && objDef.target.toLowerCase().includes('pick up')) ? 'PASSENGER BOARDED' : 'ACTION COMPLETED';
+                                const actionLabel = (objDef && objDef.actionText) ? objDef.actionText : ((objDef && objDef.target && objDef.target.toLowerCase().includes('pick up')) ? 'PASSENGER BOARDED' : 'ACTION COMPLETED');
                                 this.manager.createFloatingText(actionLabel, x, y, '#c084fc');
                                 
                                 this.manager.simulationService.missionService.checkTriggers();
@@ -941,6 +989,164 @@ export class UIMissionControl {
                          skipBtn.dataset.action = 'skip-tutorial';
                          buttonsEl.appendChild(skipBtn);
                      }
+                }
+                
+                const transferVesselBtn = modal.querySelector('#mission-transfer-vessel-btn');
+                if (transferVesselBtn) {
+                    transferVesselBtn.addEventListener('click', (e) => {
+                        if (this.manager.simulationService && this.manager.simulationService.gameState) {
+                            const coreState = this.manager.simulationService.gameState;
+                            const playerShips = coreState.player.ownedShipIds.map(id => {
+                                const stats = this.manager.simulationService.getEffectiveShipStats(id);
+                                return { id, name: stats.name, class: stats.class, value: stats.price || 0 };
+                            });
+                            
+                            if (playerShips.length <= 1) return;
+                            
+                            // Create modal UI for Transfer Vessel
+                            const transferModal = document.createElement('div');
+                            transferModal.className = 'fixed inset-0 z-[600] flex items-center justify-center p-4 bg-black/80 font-mono text-sm';
+                            
+                            const getClassTheme = (c) => {
+                                switch(c) {
+                                    case 'C': return { color: '#ffffff', gradient: 'linear-gradient(90deg, rgba(31,41,55,1) 0%, rgba(255,255,255,0.15) 50%, rgba(156,163,175,0.4) 100%)' };
+                                    case 'B': return { color: '#4ade80', gradient: 'linear-gradient(90deg, rgba(31,41,55,1) 0%, rgba(74,222,128,0.15) 50%, rgba(156,163,175,0.4) 100%)' };
+                                    case 'A': return { color: '#60a5fa', gradient: 'linear-gradient(90deg, rgba(31,41,55,1) 0%, rgba(96,165,250,0.15) 50%, rgba(192,132,252,0.4) 100%)' };
+                                    case 'S': return { color: '#facc15', gradient: 'linear-gradient(90deg, rgba(31,41,55,1) 0%, rgba(250,204,21,0.15) 50%, rgba(180,83,9,0.4) 100%)' };
+                                    case 'O': return { color: '#fb923c', gradient: 'linear-gradient(90deg, rgba(31,41,55,1) 0%, rgba(251,146,60,0.15) 50%, rgba(239,68,68,0.4) 100%)' };
+                                    case 'Z': return { color: '#ef4444', gradient: 'linear-gradient(90deg, rgba(31,41,55,1) 0%, rgba(239,68,68,0.2) 50%, rgba(0,0,0,0.9) 100%)' };
+                                    default: return { color: '#a1a1aa', gradient: 'linear-gradient(90deg, rgba(31,41,55,1) 0%, rgba(161,161,170,0.15) 50%, rgba(31,41,55,1) 100%)' };
+                                }
+                            };
+
+                            let shipListHtml = '';
+                            playerShips.forEach((ship, idx) => {
+                                const theme = getClassTheme(ship.class);
+                                shipListHtml += `<div class="transfer-ship-row py-3 px-4 mb-3 border border-gray-600 hover:border-cyan-400 cursor-pointer rounded-lg transition-all duration-200" data-ship-id="${ship.id}" style="background: ${theme.gradient}; font-size: 15px;">
+                                    <div class="grid grid-cols-[8fr_3fr_5fr] items-center gap-2">
+                                        <div class="overflow-hidden whitespace-nowrap mask-text-edges relative" style="-webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%);">
+                                            <span class="ship-name-scroll inline-block font-bold" style="color: ${theme.color}; text-shadow: 0 0 5px ${theme.color}80;">${ship.name}</span>
+                                        </div>
+                                        <div class="text-gray-400 text-center border-l border-gray-600/50 pl-2">Class ${ship.class}</div>
+                                        <div class="text-cyan-400 font-bold tracking-wide text-right">⌬ ${formatShortCredits(ship.value)}</div>
+                                    </div>
+                                </div>`;
+                            });
+                            
+                            transferModal.innerHTML = `
+                                <style>
+                                    @keyframes scroll-text-anim {
+                                        0%, 25% { transform: translateX(0); }
+                                        75%, 100% { transform: translateX(var(--scroll-dist)); }
+                                    }
+                                </style>
+                                <div class="bg-gray-900 border border-cyan-500 rounded-xl p-5 w-full max-w-md shadow-[0_0_25px_rgba(34,211,238,0.25)]">
+                                    <h2 class="text-cyan-400 text-lg font-bold mb-5 uppercase text-center border-b border-cyan-500/50 pb-2">Select Ship to Transfer</h2>
+                                    <div class="mb-5 max-h-[45vh] overflow-y-auto pr-2 custom-scrollbar overflow-x-hidden">
+                                        ${shipListHtml}
+                                    </div>
+                                    <div class="flex gap-3">
+                                        <button id="transfer-cancel-btn" class="btn flex-1 bg-gray-700 hover:bg-gray-600 border-gray-500 text-white rounded-lg py-2">CANCEL</button>
+                                        <button id="transfer-confirm-btn" class="btn flex-1 bg-cyan-700 border-cyan-500 text-white opacity-50 cursor-not-allowed rounded-lg py-2 transition-all duration-300" disabled>CONFIRM</button>
+                                    </div>
+                                </div>
+                            `;
+                            document.body.appendChild(transferModal);
+                            
+                            // Apply scrolling animation to overflowing ship names
+                            setTimeout(() => {
+                                transferModal.querySelectorAll('.ship-name-scroll').forEach(el => {
+                                    if (el.scrollWidth > el.parentElement.clientWidth) {
+                                        const distance = el.scrollWidth - el.parentElement.clientWidth + 10;
+                                        el.style.setProperty('--scroll-dist', `-${distance}px`);
+                                        el.style.animation = `scroll-text-anim ${distance * 0.05 + 3}s linear infinite`;
+                                    }
+                                });
+                            }, 50);
+                            
+                            let selectedShipId = null;
+                            const rows = transferModal.querySelectorAll('.transfer-ship-row');
+                            const confirmBtn = transferModal.querySelector('#transfer-confirm-btn');
+                            
+                            rows.forEach(row => {
+                                row.addEventListener('click', () => {
+                                    rows.forEach(r => {
+                                        r.classList.remove('border-cyan-400', 'ring-1', 'ring-cyan-400');
+                                        r.classList.add('border-gray-600');
+                                        r.style.filter = 'brightness(1)';
+                                    });
+                                    row.classList.remove('border-gray-600');
+                                    row.classList.add('border-cyan-400', 'ring-1', 'ring-cyan-400');
+                                    row.style.filter = 'brightness(1.2)';
+                                    selectedShipId = row.dataset.shipId;
+                                    confirmBtn.disabled = false;
+                                    confirmBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                                    confirmBtn.classList.add('hover:bg-cyan-600', 'shadow-[0_0_15px_rgba(34,211,238,0.4)]');
+                                });
+                            });
+                            
+                            transferModal.querySelector('#transfer-cancel-btn').addEventListener('click', () => {
+                                transferModal.remove();
+                            });
+                            
+                            confirmBtn.addEventListener('click', () => {
+                                if (!selectedShipId) return;
+                                
+                                const shipName = playerShips.find(s => s.id === selectedShipId)?.name || 'Vessel';
+                                const confirmOverlay = document.createElement('div');
+                                confirmOverlay.className = 'fixed inset-0 z-[610] flex items-center justify-center p-4 bg-black/90 font-mono';
+                                confirmOverlay.innerHTML = `
+                                    <div class="bg-gray-900 border border-red-500 rounded-xl p-6 w-full max-w-sm text-center shadow-[0_0_40px_rgba(239,68,68,0.35)]" style="font-size: 16px;">
+                                        <div class="text-red-400 font-bold mb-6 text-lg">Transfer ${shipName} - Are you sure?</div>
+                                        <div class="flex gap-3">
+                                            <button id="final-cancel-btn" class="btn flex-1 bg-gray-700 hover:bg-gray-600 border-gray-500 text-white rounded-lg py-2">Cancel</button>
+                                            <button id="final-confirm-btn" class="btn flex-1 bg-red-700 hover:bg-red-600 border-red-500 text-white font-bold rounded-lg py-2 shadow-[0_0_15px_rgba(239,68,68,0.4)]">Confirm</button>
+                                        </div>
+                                    </div>
+                                `;
+                                transferModal.appendChild(confirmOverlay);
+                                
+                                confirmOverlay.querySelector('#final-cancel-btn').addEventListener('click', () => {
+                                    confirmOverlay.remove();
+                                });
+                                
+                                confirmOverlay.querySelector('#final-confirm-btn').addEventListener('click', () => {
+                                    // EXECUTE TRANSFER
+                                    const idx = coreState.player.ownedShipIds.indexOf(selectedShipId);
+                                    if (idx > -1) {
+                                        coreState.player.ownedShipIds.splice(idx, 1);
+                                        // Handle primary ship change if needed
+                                        if (coreState.player.shipId === selectedShipId) {
+                                            coreState.player.shipId = coreState.player.ownedShipIds[0];
+                                        }
+                                        
+                                        // Clean up inventory mapping if necessary (optional but good practice)
+                                        delete coreState.player.inventories[selectedShipId];
+                                        
+                                        // Update mission progress
+                                        const objKey = transferVesselBtn.dataset.objKey;
+                                        const prog = coreState.missions.missionProgress[mission.id];
+                                        if (!prog.objectives[objKey]) {
+                                            prog.objectives[objKey] = { deposited: 0, current: 0, target: 1 };
+                                        }
+                                        prog.objectives[objKey].deposited = 1;
+                                        prog.objectives[objKey].current = 1;
+                                        
+                                        const rect = transferVesselBtn.getBoundingClientRect();
+                                        const x = rect.left + (rect.width / 2);
+                                        const y = rect.top;
+                                        this.manager.createFloatingText('TRANSFERRED VESSEL', x, y, '#ffffff');
+                                        
+                                        this.manager.simulationService.missionService.checkTriggers();
+                                        coreState.setState({});
+                                        this.manager.render();
+                                        transferModal.remove();
+                                        closeHandler();
+                                    }
+                                });
+                            });
+                        }
+                    });
                 }
 
                 const navBtn = modal.querySelector('#mission-navigate-btn');
@@ -1174,6 +1380,8 @@ export class UIMissionControl {
                                 }
                             } else if (r.type.toLowerCase() === 'text') {
                                 content = `<span class="t-subject font-bold text-emerald-400">${r.text}</span>`;
+                            } else if (r.type.toLowerCase() === 'grant_random_ship') {
+                                content = `<span class="t-subject text-green-400">CLASS-${r.shipClass || 'S'} VESSEL</span>`;
                             } else if (r.type.toLowerCase() === 'grant_ship') {
                                 const shipName = DB.SHIPS[r.shipId]?.name || 'NEW VESSEL';
                                 content = `<span class="t-subject text-green-400">${shipName.toUpperCase()}</span>`;
@@ -1235,7 +1443,7 @@ export class UIMissionControl {
                     outerWrapper.appendChild(indicator);
                }
 
-               // Ensure elements are unconditionally inside the wrapper
+               // Uniform wrapper construction block guaranteeing child un-orphaning
                if (wrapper) {
                    if (descEl) wrapper.appendChild(descEl);
                    if (objectivesEl) wrapper.appendChild(objectivesEl);
@@ -1348,9 +1556,44 @@ export class UIMissionControl {
                        if (this.manager.simulationService) {
                            this.manager.simulationService.missionService.completeMission(mission.id);
                        }
-                       
                        uiManager.render = originalRender;
                        closeHandler(); // close current completion modal
+
+                       // Unlock Location Reward Floating Text
+                       const unlockLocReward = mission.rewards?.find(r => r.type.toLowerCase() === 'unlock_location');
+                       if (unlockLocReward && unlockLocReward.locationId === 'loc_exchange') {
+                           setTimeout(() => {
+                               const x = window.innerWidth / 2;
+                               const y = window.innerHeight / 2;
+                               uiManager.createFloatingText('The Exchange Unlocked', x, y, '#c084fc', 3000);
+                           }, 300);
+                       }
+
+                       // Ship Reward Intercept
+                       const randomShipReward = mission.rewards?.find(r => r.type.toLowerCase() === 'grant_random_ship');
+                       if (randomShipReward && randomShipReward.grantedShipId && !licenseReward) {
+                           setTimeout(() => {
+                               if (uiManager.simulationService && uiManager.simulationService.gameState) {
+                                   const coreState = uiManager.simulationService.gameState;
+                                   
+                                   // Change screen to Hangar
+                                   coreState.activeNav = NAV_IDS.STARPORT;
+                                   coreState.activeScreen = SCREEN_IDS.HANGAR;
+                                   coreState.lastActiveScreen[NAV_IDS.STARPORT] = SCREEN_IDS.HANGAR;
+                                   
+                                   // Focus the newly acquired ship in the hangar carousel
+                                   if (!coreState.uiState) coreState.uiState = {};
+                                   coreState.uiState.hangarShipyardToggleState = 'hangar';
+                                   
+                                   const newShipIndex = coreState.player.ownedShipIds.indexOf(randomShipReward.grantedShipId);
+                                   if (newShipIndex !== -1) {
+                                       coreState.uiState.hangarActiveIndex = newShipIndex;
+                                   }
+                                   
+                                   coreState.setState({});
+                               }
+                           }, 500);
+                       }
 
                        // License Sequence Intercept
                        if (licenseReward) {
@@ -2037,6 +2280,7 @@ export class UIMissionControl {
                 this.manager.queueModal('mission-modal', step.title, step.text, next, {
                     portraitId: step.portraitId || mission.portraitId,
                     portraitName: step.portraitName || mission.portraitName,
+                    portraitFilter: step.portraitFilter || mission.portraitFilter,
                     dismissOutside: false,
                     noModalVisible: !!step.crtEffect, // Bypass standard fade-in for CRT sequence
                     customSetup: (modal, closeHandler) => {
@@ -2046,9 +2290,17 @@ export class UIMissionControl {
                         modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
 
                         modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
-                        const activeHost = mission.completion?.host || mission.host || 'UNKNOWN';
+                        const activeHost = step.host || mission.completion?.host || mission.host || 'UNKNOWN';
                         const hostClass = `host-${activeHost.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
                         modalContent.classList.add(hostClass);
+
+                        // Inject Filter Override Surgically
+                        const portraitEl = modal.querySelector('.portrait-thumbnail');
+                        if (portraitEl) {
+                            const pFilter = step.portraitFilter || mission.completion?.portraitFilter || mission.portraitFilter || 'none';
+                            portraitEl.style.filter = pFilter;
+                            portraitEl.style.webkitFilter = pFilter;
+                        }
 
                         // Hide unnecessary mission parts
                         const typeEl = modal.querySelector('#mission-modal-type');
@@ -2081,61 +2333,63 @@ export class UIMissionControl {
 
                         // Scroll Wrapper Configuration
                         let outerWrapper = modal.querySelector('.mission-scroll-outer');
+                        let wrapper = modal.querySelector('.mission-scroll-wrapper');
                         let indicator = modal.querySelector('.scroll-indicator-arrow');
 
-                        // Safely rescue the target text block from the old wrapper before purging
-                        if (outerWrapper && targetDescEl && outerWrapper.contains(targetDescEl)) {
-                            outerWrapper.parentNode.insertBefore(targetDescEl, outerWrapper);
-                        }
-
-                        if (outerWrapper) outerWrapper.remove();
-                        if (indicator) indicator.remove();
-
-                        if (targetDescEl) {
+                        if (!wrapper && targetDescEl) {
                             outerWrapper = document.createElement('div');
                             outerWrapper.className = 'mission-scroll-outer w-full relative mb-2 mt-2';
                             
-                            let wrapper = document.createElement('div');
+                            wrapper = document.createElement('div');
                             wrapper.className = 'mission-scroll-wrapper w-full overflow-y-auto custom-scrollbar px-1 mb-2 flex flex-col items-center';
-                            wrapper.style.maxHeight = '304px'; // Match standard mission details height
+                            wrapper.style.maxHeight = '304px'; 
                             
                             targetDescEl.parentNode.insertBefore(outerWrapper, targetDescEl);
                             outerWrapper.appendChild(wrapper);
-
-                            // Inject Custom Image securely into the scroll wrapper
-                            if (step.customImage) {
-                                const imgDiv = document.createElement('div');
-                                imgDiv.className = 'w-full flex justify-center mb-4 mt-1 shrink-0';
-                                imgDiv.innerHTML = `<img src="${step.customImage}" class="rounded border border-gray-600 shadow-[0_0_15px_rgba(0,0,0,0.8)]" style="max-height: 160px; object-fit: cover; width: 100%;">`;
-                                wrapper.appendChild(imgDiv);
-                            }
-
-                            wrapper.appendChild(targetDescEl);
                             
                             indicator = document.createElement('div');
                             indicator.className = 'scroll-indicator-arrow';
                             indicator.innerHTML = '&#8964;';
                             indicator.style.transition = 'opacity 0.2s ease-in-out';
                             outerWrapper.appendChild(indicator);
+                        }
 
-                            // Bind scroll indicator logic
-                            wrapper.onscroll = () => {
-                                const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
-                                indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                            };
-                            
-                            wrapper.scrollTop = 0; 
-                            setTimeout(() => {
-                                wrapper.scrollTop = 0; 
-                                if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
-                                    indicator.style.display = 'block';
+                        if (wrapper) {
+                            // Clear any leftover custom images from previous steps
+                            wrapper.querySelectorAll('.step-custom-image').forEach(el => el.remove());
+
+                            // Re-append to guarantee correct visual stacking order
+                            if (step.customImage) {
+                                const imgDiv = document.createElement('div');
+                                imgDiv.className = 'w-full flex justify-center mb-4 mt-1 shrink-0 step-custom-image';
+                                imgDiv.innerHTML = `<img src="${step.customImage}" class="rounded border border-gray-600 shadow-[0_0_15px_rgba(0,0,0,0.8)]" style="max-height: 160px; object-fit: cover; width: 100%;">`;
+                                wrapper.appendChild(imgDiv);
+                            }
+
+                            // Unconditionally secure all core blocks back inside the wrapper
+                            if (targetDescEl) wrapper.appendChild(targetDescEl);
+                            if (objectivesEl) wrapper.appendChild(objectivesEl);
+                            if (rewardsEl) wrapper.appendChild(rewardsEl);
+
+                            if (indicator) {
+                                wrapper.onscroll = () => {
                                     const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
                                     indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
-                                } else {
-                                    indicator.style.display = 'none';
-                                    indicator.style.opacity = '0';
-                                }
-                            }, 150); 
+                                };
+                                
+                                wrapper.scrollTop = 0; 
+                                setTimeout(() => {
+                                    wrapper.scrollTop = 0; 
+                                    if (wrapper.scrollHeight > wrapper.clientHeight + 2) {
+                                        indicator.style.display = 'block';
+                                        const distanceToBottom = wrapper.scrollHeight - Math.ceil(wrapper.scrollTop) - wrapper.clientHeight;
+                                        indicator.style.opacity = distanceToBottom < 15 ? '0' : '1';
+                                    } else {
+                                        indicator.style.display = 'none';
+                                        indicator.style.opacity = '0';
+                                    }
+                                }, 150);
+                            }
                         }
 
                         // Buttons setup
@@ -2189,6 +2443,20 @@ export class UIMissionControl {
                 
                 CinematicService.playVideo(step.sequenceId).then(async () => {
                     await new Promise(r => setTimeout(r, 1000));
+                    
+                    if (step.sequenceId === 'assets/images/video/kepler_rud.mp4') {
+                        const coreState = this.manager.simulationService?.gameState || this.manager.lastKnownState;
+                        if (coreState) {
+                            coreState.currentLocationId = 'loc_neptune';
+                            if (coreState.player && coreState.player.unlockedLocationIds) {
+                                coreState.player.unlockedLocationIds = coreState.player.unlockedLocationIds.filter(id => id !== 'loc_kepler');
+                            }
+                            if (this.manager.simulationService) {
+                                this.manager.simulationService.saveGame();
+                            }
+                        }
+                    }
+
                     blackOverlay.style.opacity = '0';
                     setTimeout(() => blackOverlay.remove(), 1000);
                     next();

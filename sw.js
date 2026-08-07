@@ -4,7 +4,7 @@
  * Handles local caching of core assets to enable offline playability and rapid subsequent load times.
  */
 
-const CACHE_NAME = 'orbital-trading-v1';
+const CACHE_NAME = 'orbital-trading-v2';
 
 const ASSETS_TO_CACHE = [
     '/',
@@ -20,6 +20,7 @@ const ASSETS_TO_CACHE = [
  * Pre-caches the essential static assets when the Service Worker is first registered.
  */
 self.addEventListener('install', (event) => {
+    self.skipWaiting(); // Force the waiting service worker to become the active service worker.
     event.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             // Use Promise.allSettled to gracefully install even if some dist/ assets are missing in dev environments
@@ -60,7 +61,9 @@ self.addEventListener('activate', (event) => {
                         return caches.delete(cacheName);
                     }
                 })
-            );
+            ).then(() => {
+                return self.clients.claim(); // Take control of all pages immediately
+            });
         })
     );
 });

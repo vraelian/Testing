@@ -669,3 +669,45 @@
     background: rgba(15, 23, 42, 0.9);
     border-color: #6b7280;
 }
+
+/* --- BIRTHDAY MODAL EFFECTS --- */
+.birthday-modal-enter {
+    animation: birthdayBlurFadeIn 1s ease-out forwards !important;
+}
+.birthday-modal-exit {
+    animation: birthdayBlurFadeOut 1s ease-in forwards !important;
+    pointer-events: none;
+}
+.birthday-modal .modal-content {
+    background: linear-gradient(135deg, rgba(255,0,0,0.1), rgba(255,165,0,0.1), rgba(255,255,0,0.1), rgba(0,128,0,0.1), rgba(0,0,255,0.1), rgba(75,0,130,0.1), rgba(238,130,238,0.1)) !important;
+    border: 2px solid rgba(255, 215, 0, 0.4);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px) brightness(1.2);
+    padding-bottom: 1rem !important;
+}
+
+.birthday-modal #event-button-container {
+    margin-top: 1rem !important;
+}
+
+@keyframes birthdayBlurFadeIn {
+    0% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+    100% { opacity: 1; filter: blur(0px); transform: scale(1); }
+}
+
+@keyframes birthdayBlurFadeOut {
+    0% { opacity: 1; filter: blur(0px); transform: scale(1); }
+    100% { opacity: 0; filter: blur(12px); transform: scale(1.05); }
+}
+
+@keyframes rainbowShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.birthday-rainbow-overlay {
+    background: linear-gradient(124deg, #ff2400, #e81d1d, #e8b71d, #e3e81d, #1de840, #1ddde8, #2b1de8, #dd00f3, #dd00f3);
+    background-size: 1800% 1800%;
+    animation: rainbowShift 10s ease infinite;
+}

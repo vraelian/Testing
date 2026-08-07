@@ -16,7 +16,7 @@ import { DB } from '../../data/database.js';
 /**
  * Resolves the "Adrift Passenger" event outcome where the player gives them a fuel cell.
  * The reward is conditional:
- * 1. If the player has enough cargo space, they receive Cybernetics.
+ * 1. If the player has enough cargo space, they receive cybernetics.
  * 2. If not, and they have debt, the passenger pays off a portion of it.
  * 3. If they have no cargo space and no debt, they receive credits instead.
  *

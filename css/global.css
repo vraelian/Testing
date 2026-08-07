@@ -149,10 +149,15 @@ a *, button *, [data-action] *, .tab * {
 }
 
 .game-container {
-    max-width: 1200px;
-    width: 100%;
-    height: 100%; /* MODIFIED: Use dynamic viewport height via fixed body */
-    margin: 0 auto; /* MODIFIED: Use auto margin to center on desktop */
+    /* Width constraint: !important ensures it overrides any Tailwind utility classes */
+    height: 100%; /* JS (setAppHeight) pins this to 926px and scales to fit */
+    
+    /* BREAKOUT LAYOUT: Absolute positioning avoids all flexbox collapse/shift bugs */
+    position: absolute !important;
+    left: 50% !important;
+    top: 50% !important;
+    transform: translate(-50%, -50%);
+    margin: 0 !important;
     
     /* V1 OPTIMIZATION: Assign variable to structural container */
     background: var(--ui-bg-base, #0c101d);
@@ -193,9 +198,9 @@ a *, button *, [data-action] *, .tab * {
 }
 
 #main-content {
-    
-display: flex;
-    flex-direction: column;
+    display: grid;
+    grid-template-columns: 1fr;
+    grid-template-rows: 1fr;
     height: 100%;
 }
 
@@ -331,14 +336,31 @@ display: flex;
 }
 
 .screen {
+    grid-area: 1 / 1;
     display: none;
+    flex-direction: column;
+    min-height: 0;
 }
 
+/* Active screen entry transition. 
+   Set to 400ms as requested, transitioning from 0.75 opacity + blur to 1 opacity + 0 blur. */
 .active-screen {
     display: flex;
-    flex-direction: column;
-    flex-grow: 1;
-    min-height: 0;
+    opacity: 1;
+    filter: blur(0px);
+    transform: translateY(0);
+    transition: opacity 400ms ease-out, filter 400ms ease-out, transform 400ms ease-out;
+    z-index: 2; /* Ensure incoming screen is on top */
+}
+
+/* Outgoing screen that is blurring out quickly */
+.screen-fading-out {
+    display: flex; /* Keep visible in the grid to animate out */
+    opacity: 0 !important;
+    filter: blur(4px) !important;
+    transition: opacity 150ms ease-out, filter 150ms ease-out !important;
+    pointer-events: none; /* Prevent clicks on old screen */
+    z-index: 1;
 }
 
 @keyframes fadeIn {

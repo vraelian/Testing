@@ -642,6 +642,26 @@ export class SimulationService {
                         }
                     }
                     break;
+                case 'grant_random_ship':
+                    const validShips = Object.keys(DB.SHIPS).filter(id => DB.SHIPS[id].class === reward.shipClass && !this.gameState.player.ownedShipIds.includes(id));
+                    let randomTargetShipId = null;
+                    if (validShips.length > 0) {
+                        randomTargetShipId = validShips[Math.floor(Math.random() * validShips.length)];
+                    } else {
+                        // Fallback if all ships of that class are owned
+                        const allClassShips = Object.keys(DB.SHIPS).filter(id => DB.SHIPS[id].class === reward.shipClass);
+                        if (allClassShips.length > 0) {
+                            randomTargetShipId = allClassShips[Math.floor(Math.random() * allClassShips.length)];
+                        }
+                    }
+                    if (randomTargetShipId) {
+                        reward.grantedShipId = randomTargetShipId;
+                        if (!this.gameState.player.ownedShipIds.includes(randomTargetShipId)) {
+                            this.addShipToHangar(randomTargetShipId);
+                            this.logger.info.player(this.gameState.day, 'REWARD_SHIP', `Acquired random ${reward.shipClass}-class ship: ${randomTargetShipId}`);
+                        }
+                    }
+                    break;
                 case 'grant_ship':
                 case 'ship':
                     const targetShipId = reward.shipId || reward.target;

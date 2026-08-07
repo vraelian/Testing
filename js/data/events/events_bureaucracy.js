@@ -183,7 +183,7 @@ export const EVENTS_BUREAUCRACY = [
         choices: [
             {
                 id: 'choice_donate',
-                text: 'Donate Cloned Organs (Lose Cargo)',
+                text: 'Donate cloned organs (Lose Cargo)',
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate' }] }
             },
             {

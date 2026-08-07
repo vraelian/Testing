@@ -45,6 +45,13 @@ export class UIManager {
         this.lastSeenSystemStateId = null; 
         this.hasTraveledThisSession = false; 
         
+        // --- Nav transition state: track last rendered nav/screen to avoid
+        //     re-animating the sub-nav indicator on same-screen content refreshes ---
+        this._lastRenderedNav = null;
+        this._lastRenderedScreen = null;
+        this._lastRenderedSubNavCollapsed = null;
+        this._lastNavGuideActive = false;
+        
         // --- Dependency Injection Placeholders ---
         this.missionService = null; 
         this.simulationService = null; 
@@ -57,6 +64,7 @@ export class UIManager {
         // --- Core Sub-Systems ---
         this.effectsManager = new EffectsManager();
         this.travelAnimationService = new TravelAnimationService(this.isMobile);
+        this.travelAnimationService.uiManager = this;
 
         // --- Domain Controllers (The Switchboard) ---
         this.modalEngine = new UIModalEngine(this);
@@ -368,12 +376,13 @@ export class UIManager {
         }).join('');
 
         let statusPodHtml = '';
+        let hullRatio = 0, hullPct = 0, fuelPct = 0, cargoPct = 0;
         if (activeShipStatic && activeShipState && inventory) {
             const cargoUsed = calculateInventoryUsed(inventory);
-            const hullRatio = activeShipState.health / activeShipStatic.maxHealth;
-            const hullPct = hullRatio * 100;
-            const fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
-            const cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
+            hullRatio = activeShipState.health / activeShipStatic.maxHealth;
+            hullPct = hullRatio * 100;
+            fuelPct = (activeShipState.fuel / activeShipStatic.maxFuel) * 100;
+            cargoPct = (cargoUsed / activeShipStatic.cargoCapacity) * 100;
             
             const hullPulseClass = hullRatio < 0.30 ? ' bg-critical-pulse' : '';
 
@@ -419,7 +428,7 @@ export class UIManager {
 
                  let subStyle = '';
                  if (isSubNavActive) {
-                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; opacity: 1; font-weight: 700;"`;
+                    subStyle = `style="background: ${theme.gradient}; color: ${theme.textColor}; font-weight: 700;"`;
                  }
                  return `<a href="#" class="${isDisabled ? 'disabled' : ''} ${activeClass} ${guideClass}" ${subStyle} data-action="${action}" data-nav-id="${navId}" data-screen-id="${screenId}" draggable="false">${screens[screenId]}</a>`;
             }).join('');
@@ -454,37 +463,51 @@ export class UIManager {
                 creditSpan.textContent = creditText;
             }
 
-            existingNavWrapper.outerHTML = navWrapperHtml;
+            // Only rebuild the main tab DOM when the active nav group changes,
+            // preventing the tab-activate animation from firing on every render.
+            if (activeNav !== this._lastRenderedNav || navGuide.active !== this._lastNavGuideActive) {
+                existingNavWrapper.outerHTML = navWrapperHtml;
+            } else {
+                // Still update the status pod bars in-place (they change with every fuel/hull/cargo tick).
+                // Using direct DOM property updates avoids innerHTML parsing complexity.
+                if (activeShipStatic && activeShipState && inventory) {
+                    const hullFill = existingNavWrapper.querySelector('.hull-fill');
+                    const fuelFill = existingNavWrapper.querySelector('.fuel-fill');
+                    const cargoFill = existingNavWrapper.querySelector('.cargo-fill');
+                    const hullBar = existingNavWrapper.querySelector('.hull-group .status-bar');
+                    if (hullFill) hullFill.style.width = `${hullPct}%`;
+                    if (fuelFill) fuelFill.style.width = `${fuelPct}%`;
+                    if (cargoFill) cargoFill.style.width = `${cargoPct}%`;
+                    if (hullBar) {
+                        if (hullRatio < 0.30) hullBar.classList.add('bg-critical-pulse');
+                        else hullBar.classList.remove('bg-critical-pulse');
+                    }
+                } else if (existingNavWrapper.querySelector('.status-pod') === null && statusPodHtml) {
+                    // Status pod newly appeared (e.g. ship just assigned) — do a full rebuild
+                    existingNavWrapper.outerHTML = navWrapperHtml;
+                }
+            }
         } else {
             this.cache.navBar.innerHTML = contextBarHtml + navWrapperHtml;
         }
         
-        this.cache.subNavBar.innerHTML = subNavsHtml;
+        // Only rebuild the sub-nav DOM when the active nav or screen has changed.
+        // This prevents the sub-nav indicator entrance animation from re-firing
+        // on every content refresh (e.g. market price updates).
+        const navOrScreenChanged = 
+            activeNav !== this._lastRenderedNav || 
+            activeScreen !== this._lastRenderedScreen ||
+            subNavCollapsed !== this._lastRenderedSubNavCollapsed ||
+            navGuide.active !== this._lastNavGuideActive;
 
-        // Auto-center navigation card if applicable
-        if (activeScreen === SCREEN_IDS.NAVIGATION) {
-            requestAnimationFrame(() => {
-                setTimeout(() => {
-                    const navScreenEl = this.cache.navigationScreen;
-                    if (!navScreenEl) return;
-                    
-                    const scrollPanel = navScreenEl.querySelector('.navigation-scroll-panel');
-                    const currentCard = navScreenEl.querySelector('.highlight-current');
-                    
-                    if (scrollPanel && currentCard) {
-                        const panelHeight = scrollPanel.clientHeight;
-                        const cardTop = currentCard.offsetTop;
-                        const cardHeight = currentCard.clientHeight;
-                        const newScrollTop = cardTop - (panelHeight / 2) + (cardHeight / 2);
-                        
-                        scrollPanel.scrollTo({
-                            top: newScrollTop,
-                            behavior: 'smooth'
-                        });
-                    }
-                }, 50);
-            });
+        if (navOrScreenChanged) {
+            this.cache.subNavBar.innerHTML = subNavsHtml;
+            this._lastRenderedNav = activeNav;
+            this._lastRenderedScreen = activeScreen;
+            this._lastRenderedSubNavCollapsed = subNavCollapsed;
+            this._lastNavGuideActive = navGuide.active;
         }
+
     }
 
     _preserveScrollAndRender(screenEl, renderCallback) {
@@ -531,10 +554,25 @@ export class UIManager {
         }
 
         const activeScreenEl = this.cache[`${gameState.activeScreen}Screen`];
-        if (this.lastActiveScreenEl && this.lastActiveScreenEl !== activeScreenEl) {
-            this.lastActiveScreenEl.classList.remove('active-screen');
+        const isScreenChange = activeScreenEl !== this.lastActiveScreenEl;
+
+        if (this.lastActiveScreenEl && isScreenChange) {
+            const oldEl = this.lastActiveScreenEl;
+            oldEl.classList.remove('active-screen');
+            // Keep old screen in the DOM while it fades/blurs out quickly (150ms)
+            oldEl.classList.add('screen-fading-out');
+            setTimeout(() => {
+                oldEl.classList.remove('screen-fading-out');
+            }, 150);
         }
         if (activeScreenEl) {
+            // Set start state inline before content renders
+            // User requested: "blurs in quickly at 75% transparency and then fades into full transparency"
+            if (isScreenChange) {
+                activeScreenEl.style.opacity = '0.75';
+                activeScreenEl.style.filter = 'blur(4px)';
+                activeScreenEl.style.transform = 'translateY(4px)';
+            }
             activeScreenEl.classList.add('active-screen');
             this.lastActiveScreenEl = activeScreenEl;
         }
@@ -546,6 +584,15 @@ export class UIManager {
                 break;
             case SCREEN_IDS.NAVIGATION:
                 this.cache.navigationScreen.innerHTML = renderNavigationScreen(gameState);
+                // Synchronously auto-center to prevent visual jumping
+                const scrollPanel = this.cache.navigationScreen.querySelector('.navigation-scroll-panel');
+                const currentCard = this.cache.navigationScreen.querySelector('.highlight-current');
+                if (scrollPanel && currentCard) {
+                    const panelHeight = scrollPanel.clientHeight;
+                    const cardTop = currentCard.offsetTop;
+                    const cardHeight = currentCard.clientHeight;
+                    scrollPanel.scrollTop = cardTop - (panelHeight / 2) + (cardHeight / 2);
+                }
                 break;
             case SCREEN_IDS.SERVICES:
                 this._preserveScrollAndRender(this.cache.servicesScreen, () => {
@@ -598,6 +645,16 @@ export class UIManager {
                 }
                 this.missionControl.updateIntelTab(gameState.uiState.activeIntelTab);
                 break;
+        }
+
+        // After content is rendered: remove the inline state overrides one frame later.
+        // The CSS transition on .active-screen picks up the change and animates it over 400ms.
+        if (isScreenChange && activeScreenEl) {
+            requestAnimationFrame(() => {
+                activeScreenEl.style.opacity = '';
+                activeScreenEl.style.filter = '';
+                activeScreenEl.style.transform = '';
+            });
         }
     }
 

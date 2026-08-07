@@ -9,17 +9,17 @@ import { LEVEL_REGISTRY } from '../data/solProgressionRegistry.js';
  * * OPERATIONAL MODES MATHEMATICAL PERFORMANCE:
  * Based on 120 Real-Time Seconds = 1 In-Game Day at 100% Efficiency.
  * * STABILITY MODE:
- * - Generation: 1 Antimatter / Day, 2,000 Credits / Day
+ * - Generation: 1 antimatter / Day, 2,000 Credits / Day
  * - Consumption: 0.08% Cache Loss / Day (Entropy Multiplier: 1.0x)
  * * COMMERCE MODE:
- * - Generation: 1 Antimatter / Day, 16,000 Credits / Day
+ * - Generation: 1 antimatter / Day, 16,000 Credits / Day
  * - Consumption: 0.14% Cache Loss / Day (Entropy Multiplier: 1.75x)
  * * PRODUCTION MODE:
- * - Generation: 6 Antimatter / Day, 2,000 Credits / Day
+ * - Generation: 6 antimatter / Day, 2,000 Credits / Day
  * - Consumption: 0.21% Cache Loss / Day (Entropy Multiplier: 2.625x)
  * * SYNTHESIS MODE:
- * - Generation: 0 Antimatter / Day, 0 Credits / Day
- * - Consumption: 0.08% Cache Loss / Day (Entropy Multiplier: 1.0x), plus 10 Antimatter over 30 Days
+ * - Generation: 0 antimatter / Day, 0 Credits / Day
+ * - Consumption: 0.08% Cache Loss / Day (Entropy Multiplier: 1.0x), plus 10 antimatter over 30 Days
  */
 export const LEVEL_1_BASELINE = {
     MAX_ANTIMATTER_STOCKPILE: 150,
@@ -656,7 +656,7 @@ export class SolStationService {
 
         if (isAmCache) {
             station.antimatterCache = (station.antimatterCache || 0) + quantity;
-            this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x Antimatter to Synthesis Cache.`);
+            this.logger.info.player(this.gameState.day, 'STATION_DONATION', `Donated ${quantity}x antimatter to Synthesis Cache.`);
         } else {
             station.caches[commodityId].current += quantity;
             

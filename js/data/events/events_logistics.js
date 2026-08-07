@@ -20,7 +20,7 @@ export const EVENTS_LOGISTICS = [
         choices: [
             {
                 id: 'choice_foam',
-                text: 'Secure with Foam (-5 Plasteel * Scale)',
+                text: 'Secure with Foam (-5 plasteel * Scale)',
                 requirements: [
                     { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 1 },
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 5 } }
@@ -100,7 +100,7 @@ export const EVENTS_LOGISTICS = [
         outcomes: {
             'out_ice': {
                 title: 'Temp Stabilized',
-                text: 'You feed Water Ice into the heat exchanger. The temp drops back to safe levels.',
+                text: 'You feed water ice into the heat exchanger. The temp drops back to safe levels.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.WATER_ICE, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }]
             },
             'out_power': {

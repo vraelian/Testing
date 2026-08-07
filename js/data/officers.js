@@ -93,7 +93,7 @@ export const OFFICERS = {
         role: "Flight Director",
         rarity: "uncommon",
         portraitId: "Lightly_Augmented_1",
-        description: "A tiny, penalty-free bump to Antimatter synthesis through flawless telemetry alignment.",
+        description: "A tiny, penalty-free bump to antimatter synthesis through flawless telemetry alignment.",
         lore: "Monitors the real-time telemetry of thousands of active flights. Communicates exclusively in hexadecimal when stressed.",
         buffs: { entropy: 0, creditMult: 0, amMult: 0.05, capacityMods: {}, consumptionMods: {} }
     },
@@ -324,7 +324,7 @@ export const OFFICERS = {
     "off_hyperion": {
         id: "off_hyperion",
         name: "Hyperion",
-        role: "Antimatter Baron",
+        role: "antimatter Baron",
         rarity: "hyper_rare",
         portraitId: "Heavily_Augmented_3",
         description: "Generates AM at an absurd rate, but cuts storage in half and nearly doubles decay. For local inner-system loops only.",

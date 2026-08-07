@@ -26,25 +26,22 @@ const setAppHeight = () => {
     if (!gameContainer) return;
 
     const visualHeight = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-    
-    document.documentElement.style.setProperty('--app-height', `${visualHeight}px`);
-
+    const visualWidth = window.visualViewport ? window.visualViewport.width : window.innerWidth;
     const DESIGN_TARGET_HEIGHT = 926;
 
-    if (visualHeight < DESIGN_TARGET_HEIGHT) {
-        const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT; 
-        
-        gameContainer.style.height = `${DESIGN_TARGET_HEIGHT}px`;
-        gameContainer.style.transform = `scale(${scaleFactor})`;
-        gameContainer.style.transformOrigin = 'top center';
-        
-        document.body.style.alignItems = 'flex-start';
-    } else {
-        gameContainer.style.transform = 'none';
-        gameContainer.style.height = '100dvh';
-        
-        document.body.style.alignItems = 'center'; 
-    }
+    const scaleFactor = visualHeight / DESIGN_TARGET_HEIGHT;
+
+    document.documentElement.style.setProperty('--app-height', `${scaleFactor * DESIGN_TARGET_HEIGHT}px`);
+
+    // Counter-scale width so it fills the screen after the transform: scale() is applied
+    const maxVisualWidth = Math.min(visualWidth, 1200); // Cap extreme ultrawide desktops
+    const internalWidth = maxVisualWidth / scaleFactor;
+
+    gameContainer.style.width           = `${internalWidth}px`;
+    gameContainer.style.height          = `${DESIGN_TARGET_HEIGHT}px`;
+    gameContainer.style.transform       = `translate(-50%, -50%) scale(${scaleFactor})`;
+    gameContainer.style.transformOrigin = 'center center';
+    document.body.style.alignItems      = scaleFactor < 1 ? 'flex-start' : 'center';
 };
 
 document.addEventListener('DOMContentLoaded', () => {

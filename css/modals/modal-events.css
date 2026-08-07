@@ -496,3 +496,20 @@
         margin-top: 150px;
     }
 }
+/* Birthday Modal Transition */
+.birthday-modal {
+    animation: blurFadeIn 1s ease-in-out forwards;
+}
+
+@keyframes blurFadeIn {
+    0% {
+        opacity: 0;
+        backdrop-filter: blur(0px);
+        -webkit-backdrop-filter: blur(0px);
+    }
+    100% {
+        opacity: 1;
+        backdrop-filter: blur(10px);
+        -webkit-backdrop-filter: blur(10px);
+    }
+}

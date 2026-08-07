@@ -166,10 +166,18 @@ export class ToastService {
         // Enforce the "Rule of Two" cap per arrival
         this.toastQueue = triggers.slice(0, 2);
 
-        // 1.0s initial delay before firing the first toast in the queue
-        this.queueDelayTimer = setTimeout(() => {
-            this.playNextInQueue();
-        }, 1000);
+        // Ensure no modals or cinematic overlays are blocking before playing the first toast
+        const tryPlay = () => {
+            const hasModals = document.querySelector('.modal-backdrop:not(.hidden)') || 
+                              (this.uiManager.modalEngine && this.uiManager.modalEngine.modalQueue.length > 0) ||
+                              document.getElementById('birthday-white-overlay');
+            if (hasModals) {
+                this.queueDelayTimer = setTimeout(tryPlay, 500);
+            } else {
+                this.playNextInQueue();
+            }
+        };
+        this.queueDelayTimer = setTimeout(tryPlay, 1000);
     }
 
     /**

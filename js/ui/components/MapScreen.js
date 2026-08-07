@@ -144,8 +144,8 @@ function _calculatePOIData(containerWidth, uiManager, centerX) {
     // Create the final data array with all calculated pixel coordinates and state flags
     const poiData = allPoiData.map((d, i) => {
         const y = topPadding + (i * verticalSpacing);
-        const x = centerX + (i % 2 === 0 ? -50 : 50); // POI x-position
-        const labelX = centerX + (i % 2 === 0 ? -56 : 56); // Label x-position
+        const x = centerX + (i % 2 === 0 ? -25 : 25); // POI leader line x-position (reduced 50%)
+        const labelX = centerX + (i % 2 === 0 ? -31 : 31); // Label x-position (reduced 50%)
         const labelAnchor = (i % 2 === 0 ? "end" : "start");
         const radius = (d.parent ? 12 : 16) * (sizeModifiers[d.id] || 1);
 
@@ -352,7 +352,7 @@ function _updateCurrentLocationHighlight(uiManager) {
         if (currentLocationId === LOCATION_IDS.PLUTO) {
             containerNode.scrollTo({
                 top: containerNode.scrollHeight,
-                behavior: 'smooth'
+                behavior: 'instant'
             });
         } else {
             // Main case: center the POI
@@ -362,10 +362,10 @@ function _updateCurrentLocationHighlight(uiManager) {
             // Calculate the scroll position to center the POI including its own height
             const newScrollTop = poiTop - (containerHeight / 2) + (poiNode.clientHeight / 2);
             
-            // Set the scroll position with smooth behavior
+            // Set the scroll position with instant behavior
             containerNode.scrollTo({
                 top: newScrollTop,
-                behavior: 'smooth'
+                behavior: 'instant'
             });
         }
     }

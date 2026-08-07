@@ -4,6 +4,7 @@ import { GAME_RULES, ATTRIBUTE_TYPES, LOCATION_IDS, SHIP_IDS } from '../../data/
 import { formatCredits, calculateInventoryUsed } from '../../utils.js';
 import { GameAttributes } from '../../services/GameAttributes.js';
 import { SystemStateService } from './SystemStateService.js';
+import { endBirthdayAnimation } from '../ui/AnimationService.js';
 
 // --- ERA 2: TRANSHUMANIST EVENT DATA (Age 100-195) ---
 const CYBORG_EVENTS = {
@@ -289,8 +290,39 @@ export class TimeService {
 
         const stats = this.gameState.player.statModifiers;
         let title = `Happy Birthday!`;
-        let desc = `You turned ${age}.`;
+        let ageText = `<div class="text-xl">You turned ${age}.</div>`;
         let bonusText = "";
+        
+        const birthdayCallback = () => {
+            setTimeout(() => {
+                endBirthdayAnimation().then(() => {
+                    const gameContainer = document.getElementById('game-container');
+                    if (gameContainer && !gameContainer.classList.contains('fade-in')) {
+                        gameContainer.classList.add('fade-in');
+                    }
+                });
+            }, 1000);
+        };
+
+        const enqueueBirthdayModal = (payload) => {
+            const doQueue = () => {
+                this.simulationService.uiManager.queueModal(
+                    payload.id, payload.title, payload.body, birthdayCallback, payload.options
+                );
+            };
+            
+            const launchModal = document.getElementById('launch-modal');
+            const travelModal = document.getElementById('travel-animation-modal');
+            const isLaunchVisible = launchModal && !launchModal.classList.contains('hidden');
+            const isTravelVisible = document.getElementById('travel-animation-modal') && !document.getElementById('travel-animation-modal').classList.contains('hidden');
+            
+            if (this.gameState.isTraveling || this.gameState.pendingTravel || isLaunchVisible || isTravelVisible) {
+                payload.callback = birthdayCallback;
+                this.gameState.deferredModals.push(payload);
+            } else {
+                doQueue();
+            }
+        };
 
         // Push target to deferred queue
         if (!this.gameState.deferredModals) this.gameState.deferredModals = [];
@@ -331,11 +363,24 @@ export class TimeService {
                     break;
             }
             
-            this.gameState.deferredModals.push({
+            const modalPayload = {
                 id: 'event-modal',
                 title: title,
-                body: `${desc} ${bonusText}`
-            });
+                body: `${ageText}<div class="mt-4 text-sky-300 font-bold text-lg">${bonusText}</div>`,
+                options: {
+                    nonDismissible: false,
+                    noModalVisible: true,
+                    specialClass: 'birthday-modal birthday-modal-enter',
+                    exitClass: 'birthday-modal-exit',
+                    buttonText: '+1 Sol Cycle',
+                    buttonClass: 'btn-pulse-gold !bg-yellow-900/50 hover:!bg-yellow-800 !text-yellow-200 !border-yellow-500'
+                }
+            };
+            
+            // Queue immediately. If traveling, the UI engine handles deferral naturally 
+            // since travel is not a modal. Wait, we want it to show behind modals. 
+            // uiManager.queueModal does this.
+            enqueueBirthdayModal(modalPayload);
         }
 
         // --- ERA 2: THE TRANSHUMANIST ERA (100 - 199) ---
@@ -360,11 +405,21 @@ export class TimeService {
 
                 title = `Augmentation Installed: ${event.title}`;
                 
-                this.gameState.deferredModals.push({
+                const modalPayload = {
                     id: 'event-modal',
                     title: title,
-                    body: `You are now ${age}. ${event.desc}\n\n<span class='text-green-400'>EFFECT: ${bonusDisplay}</span>`
-                });
+                    body: `${ageText} ${event.desc}<div class="mt-4 text-sky-300 font-bold text-lg">EFFECT: ${bonusDisplay}</div>`,
+                    options: {
+                        nonDismissible: false,
+                        noModalVisible: true,
+                        specialClass: 'birthday-modal birthday-modal-enter',
+                        exitClass: 'birthday-modal-exit',
+                        buttonText: '+1 Sol Cycle',
+                        buttonClass: 'btn-pulse-gold !bg-yellow-900/50 hover:!bg-yellow-800 !text-yellow-200 !border-yellow-500'
+                    }
+                };
+                
+                enqueueBirthdayModal(modalPayload);
             }
         }
 
@@ -393,11 +448,21 @@ export class TimeService {
                     bonusText = "Hull integrity fully restored.";
                 }
 
-                this.gameState.deferredModals.push({
+                const modalPayload = {
                     id: 'event-modal',
                     title: title,
-                    body: `${desc}\n\n<span class='text-yellow-400'>${bonusText}</span>`
-                });
+                    body: `${ageText} ${desc}<div class="mt-4 text-sky-300 font-bold text-lg">${bonusText}</div>`,
+                    options: {
+                        nonDismissible: false,
+                        noModalVisible: true,
+                        specialClass: 'birthday-modal birthday-modal-enter',
+                        exitClass: 'birthday-modal-exit',
+                        buttonText: '+1 Sol Cycle',
+                        buttonClass: 'btn-pulse-gold !bg-yellow-900/50 hover:!bg-yellow-800 !text-yellow-200 !border-yellow-500'
+                    }
+                };
+                
+                enqueueBirthdayModal(modalPayload);
             }
         }
     }

@@ -366,4 +366,121 @@ export async function playActCinematic(actText) {
     // 7. Cleanup
     overlay.remove();
 }
+
+let birthdayUIObserver = null;
+
+/**
+ * Initiates the Birthday cinematic sequence.
+ * Injects a full-screen dynamic rainbow overlay and hides side UI elements.
+ * @returns {Promise<void>} Resolves when the fade-in completes.
+ */
+export async function startBirthdayAnimation() {
+    document.body.classList.add('cinematic-active');
+
+    let overlay = document.getElementById('birthday-white-overlay');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'birthday-white-overlay';
+        overlay.className = 'fixed inset-0 z-[45] pointer-events-none opacity-0 birthday-rainbow-overlay';
+        document.body.appendChild(overlay);
+    }
+
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor', 'mission-sticky-bar'];
+
+    const hideAndCache = (el) => {
+        if (el && el.style.display !== 'none') {
+            if (el.dataset.cachedDisplay === undefined) {
+                el.dataset.cachedDisplay = el.style.display || '';
+            }
+            el.style.setProperty('display', 'none', 'important');
+        }
+    };
+
+    // Initial Hide
+    sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
+    document.querySelectorAll('button').forEach((btn) => {
+        if (btn.textContent && (btn.textContent.trim() === '(?)' || btn.textContent.trim() === '?')) {
+            btn.dataset.isDynamicHelpBtn = "true";
+            hideAndCache(btn);
+        }
+    });
+
+    if (birthdayUIObserver) birthdayUIObserver.disconnect();
+    
+    birthdayUIObserver = new MutationObserver((mutations) => {
+        mutations.forEach(mutation => {
+            if (mutation.type === 'attributes' && mutation.attributeName === 'style') {
+                const el = mutation.target;
+                if (sideUIElements.includes(el.id) || el.dataset.isDynamicHelpBtn === "true") {
+                    if (el.style.display !== 'none') {
+                        el.style.setProperty('display', 'none', 'important');
+                    }
+                }
+            } else if (mutation.type === 'childList') {
+                sideUIElements.forEach(id => hideAndCache(document.getElementById(id)));
+                document.querySelectorAll('button').forEach((btn) => {
+                    if (btn.textContent && (btn.textContent.trim() === '(?)' || btn.textContent.trim() === '?')) {
+                        if (!btn.dataset.isDynamicHelpBtn) btn.dataset.isDynamicHelpBtn = "true";
+                        hideAndCache(btn);
+                    }
+                });
+            }
+        });
+    });
+
+    birthdayUIObserver.observe(document.body, { attributes: true, childList: true, subtree: true, attributeFilter: ['style'] });
+
+    const fadeIn = overlay.animate(
+        [{ opacity: 0 }, { opacity: 1 }],
+        { duration: 1000, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    
+    await fadeIn.finished;
+}
+
+/**
+ * Concludes the Birthday cinematic sequence.
+ * Fades out the overlay and restores UI elements.
+ * @returns {Promise<void>} Resolves when the sequence completes and the overlay is removed.
+ */
+export async function endBirthdayAnimation() {
+    const overlay = document.getElementById('birthday-white-overlay');
+    if (!overlay) return;
+
+    // Disconnect Observer & Restore Sidebar UI Elements
+    if (birthdayUIObserver) {
+        birthdayUIObserver.disconnect();
+        birthdayUIObserver = null;
+    }
+
+    const sideUIElements = ['btn-achievements', 'btn-econ-weather', 'btn-game-menu', 'btn-tutorial', 'btn-help', 'tutorial-helper', 'global-help-anchor', 'mission-sticky-bar'];
+    sideUIElements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && el.dataset.cachedDisplay !== undefined) {
+            el.style.display = el.dataset.cachedDisplay;
+            delete el.dataset.cachedDisplay;
+        }
+    });
+
+    // Restore dynamically found (?) buttons
+    document.querySelectorAll('button[data-is-dynamic-help-btn="true"]').forEach(btn => {
+        if (btn.dataset.cachedDisplay !== undefined) {
+            btn.style.display = btn.dataset.cachedDisplay;
+            delete btn.dataset.cachedDisplay;
+            delete btn.dataset.isDynamicHelpBtn;
+        }
+    });
+
+    document.body.classList.remove('cinematic-active');
+
+    const fadeOut = overlay.animate(
+        [{ opacity: 1 }, { opacity: 0 }],
+        { duration: 1000, fill: 'forwards', easing: 'ease-in-out' }
+    );
+    await fadeOut.finished;
+
+    if (overlay.parentNode) {
+        overlay.parentNode.removeChild(overlay);
+    }
+}
 // --- [[END]] VIRTUAL WORKBENCH ---

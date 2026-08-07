@@ -177,7 +177,13 @@ export function renderMissionsScreen(gameState, missionService) {
                     const locName = DB.MARKETS.find(m => m.id === r.locationId)?.name || 'NEW SECTOR';
                     rewardTextParts.push(`<span class="text-purple-400 font-bold" style="-webkit-text-stroke: 1px black;">ACCESS: ${locName.toUpperCase()}</span>`);
                 }
-                else rewardTextParts.push(r.type.toUpperCase());
+                else if (r.type.toLowerCase() === 'grant_random_ship') {
+                    rewardTextParts.push(`<span class="text-green-400 font-bold" style="-webkit-text-stroke: 1px black;">CLASS-${r.shipClass || 'S'} VESSEL</span>`);
+                }
+                else if (r.type.toLowerCase() === 'grant_ship') {
+                    rewardTextParts.push(`<span class="text-green-400 font-bold" style="-webkit-text-stroke: 1px black;">NEW VESSEL</span>`);
+                }
+                else rewardTextParts.push(r.type.toUpperCase().replace(/_/g, ' '));
             });
         }
         
@@ -325,6 +331,7 @@ export function renderMissionsScreen(gameState, missionService) {
                 const comparator = obj.comparator || '>=';
 
                 let desc = 'OBJECTIVE';
+                if (obj.text) desc = obj.text.toUpperCase();
                 let displayStr = `${current} / ${target}`;
                 let percent = 0;
 
@@ -336,6 +343,15 @@ export function renderMissionsScreen(gameState, missionService) {
                         desc = `DELIVER ${commName} TO ${locName}`;
                     } else {
                         desc = `DELIVER ${commName}`;
+                    }
+                    percent = Math.min(100, Math.floor((current / target) * 100));
+                }
+                else if (obj.type === 'DELIVER_SHIP' || obj.type === 'deliver_ship') {
+                    if (obj.target && DB.MARKETS.find(m => m.id === obj.target)) {
+                        const locName = DB.MARKETS.find(m => m.id === obj.target).name.toUpperCase();
+                        desc = obj.text ? obj.text.toUpperCase() : `DELIVER SHIP TO ${locName}`;
+                    } else {
+                        desc = obj.text ? obj.text.toUpperCase() : `DELIVER SHIP`;
                     }
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }
@@ -417,7 +433,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     percent = current * 100;
                 }
                 else if (obj.type === 'action' || obj.type === 'ACTION') {
-                    desc = (obj.target || 'COMPLETE ACTION').toUpperCase();
+                    desc = obj.text ? obj.text.toUpperCase() : (obj.target || 'COMPLETE ACTION').toUpperCase();
                     displayStr = current >= target ? 'COMPLETE' : 'PENDING';
                     percent = Math.min(100, Math.floor((current / target) * 100));
                 }

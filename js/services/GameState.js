@@ -413,7 +413,7 @@ export class GameState {
      */
     startNewGame(playerName) {
         // --- SOL STATION CACHE INITIALIZATION ---
-        // Dynamically create a cache for every commodity except Antimatter (Tier 7)
+        // Dynamically create a cache for every commodity except antimatter (Tier 7)
         // Capacity scales inversely with Tier.
         const solCaches = {};
         const TIER_CAPACITY = {

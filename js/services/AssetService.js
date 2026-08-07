@@ -102,13 +102,27 @@ export class AssetService {
 
     static _generateCommodityPath(commodityName, visualSeed) {
         if (!commodityName) return null;
-        let variantCount = COMMODITY_VARIANT_COUNTS[commodityName];
+        
+        // Convert 'water ice' back to 'water ice' for file paths
+        const originalName = commodityName.split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ')
+            .replace(/ Xeno-geologicals/i, ' xeno-geologicals') // handle hyphen
+            .replace(/^Xeno-geologicals/i, 'xeno-geologicals')
+            .replace(/ Cryo-sleep/i, ' Cryo-Sleep')
+            .replace(/^Cryo-sleep/i, 'Cryo-Sleep')
+            .replace(/ Folded-space/i, ' Folded-Space')
+            .replace(/^Folded-space/i, 'Folded-Space')
+            .replace(/ Ai /i, ' AI '); // Handle special capitalization
+            
+        let variantCount = COMMODITY_VARIANT_COUNTS[commodityName] || COMMODITY_VARIANT_COUNTS[originalName];
         if (variantCount === undefined) variantCount = DEFAULT_COMMODITY_VARIANT_COUNT;
         if (variantCount <= 0) return null;
+        
         const variantIndex = Math.abs(visualSeed) % variantCount;
         const variantLetter = this._getVariantSuffix(variantIndex);
-        const fileNamePrefix = commodityName.replace(/ /g, '_');
-        return `assets/images/commodities/${commodityName}/${fileNamePrefix}_${variantLetter}.webp`;
+        const fileNamePrefix = originalName.replace(/ /g, '_');
+        return `assets/images/commodities/${originalName}/${fileNamePrefix}_${variantLetter}.webp`;
     }
 
     static _generateLocationPath(locationId) {

@@ -260,7 +260,7 @@ export const EVENTS_SALVAGE = [
         choices: [
             {
                 id: 'choice_scrap',
-                text: 'Harvest Scrap (+Trip Delay, +Plasteel)',
+                text: 'Harvest Scrap (+Trip Delay, +plasteel)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_CARGO_SPACE, operator: 'GTE', value: 5 }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_scrap' }] }
             },

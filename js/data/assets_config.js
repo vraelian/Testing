@@ -54,25 +54,25 @@ export const SHIP_VARIANT_COUNTS = {
 
 /**
  * A map of Commodity Names to their specific variant counts.
- * The Key must match the game Name exactly (e.g., "Water Ice").
+ * The Key must match the game Name exactly (e.g., "water ice").
  * The Code automatically looks for "Water_Ice_A.png".
  * * Update the number to match how many files (A, B, C...) you have created.
  */
 export const COMMODITY_VARIANT_COUNTS = {
-    'Water Ice': 1,           // File: Water_Ice_A.png
-    'Plasteel': 1,            // File: Plasteel_A.png
-    'Hydroponics': 1,         // File: Hydroponics_A.png
-    'Cybernetics': 1,         // File: Cybernetics_A.png
-    'Refined Propellant': 1,  // File: Refined_Propellant_A.png
-    'Neural Processors': 1,   // File: Neural_Processors_A.png
-    'Graphene Lattices': 1,   // File: Graphene_Lattices_A.png
-    'Cryo-Sleep Pods': 1,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
-    'Atmo Processors': 1,     // File: Atmo_Processors_A.png
-    'Cloned Organs': 1,       // File: Cloned_Organs_A.png
-    'Xeno-Geologicals': 1,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
-    'Sentient AI Cores': 1,   // File: Sentient_AI_Cores_A.png
-    'Antimatter': 1,          // File: Antimatter_A.png
-    'Folded-Space Drives': 1  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
+    'water ice': 1,           // File: Water_Ice_A.png
+    'plasteel': 1,            // File: Plasteel_A.png
+    'hydroponics': 1,         // File: Hydroponics_A.png
+    'cybernetics': 1,         // File: Cybernetics_A.png
+    'refined propellant': 1,  // File: Refined_Propellant_A.png
+    'neural processors': 1,   // File: Neural_Processors_A.png
+    'graphene lattices': 1,   // File: Graphene_Lattices_A.png
+    'cryo-sleep pods': 1,     // File: Cryo-Sleep_Pods_A.png  <-- Note Hyphen!
+    'atmo processors': 1,     // File: Atmo_Processors_A.png
+    'cloned organs': 1,       // File: Cloned_Organs_A.png
+    'xeno-geologicals': 1,    // File: Xeno-Geologicals_A.png <-- Note Hyphen!
+    'sentient ai cores': 1,   // File: Sentient_AI_Cores_A.png
+    'antimatter': 1,          // File: Antimatter_A.png
+    'folded-space drives': 1  // File: Folded-Space_Drives_A.png <-- Note Hyphen!
 };
 
 /**

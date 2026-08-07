@@ -130,7 +130,8 @@ export class TravelService {
 
             let message = `You need ${requiredFuel} ${fuelHtml} but your ${shipNameHtml} has ${currentFuel}.`;
             
-            if (effectiveMaxFuel < requiredFuel) {
+            const isFuelTankTooSmall = effectiveMaxFuel < requiredFuel;
+            if (isFuelTankTooSmall) {
                 message += `<br><br>A direct flight to ${destName} requires more ${fuelHtml} than your ship can hold.`;
             }
 
@@ -139,7 +140,9 @@ export class TravelService {
                 "Insufficient Fuel", 
                 message, 
                 () => {
-                    this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.SERVICES);
+                    if (!isFuelTankTooSmall) {
+                        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.SERVICES);
+                    }
                 }, 
                 { 
                     buttonText: "Return to Starport",
@@ -243,7 +246,10 @@ export class TravelService {
         if (eventsResolvedCount >= 2 || this.gameState.pendingStoryEvents.length === 0) {
             // Processing complete. Hand off to actual travel sequence.
             if (eventsResolvedCount > 0) {
-                this.initiateTravel(locationId, { useFoldedDrive });
+                // Defer travel calculation to allow the story event modal animation to complete smoothly
+                setTimeout(() => {
+                    this.initiateTravel(locationId, { useFoldedDrive });
+                }, 1050);
             } else {
                 if (!this._checkForRandomEvent(locationId)) {
                     this.initiateTravel(locationId, { useFoldedDrive });
@@ -615,6 +621,7 @@ export class TravelService {
             }
         }
 
+        this.gameState.isTraveling = true;
         this.timeService.advanceDays(travelInfo.time);
         if (this.gameState.isGameOver) return;
         
@@ -825,7 +832,11 @@ export class TravelService {
         if (!this.gameState.pendingTravel) return;
         this.logger.info.system('Game', this.gameState.day, 'TRAVEL_RESUME', 'Resuming travel after event.');
         const { destinationId, ...eventMods } = this.gameState.pendingTravel;
-        this.initiateTravel(destinationId, eventMods);
+        
+        // Defer travel calculation to allow the event modal animation to complete smoothly without main thread locking
+        setTimeout(() => {
+            this.initiateTravel(destinationId, eventMods);
+        }, 1050);
     }
 
     _checkForRandomEvent(destinationId, force = false) {

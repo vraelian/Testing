@@ -64,7 +64,7 @@ export const EVENTS_HAZARDS = [
         choices: [
             {
                 id: 'choice_harden',
-                text: 'Harden Ship (-10 Plasteel * Scale)',
+                text: 'Harden Ship (-10 plasteel * Scale)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.PLASTEEL, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_harden' }] }
             },
@@ -89,7 +89,7 @@ export const EVENTS_HAZARDS = [
         outcomes: {
             'out_harden': {
                 title: 'Shields Holding',
-                text: 'You rig extra Plasteel plating over the emitter arrays. The radiation storm washes over you, but the interior remains safe.',
+                text: 'You rig extra plasteel plating over the emitter arrays. The radiation storm washes over you, but the interior remains safe.',
                 effects: [{ type: EVENT_CONSTANTS.EFFECTS.REMOVE_ITEM, target: COMMODITY_IDS.PLASTEEL, value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 10 } }]
             },
             'out_shadow': {

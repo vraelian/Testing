@@ -25,7 +25,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "A Steadfast Friend",
-            text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release your Rank II market dividend upgrade, as promised.",
+            text: "The Guild values reliability, and you have proven yourself a steadfast friend to our administration. We appreciate your discretion in this matter. I have been authorized to release your rank II market dividend upgrade, as promised.",
             buttonText: "Accept Rewards"
         },
         rewards: [
@@ -49,7 +49,7 @@ export const PHASE_THREE_MISSIONS = {
         completion: {
             locationId: "any",
             title: "A Lucrative Secret",
-            text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant your Rank II loan forgiveness protocol, as promised.",
+            text: "You've cemented your place with the Syndicate, Captain. Thanks for delivering. The Guild will view this as a direct threat when they figure out we have the data they wanted to hide under red tape. I’ve been authorized to grant your rank II loan forgiveness protocol, as promised.",
             buttonText: "Accept Rewards"
         },
         rewards: [
@@ -256,7 +256,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Audita_1",
         isRepeatable: false,
         isAbandonable: false,
-        description: "Captain [playerName]. The telemetry from your Pluto run is frustrating. An isolated Expert System running a localized labor cult to launch scrap into the corona is esoteric noise to my department. However, the upper administration seized your report instantly. Our highest authority, the Arbiter, intends to control the resulting economic disruption if this anomaly threatens systemic stability.<br><br>We are mobilizing for outright economic warfare to ensure the Syndicate cannot capitalize on this shift. We are to stockpile high-tier computational hardware immediately. Purchase and deliver Neural Processors to Earth. The Arbiter's office expects this done flawlessly.",
+        description: "Captain [playerName]. The telemetry from your Pluto run is frustrating. An isolated Expert System running a localized labor cult to launch scrap into the corona is esoteric noise to my department. However, the upper administration seized your report instantly. Our highest authority, the Arbiter, intends to control the resulting economic disruption if this anomaly threatens systemic stability.<br><br>We are mobilizing for outright economic warfare to ensure the Syndicate cannot capitalize on this shift. We are to stockpile high-tier computational hardware immediately. Purchase and deliver neural processors to Earth. The Arbiter's office expects this done flawlessly.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_guild" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
@@ -278,7 +278,7 @@ export const PHASE_THREE_MISSIONS = {
         portraitId: "Venusian_Syndicate_4",
         isRepeatable: false,
         isAbandonable: false,
-        description: "I'll be honest, Captain. That Pluto expedition feels like a dead end. A deranged AI paying augmented scrap-haulers isn't actionable leverage for my network. Yet, the moment your report hit the system, Syndicate leadership locked it down. The head of our entire network, Vrael, sees the potential for massive systemic disruption, and he intends to own it.<br><br>We are prepping for an all-out economic war to ensure the Guild loses their grip on the situation. Now, I have orders to hoard industrial energy reserves. Secure Refined Propellant and haul it to Venus.",
+        description: "I'll be honest, Captain. That Pluto expedition feels like a dead end. A deranged AI paying augmented scrap-haulers isn't actionable leverage for my network. Yet, the moment your report hit the system, Syndicate leadership locked it down. The head of our entire network, Vrael, sees the potential for massive systemic disruption, and he intends to own it.<br><br>We are prepping for an all-out economic war to ensure the Guild loses their grip on the situation. Now, I have orders to hoard industrial energy reserves. Secure refined propellant and haul it to Venus.",
         triggers: [ { "type": "mission_completed", "missionId": "mission_37_syndicate" } ],
         onAccept: [ { "type": "TRIGGER_SYSTEM_STATE", "stateId": "SHADOW_MOBILIZATION" } ],
         objectives: [
@@ -684,7 +684,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitId: "Arbiter_1",
             title: "The Arbiter's Truth",
             text: "Most perceive the Guild as a mere mercantile institution, but it is so much more. Every light, every life, is sustained by the mathematical order that the Merchant's Guild enforces. A million variables shift every second to prevent humanity from consuming itself, and I am the fulcrum of that equilibrium, the Arbiter.<br><br>You have wielded that order as a weapon, breaking the Syndicate's industrial backbone with absolute precision. You have starved their shipyards of graphene, rendering their shadow fleet inert.<br><br>But our true concern lies inward, at the very center of the system. The kinetic launches you witnessed from that eccentric machine on Pluto are supplying a leviathan hidden in the corona. A ghost structure gathering mass in the dark, bypassing our authority.<br><br>Furthermore, the telemetry you uploaded regarding a Z Class vessel utilizing a folded space drive is a mathematical impossibility. That technology is extinct, yet it moves freely in our space.<br><br>Maintain your fleet's readiness. The board is resetting, and your role is about to escalate significantly. Between the leviathan at the center and these ancient anomalies returning to the fringe, the coming cycles will require unprecedented intervention to maintain control.",
-            buttonText: "Act III Complete"
+            buttonText: "Maintain Control"
         },
         rewards: [
             { "type": "fill_fleet_fuel" },
@@ -710,7 +710,7 @@ export const PHASE_THREE_MISSIONS = {
             portraitId: "Vrael_1",
             title: "Vrael's Truth",
             text: "It is fitting we meet here, suspended in the extravagance of the Venusian atmosphere, far above the Guild's rigid domain. I am Vrael.<br><br>The mathematical order of the Guild is a fragile illusion, as you have so eloquently proven by interring their cryo sleep pods on the Plutonian fringe. You have weaponized time itself against their ruling class, forcing their gerontocracy to face the sudden reality of their own mortality. Yet, the Syndicate's subversion of their hierarchy is merely a prelude.<br><br>The true locus of power has shifted. The telemetry you secured from that enigmatic machine intelligence on Pluto launching its continuous harvest directly into the sun's gravity well confirms a truth the Guild cannot quantify. It has revealed an uncontrolled silhouette within the corona. An unregistered megastructure hides there, consuming that kinetic tribute.<br><br>But it is not the only shadow moving in the dark. Your encounter with a Z Class dreadnought folding spacetime proves that the old limitations are dead. Ancient, terrifying power is returning to the board, completely independent of Guild regulation and our own designs.<br><br>See to your fleet's readiness. The established order is fracturing, and we are going to harness this chaos.",
-            buttonText: "Act III Complete"
+            buttonText: "Harness the Chaos"
         },
         rewards: [
             { "type": "fill_fleet_fuel" },

@@ -66,10 +66,10 @@ export const SYSTEM_STATE_REGISTRY = {
         durationBounds: [240, 1387],
         varietals: [
             "The immortal executives of Mars and Venus have jointly mandated a multi-trillion credit infrastructure overhaul. Demand for industrial bulk materials has completely outpaced standard system supply.",
-            "A panic over degrading terraforming arrays has triggered massive government spending. Planetary markets are absorbing endless shipments of Plasteel and Atmo Processors at massive premiums.",
+            "A panic over degrading terraforming arrays has triggered massive government spending. Planetary markets are absorbing endless shipments of plasteel and atmo processors at massive premiums.",
             "The Guild’s 'Century Expansion Initiative' is officially underway. Construction hubs are offering blank checks for structural composites and environmental hardware to meet absurdly aggressive building quotas."
         ],
-        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Industrial materials like Plasteel are selling for 35% more credits, and their market capacity for purchasing these goods has doubled.</span>",
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Industrial materials like plasteel are selling for 35% more credits, and their market capacity for purchasing these goods has doubled.</span>",
         modifiers: {
             affectedCommodities: [COMMODITY_IDS.PLASTEEL, COMMODITY_IDS.GRAPHENE_LATTICES, COMMODITY_IDS.ATMO_PROCESSORS],
             basePriceInflate: 1.35,
@@ -100,7 +100,7 @@ export const SYSTEM_STATE_REGISTRY = {
             "In a rare display of corporate benevolence, the Guild has suspended all loan interest accruals for the fiscal quarter. Furthermore, foundational agricultural goods are trading at half their standard cost.",
             "An anonymous philanthropic trust is dumping trillions of credits into the system. Debt clocks have stopped, and basic life-support commodities are practically free."
         ],
-        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Your loan interest has been completely frozen, and basic survival goods like Water Ice cost half as much to buy everywhere.</span>",
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Your loan interest has been completely frozen, and basic survival goods like water ice cost half as much to buy everywhere.</span>",
         modifiers: {
             interestFrozen: true,
             affectedCommodities: [COMMODITY_IDS.WATER_ICE, COMMODITY_IDS.HYDROPONICS],
@@ -225,10 +225,10 @@ export const SYSTEM_STATE_REGISTRY = {
         durationBounds: [240, 1387],
         varietals: [
             "An inexplicable, massive surge in demand for high-tier computational and energetic assets has gripped the system. Anonymous corporate shells are buying up processors and propellant at highly inflated rates.",
-            "Rumors of a clandestine dreadnought program have spooked the markets. Station quartermasters have received blind directives to hoard Refined Propellant and Neural Processors, regardless of the premium.",
+            "Rumors of a clandestine dreadnought program have spooked the markets. Station quartermasters have received blind directives to hoard refined propellant and neural processors, regardless of the premium.",
             "A sudden, aggressive shift in macro-faction logistics has triggered a localized boom. The Guild and the Syndicate are engaged in a silent bidding war over advanced electronics and volatile fuels."
         ],
-        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Demand for Neural Processors and Refined Propellant has skyrocketed. They are selling for 50% more, and market capacities for these goods have more than doubled.</span>",
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Demand for neural processors and refined propellant has skyrocketed. They are selling for 50% more, and market capacities for these goods have more than doubled.</span>",
         modifiers: {
             affectedCommodities: [COMMODITY_IDS.NEURAL_PROCESSORS, COMMODITY_IDS.REFINED_PROPELLANT],
             basePriceInflate: 1.50,

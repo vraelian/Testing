@@ -2,6 +2,36 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [38.98] - 2026-8-4
+-  map screen polish
+-  mission polish
+
+# [38.97] - 2026-8-2
+-  writing polish
+-  performance polish
+
+# [38.95] - 2026-7-28
+-  writing polish
+-  updated mission logic
+
+# [38.95] - 2026-7-28
+-  completed logic for mission 48
+-  writing polish
+
+# [38.93] - 2026-7-26
+-  updated story_timeline.html
+
+# [38.93] - 2026-7-25
+-  updated birthday sequence
+-  writing polish
+-  mission logic fixes
+
+# [38.90] - 2026-7-24
+-  added intercept dialog modal
+-  added narration dialog modal
+-  mission polish
+-  added kepler's eye RUD cinematic
+
 # [38.86] - 2026-7-18
 -  Act IV rewrites and polish
 -  updated workbench_routing.json
@@ -38,7 +68,7 @@ All notable changes to the Orbital Trading project will be documented in this fi
 -  added sol station silhouette cinematic to mission 41
 
 # [38.69] - 2026-6-21
--  added kepler's eye cinematic to mission 36
+-  added kepler's eye cinematic
 -  mission bug fixes
 
 # [38.67] - 2026-6-20

@@ -3,6 +3,7 @@
 import { DB } from '../../data/database.js';
 import { AssetService } from '../AssetService.js';
 import { starfieldService } from './StarfieldService.js';
+import { startBirthdayAnimation } from './AnimationService.js';
 
 export class TravelAnimationService {
     constructor(isMobile) {
@@ -130,10 +131,24 @@ export class TravelAnimationService {
                 finalCallback();
             }
 
-            // A short delay to ensure the market screen is rendered before the fade-in starts.
-            setTimeout(() => {
-                this.gameContainer.classList.add('fade-in');
-            }, 50); // Small buffer
+            let hasBirthday = false;
+            if (this.uiManager && this.uiManager.modalEngine && this.uiManager.modalEngine.modalQueue.length > 0) {
+                hasBirthday = this.uiManager.modalEngine.modalQueue.some(m => m.options && m.options.specialClass && m.options.specialClass.includes('birthday-modal'));
+            }
+
+            if (hasBirthday) {
+                startBirthdayAnimation().then(() => {
+                    this.modal.classList.add('hidden'); // Prevent UIModalEngine from aborting queue processing
+                    if (this.uiManager && this.uiManager.modalEngine && this.uiManager.modalEngine.modalQueue.length > 0) {
+                        this.uiManager.modalEngine.processModalQueue();
+                    }
+                });
+            } else {
+                // A short delay to ensure the market screen is rendered before the fade-in starts.
+                setTimeout(() => {
+                    this.gameContainer.classList.add('fade-in');
+                }, 50); // Small buffer
+            }
 
             setTimeout(() => {
                 this.modal.classList.add('hidden');
@@ -142,6 +157,10 @@ export class TravelAnimationService {
                 // Cleanup Cinematic State
                 this.imageElement.classList.remove('travel-zoom-active');
                 this.imageElement.style.opacity = 0;
+                
+                if (!hasBirthday && this.uiManager && this.uiManager.modalEngine && this.uiManager.modalEngine.modalQueue.length > 0) {
+                    this.uiManager.modalEngine.processModalQueue();
+                }
             }, 1000); // 1s to match CSS transition
         };
     }

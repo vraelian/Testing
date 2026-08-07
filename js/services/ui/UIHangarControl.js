@@ -459,7 +459,11 @@ export class UIHangarControl {
             
             setTimeout(() => {
                 clearThemeFromModal();
-                closeHandler();
+                if (this.manager.modalEngine && typeof this.manager.modalEngine.destroyModalInstant === 'function') {
+                    this.manager.modalEngine.destroyModalInstant('event-modal');
+                } else {
+                    closeHandler();
+                }
                 
                 // Force DOM layout recalculation and paint before resolving the sequence.
                 // This prevents batched CSS transition calculations from skipping the installation progress bar animation.

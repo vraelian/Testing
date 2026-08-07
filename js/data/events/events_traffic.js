@@ -74,13 +74,13 @@ export const EVENTS_TRAFFIC = [
         choices: [
             {
                 id: 'choice_donate_ice',
-                text: 'Donate Water Ice (-15 Ice * Scale)',
+                text: 'Donate water ice (-15 Ice * Scale)',
                 requirements: [{ type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.WATER_ICE, operator: 'GTE', value: { base: 0, scaleWith: 'SHIP_CLASS_SCALAR', factor: 15 } }],
                 resolution: { type: EVENT_CONSTANTS.RESOLVERS.DETERMINISTIC, pool: [{ outcomeId: 'out_donate_ice' }] }
             },
             {
                 id: 'choice_donate_cyber',
-                text: 'Donate Cybernetics (-2 Cybernetics)',
+                text: 'Donate cybernetics (-2 cybernetics)',
                 requirements: [
                     { type: EVENT_CONSTANTS.CONDITIONS.WEALTH_TIER, operator: 'GTE', value: 2 },
                     { type: EVENT_CONSTANTS.CONDITIONS.HAS_ITEM, target: COMMODITY_IDS.CYBERNETICS, operator: 'GTE', value: 2 }

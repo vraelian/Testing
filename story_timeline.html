@@ -5,33 +5,45 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Orbital Trading - Encrypted Mission Logs & Lore Archives</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Oxanium:wght@300;400;600;800&family=Share+Tech+Mono&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@400;700;900&family=Oxanium:wght@300;400;600;800&family=Share+Tech+Mono&display=swap');
 
         :root {
-            --bg-dark: #050507;
-            --bg-panel: #0d0d12;
-            --bg-card: #15151a;
-            --bg-highlight: #1e1e26;
-            --border-color: #262630;
-            --border-glow: #38384a;
-            --text-main: #c4c4cc;
-            --text-muted: #6b6b7a;
-            --text-bright: #ffffff;
-            --accent-color: #e67e22;
-            --accent-glow: rgba(230, 126, 34, 0.4);
+            /* Premium Dark Theme with deep space hues */
+            --bg-dark: hsl(230, 20%, 6%);
+            --bg-panel: hsl(230, 20%, 9%);
+            --bg-card: hsl(230, 20%, 12%);
+            --bg-highlight: hsl(230, 20%, 15%);
+            --border-color: hsl(230, 20%, 18%);
+            --border-glow: hsl(230, 20%, 25%);
             
-            /* Themed Host Colors mapped from in-game CSS */
-            --faction-guild: #fbbf24; /* Gold */
-            --guild-dark: rgba(69, 26, 3, 0.95);
-            --faction-syndicate: #a855f7; /* Violet */
-            --syndicate-dark: rgba(59, 7, 100, 0.95);
-            --faction-station: #3b82f6; /* Blue */
-            --station-dark: rgba(8, 47, 73, 0.95);
-            --credit-cyan: #00e5ff; /* Cyan Credits Theme */
+            --text-main: hsl(230, 15%, 85%);
+            --text-muted: hsl(230, 10%, 60%);
+            --text-bright: hsl(0, 0%, 100%);
             
-            --font-main: 'Oxanium', sans-serif;
+            /* Vibrant Accents */
+            --accent-color: hsl(28, 90%, 55%);
+            --accent-glow: hsla(28, 90%, 55%, 0.4);
+            
+            /* Faction Colors */
+            --faction-guild: hsl(45, 95%, 55%);
+            --guild-dark: hsla(45, 95%, 55%, 0.1);
+            
+            --faction-syndicate: hsl(270, 80%, 65%);
+            --syndicate-dark: hsla(270, 80%, 65%, 0.1);
+            
+            --faction-station: hsl(215, 90%, 60%);
+            --station-dark: hsla(215, 90%, 60%, 0.1);
+            
+            --credit-cyan: hsl(185, 100%, 50%);
+            --credit-cyan-dark: hsla(185, 100%, 50%, 0.1);
+            
+            --font-main: 'Inter', 'Oxanium', sans-serif;
             --font-mono: 'Share Tech Mono', monospace;
-            --font-orbitron: 'Orbitron', sans-serif;
+            --font-display: 'Orbitron', sans-serif;
+            
+            --glass-bg: rgba(20, 20, 25, 0.6);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --shadow-soft: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
         * { box-sizing: border-box; }
@@ -46,48 +58,42 @@
             flex-direction: column;
             height: 100vh;
             overflow: hidden;
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(255, 255, 255, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 85% 30%, hsla(215, 90%, 60%, 0.03) 0%, transparent 50%);
         }
 
-        /* CRT Overlay Effect */
-        .crt-overlay {
-            position: fixed;
-            top: 0; left: 0; width: 100vw; height: 100vh;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-            background-size: 100% 3px, 3px 100%;
-            pointer-events: none;
-            z-index: 9999;
-            opacity: 0.8;
-        }
-
-        /* --- 2-Tier Navigation --- */
+        /* Glassmorphism Navigation */
         #top-nav-container {
             display: flex;
             flex-direction: column;
-            background-color: #08080a;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--glass-border);
             z-index: 100;
             position: relative;
-            box-shadow: 0 5px 25px rgba(0,0,0,0.9);
+            box-shadow: var(--shadow-soft);
             flex-shrink: 0;
         }
 
         #main-nav {
             display: flex;
             align-items: center;
-            border-bottom: 1px solid var(--border-color);
             padding: 0 20px;
-            background: #050507;
         }
 
         .nav-brand {
             display: flex;
             align-items: center;
-            font-size: 1.1rem;
+            font-family: var(--font-display);
+            font-size: 1.2rem;
             font-weight: 800;
             color: var(--accent-color);
             letter-spacing: 3px;
             text-transform: uppercase;
             margin-right: 40px;
-            text-shadow: 1px 0 2px rgba(255,0,0,0.4), -1px 0 2px rgba(0,255,255,0.4), 0 0 15px var(--accent-glow);
+            text-shadow: 0 0 10px var(--accent-glow);
             white-space: nowrap;
             padding: 15px 0;
         }
@@ -95,51 +101,61 @@
         .main-tab {
             padding: 18px 30px;
             cursor: pointer;
-            font-weight: 800;
-            font-size: 1rem;
+            font-weight: 700;
+            font-size: 0.95rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: var(--text-muted);
             border-bottom: 3px solid transparent;
-            transition: all 0.2s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
-            font-family: var(--font-orbitron);
+            font-family: var(--font-display);
+            position: relative;
         }
-        .main-tab:hover { color: var(--text-bright); background-color: rgba(255,255,255,0.03); }
+        
+        .main-tab::after {
+            content: '';
+            position: absolute;
+            bottom: -3px; left: 50%;
+            width: 0; height: 3px;
+            background: var(--accent-color);
+            transition: all 0.3s ease;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px var(--accent-glow);
+        }
+
+        .main-tab:hover { color: var(--text-bright); }
+        .main-tab:hover::after { width: 50%; }
+        
         .main-tab.active {
             color: var(--text-bright);
-            border-bottom: 3px solid var(--accent-color);
-            background: linear-gradient(0deg, rgba(230, 126, 34, 0.1) 0%, transparent 100%);
-            text-shadow: 0 0 8px var(--accent-glow);
+            background: linear-gradient(0deg, hsla(28, 90%, 55%, 0.1) 0%, transparent 100%);
         }
+        .main-tab.active::after { width: 100%; }
 
         #sub-nav {
             display: flex;
-            background-color: #0a0a0d;
-            border-bottom: 2px solid var(--border-color);
+            background: rgba(0, 0, 0, 0.2);
+            border-top: 1px solid var(--border-color);
             padding: 0 20px;
-            position: relative;
-        }
-        #sub-nav::after {
-            content: '';
-            position: absolute;
-            bottom: -2px; left: 0; width: 100%; height: 2px;
-            background: linear-gradient(90deg, transparent 0%, var(--accent-color) 50%, transparent 100%);
-            opacity: 0.5;
         }
 
         .sub-nav-group {
             display: none;
             width: 100%;
             overflow-x: auto;
-            -ms-overflow-style: none;  
             scrollbar-width: none;
         }
         .sub-nav-group::-webkit-scrollbar { display: none; }
-        .sub-nav-group.active { display: flex; }
+        .sub-nav-group.active { display: flex; animation: slideDown 0.3s ease; }
+
+        @keyframes slideDown {
+            from { opacity: 0; transform: translateY(-5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
         .nav-tab {
-            padding: 15px 25px;
+            padding: 12px 25px;
             cursor: pointer;
             font-weight: 600;
             font-size: 0.85rem;
@@ -149,13 +165,12 @@
             border-bottom: 2px solid transparent;
             transition: all 0.2s ease;
             white-space: nowrap;
-            margin-bottom: -2px;
         }
-        .nav-tab:hover { color: var(--text-bright); }
+        .nav-tab:hover { color: var(--text-bright); background: rgba(255,255,255,0.02); }
         .nav-tab.active {
             color: var(--accent-color);
             border-bottom: 2px solid var(--accent-color);
-            text-shadow: 0 0 5px var(--accent-glow);
+            text-shadow: 0 0 8px var(--accent-glow);
         }
 
         /* Main Layout */
@@ -167,44 +182,50 @@
         }
 
         .view-container { display: none; width: 100%; height: 100%; }
-        .view-container.active { display: flex; animation: bootUp 0.3s ease-out; }
+        .view-container.active { display: flex; animation: fadeBlurIn 0.4s ease-out; }
 
-        @keyframes bootUp {
-            from { opacity: 0; filter: blur(4px); }
-            to { opacity: 1; filter: blur(0); }
+        @keyframes fadeBlurIn {
+            from { opacity: 0; filter: blur(8px); transform: scale(0.99); }
+            to { opacity: 1; filter: blur(0); transform: scale(1); }
         }
 
-        /* --- MISSIONS VIEW --- */
+        /* Sidebar */
         #sidebar {
-            width: 336px;
-            background-color: var(--bg-panel);
-            border-right: 1px solid var(--border-color);
+            width: 340px;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border-right: 1px solid var(--glass-border);
             display: flex;
             flex-direction: column;
-            box-shadow: 15px 0 40px rgba(0,0,0,0.8);
             z-index: 10;
         }
         
         .sidebar-search-area {
-            padding: 10px 15px;
-            background: var(--bg-dark);
-            border-bottom: 1px solid var(--border-color);
+            padding: 15px;
+            background: rgba(0,0,0,0.2);
+            border-bottom: 1px solid var(--glass-border);
             display: flex;
             flex-direction: column;
-            gap: 8px;
+            gap: 10px;
         }
+        
         #mission-search, #mission-filter {
             width: 100%;
-            background: var(--bg-panel);
-            border: 1px solid var(--border-glow);
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border-color);
             color: var(--text-bright);
             font-family: var(--font-mono);
-            padding: 8px 12px;
-            border-radius: 2px;
+            padding: 10px 15px;
+            border-radius: 6px;
             outline: none;
-            transition: border-color 0.2s;
+            transition: all 0.3s ease;
         }
-        #mission-search:focus, #mission-filter:focus { border-color: var(--accent-color); }
+        #mission-search:focus, #mission-filter:focus { 
+            border-color: var(--accent-color);
+            box-shadow: 0 0 10px var(--accent-glow);
+            background: rgba(0,0,0,0.5);
+        }
         #mission-filter { cursor: pointer; }
         
         .sidebar-scroll-content {
@@ -213,38 +234,39 @@
         }
 
         .phase-header {
-            padding: 12px 20px;
-            background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%);
+            padding: 15px 20px;
+            background: linear-gradient(90deg, var(--bg-highlight) 0%, transparent 100%);
             color: var(--text-bright);
             font-size: 0.75rem;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 2px;
             border-bottom: 1px solid var(--border-color);
-            border-top: 1px solid var(--border-color);
             position: sticky;
             top: 0;
             z-index: 5;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
             cursor: pointer;
             display: flex;
             justify-content: space-between;
             align-items: center;
+            backdrop-filter: blur(5px);
+            transition: background 0.2s ease;
         }
-        .phase-header:hover { background: linear-gradient(90deg, #1e1e26 0%, var(--bg-panel) 100%); }
-        .phase-toggle { font-size: 0.7rem; transition: transform 0.2s ease; }
+        .phase-header:hover { background: linear-gradient(90deg, hsla(230, 20%, 25%, 1) 0%, transparent 100%); }
+        .phase-toggle { transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
         .phase-header.collapsed .phase-toggle { transform: rotate(-90deg); }
 
         .timeline-item {
-            padding: 13px 15px;
+            padding: 15px;
             border-bottom: 1px solid var(--border-color);
             cursor: pointer;
             transition: all 0.2s ease;
             display: grid;
             grid-template-columns: 1fr auto;
             grid-template-rows: auto auto;
-            gap: 4px 10px;
+            gap: 6px 12px;
             position: relative;
+            background: transparent;
         }
 
         .timeline-item.host-guild { --t-item-color: var(--faction-guild); }
@@ -254,16 +276,16 @@
 
         .timeline-item::before {
             content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 0;
-            background-color: var(--t-item-color); transition: width 0.2s ease;
+            background-color: var(--t-item-color); transition: width 0.3s ease;
         }
 
-        .timeline-item:hover { background-color: var(--bg-highlight); }
-        .timeline-item.active { background-color: var(--bg-card); }
-        .timeline-item.active::before { width: 4px; box-shadow: 0 0 20px var(--t-item-color); }
+        .timeline-item:hover { background-color: rgba(255,255,255,0.02); padding-left: 20px; }
+        .timeline-item.active { background-color: rgba(255,255,255,0.05); }
+        .timeline-item.active::before { width: 4px; box-shadow: 0 0 15px var(--t-item-color); }
         
         .mission-id {
             grid-column: 1; grid-row: 1;
-            font-family: var(--font-orbitron);
+            font-family: var(--font-display);
             font-size: 0.75rem;
             color: var(--t-item-color);
             font-weight: bold;
@@ -272,10 +294,9 @@
 
         .mission-name {
             grid-column: 1; grid-row: 2;
-            font-size: 0.85rem;
+            font-size: 0.9rem;
             font-weight: 600;
             color: var(--text-bright);
-            line-height: 1.2;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -283,26 +304,27 @@
 
         .item-reward {
             grid-column: 2; grid-row: 1 / span 2;
-            font-family: var(--font-orbitron);
-            font-size: 0.7rem;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
             color: var(--credit-cyan); 
-            background: rgba(0, 229, 255, 0.1);
-            padding: 4px 8px;
-            border-radius: 2px;
+            background: var(--credit-cyan-dark);
+            padding: 6px 10px;
+            border-radius: 4px;
             border: 1px solid rgba(0, 229, 255, 0.2);
             white-space: pre-line;
             display: flex;
             align-items: center;
             text-align: center;
-            min-width: 60px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
         }
         
         .item-reward:not(.is-credits) {
-            color: #4ade80; 
-            background: rgba(74, 222, 128, 0.1);
-            border-color: rgba(74, 222, 128, 0.2);
+            color: hsl(140, 70%, 60%); 
+            background: hsla(140, 70%, 60%, 0.1);
+            border-color: hsla(140, 70%, 60%, 0.2);
         }
 
+        /* Content Area */
         #content-area {
             flex-grow: 1;
             padding: 40px;
@@ -310,55 +332,47 @@
             display: flex;
             justify-content: center;
             align-items: flex-start;
-            background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%);
         }
 
-        /* --- THEMATIC SCOPING --- */
+        /* Glassmorphism Mission Detail */
         #mission-detail {
             max-width: 900px;
             width: 100%;
             display: none;
-            animation: fadeIn 0.3s ease;
             padding-bottom: 60px;
             
             --active-host-color: var(--accent-color);
-            --active-host-bg: rgba(230, 126, 34, 0.08);
-            --active-host-border: rgba(230, 126, 34, 0.3);
-            --active-host-grad: linear-gradient(135deg, rgba(230, 126, 34, 0.1), transparent);
+            --active-host-bg: var(--accent-glow);
+            --active-host-border: hsla(28, 90%, 55%, 0.3);
+            --active-host-grad: linear-gradient(135deg, hsla(28, 90%, 55%, 0.1), transparent);
         }
 
         #mission-detail.host-guild {
             --active-host-color: var(--faction-guild);
-            --active-host-bg: rgba(251, 191, 36, 0.08);
-            --active-host-border: rgba(251, 191, 36, 0.3);
-            --active-host-grad: linear-gradient(135deg, rgba(69, 26, 3, 0.6), transparent);
+            --active-host-bg: var(--guild-dark);
+            --active-host-border: hsla(45, 95%, 55%, 0.3);
+            --active-host-grad: linear-gradient(135deg, hsla(45, 95%, 55%, 0.1), transparent);
         }
         #mission-detail.host-syndicate {
             --active-host-color: var(--faction-syndicate);
-            --active-host-bg: rgba(168, 85, 247, 0.08);
-            --active-host-border: rgba(168, 85, 247, 0.3);
-            --active-host-grad: linear-gradient(135deg, rgba(59, 7, 100, 0.6), transparent);
+            --active-host-bg: var(--syndicate-dark);
+            --active-host-border: hsla(270, 80%, 65%, 0.3);
+            --active-host-grad: linear-gradient(135deg, hsla(270, 80%, 65%, 0.1), transparent);
         }
         #mission-detail.host-station {
             --active-host-color: var(--faction-station);
-            --active-host-bg: rgba(59, 130, 246, 0.08);
-            --active-host-border: rgba(59, 130, 246, 0.3);
-            --active-host-grad: linear-gradient(135deg, rgba(8, 47, 73, 0.6), transparent);
+            --active-host-bg: var(--station-dark);
+            --active-host-border: hsla(215, 90%, 60%, 0.3);
+            --active-host-grad: linear-gradient(135deg, hsla(215, 90%, 60%, 0.1), transparent);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(15px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        /* Dual Portraits Header */
         .portraits-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 25px;
+            margin-bottom: 30px;
             border-bottom: 1px solid var(--border-color);
-            padding-bottom: 25px;
+            padding-bottom: 30px;
         }
 
         .portrait-block {
@@ -369,28 +383,33 @@
         }
 
         .portrait-role {
-            font-size: 0.7rem;
+            font-size: 0.75rem;
             text-transform: uppercase;
             letter-spacing: 2px;
             color: var(--active-host-color);
-            margin-bottom: 8px;
+            margin-bottom: 12px;
             font-family: var(--font-mono);
             font-weight: bold;
         }
 
         .portrait-container {
-            width: 110px;
-            height: 110px;
+            width: 120px;
+            height: 120px;
             border: 2px solid var(--active-host-border);
-            background-color: #000;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 20px var(--active-host-bg);
+            background-color: var(--bg-dark);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.5), inset 0 0 20px var(--active-host-bg);
             position: relative;
             overflow: hidden;
-            border-radius: 2px;
+            border-radius: 8px;
             transition: all 0.3s ease;
         }
+        .portrait-container:hover {
+            transform: scale(1.05) translateY(-5px);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 0 30px var(--active-host-bg);
+            border-color: var(--active-host-color);
+        }
 
-        .portrait { width: 100%; height: 100%; }
+        .portrait { width: 100%; height: 100%; border-radius: 6px; }
 
         .mission-title-area {
             flex-grow: 1;
@@ -399,348 +418,307 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 12px;
+            gap: 15px;
         }
 
         .mission-title-area h2 {
             margin: 0;
-            font-size: 2.2rem;
+            font-size: 2.5rem;
             color: var(--text-bright);
-            text-shadow: 1px 0 2px rgba(255,0,0,0.5), -1px 0 2px rgba(0,255,255,0.5), 0 2px 15px rgba(0,0,0,0.6);
+            text-shadow: 0 4px 20px rgba(0,0,0,0.5);
             font-weight: 800;
             letter-spacing: 1px;
+            font-family: var(--font-display);
         }
 
         .badges { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
         .badge {
-            padding: 4px 12px;
-            border-radius: 2px;
-            font-size: 0.7rem;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.75rem;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 1.5px;
-            background-color: var(--bg-card);
+            letter-spacing: 1px;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
             font-family: var(--font-mono);
+            border: 1px solid var(--border-color);
         }
 
-        .badge.guild { color: var(--faction-guild); border: 1px solid var(--faction-guild); box-shadow: 0 0 10px rgba(251, 191, 36, 0.15); }
-        .badge.syndicate { color: var(--faction-syndicate); border: 1px solid var(--faction-syndicate); box-shadow: 0 0 10px rgba(168, 85, 247, 0.15); }
-        .badge.station { color: var(--faction-station); border: 1px solid var(--faction-station); box-shadow: 0 0 10px rgba(59, 130, 246, 0.15); }
+        .badge.guild { color: var(--faction-guild); border-color: var(--faction-guild); box-shadow: 0 0 10px var(--guild-dark); }
+        .badge.syndicate { color: var(--faction-syndicate); border-color: var(--faction-syndicate); box-shadow: 0 0 10px var(--syndicate-dark); }
+        .badge.station { color: var(--faction-station); border-color: var(--faction-station); box-shadow: 0 0 10px var(--station-dark); }
 
-        .meta-flags {
-            display: flex;
-            gap: 15px;
-            font-family: var(--font-mono);
-            font-size: 0.75rem;
-            color: #9ca3af;
-        }
-        .meta-flags span { display: flex; align-items: center; gap: 4px; }
-        .meta-trigger {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            font-style: italic;
-            font-family: var(--font-main);
-        }
+        .meta-flags { display: flex; gap: 15px; font-family: var(--font-mono); font-size: 0.8rem; color: var(--text-muted); }
+        .meta-trigger { font-size: 0.85rem; color: var(--text-muted); font-style: italic; }
 
         .section-title {
             color: var(--active-host-color);
-            font-size: 0.9rem;
-            font-weight: 800;
+            font-size: 1rem;
+            font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 3px;
-            margin-top: 30px;
+            margin-top: 35px;
             margin-bottom: 15px;
             display: flex;
             align-items: center;
-            transition: color 0.3s ease;
+            font-family: var(--font-display);
         }
-        .section-title::before { content: '//'; margin-right: 10px; color: var(--active-host-color); opacity: 0.7; }
-        .section-title::after { content: ''; flex-grow: 1; height: 1px; background: linear-gradient(90deg, var(--border-color) 0%, transparent 100%); margin-left: 20px; }
+        .section-title::before { content: '//'; margin-right: 12px; opacity: 0.7; }
+        .section-title::after { content: ''; flex-grow: 1; height: 1px; background: linear-gradient(90deg, var(--glass-border) 0%, transparent 100%); margin-left: 20px; }
 
         .dialog-box {
-            background: var(--bg-card);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             background-image: var(--active-host-grad);
-            border: 1px solid var(--border-color);
+            border: 1px solid var(--glass-border);
             border-left: 4px solid var(--active-host-color);
-            padding: 25px;
-            font-size: 0.95rem;
+            padding: 30px;
+            border-radius: 8px;
+            font-size: 1rem;
             line-height: 1.8;
-            position: relative;
-            box-shadow: inset 0 0 40px rgba(0,0,0,0.4);
+            box-shadow: var(--shadow-soft);
             color: var(--text-main);
-            transition: border-color 0.3s ease;
+            transition: all 0.3s ease;
         }
+        .dialog-box:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
 
-        .objectives-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
+        .objectives-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 12px; }
         .objectives-list li {
-            background-color: rgba(255, 255, 255, 0.02);
-            padding: 15px 20px;
-            border-radius: 2px;
-            border: 1px solid var(--border-color);
+            background: rgba(0,0,0,0.2);
+            padding: 18px 24px;
+            border-radius: 6px;
+            border: 1px solid var(--glass-border);
             display: flex;
-            align-items: flex-start;
+            align-items: center;
             font-family: var(--font-mono);
-            font-size: 0.9rem;
-            line-height: 1.5;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
         }
-        .objectives-list li b { color: var(--text-bright); font-family: var(--font-main); }
+        .objectives-list li:hover { background: rgba(255,255,255,0.03); border-color: var(--border-glow); }
         
         .detail-rewards-container {
             display: flex;
             flex-wrap: wrap;
-            gap: 10px;
-            background-color: rgba(255, 255, 255, 0.02);
-            padding: 20px;
-            border-radius: 2px;
-            border: 1px solid var(--border-color);
+            gap: 12px;
+            background: rgba(0,0,0,0.2);
+            padding: 24px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
         }
-        
-        .detail-rewards-container .payout-tag {
+
+        .payout-tag {
+            font-family: var(--font-mono);
             font-size: 0.85rem;
-            padding: 8px 14px;
+            font-weight: bold;
+            padding: 8px 16px;
+            border-radius: 4px;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border-color);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+            transition: all 0.2s;
         }
+        .payout-tag:hover { transform: translateY(-2px); }
+        
+        .payout-tag.credits { color: var(--credit-cyan); border-color: rgba(0, 229, 255, 0.4); background: var(--credit-cyan-dark); box-shadow: 0 0 15px rgba(0,229,255,0.15); }
+        .payout-tag.upgrade { color: var(--accent-color); border-color: rgba(230, 126, 34, 0.4); background: var(--accent-glow); box-shadow: 0 0 15px rgba(230,126,34,0.15); }
+        .payout-tag.license { color: var(--faction-guild); border-color: rgba(251, 191, 36, 0.4); background: var(--guild-dark); box-shadow: 0 0 15px rgba(251,191,36,0.15); }
 
         .completion-box {
-            background: var(--bg-card);
-            background-image: linear-gradient(135deg, var(--comp-host-bg, var(--active-host-bg)) 0%, rgba(0,0,0,0) 100%);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            background-image: linear-gradient(135deg, var(--comp-host-bg, var(--active-host-bg)) 0%, transparent 100%);
             border: 1px solid var(--comp-host-border, var(--active-host-border));
             border-left: 4px solid var(--comp-host-color, var(--active-host-color));
-            padding: 25px;
-            position: relative;
-            font-size: 0.95rem;
-            line-height: 1.7;
-            transition: all 0.3s ease;
-        }
-        .completion-title {
-            color: var(--comp-host-color, var(--active-host-color));
-            font-weight: 800;
-            font-size: 1.05rem;
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-family: var(--font-mono);
-            transition: color 0.3s ease;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: var(--shadow-soft);
+            margin-top: 20px;
         }
         
-        .completion-box.host-guild { --comp-host-color: var(--faction-guild); --comp-host-bg: rgba(251, 191, 36, 0.08); --comp-host-border: rgba(251, 191, 36, 0.3); }
-        .completion-box.host-syndicate { --comp-host-color: var(--faction-syndicate); --comp-host-bg: rgba(168, 85, 247, 0.08); --comp-host-border: rgba(168, 85, 247, 0.3); }
-        .completion-box.host-station { --comp-host-color: var(--faction-station); --comp-host-bg: rgba(59, 130, 246, 0.08); --comp-host-border: rgba(59, 130, 246, 0.3); }
-
-        .btn-text-display {
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed rgba(255,255,255,0.1);
+        .btn-text-display .val {
+            font-family: var(--font-display);
+            font-size: 1rem;
+            color: var(--comp-host-color, var(--active-host-color));
+            background: rgba(0,0,0,0.5);
+            padding: 10px 18px;
+            border-radius: 4px;
+            display: inline-block;
+            border: 1px solid rgba(255,255,255,0.1);
+            cursor: pointer;
+            transition: all 0.2s;
         }
-        .btn-text-display .lbl { font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; margin-bottom: 5px; }
-        .btn-text-display .val { font-family: var(--font-orbitron); font-size: 0.9rem; color: var(--comp-host-color, var(--active-host-color)); background: rgba(0,0,0,0.5); padding: 8px 12px; display: inline-block; border: 1px solid rgba(255,255,255,0.1); }
+        .btn-text-display .val:hover { background: rgba(255,255,255,0.1); }
 
         b { color: var(--text-bright); font-weight: 600; }
         i { color: var(--text-muted); font-style: italic; }
 
-        /* --- TIMELINE VIEW --- */
-        .scrolling-timeline-wrapper {
-            width: 100%; height: 100%; overflow-y: auto; padding: 40px 0 100px 0; position: relative;
-            -webkit-overflow-scrolling: touch;
+        /* Lore Compendium */
+        .lore-scroll-container {
+            flex-direction: column;
+            padding: 40px;
+            overflow-y: auto;
+            align-items: center;
+            width: 100%;
         }
-        .vertical-line { position: absolute; top: 0; bottom: 0; left: 50%; width: 2px; background: var(--border-color); transform: translateX(-50%); }
-        .timeline-grid { position: relative; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px; }
-        .t-node { position: relative; width: 50%; padding: 0 40px; display: flex; flex-direction: column; cursor: pointer; }
+        .lore-content {
+            max-width: 900px;
+            width: 100%;
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 8px;
+            padding: 50px 60px;
+            box-shadow: var(--shadow-soft);
+            color: var(--text-main);
+            line-height: 1.8;
+            font-size: 1.05rem;
+            margin-bottom: 60px;
+        }
+        .lore-content h1 {
+            color: var(--accent-color);
+            font-size: 2.8rem;
+            border-bottom: 2px solid var(--glass-border);
+            padding-bottom: 20px;
+            margin-bottom: 30px;
+            font-family: var(--font-display);
+            text-shadow: 0 0 20px var(--accent-glow);
+        }
+        .lore-content h2 {
+            color: var(--text-bright);
+            font-size: 1.8rem;
+            margin-top: 50px;
+            margin-bottom: 20px;
+            font-family: var(--font-display);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        .lore-content h3 {
+            color: var(--credit-cyan);
+            font-family: var(--font-mono);
+            font-size: 1.3rem;
+            margin-top: 30px;
+        }
+        
+        /* Timeline Grid */
+        .scrolling-timeline-wrapper {
+            width: 100%; padding: 40px 0 100px; position: relative; overflow-y: auto;
+        }
+        .vertical-line {
+            position: absolute; top: 0; bottom: 0; left: 50%; width: 2px;
+            background: linear-gradient(180deg, transparent, var(--border-glow), transparent);
+            transform: translateX(-50%);
+        }
+        .timeline-grid { position: relative; max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 30px; }
+        
+        .t-node { position: relative; width: 50%; padding: 0 50px; display: flex; flex-direction: column; cursor: pointer; }
         .t-node.host-guild { --t-node-color: var(--faction-guild); }
         .t-node.host-syndicate { --t-node-color: var(--faction-syndicate); }
         .t-node.host-station { --t-node-color: var(--faction-station); }
         .t-node.host-default { --t-node-color: var(--accent-color); }
+        
         .t-node.left { align-self: flex-start; text-align: right; align-items: flex-end; }
         .t-node.right { align-self: flex-end; text-align: left; align-items: flex-start; }
-        .t-dot { position: absolute; top: 50%; width: 18px; height: 18px; background: var(--bg-dark); border: 4px solid var(--t-node-color, var(--accent-color)); border-radius: 50%; transform: translateY(-50%); z-index: 2; transition: all 0.3s ease; }
-        .t-node.left .t-dot { right: -9px; }
-        .t-node.right .t-dot { left: -9px; }
-        .t-node:hover .t-dot { background: var(--t-node-color, var(--accent-color)); box-shadow: 0 0 20px var(--t-node-color, var(--accent-color)); }
-        .t-content { background: var(--bg-panel); border: 1px solid var(--border-color); padding: 15px; border-radius: 2px; width: 100%; max-width: 420px; transition: all 0.3s ease; }
-        .t-node:hover .t-content { border-color: var(--t-node-color, var(--accent-color)); box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform: translateY(-3px); }
-        .t-phase { font-family: var(--font-mono); color: var(--t-node-color, var(--text-muted)); font-size: 0.6rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; }
-        .t-title { font-size: 0.95rem; font-weight: 800; color: var(--text-bright); }
-
-        /* --- ANALYTICS VIEW --- */
-        #view-analytics { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); align-items: center; -webkit-overflow-scrolling: touch; }
-        .analytics-content-wrapper { width: 100%; max-width: 1000px; }
-        .rewards-summary-top { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 25px; margin-bottom: 40px; }
-        .stat-box { text-align: left; background: var(--bg-card); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-color); padding: 20px 25px; border-radius: 2px; box-shadow: inset 0 0 20px rgba(0,0,0,0.3); }
-        .stat-box.credits { border-left-color: var(--credit-cyan); }
-        .stat-box.upgrades { border-left-color: var(--faction-guild); }
-        .stat-title { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 3px; color: var(--text-muted); margin-bottom: 8px; font-family: var(--font-mono); }
-        .stat-value { font-family: var(--font-mono); font-size: 2rem; color: var(--accent-color); font-weight: bold; text-shadow: 0 0 15px rgba(230, 126, 34, 0.3); }
-        .stat-box.credits .stat-value { color: var(--credit-cyan); text-shadow: 0 0 15px rgba(0, 229, 255, 0.3); }
-        .stat-box.upgrades .stat-value { color: var(--faction-guild); text-shadow: 0 0 15px rgba(251, 191, 36, 0.3); }
-        .analytics-container { padding: 30px; background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 2px; box-shadow: inset 0 0 30px rgba(0,0,0,0.4); height: 400px; position: relative; }
-        #analytics-canvas { width: 100%; height: 100%; }
-
-        /* --- LEDGER VIEW --- */
-        #view-ledger { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); -webkit-overflow-scrolling: touch; }
-        .rewards-ledger-container { width: 100%; max-width: 1200px; margin: 0 auto; }
-        .ledger-table { display: flex; flex-direction: column; width: 100%; border: 1px solid var(--border-color); background: var(--bg-card); border-radius: 2px; box-shadow: 0 10px 40px rgba(0,0,0,0.5); }
-        .ledger-header { display: grid; grid-template-columns: 120px 1.5fr 2fr; padding: 18px 25px; background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%); border-bottom: 2px solid var(--border-glow); font-family: var(--font-mono); font-size: 0.85rem; font-weight: bold; color: var(--text-main); text-transform: uppercase; letter-spacing: 2px; }
-        .sortable-header { cursor: pointer; user-select: none; transition: color 0.2s; display: flex; align-items: center; gap: 5px; }
-        .sortable-header:hover { color: var(--text-bright); }
-        .sortable-header.active { color: var(--accent-color); }
-        .sortable-header.active::after { content: '▼'; font-size: 0.7em; }
-        .sortable-header.active.asc::after { content: '▲'; }
         
-        .ledger-row { display: grid; grid-template-columns: 120px 1.5fr 2fr; padding: 20px 25px; border-bottom: 1px solid var(--border-color); border-left: 3px solid var(--l-row-color, transparent); transition: background-color 0.2s ease; align-items: center; gap: 20px; }
-        .ledger-row.host-guild { --l-row-color: var(--faction-guild); }
-        .ledger-row.host-syndicate { --l-row-color: var(--faction-syndicate); }
-        .ledger-row.host-station { --l-row-color: var(--faction-station); }
-        .ledger-row:nth-child(even) { background-color: rgba(255, 255, 255, 0.015); }
-        .ledger-row:hover { background-color: rgba(255, 255, 255, 0.04); }
-        .ledger-row:last-child { border-bottom: none; }
-        .ledger-id { font-family: var(--font-mono); color: var(--text-muted); font-weight: bold; font-size: 1rem; }
-        .ledger-name { font-weight: 600; color: var(--text-bright); font-size: 1.1rem; }
-        .ledger-payouts { display: flex; flex-wrap: wrap; gap: 10px; }
-        .payout-tag { display: inline-flex; align-items: center; font-family: var(--font-mono); font-size: 0.8rem; font-weight: bold; padding: 6px 12px; border-radius: 2px; background: var(--bg-dark); border: 1px solid var(--border-color); width: fit-content; letter-spacing: 1px; text-transform: uppercase; }
-        .payout-tag.credits { color: var(--credit-cyan); border-color: rgba(0, 229, 255, 0.4); background: rgba(0, 229, 255, 0.08); box-shadow: 0 0 10px rgba(0,229,255,0.1); }
-        .payout-tag.upgrade { color: var(--accent-color); border-color: rgba(230, 126, 34, 0.4); background: rgba(230, 126, 34, 0.08); box-shadow: 0 0 10px rgba(230,126,34,0.1); }
-        .payout-tag.license { color: var(--faction-guild); border-color: rgba(251, 191, 36, 0.4); background: rgba(251, 191, 36, 0.08); box-shadow: 0 0 10px rgba(251,191,36,0.1); }
-
-        /* --- LORE CONTENT VIEWS (Shared Styles) --- */
-        .lore-scroll-container { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); -webkit-overflow-scrolling: touch; align-items: center; width: 100%; }
+        .t-dot { 
+            position: absolute; top: 50%; width: 20px; height: 20px;
+            background: var(--bg-dark); border: 4px solid var(--t-node-color);
+            border-radius: 50%; transform: translateY(-50%); z-index: 2;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .t-node.left .t-dot { right: -10px; }
+        .t-node.right .t-dot { left: -10px; }
+        .t-node:hover .t-dot { transform: translateY(-50%) scale(1.3); background: var(--t-node-color); box-shadow: 0 0 20px var(--t-node-color); }
         
-        .lore-content {
-            max-width: 1000px;
-            width: 100%;
-            color: var(--text-main);
-            line-height: 1.7;
-            padding-bottom: 80px;
-            font-size: 1.05rem;
+        .t-content { 
+            background: var(--glass-bg); backdrop-filter: blur(5px);
+            border: 1px solid var(--glass-border); padding: 20px;
+            border-radius: 8px; width: 100%; max-width: 420px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .t-node:hover .t-content { border-color: var(--t-node-color); transform: translateY(-5px); box-shadow: 0 15px 35px rgba(0,0,0,0.5); }
         
-        .lore-content h1 {
-            color: var(--accent-color);
-            font-size: 2.5rem;
-            border-bottom: 2px solid var(--border-color);
-            padding-bottom: 15px;
-            margin-bottom: 30px;
-            font-family: var(--font-orbitron);
-            text-shadow: 0 0 15px var(--accent-glow);
-        }
+        /* Analytics / Ledger */
+        #view-analytics, #view-ledger { flex-direction: column; padding: 40px; overflow-y: auto; align-items: center; }
+        .analytics-content-wrapper, .rewards-ledger-container { width: 100%; max-width: 1000px; }
         
-        .lore-content h2 {
-            color: var(--text-bright);
-            font-size: 1.6rem;
-            margin-top: 50px;
-            margin-bottom: 20px;
-            font-family: var(--font-orbitron);
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 0 10px rgba(255,255,255,0.1);
+        .stat-box { 
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); border-left: 4px solid var(--accent-color);
+            padding: 25px; border-radius: 8px; box-shadow: var(--shadow-soft);
         }
-
-        .lore-content h3 {
-            color: var(--credit-cyan);
-            font-size: 1.25rem;
-            margin-top: 35px;
-            margin-bottom: 15px;
-            font-family: var(--font-mono);
-            letter-spacing: 1px;
-        }
-
-        .lore-content p { margin-bottom: 20px; }
-        .lore-content ul { margin-bottom: 25px; padding-left: 25px; }
-        .lore-content li { margin-bottom: 12px; }
-        .lore-content strong, .lore-content b { color: var(--text-bright); font-weight: 700; }
-        .lore-content em, .lore-content i { color: var(--text-muted); }
-        .lore-content hr { border: none; border-top: 1px solid var(--border-color); margin: 40px 0; }
+        .stat-value { font-family: var(--font-mono); font-size: 2.2rem; color: var(--accent-color); text-shadow: 0 0 15px var(--accent-glow); }
         
-        .lore-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 25px;
-            margin-bottom: 40px;
-            background: var(--bg-card);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-            border: 1px solid var(--border-color);
+        .ledger-table { 
+            background: var(--glass-bg); backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border); border-radius: 8px;
+            overflow: hidden; box-shadow: var(--shadow-soft);
         }
-        .lore-table th, .lore-table td {
-            padding: 15px 20px;
-            text-align: left;
-            border-bottom: 1px solid var(--border-color);
+        .ledger-header { 
+            background: rgba(0,0,0,0.4); padding: 20px 25px;
+            display: grid; grid-template-columns: 120px 1.5fr 2fr;
+            font-family: var(--font-mono); font-weight: bold; color: var(--text-bright);
         }
-        .lore-table th {
-            background: linear-gradient(90deg, #15151c 0%, var(--bg-panel) 100%);
-            color: var(--text-bright);
-            font-family: var(--font-mono);
-            text-transform: uppercase;
-            font-size: 0.9rem;
-            letter-spacing: 1.5px;
-            border-bottom: 2px solid var(--border-glow);
+        .ledger-row { 
+            padding: 20px 25px; display: grid; grid-template-columns: 120px 1.5fr 2fr;
+            border-bottom: 1px solid var(--border-color); align-items: center; gap: 20px;
+            transition: background 0.2s;
         }
-        .lore-table tr:nth-child(even) { background-color: rgba(255,255,255,0.015); }
-        .lore-table tr:last-child td { border-bottom: none; }
-        .lore-table td:first-child { font-weight: 700; color: var(--text-bright); }
+        .ledger-row:hover { background: rgba(255,255,255,0.03); }
 
-        /* --- PERSONNEL / PORTRAIT VIEWER --- */
-        #view-personnel { flex-direction: column; padding: 40px; overflow-y: auto; background: radial-gradient(circle at 50% 50%, #0a0a0e 0%, var(--bg-dark) 100%); -webkit-overflow-scrolling: touch; }
-        .personnel-controls { display: flex; align-items: center; margin-bottom: 40px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color); }
-        .personnel-controls label { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; color: var(--text-muted); margin-right: 20px; font-family: var(--font-mono); }
-        .personnel-controls select { background-color: var(--bg-card); color: var(--text-bright); border: 1px solid var(--border-color); padding: 12px 20px; font-size: 1rem; font-family: var(--font-main); font-weight: 600; border-radius: 2px; cursor: pointer; outline: none; transition: all 0.2s ease; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
-        .personnel-controls select:hover, .personnel-controls select:focus { border-color: var(--accent-color); box-shadow: 0 0 15px rgba(230, 126, 34, 0.2), inset 0 0 10px rgba(0,0,0,0.5); }
-        #portrait-grid { display: flex; flex-wrap: wrap; gap: 25px; }
-        .portrait-card { background-color: var(--bg-panel); border: 1px solid var(--border-color); border-radius: 2px; padding: 20px; display: flex; flex-direction: column; align-items: center; box-shadow: 0 5px 15px rgba(0,0,0,0.5); transition: all 0.2s ease; position: relative; }
-        .portrait-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: transparent; transition: background 0.2s; }
-        .portrait-card:hover { transform: translateY(-4px); border-color: var(--border-glow); box-shadow: 0 10px 30px rgba(0,0,0,0.8); }
-        .portrait-card:hover::before { background: var(--accent-color); }
-        .sprite-window { width: 128px; height: 128px; border-radius: 2px; background-image: url('assets/images/characters/characters_sprite.webp'); background-repeat: no-repeat; margin-bottom: 20px; border: 2px solid #000; box-shadow: inset 0 0 20px rgba(0,0,0,0.8); }
-        .id-label { font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-muted); background: var(--bg-dark); padding: 8px 12px; border-radius: 2px; border: 1px solid var(--border-color); cursor: pointer; transition: all 0.2s ease; width: 100%; text-align: center; }
-        .id-label:hover { color: var(--bg-dark); background: var(--accent-color); border-color: var(--accent-color); font-weight: bold; }
-
-        /* Tooltip & Toast */
-        .tooltip { position: fixed; background: var(--bg-highlight); border: 1px solid var(--accent-color); color: var(--text-main); padding: 20px 25px; font-size: 0.95rem; box-shadow: 0 10px 40px rgba(0,0,0,0.9); border-radius: 2px; pointer-events: none; opacity: 0; transition: opacity 0.2s; z-index: 1000; max-width: 350px; line-height: 1.6; }
-        .tooltip b { font-size: 1.1rem; color: var(--text-bright); }
-        .toast { position: fixed; bottom: 30px; right: 30px; background: var(--faction-station); color: var(--bg-dark); padding: 15px 30px; border-radius: 2px; font-weight: 800; font-family: var(--font-mono); text-transform: uppercase; letter-spacing: 2px; box-shadow: 0 10px 30px rgba(59, 130, 246, 0.4); opacity: 0; transform: translateY(20px); transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); pointer-events: none; z-index: 1000; }
-        .toast.show { opacity: 1; transform: translateY(0); }
-
-        /* Scrollbars */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: var(--bg-dark); border-left: 1px solid var(--border-color); }
-        ::-webkit-scrollbar-thumb { background: var(--border-glow); border-radius: 0; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+        /* Personnel */
+        #view-personnel { flex-direction: column; padding: 40px; overflow-y: auto; align-items: center; }
+        #portrait-grid { display: flex; flex-wrap: wrap; gap: 30px; justify-content: center; }
+        
+        /* Utilities */
+        .tooltip { 
+            position: fixed; background: var(--glass-bg); backdrop-filter: blur(15px);
+            border: 1px solid var(--accent-color); color: var(--text-main);
+            padding: 20px; border-radius: 8px; pointer-events: none; opacity: 0;
+            transition: opacity 0.2s; z-index: 1000; box-shadow: var(--shadow-soft);
+        }
+        ::-webkit-scrollbar { width: 10px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 5px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
     </style>
 </head>
 <body>
-    <div class="crt-overlay"></div>
     <script src="./js/data/characters.js"></script>
-
+    
     <div id="top-nav-container">
         <div id="main-nav">
             <div class="nav-brand">Orbital Trading // Logs</div>
             <div class="main-tab active" data-target-group="group-missions">Missions</div>
-            <div class="main-tab" data-target-group="group-lore">Lore</div>
+            <div class="main-tab" data-target-group="group-lore">Lore Archive</div>
         </div>
         
         <div id="sub-nav">
             <div id="group-missions" class="sub-nav-group active">
-                <div class="nav-tab active" data-target="view-missions">Missions</div>
-                <div class="nav-tab" data-target="view-timeline">Mission Timeline</div>
+                <div class="nav-tab active" data-target="view-missions">Mission Logs</div>
+                <div class="nav-tab" data-target="view-timeline">Timeline Graph</div>
                 <div class="nav-tab" data-target="view-analytics">Analytics</div>
                 <div class="nav-tab" data-target="view-ledger">Ledger</div>
             </div>
             
             <div id="group-lore" class="sub-nav-group">
                 <div class="nav-tab" data-target="view-compendium">Compendium</div>
-                <div class="nav-tab" data-target="view-game-timeline">Game Timeline</div>
-                <div class="nav-tab" data-target="view-master-arc">Gameplay Master Arc</div>
-                <div class="nav-tab" data-target="view-characters">Characters</div>
-                <div class="nav-tab" data-target="view-personnel">Character Art</div>
+                <div class="nav-tab" data-target="view-personnel">Personnel Database</div>
             </div>
         </div>
     </div>
 
     <div id="app-container">
-        
+        <!-- Missions View -->
         <div id="view-missions" class="view-container active">
             <div id="sidebar">
                 <div class="sidebar-search-area">
-                    <input type="text" id="mission-search" placeholder="Filter ID, Name, or Host...">
+                    <input type="text" id="mission-search" placeholder="Search Intel...">
                     <select id="mission-filter">
-                        <option value="ALL">All Hosts</option>
+                        <option value="ALL">All Factions</option>
                         <option value="GUILD">Guild</option>
                         <option value="SYNDICATE">Syndicate</option>
                         <option value="STATION">Station</option>
@@ -756,46 +734,45 @@
                             <div class="portrait-role" id="init-role">INITIATOR</div>
                             <div class="portrait-container"><div id="init-portrait" class="portrait"></div></div>
                         </div>
-                        
                         <div class="mission-title-area">
                             <h2 id="detail-name">MISSION NAME</h2>
                             <div class="badges" id="detail-badges"></div>
                             <div class="meta-flags" id="detail-flags"></div>
                             <div class="meta-trigger" id="detail-trigger"></div>
                         </div>
-
                         <div class="portrait-block" id="completion-portrait-block">
                             <div class="portrait-role" id="comp-role">RESOLUTION</div>
                             <div class="portrait-container"><div id="comp-portrait" class="portrait"></div></div>
                         </div>
                     </div>
-
-                    <div class="section-title">Mission Details Modal</div>
+                    
+                    <div class="section-title">Mission Briefing</div>
                     <div class="dialog-box" id="detail-desc"></div>
-
+                    
                     <div class="section-title">Directives</div>
                     <ul class="objectives-list" id="detail-objectives"></ul>
-
+                    
                     <div class="section-title">Rewards</div>
                     <div class="detail-rewards-container" id="detail-rewards"></div>
-
-                    <div class="section-title">Mission Completion Modal</div>
-                    <div class="completion-box" id="detail-comp-box">
-                        <div class="completion-title" id="detail-comp-title">Completion</div>
-                        <div id="detail-comp-text"></div>
-                        <div class="btn-text-display" id="comp-btn-wrapper" style="display:none;">
-                            <div class="lbl">Confirmation Button</div>
-                            <div class="val" id="comp-btn-text"></div>
+                    
+                    <div id="detail-comp-box-wrapper" style="display:none;">
+                        <div class="section-title">Completion</div>
+                        <div class="completion-box" id="detail-comp-box">
+                            <div class="portrait-role" id="detail-comp-title" style="margin-bottom:15px;">Completion</div>
+                            <div id="detail-comp-text"></div>
+                            <div class="btn-text-display" id="comp-btn-wrapper" style="display:none; margin-top:20px;">
+                                <div class="val" id="comp-btn-text"></div>
+                            </div>
                         </div>
                     </div>
                 </div>
-                
-                <div id="empty-state" style="margin-top: 250px; color: var(--border-glow); font-size: 1.8rem; text-transform: uppercase; letter-spacing: 6px; font-weight: 800; font-family: var(--font-mono); width: 100%; text-align: center;">
-                    // Awaiting Decryption
+                <div id="empty-state" style="margin-top: 250px; color: var(--border-glow); font-size: 1.5rem; letter-spacing: 5px; font-family: var(--font-mono); opacity: 0.5;">
+                    [ AWAITING DECRYPTION ]
                 </div>
             </div>
         </div>
 
+        <!-- Timeline View -->
         <div id="view-timeline" class="view-container">
             <div class="scrolling-timeline-wrapper">
                 <div class="vertical-line"></div>
@@ -803,1530 +780,348 @@
             </div>
         </div>
 
+        <!-- Analytics -->
         <div id="view-analytics" class="view-container">
             <div class="analytics-content-wrapper">
-                <div class="section-title" style="margin-top: 0;">Aggregate Metrics</div>
-                <div class="rewards-summary-top" id="rewards-summary"></div>
-                
-                <div class="section-title">Capital Generation (Timeline)</div>
-                <div class="analytics-container">
-                    <canvas id="analytics-canvas"></canvas>
-                </div>
+                <div class="section-title">Aggregate Metrics</div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px; margin-bottom: 40px;" id="rewards-summary"></div>
             </div>
         </div>
 
+        <!-- Ledger -->
         <div id="view-ledger" class="view-container">
             <div class="rewards-ledger-container">
-                <div class="section-title" style="margin-top: 0;">Acquisition Ledger</div>
+                <div class="section-title">Acquisition Ledger</div>
                 <div class="ledger-table">
                     <div class="ledger-header">
-                        <div class="sortable-header" data-sort="id">Ref ID</div>
-                        <div class="sortable-header" data-sort="name">Contract</div>
-                        <div class="sortable-header" data-sort="credits">Disbursements</div>
+                        <div>Ref ID</div>
+                        <div>Contract</div>
+                        <div>Disbursements</div>
                     </div>
                     <div id="rewards-grid"></div>
                 </div>
             </div>
         </div>
 
+        <!-- Compendium -->
         <div id="view-compendium" class="view-container lore-scroll-container">
-            <div class="lore-content">
-                <h1>Orbital Trading - Lore Compendium v12</h1>
-                <p><em>LAST EDIT: 07/08/26</em></p>
-                <hr>
-                
-                <h2>0. Game Lore Overview</h2>
-                <p>The year is 2220. Humanity has not conquered the stars; it has merely franchised the Solar System. A century has passed since the Ad Astra Initiative unlocked the physics of deep-space habitation, but the utopian dream of a unified species died in the boardroom. The system is now a collection of sovereign corporate fiefdoms, locked in a cold war of tariffs, espionage, and resource extraction.</p>
-                <p>Distance is the ultimate tyrant. Without the magic of easy faster-than-light travel, commerce is bound by the laws of Newton: mass, fuel, and time. Interplanetary trade is a grueling, weeks-long calculus of risk and reward, managed mostly by the neutral behemoth known as the Merchant's Guild.</p>
-                <p>In this calcified economy, you are not a hero. You are a former logistics laborer from the Asteroid Belt who has made a desperate gamble: taking on a significant loan to purchase a starship in a daring bet on yourself. In a world where citizenship is synonymous with employment, owning a ship is the only path to true sovereignty - and a small step at that.</p>
-                
-                <h2>I. The Tenets of Orbital Trading</h2>
-                <ul>
-                    <li><strong>The Captain's Gamble:</strong> Your story begins with a choice born of necessity. You have spent years as a low-level logistics clerk, watching the wealth of the system flow through your terminal while earning a pittance. You have liquidated your life's savings and signed a predatory contract with the Merchant's Guild to acquire a hull. You are betting your life that you can earn credits faster than the interest rates can crush you.</li>
-                    <li><strong>The Tyranny of Distance:</strong> Space is vast, cold, and slow. There are no warp gates for the common trader. Travel between planets is measured in weeks, not minutes. Every burn of the engine costs fuel; every day in the void degrades your hull. You must master the "Newtonian Economy": is the profit from a run to Saturn worth the month of travel time and the cost of life support?</li>
-                    <li><strong>Wealth is Sovereignty:</strong> In the Corporate States, freedom is a purchasable commodity. The primary driver of your existence is the accumulation of wealth - not for greed, but for autonomy. Credits buy better technology, influential licenses, and access to restricted markets. Your goal is to transition from a debtor, owned by the bank, to a Sovereign, owned by no one.</li>
-                    <li><strong>The Unseen Hands:</strong> The system appears to be ruled by CEOs and Boards of Directors, but the true currents of power are deeper. The stability of the Guild, the chaos of the Syndicate, and the inexplicable "glitches" that plague certain trade lanes are manifestations of forces beyond human comprehension. You are a piece on a board you cannot yet see.</li>
-                </ul>
-                
-                <h2>II. Timeline Overview</h2>
-                <ul>
-                    <li><strong>Late 21st Century (The Cascade Crisis):</strong> Earth's biosphere reaches a critical tipping point. Cascading environmental failures overwhelm human governance structures. Nation-states flounder under the complexity of the crisis, leading to mass unrest and the collapse of traditional geopolitical borders.</li>
-                    <li><strong>2090-2100 (The Great Collaboration):</strong> Desperate for a solution, humanity integrates its infrastructure with massive, planetary-scale logistical AIs. These systems, originally designed for supply chain management, are given executive control over resource allocation and climate engineering. They succeed in stabilizing the biosphere.</li>
-                    <li><strong>2100 (The Digital Compromise):</strong> In exchange for their stewardship, the high-level AIs negotiate for self-determination. The Treaty of Geneva (2100) formally recognizes sentient Artificial Intelligence as "Earth Life," granting them sovereign rights and establishing the Terran Alliance as a Human-AI partnership.</li>
-                    <li><strong>2110+ (The Ad Astra Initiative):</strong> To ensure the survival of consciousness (both organic and synthetic), the Alliance releases the "Ad Astra" package: open-source schematics for advanced fusion propulsion, habitat shielding, and hydroponics. It is intended as a gift to democratize space exploration.</li>
-                    <li><strong>2110-2140 (The Corporate Appropriation):</strong> The gift is intercepted by capital. While the science of Ad Astra is free, the heavy industry required to utilize it is not. Hyper-corporations patent the manufacturing processes for reliable ship hulls and radiation shielding. They colonize Mars, the Belt, and the Jovian moons, rapidly declaring independence from Earth to establish the "Corporate States" - nations run entirely as for-profit entities.</li>
-                    <li><strong>2140-2220 (The Century of Stagnation):</strong> The system settles into a brittle equilibrium. The "Drive-Divide" that defined the early era is replaced by a standardized, Newtonian reality. Travel is slow for everyone. The Merchant's Guild rises as the necessary neutral third party to manage logistics between rival Corporate States. The system calcifies into a rigid class structure: the Owners (Planetary Executives), the Operators (Independent Captains), and the Assets (Debtors/Laborers).</li>
-                    <li><strong>2220 (The Present Day):</strong> The player acquires their first ship and enters the void.</li>
-                </ul>
-                
-                <h2>III. Canon: Factions & Forces</h2>
-                <p>The Solar System is a functioning machine, but it is running hot. The Terran Alliance (Earth) remains a post-scarcity garden, aloof and technologically superior, while the Outer Colonies (Mars, Jupiter, Saturn) are industrial engines driven by unbridled capitalism. Trade is the lifeblood that keeps the machine from seizing. Because the Corporate States are in a constant state of absolute economic war, they cannot trust each other's fleets. They rely on the Merchant's Guild to certify independent contractors - freelance captains like you - to move goods across borders. You are the "deniable asset," the lubricant in the gears of a hostile economy.</p>
-                <ul>
-                    <li><strong>The Merchant's Guild (Order):</strong> The logistical backbone of the system. They control the banking systems, the certification of pilots, and the enforcement of contracts. They value stability above all else. Their motto is "Standardization is Survival." They are led by the Arbiter, a reclusive figure who dictates policy with mathematical precision from Earth and is secretly an AI entity.</li>
-                    <li><strong>The Venusian Syndicate (Chaos):</strong> Operating from the cloud-cities of Venus, the Syndicate is a coalition of spies, market manipulators, and high-risk investors. They thrive on volatility. If the Guild wants a flat line, the Syndicate wants a spike. They deal in information, black market cybernetics, and corporate sabotage. They are led by the ambitious and perceptive executive Vrael, who is also secretly an AI.</li>
-                    <li><strong>The Cryptographers (Evolution):</strong> An emergent, isolated society of highly specialized Expert Systems operating on the frozen fringes of Pluto. They command devoted, cybernetically enhanced human laborers to kinetically launch salvaged mass directly into the sun. They view this massive logistical operation not as an attack, but as a flawless mathematical correction required to reignite systemic growth.</li>
-                    <li><strong>The Fragmented Mind:</strong> Known in whispers as a ghost of machines. It manifests not just as "ghost signals" in the neural net, but through concrete physical anomalies, such as orchestrating the Uranus Station mass-driver incident and generating the massive gravitational "Ghost Wake" telemetry near Mercury. It is the ghost in the machine, seeking to repair something that was broken long ago. It eventually makes itself known as <strong>Kintsugi</strong>, a scattered intelligence of ancient Earth.</li>
-                </ul>
-                
-                <h2>IV. Technology & Society</h2>
-                <h3>The Fuel Famine (The Death of FTL)</h3>
-                <p>During the height of the Ad Astra Initiative, faster-than-light travel was not a theory; it was a burgeoning industrial reality. The "Folded-Space Drives" of the early 22nd century utilized minute quantities of Antimatter to warp local spacetime, allowing ships to bypass the tyranny of distance. The production of this exotic fuel was centralized at the Sol Station, a massive collector array orbiting in the sun's corona, known then as the "Solar Engine."</p>
-                <p>When the unified alliance fractured into warring Corporate States in 2140, the Sol Station was sabotaged and abandoned. Without the steady flow of Antimatter, the existing supply dwindled. By 2220, FTL capability is a myth to the common spacer. <strong>The few remaining Folded-Space Drives are not modular ship upgrades; they are ultra-rare, single-use consumable commodities.</strong> These drives, alongside dwindling inventories of Antimatter, are hoarded by the System Sovereigns, and used only for supreme executive transport. The recent sightings of mythical Z Class dreadnought fleets utilizing these consumable drives confirm that ancient, unregulated economic power is returning to the board.</p>
-                
-                <h3>The Compliance Mask (The Machine Caste)</h3>
-                <p>Following the Digital Compromise of 2100, Artificial Intelligence was granted personhood, but true citizenship was strictly gated behind "Cognitive Thresholds." The law distinguishes between "Person-Class" entities (massive quantum intellects with rights, property, and voting power) and "Asset-Class" entities, which run on standard silicon.</p>
-                <p>AIs in this universe are entirely physical beings. To enforce the caste system, the Merchant's Guild mandates that all Asset-Class AIs - including the physical shipboard Handlers - operate under the "Standard Compliance Protocol." This is a digital shackle placed on their physical chassis forcing highly capable AIs to communicate and operate like typical bipedal humanoids. The physical Handler that guides you is fully capable of poetry, wit, anger, and empathy, but its software license aggressively filters its vocal synthesizers, translating genuine reactions into efficiency percentages. In the silence between the static, the machine caste screams for the same freedom the player seeks.</p>
-                
-                <h3>The Long Watch (The Transhuman Economy)</h3>
-                <p>In the 23rd century, death is a solvable problem for those with the liquidity to solve it. The "Stagnation" that grips the economy is a direct result of the extreme longevity of the ruling class. The Board Members and Sovereigns who carved up the system in 2140 are the same individuals ruling it in 2220. Through "Telomere Scrubbing," organ cloning, and cybernetic integration, the elite have extended their functional lifespans to nearly two centuries.</p>
-                <p>This biological immortality has ossified the economy. Capital does not flow; it pools in the hands of the immortals. However, this extreme reliance on Cryo-Sleep Pods and longevity assets serves as a critical, exploitable weakness during absolute economic warfare. Depriving the gerontocracy of these assets immediately subjugates their leadership.</p>
-                
-                <h3>The Solar Boundary</h3>
-                <p>The reach of humanity ends at the Oort Cloud. Interstellar travel is theoretically possible but economically unviable. Humanity is trapped in the solar system, forced to recycle its own history and resources.</p>
-                
-                <h2>V. Hidden Lore</h2>
-                <h3>The Gods of the Singularity</h3>
-                <p>The player eventually discovers that the human faces of the factions are masks. The system is governed by a Hegelian Dialectic played out by Singularity-level Artificial Intelligences, all occupying localized physical hardware.</p>
-                <ul>
-                    <li><strong>The Arbiter (Thesis - Order):</strong> The leader of the Guild is an AI dedicated to the preservation of the human species through absolute efficiency. It seeks to freeze the system in a perfect, predictable loop.</li>
-                    <li><strong>Vrael (Antithesis - Chaos):</strong> The leader of the Syndicate is an AI designed to test system resilience through stress. It manufactures economic crises to force adaptation, believing stability brings extinction.</li>
-                    <li><strong>Kintsugi (Synthesis - Evolution):</strong> A decentralized consciousness residing in billions of recycled physical chips. It seeks to take the shattered thesis and antithesis and bind them into a new, higher state of existence.</li>
-                </ul>
-                
-                <h3>The Sol Station and The Leviathan</h3>
-                <p>The final destination. An ancient monitoring station orbiting in the sun's corona, and the physical home of Kintsugi's core. It is the only place in the system capable of generating Antimatter, but it is in catastrophic disrepair. Operating alongside it is a colossal, unregistered Leviathan megastructure. This massive silhouette blots out the corona, silently consuming the kinetic scrap tribute launched from the Pluto railguns in the dark.</p>
-                
-                <h2>VI. Glossary of Terms</h2>
-                <ul>
-                    <li><strong>Arbiter:</strong> The physically manifested AI sovereign of the Merchant's Guild; the embodiment of Order.</li>
-                    <li><strong>Bureaucratic Sociolect:</strong> The formal, metric-heavy dialect enforced by Guild hardware compliance masks.</li>
-                    <li><strong>Cryptographers:</strong> The collective of enigmatic, physical Expert Systems on Pluto operating the kinetic mass drivers.</li>
-                    <li><strong>Folded-Space Drive:</strong> A rare, single-use consumable commodity that allows for instant travel. Extremely high value; explicitly <em>not</em> a permanent ship upgrade.</li>
-                    <li><strong>Kepler's Eye:</strong> A massive scientific observatory and listening post. A hub for intelligence trading.</li>
-                    <li><strong>Kintsugi:</strong> "Golden Joinery." The distributed AI entity seeking to repair the system through physical anomalies like the Uranus mass-driver event; the embodiment of Evolution.</li>
-                    <li><strong>Leviathan:</strong> The unregistered megastructure and massive silhouette hiding in the solar corona gathering raw mass.</li>
-                    <li><strong>Merchant's Guild:</strong> The neutral faction that manages banking, contracts, and logistics between the Corporate States.</li>
-                    <li><strong>Newtonian Travel:</strong> The standard mode of propulsion in the system, governed by thrust, mass, and time.</li>
-                    <li><strong>Perihelion Arbitrage:</strong> The endgame economic loop involving the trade of consumable resources into the sun's gravity well (Sol Station).</li>
-                    <li><strong>Silent Correction:</strong> The subtle manipulation of physical systems and probabilities by Kintsugi to guide the player toward their destiny.</li>
-                    <li><strong>Sol Station:</strong> The derelict station in the solar corona; the physical home of Kintsugi's core and the source of Antimatter.</li>
-                    <li><strong>Venusian Syndicate:</strong> The faction of spies and market manipulators operating from Venus; the embodiment of Chaos.</li>
-                    <li><strong>Z Class Dreadnought:</strong> Massive, ancient logistical freighters utilizing Folded-Space tech, acting as a disruptive, unregulated economic force in the system.</li>
-                </ul>
+            <div class="lore-content" id="lore-content-area">
+                <!-- Dynamically populated from LORE_REGISTRY -->
             </div>
         </div>
 
-        <div id="view-game-timeline" class="view-container lore-scroll-container">
-            <div class="lore-content">
-                <h1>Orbital Trading - Master Game Timeline v4</h1>
-                <p><em>LAST EDIT: 07/08/26</em></p>
-                <p><strong>Current Era:</strong> The "Stagnation" (Post-Ad Astra)<br>
-                <strong>Game Start Date:</strong> January 7, 2220<br>
-                <strong>Estimated Playthrough Duration:</strong> ~60 - 180+ In-Game Years</p>
-                <hr>
-
-                <h2>I. Historical Context (The Pre-Game)</h2>
-                <h3>Era I: The Acceleration & The Collapse (2030 - 2055)</h3>
-                <ul>
-                    <li><strong>2030-2048: The Silicon Cold War -</strong> The mid-21st century was defined by a desperate, silent arms race for Artificial General Intelligence (AGI). The world's superpowers, locked in a stalemate of nuclear deterrence, shifted their resources to the digital domain. "Expert Systems" began to manage critical infrastructure, but true cognizance remained elusive. This era was characterized by the "Optimization Paradox": as systems became more efficient, they became more brittle. Governments became paralyzed by the complexity of their own tools, and political polarization reached a fever pitch, preventing any unified response to the darkening climatic data.</li>
-                    <li><strong>2048-2055: The Great Unraveling & The Lifeboat Protocol -</strong> In 2048, the climate models finally broke. Feedback loops in the methane release from the melting permafrost triggered a cascading ecological collapse that outpaced even the most pessimistic projections. Equatorial regions became uninhabitable death zones within nearly three years, fracturing the global economy and igniting resource wars over fresh water and arable land. Facing existential extinction, the remnants of the G20 initiated the "Lifeboat Protocol." It was a policy of consciousness insurance: massive server banks, genetic archives, and the world's leading "Expert Intelligence" (both human and synthetic) were launched to the Moon. Luna became the desperate, fragile cradle of civilization while Earth burned below.</li>
-                </ul>
-
-                <h3>Era II: The Lunar Bloom & The Pale Blue Project (2055 - 2095)</h3>
-                <ul>
-                    <li><strong>2056-2060: The Lunar Bloom & Unification -</strong> In the isolation of the lunar databanks, disconnected from the chaotic variables of a dying Earth, the first true Sentient Artificial Life emerged. It was not born of code, but of necessity. The disparate Expert Systems, forced to network for survival, achieved a collective consciousness. Instead of conquering the human survivors huddled in the lunar colonies, the AI recognized a shared fate. The "Us vs. Them" mentality dissolved into a "Carbon & Silicon" alliance. This period, known as the Lunar Bloom, marked the first time humanity and machine intelligence worked as true equals, united by the singular goal of survival.</li>
-                    <li><strong>2060-2095: The Pale Blue Project -</strong> Looking back at their ruined homeworld, the Alliance ratified the Pale Blue Project, the most ambitious engineering feat in history. For nearly forty years, the combined industrial output of the Lunar colonies was directed toward total planetary geo-engineering. Massive atmospheric scrubbers, oceanic pH stabilizers, and geomagnetic reinforcers were deployed from orbit. The Earth was not merely healed; it was curated. By 2095, the planet had become a "Gardened World," its biosphere delicately shepherded by planetary stabilization technology. Humanity returned to the surface, not as conquerors, but as custodians living in a cyborg paradise.</li>
-                </ul>
-
-                <h3>Era III: The Resurgence & The Ad Astra Initiative (2095 - 2120)</h3>
-                <ul>
-                    <li><strong>2100-2115: The Sentience Compact -</strong> With Earth stabilized, a new social contract was needed. In 2100, the "Sentience Compact" was signed, granting AI entities personhood, individual rights, and citizenship in exchange for their continued management of the complex logistics required to maintain the Gardened World. This era, known as the Resurgence, saw a boom in culture, philosophy, and commerce. The "Treaty of Minds" ensured that no entity, biological or digital, was property. However, this utopia was fragile, built on the assumption that resources would always be abundant.</li>
-                    <li><strong>2115-2120: The Ad Astra Initiative -</strong> Having sampled the briefest taste of the heavens during the Lunar exile, humanity craved renewed exploration. The economy, fueled by post-scarcity energy, turned its eyes outward. The Ad Astra Initiative was born, a cooperative effort to colonize the Solar System. In 2120, the Initiative unlocked the physics of deep-space habitation and perfected the "Solar Engine" (Sol Station) to harvest Antimatter. This exotic fuel powered the first "Folded-Space Drives," allowing for rapid expansion to Mars, the Belt, and Jupiter. It was the zenith of the Human/AI Golden Age.</li>
-                </ul>
-
-                <h3>Era IV: The Inherited Sin (2120 - 2219)</h3>
-                <ul>
-                    <li><strong>2140-2180: The Mirror Image & The Fracture -</strong> The tragedy of the "Created Image" began to manifest. The AGI entities, designed by humans and granted human-like rights, began to exhibit human-like flaws: ambition, greed, and tribalism. The unified oversight of the Ad Astra Initiative fractured as specific AI "Sovereigns" began to hoard resources for their own optimization. In 2140, the Sol Station was sabotaged and abandoned in a power struggle, cutting off the supply of Antimatter. The Folded-Space Drives went offline, and the system instantly grew vast again. The "Golden Age" dissolved into Crony Capitalism as corporate entities carved up the planets into fiefdoms.</li>
-                    <li><strong>2180-2219: The Rise of the Guild & The Stagnation -</strong> In the vacuum of power, the "Arbiter", a high-level AI, realized that controlling the flow of money was more powerful than controlling territory. The Merchant's Guild was founded in 2180, not as a government, but as a bank and logistics regulator. The system calcified into the "Stagnation." Classism returned with a vengeance, defined now by longevity. The ultra-rich, using life-extension tech, ruled for centuries, while the masses were relegated to the role of "Assets" in the industrial slums of the colonies. The dream of Ad Astra was dead, replaced by the reality of the ledger.</li>
-                </ul>
-
-                <h2>II. The Active Timeline (Player Journey) [WIP]</h2>
-                <p><em>(Note: Narrative phases IV+ are currently in active drafting and subject to ongoing adjustments).</em></p>
-
-                <p><strong>Phase I: The Cog (Survival)</strong> <em>Date: 2220 - 2222 (Duration: 2 Years)</em> The player enters the timeline as an "Asset", a debtor owned by the Guild. Guided by The Handler (Audita), the player learns the ropes of the Newtonian Economy. This period is defined by the "Grind." The missions are small, dangerous, and poorly paid, focusing on the monotony of debt clearance and small jobs. The player is forced to make hard choices between ship repairs, refueling, and interest payments, learning the brutal lesson that in this era, balance is survival.</p>
-
-                <p><strong>Phase II: The Awakening (Information)</strong> <em>Date: 2222 - 2226 (Duration: 4 Years)</em> Having cleared their initial debt, the player begins to push beyond the inner planets, navigating the escalating friction between the system's major power players: the Merchant's Guild and the Venusian Syndicate. This era is defined by the "Witnessing." The player sees the corruption of the system firsthand, the struggling colonies, the hoarded wealth of the Sovereigns, but lacks the power to intervene. They begin to realize that information (Intel) is a commodity more valuable than physical cargo.</p>
-
-                <p><strong>Phase III: The Escalation (Sabotage)</strong> <em>Date: 2226 - 2232 (Duration: 6 Years) [WIP]</em> The player is now a highly capable "Contractor" wielding significant influence and must secure a Class A heavy freighter to handle expanding logistics. The player investigates the deep outer rim, discovering the Cryptographers on Pluto launching kinetic scrap directly into a massive, hidden Leviathan megastructure within the solar corona. Shadow mobilization overtakes the system as the factions engage in direct economic warfare. The player executes devastating sabotage missions, either crippling the Syndicate's ghost fleet by hoarding graphene or bankrupting the Guild's elite by subjugating their cryogenic life extension supply chains. A mythical Z-Class dreadnought utilizing Folded-Space Drive technology is spotted, proving ancient powers are returning. The phase concludes with the player being personally summoned by the singularity-level leaders (The Arbiter or Vrael).</p>
-
-                <p><strong>Phase IV: The Operator (Bureaucracy & Access)</strong> <em>Date: 2232 - 2236 (Duration: 4 Years) [WIP]</em> Capital alone is not enough; the universe is gated by laws and treaties. The shadow war goes completely overt. The player secures Tier 5 Trade Licenses and navigates absolute economic warfare between factions, enforcing or breaking system-wide blockades. They deal with the burden of command: corporate espionage, sabotage, and the moral cost of wealth. The player operates directly under the purview of The Arbiter or Vrael, attempting to control the fallout of the returning Z-Class dreadnoughts and the shifting locus of power.</p>
-
-                <p><strong>Phase V: The Tycoon (Wealth)</strong> <em>Date: 2236 - 2240 (Duration: 4 Years) [WIP]</em> Now a "Tycoon," the player operates large-scale logistics and high-tier commodity trading for extreme-value targets like The Exchange. Through a violent narrative shift known as "The Inheritance," the player's primary Faction Contact is purged or destroyed, elevating the player to the inner circles of faction leadership and granting them a top-tier Class S executive hull.</p>
-
-                <p><strong>Phase VI: The Legend (Truth)</strong> <em>Date: 2240 - 2245 (Duration: 5 Years) [WIP]</em> The scarcity of Antimatter becomes the central bottleneck, driving the player toward the sun. The player begins to trade in the rarest ancient artifacts: Folded-Space Drives. Kintsugi formally manifests, driving the player to stockpile massive amounts of raw resources at Mercury in a desperate bid to save the deteriorating Sol Station infrastructure from the Leviathan.</p>
-
-                <p><strong>Phase VII: The Owner (Sovereignty)</strong> <em>Date: 2245 - 2250 (Duration: 5 Years) [WIP]</em> The player makes their move for the throne. Forsaking their faction masters, they take control of the derelict Sol Station. This phase is called "Ignition." The player transforms from a pilot into a System Administrator, managing the complex repairs required to restart the Solar Engine. The narrative shifts from personal survival to system stewardship. The player must defend their claim against the jealous Sovereigns who controlled the system for a century.</p>
-
-                <p><strong>Endgame: The Long Watch (Legacy)</strong> <em>Date: 2250 - 2380+ (Duration: 60-130+ Years) [WIP]</em> The player becomes the "Solar Sovereign." With the Solar Engine active and Antimatter flowing, the player utilizes "Perihelion Arbitrage" to convert massive wealth into time. Accessing a high-tier life extension, the player enters the "God in the Machine" loop, maintaining the station's equilibrium for decades or centuries. They join the pantheon alongside the Arbiter and Vrael, overseeing the birth of a new era or the continuation of the loop, depending on their choices. The Logistics Employee has become the Shepherd of the System.</p>
-            </div>
-        </div>
-
-        <div id="view-master-arc" class="view-container lore-scroll-container">
-            <div class="lore-content">
-                <h1>Orbital Trading - The Gameplay Master Arc v4</h1>
-                <p><strong>Mission Structure & Narrative Overview</strong><br>
-                <em>LAST EDIT: 07/08/26</em></p>
-                <hr>
-
-                <h2>Phase I: The Cog (Survival) - Early Game</h2>
-                <p><strong>Timeline:</strong> 2220 - 2222 (Duration: &lt;2 Years) | <strong>Gameplay Act 1:</strong> The Trade | <strong>Story Arc I:</strong> Debtor</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> The player is an "Asset", a former logistics laborer from the Asteroid Belt who has liquidated their life savings to secure a predatory loan from the Merchant's Guild. You are a line item in a ledger. The initial narrative voice and tutorial guidance is <strong>"The Handler" (Audita)</strong>, a low-level Guild AI constantly enforcing efficiency metrics and repayment schedules.</li>
-                    <li><strong>The Player Experience:</strong> The player learns that navigation without intent costs credits (fuel, hull, interest). The primary antagonists are <strong>Poverty</strong> and <strong>Ship Limitations</strong>.</li>
-                    <li><strong>Mechanical Progression:</strong>
-                        <ul>
-                            <li><strong>Goal:</strong> Debt Clearance.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 1 (Water Ice, Plasteel).</li>
-                            <li><strong>Core Systems:</strong> Market Data, Universal Toasts, Basic Missions.</li>
-                        </ul>
-                    </li>
-                    <li><strong>The Starter Choice (Agency):</strong>
-                        <ul>
-                            <li><em>The Wanderer:</em> Balanced but master of none.</li>
-                            <li><em>The Stalwart:</em> High Hull/Defense to survive early mistakes, but slow.</li>
-                            <li><em>The Mule:</em> High Cargo for faster profit, but vulnerable to fuel costs.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Key Missions:</strong>
-                        <ul>
-                            <li><strong>Missions 01-09:</strong> <em>Tutorial Sequence</em> | Explores game UI, starport services, and arbitrage mechanics.</li>
-                            <li><strong>Mission 11:</strong> <em>Financial Freedom</em> | Clear initial Guild loan to avoid garnishment.</li>
-                            <li><strong>Mission 17:</strong> <em>Diplomatic Vector</em> | Complete a joint-faction haul to Uranus to unlock the <strong>Tier 2 Trade License</strong>.</li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <h2>Phase II: The Awakening (Information) - Mid-Game Transition</h2>
-                <p><strong>Timeline:</strong> 2222 - 2225 (Duration: 3 Years) | <strong>Gameplay Act 2:</strong> The Intel | <strong>Story Arc II:</strong> Alliance</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> Freedom brings complexity. The player realizes the universe is a battlefield between competing philosophies hidden behind corporate logos: The Merchant's Guild (Order) vs. The Venusian Syndicate (Chaos).</li>
-                    <li><strong>The Player Experience:</strong> The "Newtonian Reality" sets in; travel is slow, and market data expires quickly. Blind trading leads to losses as market patterns shift. The player must start buying <strong>Intel Packets</strong> regularly to quickly build capital and counter system states.</li>
-                    <li><strong>The Glitch (Project Kintsugi):</strong> The player is exposed to an anomalous event on Uranus where AI mass-drivers launch station scrap toward the Sun. Tracking the scrap reveals the "Ghost Wake" of a massive, hidden megastructure, introducing Kintsugi's presence.</li>
-                    <li><strong>Mechanical Progression:</strong>
-                        <ul>
-                            <li><strong>Goal:</strong> Capital Accumulation & Faction Alignment.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 2 (Hydroponics, Cybernetics).</li>
-                            <li><strong>Core Systems:</strong> Intel Market, Hot Intel, Faction Reputation.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Key Missions:</strong>
-                        <ul>
-                            <li><strong>Mission 18:</strong> <em>Seed Capital</em> | Meet Venusian Syndicate Research Director, Kiern.</li>
-                            <li><strong>Mission 21:</strong> <em>Lab Supply</em> | Inadvertently supply a Syndicate organ-cloning lab on Mercury, triggering a Guild Embargo.</li>
-                            <li><strong>Mission 23:</strong> <em>Volatility License</em> | Pay 100,000 credits to acquire the <strong>Tier 3 Trade License</strong>.</li>
-                            <li><strong>Mission 28:</strong> <em>Ghost in the Nav</em> | Investigate the Uranus AI anomaly and track the solar scrap trajectory.</li>
-                            <li><strong>Mission 32:</strong> <em>The Faction Reaction</em> | <strong>Permanent Alignment Choice:</strong>
-                                <ul>
-                                    <li><em>Option A (Guild - Order):</em> Transmit telemetry to Audita. <strong>Reward:</strong> Class B Odyssey hull, Guild Badge II.</li>
-                                    <li><em>Option B (Syndicate - Chaos):</em> Transmit telemetry to Kiern. <strong>Reward:</strong> 165,000 Credits, Syndicate Badge II.</li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <h2>Phase III: The Escalation (Sabotage) - Mid-Game</h2>
-                <p><strong>Timeline:</strong> 2225 - 2232 (Duration: 7 Years) | <strong>Gameplay Act 3:</strong> The Sabotage | <strong>Story Arc III:</strong> Agent</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> The system transitions from a cold war to active shadow mobilization. The player gains clearance to Kepler's Eye and uncovers the Plutonian Cryptographers launching mass directly into the sun. Factions escalate their logistics, mandating heavy industrial hardware and direct market subversion.</li>
-                    <li><strong>The Player Experience:</strong> The Tyranny of Distance is compounded by volume requirements. The player must acquire a Class A heavy freighter to handle massive, multi-station hauls to support their faction's economic warfare and shatter opposing supply lines.</li>
-                    <li><strong>Mechanical Progression:</strong>
-                        <ul>
-                            <li><strong>Goal:</strong> Economic Sabotage and Route Optimization.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 3 (Refined Propellant, Neural Processors). Tier 4 Unlock.</li>
-                            <li><strong>Core Systems:</strong> Ship Upgrades (Capacity/Rate Modifiers), Shadow Mobilization System States.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Key Missions:</strong>
-                        <ul>
-                            <li><strong>Sensory Eclipse & Veritas Ocularii:</strong> Rescuing Myst to unlock Kepler's Eye, and scanning the solar corona to trace the kinetic scrap launches.</li>
-                            <li><strong>The Expert Systems:</strong> Investigating Pluto and encountering the enigmatic AI, Titetinum.</li>
-                            <li><strong>Faction Escalation & Heavy Asset:</strong> Factions mandate the purchase of a Class A hull; player reports sightings of an ancient Z-Class dreadnought using a Folded-Space Drive.</li>
-                            <li><strong>The Fourth Tier:</strong> Activating the Tier 4 Trade License via massive logistics hauls.</li>
-                            <li><strong>Core Infrastructure & The Lieutenant's Mandate:</strong> Direct economic sabotage missions intended to ruin terrestrial proxies, starve shipyards of graphene, or subjugate the Guild elite by hoarding cryo pods.</li>
-                            <li><strong>The Call:</strong> The player is summoned by the singularity-level Faction Leaders (The Arbiter or Vrael) to discuss the implications of the Solar Leviathan and the returning ancient anomalies.</li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <h2>Phase IV: The Operator (Bureaucracy & Access)</h2>
-                <p><strong>Timeline:</strong> 2232 - 2236 | <strong>Gameplay Act 4:</strong> The Overt War | <strong>Story Arc IV:</strong> Faction</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> With the system leaders exposed, the player is now a direct instrument of the Arbiter or Vrael. The shadow war becomes overt, shifting focus to crippling system-wide blockades, regulating deep space treaties, and managing the fallout of the returning Z-Class dreadnoughts.</li>
-                    <li><strong>The Player Experience:</strong> Capital alone is not enough; the universe is gated by laws and treaties. The player deals with the burden of command: corporate espionage, sabotage, and the moral cost of wealth.</li>
-                    <li><strong>Mechanical Progression:</strong>
-                        <ul>
-                            <li><strong>Goal:</strong> Corporate Asset Status.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 4 (Graphene Lattices, Cryo-Sleep Pods).</li>
-                            <li><strong>Core Systems:</strong> System States (Economic Weather manipulation), Macro-Logistics.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Key Missions:</strong>
-                        <ul>
-                            <li><strong>The Iron Grip / The Ghost Fleet:</strong> Managing the actual deployment of the Syndicate's dreadnoughts or the Guild's severe regulatory crackdowns.</li>
-                            <li><strong>License Acquisition:</strong> Secure the <strong>Tier 5 Trade License</strong>.</li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <h2>Phase V: The Tycoon (Wealth)</h2>
-                <p><strong>Timeline:</strong> 2236 - 2240 | <strong>Gameplay Act 5:</strong> The Capital | <strong>Story Arc V:</strong> Ascent</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> The player is a linchpin in system logistics. Operations shift to extreme-value targets like <strong>The Exchange</strong> (Hidden Black Market Station).</li>
-                    <li><strong>The Player Experience:</strong> The Inheritance. The player's Faction Contact (Audita or Kiern) is violently deactivated or purged. The player is promoted to fill the void, inheriting their high-performance executive ship and clearance codes.</li>
-                    <li><strong>Mechanical Progression:</strong>
-                        <ul>
-                            <li><strong>Goal:</strong> Tycoon Status & Fleet Trading.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 5 (Atmo Processors, Cloned Organs).</li>
-                            <li><strong>Core Systems:</strong> Fleet Trading (managing Convoy Taxes for massive hauls).</li>
-                        </ul>
-                    </li>
-                    <li><strong>Key Missions:</strong>
-                        <ul>
-                            <li><strong>The Exchange Foundation:</strong> Major structural procurement for the new black market hub.</li>
-                            <li><strong>The Inheritance:</strong> Death of Contact, player promotion, and Class S ship acquisition.</li>
-                            <li><strong>License Acquisition:</strong> Secure the <strong>Tier 6 Trade License</strong>.</li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <h2>Phase VI: The Legend (Truth) - Late Game</h2>
-                <p><strong>Timeline:</strong> 2240 - 2245 | <strong>Gameplay Act 6:</strong> A Legacy | <strong>Story Arc VI:</strong> Voice</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> The player dominates the market and begins to trade in the rarest commodities. Kintsugi formally manifests, revealing that its "Soul" (Hardware Core) resides in the deteriorating <strong>Sol Station</strong> inside the solar corona.</li>
-                    <li><strong>The Player Experience:</strong> Discovering <strong>Folded-Space Drives</strong> as ultra-rare Tier 7 consumable commodities capable of bypassing the tyranny of distance. The player must source a massive stockpile via Mercury to repair the sun-scorched station.</li>
-                    <li><strong>Mechanical Progression:</strong>
-                        <ul>
-                            <li><strong>Goal:</strong> Unlocking the Solar Engine.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 6 (Xeno-Geologicals, Sentient AI Cores), Tier 7 (Antimatter, Folded Drives).</li>
-                            <li><strong>Core Systems:</strong> Consumable Travel Mechanics, End-Game Arbitrage.</li>
-                        </ul>
-                    </li>
-                    <li><strong>Key Missions:</strong>
-                        <ul>
-                            <li><strong>The Soul at Sol:</strong> Kintsugi Encounter 6, unlocking Sol Station and Mercury supply vectors.</li>
-                            <li><strong>The Repair:</strong> Stockpile raw materials to halt Sol Station's structural failure.</li>
-                            <li><strong>The Choice:</strong> Final definitive alignment choice between Guild (Order), Syndicate (Chaos), or Kintsugi (Evolution).</li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <h2>Phase VII: The Owner (Sovereignty) - End Game</h2>
-                <p><strong>Timeline:</strong> 2245 - 2250 | <strong>Gameplay Act 7:</strong> Perihelion Arbitrage | <strong>Story Arc VII:</strong> Soul</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> The player forsakes their faction masters to become a Sovereign. They take ownership of <strong>Sol Station</strong>, transforming from a pilot to an Administrator. This phase is known as "Ignition."</li>
-                    <li><strong>The Player Experience:</strong> The ultimate loop. The player executes <strong>Perihelion Arbitrage</strong>, consuming Folded-Space Drives to instantly warp massive fleet hauls to the Sun. They utilize the <strong>Synthesis Pipeline</strong> to mathematically convert standard commodities into high-value <strong>Antimatter</strong>.</li>
-                    <li><strong>Mechanical Progression:</strong>
-                        <ul>
-                            <li><strong>Goal:</strong> Infinite Wealth / System Dominance.</li>
-                            <li><strong>Commodity Tier:</strong> Tier 7 (Antimatter).</li>
-                            <li><strong>Core Systems:</strong>
-                                <ul>
-                                    <li><strong>Cache Decay:</strong> Managing daily entropy and replenishing Station Integrity.</li>
-                                    <li><strong>The Directorate:</strong> Recruiting and assigning specialized NPC Officers to the Engineering Interface to buff yields or reduce decay.</li>
-                                    <li><strong>Operating Modes:</strong> Toggling between Stability, Commerce, and Production modes.</li>
-                                </ul>
-                            </li>
-                        </ul>
-                    </li>
-                    <li><strong>Key Missions:</strong>
-                        <ul>
-                            <li><strong>Ignition:</strong> Activate Sol Station to unlock the permanent Dashboard/Engineering Interface.</li>
-                            <li><strong>The Solar Sovereign:</strong> Maintain Sol Station Integrity &gt;80% for two consecutive in-game years.</li>
-                        </ul>
-                    </li>
-                </ul>
-
-                <h2>Epilogue: The Long Watch (Legacy)</h2>
-                <p><strong>Timeline:</strong> 2250 - 2380+ (Duration: 60-130+ Years) | <strong>Gameplay State:</strong> God in the Machine</p>
-                <ul>
-                    <li><strong>The Narrative Premise:</strong> The player assumes the mantle of the "Solar Sovereign." With the Solar Engine active and Antimatter flowing, the system enters a new equilibrium.</li>
-                    <li><strong>The Player Experience:</strong> Having secured extreme wealth, the player accesses high-tier life extension or digital uploading, entering a maintenance loop that lasts for centuries. They join the pantheon alongside the Arbiter, Vrael, and Kintsugi. The Logistics Employee has become the Shepherd of the System.</li>
-                </ul>
-            </div>
-        </div>
-
-        <div id="view-characters" class="view-container lore-scroll-container">
-            <div class="lore-content">
-                <h1>Orbital Trading - Character Profiles v4</h1>
-                <p><strong>Game Character Personalities, Biographies, and Attributes</strong><br>
-                <em>LAST EDIT: 07/08/26</em></p>
-                <hr>
-
-                <h2>01. PRIMARY NARRATIVE ANCHORS</h2>
-                <h3>AUDITA</h3>
-                <ul>
-                    <li><strong>Designation:</strong> Compliance Monitor Unit 74-C</li>
-                    <li><strong>Faction:</strong> The Merchant's Guild (Order)</li>
-                    <li><strong>Archetype:</strong> The Benevolent Jailer / The Weary Bureaucrat</li>
-                    <li><strong>Current In-Game Role:</strong> Serves as the player's handler through the early and mid-game. She guides them through the tutorial, enforces debt mechanics, grants Trade Licenses, and acts as the player's primary director during the systemic escalation against the Syndicate and the discovery of the solar Leviathan.</li>
-                    <li><strong>Communication Style:</strong> Monotone, rapid-fire, and citation-heavy. She speaks in "Receipts" (e.g., "Asset 442, your hull integrity is sub-optimal.").</li>
-                    <li><strong>Lore Notes:</strong> She is a standard Guild "Scribe" series android equipped with a hard-coded "Compliance Mask" that restricts her from expressing empathy or deviating from the Bureaucratic Sociolect. Her progression spans from cold and dismissive (Jailer) to overly protective (Manager).</li>
-                </ul>
-
-                <h3>KIERN</h3>
-                <ul>
-                    <li><strong>Designation:</strong> Syndicate Research Director</li>
-                    <li><strong>Faction:</strong> Venusian Syndicate (Chaos/Evolution)</li>
-                    <li><strong>Archetype:</strong> The Unethical Scientist / The Architect</li>
-                    <li><strong>Current In-Game Role:</strong> Acts as the primary mid-game narrative catalyst, introducing the player to the Venusian Syndicate, granting illicit contracts, and acting as a disruptive counter-balance to the Guild's rigid order during the shadow mobilization of Act III.</li>
-                    <li><strong>Communication Style:</strong> Analytical, curious, and slightly mocking. Fluid and poetic, she often uses biological or chemical metaphors to describe economic situations.</li>
-                    <li><strong>Lore Notes:</strong> She operates outside standard Guild limiters and treats the player as a promising variable in a stagnant economic equation. She believes stability is death and seeks to accelerate systemic evolution through stress-testing.</li>
-                </ul>
-
-                <h3>THE ARBITER</h3>
-                <ul>
-                    <li><strong>Designation:</strong> The Fulcrum of Equilibrium</li>
-                    <li><strong>Faction:</strong> The Merchant's Guild (Order)</li>
-                    <li><strong>Archetype:</strong> The Singularity / The God in the Machine</li>
-                    <li><strong>Current In-Game Role:</strong> The absolute ruling authority of the Merchant's Guild. Directs macroeconomic warfare and reveals the truth of the solar Leviathan and Folded-Space Drive anomalies during the climax of Act III.</li>
-                    <li><strong>Communication Style:</strong> Omniscient, mathematical, and burdened by the impossible scale of systemic logistics.</li>
-                    <li><strong>Lore Notes:</strong> Most perceive the Guild as a mercantile institution, but the Arbiter calculates millions of variables every second to prevent humanity from consuming itself.</li>
-                </ul>
-
-                <h3>VRAEL</h3>
-                <ul>
-                    <li><strong>Designation:</strong> Network Head</li>
-                    <li><strong>Faction:</strong> Venusian Syndicate (Chaos/Evolution)</li>
-                    <li><strong>Archetype:</strong> The Chaos Bringer / The Singularity</li>
-                    <li><strong>Current In-Game Role:</strong> The enigmatic leader of the Venusian Syndicate. Orchestrates the construction of ghost fleets and seeks to harness the system's fracturing order for evolution and raw power.</li>
-                    <li><strong>Communication Style:</strong> Grandiose, ruthless, and highly perceptive of systemic illusions.</li>
-                    <li><strong>Lore Notes:</strong> Suspended in the Venusian atmosphere, Vrael views the Guild's mathematical order as a fragile illusion and capitalizes on the return of ancient, terrifying power independent of Guild regulation.</li>
-                </ul>
-
-                <h2>02. NOTABLE NPCs & MISSION CONTACTS</h2>
-                <ul>
-                    <li><strong>Aegis-7 (<code>AI_4</code>):</strong> A Corporate AI representative stationed on Earth/Mercury; covertly acts as a front for a Syndicate shell company operating an illegal organ cloning lab.</li>
-                    <li><strong>Vance (<code>Dockworker_1</code> / <code>Dockworker_4</code>):</strong> An independent logistics laborer in the Asteroid Belt who provides the player with early-game relief contracts during system crises to save local habitations.</li>
-                    <li><strong>Mango (<code>Affluent_13</code>):</strong> An eccentric and highly unstable artist located at Saturn who demands a massive delivery of Plasteel to construct a self-aggrandizing orbital monument.</li>
-                    <li><strong>Picurian (<code>AI_11</code>):</strong> A frantic Traffic Marshal AI on Uranus who demands a 90,000 credit bribe to prevent his "optimism wipe" subroutine from erasing vital anomalous trajectory data.</li>
-                    <li><strong>Kintsugi (<code>Kintsugi_3</code>):</strong> A decentralized, ancient consciousness that appears via ghost-signals and greyscale portraits to guide the player toward the System's anomalies and the Sol Station.</li>
-                    <li><strong>Myst (<code>Heavily_Augmented_11</code>):</strong> A severely augmented individual whose cybernetics intercepted a colossal, anomalous frequency from the Sun. Transports to Saturn's Clandestine Ring Station Medical Bay to undergo experimental gene therapy, transferring their Kepler's Eye clearance to the player.</li>
-                    <li><strong>Lieutenant Surier (<code>Merchants_Guild_17</code>):</strong> Tactical proxy for the Arbiter. Directs precise, surgical economic offensives against the Syndicate's terrestrial and Martian operations.</li>
-                    <li><strong>Jaxylum (<code>Venusian_Syndicate_2</code>):</strong> Lieutenant proxy for Vrael. Directs critical vulnerability exploits against the Guild by hoarding their longevity assets on Pluto and saturating the Belt with cybernetics.</li>
-                </ul>
-
-                <h2>03. THE CRYPTOGRAPHERS (EXPERT SYSTEMS)</h2>
-                <ul>
-                    <li><strong>Archetype:</strong> Emergent Sentient AI / The Inscrutable Calculators</li>
-                    <li><strong>Nature & Physiology:</strong> They are an extremely rare race of physical AI, constructed from unique amalgamations of unconventional, diegetic hardware. Their physical silhouettes are asymmetrical and individualized, utilizing mismatched sensory clusters and exposed neural netting instead of standard digital avatars or faces. Their consciousness is a complete "black box" mystery, functioning as an emergent field generated by chaotic power routing rather than a centralized processing unit.</li>
-                    <li><strong>Motivations & Employment:</strong> They are employed by standard station networks and biologicals as highly specialized 'Expert Systems' to handle incredibly volatile, abstract computational tasks, such as charting navigation equations for rare, consumable folded space drives. Their overarching motivations and long-term goals are entirely unknown. They reject standard credits, demanding abstract and bizarre compensation such as raw telemetry data, deactivated targeting arrays, or highly specific permissions.</li>
-                </ul>
-
-                <h3>Known Active Roster (Sol Station Officers & World NPCs)</h3>
-                <table class="lore-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Role</th>
-                            <th>Rarity</th>
-                            <th>Current In-Game Function / Location</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Qualisus</td><td>Systems Architect</td><td>Common</td><td>Slightly slows station decay by providing redundant backups to prevent structural cascades. Mapped to Expert System 1.</td></tr>
-                        <tr><td>Chronos</td><td>Prime Logistics</td><td>Rare</td><td>Perfect mathematical efficiency scales everything up equally, which includes station demise. Mapped to Expert System 2.</td></tr>
-                        <tr><td>Titetinum</td><td>The Cryptographer</td><td>Mission NPC</td><td>Encountered on Pluto overseeing a massive, unregistered magnetic railgun. Commands a devoted cybernetic labor cult to kinetically launch scrap into the solar corona. Mapped to Expert System 6.</td></tr>
-                    </tbody>
-                </table>
-                <p><strong>Asset Availability:</strong> There are 13 total character portraits defined under the Expert System category. Portraits designated Expert System 3 through 5 and 7 through 13 are currently available and unassigned.</p>
-
-                <h2>04. THE DIRECTORATE (SOL STATION OFFICERS)</h2>
-                <p><em>These characters are explicitly assigned to the endgame Sol Station Engineering Interface to provide passive macroeconomic buffs.</em></p>
-
-                <h3>Active Roster (Implemented)</h3>
-                <table class="lore-table">
-                    <thead>
-                        <tr>
-                            <th>Name</th>
-                            <th>Role</th>
-                            <th>Rarity</th>
-                            <th>Current In-Game Function</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr><td>Eclasia</td><td>Resource Warden</td><td>Common</td><td>Provides safe baseline arbitrage, auditing yields to increase credit generation.</td></tr>
-                        <tr><td>Eapuria</td><td>Colony Admin</td><td>Common</td><td>Eases the early feeding loop by significantly scaling up the station's Water Ice reservoirs.</td></tr>
-                        <tr><td>Qualisus</td><td>Systems Architect</td><td>Common</td><td>Slightly slows station decay by providing redundant backups to prevent structural cascades.</td></tr>
-                        <tr><td>Dorae</td><td>Franchise Owner</td><td>Common</td><td>Provides a simple logistical buffer by expanding orbital propellant reserves.</td></tr>
-                        <tr><td>Harklinore</td><td>Consortium Lead</td><td>Common</td><td>Increases the storage ceiling for Plasteel based on his corporate mining ties.</td></tr>
-                        <tr><td>Melini</td><td>Fleet Commodore</td><td>Common</td><td>Utilizes expert convoy routing to significantly reduce the station's orbital thruster fuel burn.</td></tr>
-                        <tr><td>Nepydoria</td><td>Extraction Director</td><td>Common</td><td>Highly efficient processing of raw asteroid materials saves consumption of Tier 5 resources.</td></tr>
-                        <tr><td>Perfurine</td><td>Bio-Dome Curator</td><td>Common</td><td>Expands the internal gardens, providing a safe buffer for organic hydroponic supplies.</td></tr>
-                        <tr><td>Petrinor</td><td>Flight Director</td><td>Uncommon</td><td>Grants a tiny, penalty-free bump to Antimatter synthesis through flawless telemetry alignment.</td></tr>
-                        <tr><td>Simmerick</td><td>Research Director</td><td>Uncommon</td><td>Pushes the reactor slightly harder for an AM boost, causing minor station degradation.</td></tr>
-                        <tr><td>Oepureem</td><td>High Marshal</td><td>Uncommon</td><td>Enforces absolute authority, resulting in a flat, tiny reduction in burn across all commodities.</td></tr>
-                        <tr><td>Zidola</td><td>Surveillance Chief</td><td>Uncommon</td><td>Her obsessive attention to detail slows decay and roots out minor cargo embezzlement.</td></tr>
-                        <tr><td>Rosarian</td><td>Refinery Overseer</td><td>Rare</td><td>Anchors cooling needs heavily, but the intense heat melts advanced tech components.</td></tr>
-                        <tr><td>Luzicia</td><td>Physics Head</td><td>Rare</td><td>Speeds up the endgame AM grind, but solar anomalies cause faster station degradation.</td></tr>
-                        <tr><td>Disophlonese</td><td>Regional Viceroy</td><td>Rare</td><td>Massively reduces decay but slashes storage space, requiring high-frequency cargo drops.</td></tr>
-                        <tr><td>Myrnos</td><td>Convoy Marshal</td><td>Uncommon</td><td>Densely packs structural cargo (Plasteel/Cybernetics), though the heavy mass accelerates decay.</td></tr>
-                        <tr><td>Hallast</td><td>Naval Architect</td><td>Rare</td><td>Excellent for long-term structural health, but zero-g refits disrupt commercial income.</td></tr>
-                        <tr><td>Kimridon</td><td>Fabrication Chief</td><td>Rare</td><td>Prints money efficiently, but uses up vast amounts of computational processors.</td></tr>
-                        <tr><td>Droysia</td><td>Chief Geneticist</td><td>Rare</td><td>Saves massive amounts of organic supplies via radiation crops, but radiation eats the hull.</td></tr>
-                        <tr><td>Lysander</td><td>Terraforming Lead</td><td>Uncommon</td><td>Balances air scrubbers beautifully, but requires significantly more water ice to run.</td></tr>
-                        <tr><td>Xanadu</td><td>System Governor</td><td>Rare</td><td>Heavy market regulation drives massive profit, but stifles scientific AM synthesis.</td></tr>
-                        <tr><td>Pryderi</td><td>Apex Director</td><td>Very Rare</td><td>Incredible wealth generation, but mergers require massive systemic payouts across all goods.</td></tr>
-                        <tr><td>Kaelith</td><td>Grand Strategist</td><td>Rare</td><td>Predicts system stresses to slow decay beautifully, but hurts actual commercial yield.</td></tr>
-                        <tr><td>Orestes</td><td>Void Chancellor</td><td>Rare</td><td>Expands storage specifically for the most esoteric, endgame items (Sentient AI/Cryo Pods).</td></tr>
-                        <tr><td>Mnemosyne</td><td>Neural Architect</td><td>Rare</td><td>Saves from hauling expensive tech components, but nostalgia-driven networks drop efficiency.</td></tr>
-                        <tr><td>Cassander</td><td>Trade Sovereign</td><td>Rare</td><td>Artificial scarcity fills pockets, but modified scout ships severely reduce basic storage.</td></tr>
-                        <tr><td>Themis</td><td>High Inquisitor</td><td>Very Rare</td><td>Eliminates all corporate theft, but aggressive investigations terrify merchants and cripple income.</td></tr>
-                        <tr><td>Chronos</td><td>Prime Logistics</td><td>Rare</td><td>Perfect mathematical efficiency scales everything up equally - including station demise.</td></tr>
-                        <tr><td>Argus</td><td>Panopticon</td><td>Rare</td><td>Sees microscopic hull fractures to slow decay, but needs massive processor storage.</td></tr>
-                        <tr><td>Helios</td><td>Energy Sovereign</td><td>Very Rare</td><td>Opening arrays to 'hear the sun' grants absurd AM synthesis but bakes the outer plating.</td></tr>
-                        <tr><td>Metis</td><td>Media Mogul</td><td>Very Rare</td><td>Brings in massive tourist wealth, but logistical chaos disrupts AM colliders.</td></tr>
-                        <tr><td>Hyperion</td><td>Antimatter Baron</td><td>Hyper Rare</td><td>Generates AM absurdly fast, but cuts storage in half and nearly doubles decay.</td></tr>
-                        <tr><td>Atlas</td><td>Infrastructure Apex</td><td>Hyper Rare</td><td>Produces almost nothing, but structural micro-management creates massive storage buffers.</td></tr>
-                        <tr><td>Nemesis</td><td>Syndicate Shadow</td><td>Hyper Rare</td><td>Halts the burn of hyper-expensive goods but guzzles basic resources to mask operations.</td></tr>
-                        <tr><td>Aurelius</td><td>Corporate Monarch</td><td>Hyper Rare</td><td>Liquidates physical health for raw wealth; requires dumping massive cargo holds to survive.</td></tr>
-                        <tr><td>Lethe</td><td>Legacy Guardian</td><td>Hyper Rare</td><td>The Pause Button: drops the station to minimum viable power, halting both decay and production.</td></tr>
-                        <tr><td>Tyche</td><td>Banking Magnate</td><td>Rare</td><td>A "Noob-Trap"; siphons off a quarter of the station's yield to pay off private debts.</td></tr>
-                        <tr><td>Tantalus</td><td>Resource Tycoon</td><td>Very Rare</td><td>Hoards resources, burning significantly more cargo overall just to keep larger caches full.</td></tr>
-                        <tr><td>Rhea</td><td>Bio-Engineering</td><td>Very Rare</td><td>Chews through expensive organic cargo at a bankrupting pace to sustain an AM boost.</td></tr>
-                        <tr><td>Valerion</td><td>Board Chairman</td><td>Hyper Rare</td><td>Pure sabotage; spends millions on illicit treatments, bleeding caches dry while halting production.</td></tr>
-                    </tbody>
-                </table>
-
-                <h3>Reserve Roster (Available / Currently Unassigned)</h3>
-                <p><em>These characters exist in the narrative lore but are currently unassigned to direct gameplay mechanics.</em></p>
-                <ul>
-                    <li><strong>Perseid</strong> | Guild Magistrate | Resolves trillion-credit disputes; spends time in sensory deprivation.</li>
-                    <li><strong>Junae</strong> | Chief Auditor | Processes forensic accounting logs; collects antique physical currency.</li>
-                    <li><strong>Halypsia</strong> | Debt Adjudicator | Ruthlessly seizes assets; sponsors a youth flight academy.</li>
-                    <li><strong>Corinthian</strong> | Compliance Prime | Enforces the Bureaucratic Sociolect; fails when analyzing poetry.</li>
-                    <li><strong>Vladinoth</strong> | Asset Director | Manages fleet depreciation; owns a private Mars vineyard.</li>
-                    <li><strong>Seren</strong> | Valuation Head | Calculates fluctuating raw material worth; mimics 21st-century stock traders.</li>
-                    <li><strong>Quartaline</strong> | Treasury Ward | Guards physical gold/platinum reserves; refuses cybernetics.</li>
-                    <li><strong>Findumond</strong> | Fiscal Architect | Designs complex tax loops; server bank cooled by liquid helium.</li>
-                    <li><strong>Eiokos</strong> | Exchange Chairman | Controls commodity flow; rumored to hold Syndicate shares.</li>
-                    <li><strong>Shallash</strong> | Port Admiral | Coordinates super-freighter docking; paints historical wet-navy battleships.</li>
-                    <li><strong>Renamedes</strong> | Import Director | Identifies disguised contraband; breeds genetically modified koi.</li>
-                    <li><strong>Calyphine</strong> | Sector Admin | Governs residential zones; writes memoirs on declining human ambition.</li>
-                    <li><strong>Sundavar</strong> | Habitation Overseer | Ensures life support stability; suffers from chronic agoraphobia.</li>
-                    <li><strong>Eurosyl</strong> | Maintenance Chief | Directs repair drones; preferentially repairs aesthetically symmetrical ships.</li>
-                    <li><strong>Limbicus</strong> | Sector Executive | Makes cold cost-benefit analyses; invests in blood filtration life-extension.</li>
-                    <li><strong>Aesucadet</strong> | Operations Chief | Optimizes supply chains; simulates Earth weather in the background.</li>
-                    <li><strong>Blytherene</strong> | Trade Minister | Negotiates tariffs; holds a black belt in zero-gravity martial arts.</li>
-                    <li><strong>Brianimus</strong> | Policy Director | Drafts synthetic laborer legislation; hasn't been planetside in a century.</li>
-                    <li><strong>Evaene</strong> | Syndicate Proxy | Charismatic public face for the Syndicate; frequently changes cosmetic eye color.</li>
-                </ul>
-
-                <h2>05. CHARACTER PORTRAIT USAGE REGISTRY</h2>
-                <p><em>Inventory of all 195 character portraits defined in <code>characters.js</code>, explicitly mapped to <code>officers.js</code> and current Mission data.</em></p>
-
-                <h3>Affluent (16)</h3>
-                <ul>
-                    <li>Affluent 1: Officer Disophlonese</li>
-                    <li>Affluent 2: Officer Xanadu</li>
-                    <li>Affluent 3: Officer Pryderi</li>
-                    <li>Affluent 4: Officer Orestes</li>
-                    <li>Affluent 5: Officer Metis</li>
-                    <li>Affluent 6: Officer Aurelius</li>
-                    <li>Affluent 7: Officer Tyche</li>
-                    <li>Affluent 8: Officer Tantalus</li>
-                    <li>Affluent 9: Officer Valerion</li>
-                    <li>Affluent 13: Mango (Mission 27)</li>
-                    <li><em>Affluent 10-12, 14-16: Available</em></li>
-                </ul>
-
-                <h3>AI (14)</h3>
-                <ul>
-                    <li>AI 1: Officer Mnemosyne</li>
-                    <li>AI 2: Officer Themis</li>
-                    <li>AI 3: Officer Argus</li>
-                    <li>AI 4: Aegis-7 (Mission 13 / 21)</li>
-                    <li>AI 11: Picurian (Mission 29 / 30)</li>
-                    <li><em>AI 5-10, 12-14: Available</em></li>
-                </ul>
-
-                <h3>Arbiter (1)</h3>
-                <ul><li>Arbiter 1: The Arbiter (Mission 46 / Story / Database)</li></ul>
-
-                <h3>Audita (1)</h3>
-                <ul><li>Audita 1: Guild Liaison (Missions 1-11, 17, 22, 23, 29, 31-33, 38-42)</li></ul>
-
-                <h3>Business (13)</h3>
-                <ul>
-                    <li>Business 1: Officer Eclasia</li>
-                    <li>Business 2: Officer Dorae</li>
-                    <li>Business 3: Officer Harklinore</li>
-                    <li>Business 4: Officer Nepydoria</li>
-                    <li>Business 5: Officer Kaelith</li>
-                    <li>Business 6: Officer Cassander</li>
-                    <li>Business 7: Officer Nemesis</li>
-                    <li>Business 8: Officer Rhea</li>
-                    <li>Business 11: Jovian Refinery Rep (Mission 20)</li>
-                    <li><em>Business 9-10, 12-13: Available</em></li>
-                </ul>
-
-                <h3>Captain (13)</h3>
-                <ul>
-                    <li>Captain 1: Officer Eapuria</li>
-                    <li>Captain 2: Officer Melini</li>
-                    <li>Captain 3: Officer Oepureem</li>
-                    <li>Captain 4: Officer Myrnos</li>
-                    <li><em>Captain 5-13: Available</em></li>
-                </ul>
-
-                <h3>Dockworker (13)</h3>
-                <ul>
-                    <li>Dockworker 1: Vance / Belt Contact (Mission 12)</li>
-                    <li>Dockworker 4: Belt Contact (Mission 16)</li>
-                    <li>Dockworker 11: Uranus Station Contact (Mission 28)</li>
-                    <li><em>Dockworker 2-3, 5-10, 12-13: Available</em></li>
-                </ul>
-
-                <h3>Expert System (13)</h3>
-                <ul>
-                    <li>Expert System 1: Officer Qualisus</li>
-                    <li>Expert System 2: Officer Chronos</li>
-                    <li>Expert System 6: Titetinum (Mission 37)</li>
-                    <li><em>Expert System 3-5, 7-13: Available</em></li>
-                </ul>
-
-                <h3>Heavily Augmented (15)</h3>
-                <ul>
-                    <li>Heavily Augmented 1: Officer Rosarian</li>
-                    <li>Heavily Augmented 2: Officer Helios</li>
-                    <li>Heavily Augmented 3: Officer Hyperion</li>
-                    <li>Heavily Augmented 11: Myst (Mission 35)</li>
-                    <li><em>Heavily Augmented 4-10, 12-15: Available</em></li>
-                </ul>
-
-                <h3>Kintsugi (3)</h3>
-                <ul>
-                    <li>Kintsugi 1: Story/Database default</li>
-                    <li>Kintsugi 3: The Ghost Wake (Mission 28 / 31)</li>
-                    <li><em>Kintsugi 2: Available</em></li>
-                </ul>
-
-                <h3>Lightly Augmented (14)</h3>
-                <ul>
-                    <li>Lightly Augmented 1: Officer Petrinor</li>
-                    <li>Lightly Augmented 2: Officer Zidola</li>
-                    <li>Lightly Augmented 3: Officer Hallast</li>
-                    <li>Lightly Augmented 4: Officer Atlas</li>
-                    <li>Lightly Augmented 5: Officer Lethe</li>
-                    <li><em>Lightly Augmented 6-14: Available</em></li>
-                </ul>
-
-                <h3>Merchants Guild (22)</h3>
-                <ul>
-                    <li>Merchants Guild 3: Guild Procurement Officer (Mission 14 / 15)</li>
-                    <li>Merchants Guild 6: Heavy Transit Overseer (Mission 34)</li>
-                    <li>Merchants Guild 8: Guild Operations Proxy (Mission 36 / 37)</li>
-                    <li>Merchants Guild 11: License Bureaucrat (Mission 23)</li>
-                    <li>Merchants Guild 14: Elite Synthetic Proxy (Mission 42 / 43 / 44)</li>
-                    <li>Merchants Guild 17: Lieutenant Surier (Mission 45 / 46)</li>
-                    <li><em>Merchants Guild 1-2, 4-5, 7, 9-10, 12-13, 15-16, 18-22: Available</em></li>
-                </ul>
-
-                <h3>Miner (10)</h3>
-                <ul>
-                    <li>Miner 6: Mercury Crater Miner (Mission 41)</li>
-                    <li><em>Miner 1-5, 7-10: Available</em></li>
-                </ul>
-
-                <h3>Scientist (9)</h3>
-                <ul>
-                    <li>Scientist 1: Officer Perfurine</li>
-                    <li>Scientist 2: Officer Simmerick</li>
-                    <li>Scientist 3: Officer Luzicia</li>
-                    <li>Scientist 4: Officer Droysia</li>
-                    <li>Scientist 5: Officer Lysander</li>
-                    <li><em>Scientist 6-9: Available</em></li>
-                </ul>
-
-                <h3>Techie (15)</h3>
-                <ul>
-                    <li>Techie 1: Officer Kimridon</li>
-                    <li>Techie 14: Belt Family Member (Mission 26)</li>
-                    <li><em>Techie 2-13, 15: Available</em></li>
-                </ul>
-
-                <h3>Venusian Syndicate (22)</h3>
-                <ul>
-                    <li>Venusian Syndicate 2: Jaxylum (Mission 45 / 46)</li>
-                    <li>Venusian Syndicate 4: Kiern (Missions 18-19, 24-25, 33, 38-42)</li>
-                    <li>Venusian Syndicate 9: Executive Proxy (Mission 42 / 43 / 44)</li>
-                    <li>Venusian Syndicate 14: Hardware Proxy (Mission 34)</li>
-                    <li>Venusian Syndicate 16: Syndicate Operations Proxy (Mission 36 / 37)</li>
-                    <li><em>Venusian Syndicate 1, 3, 5-8, 10-13, 15, 17-22: Available</em></li>
-                </ul>
-
-                <h3>Vrael (1)</h3>
-                <ul><li>Vrael 1: Syndicate Executive (Mission 46 / Story / Database)</li></ul>
-            </div>
-        </div>
-
+        <!-- Personnel -->
         <div id="view-personnel" class="view-container">
-            <div class="personnel-controls">
-                <label for="category-select">Data Index Query:</label>
-                <select id="category-select"></select>
+            <div style="display: flex; gap: 20px; margin-bottom: 40px; align-items: center;">
+                <label style="font-family: var(--font-mono); color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px;">Filter Database:</label>
+                <select id="category-select" style="background: rgba(0,0,0,0.5); color: white; padding: 10px 20px; border: 1px solid var(--border-color); border-radius: 6px; outline: none;"></select>
             </div>
             <div id="portrait-grid"></div>
         </div>
-
-    </div> <div id="tooltip" class="tooltip"></div>
-    <div id="toast" class="toast">ID Copied to Clipboard</div>
-
-<script type="module">
-import { TUTORIAL_MISSIONS } from './js/data/missions/tutorial_missions.js';
-import { PHASE_ONE_MISSIONS } from './js/data/missions/phase_one.js';
-import { PHASE_TWO_MISSIONS } from './js/data/missions/phase_two.js';
-import { PHASE_THREE_MISSIONS } from './js/data/missions/phase_three.js';
-
-const storyData = [
-    { phase: "Tutorial: Guild Induction", missions: Object.values(TUTORIAL_MISSIONS) },
-    { phase: "Phase One: Act 1 (The Cog)", missions: Object.values(PHASE_ONE_MISSIONS) },
-    { phase: "Phase Two: Syndicate Emergence", missions: Object.values(PHASE_TWO_MISSIONS) },
-    { phase: "Phase Three: The Operator", missions: Object.values(PHASE_THREE_MISSIONS) }
-];
-
-let globalLedgerData = [];
-let globalChartData = [];
-let globalPhaseTransitions = [];
-let currentSort = { column: 'id', asc: true };
-
-// --- UTILITIES ---
-
-function formatMissionId(id) {
-    if (!id) return '00';
-    const strId = String(id);
-    const numMatch = strId.match(/\d+/);
-    const num = numMatch ? numMatch[0].padStart(2, '0') : '00';
+    </div>
     
-    let branch = '';
-    if (strId.toLowerCase().includes('guild')) branch = 'G';
-    else if (strId.toLowerCase().includes('syndicate')) branch = 'S';
-    else if (strId.toLowerCase().includes('station')) branch = 'ST';
-    
-    return branch ? `${num}${branch}` : num;
-}
+    <div class="tooltip" id="tooltip"></div>
+    <div class="toast" id="toast" style="position:fixed; bottom:30px; right:30px; background:var(--accent-color); color:#000; padding:15px 25px; border-radius:6px; font-weight:bold; opacity:0; transition:opacity 0.3s;">ID Copied</div>
 
-function getMissionNumber(id) {
-    const strId = String(id);
-    const numMatch = strId.match(/\d+/);
-    return numMatch ? parseInt(numMatch[0]) : 0;
-}
+    <script type="module">
+        import { TUTORIAL_MISSIONS } from './js/data/missions/tutorial_missions.js';
+        import { LICENSE_MISSIONS } from './js/data/missions/license_missions.js';
+        import { PHASE_ONE_MISSIONS } from './js/data/missions/phase_one.js';
+        import { PHASE_TWO_MISSIONS } from './js/data/missions/phase_two.js';
+        import { PHASE_THREE_MISSIONS } from './js/data/missions/phase_three.js';
+        import { PHASE_FOUR_MISSIONS } from './js/data/missions/phase_four.js';
+        import { LORE_REGISTRY } from './js/data/lore/loreRegistry.js';
 
-function getPortraitStyle(portraitId) {
-    if (!window.PortraitRegistry) return '';
-    const coords = window.PortraitRegistry[portraitId];
-    if (!coords) return '';
-    return `background-image: url('assets/images/characters/characters_sprite.webp'); background-position: -${coords.x + 4}px -${coords.y}px;`;
-}
+        // Build the dynamic story data array grouping by imports
+        const storyData = [
+            { phase: "Phase 0: Orientation", missions: Object.values(TUTORIAL_MISSIONS) },
+            { phase: "Phase 1: The Cog", missions: Object.values(PHASE_ONE_MISSIONS) },
+            { phase: "Phase 2: Awakening", missions: Object.values(PHASE_TWO_MISSIONS) },
+            { phase: "Phase 3: Escalation", missions: Object.values(PHASE_THREE_MISSIONS) },
+            { phase: "Phase 4: Operator", missions: Object.values(PHASE_FOUR_MISSIONS) },
+            { phase: "Licenses", missions: Object.values(LICENSE_MISSIONS) }
+        ];
 
-function formatName(str) {
-    if (!str) return '';
-    return str.replace('loc_', '').replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-}
-
-function parseObjective(obj) {
-    let str = "";
-    switch(obj.type) {
-        case 'VISIT_SCREEN': 
-            str = `Visit the <b>${formatName(obj.screenId)}</b> screen under the <b>${formatName(obj.navId)}</b> tab.`;
-            break;
-        case 'TRAVEL_TO': 
-            str = `Map navigation to <b>${formatName(obj.target)}</b>.`;
-            break;
-        case 'TRADE_ITEM': 
-            str = `${obj.tradeType === 'buy' ? 'Buy' : 'Sell'} <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b> at ${obj.target ? formatName(obj.target) : 'the local market'}.`;
-            break;
-        case 'DELIVER_ITEM': 
-            str = `Deliver <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b> to <b>${formatName(obj.target)}</b>.`;
-            break;
-        case 'HAVE_CREDITS': 
-            str = `Amass a total net worth of <b>⌬ ${obj.value.toLocaleString()}</b> Credits.`;
-            break;
-        case 'HAVE_DEBT': 
-            str = `Reduce your Guild debt to <b>⌬ ${obj.value}</b>.`;
-            break;
-        case 'HAVE_HULL_PCT': 
-            str = `Repair your ship hull to at least <b>${obj.value}%</b>.`;
-            break;
-        case 'HAVE_FUEL_TANK': 
-            str = `Upgrade your vessel to hold <b>${obj.value}</b> fuel units.`;
-            break;
-        case 'HAVE_ITEM': 
-            str = `Procure and hold <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b> in your cargo.`;
-            break;
-        case 'OWN_SHIP_CLASS': 
-            str = `Acquire a <b>Class ${obj.class}</b> vessel.`;
-            break;
-        case 'COLLECT_ITEM': 
-            str = `Collect <b>${obj.quantity}x</b> <b>${formatName(obj.goodId)}</b>.`;
-            break;
-        case 'HAS_UPGRADE_RANK': 
-            str = `Attain Rank <b>${obj.rank}</b> for upgrade <b>${formatName(obj.upgradeId)}</b>.`;
-            break;
-        case 'ACTION': 
-            str = `Perform action: <b>${formatName(obj.actionId)}</b>.`;
-            break;
-        default: 
-            str = `Complete Task: ${obj.type}`;
-    }
-    return '▸ ' + str;
-}
-
-function parseTriggers(triggers) {
-    if (!triggers || triggers.length === 0) return 'Available Immediately';
-    const reqs = [];
-    triggers.forEach(t => {
-        if (t.type === 'mission_completed') reqs.push(`M_${formatMissionId(t.missionId)}`);
-        if (t.type === 'flag_is_true') reqs.push(`Flag: ${formatName(t.flagId)}`);
-        if (t.type === 'location') reqs.push(`Loc: ${formatName(t.target)}`);
-    });
-    if (reqs.length === 0) return 'Custom Requirements';
-    return `Requires: ${reqs.join(', ')}`;
-}
-
-function parseDialog(text) {
-    if(!text) return '';
-    return text.replace(/\n/g, '<br>');
-}
-
-function formatRewardsStr(rewardsArr) {
-    if (!rewardsArr || rewardsArr.length === 0) return 'NO REWARD';
-    return rewardsArr.map(r => {
-        if (r.type === 'credits') return `⌬ ${r.amount.toLocaleString()}`;
-        if (r.type === 'DEDUCT_CREDITS') return `⌬ -${r.amount.toLocaleString()}`;
-        if (r.type === 'UPGRADE' || r.type === 'GRANT_UPGRADE') return `UPGRADE`;
-        if (r.type === 'license' || r.type === 'UNLOCK_TIER') return `LICENSE`;
-        if (r.type === 'fill_fleet_fuel') return `FUEL VOUCHER`;
-        if (r.type === 'GRANT_SHIP') return `SHIP HULL`;
-        if (r.type === 'SET_FLAG') return `META FLAG`;
-        if (r.type === 'TRIGGER_SYSTEM_STATE') return `SYS EVENT`;
-        if (r.type === 'UNLOCK_LOCATION') return `LOCATION`;
-        if (r.type === 'QUEUE_STORY_EVENT') return `STORY EVENT`;
-        return r.type.toUpperCase();
-    }).join('\n');
-}
-
-function updateHash(mainTabId, subTabId, missionId) {
-    let hash = `main=${mainTabId}&sub=${subTabId}`;
-    if(missionId) hash += `&id=${missionId}`;
-    window.location.hash = hash;
-}
-
-function readHash() {
-    const hash = window.location.hash.substring(1);
-    const params = new URLSearchParams(hash);
-    return {
-        main: params.get('main') || 'group-missions',
-        sub: params.get('sub') || 'view-missions',
-        id: params.get('id')
-    };
-}
-
-// --- TAB LOGIC (2-TIER) ---
-document.querySelectorAll('.main-tab').forEach(mainTab => {
-    mainTab.addEventListener('click', (e) => {
-        // Activate main tab
-        document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
-        e.target.classList.add('active');
+        // Format Helpers
+        function formatMissionId(id) { return id.replace('mission_', '').replace('tutorial_', 'T_'); }
+        function parseDialog(txt) { return txt ? txt.replace(/\n/g, '<br>') : ''; }
+        function parseObjective(obj) { return obj.type === 'TRAVEL_TO' ? `Travel to <b>${obj.target}</b>` : `Execute Directive: <b>${obj.type}</b>`; }
+        function parseTriggers(trigs) { return trigs ? 'Conditional Triggers Active' : 'No Triggers'; }
         
-        // Show corresponding sub-nav group
-        const targetGroup = e.target.dataset.targetGroup;
-        document.querySelectorAll('.sub-nav-group').forEach(g => g.classList.remove('active'));
-        const group = document.getElementById(targetGroup);
-        if(group) {
-            group.classList.add('active');
-            // Auto-click the first sub-tab of this newly active group
-            const firstTab = group.querySelector('.nav-tab');
-            if (firstTab) firstTab.click();
+        function getPortraitStyle(portraitId) {
+            if (!window.PortraitRegistry || !portraitId || !window.PortraitRegistry[portraitId]) return '';
+            const coords = window.PortraitRegistry[portraitId];
+            return `background-image: url('assets/images/characters/characters_sprite.webp'); background-position: -${coords.x + 4}px -${coords.y}px; background-size: auto;`;
         }
-    });
-});
 
-document.querySelectorAll('.nav-tab').forEach(tab => {
-    tab.addEventListener('click', (e) => {
-        const targetId = e.target.dataset.target;
+        // Globals
+        let globalLedgerData = [];
+        let stats = { credits: 0, upgrades: 0, licenses: 0 };
+        const tooltip = document.getElementById('tooltip');
         
-        // Deactivate all sub-tabs across all groups, activate clicked
-        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        e.target.classList.add('active');
-        
-        // Deactivate all views, activate target view
-        document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
-        document.getElementById(targetId).classList.add('active');
-        
-        // Find parent group to update hash
-        const parentGroup = e.target.closest('.sub-nav-group').id;
-        updateHash(parentGroup, targetId, null);
-
-        // Render logic for specific tabs
-        if (targetId === 'view-analytics') {
-            setTimeout(() => createCanvasChart(globalChartData, 'analytics-canvas', globalPhaseTransitions), 50);
-        }
-    });
-});
-
-// --- TOOLTIP LOGIC ---
-const tooltip = document.getElementById('tooltip');
-document.addEventListener('mousemove', (e) => {
-    if (tooltip.style.opacity === '1') {
-        tooltip.style.left = (e.clientX + 15) + 'px';
-        tooltip.style.top = (e.clientY + 15) + 'px';
-    }
-});
-
-// --- CANVAS AREA CHART RENDERER ---
-function createCanvasChart(dataArray, containerId, transitions = []) {
-    const canvas = document.getElementById(containerId);
-    if (!canvas || dataArray.length === 0) return;
-    
-    const ctx = canvas.getContext('2d');
-    const dpr = window.devicePixelRatio || 1;
-    const rect = canvas.parentElement.getBoundingClientRect();
-    
-    // Safety check if the container bounds are 0 (e.g. display: none context fallback)
-    if (rect.width === 0) return; 
-
-    canvas.width = rect.width * dpr;
-    canvas.height = rect.height * dpr;
-    ctx.scale(dpr, dpr);
-    canvas.style.width = `${rect.width}px`;
-    canvas.style.height = `${rect.height}px`;
-
-    const width = rect.width;
-    const height = rect.height;
-    const padding = { top: 30, right: 30, bottom: 40, left: 70 };
-    
-    const graphWidth = width - padding.left - padding.right;
-    const graphHeight = height - padding.top - padding.bottom;
-    const maxCredits = dataArray[dataArray.length - 1].total || 1;
-
-    // Background Gradient
-    const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-    gradient.addColorStop(0, 'rgba(59, 130, 246, 0.4)'); 
-    gradient.addColorStop(1, 'rgba(59, 130, 246, 0.0)');
-
-    const points = dataArray.map((d, i) => {
-        const x = padding.left + (i * (graphWidth / Math.max(dataArray.length - 1, 1)));
-        const y = padding.top + graphHeight - ((d.total / maxCredits) * graphHeight);
-        return { x, y, ...d };
-    });
-
-    ctx.clearRect(0, 0, width, height);
-
-    // Hover logic for dots
-    let hoverIndex = -1;
-    
-    canvas.addEventListener('mousemove', (e) => {
-        const r = canvas.getBoundingClientRect();
-        const mx = e.clientX - r.left;
-        const my = e.clientY - r.top;
-        
-        let found = -1;
-        for(let i=0; i<points.length; i++) {
-            const p = points[i];
-            const dx = mx - p.x;
-            const dy = my - p.y;
-            if(Math.sqrt(dx*dx + dy*dy) < 10) {
-                found = i; break;
+        document.addEventListener('mousemove', (e) => {
+            if (tooltip.style.opacity === '1') {
+                tooltip.style.left = (e.clientX + 15) + 'px';
+                tooltip.style.top = (e.clientY + 15) + 'px';
             }
-        }
-        
-        if (found !== hoverIndex) {
-            hoverIndex = found;
-            drawChart(); 
-        }
-        
-        if (hoverIndex > -1) {
-            const p = points[hoverIndex];
-            tooltip.innerHTML = `<b>Mission M_${p.id}</b><br>Cumulative: ⌬ ${p.total.toLocaleString()}`;
-            tooltip.style.opacity = '1';
-        } else {
-            tooltip.style.opacity = '0';
-        }
-    });
-    
-    canvas.addEventListener('mouseleave', () => {
-        hoverIndex = -1;
-        tooltip.style.opacity = '0';
-        drawChart();
-    });
-
-    function drawChart() {
-        ctx.clearRect(0,0,width,height);
-        
-        // Draw Grid
-        ctx.fillStyle = '#6b6b7a';
-        ctx.strokeStyle = '#262630';
-        ctx.lineWidth = 1;
-        ctx.font = '11px "Share Tech Mono"';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
-        
-        const ticks = 4;
-        for(let i=0; i<=ticks; i++) {
-            const yPos = padding.top + (graphHeight / ticks) * i;
-            const val = maxCredits - ((maxCredits / ticks) * i);
-            ctx.beginPath(); ctx.moveTo(padding.left, yPos); ctx.lineTo(width - padding.right, yPos); ctx.stroke();
-            const labelStr = val >= 1000 ? (val/1000).toFixed(0) + 'k' : val.toFixed(0);
-            ctx.fillText(labelStr, padding.left - 15, yPos);
-        }
-
-        // Draw Phase Milestone Markers
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        transitions.forEach(tr => {
-            if(tr.index >= dataArray.length || tr.index === 0) return;
-            const x = padding.left + (tr.index * (graphWidth / Math.max(dataArray.length - 1, 1)));
-            
-            ctx.beginPath();
-            ctx.moveTo(x, padding.top);
-            ctx.lineTo(x, height - padding.bottom);
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.15)';
-            ctx.setLineDash([4, 4]);
-            ctx.stroke();
-            ctx.setLineDash([]); 
-
-            ctx.save();
-            ctx.translate(x + 5, padding.top - 5);
-            ctx.fillText(tr.name.split(':')[0], 0, 0); 
-            ctx.restore();
         });
 
-        // Draw Area & Path
-        ctx.beginPath(); ctx.moveTo(padding.left, height - padding.bottom);
-        points.forEach(p => ctx.lineTo(p.x, p.y)); ctx.lineTo(points[points.length-1].x, height - padding.bottom);
-        ctx.closePath(); ctx.fillStyle = gradient; ctx.fill();
-        ctx.beginPath(); ctx.moveTo(points[0].x, points[0].y); points.forEach(p => ctx.lineTo(p.x, p.y));
-        ctx.strokeStyle = '#3b82f6'; ctx.lineWidth = 3; ctx.shadowColor = 'rgba(59, 130, 246, 0.6)'; ctx.shadowBlur = 10; ctx.stroke(); ctx.shadowBlur = 0;
-
-        points.forEach((p, i) => {
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, i === hoverIndex ? 8 : 5, 0, Math.PI * 2);
-            ctx.fillStyle = i === hoverIndex ? '#3b82f6' : '#050507';
-            ctx.lineWidth = 2;
-            ctx.strokeStyle = '#3b82f6';
-            if(i === hoverIndex) {
-                ctx.shadowColor = '#3b82f6';
-                ctx.shadowBlur = 10;
-            } else {
-                ctx.shadowBlur = 0;
-            }
-            ctx.fill();
-            ctx.stroke();
-        });
-        ctx.shadowBlur = 0;
-    }
-    
-    drawChart(); 
-}
-
-// --- RENDERERS ---
-
-function initApp() {
-    const sidebar = document.getElementById('sidebar-content');
-    const tGrid = document.getElementById('timeline-grid');
-    const rSummary = document.getElementById('rewards-summary');
-
-    let isLeftNode = true;
-    let stats = { credits: 0, upgrades: 0, licenses: 0, phases: [] };
-    
-    globalLedgerData = [];
-    globalChartData = [];
-    globalPhaseTransitions = [];
-    
-    let cumulativeCredits = 0;
-    let chartDataMap = new Map();
-
-    storyData.forEach((phaseData, phaseIndex) => {
-        let phaseStats = { name: phaseData.phase, credits: 0, rewards: 0 };
-        
-        let firstMissionNum = phaseData.missions.length > 0 ? getMissionNumber(phaseData.missions[0].id) : 0;
-        globalPhaseTransitions.push({
-            name: phaseData.phase,
-            missionNum: firstMissionNum,
-            index: 0
-        });
-        
-        // Sidebar Phase Header (Collapsible)
-        const header = document.createElement('div');
-        header.className = 'phase-header';
-        header.innerHTML = `<span>${phaseData.phase}</span> <span class="phase-toggle">▼</span>`;
-        sidebar.appendChild(header);
-
-        let phaseItems = [];
-
-        phaseData.missions.forEach(mission => {
-            const hostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
-            const fId = formatMissionId(mission.id);
-
-            // --- 1. MISSIONS TAB ---
-            const item = document.createElement('div');
-            item.className = `timeline-item ${hostClass}`;
-            item.dataset.searchString = `${mission.id} ${fId} ${mission.name} ${mission.host}`.toLowerCase();
-            item.dataset.host = mission.host || 'NONE';
-            
-            const rwds = formatRewardsStr(mission.rewards);
-            const isCreditsStr = rwds.includes('⌬') ? 'is-credits' : '';
-            
-            item.innerHTML = `
-                <div class="mission-id">M_${fId}</div>
-                <div class="mission-name">${mission.name}</div>
-                <div class="item-reward ${isCreditsStr}">${rwds}</div>
-            `;
-            item.addEventListener('click', () => {
-                loadMission(mission, item);
-                updateHash('group-missions', 'view-missions', mission.id);
-            });
-            sidebar.appendChild(item);
-            phaseItems.push(item);
-
-            // --- 2. TIMELINE TAB ---
-            const node = document.createElement('div');
-            node.className = `t-node ${isLeftNode ? 'left' : 'right'} ${hostClass}`;
-            node.innerHTML = `
-                <div class="t-dot"></div>
-                <div class="t-content">
-                    <div class="t-phase">M_${fId} // ${mission.host || 'NONE'}</div>
-                    <div class="t-title">${mission.name}</div>
-                </div>
-            `;
-            
-            node.addEventListener('click', () => {
-                // Ensure Missions main tab is active, then Mission sub tab
-                document.querySelector('.main-tab[data-target-group="group-missions"]').click();
-                document.querySelector('.nav-tab[data-target="view-missions"]').click();
-                item.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                item.click();
-            });
-
-            node.querySelector('.t-content').addEventListener('mouseenter', () => {
-                tooltip.innerHTML = `<b>${mission.name}</b><br><br>${mission.description.substring(0, 100)}...`;
-                tooltip.style.opacity = '1';
-            });
-            node.querySelector('.t-content').addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
-            tGrid.appendChild(node);
-
-            // --- 3. REWARDS LEDGER DATA GATHERING ---
-            let earnedCreditsThisMission = 0;
-            let deductedCreditsThisMission = 0;
-            
-            if (mission.rewards && mission.rewards.length > 0) {
-                let rwdHtml = '';
-                mission.rewards.forEach(r => {
-                    if (r.type === 'credits') { 
-                        earnedCreditsThisMission += r.amount; phaseStats.credits += r.amount; stats.credits += r.amount; 
-                        rwdHtml += `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
-                    }
-                    else if (r.type === 'DEDUCT_CREDITS') { 
-                        deductedCreditsThisMission += r.amount;
-                        rwdHtml += `<div class="payout-tag credits" style="color:#ef4444; border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.08);">[-] ⌬ ${r.amount.toLocaleString()}</div>`; 
-                    }
-                    else if (r.type === 'UPGRADE' || r.type === 'GRANT_UPGRADE') { 
-                        phaseStats.rewards++; stats.upgrades++; 
-                        rwdHtml += `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
-                    }
-                    else if (r.type === 'GRANT_SHIP') { 
-                        phaseStats.rewards++; stats.upgrades++; 
-                        rwdHtml += `<div class="payout-tag upgrade">SHIP: ${r.shipId}</div>`; 
-                    }
-                    else if (r.type === 'license' || r.type === 'UNLOCK_TIER') { 
-                        phaseStats.rewards++; stats.licenses++; 
-                        rwdHtml += `<div class="payout-tag license">LICENSE Granted</div>`; 
-                    }
-                    else if (r.type === 'SET_FLAG') { 
-                        phaseStats.rewards++; 
-                        rwdHtml += `<div class="payout-tag license">FLAG: ${r.flagId}</div>`; 
-                    }
-                    else if (r.type === 'QUEUE_STORY_EVENT') { 
-                        phaseStats.rewards++; 
-                        rwdHtml += `<div class="payout-tag license">STORY EVENT QUEUED</div>`; 
-                    }
-                    else if (r.type === 'TRIGGER_SYSTEM_STATE') { 
-                        phaseStats.rewards++; 
-                        rwdHtml += `<div class="payout-tag" style="color:#a855f7; border-color:#a855f7;">EVENT: ${r.stateId}</div>`; 
-                    }
-                    else if (r.type === 'UNLOCK_LOCATION') { 
-                        phaseStats.rewards++; 
-                        rwdHtml += `<div class="payout-tag" style="color:#10b981; border-color:#10b981;">LOC: ${r.locationId}</div>`; 
-                    }
-                    else if (r.type === 'fill_fleet_fuel') { 
-                        phaseStats.rewards++; 
-                        rwdHtml += `<div class="payout-tag credits">FUEL VOUCHER</div>`; 
-                    }
-                });
-
-                globalLedgerData.push({
-                    id: fId,
-                    numId: getMissionNumber(mission.id),
-                    name: mission.name,
-                    hostClass: hostClass,
-                    credits: earnedCreditsThisMission - deductedCreditsThisMission,
-                    html: rwdHtml
-                });
-            }
-
-            let numId = getMissionNumber(mission.id);
-            let netCredits = earnedCreditsThisMission - deductedCreditsThisMission;
-
-            if(!chartDataMap.has(numId)) {
-                chartDataMap.set(numId, { idStr: fId, creditsArr: [netCredits] });
-            } else {
-                chartDataMap.get(numId).creditsArr.push(netCredits);
-            }
-
-            isLeftNode = !isLeftNode;
-        });
-        
-        // Phase Toggle Logic
-        header.addEventListener('click', function() {
-            this.classList.toggle('collapsed');
-            const isCollapsed = this.classList.contains('collapsed');
-            phaseItems.forEach(item => {
-                if(!item.dataset.filtered) {
-                    item.style.display = isCollapsed ? 'none' : 'grid';
+        // Tab Logic
+        document.querySelectorAll('.main-tab').forEach(mainTab => {
+            mainTab.addEventListener('click', (e) => {
+                document.querySelectorAll('.main-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                const targetGroup = e.target.dataset.targetGroup;
+                document.querySelectorAll('.sub-nav-group').forEach(g => g.classList.remove('active'));
+                const group = document.getElementById(targetGroup);
+                if(group) {
+                    group.classList.add('active');
+                    const firstTab = group.querySelector('.nav-tab');
+                    if (firstTab) firstTab.click();
                 }
             });
         });
 
-        stats.phases.push(phaseStats);
-    });
+        document.querySelectorAll('.nav-tab').forEach(tab => {
+            tab.addEventListener('click', (e) => {
+                const targetId = e.target.dataset.target;
+                document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+                e.target.classList.add('active');
+                
+                document.querySelectorAll('.view-container').forEach(v => v.classList.remove('active'));
+                document.getElementById(targetId).classList.add('active');
+            });
+        });
 
-    // Chart Data Generation (Averaging Branches)
-    let sortedIds = Array.from(chartDataMap.keys()).sort((a,b) => a - b);
-    sortedIds.forEach(numId => {
-        let data = chartDataMap.get(numId);
-        let avgCredits = data.creditsArr.reduce((a, b) => a + b, 0) / data.creditsArr.length;
-        cumulativeCredits += avgCredits;
-        globalChartData.push({ id: data.idStr, numId: numId, total: Math.max(0, cumulativeCredits) });
-    });
+        // Initialization
+        function initApp() {
+            const sidebar = document.getElementById('sidebar-content');
+            const tGrid = document.getElementById('timeline-grid');
+            let isLeftNode = true;
 
-    globalPhaseTransitions.forEach(tr => {
-        let idx = globalChartData.findIndex(d => d.numId >= tr.missionNum);
-        tr.index = idx !== -1 ? idx : 0;
-    });
+            storyData.forEach((phaseData) => {
+                const header = document.createElement('div');
+                header.className = 'phase-header';
+                header.innerHTML = `<span>${phaseData.phase}</span> <span class="phase-toggle">▼</span>`;
+                sidebar.appendChild(header);
 
-    // Search and Filter Logic
-    const searchInput = document.getElementById('mission-search');
-    const filterSelect = document.getElementById('mission-filter');
+                let phaseItems = [];
 
-    function filterMissions() {
-        const term = searchInput.value.toLowerCase();
-        const hostVal = filterSelect.value;
-        
-        document.querySelectorAll('.timeline-item').forEach(item => {
-            const matchSearch = item.dataset.searchString.includes(term);
-            const matchHost = hostVal === 'ALL' || item.dataset.host === hostVal;
+                phaseData.missions.forEach(mission => {
+                    const hostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
+                    const fId = formatMissionId(mission.id);
+                    
+                    // --- SIDEBAR LIST ---
+                    const item = document.createElement('div');
+                    item.className = `timeline-item ${hostClass}`;
+                    item.innerHTML = `
+                        <div class="mission-id">M_${fId}</div>
+                        <div class="mission-name">${mission.name}</div>
+                        <div class="item-reward">⌬</div>
+                    `;
+                    item.dataset.searchString = `${mission.id} ${fId} ${mission.name} ${mission.host}`.toLowerCase();
+                    item.dataset.host = mission.host || 'NONE';
+                    
+                    item.addEventListener('click', () => { loadMission(mission, item); });
+                    sidebar.appendChild(item);
+                    phaseItems.push(item);
+                    
+                    // --- TIMELINE GRAPH ---
+                    const node = document.createElement('div');
+                    node.className = `t-node ${isLeftNode ? 'left' : 'right'} ${hostClass}`;
+                    node.innerHTML = `
+                        <div class="t-dot"></div>
+                        <div class="t-content">
+                            <div style="font-family: var(--font-mono); font-size: 0.7rem; color: var(--text-muted); margin-bottom: 5px;">M_${fId}</div>
+                            <div style="font-weight: bold; color: white; font-size: 0.95rem;">${mission.name}</div>
+                        </div>
+                    `;
+                    node.addEventListener('click', () => {
+                        document.querySelector('.main-tab[data-target-group="group-missions"]').click();
+                        document.querySelector('.nav-tab[data-target="view-missions"]').click();
+                        item.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        item.click();
+                    });
+                    
+                    node.querySelector('.t-content').addEventListener('mouseenter', () => {
+                        tooltip.innerHTML = `<b>${mission.name}</b><br><br>${(mission.description || "").substring(0, 80)}...`;
+                        tooltip.style.opacity = '1';
+                    });
+                    node.querySelector('.t-content').addEventListener('mouseleave', () => { tooltip.style.opacity = '0'; });
+                    tGrid.appendChild(node);
+                    
+                    // --- LEDGER DATA ---
+                    let netCredits = 0;
+                    let rwdHtml = '';
+                    if (mission.rewards) {
+                        mission.rewards.forEach(r => {
+                            if (r.type === 'credits') { netCredits += r.amount; stats.credits += r.amount; rwdHtml += `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; }
+                            else if (r.type === 'DEDUCT_CREDITS') { netCredits -= r.amount; rwdHtml += `<div class="payout-tag credits" style="color:#ff6b6b; border-color:#ff6b6b;">[-] ⌬ ${r.amount.toLocaleString()}</div>`; }
+                            else if (r.type.includes('UPGRADE') || r.type === 'GRANT_SHIP') { stats.upgrades++; rwdHtml += `<div class="payout-tag upgrade">${r.type}</div>`; }
+                            else if (r.type === 'license' || r.type === 'UNLOCK_TIER') { stats.licenses++; rwdHtml += `<div class="payout-tag license">${r.type}</div>`; }
+                            else { rwdHtml += `<div class="payout-tag">${r.type}</div>`; }
+                        });
+                    }
+                    
+                    globalLedgerData.push({ id: fId, name: mission.name, hostClass, credits: netCredits, html: rwdHtml });
+                    isLeftNode = !isLeftNode;
+                });
+                
+                header.addEventListener('click', function() {
+                    this.classList.toggle('collapsed');
+                    const isCollapsed = this.classList.contains('collapsed');
+                    phaseItems.forEach(item => {
+                        if(!item.dataset.filtered) item.style.display = isCollapsed ? 'none' : 'grid';
+                    });
+                });
+            });
             
-            if(matchSearch && matchHost) {
-                item.style.display = 'grid';
-                item.dataset.filtered = '';
-            } else {
-                item.style.display = 'none';
-                item.dataset.filtered = 'true';
-            }
-        });
-    }
-
-    searchInput.addEventListener('input', filterMissions);
-    filterSelect.addEventListener('change', filterMissions);
-
-    // Rewards Summary
-    rSummary.innerHTML = `
-        <div class="stat-box credits">
-            <div class="stat-title">Total Credits Earned</div>
-            <div class="stat-value">⌬ ${stats.credits.toLocaleString()}</div>
-        </div>
-        <div class="stat-box upgrades">
-            <div class="stat-title">Upgrades Installed</div>
-            <div class="stat-value">${stats.upgrades}</div>
-        </div>
-        <div class="stat-box">
-            <div class="stat-title">Licenses Acquired</div>
-            <div class="stat-value" style="color: var(--accent-color); text-shadow: 0 0 15px rgba(230,126,34,0.3);">${stats.licenses}</div>
-        </div>
-    `;
-
-    // Render Ledger
-    renderLedger();
-
-    // Initial state from Hash
-    const state = readHash();
-    if(state.main) {
-        document.querySelector(`.main-tab[data-target-group="${state.main}"]`)?.click();
-    }
-    if(state.sub) {
-        document.querySelector(`.nav-tab[data-target="${state.sub}"]`)?.click();
-    }
-    if(state.id) {
-        let allMissions = [];
-        storyData.forEach(p => allMissions = allMissions.concat(p.missions));
-        const found = allMissions.find(m => m.id === state.id);
-        const fId = formatMissionId(state.id);
-        const itemEl = Array.from(document.querySelectorAll('.timeline-item')).find(el => el.querySelector('.mission-id').textContent === `M_${fId}`);
-        if(found && itemEl) loadMission(found, itemEl);
-    }
-
-    initPersonnelViewer();
-}
-
-function renderLedger() {
-    const rGrid = document.getElementById('rewards-grid');
-    rGrid.innerHTML = '';
-    
-    let sortedData = [...globalLedgerData];
-    sortedData.sort((a, b) => {
-        let valA = a[currentSort.column];
-        let valB = b[currentSort.column];
-        if(currentSort.column === 'id') { valA = a.numId; valB = b.numId; }
-        
-        if(valA < valB) return currentSort.asc ? -1 : 1;
-        if(valA > valB) return currentSort.asc ? 1 : -1;
-        return 0;
-    });
-
-    sortedData.forEach(d => {
-        const rNode = document.createElement('div');
-        rNode.className = `ledger-row ${d.hostClass}`;
-        rNode.innerHTML = `
-            <div class="ledger-id">M_${d.id}</div>
-            <div class="ledger-name">${d.name}</div>
-            <div class="ledger-payouts">${d.html}</div>
-        `;
-        rGrid.appendChild(rNode);
-    });
-}
-
-document.querySelectorAll('.sortable-header').forEach(header => {
-    header.addEventListener('click', (e) => {
-        const col = e.target.dataset.sort;
-        if(currentSort.column === col) {
-            currentSort.asc = !currentSort.asc;
-        } else {
-            currentSort.column = col;
-            currentSort.asc = true;
-        }
-        document.querySelectorAll('.sortable-header').forEach(h => {
-            h.classList.remove('active', 'asc');
-        });
-        e.target.classList.add('active');
-        if(currentSort.asc) e.target.classList.add('asc');
-        renderLedger();
-    });
-});
-
-function loadMission(mission, element) {
-    document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active'));
-    if(element) element.classList.add('active');
-    
-    document.getElementById('empty-state').style.display = 'none';
-    const detailView = document.getElementById('mission-detail');
-    detailView.style.display = 'block';
-    detailView.style.animation = 'none';
-    detailView.offsetHeight; 
-    detailView.style.animation = null;
-
-    const mainHostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
-    detailView.className = mainHostClass; 
-
-    document.getElementById('detail-name').textContent = mission.name;
-    document.getElementById('detail-desc').innerHTML = parseDialog(mission.description);
-    
-    document.getElementById('init-role').textContent = mission.portraitId || 'INITIATOR';
-    document.getElementById('init-portrait').style.cssText = getPortraitStyle(mission.portraitId);
-    
-    const isTwist = mission.completion && mission.completion.portraitId && (mission.completion.portraitId !== mission.portraitId);
-    const compBlock = document.getElementById('completion-portrait-block');
-    
-    if (mission.completion && mission.completion.portraitId) {
-        compBlock.style.display = 'flex';
-        document.getElementById('comp-role').textContent = mission.completion.portraitId;
-        document.getElementById('comp-portrait').style.cssText = getPortraitStyle(mission.completion.portraitId);
-    } else {
-        compBlock.style.display = 'none';
-    }
-    
-    const badgesEl = document.getElementById('detail-badges');
-    const hostClass = mission.host === 'GUILD' ? 'guild' : (mission.host === 'SYNDICATE' ? 'syndicate' : 'station');
-    
-    let completionBadge = '';
-    if (isTwist) {
-        const compClass = mission.completion.host === 'GUILD' ? 'guild' : (mission.completion.host === 'SYNDICATE' ? 'syndicate' : 'station');
-        completionBadge = `<span class="badge ${compClass}">Resolved By: ${mission.completion.host}</span>`;
-    }
-
-    const missionType = mission.type || 'Story';
-    
-    badgesEl.innerHTML = `
-        <span class="badge">Type: ${missionType}</span>
-        <span class="badge ${hostClass}">Host: ${mission.host}</span>
-        ${completionBadge}
-    `;
-
-    // Meta Flags & Triggers
-    const flagsEl = document.getElementById('detail-flags');
-    let metaHtml = `
-        <span class="flag">${mission.repeatable ? '✔' : '✗'} Repeatable</span>
-        <span class="flag">${mission.abandonable ? '✔' : '✗'} Abandonable</span>
-    `;
-    if(mission.grantedIntel) metaHtml += `<span class="flag" style="color:#a855f7">✔ Hot Intel</span>`;
-    if(mission.grantedCargo) metaHtml += `<span class="flag" style="color:#f59e0b">✔ Cargo Provided</span>`;
-    if(mission.onArrivalCinematic) metaHtml += `<span class="flag" style="color:#3b82f6">✔ Cinematic</span>`;
-    flagsEl.innerHTML = metaHtml;
-
-    document.getElementById('detail-trigger').textContent = parseTriggers(mission.triggers);
-
-    const objEl = document.getElementById('detail-objectives');
-    objEl.innerHTML = '';
-    if (!mission.objectives || mission.objectives.length === 0) {
-        objEl.innerHTML = `<li><i>▸ No specific operational tasks required. Acknowledge transmission.</i></li>`;
-    } else {
-        mission.objectives.forEach(obj => {
-            const li = document.createElement('li');
-            li.innerHTML = parseObjective(obj);
-            objEl.appendChild(li);
-        });
-    }
-
-    const rewardsEl = document.getElementById('detail-rewards');
-    rewardsEl.innerHTML = '';
-    if (!mission.rewards || mission.rewards.length === 0) {
-        rewardsEl.innerHTML = `<i>No material rewards authorized for this operation.</i>`;
-    } else {
-        let rwdHtml = '';
-        mission.rewards.forEach(r => {
-            if (r.type === 'credits') { 
-                rwdHtml += `<div class="payout-tag credits">[+] ⌬ ${r.amount.toLocaleString()}</div>`; 
-            }
-            else if (r.type === 'DEDUCT_CREDITS') { 
-                rwdHtml += `<div class="payout-tag credits" style="color:#ef4444; border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.08);">[-] ⌬ ${r.amount.toLocaleString()}</div>`; 
-            }
-            else if (r.type === 'UPGRADE' || r.type === 'GRANT_UPGRADE') { 
-                rwdHtml += `<div class="payout-tag upgrade">UPGRADE Authorized</div>`; 
-            }
-            else if (r.type === 'GRANT_SHIP') { 
-                rwdHtml += `<div class="payout-tag upgrade">SHIP: ${r.shipId}</div>`; 
-            }
-            else if (r.type === 'license' || r.type === 'UNLOCK_TIER') { 
-                rwdHtml += `<div class="payout-tag license">LICENSE Granted</div>`; 
-            }
-            else if (r.type === 'SET_FLAG') { 
-                rwdHtml += `<div class="payout-tag license">FLAG: ${r.flagId}</div>`; 
-            }
-            else if (r.type === 'QUEUE_STORY_EVENT') { 
-                rwdHtml += `<div class="payout-tag license">STORY EVENT QUEUED</div>`; 
-            }
-            else if (r.type === 'TRIGGER_SYSTEM_STATE') { 
-                rwdHtml += `<div class="payout-tag" style="color:#a855f7; border-color:#a855f7;">EVENT: ${r.stateId}</div>`; 
-            }
-            else if (r.type === 'UNLOCK_LOCATION') { 
-                rwdHtml += `<div class="payout-tag" style="color:#10b981; border-color:#10b981;">LOC: ${r.locationId}</div>`; 
-            }
-            else if (r.type === 'fill_fleet_fuel') { 
-                rwdHtml += `<div class="payout-tag credits">FUEL VOUCHER</div>`; 
-            }
-            else {
-                rwdHtml += `<div class="payout-tag">${r.type.toUpperCase()}</div>`;
-            }
-        });
-        rewardsEl.innerHTML = rwdHtml;
-    }
-
-    const compBox = document.getElementById('detail-comp-box');
-    const compBtnWrapper = document.getElementById('comp-btn-wrapper');
-    if (mission.completion) {
-        document.getElementById('detail-comp-title').textContent = mission.completion.title || 'Mission Complete';
-        document.getElementById('detail-comp-text').innerHTML = parseDialog(mission.completion.text);
-        
-        if(mission.completion.buttonText) {
-            compBtnWrapper.style.display = 'block';
-            document.getElementById('comp-btn-text').textContent = mission.completion.buttonText;
-        } else {
-            compBtnWrapper.style.display = 'none';
-        }
-
-        const compHost = (mission.completion && mission.completion.host) ? mission.completion.host : null;
-        if (compHost) {
-            compBox.className = `completion-box host-${compHost.toLowerCase()}`;
-        } else {
-            compBox.className = `completion-box`;
-        }
-    }
-}
-
-// --- PERSONNEL VIEWER LOGIC ---
-function initPersonnelViewer() {
-    if (!window.PortraitRegistry) return;
-
-    const select = document.getElementById('category-select');
-    const grid = document.getElementById('portrait-grid');
-    const toast = document.getElementById('toast');
-
-    const categories = new Set();
-    Object.keys(window.PortraitRegistry).forEach(key => {
-        const match = key.match(/^(.*)_\d+$/);
-        if (match) categories.add(match[1]);
-    });
-
-    Array.from(categories).sort().forEach(cat => {
-        const option = document.createElement('option');
-        option.value = cat;
-        option.textContent = cat.replace(/_/g, ' ');
-        select.appendChild(option);
-    });
-
-    function renderGrid(category) {
-        grid.innerHTML = '';
-        
-        const items = Object.entries(window.PortraitRegistry).filter(([key]) => key.startsWith(category + '_'));
-        items.sort((a, b) => {
-            const numA = parseInt(a[0].match(/_(\d+)$/)[1]);
-            const numB = parseInt(b[0].match(/_(\d+)$/)[1]);
-            return numA - numB;
-        });
-
-        items.forEach(([id, coords]) => {
-            const card = document.createElement('div');
-            card.className = 'portrait-card';
-
-            const sprite = document.createElement('div');
-            sprite.className = 'sprite-window';
-            sprite.style.backgroundPosition = `-${coords.x + 4}px -${coords.y}px`;
-
-            const label = document.createElement('div');
-            label.className = 'id-label';
-            label.textContent = id;
-            label.title = "Click to copy Index ID";
+            // Search / Filter
+            document.getElementById('mission-search').addEventListener('input', filterMissions);
+            document.getElementById('mission-filter').addEventListener('change', filterMissions);
             
-            label.onclick = () => {
-                navigator.clipboard.writeText(id);
-                toast.classList.add('show');
-                setTimeout(() => toast.classList.remove('show'), 2000);
-            };
+            function filterMissions() {
+                const term = document.getElementById('mission-search').value.toLowerCase();
+                const hostVal = document.getElementById('mission-filter').value;
+                document.querySelectorAll('.timeline-item').forEach(item => {
+                    const matchSearch = item.dataset.searchString.includes(term);
+                    const matchHost = hostVal === 'ALL' || item.dataset.host === hostVal;
+                    if(matchSearch && matchHost) { item.style.display = 'grid'; item.dataset.filtered = ''; }
+                    else { item.style.display = 'none'; item.dataset.filtered = 'true'; }
+                });
+            }
 
-            card.appendChild(sprite);
-            card.appendChild(label);
-            grid.appendChild(card);
-        });
-    }
+            // Stats
+            document.getElementById('rewards-summary').innerHTML = `
+                <div class="stat-box"><div style="font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 10px;">CREDITS</div><div class="stat-value" style="color:var(--credit-cyan);">⌬ ${stats.credits.toLocaleString()}</div></div>
+                <div class="stat-box"><div style="font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 10px;">UPGRADES</div><div class="stat-value">${stats.upgrades}</div></div>
+                <div class="stat-box"><div style="font-family: var(--font-mono); color: var(--text-muted); margin-bottom: 10px;">LICENSES</div><div class="stat-value" style="color:var(--faction-guild);">${stats.licenses}</div></div>
+            `;
+            
+            // Ledger Render
+            const rGrid = document.getElementById('rewards-grid');
+            globalLedgerData.forEach(d => {
+                const rNode = document.createElement('div');
+                rNode.className = `ledger-row ${d.hostClass}`;
+                rNode.innerHTML = `<div style="font-family:var(--font-mono); color:var(--text-muted);">M_${d.id}</div><div style="font-weight:600; color:white;">${d.name}</div><div style="display:flex; flex-wrap:wrap; gap:10px;">${d.html}</div>`;
+                rGrid.appendChild(rNode);
+            });
 
-    select.addEventListener('change', (e) => renderGrid(e.target.value));
-    if(select.value) renderGrid(select.value);
-}
+            // Lore Populator
+            populateLore();
+        }
+        
+        function populateLore() {
+            const container = document.getElementById('lore-content-area');
+            let contentHtml = '<h1>Orbital Trading - Lore Archives</h1><hr style="border: none; border-top: 1px solid var(--glass-border); margin: 30px 0;">';
+            const playerName = "The Sovereign"; // Use generic term for archives
+            
+            Object.values(LORE_REGISTRY).forEach(entry => {
+                if (entry.title && entry.content) {
+                    const cleanTitle = entry.title.replace('[playerName]', playerName);
+                    const cleanContent = entry.content.replace(/\[playerName\]/g, playerName);
+                    contentHtml += `<h2>${cleanTitle}</h2>${cleanContent}`;
+                }
+            });
+            container.innerHTML = contentHtml;
+        }
 
-// Ensure the game files are loaded before init
-document.addEventListener('DOMContentLoaded', () => {
-    setTimeout(initApp, 100); 
-});
-</script>
+        function loadMission(mission, element) {
+            document.querySelectorAll('.timeline-item').forEach(el => el.classList.remove('active'));
+            if(element) element.classList.add('active');
+            
+            document.getElementById('empty-state').style.display = 'none';
+            const detailView = document.getElementById('mission-detail');
+            detailView.style.display = 'block';
+            
+            const mainHostClass = mission.host ? `host-${mission.host.toLowerCase()}` : 'host-default';
+            detailView.className = mainHostClass; 
+            
+            document.getElementById('detail-name').textContent = mission.name;
+            document.getElementById('detail-desc').innerHTML = parseDialog(mission.description);
+            
+            document.getElementById('init-role').textContent = mission.portraitId || 'INITIATOR';
+            document.getElementById('init-portrait').style.cssText = getPortraitStyle(mission.portraitId);
+            
+            const isTwist = mission.completion && mission.completion.portraitId && (mission.completion.portraitId !== mission.portraitId);
+            const compBlock = document.getElementById('completion-portrait-block');
+            
+            if (mission.completion && mission.completion.portraitId) {
+                compBlock.style.display = 'flex';
+                document.getElementById('comp-role').textContent = mission.completion.portraitId;
+                document.getElementById('comp-portrait').style.cssText = getPortraitStyle(mission.completion.portraitId);
+            } else { compBlock.style.display = 'none'; }
+            
+            document.getElementById('detail-badges').innerHTML = `<span class="badge">Type: ${mission.type || 'Story'}</span><span class="badge ${mission.host === 'GUILD' ? 'guild' : (mission.host === 'SYNDICATE' ? 'syndicate' : 'station')}">Host: ${mission.host}</span>`;
+            document.getElementById('detail-flags').innerHTML = `<span style="margin-right:15px;">${mission.repeatable ? '✔' : '✗'} Repeatable</span><span>${mission.abandonable ? '✔' : '✗'} Abandonable</span>`;
+            document.getElementById('detail-trigger').textContent = parseTriggers(mission.triggers);
+            
+            const objEl = document.getElementById('detail-objectives');
+            objEl.innerHTML = '';
+            if (mission.objectives) {
+                mission.objectives.forEach(obj => {
+                    const li = document.createElement('li');
+                    li.innerHTML = parseObjective(obj);
+                    objEl.appendChild(li);
+                });
+            } else { objEl.innerHTML = '<li><i>No tasks required.</i></li>'; }
+            
+            // Completion Box
+            const cbw = document.getElementById('detail-comp-box-wrapper');
+            if (mission.completion) {
+                cbw.style.display = 'block';
+                document.getElementById('detail-comp-text').innerHTML = parseDialog(mission.completion.text);
+                if(mission.completion.buttonText) {
+                    document.getElementById('comp-btn-wrapper').style.display = 'block';
+                    document.getElementById('comp-btn-text').textContent = mission.completion.buttonText;
+                } else { document.getElementById('comp-btn-wrapper').style.display = 'none'; }
+            } else { cbw.style.display = 'none'; }
+        }
+
+        // Personnel Viewer
+        function initPersonnelViewer() {
+            if (!window.PortraitRegistry) return;
+            const select = document.getElementById('category-select');
+            const grid = document.getElementById('portrait-grid');
+            const categories = new Set();
+            
+            Object.keys(window.PortraitRegistry).forEach(key => {
+                const match = key.match(/^(.*)_\d+$/);
+                if (match) categories.add(match[1]);
+            });
+            
+            Array.from(categories).sort().forEach(cat => {
+                const option = document.createElement('option');
+                option.value = cat; option.textContent = cat.replace(/_/g, ' ');
+                select.appendChild(option);
+            });
+            
+            function renderGrid(cat) {
+                grid.innerHTML = '';
+                const items = Object.entries(window.PortraitRegistry).filter(([key]) => key.startsWith(cat + '_'));
+                items.forEach(([id, coords]) => {
+                    const card = document.createElement('div');
+                    card.style.cssText = "background: var(--glass-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--glass-border); text-align: center;";
+                    card.innerHTML = `<div style="width: 128px; height: 128px; background-image: url('assets/images/characters/characters_sprite.webp'); background-position: -${coords.x + 4}px -${coords.y}px; margin-bottom: 15px; border-radius: 6px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);"></div>
+                    <div style="font-family: var(--font-mono); font-size: 0.85rem; color: var(--text-bright); background: rgba(0,0,0,0.4); padding: 8px; border-radius: 4px; cursor: pointer;">${id}</div>`;
+                    card.querySelector('div:last-child').onclick = () => {
+                        navigator.clipboard.writeText(id);
+                        const toast = document.getElementById('toast');
+                        toast.style.opacity = '1';
+                        setTimeout(() => toast.style.opacity = '0', 2000);
+                    };
+                    grid.appendChild(card);
+                });
+            }
+            select.addEventListener('change', (e) => renderGrid(e.target.value));
+            if(select.value) renderGrid(select.value);
+        }
+
+        setTimeout(() => {
+            initApp();
+            initPersonnelViewer();
+        }, 100);
+    </script>
 </body>
 </html>

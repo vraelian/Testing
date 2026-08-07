@@ -476,7 +476,7 @@ export class IntelService {
             this.gameState.setState({ lastHotIntelDay: state.day });
             this.generateHotIntel();
             
-            // Initiate the 3-second delay sequence for the UI rendering
+            // Initiate the 10.1-second delay sequence for the UI rendering to queue behind birthday modals (10s)
             setTimeout(() => {
                 const currentState = this.gameState.getState();
                 
@@ -488,7 +488,7 @@ export class IntelService {
                 } else {
                     this.logger.error('IntelService', 'Failed to show Hot Intel Modal: UI Manager not found.');
                 }
-            }, 3000);
+            }, 10100);
         }
     }
 }

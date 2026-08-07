@@ -26,20 +26,18 @@ BULKHEAD NAVIGATION STYLES
     font-family: 'Orbitron', sans-serif;
     font-weight: 700;
     font-size: 0.8rem;
-    position: relative; /* Establishes stacking context for z-index */
+    position: relative;
     background-color: #444;
     border-top: 1px solid #666;
-    /* Added transition for smooth scaling and filter effects */
-    transition: all 0.1s ease; /* Reduced to 0.1s for snappy feedback */
+    /* No transition on inactive tabs — they rebuild as fresh DOM nodes on nav change
+       and don't need interpolation. Transitions here only added perceived lag. */
     text-decoration: none;
     filter: drop-shadow(0 2px 2px rgba(0,0,0,0.4));
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
-
-    /* --- Core Interlocking Logic --- */
     clip-path: polygon(12px 0, 100% 0, calc(100% - 12px) 100%, 0% 100%);
-    margin-left: -12px; /* Overlap by the same amount as the clip-path skew */
+    margin-left: -12px;
 }
 
 /* Straighten the left edge of the very first tab and remove its negative margin */
@@ -56,10 +54,10 @@ BULKHEAD NAVIGATION STYLES
 
 .tab.active {
     opacity: 1;
-    z-index: 2; /* Bring the active tab to the front */
-    transform: scale(1.05); /* The "raised" effect */
-    /* Active tab has a drop-shadow for depth and a theme-colored glow */
+    z-index: 2;
+    transform: scale(1.05);
     filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6)) drop-shadow(0 0 8px var(--theme-color-glow, #fde047));
+    /* Transitions removed to make the button snap instantly to its active state */
 }
 
 #sub-nav-bar {
@@ -80,15 +78,16 @@ BULKHEAD NAVIGATION STYLES
     flex-grow: 1;
     text-align: center;
     opacity: 0.8;
-    font-family: 'Orbitron', sans-serif; /* Matched font */
+    font-family: 'Orbitron', sans-serif;
     font-size: 0.75rem;
     font-weight: 500;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* Added text shadow for depth */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
     text-transform: uppercase;
     padding: 8.75px 0;
     text-decoration: none;
-    position: relative; /* Needed for the ::after pseudo-element */
-    transition: all 0.1s; /* Reduced to 0.1s for snappy feedback */
+    position: relative;
+    /* No transition on inactive sub-nav links — they rebuild as fresh DOM nodes.
+       Transitions here were causing all three buttons to feel sluggish on tap. */
     background-color: #3a3a3a;
     border-right: 1px solid #1c1c1c;
     border-left: 1px solid #4a4a4a;
@@ -97,14 +96,22 @@ BULKHEAD NAVIGATION STYLES
     -webkit-user-select: none;
     -ms-user-select: none;
     user-select: none;
-    -webkit-touch-callout: none; /* Add this line to disable tap-hold menu on iOS */
+    -webkit-touch-callout: none;
 }
 
-/* Active Sub-Nav Indicator */
+/* Active sub-nav link updates instantly on screen change */
+.nav-sub a.sub-nav-active {
+    opacity: 1;
+}
+@keyframes subnav-indicator-enter {
+    from { opacity: 0; transform: translateX(-50%) scaleX(0.3); }
+    to   { opacity: 1; transform: translateX(-50%) scaleX(1); }
+}
+
 .nav-sub a.sub-nav-active::after {
     content: '';
     position: absolute;
-    bottom: 4px; /* Position the line just below the text */
+    bottom: 4px;
     left: 50%;
     transform: translateX(-50%);
     width: 60%;
@@ -112,6 +119,7 @@ BULKHEAD NAVIGATION STYLES
     background-color: var(--theme-border-color, #fde047);
     border-radius: 1px;
     box-shadow: 0 0 5px var(--theme-border-color, #fde047);
+    animation: subnav-indicator-enter 160ms ease-out both;
 }
 
 

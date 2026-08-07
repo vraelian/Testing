@@ -62,7 +62,9 @@ export class MissionObjectiveEvaluator {
             }
 
             case 'deliver_item':
-            case 'DELIVER_ITEM': {
+            case 'DELIVER_ITEM':
+            case 'deliver_ship':
+            case 'DELIVER_SHIP': {
                 // STRICT DELIVERY TRACKING:
                 // Only tracks what the player has explicitly offloaded/deposited at the target location.
                 // Decouples fleet inventory from objective completion logic.
@@ -271,10 +273,18 @@ export class MissionObjectiveEvaluator {
             // --- WORLD STATE CHECKS ---
             case 'travel_to':
             case 'TRAVEL_TO': {
+                // Check dependency before latching
+                let dependencyMetLocally = true;
+                if (objective.dependsOn) {
+                    const depProgress = missionProgress.objectives?.[objective.dependsOn];
+                    if (!depProgress || depProgress.current < depProgress.target) {
+                        dependencyMetLocally = false;
+                    }
+                }
                 const targetLoc = objective.target;
                 const atLocation = gameState.currentLocationId === targetLoc;
-                // Latch progress: Once arrived, the travel objective remains completed
-                current = Math.max(currentProgress, atLocation ? 1 : 0);
+                // Latch progress ONLY if dependency is met
+                current = Math.max(currentProgress, (atLocation && dependencyMetLocally) ? 1 : 0);
                 break;
             }
 

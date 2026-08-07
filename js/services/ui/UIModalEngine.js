@@ -243,6 +243,9 @@ export class UIModalEngine {
 
         if (options.specialClass) {
             modal.classList.add(...options.specialClass.split(' ').filter(Boolean));
+            modal.dataset.specialClass = options.specialClass;
+        } else {
+            delete modal.dataset.specialClass;
         }
         if (options.nonDismissible) {
             modal.classList.add('dismiss-disabled');
@@ -595,6 +598,10 @@ export class UIModalEngine {
 
                 modal.classList.add('hidden');
                 modal.classList.remove(exitClass, 'modal-visible', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s');
+                if (modal.dataset.specialClass) {
+                    modal.classList.remove(...modal.dataset.specialClass.split(' ').filter(Boolean));
+                    delete modal.dataset.specialClass;
+                }
 
                 modal.style.opacity = '';
                 modal.style.pointerEvents = '';
@@ -622,6 +629,10 @@ export class UIModalEngine {
         if (modal && !modal.classList.contains('hidden')) {
             modal.classList.add('hidden');
             modal.classList.remove('modal-visible', 'modal-hiding', 'dismiss-disabled', 'intro-fade-in', 'intro-backdrop-clear', 'modal-backdrop-grey', 'intro-blur-fade-in-4s', 'intro-blur-fade-out-3s');
+            if (modal.dataset.specialClass) {
+                modal.classList.remove(...modal.dataset.specialClass.split(' ').filter(Boolean));
+                delete modal.dataset.specialClass;
+            }
             
             modal.style.opacity = '';
             modal.style.pointerEvents = '';

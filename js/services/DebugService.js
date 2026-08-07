@@ -70,10 +70,10 @@ const DEBUG_MISSIONS = {
     },
     'debug_obj_delivery': {
         id: 'debug_obj_delivery',
-        name: '[DEBUG] Delivery (Water Ice)',
+        name: '[DEBUG] Delivery (water ice)',
         type: 'DEBUG',
         host: 'DEV',
-        description: 'Deliver 5 Water Ice. (Cargo provided on accept)',
+        description: 'Deliver 5 water ice. (Cargo provided on accept)',
         triggers: [],
         objectives: [
             { type: 'DELIVER_ITEM', goodId: 'water_ice', quantity: 5 }

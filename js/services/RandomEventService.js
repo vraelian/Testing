@@ -79,7 +79,7 @@ export class RandomEventService {
                 }
 
                 // C. [[UPDATED]]: Dynamic Text Formatting
-                // Replaces raw strings like "(-15 Ice * Scale)" with actuals "(-30 Water Ice)"
+                // Replaces raw strings like "(-15 Ice * Scale)" with actuals "(-30 water ice)"
                 this._hydrateChoiceText(choice, gameState);
             });
         }

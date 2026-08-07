@@ -33,13 +33,13 @@ const ATTRIBUTE_DEFINITIONS = {
     // --- STATION QUIRKS (Map Intel) ---
     'QUIRK_SOL_FORGE': {
         name: "Solar Forge",
-        description: "+25% Sell Price for Graphene Lattices & Plasteel.",
+        description: "+25% Sell Price for graphene lattices & plasteel.",
         type: "STATION_QUIRK",
         color: "#f59e0b"
     },
     'QUIRK_MERCURY_THIRST': {
         name: "Desperate Thirst",
-        description: "Pays 40% more for Water Ice.",
+        description: "Pays 40% more for water ice.",
         type: "STATION_QUIRK",
         color: "#f87171"
     },
@@ -51,7 +51,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'QUIRK_EARTH_CONSUMPTION': {
         name: "High Demand",
-        description: "Cloned Organs & Xeno-Geologicals sell for 10% more.",
+        description: "cloned organs & xeno-geologicals sell for 10% more.",
         type: "STATION_QUIRK",
         color: "#60a5fa"
     },
@@ -63,7 +63,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'QUIRK_MARS_COLONY': {
         name: "Colonial Expansion",
-        description: "+10% Sell Price for Water Ice and Hydroponics.",
+        description: "+10% Sell Price for water ice and hydroponics.",
         type: "STATION_QUIRK",
         color: "#fb923c"
     },
@@ -99,7 +99,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'QUIRK_NEPTUNE_MILITARY': {
         name: "Military Logistics",
-        description: "10% Bulk Discount on Propellant & Plasteel (>50 units).",
+        description: "10% Bulk Discount on Propellant & plasteel (>50 units).",
         type: "STATION_QUIRK",
         color: "#60a5fa"
     },
@@ -111,7 +111,7 @@ const ATTRIBUTE_DEFINITIONS = {
     },
     'QUIRK_PLUTO_FRINGE': {
         name: "Fringe Outpost",
-        description: "+25% Sell Price on Cybernetics & Antimatter. Low Supply.",
+        description: "+25% Sell Price on cybernetics & antimatter. Low Supply.",
         type: "STATION_QUIRK",
         color: "#a78bfa"
     },
