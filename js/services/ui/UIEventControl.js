@@ -12,9 +12,17 @@ import { AssetService } from '../AssetService.js';
 import CinematicService from './CinematicService.js';
 
 export const ACT_CINEMATIC_CONFIG = {
-    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: 'Wealth is Sovereignty', actLabel: 'BEGIN TUTORIAL' },
-    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'Act I: Debtor', actLabel: 'ACT I' },
-    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'Act II: Alliance', actLabel: 'ACT II' }
+    'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: 'Wealth is Sovereignty', actLabel: 'BEGIN TUTORIAL', trigger: 'open' },
+    'mission_10': { video: './assets/images/video/act_1_begin.mp4', title: 'Act I: Debtor', actLabel: 'ACT I', trigger: 'open' },
+    'mission_18': { video: './assets/images/video/act_2_kiern.mp4', title: 'Act II: Alliance', actLabel: 'ACT II', trigger: 'open' },
+    'mission_32': { video: './assets/images/video/act_3_schism.mp4', title: 'Act III: Schism', actLabel: 'ACT III', trigger: 'completion' },
+    'mission_46_guild': { video: './assets/images/video/Act_4_escalation.mp4', title: 'Act IV: Escalation', actLabel: 'ACT IV', trigger: 'completion' },
+    'mission_46_syndicate': { video: './assets/images/video/Act_4_escalation.mp4', title: 'Act IV: Escalation', actLabel: 'ACT IV', trigger: 'completion' },
+    'mission_53_guild': { video: './assets/images/video/act_5_ascendance.mp4', title: 'Act V: Ascendance', actLabel: 'ACT V', trigger: 'completion' },
+    'mission_53_syndicate': { video: './assets/images/video/act_5_ascendance.mp4', title: 'Act V: Ascendance', actLabel: 'ACT V', trigger: 'completion' },
+    'mission_55': { video: './assets/images/video/act_6_mandate.mp4', title: 'Act VI: The Mandate', actLabel: 'ACT VI', trigger: 'completion' },
+    'mission_56_guild': { video: './assets/images/video/act_7_intro.mp4', title: 'Act VII: Soul of Sol', actLabel: 'ACT VII', trigger: 'completion' },
+    'mission_56_syndicate': { video: './assets/images/video/act_7_intro.mp4', title: 'Act VII: Soul of Sol', actLabel: 'ACT VII', trigger: 'completion' },
 };
 
 export class UIEventControl {
@@ -380,7 +388,7 @@ export class UIEventControl {
                 modalContent._crtTimeout = setTimeout(() => {
                     modalContent.classList.remove('sev-crt-turn-on');
                     modalContent.style.animationDuration = '';
-                }, 400);
+                }, 500);
 
                 // Generate Buttons
                 if (btnContainer) btnContainer.innerHTML = '';
@@ -395,7 +403,7 @@ export class UIEventControl {
 
                     modalContent.classList.remove('sev-crt-turn-on');
                     modalContent.classList.add('sev-crt-shutdown');
-                    modalContent.style.animationDuration = '0.35s';
+                    modalContent.style.animationDuration = '0.45s';
                     
                     setTimeout(() => {
                         if (this.manager.modalEngine && this.manager.modalEngine.destroyModalInstant) {
@@ -409,12 +417,12 @@ export class UIEventControl {
                                 choicesCallback(choiceId);
                             }, 10);
                         });
-                    }, 340);
+                    }, 440);
                 };
 
                 choices.forEach((choice) => {
                     const button = document.createElement('button');
-                    button.className = 'btn w-full p-4 mb-2 event-choice-btn transition-colors';
+                    button.className = 'btn w-full p-4 event-choice-btn transition-colors';
                     if (choice.disabled) {
                         button.disabled = true;
                         button.classList.add('opacity-50', 'cursor-not-allowed');
@@ -832,12 +840,15 @@ export class UIEventControl {
                 </div>`;
         }
 
-        const contentHtml = `
+        let contentHtml = `
             <div class="text-center">
                 <h3 class="text-3xl font-orbitron" style="color: ${theme.textColor};">${location.name}</h3>
                  <p class="text-base italic imprinted-text">${location.description}</p>
             </div>
+        `;
 
+        if (locationId !== 'loc_corona') {
+            contentHtml += `
             <div class="my-4 space-y-3">
                 <div class="map-intel-block">
                     <h5 class="font-bold imprinted-text" style="color: ${theme.textColor}; opacity: 0.7;">Fuel Price</h5>
@@ -857,8 +868,11 @@ export class UIEventControl {
                 <div class="mt-2">
                      <h5 class="font-bold imprinted-text">Needs:</h5>
                      <div>${imports.length > 0 ? renderTags(imports) : '<span class="text-gray-400">CLASSIFIED</span>'}</div>
-                </div>
-                <div class="mt-6 mb-2">
+                </div>`;
+        }
+
+        contentHtml += `
+                <div class="text-center mt-6 mb-2">
                     ${navigateBtnHtml}
                     ${storyActionsHtml}
                 </div>
@@ -1330,11 +1344,10 @@ export class UIEventControl {
         const fadeIn = overlay.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 1500, fill: 'forwards', easing: 'ease-in-out' });
         await fadeIn.finished;
 
-        // 4. Construct Diegetic Prompt Modal (CRT Style)
+        // 4. Construct Diegetic Prompt Modal
         const promptPanel = document.createElement('div');
-        promptPanel.className = 'modal-content sci-fi-frame sev-crt-turn-on flex flex-col items-center justify-center p-8';
+        promptPanel.className = 'modal-content sci-fi-frame flex flex-col items-center justify-center p-8';
         promptPanel.style.minWidth = '300px';
-        promptPanel.style.animationDuration = '0.4s';
         
         // High-Fidelity Glass Polish
         promptPanel.style.backdropFilter = 'blur(10px)';
@@ -1395,6 +1408,79 @@ export class UIEventControl {
             startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(46, 16, 101, 1)'; startBtn.style.boxShadow = '0 0 20px rgba(168, 85, 247, 0.8)'; };
             startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(46, 16, 101, 0.8)'; startBtn.style.boxShadow = '0 0 15px rgba(168, 85, 247, 0.5), inset 0 0 10px rgba(168, 85, 247, 0.3)'; };
 
+        } else if (missionId === 'mission_32') { // Act III: Schism (Guild Gold / Syndicate Purple)
+            promptTitle.style.color = '#ffffff';
+            promptTitle.style.textShadow = '0 0 10px rgba(250, 204, 21, 0.8), 0 0 20px rgba(168, 85, 247, 0.8)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(66, 32, 6, 0.9) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(59, 7, 100, 0.9) 100%)';
+            promptPanel.style.border = '1px solid rgba(255, 255, 255, 0.4)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), -15px 0 25px rgba(250, 204, 21, 0.3), 15px 0 25px rgba(168, 85, 247, 0.3)';
+
+            // Thematic Button: Split Gold/Purple
+            startBtn.style.color = '#ffffff'; 
+            startBtn.style.border = '1px solid #d97706'; 
+            startBtn.style.background = 'linear-gradient(90deg, rgba(202, 138, 4, 0.8) 0%, rgba(126, 34, 206, 0.8) 100%)';
+            startBtn.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.4)';
+            startBtn.onmouseover = () => { startBtn.style.background = 'linear-gradient(90deg, rgba(202, 138, 4, 1) 0%, rgba(126, 34, 206, 1) 100%)'; startBtn.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.6)'; };
+            startBtn.onmouseout = () => { startBtn.style.background = 'linear-gradient(90deg, rgba(202, 138, 4, 0.8) 0%, rgba(126, 34, 206, 0.8) 100%)'; startBtn.style.boxShadow = '0 0 15px rgba(255, 255, 255, 0.4)'; };
+
+        } else if (missionId === 'mission_46_guild' || missionId === 'mission_46_syndicate') { // Act IV: Escalation (Intense Crimson / Carbon Slate / Flare Orange)
+            promptTitle.style.color = '#f87171';
+            promptTitle.style.textShadow = '0 0 8px rgba(239, 68, 68, 0.8)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(69, 10, 10, 0.9) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(234, 88, 12, 0.85) 100%)';
+            promptPanel.style.border = '1px solid rgba(239, 68, 68, 0.5)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 25px rgba(239, 68, 68, 0.4), inset 0 0 15px rgba(234, 88, 12, 0.3)';
+
+            // Thematic Button: Crimson / Orange
+            startBtn.style.color = '#fed7aa'; // Amber/Orange
+            startBtn.style.border = '1px solid #ef4444'; // Red border
+            startBtn.style.backgroundColor = 'rgba(127, 29, 29, 0.8)'; // Dark Crimson
+            startBtn.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.3)';
+            startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(153, 27, 27, 1)'; startBtn.style.boxShadow = '0 0 20px rgba(239, 68, 68, 0.8)'; };
+            startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(127, 29, 29, 0.8)'; startBtn.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.3)'; };
+
+        } else if (missionId === 'mission_53_guild' || missionId === 'mission_53_syndicate') { // Act V: Ascendance (Coronal Solar Gold / Radiant White / Deep Amber)
+            promptTitle.style.color = '#fef08a';
+            promptTitle.style.textShadow = '0 0 10px rgba(250, 204, 21, 0.9), 0 0 20px rgba(245, 158, 11, 0.5)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(66, 32, 6, 0.92) 0%, rgba(17, 24, 39, 0.95) 50%, rgba(217, 119, 6, 0.9) 100%)';
+            promptPanel.style.border = '1px solid rgba(251, 191, 36, 0.6)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 35px rgba(245, 158, 11, 0.5), inset 0 0 20px rgba(251, 191, 36, 0.3)';
+
+            // Thematic Button: Solar Gold / Radiant White
+            startBtn.style.color = '#ffffff';
+            startBtn.style.border = '1px solid #fbbf24';
+            startBtn.style.backgroundColor = 'rgba(180, 83, 9, 0.85)';
+            startBtn.style.boxShadow = '0 0 20px rgba(251, 191, 36, 0.6), inset 0 0 10px rgba(251, 191, 36, 0.4)';
+            startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(217, 119, 6, 1)'; startBtn.style.boxShadow = '0 0 25px rgba(251, 191, 36, 0.9)'; };
+            startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(180, 83, 9, 0.85)'; startBtn.style.boxShadow = '0 0 20px rgba(251, 191, 36, 0.6), inset 0 0 10px rgba(251, 191, 36, 0.4)'; };
+
+        } else if (missionId === 'mission_55') { // Act VI: The Mandate (Mercury Heat / Industrial Silver / Solar Flare)
+            promptTitle.style.color = '#cbd5e1'; // Silver
+            promptTitle.style.textShadow = '0 0 10px rgba(203, 213, 225, 0.8), 0 0 20px rgba(239, 68, 68, 0.6)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.95) 50%, rgba(127, 29, 29, 0.9) 100%)';
+            promptPanel.style.border = '1px solid rgba(239, 68, 68, 0.5)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 35px rgba(239, 68, 68, 0.4), inset 0 0 20px rgba(203, 213, 225, 0.2)';
+
+            // Thematic Button: Industrial Slate / Burning Orange
+            startBtn.style.color = '#fca5a5'; // Light red
+            startBtn.style.border = '1px solid #ef4444'; 
+            startBtn.style.backgroundColor = 'rgba(30, 41, 59, 0.9)'; // Dark slate
+            startBtn.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.3)';
+            startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(63, 63, 70, 1)'; startBtn.style.boxShadow = '0 0 25px rgba(239, 68, 68, 0.8)'; };
+            startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(30, 41, 59, 0.9)'; startBtn.style.boxShadow = '0 0 15px rgba(239, 68, 68, 0.5), inset 0 0 10px rgba(239, 68, 68, 0.3)'; };
+
+        } else if (missionId === 'mission_56_guild' || missionId === 'mission_56_syndicate') { // Act VII: Soul of Sol (Solar Corona White/Gold/Blue)
+            promptTitle.style.color = '#ffffff';
+            promptTitle.style.textShadow = '0 0 12px rgba(255, 255, 255, 1), 0 0 25px rgba(56, 189, 248, 0.8)';
+            promptPanel.style.background = 'linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(255, 255, 255, 0.1) 50%, rgba(56, 189, 248, 0.3) 100%)';
+            promptPanel.style.border = '1px solid rgba(255, 255, 255, 0.8)';
+            promptPanel.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 255, 255, 0.6), inset 0 0 25px rgba(56, 189, 248, 0.5)';
+
+            startBtn.style.color = '#0f172a'; // dark slate
+            startBtn.style.border = '1px solid #ffffff'; // white border
+            startBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.9)'; // white button
+            startBtn.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.7), inset 0 0 10px rgba(56, 189, 248, 0.5)';
+            startBtn.onmouseover = () => { startBtn.style.backgroundColor = 'rgba(255, 255, 255, 1)'; startBtn.style.boxShadow = '0 0 30px rgba(255, 255, 255, 1)'; };
+            startBtn.onmouseout = () => { startBtn.style.backgroundColor = 'rgba(255, 255, 255, 0.9)'; startBtn.style.boxShadow = '0 0 20px rgba(255, 255, 255, 0.7), inset 0 0 10px rgba(56, 189, 248, 0.5)'; };
         } else {
             promptTitle.style.color = '#67e8f9';
             startBtn.classList.add('btn-pulse-green'); // Fallback
@@ -1403,6 +1489,12 @@ export class UIEventControl {
         promptPanel.appendChild(promptTitle);
         promptPanel.appendChild(startBtn);
         overlay.appendChild(promptPanel);
+
+        // Smooth blur-fade-in
+        promptPanel.animate([
+            { opacity: 0, filter: 'blur(20px)', transform: 'scale(0.95)' },
+            { opacity: 1, filter: 'blur(0px)', transform: 'scale(1)' }
+        ], { duration: 600, easing: 'ease-out', fill: 'forwards' });
 
         // 5. Synchronous Execution Hook (The Bridge)
         startBtn.onclick = (e) => {
@@ -1413,10 +1505,8 @@ export class UIEventControl {
             starfieldService.triggerQuickExit();
             overlay.classList.add('bg-black');
 
-            // Trigger CRT Shutdown Visuals
-            promptPanel.classList.remove('sev-crt-turn-on');
-            promptPanel.classList.add('sev-crt-shutdown');
-            promptPanel.style.animationDuration = '0.35s';
+            // Trigger Fade Out Visuals
+            promptPanel.classList.add('modal-blur-fade-out');
 
             // Elevate the cinematic overlay to ensure it renders above the blackout screen
             const fmvOverlay = document.getElementById('fmv-cinematic-overlay') || document.getElementById('dynamic-cinematic-overlay');
@@ -1467,6 +1557,13 @@ export class UIEventControl {
 
                 // Fade out the primary overlay back to the UI
                 const fadeOut = overlay.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 3000, fill: 'forwards', easing: 'ease-in-out' });
+                
+                const persistedBlackout = document.getElementById('persisted-cinematic-blackout');
+                if (persistedBlackout) {
+                    const fadeBlackoutOut = persistedBlackout.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 3000, fill: 'forwards', easing: 'ease-in-out' });
+                    fadeBlackoutOut.finished.then(() => persistedBlackout.remove());
+                }
+                
                 await fadeOut.finished;
 
                 overlay.remove();
@@ -1480,6 +1577,8 @@ export class UIEventControl {
                 // Execute fallback text and resolve the sequence even on a strict failure
                 if (callback) callback();
                 overlay.remove();
+                const persistedBlackout = document.getElementById('persisted-cinematic-blackout');
+                if (persistedBlackout) persistedBlackout.remove();
                 toggleBackgroundUI('1', 'auto');
             });
         };

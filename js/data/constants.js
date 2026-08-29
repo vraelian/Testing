@@ -1,6 +1,6 @@
 // js/data/constants.js
 /** //////////////////    VERSION INFO    ///////////////////  */
-export const APP_VERSION = '38.97 - Act IV';
+export const APP_VERSION = '39.05 - Act IV';
 export const APP_FEEDBACK_URL = 'https://docs.google.com/forms/d/e/1FAIpQLSeVqjUEC6nsZlxTQ9-vzz0_fHO0ng8w0AueZaGzkHPoLJIBDA/viewform?usp=header';
 /** /////////////////////////////////////////////////////////  */
 
@@ -90,6 +90,7 @@ export const LOCATION_IDS = Object.freeze({
     VENUS: 'loc_venus',
     MERCURY: 'loc_mercury',
     SUN: 'loc_sun',
+    CORONA: 'loc_corona',
     BELT: 'loc_belt',
     SATURN: 'loc_saturn',
     JUPITER: 'loc_jupiter',
@@ -105,6 +106,7 @@ export const LOCATION_IDS = Object.freeze({
  * Used for "Solar Harmony" calculations and Blockade Redirects.
  */
 export const ORBITAL_ORDER = [
+    LOCATION_IDS.CORONA,
     LOCATION_IDS.SUN,
     LOCATION_IDS.MERCURY,
     LOCATION_IDS.VENUS,

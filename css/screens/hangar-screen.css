@@ -87,8 +87,8 @@ COMPONENT-SPECIFIC STYLING
     flex-direction: column; 
     justify-content: flex-start; /* Anchor to the top */
     user-select: none;
-    /* VIRTUAL WORKBENCH: Top padding 0, Right 0.5rem, Bottom 4rem, Left 0.5rem. Shifting card UP. */
-    padding: 0 0.5rem 4rem 0.5rem; 
+    /* VIRTUAL WORKBENCH: Top padding 0, Right 0.5rem, Bottom 0.75rem, Left 0.5rem. */
+    padding: 0 0.5rem 0.75rem 0.5rem; 
     contain: paint layout style; 
     /* VIRTUAL WORKBENCH: Removed content-visibility: auto; to prevent vanishing bug on Safari PWA when stationary */
     
@@ -138,9 +138,12 @@ COMPONENT-SPECIFIC STYLING
     display: flex; 
     flex-direction: column; 
     width: 100%;
-    /* VIRTUAL WORKBENCH: Height remains 580px, but the card is physically shifted 16px higher to clear the bottom boundary */
-    height: 580px; 
-    flex-shrink: 0; /* Guarantee browser cannot squish the card inside the parent */
+    /* VIRTUAL WORKBENCH: Card fills available carousel height, capped at 580px design max.
+       min-height: 380px ensures card content (name, params, buttons) never clips on small screens.
+       The main-content-wrapper's overflow-y: auto handles sub-380px edge cases. */
+    flex: 1 1 0;
+    min-height: 380px;
+    max-height: 580px;
     margin: 0 auto; 
 }
 
@@ -445,22 +448,15 @@ COMPONENT-SPECIFIC STYLING
 
 /* Pagination Dots */
 #hangar-pagination-wrapper {
-    position: fixed;
-    bottom: 14px;
-    left: 0;
-    right: 0;
+    flex-shrink: 0;
     z-index: 40;
     display: flex;
     justify-content: center;
-    pointer-events: none; 
-    padding-bottom: 0.5rem;
+    pointer-events: none;
+    padding: 0.5rem 0;
 }
 
-@media (min-width: 768px) {
-    #hangar-pagination-wrapper {
-        padding-bottom: 1rem;
-    }
-}
+
 
 #hangar-pagination {
     display: inline-flex;

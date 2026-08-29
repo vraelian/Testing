@@ -87,7 +87,7 @@ export class TravelAnimationService {
         }
 
         let startTime = null;
-        const duration = 2500; // Duration of travel sequence
+        const duration = 2200; // Duration of travel sequence
 
         const animate = (currentTime) => {
             if (!startTime) startTime = currentTime;
@@ -238,13 +238,13 @@ export class TravelAnimationService {
             this.infoText.innerHTML = `
                 <div class="text-center">
                     <div class="font-bold" style="color: #facc15;">Journey Time: INSTANT (Warp)</div>
-                    <div><span class="font-bold text-sky-300">Fuel Expended: 0 (Folded Space)</span></div>
+                    <div><span class="font-bold text-sky-300">Fuel Expended 0 (Folded Space)</span></div>
                 </div>`;
         } else {
             this.infoText.innerHTML = `
                 <div class="text-center">
                     <div>Journey Time: ${travelInfo.time} Days</div>
-                    <div><span class="font-bold text-sky-300">Fuel Expended: ${travelInfo.fuelCost}</span></div>
+                    <div><span class="font-bold text-sky-300">Fuel Expended -${travelInfo.fuelCost}</span></div>
                 </div>`;
         }
 
@@ -261,6 +261,12 @@ export class TravelAnimationService {
             this.readoutContainer.style.opacity = 1;
             this.confirmButton.style.opacity = 1;
             this.confirmButton.disabled = false;
+            
+            if (to.id === 'loc_corona') {
+                this.confirmButton.textContent = 'Investigate the Area';
+            } else {
+                this.confirmButton.textContent = 'Enter Station';
+            }
         }, 150);
     }
 }

@@ -199,8 +199,10 @@ export class SystemStateService {
         }
 
         // Process Extreme state targeting
-        if (overrideTargetLocations) {
+        if (overrideTargetLocations && overrideTargetLocations.length > 0) {
             sysState.targetLocations = overrideTargetLocations;
+        } else if (stateDef.modifiers && stateDef.modifiers.fixedLocations) {
+            sysState.targetLocations = stateDef.modifiers.fixedLocations;
         } else if (stateDef.modifiers && stateDef.modifiers.requiresLocationTarget) {
             sysState.targetLocations = this._generateTargetLocations(stateDef.modifiers.locationCount || 1);
         } else {

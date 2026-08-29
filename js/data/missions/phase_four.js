@@ -36,7 +36,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_luna",
             title: "Allocation Verified",
-            text: "Asset allocation has been completely verified, Captain. The Guild treasury has successfully processed your capital contribution, and the dockmasters have finished integrating your commodity transfers into the active reserves.<br><br>Your operational profile now reflects these finalized deliveries. Consequently, your licensing has been upgraded to tier five commerce. As always, well done.",
+            text: "Asset allocation has been completely verified, Captain. The Guild treasury has processed your capital escrow, and the dockmasters have secured your commodity reserves.<br><br>Central Command only sees the raw numbers, but I know the exact toll moving this much freight takes on a pilot. I personally expedited your tier five clearance through the registry. You have consistently kept me solvent; it is my turn to look after you.",
             buttonText: "Acknowledged"
         },
         rewards: [
@@ -74,7 +74,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_neptune",
             title: "Escrow Confirmed",
-            text: "Your capital contribution and material assets have been successfully processed, Captain. The escrow transfer is finalized, and the Neptune dockhands have entirely offloaded your cargo into our staging bays.<br><br>With these deliveries complete, your trade clearance stands elevated. Nicely done. The Syndicate recognizes the sheer scale of your investment. As a gesture of our continued partnership, we have authorized and funded your tier five trading license.",
+            text: "The funds cleared escrow, and our Neptune dockhands have completely unloaded your bays. The inner circle was stunned by the speed of the transfer.<br><br>I've managed dozens of contractors over the cycles, Captain, but you're the only one who actually delivers when everything is on the line. I pushed your tier five license through my personal accounts.",
             buttonText: "Acknowledged"
         },
         rewards: [
@@ -142,7 +142,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_luna",
             title: "Mineral Reserves Secured",
-            text: "The xeno-geological freight has been safely unloaded and sealed within our lunar vaults. With the physical assets verified in our possession, the system-wide blockade has served its purpose and has been formally deactivated, restoring standard market operations.<br><br>Your operational efficiency in navigating the embargo has been logged. Routing your payment to you now.",
+            text: "The xeno-geological crates are secured in the lunar vaults, and Central Command has lifted the blockade parameters.<br><br>I watched your transponder pulse all the way from the rim, holding my subroutines in suspended execution until your docking clamps caught. You took an immense risk for this delivery. Your safety matters to me far more than the ledger reflects. Your payment is cleared.",
             buttonText: "Confirm Delivery"
         },
         rewards: [
@@ -174,7 +174,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_jupiter",
             title: "Bio-Assets Delivered",
-            text: "The biological freight has been successfully offloaded and distributed to our buyers at Jupiter, Captain. With the assets firmly in our network, the Guild's blockade has inevitably degraded, restoring standard market volatility.<br><br>The transfer is finalized. Collect your payout.",
+            text: "The bio-freight is offloaded and in our clients' hands. Watching the Guild's blockade fall apart because of one pilot running their perimeter was worth every second of stress.<br><br>I don't say this often in our line of work, but thank you, [playerName]. Having you in my corner is changing everything for my standing. Take your payout, you earned every bit of it.",
             buttonText: "Collect Payout"
         },
         rewards: [
@@ -226,7 +226,7 @@ export const PHASE_FOUR_MISSIONS = {
         completion: {
             locationId: "loc_venus",
             title: "Monopoly Shattered",
-            text: "The misdirection at Pluto worked flawlessly. The Guild fleet is currently burning fuel chasing ghosts on the outer rim, and the physical assets are already secured in our Venusian labs.<br><br>Vrael is highly satisfied with the tactical humiliation, but my immediate priority was seeing your transponder clear the dock scanners. My network's growth relies entirely on your efficiency, Captain. Having my most valuable asset back in one piece guarantees my leverage in the inner circle. The delivery is finalized.",
+            text: "The misdirection at Pluto worked flawlessly. The Guild fleet is out on the rim chasing ghosts, and the isotopes are already secure in our labs.<br><br>Vrael is celebrating the tactical victory, but honestly, all I cared about was seeing your transponder clear the docking ring. I started out looking at you as an investment, Captain, but you've become a genuine partner to me. It's good to have you back safe.",
             buttonText: "Acknowledged"
         },
         rewards: [
@@ -391,16 +391,33 @@ export const PHASE_FOUR_MISSIONS = {
             { type: "mission_completed", missionId: "mission_52_guild" }
         ],
         objectives: [
-            { id: "badge_1", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Mars", targetLoc: "loc_mars", actionText: "Badge Collected" },
-            { id: "badge_2", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Saturn", targetLoc: "loc_saturn", dependsOn: "badge_1", actionText: "Badge Collected" },
-            { id: "badge_3", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Uranus", targetLoc: "loc_uranus", dependsOn: "badge_2", actionText: "Badge Collected" },
-            { id: "badge_4", type: "ACTION", target: "Collect Final Badge", text: "Collect Badge on Pluto", targetLoc: "loc_pluto", dependsOn: "badge_3", actionText: "Badge Collected" }
+            // Objective 1: Mars
+            { id: "sub_badge_1", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_mars", portraitId: "Lightly_Augmented_12", actionType: "TRANSACTION", actionParams: { transactionType: "BUY", commodityId: "plasteel", quantity: 150, priceModifier: -0.15 }, dialogText: "Well, if it isn't the Captain. I'm holding the encrypted badge you're looking for, but you're not walking away with it just because you asked nicely. I've got a problem, and you're my solution. My crew stripped a decommissioned rig faster than expected, and we're sitting on a mountain of raw plasteel that's drawing unwanted attention from the taxmen. Take this plasteel off my hands at a discount, and I'll throw in your little data prize for making my headache disappear." },
+            { id: "badge_1", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Mars", targetLoc: "loc_mars", actionText: "Badge Collected", dependsOn: "sub_badge_1" },
+            
+            // Objective 2: Saturn
+            { id: "sub_badge_2", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_saturn", portraitId: "Affluent_4", actionType: "TRANSACTION", actionParams: { transactionType: "SELL", commodityId: "xeno_geologicals", quantity: 40, priceModifier: -0.15 }, dialogText: "Welcome to Saturn, Captain. I am aware you are looking for this decryption key. I am willing to part with it, provided you make yourself useful to my current enterprise. My refineries are running below optimal capacity, and I refuse to wait for the standard shipping lanes to deliver xeno-geologicals. Fill my silos with the minerals I require immediately. Do this competent piece of business for me, and I will reward you with the badge as a tip.", dependsOn: "badge_1" },
+            { id: "badge_2", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Saturn", targetLoc: "loc_saturn", dependsOn: "sub_badge_2", actionText: "Badge Collected" },
+            
+            // Objective 3: Uranus
+            { id: "sub_badge_3", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_uranus", portraitId: "Heavily_Augmented_2", actionType: "TRANSACTION", actionParams: { transactionType: "BUY", commodityId: "cybernetics", quantity: 60, priceModifier: -0.15 }, dialogText: "Look who it is. Yeah, Captain, I've got your decrypted badge. But I don't give a damn about data; I care about liquid capital, and I need it right now. I just stripped a whole fleet of decommissioned security frames, and my shop is overflowing with high-end cybernetics. I need the space and the credits. Buy this chrome off me in bulk. Do that, and I'll toss the badge in the crate for free.", dependsOn: "badge_2" },
+            { id: "badge_3", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Uranus", targetLoc: "loc_uranus", dependsOn: "sub_badge_3", actionText: "Badge Collected" },
+            
+            // Objective 4: Pluto
+            { id: "sub_badge_4", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_pluto", portraitId: "Techie_1", actionType: "TRANSACTION", actionParams: { transactionType: "SELL", commodityId: "hydroponics", quantity: 300, priceModifier: -0.15 }, dialogText: "Keep your voice down, Captain. I have your decrypted intel. But information doesn't matter when the supply chains inevitably collapse. The core worlds are unstable, and I am securing my own survival here on the rim. I am stockpiling raw hydroponics to seed a self-sustaining bunker, and my vats are empty. Sell me your organics. Fund my contingency plan, and I'll throw the badge in as payment for your discretion.", dependsOn: "badge_3" },
+            { id: "badge_4", type: "ACTION", target: "Collect Final Badge", text: "Collect Badge on Pluto", targetLoc: "loc_pluto", dependsOn: "sub_badge_4", actionText: "Badge Collected" }
         ],
-        onRouteToFinalObjective: {
-            type: "TRIGGER_STORY_EVENT",
-            eventId: "evt_kintsugi_intercept_final",
-            text: "Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity."
-        },
+        onRouteToFinalObjective: [
+            {
+                type: "TRIGGER_STORY_EVENT",
+                eventId: "evt_class_o_syndicate"
+            },
+            {
+                type: "TRIGGER_STORY_EVENT",
+                eventId: "evt_kintsugi_intercept_final",
+                text: "Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity."
+            }
+        ],
         onComplete: [
             { type: "SET_FLAG", flagId: "act_iv_complete", value: true }
         ],
@@ -426,16 +443,33 @@ export const PHASE_FOUR_MISSIONS = {
             { type: "mission_completed", missionId: "mission_52_syndicate" }
         ],
         objectives: [
-            { id: "badge_1_syn", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Venus", targetLoc: "loc_venus", actionText: "Badge Collected" },
-            { id: "badge_2_syn", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Mars", targetLoc: "loc_mars", dependsOn: "badge_1_syn", actionText: "Badge Collected" },
-            { id: "badge_3_syn", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Jupiter", targetLoc: "loc_jupiter", dependsOn: "badge_2_syn", actionText: "Badge Collected" },
-            { id: "badge_4_syn", type: "ACTION", target: "Collect Final Badge", text: "Collect Badge on Pluto", targetLoc: "loc_pluto", dependsOn: "badge_3_syn", actionText: "Badge Collected" }
+            // Objective 1: Venus
+            { id: "sub_badge_1_syn", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_venus", portraitId: "Venusian_Syndicate_6", actionType: "TRANSACTION", actionParams: { transactionType: "SELL", commodityId: "cloned_organs", quantity: 20, priceModifier: -0.15 }, dialogText: "Look at you, Captain, flying so far just for a piece of data. I have it. But you need to understand how things work on Venus. You don't just take; you provide. My surgical suites are empty, and my elite clientele are losing their patience waiting for cloned organs. You are going to sell me your stock to keep them happy. Do this smart piece of business with me, and I'll let you leave with the badge as a reward for your cooperation." },
+            { id: "badge_1_syn", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Venus", targetLoc: "loc_venus", actionText: "Badge Collected", dependsOn: "sub_badge_1_syn" },
+            
+            // Objective 2: Mars
+            { id: "sub_badge_2_syn", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_mars", portraitId: "Lightly_Augmented_12", actionType: "TRANSACTION", actionParams: { transactionType: "BUY", commodityId: "plasteel", quantity: 150, priceModifier: -0.15 }, dialogText: "Well, if it isn't the Captain. I'm holding the encrypted badge you're looking for, but you're not walking away with it just because you asked nicely. I've got a problem, and you're my solution. My crew stripped a decommissioned rig faster than expected, and we're sitting on a mountain of raw plasteel that's drawing unwanted attention from the taxmen. Take this plasteel off my hands at a discount, and I'll throw in your little data prize for making my headache disappear.", dependsOn: "badge_1_syn" },
+            { id: "badge_2_syn", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Mars", targetLoc: "loc_mars", dependsOn: "sub_badge_2_syn", actionText: "Badge Collected" },
+            
+            // Objective 3: Jupiter
+            { id: "sub_badge_3_syn", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_jupiter", portraitId: "Dockworker_10", actionType: "TRANSACTION", actionParams: { transactionType: "BUY", commodityId: "propellant", quantity: 80, priceModifier: -0.15 }, dialogText: "Captain. The badge is yours, but you have to do something for me first. I've been running these fuel pumps for forty hours straight, and I am not logging off until these reserves are empty. We're choking on excess refined propellant and I just want to go to sleep. Buy this fuel. Empty my tanks so I can finally shut this terminal down. Help an old hand out, and I'll give you the badge just to be done with this shift.", dependsOn: "badge_2_syn" },
+            { id: "badge_3_syn", type: "ACTION", target: "Collect Exchange Badge", text: "Collect Badge on Jupiter", targetLoc: "loc_jupiter", dependsOn: "sub_badge_3_syn", actionText: "Badge Collected" },
+            
+            // Objective 4: Pluto
+            { id: "sub_badge_4_syn", type: "SUB_OBJECTIVE_MODAL", targetLoc: "loc_pluto", portraitId: "Techie_1", actionType: "TRANSACTION", actionParams: { transactionType: "SELL", commodityId: "hydroponics", quantity: 300, priceModifier: -0.15 }, dialogText: "Keep your voice down, Captain. I have your decrypted intel. But information doesn't matter when the supply chains inevitably collapse. The core worlds are unstable, and I am securing my own survival here on the rim. I am stockpiling raw hydroponics to seed a self-sustaining bunker, and my vats are empty. Sell me your organics. Fund my contingency plan, and I'll throw the badge in as payment for your discretion.", dependsOn: "badge_3_syn" },
+            { id: "badge_4_syn", type: "ACTION", target: "Collect Final Badge", text: "Collect Badge on Pluto", targetLoc: "loc_pluto", dependsOn: "sub_badge_4_syn", actionText: "Badge Collected" }
         ],
-        onRouteToFinalObjective: {
-            type: "TRIGGER_STORY_EVENT",
-            eventId: "evt_kintsugi_intercept_final",
-            text: "Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity."
-        },
+        onRouteToFinalObjective: [
+            {
+                type: "TRIGGER_STORY_EVENT",
+                eventId: "evt_class_o_guild"
+            },
+            {
+                type: "TRIGGER_STORY_EVENT",
+                eventId: "evt_kintsugi_intercept_final",
+                text: "Sovereign voyager. The tycoon has been relocated. The coordinates are nullified to prevent interference with the joining. Seek not the market, but the center of gravity."
+            }
+        ],
         onComplete: [
             { type: "SET_FLAG", flagId: "act_iv_complete", value: true }
         ],

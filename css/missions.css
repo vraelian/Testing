@@ -570,6 +570,7 @@
     display: flex;
     justify-content: space-between;
     width: 100%;
+    min-width: 0; /* Prevent flex item from stretching due to wide content */
     padding: 0 0.75rem;
     
     font-family: 'Oxanium', sans-serif;
@@ -992,4 +993,9 @@
 #mission-modal [class*="scroll"]::-webkit-scrollbar,
 #mission-complete-modal [class*="scroll"]::-webkit-scrollbar {
     display: none !important;
+}
+
+@keyframes stickyObjTicker {
+    0%, 24.48% { transform: translateX(0%); }
+    100% { transform: translateX(-50%); }
 }

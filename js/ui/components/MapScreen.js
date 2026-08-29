@@ -276,7 +276,9 @@ function _drawInterface(htmlLayer, poiData, uiManager, centerX) {
         .style("left", d => `${d.poiX}px`) // Centered on axis
         .style("width", d => `${d.radius * 2}px`)
         .style("height", d => `${d.radius * 2}px`)
-        .style("background-color", d => d.navTheme.borderColor)
+        .style("background-color", d => d.id === 'loc_corona' ? "transparent" : d.navTheme.borderColor)
+        .style("border", d => d.id === 'loc_corona' ? "5px solid #f97316" : "none")
+        .style("border-radius", "50%")
         // Add the diamond clip-path for Sol and upside-down triangle for Belt
         .style("clip-path", d => {
             if (d.id === LOCATION_IDS.SUN) return "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)"; // Diamond

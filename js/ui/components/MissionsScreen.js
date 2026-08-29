@@ -82,6 +82,7 @@ const parseMissionText = (text, gameState) => {
 };
 
 export function renderMissionsScreen(gameState, missionService) {
+
     const { missions, uiState, currentLocationId } = gameState;
     const { activeMissionIds, missionProgress, trackedMissionId } = missions;
     const activeTab = uiState.activeMissionTab || 'terminal'; // Default to terminal
@@ -131,9 +132,11 @@ export function renderMissionsScreen(gameState, missionService) {
         if (mission.rewards) {
             const visibleRewards = mission.rewards.filter(r => {
                 const t = r.type.toLowerCase();
+                if ((mission.id === 'mission_56_guild' || mission.id === 'mission_56_syndicate') && t === 'unlock_tier') return false;
                 if (t === 'deduct_credits') return false;
-                if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                if (t === 'set_flag' || t === 'increment_flag' || t === 'decrement_flag') return false;
                 if (t === 'trigger_system_state' || t === 'end_system_state') return false;
+                if (t === 'teleport' || t === 'lock_location' || t === 'clear_nav_lock') return false;
                 return true;
             });
             
@@ -272,7 +275,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 100%; background: rgba(245, 158, 11, 0.2);"></div>
                         <div class="objective-text" style="color: #f59e0b;">
-                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                            <div style="flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
                                 <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 10.9s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
                                     ${displayDesc}
                                 </span>
@@ -298,7 +301,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     <div class="objective-row-filled objective-row-tall">
                         <div class="objective-fill-bar" style="width: 0%"></div>
                         <div class="objective-text">
-                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                            <div style="flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
                                 <span style="display: inline-block; ${isLong ? 'animation: missionObjTicker 10.9s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
                                     ${displayDesc}
                                 </span>
@@ -398,6 +401,30 @@ export function renderMissionsScreen(gameState, missionService) {
                     displayStr = `<span class="text-cyan-400 font-bold">⌬ ${formatAbbreviatedNumber(current)} / ${formatAbbreviatedNumber(target)}</span>`;
                     percent = Math.min(100, (current / target) * 100);
                 }
+                else if (obj.type === 'SUB_OBJECTIVE_MODAL') {
+                    if (gameState.currentLocationId !== obj.targetLoc && !pObj?.revealed) {
+                        const locName = DB.MARKETS.find(m => m.id === obj.targetLoc)?.name.toUpperCase() || 'LOCATION';
+                        desc = `TRAVEL TO ${locName}`;
+                        displayStr = 'EN ROUTE';
+                        percent = 0;
+                    } else if (!pObj?.revealed) {
+                        const locName = DB.MARKETS.find(m => m.id === obj.targetLoc)?.name.toUpperCase() || 'LOCATION';
+                        desc = `TRAVEL TO ${locName}`; 
+                        displayStr = 'ARRIVED';
+                        percent = 100;
+                    } else {
+                        const actionWord = obj.actionParams?.transactionType === 'BUY' ? 'BUY' : 'SELL';
+                        const itemName = DB.COMMODITIES.find(c => c.id === obj.actionParams?.commodityId)?.name.toUpperCase() || 'ITEM';
+                        const locName = DB.MARKETS.find(m => m.id === obj.targetLoc)?.name.toUpperCase() || 'LOCATION';
+                        const fromTo = obj.actionParams?.transactionType === 'BUY' ? 'FROM' : 'TO';
+                        desc = `${actionWord} ${obj.actionParams?.quantity} ${itemName} ${fromTo} ${locName}`;
+                        
+                        const actualTarget = obj.actionParams?.quantity || target;
+                        const actualCurrent = current >= 1 ? actualTarget : 0;
+                        displayStr = `${actualCurrent} / ${actualTarget}`;
+                        percent = Math.min(100, Math.floor((actualCurrent / actualTarget) * 100));
+                    }
+                }
                 else if (['have_debt', 'HAVE_DEBT'].includes(obj.type)) {
                     desc = 'CLEAR ALL DEBT';
                     displayStr = `${formatCredits(current)}`;
@@ -447,7 +474,7 @@ export function renderMissionsScreen(gameState, missionService) {
                     <div class="objective-row-filled ${tallClass} ${isCompleted ? 'objective-completed' : ''}">
                         <div class="objective-fill-bar" style="width: ${percent}%"></div>
                         <div class="objective-text">
-                            <div style="flex: 1; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
+                            <div style="flex: 1; min-width: 0; overflow: hidden; white-space: nowrap; -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%); mask-image: linear-gradient(to right, black 85%, transparent 100%); margin-right: 0.5rem;">
                                 <span style="display: inline-block; ${isLongText ? 'animation: missionObjTicker 10.9s linear infinite;' : 'overflow: hidden; text-overflow: ellipsis; max-width: 100%;'}">
                                     ${displayDesc}
                                 </span>
@@ -551,9 +578,9 @@ export function renderMissionsScreen(gameState, missionService) {
 
     return `
         ${styleInjection}
-        <div class="flex flex-col h-full ${themeClass} missions-screen-container">
+        <div class="w-full flex flex-col h-full ${themeClass} missions-screen-container overflow-hidden">
             ${renderTabs()}
-            <div class="missions-scroll-panel flex-grow min-h-0 overflow-y-auto custom-scrollbar">
+            <div class="missions-scroll-panel flex-grow min-h-0 min-w-0 overflow-y-auto custom-scrollbar overflow-x-hidden">
                 ${contentHtml}
             </div>
         </div>

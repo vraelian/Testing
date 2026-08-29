@@ -10,6 +10,7 @@ import { PHASE_ONE_MISSIONS } from './phase_one.js';
 import { PHASE_TWO_MISSIONS } from './phase_two.js';
 import { PHASE_THREE_MISSIONS } from './phase_three.js';
 import { PHASE_FOUR_MISSIONS } from './phase_four.js';
+import { PHASE_FIVE_MISSIONS } from './phase_five.js';
 
 export const MISSION_REGISTRY = {
     ...TUTORIAL_MISSIONS,
@@ -17,6 +18,7 @@ export const MISSION_REGISTRY = {
     ...PHASE_ONE_MISSIONS,
     ...PHASE_TWO_MISSIONS,
     ...PHASE_THREE_MISSIONS,
-    ...PHASE_FOUR_MISSIONS
+    ...PHASE_FOUR_MISSIONS,
+    ...PHASE_FIVE_MISSIONS
     // Future mission packs (e.g. story_act_2, side_quests) will be spread here.
 };

@@ -130,6 +130,9 @@ export class UIMissionControl {
                         objectiveTextEl.innerHTML = `READY TO COMPLETE!`;
                         objectiveTextEl.style.width = '100%';
                         objectiveTextEl.style.textAlign = 'center';
+                        objectiveTextEl.style.display = 'block';
+                        objectiveTextEl.style.webkitMaskImage = 'none';
+                        objectiveTextEl.style.maskImage = 'none';
                         objectiveProgressEl.innerHTML = ``;
                         objectiveProgressEl.style.display = 'none';
                         contentEl.style.setProperty('--sticky-progress', `100%`);
@@ -141,6 +144,9 @@ export class UIMissionControl {
                         objectiveTextEl.innerHTML = expectedText;
                         objectiveTextEl.style.width = '100%';
                         objectiveTextEl.style.textAlign = 'center';
+                        objectiveTextEl.style.display = 'block';
+                        objectiveTextEl.style.webkitMaskImage = 'none';
+                        objectiveTextEl.style.maskImage = 'none';
                         objectiveProgressEl.innerHTML = ``;
                         objectiveProgressEl.style.display = 'none';
                         contentEl.style.setProperty('--sticky-progress', `100%`);
@@ -217,7 +223,12 @@ export class UIMissionControl {
                     target = progress.objectives[objKey].target;
                 }
                 
-                const objectiveLabel = this._getObjectiveLabel(firstObj);
+                if (firstObj.type === 'SUB_OBJECTIVE_MODAL' && firstObj.actionType === 'TRANSACTION' && firstObj.actionParams) {
+                    target = firstObj.actionParams.quantity;
+                    current = current >= 1 ? target : 0;
+                }
+                
+                const objectiveLabel = this._getObjectiveLabel(firstObj, progress);
                 let displayStr = `[${current}/${target}]`;
                 let percent = Math.min(100, (current / target) * 100);
 
@@ -246,16 +257,57 @@ export class UIMissionControl {
                     displayStr = `[${formatCredits(current)}]`;
                     percent = current <= target ? 100 : 0;
                 }
+                
+                let extraClass = '';
+                if (firstObj.type === 'SUB_OBJECTIVE_MODAL') {
+                    const isRevealed = progress.objectives[objKey] && progress.objectives[objKey].revealed;
+                    if (this.manager.lastKnownState && this.manager.lastKnownState.currentLocationId !== firstObj.targetLoc && !isRevealed) {
+                        displayStr = `[EN ROUTE]`;
+                        percent = 0;
+                    } else if (!isRevealed) {
+                        displayStr = `[ARRIVED]`;
+                        percent = 100;
+                        extraClass = ' mission-turn-in';
+                    } else {
+                        displayStr = `[${current}/${target}]`;
+                        percent = Math.min(100, (current / target) * 100);
+                    }
+                }
 
-                const expectedClass = `sticky-content ${hostClass}`;
+                const expectedClass = `sticky-content ${hostClass}${extraClass}`;
                 if (contentEl.className !== expectedClass) contentEl.className = expectedClass;
 
-                if (objectiveTextEl.innerHTML !== objectiveLabel || objectiveProgressEl.innerHTML !== displayStr) {
-                    objectiveTextEl.style.width = '';
-                    objectiveTextEl.style.textAlign = '';
-                    objectiveProgressEl.style.display = '';
+                if (objectiveTextEl.dataset.original !== objectiveLabel || objectiveProgressEl.dataset.original !== displayStr) {
+                    objectiveTextEl.dataset.original = objectiveLabel;
+                    objectiveProgressEl.dataset.original = displayStr;
+                    
+                    const isLongText = objectiveLabel.length >= 28;
+                    
+                    objectiveTextEl.style.display = 'flex';
+                    objectiveTextEl.style.flex = '1';
+                    objectiveTextEl.style.minWidth = '0';
+                    objectiveTextEl.style.overflow = 'hidden';
+                    objectiveTextEl.style.whiteSpace = 'nowrap';
+                    objectiveTextEl.style.webkitMaskImage = 'linear-gradient(to right, black 85%, transparent 100%)';
+                    objectiveTextEl.style.maskImage = 'linear-gradient(to right, black 85%, transparent 100%)';
+                    objectiveTextEl.style.marginRight = '0.5rem';
 
-                    objectiveTextEl.innerHTML = objectiveLabel;
+                    if (isLongText) {
+                        objectiveTextEl.innerHTML = `
+                            <div style="display: flex; width: max-content; animation: stickyObjTicker 8.17s linear infinite;">
+                                <span style="padding-right: 4rem;">${objectiveLabel}</span>
+                                <span style="padding-right: 4rem;">${objectiveLabel}</span>
+                            </div>
+                        `;
+                    } else {
+                        objectiveTextEl.innerHTML = `
+                            <span style="overflow: hidden; text-overflow: ellipsis; max-width: 100%;">
+                                ${objectiveLabel}
+                            </span>
+                        `;
+                    }
+
+                    objectiveProgressEl.style.display = '';
                     objectiveProgressEl.innerHTML = displayStr;
                     contentEl.style.setProperty('--sticky-progress', `${percent}%`);
                 }
@@ -274,7 +326,7 @@ export class UIMissionControl {
         }
     }
 
-    _getObjectiveLabel(obj) {
+    _getObjectiveLabel(obj, progress = null) {
         if (!obj) return 'Objective';
         if (obj.text) return obj.text;
         
@@ -345,6 +397,25 @@ export class UIMissionControl {
         if (['action', 'ACTION'].includes(obj.type)) {
             return obj.target || 'Complete Action';
         }
+        if (obj.type === 'SUB_OBJECTIVE_MODAL') {
+            const isRevealed = progress && progress.objectives[obj.id] && progress.objectives[obj.id].revealed;
+            if (this.manager.lastKnownState && this.manager.lastKnownState.currentLocationId !== obj.targetLoc) {
+                const name = DB.MARKETS.find(m => m.id === obj.targetLoc)?.name || 'Location';
+                return `Travel to ${name}`;
+            }
+            if (!isRevealed) {
+                const name = DB.MARKETS.find(m => m.id === obj.targetLoc)?.name || 'Location';
+                return `Travel to ${name}`;
+            }
+            if (obj.actionType === 'TRANSACTION' && obj.actionParams) {
+                const actionWord = obj.actionParams.transactionType === 'BUY' ? 'Buy' : 'Sell';
+                const fromTo = obj.actionParams.transactionType === 'BUY' ? 'from' : 'to';
+                const itemName = DB.COMMODITIES.find(c => c.id === obj.actionParams.commodityId)?.name || obj.actionParams.commodityId;
+                const locName = DB.MARKETS.find(m => m.id === obj.targetLoc)?.name || 'Location';
+                return `${actionWord} ${obj.actionParams.quantity} ${itemName} ${fromTo} ${locName}`;
+            }
+            return `Complete Objective`;
+        }
         return `COMPLETE OBJECTIVE`;
     }
 
@@ -366,14 +437,15 @@ export class UIMissionControl {
         const { missions, currentLocationId, player } = gameState;
         
         const isActive = missions.activeMissionIds.includes(missionId);
-        const progress = missions.missionProgress[missionId];
-        const isCompletable = progress ? progress.isCompletable : false;
+        const progress = missions.missionProgress[missionId] || { objectives: {} };
+        const isCompletable = progress.isCompletable || false;
 
         const isLocationValid = !mission.completion?.locationId || mission.completion?.locationId === 'any' || mission.completion?.locationId === currentLocationId;
         const canComplete = isActive && isCompletable && isLocationValid;
 
         // --- ACT INTERMISSION INTERCEPT (PHASE 3) ---
-        if (ACT_CINEMATIC_CONFIG && ACT_CINEMATIC_CONFIG[missionId]) {
+        const intermissionConfig = ACT_CINEMATIC_CONFIG && ACT_CINEMATIC_CONFIG[missionId];
+        if (intermissionConfig && (!intermissionConfig.trigger || intermissionConfig.trigger === 'open')) {
             // Target the core mutable state, not the disconnected snapshot
             const coreState = this.manager.simulationService?.gameState;
             const targetPlayer = coreState ? coreState.player : player;
@@ -393,7 +465,7 @@ export class UIMissionControl {
                 if (this.manager.eventControl && typeof this.manager.eventControl.playActIntermissionSequence === 'function') {
                     this.manager.eventControl.playActIntermissionSequence(
                         missionId,
-                        ACT_CINEMATIC_CONFIG[missionId],
+                        intermissionConfig,
                         () => {
                             // Render standard modal post-sequence
                             if (canComplete) {
@@ -416,6 +488,246 @@ export class UIMissionControl {
         }
     }
 
+    _showSubObjectiveModal(mission, objective) {
+        const gameState = this.manager.lastKnownState;
+        
+        let canAfford = true;
+        let hasItems = true;
+        let hasSpace = true;
+        let actionBtnHtml = '';
+        let transactionModifier = 0;
+        
+        if (objective.actionType === 'TRANSACTION') {
+            const actionParams = objective.actionParams || {};
+            transactionModifier = actionParams.priceModifier || 0;
+            const comm = DB.COMMODITIES.find(c => c.id === actionParams.commodityId);
+            if (comm) {
+                if (actionParams.transactionType === 'BUY') {
+                    const basePrice = comm.basePrice || ((comm.basePriceRange[0] + comm.basePriceRange[1]) / 2);
+                    const totalCost = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
+                    canAfford = gameState.player.credits >= totalCost;
+                    
+                    let currentVolume = 0;
+                    let maxVolume = 0;
+                    if (gameState.player.ownedShipIds) {
+                        gameState.player.ownedShipIds.forEach(shipId => {
+                            const stats = this.manager.simulationService ? this.manager.simulationService.getEffectiveShipStats(shipId) : null;
+                            maxVolume += stats ? stats.cargoCapacity : 0;
+                            const inv = gameState.player.inventories[shipId];
+                            if (inv) {
+                                currentVolume += Object.values(inv).reduce((sum, item) => sum + (item.quantity || 0), 0);
+                            }
+                        });
+                    }
+                    hasSpace = (maxVolume - currentVolume) >= actionParams.quantity;
+                } else if (actionParams.transactionType === 'SELL') {
+                    let totalOwned = 0;
+                    if (gameState.player.ownedShipIds) {
+                        gameState.player.ownedShipIds.forEach(shipId => {
+                            const inv = gameState.player.inventories[shipId];
+                            if (inv && inv[actionParams.commodityId]) {
+                                totalOwned += inv[actionParams.commodityId].quantity || 0;
+                            }
+                        });
+                    }
+                    hasItems = totalOwned >= actionParams.quantity;
+                }
+            }
+        }
+        
+        const isButtonDisabled = !canAfford || !hasSpace || !hasItems;
+
+        const options = {
+            portraitId: objective.portraitId || mission.portraitId,
+            portraitName: objective.portraitName || mission.portraitName,
+            dismissOutside: false, // We will handle this manually for CRT exit
+            noModalVisible: true, // Fix CRT animation conflict
+            customSetup: (modal, closeHandler) => {
+                const modalContent = modal.querySelector('.modal-content');
+                modalContent.style.display = ''; // Reset display from previous CRT shutdown
+                modalContent.classList.remove('modal-blur-fade-out');
+                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled', 'backdrop-fade-out-crt');
+                
+                // --- CRT Turn On Effect ---
+                modalContent.classList.remove('sev-crt-shutdown');
+                modalContent.classList.add('sev-crt-turn-on');
+                if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+                modalContent._crtTimeout = setTimeout(() => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                }, 650);
+
+                const crtCloseHandler = () => {
+                    modalContent.classList.remove('sev-crt-turn-on');
+                    modalContent.classList.add('sev-crt-shutdown');
+                    modal.classList.add('backdrop-fade-out-crt'); // Apply fast fade out
+                    if (modalContent._crtTimeout) clearTimeout(modalContent._crtTimeout);
+                    setTimeout(() => {
+                        modalContent.style.display = 'none';
+                        closeHandler();
+                    }, 640);
+                };
+                
+                // Hijack backdrop dismissal
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) crtCloseHandler();
+                });
+
+                // Hijack the standard 'X' close button to use CRT shutdown
+                const closeBtn = modal.querySelector('.close-modal');
+                if (closeBtn) {
+                    const newCloseBtn = closeBtn.cloneNode(true);
+                    closeBtn.parentNode.replaceChild(newCloseBtn, closeBtn);
+                    newCloseBtn.addEventListener('click', () => crtCloseHandler());
+                }
+                
+                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center sev-crt-turn-on';
+                const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
+                modalContent.classList.add(hostClass);
+                
+                // Hide unnecessary standard elements
+                const typeEl = modal.querySelector('#mission-modal-type');
+                if (typeEl) typeEl.style.display = 'none';
+                const objectivesEl = modal.querySelector('#mission-modal-objectives');
+                if (objectivesEl) objectivesEl.style.display = 'none';
+                const rewardsEl = modal.querySelector('#mission-modal-rewards');
+                if (rewardsEl) rewardsEl.style.display = 'none';
+
+                // Description logic (dialogText)
+                const descEl = modal.querySelector('#mission-modal-description');
+                if (descEl) {
+                    descEl.innerHTML = this._parseMissionText(objective.dialogText, gameState);
+                }
+
+                // Action buttons based on actionType
+                const buttonsEl = modal.querySelector('#mission-modal-buttons');
+                if (buttonsEl) {
+                    const btnStyles = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;" + (isButtonDisabled ? " filter: grayscale(1); opacity: 0.5; pointer-events: none;" : "");
+                    if (objective.actionType === 'TRANSACTION') {
+                        const actionParams = objective.actionParams || {};
+                        const comm = DB.COMMODITIES.find(c => c.id === actionParams.commodityId);
+                        const basePrice = comm ? (comm.basePrice || ((comm.basePriceRange[0] + comm.basePriceRange[1]) / 2)) : 0;
+                        const transactionModifier = actionParams.priceModifier || 0;
+                        const totalTradeVal = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
+                        
+                        const actionWord = actionParams.transactionType === 'BUY' ? 'BUY' : 'SELL';
+                        const fromTo = actionParams.transactionType === 'BUY' ? 'FROM' : 'TO';
+                        const itemName = comm?.name || actionParams.commodityId;
+                        const locName = DB.MARKETS.find(m => m.id === objective.targetLoc)?.name || 'LOCATION';
+                        const btnLabel = `${actionWord} ${actionParams.quantity} ${itemName.toUpperCase()} ${fromTo} ${locName.toUpperCase()}`;
+                        
+                        const isBuy = actionParams.transactionType === 'BUY';
+                        const btnColorClasses = isBuy ? 'bg-cyan-600/80 hover:bg-cyan-500/80 border-cyan-400 shadow-[0_0_15px_rgba(34,211,238,0.6)]' : 'bg-green-600/80 hover:bg-green-500/80 border-green-400 shadow-[0_0_15px_rgba(74,222,128,0.6)]';
+                        
+                        const tradeValText = `<div id="sub-obj-trade-val" class="font-bold mt-2 mb-2" style="font-size: calc(0.875rem + 2pt); color: ${isBuy ? '#22d3ee' : '#4ade80'}; text-shadow: 0 0 5px ${isBuy ? '#22d3ee' : '#4ade80'};">TOTAL: ⌬ ${this._formatAbbreviatedNumber ? this._formatAbbreviatedNumber(totalTradeVal) : totalTradeVal.toLocaleString()}</div>`;
+
+                        actionBtnHtml = `${tradeValText}<button id="sub-obj-action-btn" class="btn w-full ${btnColorClasses} text-white font-bold" style="${btnStyles}">${btnLabel}</button>`;
+                    }
+                    buttonsEl.innerHTML = actionBtnHtml;
+
+                    const actionBtn = modal.querySelector('#sub-obj-action-btn');
+                    if (actionBtn) {
+                        actionBtn.addEventListener('click', (e) => {
+                            if (isButtonDisabled) return;
+                            const result = this.manager.simulationService.missionService.objectiveEvaluator.processSubObjectiveAction(
+                                mission.id, 
+                                objective, 
+                                gameState, 
+                                this.manager.simulationService
+                            );
+
+                            if (!result.success) {
+                                this.manager.queueModal('event-modal', result.title || 'Transaction Failed', result.message || 'Unable to complete transaction.');
+                                return; // Keep modal open
+                            }
+                            
+                            // Show floating text
+                            if (objective.actionType === 'TRANSACTION') {
+                                const actionParams = objective.actionParams || {};
+                                const comm = DB.COMMODITIES.find(c => c.id === actionParams.commodityId);
+                                if (comm) {
+                                    const basePrice = comm.basePrice || ((comm.basePriceRange[0] + comm.basePriceRange[1]) / 2);
+                                    const transactionModifier = actionParams.priceModifier || 0;
+                                    
+                                    const rect = actionBtn.getBoundingClientRect();
+                                    const btnX = rect.left + rect.width / 2;
+                                    const btnY = rect.top;
+                                    
+                                    if (actionParams.transactionType === 'SELL') {
+                                        const totalReward = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
+                                        this.manager.createFloatingText(`+⌬ ${totalReward.toLocaleString()}`, btnX, btnY, '#4ade80');
+                                    } else {
+                                        const totalCost = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
+                                        this.manager.createFloatingText(`-⌬ ${totalCost.toLocaleString()}`, btnX, btnY, '#ef4444');
+                                    }
+                                }
+                            }
+
+                            // Remove trade value text
+                            const tradeValEl = modal.querySelector('#sub-obj-trade-val');
+                            if (tradeValEl) tradeValEl.remove();
+
+                            // Mark objective as complete
+                            const liveState = this.manager.simulationService ? this.manager.simulationService.gameState : gameState;
+                            if (liveState.missions && liveState.missions.missionProgress[mission.id]) {
+                                const prog = liveState.missions.missionProgress[mission.id];
+                                const objKey = objective.id || objective.target || objective.goodId;
+                                if (!prog.objectives[objKey]) {
+                                    prog.objectives[objKey] = { current: 0, target: 1 };
+                                }
+                                prog.objectives[objKey].current = prog.objectives[objKey].target || 1;
+                            }
+
+                            if (this.manager.simulationService) {
+                                this.manager.simulationService.missionService.checkTriggers();
+                                this.manager.simulationService.gameState.setState({}); 
+                            }
+                            const updatedState = this.manager.simulationService ? this.manager.simulationService.gameState.getState() : gameState;
+                            this.manager.render(updatedState);
+                            
+                            // Swap button to Collect Exchange Badge
+                            const nextObj = mission.objectives.find(o => o.dependsOn === objective.id);
+                            if (nextObj) {
+                                const newBtn = document.createElement('button');
+                                newBtn.className = 'btn w-full mt-2 bg-purple-600/80 hover:bg-purple-500/80 border-purple-400 text-white font-bold shadow-[0_0_15px_rgba(168,85,247,0.6)]';
+                                newBtn.textContent = 'COLLECT EXCHANGE BADGE';
+                                newBtn.style = "padding-top: 0.3rem; padding-bottom: 0.3rem; min-height: 28px;";
+                                
+                                newBtn.addEventListener('click', (e) => {
+                                    if (liveState.missions && liveState.missions.missionProgress[mission.id]) {
+                                        const prog2 = liveState.missions.missionProgress[mission.id];
+                                        const objKey2 = nextObj.id || nextObj.target || nextObj.goodId;
+                                        if (!prog2.objectives[objKey2]) prog2.objectives[objKey2] = { current: 0, target: 1 };
+                                        prog2.objectives[objKey2].current = prog2.objectives[objKey2].target || 1;
+                                    }
+                                    
+                                    const rect = newBtn.getBoundingClientRect();
+                                    const x = e.clientX || rect.left + (rect.width / 2);
+                                    const y = e.clientY || rect.top;
+                                    this.manager.createFloatingText('+1 Exchange Badge', x, y, '#c084fc', 2500);
+                                    
+                                    if (this.manager.simulationService) {
+                                        this.manager.simulationService.missionService.checkTriggers();
+                                        this.manager.simulationService.gameState.setState({});
+                                    }
+                                    const finalState = this.manager.simulationService ? this.manager.simulationService.gameState.getState() : gameState;
+                                    this.manager.render(finalState);
+                                    crtCloseHandler();
+                                });
+                                
+                                actionBtn.parentNode.replaceChild(newBtn, actionBtn);
+                            } else {
+                                crtCloseHandler();
+                            }
+                        });
+                    }
+                }
+            }
+        };
+
+        const parsedTitle = this._parseMissionText(mission.name, gameState);
+        this.manager.queueModal('mission-modal', parsedTitle, "", null, options);
+    }
+
     _showMissionDetailsModal(mission) {
         const gameState = this.manager.lastKnownState;
         const { missions, tutorials, currentLocationId } = gameState;
@@ -423,6 +735,53 @@ export class UIMissionControl {
         
         const progress = missions.missionProgress[mission.id] || { objectives: {} };
         const isCompletable = progress ? progress.isCompletable : false;
+
+        // --- SUB_OBJECTIVE_MODAL INTERCEPT ---
+        let firstObj = null;
+        if (isActive && mission.objectives && mission.objectives.length > 0) {
+            firstObj = mission.objectives.find(obj => {
+                if (obj.dependsOn) {
+                    const depProgress = progress.objectives[obj.dependsOn];
+                    if (!depProgress || depProgress.current < depProgress.target) {
+                        return false; 
+                    }
+                }
+                const localKey = obj.id || obj.goodId || obj.target;
+                const pObj = progress.objectives[localKey];
+                const locCurrent = pObj ? pObj.current : 0;
+                const locTarget = pObj ? pObj.target : (obj.quantity || obj.value || 1);
+                
+                if (['have_hull_pct', 'HAVE_HULL_PCT', 'have_cargo_pct', 'HAVE_CARGO_PCT'].includes(obj.type)) {
+                    const comparator = obj.comparator || '>=';
+                    if (comparator === '<=') return locCurrent > locTarget;
+                    return locCurrent < locTarget;
+                }
+                return locCurrent < locTarget;
+            });
+        }
+
+        if (firstObj && firstObj.type === 'SUB_OBJECTIVE_MODAL' && firstObj.targetLoc === currentLocationId) {
+            // Flag as revealed so the UI updates
+            const objKey = firstObj.id || firstObj.target || firstObj.goodId;
+            const liveState = this.manager.simulationService ? this.manager.simulationService.gameState : null;
+            if (liveState && liveState.missions && liveState.missions.missionProgress[mission.id]) {
+                const liveProg = liveState.missions.missionProgress[mission.id];
+                if (!liveProg.objectives[objKey]) {
+                    liveProg.objectives[objKey] = { current: 0, target: 1 };
+                }
+                liveProg.objectives[objKey].revealed = true;
+                liveState.setState({});
+                this.manager.render(liveState.getState()); // Force redraw of UI behind modal
+            } else {
+                if (!progress.objectives[objKey]) {
+                    progress.objectives[objKey] = { current: 0, target: 1 };
+                }
+                progress.objectives[objKey].revealed = true;
+            }
+            this._showSubObjectiveModal(mission, firstObj);
+            return;
+        }
+        // --- END INTERCEPT ---
         
         const isLogisticsPickupPhase = mission.deferredCargo && mission.deferredCargo.length > 0 && !progress.cargoLoaded;
         const isAtPickupLocation = isLogisticsPickupPhase && mission.pickupLocationId === currentLocationId;
@@ -468,9 +827,13 @@ export class UIMissionControl {
             dismissOutside: true, 
             customSetup: (modal, closeHandler) => {
                 const modalContent = modal.querySelector('.modal-content');
+                modalContent.style.display = ''; // Reset display from previous CRT shutdown
+                
+                const customDescEl = modal.querySelector('#mission-modal-description');
+                if (customDescEl) customDescEl.innerHTML = parsedDescription;
                 
                 modalContent.classList.remove('modal-blur-fade-out');
-                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
+                modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled', 'backdrop-fade-out-crt');
 
                 modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                 const hostClass = `host-${mission.host.toLowerCase().replace(/[^a-z0-9]/g, '')}`;
@@ -498,6 +861,10 @@ export class UIMissionControl {
                     }
                 }
 
+                const liveState = this.manager.simulationService?.gameState?.getState() || this.manager.lastKnownState;
+                const freshProgress = liveState?.missions?.missionProgress?.[mission.id] || { objectives: {} };
+                if (modalContent) modalContent.style.display = '';
+
                 const typeEl = modal.querySelector('#mission-modal-type');
                 if (typeEl) {
                     typeEl.textContent = mission.type;
@@ -516,9 +883,11 @@ export class UIMissionControl {
                 // Filter out backend flags and negative credits for visual presentation
                 const visibleRewards = mission.rewards ? mission.rewards.filter(r => {
                     const t = r.type.toLowerCase();
+                    if ((mission.id === 'mission_56_guild' || mission.id === 'mission_56_syndicate') && t === 'unlock_tier') return false;
                     if (t === 'deduct_credits') return false;
-                    if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                    if (t === 'set_flag' || t === 'increment_flag' || t === 'decrement_flag') return false;
                     if (t === 'trigger_system_state' || t === 'end_system_state') return false;
+                    if (t === 'teleport' || t === 'lock_location' || t === 'clear_nav_lock') return false;
                     return true;
                 }) : [];
                 
@@ -555,7 +924,7 @@ export class UIMissionControl {
                     const inboundFullWidthClass = !hasPayout ? ' full-width' : '';
                     const grantedStr = inboundItems.map(item => {
                         const delay = animDelayIdx++ * 0.05;
-                        return `<div class="telemetry-item" style="animation-delay: ${delay}s">${item}</div>`;
+                        return `<div class="telemetry-item" style="animation-delay: ${delay}s; opacity: 1 !important; transform: none !important;">${item}</div>`;
                     }).join('');
                     
                     flexColumns.push(`
@@ -615,7 +984,7 @@ export class UIMissionControl {
                             } else {
                                 content = `<span class="t-subject">${r.type.toUpperCase()}</span>`;
                             }
-                            return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s">${content}</div>`;
+                            return `<div class="telemetry-item payout-item" style="animation-delay: ${delay}s; opacity: 1 !important; transform: none !important;">${content}</div>`;
                         }).join('');
                     }
 
@@ -652,28 +1021,45 @@ export class UIMissionControl {
                     });
                 }
 
-                // 3. DIRECTIVE
+                // 3. 
                 if (mission.objectives && mission.objectives.length > 0) {
                     const obsList = mission.objectives.filter(obj => {
                         // SEQUENTIAL GATING: Hide objective if its dependency isn't met
                         if (obj.dependsOn) {
-                            const depProgress = progress.objectives[obj.dependsOn];
+                            const depProgress = freshProgress?.objectives?.[obj.dependsOn];
                             if (!depProgress || depProgress.current < depProgress.target) {
                                 return false; // Skip rendering
                             }
                         }
+                        
+                        // Hide completed objectives entirely instead of crossing them out
+                        const objKey = obj.id || obj.goodId || obj.target;
+                        const objProg = freshProgress?.objectives?.[objKey];
+                        const isObjComplete = objProg && objProg.current >= (objProg.target || 1);
+                        if (isObjComplete) {
+                            return false;
+                        }
+                        
                         return true;
                     }).map(obj => {
                         const delay = animDelayIdx++ * 0.05;
-                        let text = this._getObjectiveLabel(obj);
+                        let text = this._getObjectiveLabel(obj, freshProgress);
                         
                         if (!['have_credits', 'HAVE_CREDITS', 'wealth_gt', 'WEALTH_CHECK'].includes(obj.type)) {
-                            text = text.replace(/(\b\d+[xX]?\b)/g, '<span class="t-qty">$1</span>');
+                            text = text.replace(/\b(\d+[xX]?)\b(?![^<]*>)/g, '<span class="t-qty">$1</span>');
                         }
-                        
+
+                        if (freshProgress?.isCompletable) {
+                            if (obj.type === 'TRAVEL_TO' && obj.target === mission.completion.locationId) {
+                                text = `<span class="text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)] font-bold tracking-wider">${text}</span>`;
+                            } else {
+                                text = `<span class="text-green-400 drop-shadow-[0_0_5px_rgba(74,222,128,0.8)]">${text}</span>`;
+                            }
+                        }
+
                         if (obj.type === 'DELIVER_ITEM') {
                             const objKey = obj.id || obj.goodId || obj.target;
-                            const depositedAmt = progress?.objectives?.[objKey]?.deposited || 0;
+                            const depositedAmt = freshProgress?.objectives?.[objKey]?.deposited || 0;
                             const targetQty = obj.quantity || obj.value || 1;
                             if (depositedAmt > 0) {
                                 text += `<br><span class="text-blue-400 font-bold">[DEPOSITED: ${depositedAmt}/${targetQty}]</span>`;
@@ -682,14 +1068,16 @@ export class UIMissionControl {
                         
                         if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
                             const objKey = obj.id || obj.goodId || obj.target;
-                            const collectedAmt = progress?.objectives?.[objKey]?.collected || 0;
+                            const collectedAmt = freshProgress?.objectives?.[objKey]?.collected || 0;
                             const targetQty = obj.quantity || obj.value || 1;
                             if (collectedAmt > 0) {
                                 text += `<br><span class="text-blue-400 font-bold">[COLLECTED: ${collectedAmt}/${targetQty}]</span>`;
                             }
                         }
-                        
-                        return `<div class="telemetry-item" style="animation-delay: ${delay}s">${text}</div>`;
+
+                        if (!text || text.trim() === '') return '';
+
+                        return `<div class="telemetry-item" style="animation-delay: ${delay}s; opacity: 1 !important; transform: none !important;">${text}</div>`;
                     }).join('');
                     
                     flexColumns.push(`
@@ -723,6 +1111,8 @@ export class UIMissionControl {
                         </div>
                     `;
                     objectivesEl.style.display = 'block';
+                    objectivesEl.style.visibility = 'visible';
+                    objectivesEl.style.opacity = '1';
                 } else {
                     objectivesEl.innerHTML = '';
                     objectivesEl.style.display = 'none';
@@ -1285,9 +1675,10 @@ export class UIMissionControl {
            dismissOutside: true,
            customSetup: (modal, closeHandler) => {
                const modalContent = modal.querySelector('.modal-content');
+               modalContent.style.display = ''; // Reset display from previous CRT shutdown
                
-               modalContent.classList.remove('modal-blur-fade-out');
-               modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled');
+               modalContent.classList.remove('modal-blur-fade-out', 'sev-crt-shutdown', 'sev-crt-turn-on');
+               modal.classList.remove('backdrop-fade-out-slow', 'dismiss-disabled', 'backdrop-fade-out-crt');
 
                modalContent.className = 'modal-content sci-fi-frame flex flex-col items-center text-center';
                const activeHost = mission.completion?.host || mission.host || 'UNKNOWN';
@@ -1333,9 +1724,11 @@ export class UIMissionControl {
                // Filter out backend flags and negative credits for visual presentation
                const visibleRewards = mission.rewards ? mission.rewards.filter(r => {
                    const t = r.type.toLowerCase();
+                   if ((mission.id === 'mission_56_guild' || mission.id === 'mission_56_syndicate') && t === 'unlock_tier') return false;
                    if (t === 'deduct_credits') return false;
-                   if (t === 'set_flag' && r.flagId && r.flagId.startsWith('mission_')) return false;
+                   if (t === 'set_flag' || t === 'increment_flag' || t === 'decrement_flag') return false;
                    if (t === 'trigger_system_state' || t === 'end_system_state') return false;
+                   if (t === 'teleport' || t === 'lock_location' || t === 'clear_nav_lock') return false;
                    return true;
                }) : [];
 
@@ -1416,6 +1809,10 @@ export class UIMissionControl {
                    `;
                } else {
                    rewardsEl.innerHTML = '';
+                   rewardsEl.style.display = 'none';
+               }
+
+               if (mission.id === 'mission_56_guild' || mission.id === 'mission_56_syndicate') {
                    rewardsEl.style.display = 'none';
                }
 
@@ -1565,7 +1962,7 @@ export class UIMissionControl {
                            setTimeout(() => {
                                const x = window.innerWidth / 2;
                                const y = window.innerHeight / 2;
-                               uiManager.createFloatingText('The Exchange Unlocked', x, y, '#c084fc', 3000);
+                               uiManager.createFloatingText('The Exchange Unlocked', x, y, '#c084fc', 2500);
                            }, 300);
                        }
 
@@ -1830,7 +2227,65 @@ export class UIMissionControl {
                                        setTimeout(() => {
                                            whiteOverlay.remove();
                                            
-                                           mission.rewards = choice.rewards;
+                                           const intermissionConfig = ACT_CINEMATIC_CONFIG && ACT_CINEMATIC_CONFIG[mission.id];
+                                           const coreState = this.manager.simulationService?.gameState;
+                                           const targetPlayer = coreState ? coreState.player : this.manager.lastKnownState?.player;
+                                           const hasNotViewedIntermission = targetPlayer && (!targetPlayer.viewedIntermissions || !targetPlayer.viewedIntermissions.includes(mission.id));
+
+                                           if (intermissionConfig && intermissionConfig.trigger === 'completion' && hasNotViewedIntermission && this.manager.eventControl && typeof this.manager.eventControl.playActIntermissionSequence === 'function') {
+                                               if (!targetPlayer.viewedIntermissions) targetPlayer.viewedIntermissions = [];
+                                               targetPlayer.viewedIntermissions.push(mission.id);
+
+                                               if (coreState && this.manager.simulationService) {
+                                                   this.manager.simulationService.saveGame();
+                                               }
+
+                                               // Visually hide the modal immediately to prevent hanging
+                                               if (modalContent) {
+                                                   modalContent.style.transition = 'opacity 0.5s ease';
+                                                   modalContent.style.opacity = '0';
+                                                   modalContent.style.pointerEvents = 'none';
+                                               }
+
+                                               this.manager.eventControl.playActIntermissionSequence(
+                                                   mission.id,
+                                                   intermissionConfig,
+                                                   () => {
+                                                       // Resume standard completion logic AFTER cinematic
+                                                       mission.rewards = choice.rewards;
+                                                       executeCompletion(e);
+
+                                                       if (this.manager.simulationService) {
+                                                           const uiManager = this.manager;
+                                                           const originalRender = uiManager.render;
+                                                           uiManager.render = function(...args) {
+                                                               const newState = args[0] || uiManager.lastKnownState;
+                                                               uiManager.lastKnownState = newState;
+                                                               if (uiManager.missionControl) uiManager.missionControl.renderStickyBar(newState);
+                                                           };
+                                                           
+                                                           this.manager.simulationService.missionService.completeMission(mission.id);
+                                                           
+                                                           uiManager.render = originalRender;
+                                                           if (stickyBarEl) {
+                                                               stickyBarEl.style.transition = 'none';
+                                                               stickyBarEl.style.filter = 'none';
+                                                               stickyBarEl.style.webkitFilter = 'none';
+                                                           }
+                                                           if (this.manager.simulationService.gameState) {
+                                                               this.manager.render(this.manager.simulationService.gameState.getState());
+                                                           } else {
+                                                               this.manager.render();
+                                                           }
+                                                       }
+                                                       closeHandler();
+                                                   }
+                                               );
+                                               return; // Halt standard execution path precisely like trigger: 'open'
+                                           } else {
+                                               mission.rewards = choice.rewards;
+                                               executeCompletion(e);
+                                           }
                                            
                                            if (this.manager.simulationService) {
                                                const uiManager = this.manager;
@@ -1918,8 +2373,12 @@ export class UIMissionControl {
                    completeBtn.onclick = async (e) => {
                        completeBtn.disabled = true;
                        
+                       const intermissionConfig = ACT_CINEMATIC_CONFIG && ACT_CINEMATIC_CONFIG[mission.id];
+                       const coreState = this.manager.simulationService?.gameState;
+                       const targetPlayer = coreState ? coreState.player : this.manager.lastKnownState?.player;
+                       const hasNotViewedIntermission = targetPlayer && (!targetPlayer.viewedIntermissions || !targetPlayer.viewedIntermissions.includes(mission.id));
+
                        if (mission.id === 'mission_41_guild' || mission.id === 'mission_41_syndicate') {
-                           
                            // 1. Prepare UI Teardown Helpers
                            const toggleBackgroundUI = (opacity, pointerEvents) => {
                                const elements = [
@@ -1987,8 +2446,40 @@ export class UIMissionControl {
                                }
                            }
                            this._processCompletionSteps(mission, mission.completion.steps, 0, () => {
-                               executeCompletion(e);
+                               if (intermissionConfig && intermissionConfig.trigger === 'completion' && hasNotViewedIntermission && this.manager.eventControl && typeof this.manager.eventControl.playActIntermissionSequence === 'function') {
+                                   if (!targetPlayer.viewedIntermissions) targetPlayer.viewedIntermissions = [];
+                                   targetPlayer.viewedIntermissions.push(mission.id);
+
+                                   if (coreState && this.manager.simulationService) {
+                                       this.manager.simulationService.saveGame();
+                                   }
+
+                                   executeCompletion(e);
+
+                                   this.manager.eventControl.playActIntermissionSequence(
+                                       mission.id,
+                                       intermissionConfig
+                                   );
+                               } else {
+                                   executeCompletion(e);
+                               }
                            });
+                       } else if (intermissionConfig && intermissionConfig.trigger === 'completion' && hasNotViewedIntermission && this.manager.eventControl && typeof this.manager.eventControl.playActIntermissionSequence === 'function') {
+                           if (!targetPlayer.viewedIntermissions) targetPlayer.viewedIntermissions = [];
+                           targetPlayer.viewedIntermissions.push(mission.id);
+
+                           if (coreState && this.manager.simulationService) {
+                               this.manager.simulationService.saveGame();
+                           }
+
+                           // Trigger UI teardown and mission completion behind the overlay
+                           executeCompletion(e);
+
+                           // Launch the Act Intermission sequence
+                           this.manager.eventControl.playActIntermissionSequence(
+                               mission.id,
+                               intermissionConfig
+                           );
                        } else {
                            executeCompletion(e);
                        }
@@ -2276,7 +2767,7 @@ export class UIMissionControl {
         const next = () => this._processCompletionSteps(mission, steps, index + 1, finalCallback);
 
         const executeStep = () => {
-            if (step.type === 'NARRATION_MODAL') {
+            if (step.type === 'NARRATION_MODAL' || step.type === 'ACTION_MODAL') {
                 this.manager.queueModal('mission-modal', step.title, step.text, next, {
                     portraitId: step.portraitId || mission.portraitId,
                     portraitName: step.portraitName || mission.portraitName,
@@ -2317,6 +2808,48 @@ export class UIMissionControl {
                         const targetDescEl = modal.querySelector('#mission-modal-description');
                         if (targetDescEl) {
                             targetDescEl.innerHTML = step.text;
+                        }
+
+                        if (step.type === 'ACTION_MODAL') {
+                            const buttonsEl = modal.querySelector('#mission-modal-buttons');
+                            if (buttonsEl) {
+                                buttonsEl.innerHTML = '';
+                                const actionBtn = document.createElement('button');
+                                actionBtn.className = 'btn w-full mission-action-btn host-btn-pulse ' + (step.buttonClass || '');
+                                actionBtn.textContent = step.buttonText || step.actionText || 'Proceed';
+                                if (step.buttonStyle || step.actionStyle) actionBtn.style.cssText = step.buttonStyle || step.actionStyle;
+                                actionBtn.onclick = () => {
+                                    actionBtn.disabled = true;
+                                    if (step.rewards && this.manager.simulationService) {
+                                        const coreState = this.manager.simulationService.gameState;
+                                        if (coreState) {
+                                            step.rewards.forEach(r => {
+                                                if (r.type === 'grant_license' || r.type === 'GRANT_LICENSE' || r.type === 'LICENSE' || r.type === 'license') {
+                                                    if (!coreState.player.unlockedLicenseIds) coreState.player.unlockedLicenseIds = [];
+                                                    if (!coreState.player.unlockedLicenseIds.includes(r.licenseId)) {
+                                                        coreState.player.unlockedLicenseIds.push(r.licenseId);
+                                                    }
+                                                }
+                                                if (r.type === 'faction_standing' || r.type === 'FACTION_STANDING') {
+                                                    if (!coreState.player.factionStanding) coreState.player.factionStanding = {};
+                                                    coreState.player.factionStanding[r.faction] = (coreState.player.factionStanding[r.faction] || 0) + r.amount;
+                                                }
+                                                if (r.type === 'SET_FLAG' || r.type === 'set_flag') {
+                                                    if (!coreState.player.storyFlags) coreState.player.storyFlags = {};
+                                                    coreState.player.storyFlags[r.flagId] = r.value;
+                                                }
+                                                if (r.type === 'UNLOCK_TIER' || r.type === 'unlock_tier') {
+                                                    if (coreState.player.licenseTier < r.value) {
+                                                        coreState.player.licenseTier = r.value;
+                                                    }
+                                                }
+                                            });
+                                        }
+                                    }
+                                    closeHandler();
+                                };
+                                buttonsEl.appendChild(actionBtn);
+                            }
                         }
 
                         // Handle CRT Effect Invocation
@@ -2457,13 +2990,23 @@ export class UIMissionControl {
                         }
                     }
 
-                    blackOverlay.style.opacity = '0';
-                    setTimeout(() => blackOverlay.remove(), 1000);
+                    if (step.persistBlackout) {
+                        blackOverlay.style.zIndex = '9999';
+                        blackOverlay.id = 'persisted-cinematic-blackout';
+                    } else {
+                        blackOverlay.style.opacity = '0';
+                        setTimeout(() => blackOverlay.remove(), 1000);
+                    }
                     next();
                 }).catch(err => {
                     this.manager.logger.error('UIMissionControl', 'Cinematic playback failed', err);
-                    blackOverlay.style.opacity = '0';
-                    setTimeout(() => blackOverlay.remove(), 1000);
+                    if (step.persistBlackout) {
+                        blackOverlay.style.zIndex = '9999';
+                        blackOverlay.id = 'persisted-cinematic-blackout';
+                    } else {
+                        blackOverlay.style.opacity = '0';
+                        setTimeout(() => blackOverlay.remove(), 1000);
+                    }
                     next();
                 });
             } else {

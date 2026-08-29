@@ -98,10 +98,10 @@ export function renderHangarScreen(gameState, simulationService) {
                         }).join('') || _renderEmptyCarouselPage(isHangarMode)}
                     </div>
                 </div>
-            </div>
-            
-            <div id="hangar-pagination-wrapper" class="w-full pt-1 z-10">
-                <div id="hangar-pagination"></div>
+
+                <div id="hangar-pagination-wrapper" class="w-full pt-1 z-10">
+                    <div id="hangar-pagination"></div>
+                </div>
             </div>
         </div>
     `;

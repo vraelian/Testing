@@ -147,6 +147,11 @@
     pointer-events: none;
 }
 
+.backdrop-fade-out-crt {
+    animation: simpleFadeOut 0.65s ease-out forwards !important;
+    pointer-events: none;
+}
+
 /* ========================================================================= */
 /* --- LICENSE ACQUISITION CINEMATIC SYSTEM --- */
 /* ========================================================================= */
@@ -578,14 +583,14 @@
 .sev-actuator-btn.confirm-phase .sev-btn-text { color: #020617; font-weight: 900; }
 
 /* CRT Opening and Shutdown */
-.sev-crt-turn-on { animation: sevCrtTurnOn 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
+.sev-crt-turn-on { animation: sevCrtTurnOn 0.85s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
 @keyframes sevCrtTurnOn {
     0% { transform: scale(0, 0.005); filter: brightness(0); opacity: 0; }
     60% { transform: scale(1, 0.005); filter: brightness(5); opacity: 1; }
     100% { transform: scale(1, 1); filter: brightness(1); opacity: 1; }
 }
 
-.sev-crt-shutdown { animation: sevCrtTurnOff 1.3s cubic-bezier(0.23, 1, 0.32, 1) forwards !important; transform-origin: center center; }
+.sev-crt-shutdown { animation: sevCrtTurnOff 0.85s cubic-bezier(0.23, 1, 0.32, 1) forwards !important; transform-origin: center center; }
 @keyframes sevCrtTurnOff {
     0% { transform: scale(1, 1); filter: brightness(1); opacity: 1; }
     40% { transform: scale(1, 0.005); filter: brightness(5); opacity: 1; }

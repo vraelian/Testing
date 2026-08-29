@@ -181,6 +181,20 @@
     text-shadow: -0.5px -0.5px 0 #000, 0.5px -0.5px 0 #000, -0.5px 0.5px 0 #000, 0.5px 0.5px 0 #000;
 }
 
+#sticky-objective-text {
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 0.5rem;
+}
+
+#sticky-objective-progress {
+    flex-shrink: 0;
+    white-space: nowrap;
+}
+
 .bottom-sticky-bar:hover .sticky-content {
     /* Combined transform preserves the centering trick while adding the hover lift */
     transform: translateX(-50%) translateY(-3px);

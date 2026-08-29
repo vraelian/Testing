@@ -6,6 +6,13 @@
  */
 
 export const FLAVOR_ADS = {
+    "loc_corona": [
+        "WARNING: Approaching G-type main-sequence star.",
+        "Local UV index is currently: Yes.",
+        "Kiss your unshielded electronics goodbye.",
+        "REMINDER: We are closer to the sun than Mercury.",
+        "Holy shit, the sun is burning!"
+    ],
     "loc_sun": [
         "Proximity alert: Solar flare activity increasing.",
         "Shield integrity at 98%. Acceptable parameters.",

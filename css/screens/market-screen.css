@@ -195,6 +195,7 @@
     font-size: var(--market-card-name-font-size);
     color: var(--market-card-name-color);
     text-shadow: var(--market-card-name-text-shadow);
+    text-transform: capitalize;
 }
 
 .price-text {
@@ -453,6 +454,7 @@
     font-size: var(--market-card-name-font-size);
     color: var(--market-card-name-color);
     text-shadow: var(--market-card-name-text-shadow);
+    text-transform: capitalize;
 }
 .tier-text-min {
     font-family: 'Roboto Mono', monospace;

@@ -159,7 +159,8 @@ export class MissionObjectiveEvaluator {
             }
             
             case 'action':
-            case 'ACTION': {
+            case 'ACTION':
+            case 'SUB_OBJECTIVE_MODAL': {
                 // Actions are binary switches driven directly by UI triggers.
                 // It relies on current being mutated to 1 by the button click.
                 current = currentProgress; 
@@ -403,5 +404,127 @@ export class MissionObjectiveEvaluator {
         }
 
         return { current, target, isMet };
+    }
+
+    /**
+     * Processes, validates, and executes the state mutations for a sub-objective action.
+     * @param {string} missionId 
+     * @param {object} objective 
+     * @param {import('../GameState.js').GameState} gameState 
+     * @param {import('../SimulationService.js').SimulationService} simulationService 
+     * @returns {object} { success: boolean, errorType: string, title: string, message: string }
+     */
+    processSubObjectiveAction(missionId, objective, gameState, simulationService) {
+        if (!objective || !objective.actionType) {
+            return { success: false, errorType: 'system', title: 'SYSTEM ERROR', message: 'Invalid action payload.' };
+        }
+
+        switch (objective.actionType) {
+            case 'TRANSACTION': {
+                const actionParams = objective.actionParams || {};
+                const commodityId = actionParams.commodityId;
+                const quantity = actionParams.quantity || 0;
+                
+                if (!commodityId || quantity <= 0) {
+                    return { success: false, errorType: 'system', title: 'SYSTEM ERROR', message: 'Invalid transaction parameters.' };
+                }
+
+                // Dynamic Price Calculation
+                const commodity = DB.COMMODITIES?.find(comm => comm.id === commodityId);
+                let basePrice = gameState.market.galacticAverages?.[commodityId];
+                if (!basePrice && commodity && commodity.basePriceRange) {
+                    basePrice = (commodity.basePriceRange[0] + commodity.basePriceRange[1]) / 2;
+                }
+                if (!basePrice) basePrice = 10; // Fallback
+
+                const modifier = actionParams.priceModifier || 0;
+                const pricePerUnit = basePrice * (1 + modifier);
+                const totalCost = Math.round(pricePerUnit * quantity);
+
+                if (actionParams.transactionType === 'BUY') {
+                    // Check Liquid Capital
+                    if (gameState.player.credits < totalCost) {
+                        return { 
+                            success: false, 
+                            errorType: 'finance', 
+                            title: 'TRANSACTION FAILED', 
+                            message: 'Insufficient Credits for Transaction' 
+                        };
+                    }
+                    
+                    // Check Cargo Capacity
+                    let fleetAvailableSpace = 0;
+                    for (const shipId of gameState.player.ownedShipIds) {
+                        let usedSpace = 0;
+                        if (gameState.player.inventories[shipId]) {
+                            Object.values(gameState.player.inventories[shipId]).forEach(item => {
+                                usedSpace += item.quantity;
+                            });
+                        }
+                        const maxCap = simulationService ? simulationService.getEffectiveShipStats(shipId).cargoCapacity : (DB.SHIPS?.[shipId]?.cargoCapacity || 100);
+                        fleetAvailableSpace += Math.max(0, maxCap - usedSpace);
+                    }
+
+                    if (fleetAvailableSpace < quantity) {
+                        return { 
+                            success: false, 
+                            errorType: 'system', 
+                            title: 'CARGO FAILED', 
+                            message: 'Insufficient Cargo Space' 
+                        };
+                    }
+
+                    // Execution: Deduct credits, add cargo to active ship
+                    gameState.player.credits -= totalCost;
+                    const activeShipId = gameState.player.activeShipId;
+                    if (!gameState.player.inventories[activeShipId]) {
+                        gameState.player.inventories[activeShipId] = {};
+                    }
+                    if (!gameState.player.inventories[activeShipId][commodityId]) {
+                        gameState.player.inventories[activeShipId][commodityId] = { quantity: 0, avgCost: 0 };
+                    }
+                    gameState.player.inventories[activeShipId][commodityId].quantity += quantity;
+                    
+                    return { success: true };
+                    
+                } else if (actionParams.transactionType === 'SELL') {
+                    // Check Cargo Manifest
+                    let totalQty = 0;
+                    for (const shipId of gameState.player.ownedShipIds) {
+                        if (gameState.player.inventories[shipId]?.[commodityId]) {
+                            totalQty += gameState.player.inventories[shipId][commodityId].quantity;
+                        }
+                    }
+                    
+                    if (totalQty < quantity) {
+                        return { 
+                            success: false, 
+                            errorType: 'system', 
+                            title: 'TRANSACTION FAILED', 
+                            message: 'Insufficient Commodity Volume' 
+                        };
+                    }
+                    
+                    // Execution: Deduct cargo, add credits
+                    let remainingToDeduct = quantity;
+                    for (const shipId of gameState.player.ownedShipIds) {
+                        if (remainingToDeduct <= 0) break;
+                        const inventory = gameState.player.inventories[shipId];
+                        if (inventory && inventory[commodityId]) {
+                            const deductAmt = Math.min(inventory[commodityId].quantity, remainingToDeduct);
+                            inventory[commodityId].quantity -= deductAmt;
+                            remainingToDeduct -= deductAmt;
+                        }
+                    }
+                    gameState.player.credits += totalCost;
+
+                    return { success: true };
+                } else {
+                    return { success: false, errorType: 'system', title: 'SYSTEM ERROR', message: `Unknown transactionType: ${actionParams.transactionType}` };
+                }
+            }
+            default:
+                return { success: false, errorType: 'system', title: 'SYSTEM ERROR', message: `Unknown actionType: ${objective.actionType}` };
+        }
     }
 }

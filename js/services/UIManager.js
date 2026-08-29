@@ -111,6 +111,24 @@ export class UIManager {
 
     _setAppHeight() {
         document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+        
+        // Scale game container to maintain a consistent aspect ratio (iPhone Pro Max baseline)
+        if (this.cache && this.cache.gameContainer) {
+            const targetWidth = 430;
+            const targetHeight = 932;
+            
+            const windowWidth = window.innerWidth;
+            const windowHeight = window.innerHeight;
+            
+            // Calculate scale to fit within window without stretching
+            const scaleX = windowWidth / targetWidth;
+            const scaleY = windowHeight / targetHeight;
+            const scale = Math.min(scaleX, scaleY);
+            
+            this.cache.gameContainer.style.width = `${targetWidth}px`;
+            this.cache.gameContainer.style.height = `${targetHeight}px`;
+            this.cache.gameContainer.style.transform = `translate(-50%, -50%) scale(${scale})`;
+        }
     }
 
     _cacheDOM() {
@@ -354,7 +372,15 @@ export class UIManager {
                 <span class="credit-text ${creditClass}">${creditText}</span>
             </div>`;
 
-        const navGuide = gameState.tutorials?.guidedNavPath || { active: false, navIds: [], screenIds: [] };
+        let navGuide = gameState.tutorials?.guidedNavPath || { active: false, navIds: [], screenIds: [] };
+
+        if (gameState.currentLocationId === 'loc_corona') {
+            navGuide = {
+                active: true,
+                navIds: ['ship', 'data'],
+                screenIds: ['map', 'navigation', 'cargo', 'missions']
+            };
+        }
 
         const mainTabsHtml = Object.keys(this.navStructure).map(navId => {
             const isActive = navId === activeNav;
@@ -648,7 +674,7 @@ export class UIManager {
         }
 
         // After content is rendered: remove the inline state overrides one frame later.
-        // The CSS transition on .active-screen picks up the change and animates it over 400ms.
+        // The CSS transition on .active-screen picks up the change and animates it over 150ms.
         if (isScreenChange && activeScreenEl) {
             requestAnimationFrame(() => {
                 activeScreenEl.style.opacity = '';

@@ -292,6 +292,14 @@ export class SimulationService {
     }
 
     setScreen(navId, screenId) {
+        if (this.gameState.currentLocationId === 'loc_corona') {
+            const allowedNavs = ['ship', 'data'];
+            const allowedScreens = ['map', 'navigation', 'cargo', 'missions'];
+            if (!allowedNavs.includes(navId) || !allowedScreens.includes(screenId)) {
+                return; // Silently block routing to locked screens
+            }
+        }
+
         const newLastActive = { ...this.gameState.lastActiveScreen, [navId]: screenId };
         
         this.gameState.activeNav = navId;
@@ -624,6 +632,16 @@ export class SimulationService {
                         this.gameState.player.unlockedLocationIds.push(reward.target);
                         this.logger.info.player(this.gameState.day, 'UNLOCK', `Unlocked location: ${reward.target}`);
                     }
+                    break;
+                case 'lock_location':
+                    if (this.gameState.player.unlockedLocationIds.includes(reward.target)) {
+                        this.gameState.player.unlockedLocationIds = this.gameState.player.unlockedLocationIds.filter(id => id !== reward.target);
+                        this.logger.info.player(this.gameState.day, 'LOCK', `Locked location: ${reward.target}`);
+                    }
+                    break;
+                case 'clear_nav_lock':
+                    this.clearNavigationLock();
+                    this.logger.info.player(this.gameState.day, 'NAV_LOCK_CLEARED', 'Cleared navigation UI locks');
                     break;
                 case 'unlock_tier':
                     const newTier = Math.max(this.gameState.player.revealedTier, reward.value);

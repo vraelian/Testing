@@ -265,5 +265,20 @@ export const SYSTEM_STATE_REGISTRY = {
             hostileEncounterMod: 2.0,
             excludeTier: 5
         }
+    },
+    'BLACK_MARKET_LIQUIDATION': {
+        name: 'Black Market Liquidation',
+        archetype: 'Extreme (Targeted Surplus)',
+        durationBounds: [240, 1387],
+        varietals: [
+            "The Exchange has flooded its local market with restricted survival assets. Modified atmospheric processors and cloned proxy biology are available at unprecedented liquidation prices."
+        ],
+        quantitativeDisplay: "<span style=\"color: var(--color-profit);\">Cloned Organs and Atmo Processors are heavily discounted at The Exchange.</span>",
+        modifiers: {
+            fixedLocations: ['loc_exchange'],
+            affectedCommodities: ['cloned_organs', 'atmos_processors'],
+            localBasePriceMod: 0.65, // 35% below average
+            localTargetStockMod: 5.0 // 400% more capacity
+        }
     }
 };

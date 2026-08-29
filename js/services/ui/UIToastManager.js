@@ -38,6 +38,12 @@ export class UIToastManager {
                 return; // Silently discard toast to prevent routing out of bounds
             }
         }
+        
+        // --- SOLAR CORONA GUARDRAIL: Suppress Toast System ---
+        if (state && state.currentLocationId === 'loc_corona') {
+            if (onComplete) onComplete();
+            return;
+        }
 
         // Force clear any immediate stragglers in the view controller
         this.forceClear();

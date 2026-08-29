@@ -164,7 +164,7 @@ a *, button *, [data-action] *, .tab * {
     border: 2px solid var(--ui-border-primary);
     
     border-radius: 55px;
-    transition: background 0.5s ease-out, opacity 1s ease-in-out;
+    transition: background 0.2s ease-out, opacity 0.2s ease-in-out;
     box-shadow: 0 0 30px var(--ui-shadow-primary);
     display: flex;
     flex-direction: column;
@@ -191,6 +191,7 @@ a *, button *, [data-action] *, .tab * {
     -webkit-overflow-scrolling: touch;
     padding-top: 1rem;
     min-height: 0;
+    min-width: 0; /* Prevent horizontal stretch from flex parent */
     display: flex; 
     flex-direction: column; 
     position: relative; /* Added to elevate over global noise */
@@ -199,7 +200,7 @@ a *, button *, [data-action] *, .tab * {
 
 #main-content {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: minmax(0, 1fr); /* Force track to strict bounds */
     grid-template-rows: 1fr;
     height: 100%;
 }
@@ -340,6 +341,7 @@ a *, button *, [data-action] *, .tab * {
     display: none;
     flex-direction: column;
     min-height: 0;
+    min-width: 0; /* Prevent horizontal stretch in grid container */
 }
 
 /* Active screen entry transition. 
@@ -349,7 +351,7 @@ a *, button *, [data-action] *, .tab * {
     opacity: 1;
     filter: blur(0px);
     transform: translateY(0);
-    transition: opacity 400ms ease-out, filter 400ms ease-out, transform 400ms ease-out;
+    transition: opacity 150ms ease-out, filter 150ms ease-out, transform 150ms ease-out;
     z-index: 2; /* Ensure incoming screen is on top */
 }
 
@@ -1262,22 +1264,22 @@ card.
 }
 
 .econ-modal-anim-in {
-    animation: econ-weather-fade-in 1s ease-out forwards;
+    animation: econ-weather-fade-in 0.3s ease-out forwards;
 }
 
 .econ-modal-anim-out {
-    animation: econ-weather-fade-out 1s ease-in forwards;
+    animation: econ-weather-fade-out 0.3s ease-in forwards;
     pointer-events: none;
 }
 
 /* --- ECONOMIC WEATHER MODAL ANIMATION MAPPING --- */
 /* Map the blur-fade keyframes directly to UIModalEngine's dynamic classes */
 #econ-weather-modal.modal-visible {
-    animation: econ-weather-fade-in 1s ease-out forwards;
+    animation: econ-weather-fade-in 0.3s ease-out forwards;
 }
 
 #econ-weather-modal.modal-hiding {
-    animation: econ-weather-fade-out 1s ease-in forwards;
+    animation: econ-weather-fade-out 0.3s ease-in forwards;
     pointer-events: none;
 }
 

@@ -368,6 +368,94 @@
 }
 
 /* ========================================================================= */
+/* --- GUILD THEME (Act III Encounters) ---                                  */
+/* ========================================================================= */
+
+.modal-theme-host-guild {
+    --comm-color: #fbbf24; /* Amber 400 */
+    --comm-color-bright: #fcd34d; /* Amber 300 */
+    --comm-color-glow-low: rgba(251, 191, 36, 0.4);
+    --comm-color-glow-mid: rgba(251, 191, 36, 0.5);
+    --comm-color-glow-high: rgba(251, 191, 36, 0.8);
+    --nameplate-bg: rgba(0, 0, 0, 0.9);
+    --nameplate-border: #fbbf24;
+    --nameplate-text: #fcd34d;
+    
+    background: linear-gradient(145deg, #000000 0%, #451a03 60%, #d97706 100%) !important;
+    border: 2px solid #fbbf24 !important;
+    box-shadow: 0 0 30px rgba(251, 191, 36, 0.4), inset 0 0 20px rgba(251, 191, 36, 0.2) !important;
+    color: #f3f4f6 !important;
+}
+
+.modal-theme-host-guild * {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.modal-theme-host-guild h3, .modal-theme-host-guild #event-title, .modal-theme-host-guild #story-ship-title {
+    color: #fcd34d !important;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.6) !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.modal-theme-host-guild .btn {
+    border-color: #fbbf24 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: #fcd34d !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-theme-host-guild .btn:hover:not(:disabled) {
+    background: rgba(251, 191, 36, 0.2) !important;
+    box-shadow: 0 0 10px rgba(251, 191, 36, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+/* ========================================================================= */
+/* --- SYNDICATE THEME (Act III Encounters) ---                              */
+/* ========================================================================= */
+
+.modal-theme-host-syndicate {
+    --comm-color: #a855f7; /* Purple 500 */
+    --comm-color-bright: #c084fc; /* Purple 400 */
+    --comm-color-glow-low: rgba(168, 85, 247, 0.4);
+    --comm-color-glow-mid: rgba(168, 85, 247, 0.5);
+    --comm-color-glow-high: rgba(168, 85, 247, 0.8);
+    --nameplate-bg: rgba(0, 0, 0, 0.9);
+    --nameplate-border: #a855f7;
+    --nameplate-text: #c084fc;
+    
+    background: linear-gradient(145deg, #000000 0%, #3b0764 60%, #7e22ce 100%) !important;
+    border: 2px solid #a855f7 !important;
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.4), inset 0 0 20px rgba(168, 85, 247, 0.2) !important;
+    color: #f3f4f6 !important;
+}
+
+.modal-theme-host-syndicate * {
+    font-family: 'Orbitron', sans-serif;
+}
+
+.modal-theme-host-syndicate h3, .modal-theme-host-syndicate #event-title, .modal-theme-host-syndicate #story-ship-title {
+    color: #c084fc !important;
+    text-shadow: 0 0 12px rgba(168, 85, 247, 0.6) !important;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.modal-theme-host-syndicate .btn {
+    border-color: #a855f7 !important;
+    background: rgba(0, 0, 0, 0.6) !important;
+    color: #c084fc !important;
+    transition: all 0.2s ease-in-out;
+}
+
+.modal-theme-host-syndicate .btn:hover:not(:disabled) {
+    background: rgba(168, 85, 247, 0.2) !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.4) !important;
+    transform: translateY(-2px);
+}
+
+/* ========================================================================= */
 /* --- STORY EVENTS ---                                 */
 /* ========================================================================= */
 
@@ -426,6 +514,7 @@
     max-width: 650px !important;
     margin-top: 200px; /* Buffer for the Z-axis overhang */
     padding-top: 0 !important; 
+    padding-bottom: 0 !important;
     max-height: 75vh; 
     display: flex;
     flex-direction: column;
@@ -482,6 +571,7 @@
 .story-ship-modal-container #story-ship-button-container {
     flex-shrink: 0;
     margin-top: auto !important; /* Push buttons to bottom */
+    margin-bottom: -1rem !important; /* Forcefully pull down */
     width: 100%;
 }
 

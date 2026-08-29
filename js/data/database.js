@@ -186,12 +186,29 @@ export const DB = {
         't3_license': { type: 'mission', name: 'Tier 3 Trade License', description: 'Grants access to trade Tier 3 commodities.', missionId: 'mission_license_t3', guidanceText: 'Access to this tier is granted by the Merchant\'s Guild upon completion of a key contract.' },
         't4_license': { type: 'purchase', name: 'Tier 4 Trade License', description: 'Grants access to trade Tier 4 commodities.', cost: 35000000 },
         't5_license': { type: 'mission', name: 'Tier 5 Trade License', description: 'Grants access to trade Tier 5 commodities.', missionId: 'mission_license_t5', guidanceText: 'Prove your industrial might by completing a grand contract for a planetary governor.' },
-        't6_license': { type: 'purchase', name: 'Tier 6 Trade License', description: 'Grants access to trade the rarest and most exotic technologies.', cost: 1200000000 },
+        't6_license': { type: 'mission', name: 'Tier 6 Trade License', description: 'Grants access to trade the rarest and most exotic technologies.', missionId: 'mission_56', guidanceText: 'This license is highly restricted. Only a higher power can grant you this clearance.' },
         't7_license': { type: 'mission', name: 'Tier 7 Trade License', description: 'The ultimate license, granting the right to trade reality-bending technologies.', missionId: 'mission_license_t7', guidanceText: 'Only a true legend of the trade routes can earn this privilege.' },
     },
 
     // --- Market and Location Data ---
     MARKETS: [
+        { 
+            id: LOCATION_IDS.CORONA, 
+            name: 'Solar Corona', 
+            distance: 45, 
+            launchFlavor: "Plunge inward toward the blinding glare of the deep solar corona.", 
+            navTheme: { gradient: 'linear-gradient(to bottom right, #f59e0b, #9a3412)', textColor: '#fef3c7', borderColor: '#f59e0b' }, 
+            description: "The violent, superheated atmosphere of the star, throwing out blinding radiation and impossible thermal stress.", 
+            color: 'border-yellow-500', 
+            bg: 'bg-gradient-to-br from-yellow-600 to-orange-900', 
+            fuelPrice: 50, 
+            arrivalLore: [
+                "The blinding brilliance of the primordial star dominates the viewport as your ship groans under the immense heat.",
+                "Solar flares lick at the edges of your shielding, turning the cockpit into a localized oven."
+            ], 
+            specialty: "• Absolute hazard zone", 
+            availabilityModifier: {}
+        },
         { 
             id: LOCATION_IDS.SUN, 
             name: 'Sol Station', 

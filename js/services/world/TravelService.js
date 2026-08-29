@@ -176,8 +176,15 @@ export class TravelService {
                 
                 if (completedCount === mDef.objectives.length - 1 && locationId === finalTarget) {
                     if (!this.gameState.pendingStoryEvents) this.gameState.pendingStoryEvents = [];
-                    // Insert the Kintsugi event at the front of the queue so it resolves immediately during transit
+                    // Insert the Kintsugi event at the front of the queue
                     this.gameState.pendingStoryEvents.unshift('evt_kintsugi_intercept_final');
+                    
+                    // Insert the faction cinematic event before Kintsugi
+                    if (mId === 'mission_53_guild') {
+                        this.gameState.pendingStoryEvents.unshift('evt_class_o_syndicate');
+                    } else if (mId === 'mission_53_syndicate') {
+                        this.gameState.pendingStoryEvents.unshift('evt_class_o_guild');
+                    }
                     
                     if (!this.gameState.player.storyFlags) this.gameState.player.storyFlags = {};
                     this.gameState.player.storyFlags.mission_53_intercepted = true;
@@ -289,11 +296,10 @@ export class TravelService {
             });
         };
 
-        if (eventDef.hostImage) {
-            this.uiManager.showShipEncounterModal(eventDef, handleChoice);
-        } else {
+        // Add a 1000ms delay to allow the starfield animation to establish itself
+        setTimeout(() => {
             this.uiManager.showStoryEventModal(eventDef, handleChoice);
-        }
+        }, 1000);
     }
 
     /**
@@ -747,6 +753,8 @@ export class TravelService {
                 if (isTut5Active && locationId === LOCATION_IDS.LUNA) {
                     this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
                 } else if (this.gameState.tutorials.activeBatchId === 'intro_missions' && this.gameState.tutorials.activeStepId === 'mission_1_7' && locationId === LOCATION_IDS.LUNA) {
+                    this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
+                } else if (locationId === 'loc_corona') {
                     this.simulationService.setScreen(NAV_IDS.DATA, SCREEN_IDS.MISSIONS);
                 } else {
                     this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
