@@ -617,7 +617,7 @@ export class SimulationService {
                 case 'credits':
                     this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
                     this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
-                    this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+                    this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399', null, false, 'mission');
                     break;
                 case 'item':
                 case 'commodity':
@@ -723,7 +723,7 @@ export class SimulationService {
                     });
                     this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REFUEL', `Fully refueled all ships in the fleet. Restored ${Math.round(totalFuelRestored)} fuel.`);
                     if (totalFuelRestored > 0 && this.uiManager) {
-                        this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', 2000);
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', null, false, 'mission');
                     }
                     break;
                 case 'fill_fleet_repair':
@@ -743,7 +743,7 @@ export class SimulationService {
                     });
                     this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REPAIR', `Fully repaired all ships in the fleet. Restored ${Math.round(totalHullRestored)} hull.`);
                     if (totalHullRestored > 0 && this.uiManager) {
-                        this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', null, false, 'mission');
                     }
                     break;
                 case 'upgrade':

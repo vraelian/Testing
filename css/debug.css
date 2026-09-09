@@ -1,18 +1,399 @@
 /* css/debug.css */
+
+/* ==========================================================================
+   ORBITAL TRADING - DEBUG PANEL (lil-gui) MODERN STYLING
+   ========================================================================== */
+
+#debug-panel,
+.lil-gui {
+    --font-size: calc(11px + 5pt);
+    --font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-family-mono: 'Roboto Mono', Menlo, Monaco, Consolas, monospace;
+    --background-color: rgba(18, 24, 38, 0.97);
+    --text-color: #f8fafc;
+    --title-background-color: rgba(28, 38, 58, 0.98);
+    --widget-color: rgba(28, 38, 58, 0.9);
+    --hover-color: rgba(45, 60, 88, 0.95);
+    --focus-color: rgba(14, 165, 233, 0.5);
+    --number-color: #38bdf8;
+    --string-color: #4ade80;
+    --folder-indent: 10px;
+    --widget-height: 32px;
+    font-size: calc(11px + 5pt);
+}
+
 #debug-panel {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.75);
     transform-origin: center center;
-    width: 450px; /* Base width before scaling */
+    width: 470px;
+    max-height: 88vh;
     z-index: 1000;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     display: none; /* Hidden by default */
+    background: rgba(18, 24, 38, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(56, 189, 248, 0.25);
+    overflow: hidden;
+    will-change: transform;
 }
 
 #debug-panel.debug-visible {
-    display: block; /* Shown when class is applied */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Title Bar */
+#debug-panel.lil-gui.root > .title,
+#debug-panel > .title {
+    font-family: 'Orbitron', 'Aldrich', sans-serif;
+    font-weight: 700;
+    font-size: calc(12px + 5pt);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    background: linear-gradient(90deg, rgba(14, 116, 144, 0.6) 0%, rgba(22, 32, 50, 0.98) 100%);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.5);
+    padding: 6px 12px;
+    height: auto;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    flex-shrink: 0;
+    touch-action: none;
+}
+
+/* Header Action Buttons (Collapse, Reload) */
+.debug-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.debug-header-btn {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 4px;
+    color: #7dd3fc;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(10px + 4pt);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.15s ease-in-out;
+    line-height: 1.2;
+}
+
+.debug-header-btn:hover {
+    background: rgba(14, 116, 144, 0.6);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.45);
+}
+
+.debug-header-btn:active {
+    transform: translateY(1px);
+    background: rgba(8, 145, 178, 0.85);
+}
+
+.debug-reload-btn {
+    border-color: rgba(244, 63, 94, 0.4);
+    color: #fca5a5;
+}
+
+.debug-reload-btn:hover {
+    background: rgba(225, 29, 72, 0.5);
+    border-color: #f43f5e;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
+}
+
+/* Drag Handle on Header */
+.debug-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 24px;
+    margin-right: 10px;
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #7dd3fc;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
+}
+
+.debug-drag-handle:hover {
+    background: rgba(14, 116, 144, 0.5);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+}
+
+.debug-drag-handle:active,
+#debug-panel.is-dragging .debug-drag-handle {
+    cursor: grabbing;
+    background: rgba(8, 145, 178, 0.8);
+    border-color: #67e8f9;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.7);
+}
+
+body.debug-is-dragging {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    cursor: grabbing !important;
+}
+
+#debug-panel.is-dragging {
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(6, 182, 212, 0.35);
+    user-select: none;
+}
+
+/* Scrollable container for items/folders */
+#debug-panel > .children {
+    overflow-y: auto;
+    max-height: calc(88vh - 40px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.35) rgba(15, 23, 42, 0.6);
+}
+
+#debug-panel .children::-webkit-scrollbar {
+    width: 5px;
+}
+#debug-panel .children::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+}
+#debug-panel .children::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.35);
+    border-radius: 3px;
+}
+#debug-panel .children::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.65);
+}
+
+/* Folder Headers */
+#debug-panel .lil-gui .title,
+.debug-popped-out-panel .title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    white-space: nowrap !important;
+    flex-wrap: nowrap !important;
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 700;
+    font-size: calc(11px + 5pt);
+    letter-spacing: 0.04em;
+    color: #f1f5f9;
+    background: rgba(30, 44, 68, 0.85);
+    border-top: 1px solid rgba(56, 189, 248, 0.2);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.6);
+    padding: 6px 8px;
+    min-height: 30px;
+    height: auto;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+#debug-panel .lil-gui .title:hover {
+    background: rgba(14, 116, 144, 0.4);
+    color: #38bdf8;
+}
+
+/* Folder Bar Action Button (Pop Out / Pop In) */
+#debug-panel .debug-folder-action-btn,
+.debug-popped-out-panel .debug-folder-action-btn,
+button.debug-folder-action-btn {
+    width: auto !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    flex: 0 0 auto !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    margin-right: 2px !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(56, 189, 248, 0.45) !important;
+    border-radius: 4px !important;
+    color: #38bdf8 !important;
+    font-family: 'Roboto Mono', monospace !important;
+    font-size: calc(10px + 4pt) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 3px 8px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    line-height: 18px !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    transition: all 0.15s ease-in-out !important;
+    white-space: nowrap !important;
+}
+
+#debug-panel .debug-folder-action-btn:hover,
+.debug-popped-out-panel .debug-folder-action-btn:hover,
+button.debug-folder-action-btn:hover {
+    background: rgba(14, 116, 144, 0.6) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.5) !important;
+}
+
+#debug-panel .debug-folder-action-btn:active,
+.debug-popped-out-panel .debug-folder-action-btn:active,
+button.debug-folder-action-btn:active {
+    transform: translateY(1px) !important;
+}
+
+/* Nested Folder Hierarchy */
+#debug-panel .lil-gui .lil-gui {
+    border-left: 2px solid rgba(56, 189, 248, 0.45);
+    margin-left: 4px;
+    background: rgba(15, 23, 42, 0.45);
+}
+#debug-panel .lil-gui .lil-gui .title {
+    background: rgba(26, 38, 60, 0.8);
+    color: #e2e8f0;
+    font-size: calc(10.5px + 5pt);
+    font-weight: 600;
+    padding-left: 8px;
+}
+
+/* Controllers & Row Items */
+#debug-panel .lil-gui .controller {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 4px 6px;
+    min-height: 30px;
+    align-items: center;
+    transition: background 0.12s ease;
+}
+#debug-panel .lil-gui .controller:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+#debug-panel .lil-gui .controller .name {
+    color: #cbd5e1;
+    font-family: 'Exo 2', sans-serif;
+    font-size: calc(11px + 5pt);
+    font-weight: 600;
+    transition: color 0.15s ease;
+}
+#debug-panel .lil-gui .controller:hover .name {
+    color: #ffffff;
+}
+
+/* Buttons */
+#debug-panel .lil-gui .controller.button {
+    padding: 3px 6px;
+}
+#debug-panel .lil-gui .controller.button .name,
+#debug-panel .lil-gui button:not(.debug-folder-action-btn):not(.debug-header-btn) {
+    background: linear-gradient(180deg, rgba(38, 52, 78, 0.95) 0%, rgba(20, 28, 44, 0.98) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 4px;
+    color: #f8fafc;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    font-weight: 600;
+    text-align: center;
+    padding: 4px 8px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+#debug-panel .lil-gui .controller.button .name:hover,
+#debug-panel .lil-gui button:not(.debug-folder-action-btn):not(.debug-header-btn):hover {
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.8) 0%, rgba(8, 145, 178, 0.95) 100%);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+#debug-panel .lil-gui .controller.button .name:active,
+#debug-panel .lil-gui button:not(.debug-folder-action-btn):not(.debug-header-btn):active {
+    transform: translateY(1px);
+    filter: brightness(1.2);
+}
+
+/* Select Dropdowns */
+#debug-panel .lil-gui select {
+    background-color: rgba(20, 28, 44, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 4px;
+    color: #38bdf8;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    padding: 3px 8px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+#debug-panel .lil-gui select:hover,
+#debug-panel .lil-gui select:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+}
+#debug-panel .lil-gui select option {
+    background-color: #0c101d;
+    color: #f8fafc;
+}
+
+/* Inputs (Text & Number) */
+#debug-panel .lil-gui input[type="text"],
+#debug-panel .lil-gui input[type="number"] {
+    background-color: rgba(20, 28, 44, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 4px;
+    color: #f8fafc;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    padding: 3px 6px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+#debug-panel .lil-gui input[type="text"]:focus,
+#debug-panel .lil-gui input[type="number"]:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+}
+
+/* Checkboxes */
+#debug-panel .lil-gui input[type="checkbox"] {
+    accent-color: #06b6d4;
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+}
+
+/* Sliders */
+#debug-panel .lil-gui .slider {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    height: 8px;
+}
+#debug-panel .lil-gui .slider-fg {
+    background: linear-gradient(90deg, #0284c7 0%, #06b6d4 100%);
+    border-radius: 2px;
 }
 
 
@@ -147,10 +528,6 @@
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-#debug-panel .lil-gui.root {
-    background-color: #1f2937;
-    color: #e5e7eb;
-}
 
 #diagnostic-overlay p {
     margin: 0;
@@ -198,3 +575,406 @@
     background-color: #4a6a32 !important;
 }
 /* --- [[END]] TUTORIAL TUNER STYLES --- */
+
+/* ==========================================================================
+   POPPED OUT MISSION CONTROL PANEL (GREY THEME & COMPACT LAYOUT)
+   ========================================================================== */
+.debug-popped-out-panel {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    top: auto;
+    transform: translateX(-50%) scale(0.75);
+    transform-origin: bottom center;
+    width: 520px;
+    max-width: calc(100vw - 20px);
+    max-height: 88vh;
+    z-index: 1002;
+    background: rgba(22, 26, 34, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.9), 0 0 16px rgba(148, 163, 184, 0.15);
+    overflow: hidden;
+    will-change: transform;
+}
+
+.debug-popped-out-panel.debug-visible {
+    display: flex;
+    flex-direction: column;
+}
+
+.debug-popped-out-panel > .title {
+    font-family: 'Orbitron', 'Aldrich', sans-serif;
+    font-weight: 700;
+    font-size: calc(12px + 5pt);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f1f5f9;
+    background: linear-gradient(90deg, rgba(51, 65, 85, 0.85) 0%, rgba(30, 35, 45, 0.98) 100%);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 6px 12px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    text-shadow: 0 0 6px rgba(226, 232, 240, 0.3);
+    flex-shrink: 0;
+    touch-action: none;
+}
+
+/* Hide the folder accordion arrow in popped-out mode */
+.debug-popped-out-panel > .title::before {
+    display: none !important;
+}
+
+/* Drag Handle in grey theme */
+.debug-popped-out-panel .debug-drag-handle {
+    background: rgba(30, 35, 45, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #94a3b8;
+}
+.debug-popped-out-panel .debug-drag-handle:hover {
+    background: rgba(51, 65, 85, 0.8);
+    border-color: #cbd5e1;
+    color: #f1f5f9;
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.35);
+}
+.debug-popped-out-panel .debug-drag-handle:active,
+.debug-popped-out-panel.is-dragging .debug-drag-handle {
+    background: rgba(71, 85, 105, 0.95);
+    border-color: #e2e8f0;
+    color: #ffffff;
+}
+
+/* Pop In button in grey theme */
+.debug-popped-out-panel .debug-folder-action-btn {
+    background: rgba(30, 35, 45, 0.85) !important;
+    border: 1px solid rgba(148, 163, 184, 0.45) !important;
+    color: #cbd5e1 !important;
+    font-size: calc(10px + 4pt) !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    line-height: 18px !important;
+}
+.debug-popped-out-panel .debug-folder-action-btn:hover {
+    background: rgba(51, 65, 85, 0.8) !important;
+    border-color: #e2e8f0 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.35) !important;
+}
+.debug-popped-out-panel .debug-folder-action-btn:active {
+    background: rgba(71, 85, 105, 0.95) !important;
+    color: #ffffff !important;
+    transform: translateY(1px) !important;
+}
+
+/* Children container */
+.debug-popped-out-panel > .children {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 8px 8px 8px;
+    gap: 0;
+    overflow: visible;
+    max-height: none;
+    background: rgba(18, 21, 28, 0.75);
+}
+
+/* Dropdown controller: full width top row */
+.debug-popped-out-panel .controller.option,
+.debug-popped-out-panel .controller:not(.function):not(.button) {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 3px 2px 6px 2px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+}
+.debug-popped-out-panel .controller .name {
+    color: #cbd5e1;
+    font-family: 'Exo 2', sans-serif;
+    font-size: calc(11px + 5pt);
+    font-weight: 600;
+}
+.debug-popped-out-panel select {
+    background-color: rgba(24, 30, 42, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 4px;
+    color: #f1f5f9;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    padding: 3px 8px;
+    outline: none;
+    cursor: pointer;
+}
+.debug-popped-out-panel select:hover,
+.debug-popped-out-panel select:focus {
+    border-color: #cbd5e1;
+    box-shadow: 0 0 6px rgba(148, 163, 184, 0.35);
+}
+
+/* ==========================================================================
+   MISSION CONTROL BUTTON ROW (HORIZONTAL 4-BUTTON BAR)
+   ========================================================================== */
+.mission-control-btn-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 4px !important;
+    padding: 2px 2px 6px 2px !important;
+    box-sizing: border-box !important;
+    flex-wrap: nowrap !important;
+}
+
+.mission-control-btn-row .controller,
+.mission-control-btn-row .controller.function,
+.mission-control-btn-row .controller.button {
+    flex: 1 1 0 !important;
+    width: 25% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    display: flex !important;
+}
+
+.mission-control-btn-row .widget {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+}
+
+.mission-control-btn-row button {
+    width: 100% !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+    padding: 2px 4px !important;
+    font-family: 'Roboto Mono', monospace !important;
+    font-size: calc(10px + 4pt) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+.mission-control-btn-row button .name {
+    width: 100% !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1 !important;
+    font-size: calc(10px + 4pt) !important;
+}
+
+/* Grey theme buttons for popped-out Mission Control */
+.debug-popped-out-panel .mission-control-btn-row button {
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.85) 0%, rgba(30, 35, 45, 0.98) 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.4) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+.debug-popped-out-panel .mission-control-btn-row button:hover {
+    background: linear-gradient(180deg, rgba(71, 85, 105, 0.95) 0%, rgba(51, 65, 85, 0.98) 100%) !important;
+    border-color: #cbd5e1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.4) !important;
+}
+.debug-popped-out-panel .mission-control-btn-row button:active {
+    transform: translateY(1px) !important;
+    background: rgba(30, 35, 45, 0.95) !important;
+}
+
+/* Blue theme buttons for docked menu */
+#debug-panel .mission-control-btn-row button {
+    background: linear-gradient(180deg, rgba(38, 52, 78, 0.95) 0%, rgba(20, 28, 44, 0.98) 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.45) !important;
+    color: #f8fafc !important;
+}
+#debug-panel .mission-control-btn-row button:hover {
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.8) 0%, rgba(8, 145, 178, 0.95) 100%) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
+}
+#debug-panel .mission-control-btn-row button:active {
+    transform: translateY(1px) !important;
+    filter: brightness(1.2) !important;
+}
+
+/* Row 2: Distinct High-Contrast Accents for Bulk Actions */
+.mission-control-btn-row-2 .controller:nth-child(1) button {
+    color: #86efac !important;
+    border-color: rgba(74, 222, 128, 0.5) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(1) button:hover {
+    background: linear-gradient(180deg, rgba(22, 101, 52, 0.8) 0%, rgba(20, 83, 45, 0.95) 100%) !important;
+    border-color: #4ade80 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.45) !important;
+}
+
+.mission-control-btn-row-2 .controller:nth-child(2) button {
+    color: #fde047 !important;
+    border-color: rgba(251, 191, 36, 0.5) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(2) button:hover {
+    background: linear-gradient(180deg, rgba(161, 98, 7, 0.8) 0%, rgba(133, 77, 14, 0.95) 100%) !important;
+    border-color: #facc15 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.45) !important;
+}
+
+.mission-control-btn-row-2 .controller:nth-child(3) button {
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.55) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(3) button:hover {
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.85) 0%, rgba(8, 145, 178, 0.95) 100%) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.45) !important;
+}
+
+.mission-control-btn-row-2 .controller:nth-child(4) button {
+    color: #5eead4 !important;
+    border-color: rgba(45, 212, 191, 0.5) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(4) button:hover {
+    background: linear-gradient(180deg, rgba(13, 148, 136, 0.8) 0%, rgba(15, 118, 110, 0.95) 100%) !important;
+    border-color: #2dd4bf !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(45, 212, 191, 0.45) !important;
+}
+
+/* ==========================================================================
+   GO TO DESTINATION DROPDOWN MENU
+   ========================================================================== */
+.debug-goto-dropdown {
+    position: fixed;
+    z-index: 10005;
+    width: 240px;
+    max-height: 290px;
+    background: rgba(15, 22, 36, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.6);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9), 0 0 18px rgba(56, 189, 248, 0.25);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.debug-goto-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: linear-gradient(90deg, rgba(14, 116, 144, 0.7) 0%, rgba(22, 32, 50, 0.98) 100%);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.4);
+    font-family: 'Orbitron', 'Aldrich', sans-serif;
+    font-size: calc(9px + 4pt);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #38bdf8;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.debug-goto-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.debug-goto-close-btn:hover {
+    color: #f43f5e;
+}
+
+.debug-goto-list {
+    overflow-y: auto;
+    max-height: 245px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.4) rgba(15, 23, 42, 0.6);
+}
+
+.debug-goto-list::-webkit-scrollbar {
+    width: 4px;
+}
+.debug-goto-list::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+}
+.debug-goto-list::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.4);
+    border-radius: 2px;
+}
+
+.debug-goto-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    border: 1px solid transparent;
+}
+
+.debug-goto-item:hover {
+    background: rgba(14, 116, 144, 0.35);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.debug-goto-item.current-location {
+    opacity: 0.7;
+    background: rgba(30, 41, 59, 0.4);
+}
+
+.debug-goto-name {
+    font-size: calc(10.5px + 4pt);
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.debug-goto-badge {
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(9.5px + 4pt);
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(14, 116, 144, 0.35);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 3px;
+    padding: 1px 5px;
+    line-height: 1.2;
+}
+
+.debug-goto-badge.current {
+    color: #94a3b8;
+    background: rgba(51, 65, 85, 0.4);
+    border-color: rgba(148, 163, 184, 0.3);
+}

@@ -654,10 +654,10 @@ export class UIMissionControl {
                                     
                                     if (actionParams.transactionType === 'SELL') {
                                         const totalReward = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
-                                        this.manager.createFloatingText(`+⌬ ${totalReward.toLocaleString()}`, btnX, btnY, '#4ade80');
+                                        this.manager.createFloatingText(`+⌬ ${totalReward.toLocaleString()}`, btnX, btnY, '#4ade80', null, false, 'mission');
                                     } else {
                                         const totalCost = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
-                                        this.manager.createFloatingText(`-⌬ ${totalCost.toLocaleString()}`, btnX, btnY, '#ef4444');
+                                        this.manager.createFloatingText(`-⌬ ${totalCost.toLocaleString()}`, btnX, btnY, '#ef4444', null, false, 'mission');
                                     }
                                 }
                             }
@@ -703,7 +703,7 @@ export class UIMissionControl {
                                     const rect = newBtn.getBoundingClientRect();
                                     const x = e.clientX || rect.left + (rect.width / 2);
                                     const y = e.clientY || rect.top;
-                                    this.manager.createFloatingText('+1 Exchange Badge', x, y, '#c084fc', 2500);
+                                    this.manager.createFloatingText('+1 Exchange Badge', x, y, '#c084fc', null, false, 'mission');
                                     
                                     if (this.manager.simulationService) {
                                         this.manager.simulationService.missionService.checkTriggers();
@@ -1351,7 +1351,7 @@ export class UIMissionControl {
                                 const y = e.clientY || rect.top;
                                 
                                 const actionLabel = (objDef && objDef.actionText) ? objDef.actionText : ((objDef && objDef.target && objDef.target.toLowerCase().includes('pick up')) ? 'PASSENGER BOARDED' : 'ACTION COMPLETED');
-                                this.manager.createFloatingText(actionLabel, x, y, '#c084fc');
+                                this.manager.createFloatingText(actionLabel, x, y, '#c084fc', null, false, 'mission');
                                 
                                 this.manager.simulationService.missionService.checkTriggers();
                                 coreState.setState({}); 
@@ -1525,7 +1525,7 @@ export class UIMissionControl {
                                         const rect = transferVesselBtn.getBoundingClientRect();
                                         const x = rect.left + (rect.width / 2);
                                         const y = rect.top;
-                                        this.manager.createFloatingText('TRANSFERRED VESSEL', x, y, '#ffffff');
+                                        this.manager.createFloatingText('TRANSFERRED VESSEL', x, y, '#ffffff', null, false, 'mission');
                                         
                                         this.manager.simulationService.missionService.checkTriggers();
                                         coreState.setState({});
@@ -1564,7 +1564,7 @@ export class UIMissionControl {
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
                                 
-                                this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff');
+                                this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff', null, false, 'mission');
                             }
 
                             closeHandler();
@@ -1582,7 +1582,7 @@ export class UIMissionControl {
                                 const rect = collectBtn.getBoundingClientRect();
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
-                                this.manager.createFloatingText(`+${collectedAmt}`, x, y, '#60a5fa');
+                                this.manager.createFloatingText(`+${collectedAmt}`, x, y, '#60a5fa', null, false, 'mission');
                             }
 
                             closeHandler();
@@ -1885,7 +1885,7 @@ export class UIMissionControl {
                        const x = e.clientX || rect.left + (rect.width / 2);
                        const y = e.clientY || rect.top;
                        if (this.manager.createFloatingText) {
-                           this.manager.createFloatingText(`-${formatCredits(deductedAmount, false)}`, x, y, '#ef4444');
+                           this.manager.createFloatingText(`-${formatCredits(deductedAmount, false)}`, x, y, '#ef4444', null, false, 'mission');
                        }
                    }
 
@@ -1962,7 +1962,7 @@ export class UIMissionControl {
                            setTimeout(() => {
                                const x = window.innerWidth / 2;
                                const y = window.innerHeight / 2;
-                               uiManager.createFloatingText('The Exchange Unlocked', x, y, '#c084fc', 2500);
+                               uiManager.createFloatingText('The Exchange Unlocked', x, y, '#c084fc', 2500, false, 'mission');
                            }, 300);
                        }
 
@@ -2314,7 +2314,7 @@ export class UIMissionControl {
                                                    const y = e.clientY || rect.top;
     
                                                    // Adjacent to the credit text (+ 40y)
-                                                   this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa');
+                                                   this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa', null, false, 'mission');
                                                }
                                                
                                                if (stickyBarEl) {
@@ -2600,7 +2600,7 @@ export class UIMissionControl {
             this.manager.hideModal('event-modal'); 
             
              if(e) {
-                this.manager.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171');
+                this.manager.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171', null, false, 'mission');
             }
 
             const updatedPacket = this._findIntelPacket(packetId, locationId);

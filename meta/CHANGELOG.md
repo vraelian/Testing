@@ -2,6 +2,13 @@
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
 
+# [39.10] - 2026-9-9
+-  mission polish
+-  added solar corona location and art
+-  UI polish
+-  added act V
+-  modal and queuing polish
+
 # [39.05] - 2026-8-18
 -  mission polish
 -  story event modal polish

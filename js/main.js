@@ -109,6 +109,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     gameState.subscribe(() => uiManager.render(gameState.getState()));
     eventManager.bindEvents();
+
+    // --- DEBUG QUICK RELOAD HANDLER ---
+    if (sessionStorage.getItem('orbital_debug_quick_reload') === 'true') {
+        sessionStorage.removeItem('orbital_debug_quick_reload');
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+        }
+        if (debugService) {
+            debugService.simpleStart();
+            newsTickerService.onLocationChange();
+            uiManager.render(gameState.getState());
+            AssetService.hydrateGameAssets(gameState.getState());
+            if (!debugService.active) {
+                debugService.toggleVisibility();
+            }
+        }
+    }
     
     if (DEV_MODE || true) {
         window.game = {

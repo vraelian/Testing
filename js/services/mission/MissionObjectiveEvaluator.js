@@ -28,6 +28,11 @@ export class MissionObjectiveEvaluator {
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
         let target = val !== undefined ? val : 1; 
 
+        // If mission or objective has been marked satisfied by debug tool, immediately satisfy
+        if (missionProgress?.satisfiedByDebug || objProgress?.satisfiedByDebug) {
+            return { current: target, target: target, isMet: true };
+        }
+
         let isMet = false;
         let comparator = objective.comparator || '>='; 
 

@@ -201,6 +201,11 @@ export class TravelAnimationService {
         this.confirmButton.disabled = true;
         this.progressBar.style.width = '0%';
         this.isDecelerating = false;
+
+        if (this.imageElement) {
+            this.imageElement.style.opacity = 0;
+            this.imageElement.classList.remove('travel-zoom-active');
+        }
     }
 
     /**
@@ -210,6 +215,16 @@ export class TravelAnimationService {
         const imagePath = AssetService.getLocationImage(to.id);
         
         if (imagePath) {
+            this.imageElement.onerror = () => {
+                const fallbackPath = AssetService.getLocationImage(to.id, 'A');
+                if (fallbackPath && this.imageElement.src !== fallbackPath && !this.imageElement.src.endsWith(fallbackPath)) {
+                    this.imageElement.src = fallbackPath;
+                } else {
+                    this.imageElement.style.opacity = 0;
+                    this.imageElement.onerror = null;
+                }
+            };
+
             this.imageElement.src = imagePath;
             
             // Trigger Fade In and Zoom

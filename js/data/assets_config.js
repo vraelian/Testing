@@ -95,5 +95,7 @@ export const LOCATION_VARIANT_COUNTS = {
     'Uranus': 16,
     'Kepler': 12,
     'Pluto': 11,
+    'Sol': 11,
     'sol': 11,
+    'Corona': 1,
 };

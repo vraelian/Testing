@@ -195,6 +195,8 @@ export const DB = {
         { 
             id: LOCATION_IDS.CORONA, 
             name: 'Solar Corona', 
+            assetPrefix: 'Corona',
+            variantCount: 1,
             distance: 45, 
             launchFlavor: "Plunge inward toward the blinding glare of the deep solar corona.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #f59e0b, #9a3412)', textColor: '#fef3c7', borderColor: '#f59e0b' }, 
@@ -212,6 +214,8 @@ export const DB = {
         { 
             id: LOCATION_IDS.SUN, 
             name: 'Sol Station', 
+            assetPrefix: 'Sol',
+            variantCount: 11,
             distance: 45, 
             launchFlavor: "Plunge inward toward the corona, where extreme thermal stress threatens any hull daring enough to reach the massive solar harvester.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #f59e0b, #9a3412)', textColor: '#fef3c7', borderColor: '#f59e0b' }, 

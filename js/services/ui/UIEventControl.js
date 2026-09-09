@@ -10,6 +10,7 @@ import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 import { AssetService } from '../AssetService.js';
 import CinematicService from './CinematicService.js';
+import { spawnFloatingTransaction, TRANSACTION_PROFILES } from './FloatingTextService.js';
 
 export const ACT_CINEMATIC_CONFIG = {
     'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: 'Wealth is Sovereignty', actLabel: 'BEGIN TUTORIAL', trigger: 'open' },
@@ -947,20 +948,34 @@ export class UIEventControl {
         });
     }
 
-    createFloatingText(text, x, y, color = '#fde047', duration = 2450, isHtml = false) {
-        const el = document.createElement('div');
-        if (isHtml) {
-            el.innerHTML = text;
-        } else {
-            el.textContent = text;
+    createFloatingText(textOrOptions, x, y, color = null, duration = null, isHtml = false, type = 'regular') {
+        if (typeof textOrOptions === 'object' && textOrOptions !== null) {
+            return spawnFloatingTransaction(textOrOptions);
         }
-        el.className = 'floating-text';
-        el.style.left = `${x - 20}px`;
-        el.style.top = `${y - 40}px`;
-        el.style.color = color;
-        el.style.animationDuration = `${duration}ms`;
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), duration);
+
+        const text = textOrOptions;
+        let resolvedType = type;
+
+        // Auto-detect mission type if not explicitly supplied
+        if (!resolvedType || resolvedType === 'regular') {
+            if (duration && duration >= 2400) {
+                resolvedType = 'mission';
+            }
+        }
+
+        return spawnFloatingTransaction({
+            text,
+            x,
+            y,
+            color: color || null,
+            type: resolvedType,
+            duration: (duration && duration !== 2450) ? duration : null,
+            isHtml
+        });
+    }
+
+    spawnFloatingTransaction(options) {
+        return spawnFloatingTransaction(options);
     }
 
     showStrandedModal(originName, lostDays, callback) {

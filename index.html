@@ -24,7 +24,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./css/global.css?v=3">
+    <link rel="stylesheet" href="./css/global.css?v=4">
     <link rel="stylesheet" href="./css/navigation.css">
     <link rel="stylesheet" href="./css/news-ticker.css"> 
     <link rel="stylesheet" href="./css/help-system.css">
@@ -36,7 +36,7 @@
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/achievements.css">
     <link rel="stylesheet" href="./css/missions.css">
-    <link rel="stylesheet" href="./css/debug.css">
+    <link rel="stylesheet" href="./css/debug.css?v=2">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
@@ -217,6 +217,9 @@
              </div>
         </div>
     </main>
+    
+    <!-- Floating Transaction Vectors HUD Layer -->
+    <div id="orbital-hud-overlay" class="fixed inset-0 pointer-events-none z-[1000] overflow-visible"></div>
     
     <div id="mission-sticky-bar" class="bottom-sticky-bar cursor-pointer" data-action="set-screen" data-nav-id="data" data-screen-id="missions">
         <div class="sticky-content">

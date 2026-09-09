@@ -1,6 +1,6 @@
 // js/services/DebugService.js
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS, STATUS_EFFECTS } from '../data/constants.js';
+import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS, STATUS_EFFECTS, PERK_IDS, ATTRIBUTE_TYPES } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
@@ -101,6 +101,17 @@ export class DebugService {
         this.diagElements = {};
         this.actions = {};
         
+        // --- POPPED OUT MISSION TRIGGERS STATE ---
+        this.isMissionPoppedOut = false;
+        this.poppedActive = false;
+        this.missionFolder = null;
+        this.poppedMissionElement = null;
+        this.missionFolderPlaceholder = null;
+        this.poppedDragHandle = null;
+        this.missionPopBtn = null;
+        this.goToBtnEl = null;
+        this.goToDropdownEl = null;
+        
         this.debugState = {
             creditsToAdd: 100000,
             creditsToReduce: 100000,
@@ -139,7 +150,7 @@ export class DebugService {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
 
         this._cacheDiagElements();
-        this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
+        this.gui = new lil.GUI({ draggable: false, title: 'Debug Menu' });
         this.gui.domElement.id = 'debug-panel';
         
         // Ensure UI state matches debug state for the tick toggles
@@ -149,15 +160,737 @@ export class DebugService {
 
         this._registerDebugActions();
         this.buildGui();
-        this._startDiagLoop();
+        this._setupDraggableHandle();
+    }
+ 
+    _setupDraggableHandle() {
+        if (!this.gui || !this.gui.domElement) return;
+        const panel = this.gui.domElement;
+        const titleEl = panel.querySelector('.title');
+        if (!titleEl) return;
+
+        // Create drag handle
+        const handle = document.createElement('div');
+        handle.className = 'debug-drag-handle';
+        handle.setAttribute('title', 'Hold and drag to move');
+        handle.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <circle cx="8" cy="5" r="1.75"/>
+                <circle cx="16" cy="5" r="1.75"/>
+                <circle cx="8" cy="12" r="1.75"/>
+                <circle cx="16" cy="12" r="1.75"/>
+                <circle cx="8" cy="19" r="1.75"/>
+                <circle cx="16" cy="19" r="1.75"/>
+            </svg>
+        `;
+
+        titleEl.insertBefore(handle, titleEl.firstChild);
+        titleEl.style.touchAction = 'none';
+
+        // Create header action buttons (Collapse, Reload) on the right side
+        const actionsContainer = document.createElement('div');
+        actionsContainer.className = 'debug-header-actions';
+
+        const collapseBtn = document.createElement('button');
+        collapseBtn.className = 'debug-header-btn debug-collapse-btn';
+        collapseBtn.type = 'button';
+        collapseBtn.textContent = 'Collapse';
+        collapseBtn.setAttribute('title', 'Immediately collapse all menus');
+        collapseBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+        collapseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.collapseAll();
+        });
+
+        const reloadBtn = document.createElement('button');
+        reloadBtn.className = 'debug-header-btn debug-reload-btn';
+        reloadBtn.type = 'button';
+        reloadBtn.textContent = 'Reload';
+        reloadBtn.setAttribute('title', 'Reload game, quick start, and open debug menu');
+        reloadBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+        reloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.reloadAndQuickStart();
+        });
+
+        actionsContainer.appendChild(collapseBtn);
+        actionsContainer.appendChild(reloadBtn);
+        titleEl.appendChild(actionsContainer);
+
+        let isDragging = false;
+        let startPointerX = 0;
+        let startPointerY = 0;
+        let initialPanelLeft = 0;
+        let initialPanelTop = 0;
+        let panelWidth = 0;
+        let panelHeight = 0;
+        let activePointerId = null;
+        let dragRafId = null;
+        let pendingLeft = 0;
+        let pendingTop = 0;
+
+        const updatePosition = () => {
+            if (!isDragging) return;
+            panel.style.left = `${pendingLeft}px`;
+            panel.style.top = `${pendingTop}px`;
+            dragRafId = null;
+        };
+
+        const onPointerDown = (e) => {
+            // Allow left mouse button (0) or touch/pen
+            if (e.button !== undefined && e.button !== 0) return;
+            // Prevent drag when clicking header buttons
+            if (e.target.closest('.debug-header-actions') || e.target.closest('button')) return;
+
+            isDragging = true;
+            activePointerId = e.pointerId;
+            
+            const targetEl = e.target.closest('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.setPointerCapture(e.pointerId);
+            } catch (err) {}
+
+            const rect = panel.getBoundingClientRect();
+            startPointerX = e.clientX;
+            startPointerY = e.clientY;
+            initialPanelLeft = rect.left;
+            initialPanelTop = rect.top;
+            panelWidth = rect.width;
+            panelHeight = rect.height;
+
+            // Transition from centered relative styling to explicit fixed screen coordinates
+            panel.style.position = 'fixed';
+            panel.style.left = `${initialPanelLeft}px`;
+            panel.style.top = `${initialPanelTop}px`;
+            panel.style.transform = 'scale(0.75)';
+            panel.style.transformOrigin = 'top left';
+
+            panel.classList.add('is-dragging');
+            document.body.classList.add('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerMove = (e) => {
+            if (!isDragging || e.pointerId !== activePointerId) return;
+
+            const deltaX = e.clientX - startPointerX;
+            const deltaY = e.clientY - startPointerY;
+
+            let targetLeft = initialPanelLeft + deltaX;
+            let targetTop = initialPanelTop + deltaY;
+
+            // Keep within viewport boundaries so the panel cannot be lost offscreen
+            const minLeft = -panelWidth + 60; // Keep at least 60px visible
+            const maxLeft = window.innerWidth - 60;
+            const minTop = 0;
+            const maxTop = window.innerHeight - 40;
+
+            pendingLeft = Math.max(minLeft, Math.min(targetLeft, maxLeft));
+            pendingTop = Math.max(minTop, Math.min(targetTop, maxTop));
+
+            if (!dragRafId) {
+                dragRafId = requestAnimationFrame(updatePosition);
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerUp = (e) => {
+            if (!isDragging || (activePointerId !== null && e.pointerId !== activePointerId)) return;
+            isDragging = false;
+            activePointerId = null;
+
+            if (dragRafId) {
+                cancelAnimationFrame(dragRafId);
+                dragRafId = null;
+            }
+
+            const targetEl = e.target.closest?.('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+
+            panel.classList.remove('is-dragging');
+            document.body.classList.remove('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        titleEl.addEventListener('pointerdown', onPointerDown);
+        titleEl.addEventListener('pointermove', onPointerMove);
+        titleEl.addEventListener('pointerup', onPointerUp);
+        titleEl.addEventListener('pointercancel', onPointerUp);
+
+        // Keep panel in bounds on window resize or device orientation flip
+        window.addEventListener('resize', () => {
+            if (this.isMissionPoppedOut && this.poppedMissionElement && this.poppedActive) {
+                const rect = this.poppedMissionElement.getBoundingClientRect();
+                if (rect.left > window.innerWidth - 60) {
+                    this.poppedMissionElement.style.left = `${Math.max(0, window.innerWidth - rect.width)}px`;
+                }
+                if (rect.top > window.innerHeight - 40) {
+                    this.poppedMissionElement.style.top = `${Math.max(0, window.innerHeight - 40)}px`;
+                }
+                return;
+            }
+            if (!this.active || !this.gui) return;
+            const rect = panel.getBoundingClientRect();
+            if (rect.left > window.innerWidth - 60) {
+                panel.style.left = `${Math.max(0, window.innerWidth - rect.width)}px`;
+            }
+            if (rect.top > window.innerHeight - 40) {
+                panel.style.top = `${Math.max(0, window.innerHeight - 40)}px`;
+            }
+        });
+    }
+
+    collapseAll() {
+        if (!this.gui) return;
+        const closeFolderRecursive = (folder) => {
+            if (folder.folders && folder.folders.length) {
+                folder.folders.forEach(child => closeFolderRecursive(child));
+            }
+            if (typeof folder.close === 'function') {
+                folder.close();
+            }
+        };
+
+        if (this.gui.folders) {
+            this.gui.folders.forEach(folder => closeFolderRecursive(folder));
+        }
+        if (typeof this.gui.open === 'function') {
+            this.gui.open();
+        }
+
+        if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+            this.uiManager.createFloatingText('All Menus Collapsed', window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+        }
+    }
+
+    reloadAndQuickStart() {
+        sessionStorage.setItem('orbital_debug_quick_reload', 'true');
+        window.location.reload();
+    }
+
+    _setupMissionFolderPopControl(missionFolder) {
+        if (!missionFolder || !missionFolder.domElement) return;
+        const titleEl = missionFolder.$title || missionFolder.domElement.querySelector(':scope > .title') || missionFolder.domElement.querySelector('.title');
+        if (!titleEl) return;
+
+        titleEl.style.display = 'flex';
+        titleEl.style.alignItems = 'center';
+        titleEl.style.justifyContent = 'space-between';
+        titleEl.style.whiteSpace = 'nowrap';
+        titleEl.style.flexWrap = 'nowrap';
+        titleEl.style.minHeight = '28px';
+        titleEl.style.height = 'auto';
+        titleEl.style.width = '100%';
+        titleEl.style.boxSizing = 'border-box';
+
+        const popBtn = document.createElement('button');
+        popBtn.className = 'debug-folder-action-btn';
+        popBtn.type = 'button';
+        popBtn.textContent = 'Pop ↗';
+        popBtn.setAttribute('title', 'Pop out Mission Triggers menu');
+        popBtn.style.marginLeft = 'auto';
+        popBtn.style.flex = '0 0 auto';
+        popBtn.style.width = 'auto';
+        popBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+        popBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.isMissionPoppedOut) {
+                this.popInMissionFolder();
+            } else {
+                this.popOutMissionFolder();
+            }
+        });
+
+        titleEl.appendChild(popBtn);
+        this.missionPopBtn = popBtn;
+    }
+
+    _setMissionFolderTitle(title) {
+        if (!this.missionFolder || !this.missionFolder.domElement) return;
+        const titleEl = this.missionFolder.$title || this.missionFolder.domElement.querySelector(':scope > .title') || this.missionFolder.domElement.querySelector('.title');
+        if (!titleEl) return;
+        let found = false;
+        for (const node of titleEl.childNodes) {
+            if (node.nodeType === 3) { // TEXT_NODE
+                node.textContent = title;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            const textNode = document.createTextNode(title);
+            if (this.poppedDragHandle && this.poppedDragHandle.nextSibling) {
+                titleEl.insertBefore(textNode, this.poppedDragHandle.nextSibling);
+            } else {
+                titleEl.insertBefore(textNode, titleEl.firstChild);
+            }
+        }
+    }
+
+    popOutMissionFolder() {
+        if (this.isMissionPoppedOut || !this.missionFolder) return;
+        const el = this.missionFolder.domElement;
+        this.poppedMissionElement = el;
+
+        // Insert placeholder comment to anchor position in DOM
+        this.missionFolderPlaceholder = document.createComment('mission-folder-placeholder');
+        el.parentNode.insertBefore(this.missionFolderPlaceholder, el);
+
+        // Move element to document.body
+        document.body.appendChild(el);
+        el.removeAttribute('style');
+        el.classList.add('debug-popped-out-panel');
+        el.classList.add('debug-visible');
+
+        // Rename header to 'Mission Control'
+        this._setMissionFolderTitle('Mission Control');
+
+        this.missionFolder.open();
+
+        if (!this.poppedDragHandle) {
+            this._setupPoppedFolderDraggable(el);
+        } else {
+            this.poppedDragHandle.style.display = 'inline-flex';
+        }
+
+        if (this.missionPopBtn) {
+            this.missionPopBtn.textContent = 'Pop In ↙';
+            this.missionPopBtn.setAttribute('title', 'Pop back into Debug Menu');
+        }
+
+        // Close regular debug menu
+        this.active = false;
+        if (this.gui && this.gui.domElement) {
+            this.gui.domElement.classList.remove('debug-visible');
+        }
+
+        this.isMissionPoppedOut = true;
+        this.poppedActive = true;
+
+        if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+            this.uiManager.createFloatingText('Mission Control Popped Out', window.innerWidth / 2, window.innerHeight - 80, '#94a3b8');
+        }
+    }
+
+    popInMissionFolder() {
+        if (!this.isMissionPoppedOut || !this.poppedMissionElement) return;
+
+        if (this.poppedDragRafId) {
+            cancelAnimationFrame(this.poppedDragRafId);
+            this.poppedDragRafId = null;
+        }
+
+        document.body.classList.remove('debug-is-dragging');
+
+        const targetParent = (this.missionFolderPlaceholder && this.missionFolderPlaceholder.parentNode)
+            ? this.missionFolderPlaceholder.parentNode
+            : (this.triggersFolder ? (this.triggersFolder.$children || this.triggersFolder.domElement.querySelector('.children')) : null);
+
+        if (this.missionFolderPlaceholder && this.missionFolderPlaceholder.parentNode) {
+            this.missionFolderPlaceholder.parentNode.insertBefore(this.poppedMissionElement, this.missionFolderPlaceholder);
+            this.missionFolderPlaceholder.remove();
+        } else if (targetParent) {
+            targetParent.insertBefore(this.poppedMissionElement, targetParent.firstChild);
+        }
+        this.missionFolderPlaceholder = null;
+
+        // Completely strip all inline positioning/scaling/styling so it docks seamlessly into lil-gui flow
+        this.poppedMissionElement.removeAttribute('style');
+        this.poppedMissionElement.classList.remove('debug-popped-out-panel', 'debug-visible', 'is-dragging');
+
+        // Restore title to 'Mission Triggers'
+        this._setMissionFolderTitle('Mission Triggers');
+
+        const titleEl = this.poppedMissionElement.querySelector('.title');
+        if (titleEl) {
+            titleEl.style.touchAction = '';
+        }
+
+        if (this.poppedDragHandle) {
+            this.poppedDragHandle.style.display = 'none';
+        }
+
+        if (this.missionPopBtn) {
+            this.missionPopBtn.textContent = 'Pop ↗';
+            this.missionPopBtn.setAttribute('title', 'Pop out Mission Control');
+        }
+
+        this.isMissionPoppedOut = false;
+        this.poppedActive = false;
+
+        // Re-open main debug menu
+        this.active = true;
+        if (this.gui && this.gui.domElement) {
+            this.gui.domElement.classList.add('debug-visible');
+        }
+
+        if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+            this.uiManager.createFloatingText('Mission Control Restored to Menu', window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+        }
+    }
+
+    _setupPoppedFolderDraggable(panel) {
+        const titleEl = panel.querySelector('.title');
+        if (!titleEl) return;
+
+        const handle = document.createElement('div');
+        handle.className = 'debug-drag-handle';
+        handle.setAttribute('title', 'Hold and drag to move');
+        handle.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <circle cx="8" cy="5" r="1.75"/>
+                <circle cx="16" cy="5" r="1.75"/>
+                <circle cx="8" cy="12" r="1.75"/>
+                <circle cx="16" cy="12" r="1.75"/>
+                <circle cx="8" cy="19" r="1.75"/>
+                <circle cx="16" cy="19" r="1.75"/>
+            </svg>
+        `;
+
+        titleEl.insertBefore(handle, titleEl.firstChild);
+        titleEl.style.touchAction = 'none';
+        this.poppedDragHandle = handle;
+
+        let isDragging = false;
+        let startPointerX = 0;
+        let startPointerY = 0;
+        let initialPanelLeft = 0;
+        let initialPanelTop = 0;
+        let panelWidth = 0;
+        let panelHeight = 0;
+        let activePointerId = null;
+        let pendingLeft = 0;
+        let pendingTop = 0;
+        this.poppedDragRafId = null;
+
+        const updatePosition = () => {
+            if (!this.isMissionPoppedOut || !isDragging) return;
+            panel.style.left = `${pendingLeft}px`;
+            panel.style.top = `${pendingTop}px`;
+            this.poppedDragRafId = null;
+        };
+
+        const onPointerDown = (e) => {
+            // STRICT GUARD: Never drag or alter styling unless actively popped out
+            if (!this.isMissionPoppedOut) return;
+            if (e.button !== undefined && e.button !== 0) return;
+            if (e.target.closest('button')) return;
+
+            isDragging = true;
+            activePointerId = e.pointerId;
+
+            const targetEl = e.target.closest('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.setPointerCapture(e.pointerId);
+            } catch (err) {}
+
+            const rect = panel.getBoundingClientRect();
+            startPointerX = e.clientX;
+            startPointerY = e.clientY;
+            initialPanelLeft = rect.left;
+            initialPanelTop = rect.top;
+            panelWidth = rect.width;
+            panelHeight = rect.height;
+
+            panel.style.position = 'fixed';
+            panel.style.left = `${initialPanelLeft}px`;
+            panel.style.top = `${initialPanelTop}px`;
+            panel.style.bottom = 'auto';
+            panel.style.transform = 'scale(0.75)';
+            panel.style.transformOrigin = 'top left';
+
+            panel.classList.add('is-dragging');
+            document.body.classList.add('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerMove = (e) => {
+            if (!this.isMissionPoppedOut || !isDragging || e.pointerId !== activePointerId) return;
+
+            const deltaX = e.clientX - startPointerX;
+            const deltaY = e.clientY - startPointerY;
+
+            let targetLeft = initialPanelLeft + deltaX;
+            let targetTop = initialPanelTop + deltaY;
+
+            const minLeft = -panelWidth + 60;
+            const maxLeft = window.innerWidth - 60;
+            const minTop = 0;
+            const maxTop = window.innerHeight - 40;
+
+            pendingLeft = Math.max(minLeft, Math.min(targetLeft, maxLeft));
+            pendingTop = Math.max(minTop, Math.min(targetTop, maxTop));
+
+            if (!this.poppedDragRafId) {
+                this.poppedDragRafId = requestAnimationFrame(updatePosition);
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerUp = (e) => {
+            if (!isDragging || (activePointerId !== null && e.pointerId !== activePointerId)) return;
+            isDragging = false;
+            activePointerId = null;
+
+            if (this.poppedDragRafId) {
+                cancelAnimationFrame(this.poppedDragRafId);
+                this.poppedDragRafId = null;
+            }
+
+            const targetEl = e.target.closest?.('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+
+            panel.classList.remove('is-dragging');
+            document.body.classList.remove('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        titleEl.addEventListener('pointerdown', onPointerDown);
+        titleEl.addEventListener('pointermove', onPointerMove);
+        titleEl.addEventListener('pointerup', onPointerUp);
+        titleEl.addEventListener('pointercancel', onPointerUp);
     }
 
     handleKeyPress(key) {}
 
     toggleVisibility() {
+        if (this.isMissionPoppedOut && this.poppedMissionElement) {
+            this.poppedActive = !this.poppedActive;
+            this.poppedMissionElement.classList.toggle('debug-visible', this.poppedActive);
+            return;
+        }
         if (!this.gui) return;
         this.active = !this.active;
         this.gui.domElement.classList.toggle('debug-visible', this.active);
+    }
+
+    resetPosition(makeVisible = true) {
+        const targetPanel = (this.isMissionPoppedOut && this.poppedMissionElement) ? this.poppedMissionElement : (this.gui ? this.gui.domElement : null);
+        if (!targetPanel) return;
+
+        // Reset inline positioning to default centered / bottom style
+        targetPanel.style.position = '';
+        targetPanel.style.left = '';
+        targetPanel.style.top = '';
+        targetPanel.style.bottom = '';
+        targetPanel.style.transform = '';
+        targetPanel.style.transformOrigin = '';
+        targetPanel.classList.remove('is-dragging');
+        document.body.classList.remove('debug-is-dragging');
+
+        if (this.isMissionPoppedOut) {
+            if (makeVisible && !this.poppedActive) {
+                this.toggleVisibility();
+            }
+            if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+                this.uiManager.createFloatingText('Mission Control Reset to Bottom', window.innerWidth / 2, window.innerHeight - 80, '#94a3b8');
+            }
+        } else {
+            if (makeVisible && !this.active) {
+                this.toggleVisibility();
+            }
+            if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+                this.uiManager.createFloatingText('Debug Menu Reset to Center', window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+            }
+        }
+    }
+
+    /**
+     * Calculates the accurate travel days between locations considering active ship upgrades,
+     * perks, and attribute modifiers.
+     */
+    _calculateTripDays(fromId, toId) {
+        if (!fromId || !toId || fromId === toId) return 0;
+        const baseData = this.gameState.TRAVEL_DATA?.[fromId]?.[toId];
+        if (!baseData) return 0;
+        let baseTime = baseData.time || 0;
+
+        const activeShipId = this.gameState.player?.activeShipId;
+        let timeMod = 1;
+        if (this.gameState.player?.activePerks?.[PERK_IDS.NAVIGATOR]) {
+            timeMod *= DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod;
+        }
+        if (activeShipId && this.gameState.player?.shipStates?.[activeShipId]) {
+            const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
+            timeMod *= GameAttributes.getTravelTimeModifier(upgrades);
+            const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
+            if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) timeMod *= 0.75;
+            if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) timeMod *= 10.0;
+            if (shipAttributes.includes('ATTR_SLEEPER')) timeMod *= 4.5;
+            shipAttributes.forEach(attrId => {
+                const def = GameAttributes.getDefinition(attrId);
+                if (def && def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME && attrId !== 'ATTR_HYPER_CALCULATION' && def.value) {
+                    timeMod *= def.value;
+                }
+            });
+            const speedBonus = this.gameState.player.statModifiers?.travelSpeed || 0;
+            if (speedBonus > 0) timeMod = timeMod / (1 + speedBonus);
+        }
+        return Math.max(1, Math.round(baseTime * timeMod));
+    }
+
+    /**
+     * Relocates the player to a target location and advances game days accurately.
+     */
+    _executeGoTo(locationId) {
+        const fromId = this.gameState.currentLocationId;
+        if (fromId === locationId) {
+            const currentName = DB.MARKETS.find(m => m.id === locationId)?.name || locationId;
+            this.uiManager.createFloatingText(`Already at ${currentName}`, window.innerWidth / 2, window.innerHeight / 2, '#94a3b8');
+            return;
+        }
+
+        const destMarket = DB.MARKETS.find(m => m.id === locationId);
+        const destName = destMarket ? destMarket.name : locationId;
+        const tripDays = this._calculateTripDays(fromId, locationId);
+
+        if (fromId === LOCATION_IDS.SUN || fromId === 'sol') {
+            if (this.simulationService?.timeService?.solStationService) {
+                this.simulationService.timeService.solStationService.stopLocalLiveLoop?.();
+            }
+        }
+
+        // Advance game days based on trip duration
+        if (tripDays > 0 && this.simulationService?.timeService) {
+            this.simulationService.timeService.advanceDays(tripDays);
+        }
+
+        // Unlock location if not already unlocked
+        if (!this.gameState.player.unlockedLocationIds.includes(locationId)) {
+            this.gameState.player.unlockedLocationIds.push(locationId);
+        }
+
+        // Update player location
+        this.gameState.currentLocationId = locationId;
+
+        // News ticker update
+        if (this.simulationService?.newsTickerService) {
+            this.simulationService.newsTickerService.onLocationChange(locationId);
+        }
+
+        // Evaluate mission triggers & achievements
+        if (this.simulationService?.missionService) {
+            this.simulationService.missionService.checkTriggers();
+        }
+        if (this.simulationService?.achievementService) {
+            this.simulationService.achievementService.increment('docked_' + locationId, 1);
+        }
+
+        // Direct screen to Starport Market
+        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+
+        // Update state and UI
+        this.gameState.setState({});
+        this.uiManager.render(this.gameState.getState());
+
+        const dayText = tripDays > 0 ? ` (+${tripDays}d)` : '';
+        this.uiManager.createFloatingText(`Arrived at ${destName}${dayText}`, window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+    }
+
+    /**
+     * Toggles a compact, performant location dropdown for the Go To control.
+     */
+    _toggleGoToDropdown() {
+        if (!this.goToDropdownEl) {
+            this.goToDropdownEl = document.createElement('div');
+            this.goToDropdownEl.className = 'debug-goto-dropdown';
+            document.body.appendChild(this.goToDropdownEl);
+
+            document.addEventListener('pointerdown', (e) => {
+                if (this.goToDropdownEl && this.goToDropdownEl.style.display !== 'none') {
+                    if (!this.goToDropdownEl.contains(e.target) && !this.goToBtnEl?.contains(e.target)) {
+                        this.goToDropdownEl.style.display = 'none';
+                        this.goToDropdownEl.classList.remove('is-open');
+                    }
+                }
+            });
+        }
+
+        if (this.goToDropdownEl.style.display !== 'none' && this.goToDropdownEl.classList.contains('is-open')) {
+            this.goToDropdownEl.style.display = 'none';
+            this.goToDropdownEl.classList.remove('is-open');
+            return;
+        }
+
+        const currentLoc = this.gameState.currentLocationId;
+        const markets = DB.MARKETS || [];
+
+        let html = `
+            <div class="debug-goto-header">
+                <span>SELECT DESTINATION</span>
+                <button class="debug-goto-close-btn">&times;</button>
+            </div>
+            <div class="debug-goto-list">
+        `;
+
+        markets.forEach(m => {
+            const isCurrent = m.id === currentLoc;
+            const tripDays = this._calculateTripDays(currentLoc, m.id);
+            const timeBadge = isCurrent ? '<span class="debug-goto-badge current">HERE</span>' : `<span class="debug-goto-badge">${tripDays}d</span>`;
+            const itemClass = isCurrent ? 'debug-goto-item current-location' : 'debug-goto-item';
+            html += `
+                <div class="${itemClass}" data-location-id="${m.id}">
+                    <span class="debug-goto-name">${m.name}</span>
+                    ${timeBadge}
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        this.goToDropdownEl.innerHTML = html;
+
+        this.goToDropdownEl.querySelectorAll('.debug-goto-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const locId = item.dataset.locationId;
+                this.goToDropdownEl.style.display = 'none';
+                this.goToDropdownEl.classList.remove('is-open');
+                this._executeGoTo(locId);
+            });
+        });
+
+        const closeBtn = this.goToDropdownEl.querySelector('.debug-goto-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.goToDropdownEl.style.display = 'none';
+                this.goToDropdownEl.classList.remove('is-open');
+            });
+        }
+
+        this.goToDropdownEl.style.display = 'flex';
+        this.goToDropdownEl.classList.add('is-open');
+
+        if (this.goToBtnEl) {
+            const rect = this.goToBtnEl.getBoundingClientRect();
+            const menuWidth = 230;
+            let left = rect.left + (rect.width / 2) - (menuWidth / 2);
+            left = Math.max(10, Math.min(window.innerWidth - menuWidth - 10, left));
+
+            if (rect.top > window.innerHeight / 2) {
+                this.goToDropdownEl.style.left = `${left}px`;
+                this.goToDropdownEl.style.bottom = `${window.innerHeight - rect.top + 6}px`;
+                this.goToDropdownEl.style.top = 'auto';
+            } else {
+                this.goToDropdownEl.style.left = `${left}px`;
+                this.goToDropdownEl.style.top = `${rect.bottom + 6}px`;
+                this.goToDropdownEl.style.bottom = 'auto';
+            }
+        }
     }
 
     toggleDiagnosticOverlay() {
@@ -165,6 +898,9 @@ export class DebugService {
         const overlay = document.getElementById('diagnostic-overlay');
         if (overlay) {
             overlay.classList.toggle('hidden', !this.diagActive);
+        }
+        if (this.diagActive) {
+            this._startDiagLoop();
         }
     }
 
@@ -1041,55 +1777,203 @@ ${logHistory}
                     this.simulationService.missionService.acceptMission(this.debugState.selectedMission, true); 
                 }
             }},
-            forceCompleteMission: { name: 'Force Complete Mission', type: 'button', handler: () => {
+            satisfyMissionRequirements: { name: 'Satisfy', type: 'button', handler: () => {
+                let targetMissionId = this.debugState.selectedMission;
+                if (!targetMissionId && this.gameState.missions.activeMissionIds.length > 0) {
+                    targetMissionId = this.gameState.missions.activeMissionIds[0];
+                }
+                if (!targetMissionId) {
+                    this.uiManager.createFloatingText('No Mission Selected', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+
+                // If a mission is selected in the dropdown and not yet in the active log, accept it first
+                if (!this.gameState.missions.activeMissionIds.includes(targetMissionId)) {
+                    if (this.simulationService?.missionService) {
+                        this.simulationService.missionService.acceptMission(targetMissionId, true);
+                    }
+                }
+
+                const mission = DB.MISSIONS[targetMissionId];
+                if (!this.gameState.missions.missionProgress[targetMissionId]) {
+                    this.gameState.missions.missionProgress[targetMissionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                }
+                const progress = this.gameState.missions.missionProgress[targetMissionId];
+                if (mission && progress) {
+                    if (mission.completion) {
+                        mission.completion.locationId = 'any';
+                    }
+                    if (mission.objectives) {
+                        mission.objectives.forEach(obj => {
+                            const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                            const targetVal = obj.quantity !== undefined ? obj.quantity : (obj.value !== undefined ? obj.value : 1);
+                            if (!progress.objectives[objKey]) {
+                                progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
+                            }
+                            progress.objectives[objKey].current = targetVal;
+                            progress.objectives[objKey].target = targetVal;
+                            progress.objectives[objKey].deposited = targetVal;
+                            progress.objectives[objKey].collected = targetVal;
+                            progress.objectives[objKey].satisfiedByDebug = true;
+                        });
+                    }
+                    progress.satisfiedByDebug = true;
+                    progress.isCompletable = true;
+                    progress.cargoLoaded = true;
+                }
+
+                this.uiManager.createFloatingText(`Mission Satisfied: ${mission?.name || targetMissionId}`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+                this.uiManager.render(this.gameState.getState());
+                if (typeof this.uiManager.flashObjectiveProgress === 'function') {
+                    this.uiManager.flashObjectiveProgress();
+                }
+            }},
+
+            satisfyAllMissions: { name: 'Satisfy All', type: 'button', handler: () => {
                 const activeIds = [...this.gameState.missions.activeMissionIds];
                 if (activeIds.length === 0) {
-                    this.uiManager.createFloatingText('No Active Missions', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    this.uiManager.createFloatingText('No Active Missions in Log', window.innerWidth/2, window.innerHeight/2, '#ef4444');
                     return;
                 }
                 
                 activeIds.forEach(missionId => {
                     const mission = DB.MISSIONS[missionId];
+                    if (!this.gameState.missions.missionProgress[missionId]) {
+                        this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                    }
                     const progress = this.gameState.missions.missionProgress[missionId];
                     if (mission && progress) {
-                        // Override completion location
-                        if (mission.completion) {
-                            mission.completion.locationId = 'any';
-                        }
-                        
-                        // Max out objectives
+                        if (mission.completion) mission.completion.locationId = 'any';
                         if (mission.objectives) {
                             mission.objectives.forEach(obj => {
                                 const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                                const targetVal = obj.quantity !== undefined ? obj.quantity : (obj.value !== undefined ? obj.value : 1);
                                 if (!progress.objectives[objKey]) {
-                                    progress.objectives[objKey] = { current: 0, target: obj.quantity || obj.value || 1, deposited: 0, collected: 0 };
+                                    progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
                                 }
-                                const targetVal = obj.quantity || obj.value || 1;
                                 progress.objectives[objKey].current = targetVal;
                                 progress.objectives[objKey].target = targetVal;
-                                
-                                if (obj.type === 'DELIVER_ITEM' || obj.type === 'deliver_item') {
-                                    progress.objectives[objKey].deposited = targetVal;
-                                }
-                                if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
-                                    progress.objectives[objKey].collected = targetVal;
-                                }
+                                progress.objectives[objKey].deposited = targetVal;
+                                progress.objectives[objKey].collected = targetVal;
+                                progress.objectives[objKey].satisfiedByDebug = true;
                             });
                         }
-                        
-                        // Flip isCompletable
+                        progress.satisfiedByDebug = true;
+                        progress.isCompletable = true;
+                        progress.cargoLoaded = true;
+                    }
+                });
+                
+                this.uiManager.createFloatingText('All Log Missions Satisfied!', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+                this.uiManager.render(this.gameState.getState());
+                if (typeof this.uiManager.flashObjectiveProgress === 'function') {
+                    this.uiManager.flashObjectiveProgress();
+                }
+            }},
+
+            forceCompleteMission: { name: 'Complete', type: 'button', handler: () => {
+                let targetMissionId = this.debugState.selectedMission;
+                if (!targetMissionId && this.gameState.missions.activeMissionIds.length > 0) {
+                    targetMissionId = this.gameState.missions.activeMissionIds[0];
+                }
+                if (!targetMissionId || !this.gameState.missions.activeMissionIds.includes(targetMissionId)) {
+                    this.uiManager.createFloatingText('Selected Mission Not Active', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+
+                const mission = DB.MISSIONS[targetMissionId];
+                if (!this.gameState.missions.missionProgress[targetMissionId]) {
+                    this.gameState.missions.missionProgress[targetMissionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                }
+                const progress = this.gameState.missions.missionProgress[targetMissionId];
+                if (mission && progress) {
+                    if (mission.completion) mission.completion.locationId = 'any';
+                    if (mission.objectives) {
+                        mission.objectives.forEach(obj => {
+                            const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                            const targetVal = obj.quantity || obj.value || 1;
+                            if (!progress.objectives[objKey]) {
+                                progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
+                            }
+                            progress.objectives[objKey].current = targetVal;
+                            progress.objectives[objKey].target = targetVal;
+                            progress.objectives[objKey].satisfiedByDebug = true;
+                        });
+                    }
+                    progress.isCompletable = true;
+                    progress.cargoLoaded = true;
+                    
+                    if (this.simulationService?.missionService) {
+                        this.simulationService.missionService.completeMission(targetMissionId, true);
+                    }
+                }
+                
+                this.uiManager.createFloatingText(`Mission ${mission?.name || targetMissionId} Completed`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+            }},
+
+            completeAllMissions: { name: 'Complete All', type: 'button', handler: () => {
+                const activeIds = [...this.gameState.missions.activeMissionIds];
+                if (activeIds.length === 0) {
+                    this.uiManager.createFloatingText('No Active Missions in Log', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+                
+                activeIds.forEach(missionId => {
+                    const mission = DB.MISSIONS[missionId];
+                    if (!this.gameState.missions.missionProgress[missionId]) {
+                        this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                    }
+                    const progress = this.gameState.missions.missionProgress[missionId];
+                    if (mission && progress) {
+                        if (mission.completion) mission.completion.locationId = 'any';
+                        if (mission.objectives) {
+                            mission.objectives.forEach(obj => {
+                                const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                                const targetVal = obj.quantity || obj.value || 1;
+                                if (!progress.objectives[objKey]) {
+                                    progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
+                                }
+                                progress.objectives[objKey].current = targetVal;
+                                progress.objectives[objKey].target = targetVal;
+                                progress.objectives[objKey].satisfiedByDebug = true;
+                            });
+                        }
                         progress.isCompletable = true;
                         progress.cargoLoaded = true;
                         
-                        // Force Complete
-                        if (this.simulationService && this.simulationService.missionService) {
+                        if (this.simulationService?.missionService) {
                             this.simulationService.missionService.completeMission(missionId, true);
                         }
                     }
                 });
                 
-                this.uiManager.createFloatingText('Missions Force Completed', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.uiManager.createFloatingText('All Log Missions Completed!', window.innerWidth/2, window.innerHeight/2, '#4ade80');
                 this.gameState.setState({});
+            }},
+
+            openGoToDropdown: { name: 'Go To', type: 'button', handler: () => {
+                this._toggleGoToDropdown();
+            }},
+
+            restoreActiveShip: { name: 'Restore', type: 'button', handler: () => {
+                const activeShip = this.simulationService?._getActiveShip();
+                if (!activeShip) {
+                    this.uiManager.createFloatingText('No Active Ship', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+                const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+                const activeShipState = this.gameState.player.shipStates[activeShip.id];
+                if (activeShipState && effectiveStats) {
+                    activeShipState.health = effectiveStats.maxHealth;
+                    activeShipState.fuel = effectiveStats.maxFuel;
+                    this.simulationService._checkHullWarnings?.(activeShip.id);
+                }
+                this.uiManager.createFloatingText('Ship Hull & Fuel Restored', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+                this.uiManager.render(this.gameState.getState());
             }},
 
             triggerSystemToast: { name: 'Toast: System', type: 'button', handler: () => this.triggerToast('system') },
@@ -1238,7 +2122,13 @@ ${logHistory}
     }
 
     _startDiagLoop() {
+        if (this._diagLoopActive) return;
+        this._diagLoopActive = true;
         const update = () => {
+            if (!this.diagActive) {
+                this._diagLoopActive = false;
+                return;
+            }
             this._updateDiagOverlay();
             requestAnimationFrame(update);
         };
@@ -1270,6 +2160,110 @@ ${logHistory}
     }
 
     buildGui() {
+        const triggerFolder = this.gui.addFolder('Triggers');
+        this.triggersFolder = triggerFolder;
+
+        // --- MISSION TRIGGERS (Auto-expanded, top of Triggers) ---
+        const missionFolder = triggerFolder.addFolder('Mission Triggers');
+        this.missionFolder = missionFolder;
+        this._setupMissionFolderPopControl(missionFolder);
+        
+        const sortedMissions = Object.values(DB.MISSIONS).map(m => {
+            const match = m.id.match(/\d+/);
+            const num = match ? parseInt(match[0], 10) : -1;
+            const prefix = match ? `${match[0].padStart(2, '0')} ` : '';
+            let suffix = '';
+            if (m.id.endsWith('_guild')) suffix = ' (G)';
+            else if (m.id.endsWith('_syndicate')) suffix = ' (S)';
+            return { label: `${prefix}${m.name}${suffix}`, id: m.id, num };
+        }).sort((a, b) => {
+            if (a.num !== b.num) return b.num - a.num; // Higher/newer mission numbers first
+            return a.label.localeCompare(b.label);
+        });
+
+        const missionOptions = {};
+        sortedMissions.forEach(m => missionOptions[m.label] = m.id);
+
+        missionFolder.domElement.classList.add('mission-triggers-folder');
+        missionFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+        // Row 1: Single Mission Controls
+        const showCtrl = missionFolder.add(this.actions.forceAddTerminalMission, 'handler').name('Show');
+        const acceptCtrl = missionFolder.add(this.actions.forceAcceptMission, 'handler').name('Accept');
+        const satisfyCtrl = missionFolder.add(this.actions.satisfyMissionRequirements, 'handler').name('Satisfy');
+        const completeCtrl = missionFolder.add(this.actions.forceCompleteMission, 'handler').name('Complete');
+
+        showCtrl.domElement?.setAttribute('title', 'Force mission to Terminal (Show)');
+        acceptCtrl.domElement?.setAttribute('title', 'Force Accept mission');
+        satisfyCtrl.domElement?.setAttribute('title', 'Satisfy selected mission requirements');
+        completeCtrl.domElement?.setAttribute('title', 'Force Complete selected mission');
+
+        const btnRow1 = document.createElement('div');
+        btnRow1.className = 'mission-control-btn-row mission-control-btn-row-1';
+        btnRow1.appendChild(showCtrl.domElement);
+        btnRow1.appendChild(acceptCtrl.domElement);
+        btnRow1.appendChild(satisfyCtrl.domElement);
+        btnRow1.appendChild(completeCtrl.domElement);
+
+        // Row 2: Bulk & Utility Controls (Satisfy All, Complete All, Go To, Restore)
+        const satisfyAllCtrl = missionFolder.add(this.actions.satisfyAllMissions, 'handler').name('Satisfy All');
+        const completeAllCtrl = missionFolder.add(this.actions.completeAllMissions, 'handler').name('Complete All');
+        const goToCtrl = missionFolder.add(this.actions.openGoToDropdown, 'handler').name('Go To');
+        const restoreCtrl = missionFolder.add(this.actions.restoreActiveShip, 'handler').name('Restore');
+
+        this.goToBtnEl = goToCtrl.domElement;
+
+        satisfyAllCtrl.domElement?.setAttribute('title', 'Satisfy ALL active mission requirements in log');
+        completeAllCtrl.domElement?.setAttribute('title', 'Force Complete ALL active missions in log');
+        goToCtrl.domElement?.setAttribute('title', 'Select location to travel and advance time');
+        restoreCtrl.domElement?.setAttribute('title', 'Restore active ship Fuel and Hull to full');
+
+        const btnRow2 = document.createElement('div');
+        btnRow2.className = 'mission-control-btn-row mission-control-btn-row-2';
+        btnRow2.appendChild(satisfyAllCtrl.domElement);
+        btnRow2.appendChild(completeAllCtrl.domElement);
+        btnRow2.appendChild(goToCtrl.domElement);
+        btnRow2.appendChild(restoreCtrl.domElement);
+
+        const folderChildren = missionFolder.$children || missionFolder.domElement.querySelector('.children');
+        if (folderChildren) {
+            folderChildren.appendChild(btnRow1);
+            folderChildren.appendChild(btnRow2);
+        }
+
+        missionFolder.open();
+
+        // --- STORY EVENTS (Collapsed nested subfolder) ---
+        const storyFolder = triggerFolder.addFolder('Story Events');
+        const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
+        storyFolder.add(this.debugState, 'selectedStoryEvent', storyEventOptions).name('Story Event');
+        storyFolder.add(this.actions.forceQueueStoryEvent, 'handler').name('Queue Story Event');
+        storyFolder.close();
+
+        // --- RANDOM EVENTS (Collapsed nested subfolder) ---
+        const randomFolder = triggerFolder.addFolder('Random Events');
+        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
+        randomFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
+        randomFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
+        randomFolder.add(this.actions.triggerHotIntel, 'handler').name(this.actions.triggerHotIntel.name);
+        randomFolder.add(this.debugState, 'alwaysTriggerEvents')
+            .name('Always Trigger (100%)')
+            .onChange(val => {
+                if (this.simulationService && this.simulationService.travelService) {
+                    this.simulationService.travelService.debugAlwaysTriggerEvents = val;
+                }
+            });
+        randomFolder.close();
+
+        // --- TOASTS (Collapsed nested subfolder) ---
+        const toastFolder = triggerFolder.addFolder('Toasts');
+        toastFolder.add(this.actions.triggerSystemToast, 'handler').name(this.actions.triggerSystemToast.name);
+        toastFolder.add(this.actions.triggerFinanceToast, 'handler').name(this.actions.triggerFinanceToast.name);
+        toastFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
+        toastFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
+        toastFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
+        toastFolder.close();
+
+        // --- GAME FLOW (Below Triggers) ---
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
@@ -1281,48 +2275,6 @@ ${logHistory}
         flowFolder.add(this.actions.phase2MissionTest, 'handler').name(this.actions.phase2MissionTest.name);
         flowFolder.add(this.actions.phase3MissionTest, 'handler').name(this.actions.phase3MissionTest.name);
         flowFolder.add(this.actions.phase4MissionTest, 'handler').name(this.actions.phase4MissionTest.name);
-
-        const triggerFolder = this.gui.addFolder('Triggers');
-        const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
-        triggerFolder.add(this.debugState, 'selectedStoryEvent', storyEventOptions).name('Story Event');
-        triggerFolder.add(this.actions.forceQueueStoryEvent, 'handler').name('Queue Story Event');
-
-        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
-        triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
-        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
-        triggerFolder.add(this.actions.triggerHotIntel, 'handler').name(this.actions.triggerHotIntel.name);
-
-        triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
-            .name('Always Trigger (100%)')
-            .onChange(val => {
-                if (this.simulationService && this.simulationService.travelService) {
-                    this.simulationService.travelService.debugAlwaysTriggerEvents = val;
-                }
-            });
-        
-        const sortedMissions = Object.values(DB.MISSIONS).map(m => {
-            const match = m.id.match(/\d+/);
-            const prefix = match ? `${match[0].padStart(2, '0')} ` : '';
-            let suffix = '';
-            if (m.id.endsWith('_guild')) suffix = ' (G)';
-            else if (m.id.endsWith('_syndicate')) suffix = ' (S)';
-            return { label: `${prefix}${m.name}${suffix}`, id: m.id };
-        }).sort((a, b) => a.label.localeCompare(b.label));
-
-        const missionOptions = {};
-        sortedMissions.forEach(m => missionOptions[m.label] = m.id);
-
-        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
-        triggerFolder.add(this.actions.forceAddTerminalMission, 'handler').name('Force to Terminal');
-        triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
-        triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
-
-        const toastFolder = triggerFolder.addFolder('Toasts');
-        toastFolder.add(this.actions.triggerSystemToast, 'handler').name(this.actions.triggerSystemToast.name);
-        toastFolder.add(this.actions.triggerFinanceToast, 'handler').name(this.actions.triggerFinanceToast.name);
-        toastFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
-        toastFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
-        toastFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
 
         const uiFolder = this.gui.addFolder('UI Guides');
         const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
@@ -1457,8 +2409,10 @@ ${logHistory}
         automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
         automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
-        automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
+        automationFolder.add(this.debugState, 'botProgress').name('Progress');
 
         this.gui.folders.forEach(folder => folder.close());
+        triggerFolder.open();
+        missionFolder.open();
     }
 }

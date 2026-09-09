@@ -53,6 +53,12 @@
     font-size: calc(0.9rem - 2px); /* Reduced by ~1.5pt */
 }
 
+.location-name-text {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+
 /* [[NEW]] When Max Credits are active, reduce Location Name font size */
 .context-bar.max-credits-active .location-name-text {
     font-size: calc(0.9rem - 2.66px); /* Reduced by ~2pt */
@@ -61,6 +67,9 @@
 .credit-text {
     color: #29f1ff;
     text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7, 0 2px 4px rgba(0,0,0,0.8); /* Blue glow with dark shadow */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
 }
 
 .credit-text.text-glow-gold {
@@ -403,4 +412,32 @@
     width: 24px;
     height: 24px;
     color: inherit !important;
+}
+
+/* ==========================================================
+   ORBITAL TRADING: FLOATING TRANSACTION BASE CLASS
+   Shared typography, occlusion contrast, and 1/3 glow baseline
+   ========================================================== */
+.floating-credit-vector {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+    font-family: 'Orbitron', -apple-system, sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: #4dcfd5;
+    
+    /* Calibrated 1/3 glow with dark contrast occlusion backing */
+    text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.70),
+        0 4px 10px rgba(0, 0, 0, 0.70),
+        0 0 3px rgba(255, 255, 255, 1.00),
+        0 0 8px rgba(0, 243, 255, 1.00),
+        0 0 16px rgba(0, 243, 255, 0.47);
+
+    will-change: transform, opacity;
+    z-index: 1000;
 }

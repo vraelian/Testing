@@ -46,6 +46,10 @@ export class EventManager {
             ACTION_IDS.INCREMENT,
             ACTION_IDS.DECREMENT
         ]);
+
+        // Secret sequence tracker for debug menu: Location x2 then Credits x2 in 4s
+        this.debugTapStage = 0;
+        this.debugTapTimeout = null;
     }
 
     /**
@@ -176,6 +180,10 @@ export class EventManager {
         // Always delegate to the tooltip handler for managing popups and cleanup
         this.tooltipHandler.handleClick(e);
 
+        // Check for secret debug tap sequence in the navigation context bar:
+        // Location twice, then Credits twice within 4 seconds.
+        this._checkDebugTapSequence(e);
+
         if (actionTarget) {
             const action = actionTarget.dataset.action;
 
@@ -220,14 +228,80 @@ export class EventManager {
     }
 
     /**
+     * Checks for the secret sequence: tap Location twice, then Credits twice within 4 seconds.
+     * @param {Event} e 
+     */
+    _checkDebugTapSequence(e) {
+        if (!this.debugService) return;
+
+        const isLocation = Boolean(e.target.closest && e.target.closest('.location-name-text'));
+        const isCredits = Boolean(e.target.closest && e.target.closest('.credit-text'));
+
+        if (!isLocation && !isCredits) {
+            // If user clicked outside the context bar while mid-sequence, cancel sequence
+            if (this.debugTapStage > 0 && !(e.target.closest && e.target.closest('.context-bar'))) {
+                this._resetDebugTapSequence();
+            }
+            return;
+        }
+
+        if (isLocation) {
+            if (this.debugTapStage === 0) {
+                this.debugTapStage = 1;
+                clearTimeout(this.debugTapTimeout);
+                this.debugTapTimeout = setTimeout(() => this._resetDebugTapSequence(), 4000);
+            } else if (this.debugTapStage === 1) {
+                // Second location tap
+                this.debugTapStage = 2;
+            } else if (this.debugTapStage === 2) {
+                // Extra tap on location, remain ready for credits
+            } else {
+                // Was waiting for credits tap 2, restart at stage 1
+                this.debugTapStage = 1;
+                clearTimeout(this.debugTapTimeout);
+                this.debugTapTimeout = setTimeout(() => this._resetDebugTapSequence(), 4000);
+            }
+        } else if (isCredits) {
+            if (this.debugTapStage === 2) {
+                // First credits tap
+                this.debugTapStage = 3;
+            } else if (this.debugTapStage === 3) {
+                // Second credits tap within 4 seconds! Success!
+                this._resetDebugTapSequence();
+                this.debugService.toggleVisibility();
+            } else {
+                // Credits tapped out of order
+                this._resetDebugTapSequence();
+            }
+        }
+    }
+
+    _resetDebugTapSequence() {
+        this.debugTapStage = 0;
+        if (this.debugTapTimeout) {
+            clearTimeout(this.debugTapTimeout);
+            this.debugTapTimeout = null;
+        }
+    }
+
+    /**
      * Handles keydown events, primarily for debug shortcuts.
      * @param {Event} e The keydown event object.
      * @private
      */
     _handleKeyDown(e) {
         if (this.gameState.isGameOver || e.ctrlKey || e.metaKey) return;
-        if ((e.key === '`' || e.key === '&') && this.debugService) {
-            this.debugService.toggleVisibility();
+        const isBackquote = e.key === '`' || e.key === '~' || e.code === 'Backquote';
+        if ((isBackquote || e.key === '&') && this.debugService) {
+            if (e.shiftKey && isBackquote) {
+                if (typeof this.debugService.resetPosition === 'function') {
+                    this.debugService.resetPosition(true);
+                } else {
+                    this.debugService.toggleVisibility();
+                }
+            } else {
+                this.debugService.toggleVisibility();
+            }
         }
     }
 }

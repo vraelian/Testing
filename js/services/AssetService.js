@@ -29,6 +29,7 @@ export class AssetService {
      */
     static LOCATION_FILENAME_MAP = {
         'loc_sun': 'Sol',
+        'loc_corona': 'Corona',
         'loc_mercury': 'Mercury',
         'loc_venus': 'Venus',
         'loc_earth': 'Earth',
@@ -125,31 +126,105 @@ export class AssetService {
         return `assets/images/commodities/${originalName}/${fileNamePrefix}_${variantLetter}.webp`;
     }
 
-    static _generateLocationPath(locationId) {
-        // 1. Resolve filename prefix (Folder & File Start)
-        let filePrefix = this.LOCATION_FILENAME_MAP[locationId];
-        
-        if (!filePrefix) {
-            // Safe fallback: Strip 'loc_', capitalize first letter
-            // Example: 'loc_unknown' -> 'Unknown'
-            const raw = locationId.replace('loc_', '');
-            filePrefix = raw.charAt(0).toUpperCase() + raw.slice(1);
+    /**
+     * Resolves the canonical folder and file prefix for a location.
+     * Supports declarative market.assetPrefix, dictionary mapping, ID matching, and clean fallbacks.
+     * @param {string|object} locationIdOrObj 
+     * @returns {string} The capitalized prefix (e.g. 'Corona', 'Sol', 'Earth').
+     */
+    static _resolveLocationPrefix(locationIdOrObj) {
+        if (!locationIdOrObj) return 'Unknown';
+
+        // 1. If an object is passed (e.g. market object)
+        if (typeof locationIdOrObj === 'object') {
+            if (locationIdOrObj.assetPrefix) return locationIdOrObj.assetPrefix;
+            locationIdOrObj = locationIdOrObj.id || locationIdOrObj.name || '';
         }
 
-        // 2. Determine Variant Count
-        // NOTE: assets_config.js keys must now match the Capitalized prefix (e.g. 'Sol')
-        const variantCount = LOCATION_VARIANT_COUNTS[filePrefix] !== undefined
-            ? LOCATION_VARIANT_COUNTS[filePrefix]
-            : DEFAULT_LOCATION_VARIANT_COUNT;
-            
-        // 3. Randomize Variant 
-        // Travel images are random each time, not seeded by player ID
-        const variantIndex = Math.floor(Math.random() * variantCount);
-        const variantLetter = this._getVariantSuffix(variantIndex); // A...Z, AA...
+        const locKey = String(locationIdOrObj).trim();
 
-        // 4. Construct Path
+        // 2. Check DB.MARKETS for declarative assetPrefix
+        const market = DB.MARKETS?.find(m => m.id === locKey || m.name?.toLowerCase() === locKey.toLowerCase());
+        if (market?.assetPrefix) {
+            return market.assetPrefix;
+        }
+
+        // 3. Check explicit dictionary mapping
+        if (this.LOCATION_FILENAME_MAP[locKey]) {
+            return this.LOCATION_FILENAME_MAP[locKey];
+        }
+
+        // Check dictionary mapping case-insensitively
+        const lowerLocKey = locKey.toLowerCase();
+        for (const [key, prefix] of Object.entries(this.LOCATION_FILENAME_MAP)) {
+            if (key.toLowerCase() === lowerLocKey) {
+                return prefix;
+            }
+        }
+
+        // 4. Safe fallback: Strip 'loc_', capitalize first letter
+        const raw = locKey.replace(/^loc_/, '');
+        return raw.charAt(0).toUpperCase() + raw.slice(1);
+    }
+
+    /**
+     * Determines the total visual variants available for a location.
+     * Checks market object, LOCATION_VARIANT_COUNTS (case-insensitively), and fallback defaults.
+     * @param {string|object} locationId 
+     * @returns {number}
+     */
+    static getLocationVariantCount(locationId) {
+        // Direct property check if an object was passed
+        if (typeof locationId === 'object' && locationId !== null) {
+            if (typeof locationId.variantCount === 'number' && locationId.variantCount > 0) {
+                return locationId.variantCount;
+            }
+            if (typeof locationId.imageVariants === 'number' && locationId.imageVariants > 0) {
+                return locationId.imageVariants;
+            }
+        }
+
+        const filePrefix = this._resolveLocationPrefix(locationId);
+
+        // Check DB.MARKETS for explicit variantCount
+        const market = DB.MARKETS?.find(m => m.id === locationId || m.name?.toLowerCase() === String(locationId).toLowerCase());
+        if (typeof market?.variantCount === 'number' && market.variantCount > 0) {
+            return market.variantCount;
+        }
+
+        // Exact match in LOCATION_VARIANT_COUNTS
+        if (LOCATION_VARIANT_COUNTS[filePrefix] !== undefined) {
+            return LOCATION_VARIANT_COUNTS[filePrefix];
+        }
+
+        // Case-insensitive match in LOCATION_VARIANT_COUNTS
+        const lowerPrefix = filePrefix.toLowerCase();
+        for (const [key, count] of Object.entries(LOCATION_VARIANT_COUNTS)) {
+            if (key.toLowerCase() === lowerPrefix) {
+                return count;
+            }
+        }
+
+        return DEFAULT_LOCATION_VARIANT_COUNT;
+    }
+
+    static _generateLocationPath(locationId, variantLetter = null) {
+        if (!locationId) return null;
+
+        // 1. Resolve filename prefix (Folder & File Start)
+        const filePrefix = this._resolveLocationPrefix(locationId);
+
+        // 2. Determine Variant Letter
+        let letter = variantLetter;
+        if (!letter) {
+            const variantCount = this.getLocationVariantCount(locationId);
+            const variantIndex = variantCount > 0 ? Math.floor(Math.random() * variantCount) : 0;
+            letter = this._getVariantSuffix(variantIndex); // A...Z, AA...
+        }
+
+        // 3. Construct Path
         // Pattern: assets/images/locations/[Capitalized]/[Capitalized]_[Letter].webp
-        return `assets/images/locations/${filePrefix}/${filePrefix}_${variantLetter}.webp`;
+        return `assets/images/locations/${filePrefix}/${filePrefix}_${letter}.webp`;
     }
 
     /**
@@ -246,17 +321,38 @@ export class AssetService {
     }
 
     /**
-     * Generates a random target image URL for a location.
-     * Used for the Travel Animation sequence.
+     * Generates a target image URL for a location.
+     * Used for the Travel Animation sequence and location visual displays.
+     * @param {string|object} locationId - Location ID or market object.
+     * @param {string} [specificVariant=null] - Optional specific variant letter (e.g. 'A').
+     * @returns {string} Image path or cached blob URL.
      */
-    static getLocationImage(locationId) {
-        const path = this._generateLocationPath(locationId);
+    static getLocationImage(locationId, specificVariant = null) {
+        const path = this._generateLocationPath(locationId, specificVariant);
         if (!path) return '';
 
         if (this.blobCache.has(path)) {
             return this.blobCache.get(path);
         }
         return path;
+    }
+
+    /**
+     * Retrieves all available variant image paths for a given location.
+     * Useful for codex entries, galleries, or pre-buffering.
+     * @param {string|object} locationId 
+     * @returns {string[]}
+     */
+    static getLocationAllImagePaths(locationId) {
+        const filePrefix = this._resolveLocationPrefix(locationId);
+        const count = this.getLocationVariantCount(locationId);
+        const paths = [];
+        for (let i = 0; i < count; i++) {
+            const letter = this._getVariantSuffix(i);
+            const path = `assets/images/locations/${filePrefix}/${filePrefix}_${letter}.webp`;
+            paths.push(this.blobCache.has(path) ? this.blobCache.get(path) : path);
+        }
+        return paths;
     }
 
     /**

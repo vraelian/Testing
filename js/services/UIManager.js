@@ -835,7 +835,8 @@ export class UIManager {
     showMapDetailModal(...args) { this.eventControl.showMapDetailModal(...args); }
     hideMapDetailModal(...args) { this.eventControl.hideMapDetailModal(...args); }
     showCargoDetailModal(...args) { this.eventControl.showCargoDetailModal(...args); }
-    createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
+    createFloatingText(...args) { return this.eventControl.createFloatingText(...args); }
+    spawnFloatingTransaction(...args) { return this.eventControl.spawnFloatingTransaction(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
     showEconWeatherModal(gameState = this.lastKnownState) {

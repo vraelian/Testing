@@ -112,6 +112,7 @@ DIRECTORY STRUCTURE
 | | | |____UIMarketControl.js
 | | | |____UIHelpManager.js
 | | | |____TravelAnimationService.js
+| | | |____FloatingTextService.js
 | | | |____UIHangarControl.js
 | | | |____CinematicService.js
 | | | |____StarfieldService.js
@@ -223,7 +224,7 @@ FILE CONTENTS
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Bruno+Ace+SC&family=Exo+2:wght@400;700&family=Orbitron:wght@500;700&family=Roboto+Mono:wght@400;700&family=Aldrich&family=Space+Mono:wght@700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="./css/global.css?v=3">
+    <link rel="stylesheet" href="./css/global.css?v=4">
     <link rel="stylesheet" href="./css/navigation.css">
     <link rel="stylesheet" href="./css/news-ticker.css"> 
     <link rel="stylesheet" href="./css/help-system.css">
@@ -235,7 +236,7 @@ FILE CONTENTS
     <link rel="stylesheet" href="./css/hud.css">
     <link rel="stylesheet" href="./css/achievements.css">
     <link rel="stylesheet" href="./css/missions.css">
-    <link rel="stylesheet" href="./css/debug.css">
+    <link rel="stylesheet" href="./css/debug.css?v=2">
     <link rel="stylesheet" href="./css/screens/market-screen.css">
     <link rel="stylesheet" href="./css/screens/hangar-screen.css">
     <link rel="stylesheet" href="./css/screens/navigation-screen.css">
@@ -416,6 +417,9 @@ FILE CONTENTS
              </div>
         </div>
     </main>
+    
+    <!-- Floating Transaction Vectors HUD Layer -->
+    <div id="orbital-hud-overlay" class="fixed inset-0 pointer-events-none z-[1000] overflow-visible"></div>
     
     <div id="mission-sticky-bar" class="bottom-sticky-bar cursor-pointer" data-action="set-screen" data-nav-id="data" data-screen-id="missions">
         <div class="sticky-content">
@@ -2868,20 +2872,401 @@ FILE CONTENTS
 
 --- START OF FILE: ./css/debug.css ---
 /* css/debug.css */
+
+/* ==========================================================================
+   ORBITAL TRADING - DEBUG PANEL (lil-gui) MODERN STYLING
+   ========================================================================== */
+
+#debug-panel,
+.lil-gui {
+    --font-size: calc(11px + 5pt);
+    --font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --font-family-mono: 'Roboto Mono', Menlo, Monaco, Consolas, monospace;
+    --background-color: rgba(18, 24, 38, 0.97);
+    --text-color: #f8fafc;
+    --title-background-color: rgba(28, 38, 58, 0.98);
+    --widget-color: rgba(28, 38, 58, 0.9);
+    --hover-color: rgba(45, 60, 88, 0.95);
+    --focus-color: rgba(14, 165, 233, 0.5);
+    --number-color: #38bdf8;
+    --string-color: #4ade80;
+    --folder-indent: 10px;
+    --widget-height: 32px;
+    font-size: calc(11px + 5pt);
+}
+
 #debug-panel {
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%) scale(0.75);
     transform-origin: center center;
-    width: 450px; /* Base width before scaling */
+    width: 470px;
+    max-height: 88vh;
     z-index: 1000;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
     display: none; /* Hidden by default */
+    background: rgba(18, 24, 38, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    border-radius: 10px;
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.9), 0 0 20px rgba(56, 189, 248, 0.25);
+    overflow: hidden;
+    will-change: transform;
 }
 
 #debug-panel.debug-visible {
-    display: block; /* Shown when class is applied */
+    display: flex;
+    flex-direction: column;
+}
+
+/* Header Title Bar */
+#debug-panel.lil-gui.root > .title,
+#debug-panel > .title {
+    font-family: 'Orbitron', 'Aldrich', sans-serif;
+    font-weight: 700;
+    font-size: calc(12px + 5pt);
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #38bdf8;
+    background: linear-gradient(90deg, rgba(14, 116, 144, 0.6) 0%, rgba(22, 32, 50, 0.98) 100%);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.5);
+    padding: 6px 12px;
+    height: auto;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    text-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
+    flex-shrink: 0;
+    touch-action: none;
+}
+
+/* Header Action Buttons (Collapse, Reload) */
+.debug-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-left: auto;
+}
+
+.debug-header-btn {
+    background: rgba(15, 23, 42, 0.85);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 4px;
+    color: #7dd3fc;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(10px + 4pt);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding: 3px 8px;
+    cursor: pointer;
+    touch-action: manipulation;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.15s ease-in-out;
+    line-height: 1.2;
+}
+
+.debug-header-btn:hover {
+    background: rgba(14, 116, 144, 0.6);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.45);
+}
+
+.debug-header-btn:active {
+    transform: translateY(1px);
+    background: rgba(8, 145, 178, 0.85);
+}
+
+.debug-reload-btn {
+    border-color: rgba(244, 63, 94, 0.4);
+    color: #fca5a5;
+}
+
+.debug-reload-btn:hover {
+    background: rgba(225, 29, 72, 0.5);
+    border-color: #f43f5e;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(244, 63, 94, 0.5);
+}
+
+/* Drag Handle on Header */
+.debug-drag-handle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 24px;
+    margin-right: 10px;
+    border-radius: 4px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    color: #7dd3fc;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    transition: all 0.15s ease-in-out;
+    flex-shrink: 0;
+}
+
+.debug-drag-handle:hover {
+    background: rgba(14, 116, 144, 0.5);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.5);
+}
+
+.debug-drag-handle:active,
+#debug-panel.is-dragging .debug-drag-handle {
+    cursor: grabbing;
+    background: rgba(8, 145, 178, 0.8);
+    border-color: #67e8f9;
+    color: #ffffff;
+    box-shadow: 0 0 12px rgba(6, 182, 212, 0.7);
+}
+
+body.debug-is-dragging {
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    cursor: grabbing !important;
+}
+
+#debug-panel.is-dragging {
+    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95), 0 0 35px rgba(6, 182, 212, 0.35);
+    user-select: none;
+}
+
+/* Scrollable container for items/folders */
+#debug-panel > .children {
+    overflow-y: auto;
+    max-height: calc(88vh - 40px);
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.35) rgba(15, 23, 42, 0.6);
+}
+
+#debug-panel .children::-webkit-scrollbar {
+    width: 5px;
+}
+#debug-panel .children::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+}
+#debug-panel .children::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.35);
+    border-radius: 3px;
+}
+#debug-panel .children::-webkit-scrollbar-thumb:hover {
+    background: rgba(56, 189, 248, 0.65);
+}
+
+/* Folder Headers */
+#debug-panel .lil-gui .title,
+.debug-popped-out-panel .title {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    white-space: nowrap !important;
+    flex-wrap: nowrap !important;
+    font-family: 'Exo 2', sans-serif;
+    font-weight: 700;
+    font-size: calc(11px + 5pt);
+    letter-spacing: 0.04em;
+    color: #f1f5f9;
+    background: rgba(30, 44, 68, 0.85);
+    border-top: 1px solid rgba(56, 189, 248, 0.2);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.6);
+    padding: 6px 8px;
+    min-height: 30px;
+    height: auto;
+    box-sizing: border-box;
+    transition: background 0.15s ease, color 0.15s ease;
+}
+#debug-panel .lil-gui .title:hover {
+    background: rgba(14, 116, 144, 0.4);
+    color: #38bdf8;
+}
+
+/* Folder Bar Action Button (Pop Out / Pop In) */
+#debug-panel .debug-folder-action-btn,
+.debug-popped-out-panel .debug-folder-action-btn,
+button.debug-folder-action-btn {
+    width: auto !important;
+    min-width: unset !important;
+    max-width: unset !important;
+    flex: 0 0 auto !important;
+    flex-grow: 0 !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
+    margin-right: 2px !important;
+    background: rgba(15, 23, 42, 0.85) !important;
+    border: 1px solid rgba(56, 189, 248, 0.45) !important;
+    border-radius: 4px !important;
+    color: #38bdf8 !important;
+    font-family: 'Roboto Mono', monospace !important;
+    font-size: calc(10px + 4pt) !important;
+    font-weight: 600 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.04em !important;
+    padding: 3px 8px !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    line-height: 18px !important;
+    box-shadow: none !important;
+    cursor: pointer !important;
+    touch-action: manipulation !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+    transition: all 0.15s ease-in-out !important;
+    white-space: nowrap !important;
+}
+
+#debug-panel .debug-folder-action-btn:hover,
+.debug-popped-out-panel .debug-folder-action-btn:hover,
+button.debug-folder-action-btn:hover {
+    background: rgba(14, 116, 144, 0.6) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(6, 182, 212, 0.5) !important;
+}
+
+#debug-panel .debug-folder-action-btn:active,
+.debug-popped-out-panel .debug-folder-action-btn:active,
+button.debug-folder-action-btn:active {
+    transform: translateY(1px) !important;
+}
+
+/* Nested Folder Hierarchy */
+#debug-panel .lil-gui .lil-gui {
+    border-left: 2px solid rgba(56, 189, 248, 0.45);
+    margin-left: 4px;
+    background: rgba(15, 23, 42, 0.45);
+}
+#debug-panel .lil-gui .lil-gui .title {
+    background: rgba(26, 38, 60, 0.8);
+    color: #e2e8f0;
+    font-size: calc(10.5px + 5pt);
+    font-weight: 600;
+    padding-left: 8px;
+}
+
+/* Controllers & Row Items */
+#debug-panel .lil-gui .controller {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: 4px 6px;
+    min-height: 30px;
+    align-items: center;
+    transition: background 0.12s ease;
+}
+#debug-panel .lil-gui .controller:hover {
+    background: rgba(56, 189, 248, 0.08);
+}
+#debug-panel .lil-gui .controller .name {
+    color: #cbd5e1;
+    font-family: 'Exo 2', sans-serif;
+    font-size: calc(11px + 5pt);
+    font-weight: 600;
+    transition: color 0.15s ease;
+}
+#debug-panel .lil-gui .controller:hover .name {
+    color: #ffffff;
+}
+
+/* Buttons */
+#debug-panel .lil-gui .controller.button {
+    padding: 3px 6px;
+}
+#debug-panel .lil-gui .controller.button .name,
+#debug-panel .lil-gui button:not(.debug-folder-action-btn):not(.debug-header-btn) {
+    background: linear-gradient(180deg, rgba(38, 52, 78, 0.95) 0%, rgba(20, 28, 44, 0.98) 100%);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 4px;
+    color: #f8fafc;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    font-weight: 600;
+    text-align: center;
+    padding: 4px 8px;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: all 0.15s ease-in-out;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+}
+#debug-panel .lil-gui .controller.button .name:hover,
+#debug-panel .lil-gui button:not(.debug-folder-action-btn):not(.debug-header-btn):hover {
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.8) 0%, rgba(8, 145, 178, 0.95) 100%);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+#debug-panel .lil-gui .controller.button .name:active,
+#debug-panel .lil-gui button:not(.debug-folder-action-btn):not(.debug-header-btn):active {
+    transform: translateY(1px);
+    filter: brightness(1.2);
+}
+
+/* Select Dropdowns */
+#debug-panel .lil-gui select {
+    background-color: rgba(20, 28, 44, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.45);
+    border-radius: 4px;
+    color: #38bdf8;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    padding: 3px 8px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+    cursor: pointer;
+}
+#debug-panel .lil-gui select:hover,
+#debug-panel .lil-gui select:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+}
+#debug-panel .lil-gui select option {
+    background-color: #0c101d;
+    color: #f8fafc;
+}
+
+/* Inputs (Text & Number) */
+#debug-panel .lil-gui input[type="text"],
+#debug-panel .lil-gui input[type="number"] {
+    background-color: rgba(20, 28, 44, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 4px;
+    color: #f8fafc;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    padding: 3px 6px;
+    outline: none;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+#debug-panel .lil-gui input[type="text"]:focus,
+#debug-panel .lil-gui input[type="number"]:focus {
+    border-color: #38bdf8;
+    box-shadow: 0 0 0 1px rgba(56, 189, 248, 0.5);
+}
+
+/* Checkboxes */
+#debug-panel .lil-gui input[type="checkbox"] {
+    accent-color: #06b6d4;
+    cursor: pointer;
+    width: 15px;
+    height: 15px;
+}
+
+/* Sliders */
+#debug-panel .lil-gui .slider {
+    background: rgba(30, 41, 59, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 3px;
+    height: 8px;
+}
+#debug-panel .lil-gui .slider-fg {
+    background: linear-gradient(90deg, #0284c7 0%, #06b6d4 100%);
+    border-radius: 2px;
 }
 
 
@@ -3016,10 +3401,6 @@ FILE CONTENTS
     background-color: rgba(255, 255, 255, 0.05);
 }
 
-#debug-panel .lil-gui.root {
-    background-color: #1f2937;
-    color: #e5e7eb;
-}
 
 #diagnostic-overlay p {
     margin: 0;
@@ -3067,6 +3448,409 @@ FILE CONTENTS
     background-color: #4a6a32 !important;
 }
 /* --- [[END]] TUTORIAL TUNER STYLES --- */
+
+/* ==========================================================================
+   POPPED OUT MISSION CONTROL PANEL (GREY THEME & COMPACT LAYOUT)
+   ========================================================================== */
+.debug-popped-out-panel {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    top: auto;
+    transform: translateX(-50%) scale(0.75);
+    transform-origin: bottom center;
+    width: 520px;
+    max-width: calc(100vw - 20px);
+    max-height: 88vh;
+    z-index: 1002;
+    background: rgba(22, 26, 34, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    border-radius: 10px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.9), 0 0 16px rgba(148, 163, 184, 0.15);
+    overflow: hidden;
+    will-change: transform;
+}
+
+.debug-popped-out-panel.debug-visible {
+    display: flex;
+    flex-direction: column;
+}
+
+.debug-popped-out-panel > .title {
+    font-family: 'Orbitron', 'Aldrich', sans-serif;
+    font-weight: 700;
+    font-size: calc(12px + 5pt);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #f1f5f9;
+    background: linear-gradient(90deg, rgba(51, 65, 85, 0.85) 0%, rgba(30, 35, 45, 0.98) 100%);
+    border-bottom: 1px solid rgba(148, 163, 184, 0.35);
+    padding: 6px 12px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    cursor: default;
+    user-select: none;
+    -webkit-user-select: none;
+    text-shadow: 0 0 6px rgba(226, 232, 240, 0.3);
+    flex-shrink: 0;
+    touch-action: none;
+}
+
+/* Hide the folder accordion arrow in popped-out mode */
+.debug-popped-out-panel > .title::before {
+    display: none !important;
+}
+
+/* Drag Handle in grey theme */
+.debug-popped-out-panel .debug-drag-handle {
+    background: rgba(30, 35, 45, 0.8);
+    border: 1px solid rgba(148, 163, 184, 0.35);
+    color: #94a3b8;
+}
+.debug-popped-out-panel .debug-drag-handle:hover {
+    background: rgba(51, 65, 85, 0.8);
+    border-color: #cbd5e1;
+    color: #f1f5f9;
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.35);
+}
+.debug-popped-out-panel .debug-drag-handle:active,
+.debug-popped-out-panel.is-dragging .debug-drag-handle {
+    background: rgba(71, 85, 105, 0.95);
+    border-color: #e2e8f0;
+    color: #ffffff;
+}
+
+/* Pop In button in grey theme */
+.debug-popped-out-panel .debug-folder-action-btn {
+    background: rgba(30, 35, 45, 0.85) !important;
+    border: 1px solid rgba(148, 163, 184, 0.45) !important;
+    color: #cbd5e1 !important;
+    font-size: calc(10px + 4pt) !important;
+    height: 26px !important;
+    min-height: 26px !important;
+    line-height: 18px !important;
+}
+.debug-popped-out-panel .debug-folder-action-btn:hover {
+    background: rgba(51, 65, 85, 0.8) !important;
+    border-color: #e2e8f0 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.35) !important;
+}
+.debug-popped-out-panel .debug-folder-action-btn:active {
+    background: rgba(71, 85, 105, 0.95) !important;
+    color: #ffffff !important;
+    transform: translateY(1px) !important;
+}
+
+/* Children container */
+.debug-popped-out-panel > .children {
+    display: flex;
+    flex-direction: column;
+    padding: 6px 8px 8px 8px;
+    gap: 0;
+    overflow: visible;
+    max-height: none;
+    background: rgba(18, 21, 28, 0.75);
+}
+
+/* Dropdown controller: full width top row */
+.debug-popped-out-panel .controller.option,
+.debug-popped-out-panel .controller:not(.function):not(.button) {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 3px 2px 6px 2px;
+    border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+    margin-bottom: 4px;
+    display: flex;
+    align-items: center;
+}
+.debug-popped-out-panel .controller .name {
+    color: #cbd5e1;
+    font-family: 'Exo 2', sans-serif;
+    font-size: calc(11px + 5pt);
+    font-weight: 600;
+}
+.debug-popped-out-panel select {
+    background-color: rgba(24, 30, 42, 0.98);
+    border: 1px solid rgba(148, 163, 184, 0.45);
+    border-radius: 4px;
+    color: #f1f5f9;
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(11px + 5pt);
+    padding: 3px 8px;
+    outline: none;
+    cursor: pointer;
+}
+.debug-popped-out-panel select:hover,
+.debug-popped-out-panel select:focus {
+    border-color: #cbd5e1;
+    box-shadow: 0 0 6px rgba(148, 163, 184, 0.35);
+}
+
+/* ==========================================================================
+   MISSION CONTROL BUTTON ROW (HORIZONTAL 4-BUTTON BAR)
+   ========================================================================== */
+.mission-control-btn-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: stretch !important;
+    width: 100% !important;
+    gap: 4px !important;
+    padding: 2px 2px 6px 2px !important;
+    box-sizing: border-box !important;
+    flex-wrap: nowrap !important;
+}
+
+.mission-control-btn-row .controller,
+.mission-control-btn-row .controller.function,
+.mission-control-btn-row .controller.button {
+    flex: 1 1 0 !important;
+    width: 25% !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    display: flex !important;
+}
+
+.mission-control-btn-row .widget {
+    width: 100% !important;
+    flex: 1 1 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: flex !important;
+}
+
+.mission-control-btn-row button {
+    width: 100% !important;
+    min-height: 32px !important;
+    height: 32px !important;
+    box-sizing: border-box !important;
+    border-radius: 4px !important;
+    padding: 2px 4px !important;
+    font-family: 'Roboto Mono', monospace !important;
+    font-size: calc(10px + 4pt) !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.02em !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-align: center !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease-in-out !important;
+}
+
+.mission-control-btn-row button .name {
+    width: 100% !important;
+    text-align: center !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    line-height: 1 !important;
+    font-size: calc(10px + 4pt) !important;
+}
+
+/* Grey theme buttons for popped-out Mission Control */
+.debug-popped-out-panel .mission-control-btn-row button {
+    background: linear-gradient(180deg, rgba(51, 65, 85, 0.85) 0%, rgba(30, 35, 45, 0.98) 100%) !important;
+    border: 1px solid rgba(148, 163, 184, 0.4) !important;
+    color: #f1f5f9 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3) !important;
+}
+.debug-popped-out-panel .mission-control-btn-row button:hover {
+    background: linear-gradient(180deg, rgba(71, 85, 105, 0.95) 0%, rgba(51, 65, 85, 0.98) 100%) !important;
+    border-color: #cbd5e1 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 8px rgba(148, 163, 184, 0.4) !important;
+}
+.debug-popped-out-panel .mission-control-btn-row button:active {
+    transform: translateY(1px) !important;
+    background: rgba(30, 35, 45, 0.95) !important;
+}
+
+/* Blue theme buttons for docked menu */
+#debug-panel .mission-control-btn-row button {
+    background: linear-gradient(180deg, rgba(38, 52, 78, 0.95) 0%, rgba(20, 28, 44, 0.98) 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.45) !important;
+    color: #f8fafc !important;
+}
+#debug-panel .mission-control-btn-row button:hover {
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.8) 0%, rgba(8, 145, 178, 0.95) 100%) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
+}
+#debug-panel .mission-control-btn-row button:active {
+    transform: translateY(1px) !important;
+    filter: brightness(1.2) !important;
+}
+
+/* Row 2: Distinct High-Contrast Accents for Bulk Actions */
+.mission-control-btn-row-2 .controller:nth-child(1) button {
+    color: #86efac !important;
+    border-color: rgba(74, 222, 128, 0.5) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(1) button:hover {
+    background: linear-gradient(180deg, rgba(22, 101, 52, 0.8) 0%, rgba(20, 83, 45, 0.95) 100%) !important;
+    border-color: #4ade80 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(74, 222, 128, 0.45) !important;
+}
+
+.mission-control-btn-row-2 .controller:nth-child(2) button {
+    color: #fde047 !important;
+    border-color: rgba(251, 191, 36, 0.5) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(2) button:hover {
+    background: linear-gradient(180deg, rgba(161, 98, 7, 0.8) 0%, rgba(133, 77, 14, 0.95) 100%) !important;
+    border-color: #facc15 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(250, 204, 21, 0.45) !important;
+}
+
+.mission-control-btn-row-2 .controller:nth-child(3) button {
+    color: #38bdf8 !important;
+    border-color: rgba(56, 189, 248, 0.55) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(3) button:hover {
+    background: linear-gradient(180deg, rgba(14, 116, 144, 0.85) 0%, rgba(8, 145, 178, 0.95) 100%) !important;
+    border-color: #38bdf8 !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.45) !important;
+}
+
+.mission-control-btn-row-2 .controller:nth-child(4) button {
+    color: #5eead4 !important;
+    border-color: rgba(45, 212, 191, 0.5) !important;
+}
+.mission-control-btn-row-2 .controller:nth-child(4) button:hover {
+    background: linear-gradient(180deg, rgba(13, 148, 136, 0.8) 0%, rgba(15, 118, 110, 0.95) 100%) !important;
+    border-color: #2dd4bf !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 10px rgba(45, 212, 191, 0.45) !important;
+}
+
+/* ==========================================================================
+   GO TO DESTINATION DROPDOWN MENU
+   ========================================================================== */
+.debug-goto-dropdown {
+    position: fixed;
+    z-index: 10005;
+    width: 240px;
+    max-height: 290px;
+    background: rgba(15, 22, 36, 0.98);
+    border: 1px solid rgba(56, 189, 248, 0.6);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.9), 0 0 18px rgba(56, 189, 248, 0.25);
+    display: none;
+    flex-direction: column;
+    overflow: hidden;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    font-family: 'Exo 2', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.debug-goto-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 6px 10px;
+    background: linear-gradient(90deg, rgba(14, 116, 144, 0.7) 0%, rgba(22, 32, 50, 0.98) 100%);
+    border-bottom: 1px solid rgba(56, 189, 248, 0.4);
+    font-family: 'Orbitron', 'Aldrich', sans-serif;
+    font-size: calc(9px + 4pt);
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    color: #38bdf8;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+.debug-goto-close-btn {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    font-size: 18px;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.15s ease;
+}
+
+.debug-goto-close-btn:hover {
+    color: #f43f5e;
+}
+
+.debug-goto-list {
+    overflow-y: auto;
+    max-height: 245px;
+    padding: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(56, 189, 248, 0.4) rgba(15, 23, 42, 0.6);
+}
+
+.debug-goto-list::-webkit-scrollbar {
+    width: 4px;
+}
+.debug-goto-list::-webkit-scrollbar-track {
+    background: rgba(15, 23, 42, 0.6);
+}
+.debug-goto-list::-webkit-scrollbar-thumb {
+    background: rgba(56, 189, 248, 0.4);
+    border-radius: 2px;
+}
+
+.debug-goto-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.12s ease, border-color 0.12s ease;
+    border: 1px solid transparent;
+}
+
+.debug-goto-item:hover {
+    background: rgba(14, 116, 144, 0.35);
+    border-color: rgba(56, 189, 248, 0.5);
+}
+
+.debug-goto-item.current-location {
+    opacity: 0.7;
+    background: rgba(30, 41, 59, 0.4);
+}
+
+.debug-goto-name {
+    font-size: calc(10.5px + 4pt);
+    font-weight: 600;
+    color: #f1f5f9;
+}
+
+.debug-goto-badge {
+    font-family: 'Roboto Mono', monospace;
+    font-size: calc(9.5px + 4pt);
+    font-weight: 700;
+    color: #38bdf8;
+    background: rgba(14, 116, 144, 0.35);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 3px;
+    padding: 1px 5px;
+    line-height: 1.2;
+}
+
+.debug-goto-badge.current {
+    color: #94a3b8;
+    background: rgba(51, 65, 85, 0.4);
+    border-color: rgba(148, 163, 184, 0.3);
+}
 --- END OF FILE: ./css/debug.css ---
 
 --- START OF FILE: ./css/hud.css ---
@@ -3125,6 +3909,12 @@ FILE CONTENTS
     font-size: calc(0.9rem - 2px); /* Reduced by ~1.5pt */
 }
 
+.location-name-text {
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+
 /* [[NEW]] When Max Credits are active, reduce Location Name font size */
 .context-bar.max-credits-active .location-name-text {
     font-size: calc(0.9rem - 2.66px); /* Reduced by ~2pt */
@@ -3133,6 +3923,9 @@ FILE CONTENTS
 .credit-text {
     color: #29f1ff;
     text-shadow: 0 0 5px #16a8bb, 0 0 10px #28d5d7, 0 2px 4px rgba(0,0,0,0.8); /* Blue glow with dark shadow */
+    user-select: none;
+    -webkit-user-select: none;
+    cursor: default;
 }
 
 .credit-text.text-glow-gold {
@@ -3476,6 +4269,34 @@ FILE CONTENTS
     height: 24px;
     color: inherit !important;
 }
+
+/* ==========================================================
+   ORBITAL TRADING: FLOATING TRANSACTION BASE CLASS
+   Shared typography, occlusion contrast, and 1/3 glow baseline
+   ========================================================== */
+.floating-credit-vector {
+    position: absolute;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+    font-family: 'Orbitron', -apple-system, sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: 2.5px;
+    color: #4dcfd5;
+    
+    /* Calibrated 1/3 glow with dark contrast occlusion backing */
+    text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.70),
+        0 4px 10px rgba(0, 0, 0, 0.70),
+        0 0 3px rgba(255, 255, 255, 1.00),
+        0 0 8px rgba(0, 243, 255, 1.00),
+        0 0 16px rgba(0, 243, 255, 0.47);
+
+    will-change: transform, opacity;
+    z-index: 1000;
+}
 --- END OF FILE: ./css/hud.css ---
 
 --- START OF FILE: ./css/global.css ---
@@ -3552,6 +4373,14 @@ FILE CONTENTS
     --ui-gradient-header: linear-gradient(180deg, rgba(12, 16, 29, 0.95) 0%, transparent 100%);
     --ui-modal-bg: #111827;
     --ui-modal-border: #374151;
+
+    /* Notch / Safe Area clearance:
+       - On Dynamic Island devices, safe-area-inset-top is ~59px (notch edge is ~48-49px).
+       - An offset of -4px places the navigation bar at 55px (~6px below notch edge).
+       - On non-notched screens (env = 0px), max() falls back to 1rem (16px) with zero layout disruption.
+    */
+    --notch-clearance-offset: -4px;
+    --game-container-padding-top: max(1rem, calc(env(safe-area-inset-top, 0px) + var(--notch-clearance-offset)));
 }
 
 html {
@@ -3649,8 +4478,8 @@ a *, button *, [data-action] *, .tab * {
     box-shadow: 0 0 30px var(--ui-shadow-primary);
     display: flex;
     flex-direction: column;
-    /* MODIFIED: Corrected safe-area-inset padding */
-    padding: calc(1rem + env(safe-area-inset-top)) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
+    /* MODIFIED: Optimized notch clearance with fallback */
+    padding: var(--game-container-padding-top) 1rem calc(1rem + env(safe-area-inset-bottom)) 1rem;
     box-sizing: border-box;
     overflow: hidden;
     position: relative; /* Added to contain the ::before noise texture */
@@ -4318,14 +5147,33 @@ transform: translateY(-50%);
     border-bottom-right-radius: 10px;
 }
 
+/* ==========================================================
+   ORBITAL TRADING: FLOATING TRANSACTION BASE CLASS
+   Shared typography, occlusion contrast, and 1/3 glow baseline
+   ========================================================== */
+.floating-credit-vector,
 .floating-text {
-    position: fixed;
+    position: absolute;
     pointer-events: none;
+    user-select: none;
+    -webkit-user-select: none;
+    white-space: nowrap;
+    font-family: 'Orbitron', -apple-system, sans-serif;
+    font-size: 26px;
     font-weight: 700;
-    font-size: 1.25rem;
-    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.7);
-    z-index: 100;
-    animation: float-up 2.5s forwards ease-out;
+    letter-spacing: 2.5px;
+    color: #4dcfd5;
+    
+    /* Calibrated 1/3 glow with dark contrast occlusion backing */
+    text-shadow:
+        0 2px 4px rgba(0, 0, 0, 0.70),
+        0 4px 10px rgba(0, 0, 0, 0.70),
+        0 0 3px rgba(255, 255, 255, 1.00),
+        0 0 8px rgba(0, 243, 255, 1.00),
+        0 0 16px rgba(0, 243, 255, 0.47);
+
+    will-change: transform, opacity;
+    z-index: 1000;
 }
 
 .cargo-item-card {
@@ -15590,6 +16438,23 @@ document.addEventListener('DOMContentLoaded', () => {
     
     gameState.subscribe(() => uiManager.render(gameState.getState()));
     eventManager.bindEvents();
+
+    // --- DEBUG QUICK RELOAD HANDLER ---
+    if (sessionStorage.getItem('orbital_debug_quick_reload') === 'true') {
+        sessionStorage.removeItem('orbital_debug_quick_reload');
+        if (splashScreen) {
+            splashScreen.style.display = 'none';
+        }
+        if (debugService) {
+            debugService.simpleStart();
+            newsTickerService.onLocationChange();
+            uiManager.render(gameState.getState());
+            AssetService.hydrateGameAssets(gameState.getState());
+            if (!debugService.active) {
+                debugService.toggleVisibility();
+            }
+        }
+    }
     
     if (DEV_MODE || true) {
         window.game = {
@@ -17377,6 +18242,8 @@ export const DB = {
         { 
             id: LOCATION_IDS.CORONA, 
             name: 'Solar Corona', 
+            assetPrefix: 'Corona',
+            variantCount: 1,
             distance: 45, 
             launchFlavor: "Plunge inward toward the blinding glare of the deep solar corona.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #f59e0b, #9a3412)', textColor: '#fef3c7', borderColor: '#f59e0b' }, 
@@ -17394,6 +18261,8 @@ export const DB = {
         { 
             id: LOCATION_IDS.SUN, 
             name: 'Sol Station', 
+            assetPrefix: 'Sol',
+            variantCount: 11,
             distance: 45, 
             launchFlavor: "Plunge inward toward the corona, where extreme thermal stress threatens any hull daring enough to reach the massive solar harvester.", 
             navTheme: { gradient: 'linear-gradient(to bottom right, #f59e0b, #9a3412)', textColor: '#fef3c7', borderColor: '#f59e0b' }, 
@@ -23378,7 +24247,9 @@ export const LOCATION_VARIANT_COUNTS = {
     'Uranus': 16,
     'Kepler': 12,
     'Pluto': 11,
+    'Sol': 11,
     'sol': 11,
+    'Corona': 1,
 };
 --- END OF FILE: ./js/data/assets_config.js ---
 
@@ -26555,10 +27426,10 @@ export class UIMissionControl {
                                     
                                     if (actionParams.transactionType === 'SELL') {
                                         const totalReward = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
-                                        this.manager.createFloatingText(`+⌬ ${totalReward.toLocaleString()}`, btnX, btnY, '#4ade80');
+                                        this.manager.createFloatingText(`+⌬ ${totalReward.toLocaleString()}`, btnX, btnY, '#4ade80', null, false, 'mission');
                                     } else {
                                         const totalCost = Math.round(basePrice * (1 + transactionModifier) * actionParams.quantity);
-                                        this.manager.createFloatingText(`-⌬ ${totalCost.toLocaleString()}`, btnX, btnY, '#ef4444');
+                                        this.manager.createFloatingText(`-⌬ ${totalCost.toLocaleString()}`, btnX, btnY, '#ef4444', null, false, 'mission');
                                     }
                                 }
                             }
@@ -26604,7 +27475,7 @@ export class UIMissionControl {
                                     const rect = newBtn.getBoundingClientRect();
                                     const x = e.clientX || rect.left + (rect.width / 2);
                                     const y = e.clientY || rect.top;
-                                    this.manager.createFloatingText('+1 Exchange Badge', x, y, '#c084fc', 2500);
+                                    this.manager.createFloatingText('+1 Exchange Badge', x, y, '#c084fc', null, false, 'mission');
                                     
                                     if (this.manager.simulationService) {
                                         this.manager.simulationService.missionService.checkTriggers();
@@ -27252,7 +28123,7 @@ export class UIMissionControl {
                                 const y = e.clientY || rect.top;
                                 
                                 const actionLabel = (objDef && objDef.actionText) ? objDef.actionText : ((objDef && objDef.target && objDef.target.toLowerCase().includes('pick up')) ? 'PASSENGER BOARDED' : 'ACTION COMPLETED');
-                                this.manager.createFloatingText(actionLabel, x, y, '#c084fc');
+                                this.manager.createFloatingText(actionLabel, x, y, '#c084fc', null, false, 'mission');
                                 
                                 this.manager.simulationService.missionService.checkTriggers();
                                 coreState.setState({}); 
@@ -27426,7 +28297,7 @@ export class UIMissionControl {
                                         const rect = transferVesselBtn.getBoundingClientRect();
                                         const x = rect.left + (rect.width / 2);
                                         const y = rect.top;
-                                        this.manager.createFloatingText('TRANSFERRED VESSEL', x, y, '#ffffff');
+                                        this.manager.createFloatingText('TRANSFERRED VESSEL', x, y, '#ffffff', null, false, 'mission');
                                         
                                         this.manager.simulationService.missionService.checkTriggers();
                                         coreState.setState({});
@@ -27465,7 +28336,7 @@ export class UIMissionControl {
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
                                 
-                                this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff');
+                                this.manager.createFloatingText(`+${depositedAmt}`, x, y, '#ffffff', null, false, 'mission');
                             }
 
                             closeHandler();
@@ -27483,7 +28354,7 @@ export class UIMissionControl {
                                 const rect = collectBtn.getBoundingClientRect();
                                 const x = e.clientX || rect.left + (rect.width / 2);
                                 const y = e.clientY || rect.top;
-                                this.manager.createFloatingText(`+${collectedAmt}`, x, y, '#60a5fa');
+                                this.manager.createFloatingText(`+${collectedAmt}`, x, y, '#60a5fa', null, false, 'mission');
                             }
 
                             closeHandler();
@@ -27786,7 +28657,7 @@ export class UIMissionControl {
                        const x = e.clientX || rect.left + (rect.width / 2);
                        const y = e.clientY || rect.top;
                        if (this.manager.createFloatingText) {
-                           this.manager.createFloatingText(`-${formatCredits(deductedAmount, false)}`, x, y, '#ef4444');
+                           this.manager.createFloatingText(`-${formatCredits(deductedAmount, false)}`, x, y, '#ef4444', null, false, 'mission');
                        }
                    }
 
@@ -27863,7 +28734,7 @@ export class UIMissionControl {
                            setTimeout(() => {
                                const x = window.innerWidth / 2;
                                const y = window.innerHeight / 2;
-                               uiManager.createFloatingText('The Exchange Unlocked', x, y, '#c084fc', 2500);
+                               uiManager.createFloatingText('The Exchange Unlocked', x, y, '#c084fc', 2500, false, 'mission');
                            }, 300);
                        }
 
@@ -28215,7 +29086,7 @@ export class UIMissionControl {
                                                    const y = e.clientY || rect.top;
     
                                                    // Adjacent to the credit text (+ 40y)
-                                                   this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa');
+                                                   this.manager.createFloatingText(`+ Odyssey`, x, y + 40, '#60a5fa', null, false, 'mission');
                                                }
                                                
                                                if (stickyBarEl) {
@@ -28501,7 +29372,7 @@ export class UIMissionControl {
             this.manager.hideModal('event-modal'); 
             
              if(e) {
-                this.manager.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171');
+                this.manager.createFloatingText(`-${formatCredits(priceNum, false)}`, e.clientX, e.clientY, '#f87171', null, false, 'mission');
             }
 
             const updatedPacket = this._findIntelPacket(packetId, locationId);
@@ -29028,6 +29899,7 @@ import { starfieldService } from './StarfieldService.js';
 import { CRITICAL_HULL_WARNINGS } from '../../data/flavorAds.js';
 import { AssetService } from '../AssetService.js';
 import CinematicService from './CinematicService.js';
+import { spawnFloatingTransaction, TRANSACTION_PROFILES } from './FloatingTextService.js';
 
 export const ACT_CINEMATIC_CONFIG = {
     'mission_tutorial_01': { video: './assets/images/video/act_0_audita.mp4', title: 'Wealth is Sovereignty', actLabel: 'BEGIN TUTORIAL', trigger: 'open' },
@@ -29965,20 +30837,34 @@ export class UIEventControl {
         });
     }
 
-    createFloatingText(text, x, y, color = '#fde047', duration = 2450, isHtml = false) {
-        const el = document.createElement('div');
-        if (isHtml) {
-            el.innerHTML = text;
-        } else {
-            el.textContent = text;
+    createFloatingText(textOrOptions, x, y, color = null, duration = null, isHtml = false, type = 'regular') {
+        if (typeof textOrOptions === 'object' && textOrOptions !== null) {
+            return spawnFloatingTransaction(textOrOptions);
         }
-        el.className = 'floating-text';
-        el.style.left = `${x - 20}px`;
-        el.style.top = `${y - 40}px`;
-        el.style.color = color;
-        el.style.animationDuration = `${duration}ms`;
-        document.body.appendChild(el);
-        setTimeout(() => el.remove(), duration);
+
+        const text = textOrOptions;
+        let resolvedType = type;
+
+        // Auto-detect mission type if not explicitly supplied
+        if (!resolvedType || resolvedType === 'regular') {
+            if (duration && duration >= 2400) {
+                resolvedType = 'mission';
+            }
+        }
+
+        return spawnFloatingTransaction({
+            text,
+            x,
+            y,
+            color: color || null,
+            type: resolvedType,
+            duration: (duration && duration !== 2450) ? duration : null,
+            isHtml
+        });
+    }
+
+    spawnFloatingTransaction(options) {
+        return spawnFloatingTransaction(options);
     }
 
     showStrandedModal(originName, lostDays, callback) {
@@ -32003,6 +32889,11 @@ export class TravelAnimationService {
         this.confirmButton.disabled = true;
         this.progressBar.style.width = '0%';
         this.isDecelerating = false;
+
+        if (this.imageElement) {
+            this.imageElement.style.opacity = 0;
+            this.imageElement.classList.remove('travel-zoom-active');
+        }
     }
 
     /**
@@ -32012,6 +32903,16 @@ export class TravelAnimationService {
         const imagePath = AssetService.getLocationImage(to.id);
         
         if (imagePath) {
+            this.imageElement.onerror = () => {
+                const fallbackPath = AssetService.getLocationImage(to.id, 'A');
+                if (fallbackPath && this.imageElement.src !== fallbackPath && !this.imageElement.src.endsWith(fallbackPath)) {
+                    this.imageElement.src = fallbackPath;
+                } else {
+                    this.imageElement.style.opacity = 0;
+                    this.imageElement.onerror = null;
+                }
+            };
+
             this.imageElement.src = imagePath;
             
             // Trigger Fade In and Zoom
@@ -32073,6 +32974,253 @@ export class TravelAnimationService {
     }
 }
 --- END OF FILE: ./js/services/ui/TravelAnimationService.js ---
+
+--- START OF FILE: ./js/services/ui/FloatingTextService.js ---
+// js/services/ui/FloatingTextService.js
+/**
+ * @fileoverview Floating Transaction Vectors (Sample #20 WAAPI Implementation)
+ * Provides GPU-accelerated floating HUD telemetry text for credit events and rewards.
+ * 
+ * Profiles:
+ * - 'mission': Slower (2.0s), majestic upward drift (56px, [-31deg, +31deg]), deep +Z forward scale (0.60x -> 0.94x).
+ * - 'regular': Snappy (1.0s), responsive drift (40px, [-45deg, +45deg]), tighter scale (0.50x -> 0.86x).
+ */
+
+/**
+ * Configuration profiles for Orbital Trading floating text.
+ */
+export const TRANSACTION_PROFILES = {
+  mission: {
+    duration: 2000,
+    distance: 56,
+    coneHalfAngle: 31,     // [-31deg, +31deg] around Zenith
+    startScale: 0.60,
+    inScale: 0.668,
+    sustainScale: 0.872,
+    endScale: 0.94,
+    inOffset: 0.20,        // 0.4s fade-in (20%)
+    sustainOffset: 0.80    // 0.4s fade-out begins at 80%
+  },
+  regular: {
+    duration: 1000,
+    distance: 40,
+    coneHalfAngle: 45,     // [-45deg, +45deg] around Zenith
+    startScale: 0.50,
+    inScale: 0.536,
+    sustainScale: 0.698,
+    endScale: 0.86,
+    inOffset: 0.10,        // 0.1s fade-in (10%)
+    sustainOffset: 0.55    // 0.45s fade-out begins at 55%
+  }
+};
+
+/**
+ * Parses color strings into RGB components.
+ * Supports #hex, rgb(), rgba(), and key named color fallbacks.
+ * 
+ * @param {string} color 
+ * @returns {{r: number, g: number, b: number} | null}
+ */
+export function parseColorToRgb(color) {
+  if (!color || typeof color !== 'string') return null;
+  const str = color.trim();
+
+  // Hex formats (#rgb, #rrggbb, #rrggbbaa)
+  if (str.startsWith('#')) {
+    let hex = str.slice(1);
+    if (hex.length === 3 || hex.length === 4) {
+      hex = hex.split('').map(c => c + c).join('');
+    }
+    if (hex.length >= 6) {
+      const r = parseInt(hex.slice(0, 2), 16);
+      const g = parseInt(hex.slice(2, 4), 16);
+      const b = parseInt(hex.slice(4, 6), 16);
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+        return { r, g, b };
+      }
+    }
+  }
+
+  // Functional rgb() or rgba()
+  const rgbMatch = str.match(/rgba?\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+  if (rgbMatch) {
+    return {
+      r: parseInt(rgbMatch[1], 10),
+      g: parseInt(rgbMatch[2], 10),
+      b: parseInt(rgbMatch[3], 10)
+    };
+  }
+
+  // Common semantic named color mappings
+  const namedColors = {
+    white: { r: 255, g: 255, b: 255 },
+    black: { r: 0, g: 0, b: 0 },
+    red: { r: 239, g: 68, b: 68 },
+    green: { r: 74, g: 222, b: 128 },
+    blue: { r: 96, g: 165, b: 250 },
+    yellow: { r: 250, g: 204, b: 21 },
+    purple: { r: 192, g: 132, b: 252 },
+    cyan: { r: 77, g: 207, b: 213 }
+  };
+  const lower = str.toLowerCase();
+  if (namedColors[lower]) {
+    return namedColors[lower];
+  }
+
+  return null;
+}
+
+/**
+ * Dynamically computes the Calibrated Sample #20 text shadow:
+ * - 2-layer dark occlusion backing
+ * - Crisp white core
+ * - 1/3 glow baseline matching the specified color
+ * 
+ * @param {string} [color] 
+ * @returns {string} CSS text-shadow value
+ */
+export function computeGlowShadow(color) {
+  const rgb = parseColorToRgb(color);
+  if (!rgb) {
+    // Default Calibrated Cyan (#00f3ff) 1/3 glow baseline
+    return '0 2px 4px rgba(0, 0, 0, 0.70), 0 4px 10px rgba(0, 0, 0, 0.70), 0 0 3px rgba(255, 255, 255, 1.00), 0 0 8px rgba(0, 243, 255, 1.00), 0 0 16px rgba(0, 243, 255, 0.47)';
+  }
+  return `0 2px 4px rgba(0, 0, 0, 0.70), 0 4px 10px rgba(0, 0, 0, 0.70), 0 0 3px rgba(255, 255, 255, 1.00), 0 0 8px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 1.00), 0 0 16px rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, 0.47)`;
+}
+
+/**
+ * Spawns a floating transaction credit text vector on the HUD.
+ * 
+ * @param {Object} options
+ * @param {HTMLElement} [options.container] - Parent container element.
+ * @param {string} [options.text='+1,234 C'] - Formatted currency or telemetry text.
+ * @param {number} [options.x] - Spawn X coordinate in viewport pixels.
+ * @param {number} [options.y] - Spawn Y coordinate in viewport pixels.
+ * @param {string} [options.color] - Custom text color (retains color spec with adapted glow).
+ * @param {'mission' | 'regular'} [options.type='regular'] - Transaction profile type.
+ * @param {number} [options.duration] - Optional override duration in ms.
+ * @param {boolean} [options.isHtml=false] - Whether text contains HTML formatting.
+ * @returns {HTMLDivElement} The spawned element (auto-removes on finish).
+ */
+export function spawnFloatingTransaction({
+  container = null,
+  text = '+1,234 C',
+  x = undefined,
+  y = undefined,
+  color = null,
+  type = 'regular',
+  duration = null,
+  isHtml = false
+} = {}) {
+  const profileKey = (type === 'mission') ? 'mission' : 'regular';
+  const cfg = TRANSACTION_PROFILES[profileKey];
+  const animDuration = (typeof duration === 'number' && duration > 0) ? duration : cfg.duration;
+
+  // Resolve target container defensively
+  const targetContainer = container || document.getElementById('orbital-hud-overlay') || document.body;
+
+  // Defensive coordinates with viewport clamping and NaN protection
+  const winW = (typeof window !== 'undefined' && window.innerWidth) ? window.innerWidth : 800;
+  const winH = (typeof window !== 'undefined' && window.innerHeight) ? window.innerHeight : 600;
+
+  let spawnX = (typeof x === 'number' && !isNaN(x)) ? x : (winW / 2);
+  let spawnY = (typeof y === 'number' && !isNaN(y)) ? y : (winH / 2);
+
+  // Clamp within viewport margins so vector never clips outside boundaries
+  spawnX = Math.max(30, Math.min(winW - 30, spawnX));
+  spawnY = Math.max(40, Math.min(winH - 30, spawnY));
+
+  // Compute stochastic launch angle within calibrated cone
+  // 0 deg is zenith (straight up); negative is Port (left), positive is Starboard (right)
+  const angle = (Math.random() * (cfg.coneHalfAngle * 2)) - cfg.coneHalfAngle;
+  const rad = (angle * Math.PI) / 180;
+
+  const totalDx = Math.sin(rad) * cfg.distance;
+  const totalDy = -Math.cos(rad) * cfg.distance;
+
+  // Intermediate displacement values at transition milestones
+  const inDx = (totalDx * cfg.inOffset).toFixed(1);
+  const inDy = (totalDy * cfg.inOffset).toFixed(1);
+  const outDx = (totalDx * cfg.sustainOffset).toFixed(1);
+  const outDy = (totalDy * cfg.sustainOffset).toFixed(1);
+  const finalDx = totalDx.toFixed(1);
+  const finalDy = totalDy.toFixed(1);
+
+  // Instantiate lightweight DOM element
+  const el = document.createElement('div');
+  el.className = 'floating-credit-vector';
+  
+  if (isHtml) {
+    el.innerHTML = text;
+  } else {
+    el.textContent = text;
+  }
+
+  el.style.left = `${spawnX}px`;
+  el.style.top = `${spawnY}px`;
+
+  // Preserve caller color specification while injecting Sample #20 calibrated 1/3 glow
+  if (color) {
+    el.style.color = color;
+    el.style.textShadow = computeGlowShadow(color);
+  }
+
+  // Hardware-accelerated WAAPI Keyframe Pipeline
+  const anim = el.animate(
+    [
+      {
+        opacity: 0,
+        transform: `translate3d(-50%, -50%, 0) scale(${cfg.startScale})`,
+        offset: 0
+      },
+      {
+        opacity: 1,
+        transform: `translate3d(calc(-50% + ${inDx}px), calc(-50% + ${inDy}px), 0) scale(${cfg.inScale})`,
+        offset: cfg.inOffset
+      },
+      {
+        opacity: 1,
+        transform: `translate3d(calc(-50% + ${outDx}px), calc(-50% + ${outDy}px), 0) scale(${cfg.sustainScale})`,
+        offset: cfg.sustainOffset
+      },
+      {
+        opacity: 0,
+        transform: `translate3d(calc(-50% + ${finalDx}px), calc(-50% + ${finalDy}px), 0) scale(${cfg.endScale})`,
+        offset: 1.0
+      }
+    ],
+    {
+      duration: animDuration,
+      easing: 'linear',
+      fill: 'forwards'
+    }
+  );
+
+  targetContainer.appendChild(el);
+
+  // Defensive idempotent garbage collection
+  let cleanedUp = false;
+  const cleanup = () => {
+    if (cleanedUp) return;
+    cleanedUp = true;
+    try {
+      if (anim) anim.cancel();
+    } catch (_) {}
+    if (el && el.parentNode) {
+      el.remove();
+    }
+  };
+
+  anim.onfinish = cleanup;
+  anim.oncancel = cleanup;
+
+  // Fallback cleanup in case WAAPI is throttled or tab is backgrounded
+  setTimeout(cleanup, animDuration + 300);
+
+  return el;
+}
+
+--- END OF FILE: ./js/services/ui/FloatingTextService.js ---
 
 --- START OF FILE: ./js/services/ui/UIHangarControl.js ---
 // js/services/ui/UIHangarControl.js
@@ -36550,7 +37698,7 @@ export class AssetStorageService {
 --- START OF FILE: ./js/services/DebugService.js ---
 // js/services/DebugService.js
 import { DB } from '../data/database.js';
-import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS, STATUS_EFFECTS } from '../data/constants.js';
+import { LOCATION_IDS, SHIP_IDS, NAV_IDS, SCREEN_IDS, COMMODITY_IDS, STATUS_EFFECTS, PERK_IDS, ATTRIBUTE_TYPES } from '../data/constants.js';
 import { Logger } from './LoggingService.js';
 import { calculateInventoryUsed, skewedRandom } from '../utils.js'; 
 import { AutomatedPlayer } from './bot/AutomatedPlayerService.js';
@@ -36651,6 +37799,17 @@ export class DebugService {
         this.diagElements = {};
         this.actions = {};
         
+        // --- POPPED OUT MISSION TRIGGERS STATE ---
+        this.isMissionPoppedOut = false;
+        this.poppedActive = false;
+        this.missionFolder = null;
+        this.poppedMissionElement = null;
+        this.missionFolderPlaceholder = null;
+        this.poppedDragHandle = null;
+        this.missionPopBtn = null;
+        this.goToBtnEl = null;
+        this.goToDropdownEl = null;
+        
         this.debugState = {
             creditsToAdd: 100000,
             creditsToReduce: 100000,
@@ -36689,7 +37848,7 @@ export class DebugService {
         if(this.logger && this.logger.warn) this.logger.warn('DebugService', 'Injected Ephemeral Debug Missions into DB.MISSIONS');
 
         this._cacheDiagElements();
-        this.gui = new lil.GUI({ draggable: true, title: 'Debug Menu' });
+        this.gui = new lil.GUI({ draggable: false, title: 'Debug Menu' });
         this.gui.domElement.id = 'debug-panel';
         
         // Ensure UI state matches debug state for the tick toggles
@@ -36699,15 +37858,737 @@ export class DebugService {
 
         this._registerDebugActions();
         this.buildGui();
-        this._startDiagLoop();
+        this._setupDraggableHandle();
+    }
+ 
+    _setupDraggableHandle() {
+        if (!this.gui || !this.gui.domElement) return;
+        const panel = this.gui.domElement;
+        const titleEl = panel.querySelector('.title');
+        if (!titleEl) return;
+
+        // Create drag handle
+        const handle = document.createElement('div');
+        handle.className = 'debug-drag-handle';
+        handle.setAttribute('title', 'Hold and drag to move');
+        handle.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <circle cx="8" cy="5" r="1.75"/>
+                <circle cx="16" cy="5" r="1.75"/>
+                <circle cx="8" cy="12" r="1.75"/>
+                <circle cx="16" cy="12" r="1.75"/>
+                <circle cx="8" cy="19" r="1.75"/>
+                <circle cx="16" cy="19" r="1.75"/>
+            </svg>
+        `;
+
+        titleEl.insertBefore(handle, titleEl.firstChild);
+        titleEl.style.touchAction = 'none';
+
+        // Create header action buttons (Collapse, Reload) on the right side
+        const actionsContainer = document.createElement('div');
+        actionsContainer.className = 'debug-header-actions';
+
+        const collapseBtn = document.createElement('button');
+        collapseBtn.className = 'debug-header-btn debug-collapse-btn';
+        collapseBtn.type = 'button';
+        collapseBtn.textContent = 'Collapse';
+        collapseBtn.setAttribute('title', 'Immediately collapse all menus');
+        collapseBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+        collapseBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.collapseAll();
+        });
+
+        const reloadBtn = document.createElement('button');
+        reloadBtn.className = 'debug-header-btn debug-reload-btn';
+        reloadBtn.type = 'button';
+        reloadBtn.textContent = 'Reload';
+        reloadBtn.setAttribute('title', 'Reload game, quick start, and open debug menu');
+        reloadBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+        reloadBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            this.reloadAndQuickStart();
+        });
+
+        actionsContainer.appendChild(collapseBtn);
+        actionsContainer.appendChild(reloadBtn);
+        titleEl.appendChild(actionsContainer);
+
+        let isDragging = false;
+        let startPointerX = 0;
+        let startPointerY = 0;
+        let initialPanelLeft = 0;
+        let initialPanelTop = 0;
+        let panelWidth = 0;
+        let panelHeight = 0;
+        let activePointerId = null;
+        let dragRafId = null;
+        let pendingLeft = 0;
+        let pendingTop = 0;
+
+        const updatePosition = () => {
+            if (!isDragging) return;
+            panel.style.left = `${pendingLeft}px`;
+            panel.style.top = `${pendingTop}px`;
+            dragRafId = null;
+        };
+
+        const onPointerDown = (e) => {
+            // Allow left mouse button (0) or touch/pen
+            if (e.button !== undefined && e.button !== 0) return;
+            // Prevent drag when clicking header buttons
+            if (e.target.closest('.debug-header-actions') || e.target.closest('button')) return;
+
+            isDragging = true;
+            activePointerId = e.pointerId;
+            
+            const targetEl = e.target.closest('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.setPointerCapture(e.pointerId);
+            } catch (err) {}
+
+            const rect = panel.getBoundingClientRect();
+            startPointerX = e.clientX;
+            startPointerY = e.clientY;
+            initialPanelLeft = rect.left;
+            initialPanelTop = rect.top;
+            panelWidth = rect.width;
+            panelHeight = rect.height;
+
+            // Transition from centered relative styling to explicit fixed screen coordinates
+            panel.style.position = 'fixed';
+            panel.style.left = `${initialPanelLeft}px`;
+            panel.style.top = `${initialPanelTop}px`;
+            panel.style.transform = 'scale(0.75)';
+            panel.style.transformOrigin = 'top left';
+
+            panel.classList.add('is-dragging');
+            document.body.classList.add('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerMove = (e) => {
+            if (!isDragging || e.pointerId !== activePointerId) return;
+
+            const deltaX = e.clientX - startPointerX;
+            const deltaY = e.clientY - startPointerY;
+
+            let targetLeft = initialPanelLeft + deltaX;
+            let targetTop = initialPanelTop + deltaY;
+
+            // Keep within viewport boundaries so the panel cannot be lost offscreen
+            const minLeft = -panelWidth + 60; // Keep at least 60px visible
+            const maxLeft = window.innerWidth - 60;
+            const minTop = 0;
+            const maxTop = window.innerHeight - 40;
+
+            pendingLeft = Math.max(minLeft, Math.min(targetLeft, maxLeft));
+            pendingTop = Math.max(minTop, Math.min(targetTop, maxTop));
+
+            if (!dragRafId) {
+                dragRafId = requestAnimationFrame(updatePosition);
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerUp = (e) => {
+            if (!isDragging || (activePointerId !== null && e.pointerId !== activePointerId)) return;
+            isDragging = false;
+            activePointerId = null;
+
+            if (dragRafId) {
+                cancelAnimationFrame(dragRafId);
+                dragRafId = null;
+            }
+
+            const targetEl = e.target.closest?.('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+
+            panel.classList.remove('is-dragging');
+            document.body.classList.remove('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        titleEl.addEventListener('pointerdown', onPointerDown);
+        titleEl.addEventListener('pointermove', onPointerMove);
+        titleEl.addEventListener('pointerup', onPointerUp);
+        titleEl.addEventListener('pointercancel', onPointerUp);
+
+        // Keep panel in bounds on window resize or device orientation flip
+        window.addEventListener('resize', () => {
+            if (this.isMissionPoppedOut && this.poppedMissionElement && this.poppedActive) {
+                const rect = this.poppedMissionElement.getBoundingClientRect();
+                if (rect.left > window.innerWidth - 60) {
+                    this.poppedMissionElement.style.left = `${Math.max(0, window.innerWidth - rect.width)}px`;
+                }
+                if (rect.top > window.innerHeight - 40) {
+                    this.poppedMissionElement.style.top = `${Math.max(0, window.innerHeight - 40)}px`;
+                }
+                return;
+            }
+            if (!this.active || !this.gui) return;
+            const rect = panel.getBoundingClientRect();
+            if (rect.left > window.innerWidth - 60) {
+                panel.style.left = `${Math.max(0, window.innerWidth - rect.width)}px`;
+            }
+            if (rect.top > window.innerHeight - 40) {
+                panel.style.top = `${Math.max(0, window.innerHeight - 40)}px`;
+            }
+        });
+    }
+
+    collapseAll() {
+        if (!this.gui) return;
+        const closeFolderRecursive = (folder) => {
+            if (folder.folders && folder.folders.length) {
+                folder.folders.forEach(child => closeFolderRecursive(child));
+            }
+            if (typeof folder.close === 'function') {
+                folder.close();
+            }
+        };
+
+        if (this.gui.folders) {
+            this.gui.folders.forEach(folder => closeFolderRecursive(folder));
+        }
+        if (typeof this.gui.open === 'function') {
+            this.gui.open();
+        }
+
+        if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+            this.uiManager.createFloatingText('All Menus Collapsed', window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+        }
+    }
+
+    reloadAndQuickStart() {
+        sessionStorage.setItem('orbital_debug_quick_reload', 'true');
+        window.location.reload();
+    }
+
+    _setupMissionFolderPopControl(missionFolder) {
+        if (!missionFolder || !missionFolder.domElement) return;
+        const titleEl = missionFolder.$title || missionFolder.domElement.querySelector(':scope > .title') || missionFolder.domElement.querySelector('.title');
+        if (!titleEl) return;
+
+        titleEl.style.display = 'flex';
+        titleEl.style.alignItems = 'center';
+        titleEl.style.justifyContent = 'space-between';
+        titleEl.style.whiteSpace = 'nowrap';
+        titleEl.style.flexWrap = 'nowrap';
+        titleEl.style.minHeight = '28px';
+        titleEl.style.height = 'auto';
+        titleEl.style.width = '100%';
+        titleEl.style.boxSizing = 'border-box';
+
+        const popBtn = document.createElement('button');
+        popBtn.className = 'debug-folder-action-btn';
+        popBtn.type = 'button';
+        popBtn.textContent = 'Pop ↗';
+        popBtn.setAttribute('title', 'Pop out Mission Triggers menu');
+        popBtn.style.marginLeft = 'auto';
+        popBtn.style.flex = '0 0 auto';
+        popBtn.style.width = 'auto';
+        popBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+        popBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (this.isMissionPoppedOut) {
+                this.popInMissionFolder();
+            } else {
+                this.popOutMissionFolder();
+            }
+        });
+
+        titleEl.appendChild(popBtn);
+        this.missionPopBtn = popBtn;
+    }
+
+    _setMissionFolderTitle(title) {
+        if (!this.missionFolder || !this.missionFolder.domElement) return;
+        const titleEl = this.missionFolder.$title || this.missionFolder.domElement.querySelector(':scope > .title') || this.missionFolder.domElement.querySelector('.title');
+        if (!titleEl) return;
+        let found = false;
+        for (const node of titleEl.childNodes) {
+            if (node.nodeType === 3) { // TEXT_NODE
+                node.textContent = title;
+                found = true;
+                break;
+            }
+        }
+        if (!found) {
+            const textNode = document.createTextNode(title);
+            if (this.poppedDragHandle && this.poppedDragHandle.nextSibling) {
+                titleEl.insertBefore(textNode, this.poppedDragHandle.nextSibling);
+            } else {
+                titleEl.insertBefore(textNode, titleEl.firstChild);
+            }
+        }
+    }
+
+    popOutMissionFolder() {
+        if (this.isMissionPoppedOut || !this.missionFolder) return;
+        const el = this.missionFolder.domElement;
+        this.poppedMissionElement = el;
+
+        // Insert placeholder comment to anchor position in DOM
+        this.missionFolderPlaceholder = document.createComment('mission-folder-placeholder');
+        el.parentNode.insertBefore(this.missionFolderPlaceholder, el);
+
+        // Move element to document.body
+        document.body.appendChild(el);
+        el.removeAttribute('style');
+        el.classList.add('debug-popped-out-panel');
+        el.classList.add('debug-visible');
+
+        // Rename header to 'Mission Control'
+        this._setMissionFolderTitle('Mission Control');
+
+        this.missionFolder.open();
+
+        if (!this.poppedDragHandle) {
+            this._setupPoppedFolderDraggable(el);
+        } else {
+            this.poppedDragHandle.style.display = 'inline-flex';
+        }
+
+        if (this.missionPopBtn) {
+            this.missionPopBtn.textContent = 'Pop In ↙';
+            this.missionPopBtn.setAttribute('title', 'Pop back into Debug Menu');
+        }
+
+        // Close regular debug menu
+        this.active = false;
+        if (this.gui && this.gui.domElement) {
+            this.gui.domElement.classList.remove('debug-visible');
+        }
+
+        this.isMissionPoppedOut = true;
+        this.poppedActive = true;
+
+        if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+            this.uiManager.createFloatingText('Mission Control Popped Out', window.innerWidth / 2, window.innerHeight - 80, '#94a3b8');
+        }
+    }
+
+    popInMissionFolder() {
+        if (!this.isMissionPoppedOut || !this.poppedMissionElement) return;
+
+        if (this.poppedDragRafId) {
+            cancelAnimationFrame(this.poppedDragRafId);
+            this.poppedDragRafId = null;
+        }
+
+        document.body.classList.remove('debug-is-dragging');
+
+        const targetParent = (this.missionFolderPlaceholder && this.missionFolderPlaceholder.parentNode)
+            ? this.missionFolderPlaceholder.parentNode
+            : (this.triggersFolder ? (this.triggersFolder.$children || this.triggersFolder.domElement.querySelector('.children')) : null);
+
+        if (this.missionFolderPlaceholder && this.missionFolderPlaceholder.parentNode) {
+            this.missionFolderPlaceholder.parentNode.insertBefore(this.poppedMissionElement, this.missionFolderPlaceholder);
+            this.missionFolderPlaceholder.remove();
+        } else if (targetParent) {
+            targetParent.insertBefore(this.poppedMissionElement, targetParent.firstChild);
+        }
+        this.missionFolderPlaceholder = null;
+
+        // Completely strip all inline positioning/scaling/styling so it docks seamlessly into lil-gui flow
+        this.poppedMissionElement.removeAttribute('style');
+        this.poppedMissionElement.classList.remove('debug-popped-out-panel', 'debug-visible', 'is-dragging');
+
+        // Restore title to 'Mission Triggers'
+        this._setMissionFolderTitle('Mission Triggers');
+
+        const titleEl = this.poppedMissionElement.querySelector('.title');
+        if (titleEl) {
+            titleEl.style.touchAction = '';
+        }
+
+        if (this.poppedDragHandle) {
+            this.poppedDragHandle.style.display = 'none';
+        }
+
+        if (this.missionPopBtn) {
+            this.missionPopBtn.textContent = 'Pop ↗';
+            this.missionPopBtn.setAttribute('title', 'Pop out Mission Control');
+        }
+
+        this.isMissionPoppedOut = false;
+        this.poppedActive = false;
+
+        // Re-open main debug menu
+        this.active = true;
+        if (this.gui && this.gui.domElement) {
+            this.gui.domElement.classList.add('debug-visible');
+        }
+
+        if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+            this.uiManager.createFloatingText('Mission Control Restored to Menu', window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+        }
+    }
+
+    _setupPoppedFolderDraggable(panel) {
+        const titleEl = panel.querySelector('.title');
+        if (!titleEl) return;
+
+        const handle = document.createElement('div');
+        handle.className = 'debug-drag-handle';
+        handle.setAttribute('title', 'Hold and drag to move');
+        handle.innerHTML = `
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                <circle cx="8" cy="5" r="1.75"/>
+                <circle cx="16" cy="5" r="1.75"/>
+                <circle cx="8" cy="12" r="1.75"/>
+                <circle cx="16" cy="12" r="1.75"/>
+                <circle cx="8" cy="19" r="1.75"/>
+                <circle cx="16" cy="19" r="1.75"/>
+            </svg>
+        `;
+
+        titleEl.insertBefore(handle, titleEl.firstChild);
+        titleEl.style.touchAction = 'none';
+        this.poppedDragHandle = handle;
+
+        let isDragging = false;
+        let startPointerX = 0;
+        let startPointerY = 0;
+        let initialPanelLeft = 0;
+        let initialPanelTop = 0;
+        let panelWidth = 0;
+        let panelHeight = 0;
+        let activePointerId = null;
+        let pendingLeft = 0;
+        let pendingTop = 0;
+        this.poppedDragRafId = null;
+
+        const updatePosition = () => {
+            if (!this.isMissionPoppedOut || !isDragging) return;
+            panel.style.left = `${pendingLeft}px`;
+            panel.style.top = `${pendingTop}px`;
+            this.poppedDragRafId = null;
+        };
+
+        const onPointerDown = (e) => {
+            // STRICT GUARD: Never drag or alter styling unless actively popped out
+            if (!this.isMissionPoppedOut) return;
+            if (e.button !== undefined && e.button !== 0) return;
+            if (e.target.closest('button')) return;
+
+            isDragging = true;
+            activePointerId = e.pointerId;
+
+            const targetEl = e.target.closest('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.setPointerCapture(e.pointerId);
+            } catch (err) {}
+
+            const rect = panel.getBoundingClientRect();
+            startPointerX = e.clientX;
+            startPointerY = e.clientY;
+            initialPanelLeft = rect.left;
+            initialPanelTop = rect.top;
+            panelWidth = rect.width;
+            panelHeight = rect.height;
+
+            panel.style.position = 'fixed';
+            panel.style.left = `${initialPanelLeft}px`;
+            panel.style.top = `${initialPanelTop}px`;
+            panel.style.bottom = 'auto';
+            panel.style.transform = 'scale(0.75)';
+            panel.style.transformOrigin = 'top left';
+
+            panel.classList.add('is-dragging');
+            document.body.classList.add('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerMove = (e) => {
+            if (!this.isMissionPoppedOut || !isDragging || e.pointerId !== activePointerId) return;
+
+            const deltaX = e.clientX - startPointerX;
+            const deltaY = e.clientY - startPointerY;
+
+            let targetLeft = initialPanelLeft + deltaX;
+            let targetTop = initialPanelTop + deltaY;
+
+            const minLeft = -panelWidth + 60;
+            const maxLeft = window.innerWidth - 60;
+            const minTop = 0;
+            const maxTop = window.innerHeight - 40;
+
+            pendingLeft = Math.max(minLeft, Math.min(targetLeft, maxLeft));
+            pendingTop = Math.max(minTop, Math.min(targetTop, maxTop));
+
+            if (!this.poppedDragRafId) {
+                this.poppedDragRafId = requestAnimationFrame(updatePosition);
+            }
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        const onPointerUp = (e) => {
+            if (!isDragging || (activePointerId !== null && e.pointerId !== activePointerId)) return;
+            isDragging = false;
+            activePointerId = null;
+
+            if (this.poppedDragRafId) {
+                cancelAnimationFrame(this.poppedDragRafId);
+                this.poppedDragRafId = null;
+            }
+
+            const targetEl = e.target.closest?.('.debug-drag-handle') || titleEl;
+            try {
+                targetEl.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+
+            panel.classList.remove('is-dragging');
+            document.body.classList.remove('debug-is-dragging');
+
+            e.preventDefault();
+            e.stopPropagation();
+        };
+
+        titleEl.addEventListener('pointerdown', onPointerDown);
+        titleEl.addEventListener('pointermove', onPointerMove);
+        titleEl.addEventListener('pointerup', onPointerUp);
+        titleEl.addEventListener('pointercancel', onPointerUp);
     }
 
     handleKeyPress(key) {}
 
     toggleVisibility() {
+        if (this.isMissionPoppedOut && this.poppedMissionElement) {
+            this.poppedActive = !this.poppedActive;
+            this.poppedMissionElement.classList.toggle('debug-visible', this.poppedActive);
+            return;
+        }
         if (!this.gui) return;
         this.active = !this.active;
         this.gui.domElement.classList.toggle('debug-visible', this.active);
+    }
+
+    resetPosition(makeVisible = true) {
+        const targetPanel = (this.isMissionPoppedOut && this.poppedMissionElement) ? this.poppedMissionElement : (this.gui ? this.gui.domElement : null);
+        if (!targetPanel) return;
+
+        // Reset inline positioning to default centered / bottom style
+        targetPanel.style.position = '';
+        targetPanel.style.left = '';
+        targetPanel.style.top = '';
+        targetPanel.style.bottom = '';
+        targetPanel.style.transform = '';
+        targetPanel.style.transformOrigin = '';
+        targetPanel.classList.remove('is-dragging');
+        document.body.classList.remove('debug-is-dragging');
+
+        if (this.isMissionPoppedOut) {
+            if (makeVisible && !this.poppedActive) {
+                this.toggleVisibility();
+            }
+            if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+                this.uiManager.createFloatingText('Mission Control Reset to Bottom', window.innerWidth / 2, window.innerHeight - 80, '#94a3b8');
+            }
+        } else {
+            if (makeVisible && !this.active) {
+                this.toggleVisibility();
+            }
+            if (this.uiManager && typeof this.uiManager.createFloatingText === 'function') {
+                this.uiManager.createFloatingText('Debug Menu Reset to Center', window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+            }
+        }
+    }
+
+    /**
+     * Calculates the accurate travel days between locations considering active ship upgrades,
+     * perks, and attribute modifiers.
+     */
+    _calculateTripDays(fromId, toId) {
+        if (!fromId || !toId || fromId === toId) return 0;
+        const baseData = this.gameState.TRAVEL_DATA?.[fromId]?.[toId];
+        if (!baseData) return 0;
+        let baseTime = baseData.time || 0;
+
+        const activeShipId = this.gameState.player?.activeShipId;
+        let timeMod = 1;
+        if (this.gameState.player?.activePerks?.[PERK_IDS.NAVIGATOR]) {
+            timeMod *= DB.PERKS[PERK_IDS.NAVIGATOR].travelTimeMod;
+        }
+        if (activeShipId && this.gameState.player?.shipStates?.[activeShipId]) {
+            const upgrades = this.gameState.player.shipStates[activeShipId].upgrades || [];
+            timeMod *= GameAttributes.getTravelTimeModifier(upgrades);
+            const shipAttributes = GameAttributes.getShipAttributes(activeShipId);
+            if (shipAttributes.includes('ATTR_HYPER_CALCULATION')) timeMod *= 0.75;
+            if (shipAttributes.includes('ATTR_NEWTONS_GHOST')) timeMod *= 10.0;
+            if (shipAttributes.includes('ATTR_SLEEPER')) timeMod *= 4.5;
+            shipAttributes.forEach(attrId => {
+                const def = GameAttributes.getDefinition(attrId);
+                if (def && def.type === ATTRIBUTE_TYPES.MOD_TRAVEL_TIME && attrId !== 'ATTR_HYPER_CALCULATION' && def.value) {
+                    timeMod *= def.value;
+                }
+            });
+            const speedBonus = this.gameState.player.statModifiers?.travelSpeed || 0;
+            if (speedBonus > 0) timeMod = timeMod / (1 + speedBonus);
+        }
+        return Math.max(1, Math.round(baseTime * timeMod));
+    }
+
+    /**
+     * Relocates the player to a target location and advances game days accurately.
+     */
+    _executeGoTo(locationId) {
+        const fromId = this.gameState.currentLocationId;
+        if (fromId === locationId) {
+            const currentName = DB.MARKETS.find(m => m.id === locationId)?.name || locationId;
+            this.uiManager.createFloatingText(`Already at ${currentName}`, window.innerWidth / 2, window.innerHeight / 2, '#94a3b8');
+            return;
+        }
+
+        const destMarket = DB.MARKETS.find(m => m.id === locationId);
+        const destName = destMarket ? destMarket.name : locationId;
+        const tripDays = this._calculateTripDays(fromId, locationId);
+
+        if (fromId === LOCATION_IDS.SUN || fromId === 'sol') {
+            if (this.simulationService?.timeService?.solStationService) {
+                this.simulationService.timeService.solStationService.stopLocalLiveLoop?.();
+            }
+        }
+
+        // Advance game days based on trip duration
+        if (tripDays > 0 && this.simulationService?.timeService) {
+            this.simulationService.timeService.advanceDays(tripDays);
+        }
+
+        // Unlock location if not already unlocked
+        if (!this.gameState.player.unlockedLocationIds.includes(locationId)) {
+            this.gameState.player.unlockedLocationIds.push(locationId);
+        }
+
+        // Update player location
+        this.gameState.currentLocationId = locationId;
+
+        // News ticker update
+        if (this.simulationService?.newsTickerService) {
+            this.simulationService.newsTickerService.onLocationChange(locationId);
+        }
+
+        // Evaluate mission triggers & achievements
+        if (this.simulationService?.missionService) {
+            this.simulationService.missionService.checkTriggers();
+        }
+        if (this.simulationService?.achievementService) {
+            this.simulationService.achievementService.increment('docked_' + locationId, 1);
+        }
+
+        // Direct screen to Starport Market
+        this.simulationService.setScreen(NAV_IDS.STARPORT, SCREEN_IDS.MARKET);
+
+        // Update state and UI
+        this.gameState.setState({});
+        this.uiManager.render(this.gameState.getState());
+
+        const dayText = tripDays > 0 ? ` (+${tripDays}d)` : '';
+        this.uiManager.createFloatingText(`Arrived at ${destName}${dayText}`, window.innerWidth / 2, window.innerHeight / 2, '#38bdf8');
+    }
+
+    /**
+     * Toggles a compact, performant location dropdown for the Go To control.
+     */
+    _toggleGoToDropdown() {
+        if (!this.goToDropdownEl) {
+            this.goToDropdownEl = document.createElement('div');
+            this.goToDropdownEl.className = 'debug-goto-dropdown';
+            document.body.appendChild(this.goToDropdownEl);
+
+            document.addEventListener('pointerdown', (e) => {
+                if (this.goToDropdownEl && this.goToDropdownEl.style.display !== 'none') {
+                    if (!this.goToDropdownEl.contains(e.target) && !this.goToBtnEl?.contains(e.target)) {
+                        this.goToDropdownEl.style.display = 'none';
+                        this.goToDropdownEl.classList.remove('is-open');
+                    }
+                }
+            });
+        }
+
+        if (this.goToDropdownEl.style.display !== 'none' && this.goToDropdownEl.classList.contains('is-open')) {
+            this.goToDropdownEl.style.display = 'none';
+            this.goToDropdownEl.classList.remove('is-open');
+            return;
+        }
+
+        const currentLoc = this.gameState.currentLocationId;
+        const markets = DB.MARKETS || [];
+
+        let html = `
+            <div class="debug-goto-header">
+                <span>SELECT DESTINATION</span>
+                <button class="debug-goto-close-btn">&times;</button>
+            </div>
+            <div class="debug-goto-list">
+        `;
+
+        markets.forEach(m => {
+            const isCurrent = m.id === currentLoc;
+            const tripDays = this._calculateTripDays(currentLoc, m.id);
+            const timeBadge = isCurrent ? '<span class="debug-goto-badge current">HERE</span>' : `<span class="debug-goto-badge">${tripDays}d</span>`;
+            const itemClass = isCurrent ? 'debug-goto-item current-location' : 'debug-goto-item';
+            html += `
+                <div class="${itemClass}" data-location-id="${m.id}">
+                    <span class="debug-goto-name">${m.name}</span>
+                    ${timeBadge}
+                </div>
+            `;
+        });
+
+        html += `</div>`;
+        this.goToDropdownEl.innerHTML = html;
+
+        this.goToDropdownEl.querySelectorAll('.debug-goto-item').forEach(item => {
+            item.addEventListener('click', () => {
+                const locId = item.dataset.locationId;
+                this.goToDropdownEl.style.display = 'none';
+                this.goToDropdownEl.classList.remove('is-open');
+                this._executeGoTo(locId);
+            });
+        });
+
+        const closeBtn = this.goToDropdownEl.querySelector('.debug-goto-close-btn');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                this.goToDropdownEl.style.display = 'none';
+                this.goToDropdownEl.classList.remove('is-open');
+            });
+        }
+
+        this.goToDropdownEl.style.display = 'flex';
+        this.goToDropdownEl.classList.add('is-open');
+
+        if (this.goToBtnEl) {
+            const rect = this.goToBtnEl.getBoundingClientRect();
+            const menuWidth = 230;
+            let left = rect.left + (rect.width / 2) - (menuWidth / 2);
+            left = Math.max(10, Math.min(window.innerWidth - menuWidth - 10, left));
+
+            if (rect.top > window.innerHeight / 2) {
+                this.goToDropdownEl.style.left = `${left}px`;
+                this.goToDropdownEl.style.bottom = `${window.innerHeight - rect.top + 6}px`;
+                this.goToDropdownEl.style.top = 'auto';
+            } else {
+                this.goToDropdownEl.style.left = `${left}px`;
+                this.goToDropdownEl.style.top = `${rect.bottom + 6}px`;
+                this.goToDropdownEl.style.bottom = 'auto';
+            }
+        }
     }
 
     toggleDiagnosticOverlay() {
@@ -36715,6 +38596,9 @@ export class DebugService {
         const overlay = document.getElementById('diagnostic-overlay');
         if (overlay) {
             overlay.classList.toggle('hidden', !this.diagActive);
+        }
+        if (this.diagActive) {
+            this._startDiagLoop();
         }
     }
 
@@ -37591,55 +39475,203 @@ ${logHistory}
                     this.simulationService.missionService.acceptMission(this.debugState.selectedMission, true); 
                 }
             }},
-            forceCompleteMission: { name: 'Force Complete Mission', type: 'button', handler: () => {
+            satisfyMissionRequirements: { name: 'Satisfy', type: 'button', handler: () => {
+                let targetMissionId = this.debugState.selectedMission;
+                if (!targetMissionId && this.gameState.missions.activeMissionIds.length > 0) {
+                    targetMissionId = this.gameState.missions.activeMissionIds[0];
+                }
+                if (!targetMissionId) {
+                    this.uiManager.createFloatingText('No Mission Selected', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+
+                // If a mission is selected in the dropdown and not yet in the active log, accept it first
+                if (!this.gameState.missions.activeMissionIds.includes(targetMissionId)) {
+                    if (this.simulationService?.missionService) {
+                        this.simulationService.missionService.acceptMission(targetMissionId, true);
+                    }
+                }
+
+                const mission = DB.MISSIONS[targetMissionId];
+                if (!this.gameState.missions.missionProgress[targetMissionId]) {
+                    this.gameState.missions.missionProgress[targetMissionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                }
+                const progress = this.gameState.missions.missionProgress[targetMissionId];
+                if (mission && progress) {
+                    if (mission.completion) {
+                        mission.completion.locationId = 'any';
+                    }
+                    if (mission.objectives) {
+                        mission.objectives.forEach(obj => {
+                            const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                            const targetVal = obj.quantity !== undefined ? obj.quantity : (obj.value !== undefined ? obj.value : 1);
+                            if (!progress.objectives[objKey]) {
+                                progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
+                            }
+                            progress.objectives[objKey].current = targetVal;
+                            progress.objectives[objKey].target = targetVal;
+                            progress.objectives[objKey].deposited = targetVal;
+                            progress.objectives[objKey].collected = targetVal;
+                            progress.objectives[objKey].satisfiedByDebug = true;
+                        });
+                    }
+                    progress.satisfiedByDebug = true;
+                    progress.isCompletable = true;
+                    progress.cargoLoaded = true;
+                }
+
+                this.uiManager.createFloatingText(`Mission Satisfied: ${mission?.name || targetMissionId}`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+                this.uiManager.render(this.gameState.getState());
+                if (typeof this.uiManager.flashObjectiveProgress === 'function') {
+                    this.uiManager.flashObjectiveProgress();
+                }
+            }},
+
+            satisfyAllMissions: { name: 'Satisfy All', type: 'button', handler: () => {
                 const activeIds = [...this.gameState.missions.activeMissionIds];
                 if (activeIds.length === 0) {
-                    this.uiManager.createFloatingText('No Active Missions', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    this.uiManager.createFloatingText('No Active Missions in Log', window.innerWidth/2, window.innerHeight/2, '#ef4444');
                     return;
                 }
                 
                 activeIds.forEach(missionId => {
                     const mission = DB.MISSIONS[missionId];
+                    if (!this.gameState.missions.missionProgress[missionId]) {
+                        this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                    }
                     const progress = this.gameState.missions.missionProgress[missionId];
                     if (mission && progress) {
-                        // Override completion location
-                        if (mission.completion) {
-                            mission.completion.locationId = 'any';
-                        }
-                        
-                        // Max out objectives
+                        if (mission.completion) mission.completion.locationId = 'any';
                         if (mission.objectives) {
                             mission.objectives.forEach(obj => {
                                 const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                                const targetVal = obj.quantity !== undefined ? obj.quantity : (obj.value !== undefined ? obj.value : 1);
                                 if (!progress.objectives[objKey]) {
-                                    progress.objectives[objKey] = { current: 0, target: obj.quantity || obj.value || 1, deposited: 0, collected: 0 };
+                                    progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
                                 }
-                                const targetVal = obj.quantity || obj.value || 1;
                                 progress.objectives[objKey].current = targetVal;
                                 progress.objectives[objKey].target = targetVal;
-                                
-                                if (obj.type === 'DELIVER_ITEM' || obj.type === 'deliver_item') {
-                                    progress.objectives[objKey].deposited = targetVal;
-                                }
-                                if (obj.type === 'COLLECT_ITEM' || obj.type === 'collect_item') {
-                                    progress.objectives[objKey].collected = targetVal;
-                                }
+                                progress.objectives[objKey].deposited = targetVal;
+                                progress.objectives[objKey].collected = targetVal;
+                                progress.objectives[objKey].satisfiedByDebug = true;
                             });
                         }
-                        
-                        // Flip isCompletable
+                        progress.satisfiedByDebug = true;
+                        progress.isCompletable = true;
+                        progress.cargoLoaded = true;
+                    }
+                });
+                
+                this.uiManager.createFloatingText('All Log Missions Satisfied!', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+                this.uiManager.render(this.gameState.getState());
+                if (typeof this.uiManager.flashObjectiveProgress === 'function') {
+                    this.uiManager.flashObjectiveProgress();
+                }
+            }},
+
+            forceCompleteMission: { name: 'Complete', type: 'button', handler: () => {
+                let targetMissionId = this.debugState.selectedMission;
+                if (!targetMissionId && this.gameState.missions.activeMissionIds.length > 0) {
+                    targetMissionId = this.gameState.missions.activeMissionIds[0];
+                }
+                if (!targetMissionId || !this.gameState.missions.activeMissionIds.includes(targetMissionId)) {
+                    this.uiManager.createFloatingText('Selected Mission Not Active', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+
+                const mission = DB.MISSIONS[targetMissionId];
+                if (!this.gameState.missions.missionProgress[targetMissionId]) {
+                    this.gameState.missions.missionProgress[targetMissionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                }
+                const progress = this.gameState.missions.missionProgress[targetMissionId];
+                if (mission && progress) {
+                    if (mission.completion) mission.completion.locationId = 'any';
+                    if (mission.objectives) {
+                        mission.objectives.forEach(obj => {
+                            const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                            const targetVal = obj.quantity || obj.value || 1;
+                            if (!progress.objectives[objKey]) {
+                                progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
+                            }
+                            progress.objectives[objKey].current = targetVal;
+                            progress.objectives[objKey].target = targetVal;
+                            progress.objectives[objKey].satisfiedByDebug = true;
+                        });
+                    }
+                    progress.isCompletable = true;
+                    progress.cargoLoaded = true;
+                    
+                    if (this.simulationService?.missionService) {
+                        this.simulationService.missionService.completeMission(targetMissionId, true);
+                    }
+                }
+                
+                this.uiManager.createFloatingText(`Mission ${mission?.name || targetMissionId} Completed`, window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+            }},
+
+            completeAllMissions: { name: 'Complete All', type: 'button', handler: () => {
+                const activeIds = [...this.gameState.missions.activeMissionIds];
+                if (activeIds.length === 0) {
+                    this.uiManager.createFloatingText('No Active Missions in Log', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+                
+                activeIds.forEach(missionId => {
+                    const mission = DB.MISSIONS[missionId];
+                    if (!this.gameState.missions.missionProgress[missionId]) {
+                        this.gameState.missions.missionProgress[missionId] = { objectives: {}, isCompletable: false, acceptDay: this.gameState.day };
+                    }
+                    const progress = this.gameState.missions.missionProgress[missionId];
+                    if (mission && progress) {
+                        if (mission.completion) mission.completion.locationId = 'any';
+                        if (mission.objectives) {
+                            mission.objectives.forEach(obj => {
+                                const objKey = obj.id || obj.goodId || obj.targetLoc || obj.target;
+                                const targetVal = obj.quantity || obj.value || 1;
+                                if (!progress.objectives[objKey]) {
+                                    progress.objectives[objKey] = { current: 0, target: targetVal, deposited: 0, collected: 0 };
+                                }
+                                progress.objectives[objKey].current = targetVal;
+                                progress.objectives[objKey].target = targetVal;
+                                progress.objectives[objKey].satisfiedByDebug = true;
+                            });
+                        }
                         progress.isCompletable = true;
                         progress.cargoLoaded = true;
                         
-                        // Force Complete
-                        if (this.simulationService && this.simulationService.missionService) {
+                        if (this.simulationService?.missionService) {
                             this.simulationService.missionService.completeMission(missionId, true);
                         }
                     }
                 });
                 
-                this.uiManager.createFloatingText('Missions Force Completed', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.uiManager.createFloatingText('All Log Missions Completed!', window.innerWidth/2, window.innerHeight/2, '#4ade80');
                 this.gameState.setState({});
+            }},
+
+            openGoToDropdown: { name: 'Go To', type: 'button', handler: () => {
+                this._toggleGoToDropdown();
+            }},
+
+            restoreActiveShip: { name: 'Restore', type: 'button', handler: () => {
+                const activeShip = this.simulationService?._getActiveShip();
+                if (!activeShip) {
+                    this.uiManager.createFloatingText('No Active Ship', window.innerWidth/2, window.innerHeight/2, '#ef4444');
+                    return;
+                }
+                const effectiveStats = this.simulationService.getEffectiveShipStats(activeShip.id);
+                const activeShipState = this.gameState.player.shipStates[activeShip.id];
+                if (activeShipState && effectiveStats) {
+                    activeShipState.health = effectiveStats.maxHealth;
+                    activeShipState.fuel = effectiveStats.maxFuel;
+                    this.simulationService._checkHullWarnings?.(activeShip.id);
+                }
+                this.uiManager.createFloatingText('Ship Hull & Fuel Restored', window.innerWidth/2, window.innerHeight/2, '#4ade80');
+                this.gameState.setState({});
+                this.uiManager.render(this.gameState.getState());
             }},
 
             triggerSystemToast: { name: 'Toast: System', type: 'button', handler: () => this.triggerToast('system') },
@@ -37788,7 +39820,13 @@ ${logHistory}
     }
 
     _startDiagLoop() {
+        if (this._diagLoopActive) return;
+        this._diagLoopActive = true;
         const update = () => {
+            if (!this.diagActive) {
+                this._diagLoopActive = false;
+                return;
+            }
             this._updateDiagOverlay();
             requestAnimationFrame(update);
         };
@@ -37820,6 +39858,110 @@ ${logHistory}
     }
 
     buildGui() {
+        const triggerFolder = this.gui.addFolder('Triggers');
+        this.triggersFolder = triggerFolder;
+
+        // --- MISSION TRIGGERS (Auto-expanded, top of Triggers) ---
+        const missionFolder = triggerFolder.addFolder('Mission Triggers');
+        this.missionFolder = missionFolder;
+        this._setupMissionFolderPopControl(missionFolder);
+        
+        const sortedMissions = Object.values(DB.MISSIONS).map(m => {
+            const match = m.id.match(/\d+/);
+            const num = match ? parseInt(match[0], 10) : -1;
+            const prefix = match ? `${match[0].padStart(2, '0')} ` : '';
+            let suffix = '';
+            if (m.id.endsWith('_guild')) suffix = ' (G)';
+            else if (m.id.endsWith('_syndicate')) suffix = ' (S)';
+            return { label: `${prefix}${m.name}${suffix}`, id: m.id, num };
+        }).sort((a, b) => {
+            if (a.num !== b.num) return b.num - a.num; // Higher/newer mission numbers first
+            return a.label.localeCompare(b.label);
+        });
+
+        const missionOptions = {};
+        sortedMissions.forEach(m => missionOptions[m.label] = m.id);
+
+        missionFolder.domElement.classList.add('mission-triggers-folder');
+        missionFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
+        // Row 1: Single Mission Controls
+        const showCtrl = missionFolder.add(this.actions.forceAddTerminalMission, 'handler').name('Show');
+        const acceptCtrl = missionFolder.add(this.actions.forceAcceptMission, 'handler').name('Accept');
+        const satisfyCtrl = missionFolder.add(this.actions.satisfyMissionRequirements, 'handler').name('Satisfy');
+        const completeCtrl = missionFolder.add(this.actions.forceCompleteMission, 'handler').name('Complete');
+
+        showCtrl.domElement?.setAttribute('title', 'Force mission to Terminal (Show)');
+        acceptCtrl.domElement?.setAttribute('title', 'Force Accept mission');
+        satisfyCtrl.domElement?.setAttribute('title', 'Satisfy selected mission requirements');
+        completeCtrl.domElement?.setAttribute('title', 'Force Complete selected mission');
+
+        const btnRow1 = document.createElement('div');
+        btnRow1.className = 'mission-control-btn-row mission-control-btn-row-1';
+        btnRow1.appendChild(showCtrl.domElement);
+        btnRow1.appendChild(acceptCtrl.domElement);
+        btnRow1.appendChild(satisfyCtrl.domElement);
+        btnRow1.appendChild(completeCtrl.domElement);
+
+        // Row 2: Bulk & Utility Controls (Satisfy All, Complete All, Go To, Restore)
+        const satisfyAllCtrl = missionFolder.add(this.actions.satisfyAllMissions, 'handler').name('Satisfy All');
+        const completeAllCtrl = missionFolder.add(this.actions.completeAllMissions, 'handler').name('Complete All');
+        const goToCtrl = missionFolder.add(this.actions.openGoToDropdown, 'handler').name('Go To');
+        const restoreCtrl = missionFolder.add(this.actions.restoreActiveShip, 'handler').name('Restore');
+
+        this.goToBtnEl = goToCtrl.domElement;
+
+        satisfyAllCtrl.domElement?.setAttribute('title', 'Satisfy ALL active mission requirements in log');
+        completeAllCtrl.domElement?.setAttribute('title', 'Force Complete ALL active missions in log');
+        goToCtrl.domElement?.setAttribute('title', 'Select location to travel and advance time');
+        restoreCtrl.domElement?.setAttribute('title', 'Restore active ship Fuel and Hull to full');
+
+        const btnRow2 = document.createElement('div');
+        btnRow2.className = 'mission-control-btn-row mission-control-btn-row-2';
+        btnRow2.appendChild(satisfyAllCtrl.domElement);
+        btnRow2.appendChild(completeAllCtrl.domElement);
+        btnRow2.appendChild(goToCtrl.domElement);
+        btnRow2.appendChild(restoreCtrl.domElement);
+
+        const folderChildren = missionFolder.$children || missionFolder.domElement.querySelector('.children');
+        if (folderChildren) {
+            folderChildren.appendChild(btnRow1);
+            folderChildren.appendChild(btnRow2);
+        }
+
+        missionFolder.open();
+
+        // --- STORY EVENTS (Collapsed nested subfolder) ---
+        const storyFolder = triggerFolder.addFolder('Story Events');
+        const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
+        storyFolder.add(this.debugState, 'selectedStoryEvent', storyEventOptions).name('Story Event');
+        storyFolder.add(this.actions.forceQueueStoryEvent, 'handler').name('Queue Story Event');
+        storyFolder.close();
+
+        // --- RANDOM EVENTS (Collapsed nested subfolder) ---
+        const randomFolder = triggerFolder.addFolder('Random Events');
+        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
+        randomFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
+        randomFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
+        randomFolder.add(this.actions.triggerHotIntel, 'handler').name(this.actions.triggerHotIntel.name);
+        randomFolder.add(this.debugState, 'alwaysTriggerEvents')
+            .name('Always Trigger (100%)')
+            .onChange(val => {
+                if (this.simulationService && this.simulationService.travelService) {
+                    this.simulationService.travelService.debugAlwaysTriggerEvents = val;
+                }
+            });
+        randomFolder.close();
+
+        // --- TOASTS (Collapsed nested subfolder) ---
+        const toastFolder = triggerFolder.addFolder('Toasts');
+        toastFolder.add(this.actions.triggerSystemToast, 'handler').name(this.actions.triggerSystemToast.name);
+        toastFolder.add(this.actions.triggerFinanceToast, 'handler').name(this.actions.triggerFinanceToast.name);
+        toastFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
+        toastFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
+        toastFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
+        toastFolder.close();
+
+        // --- GAME FLOW (Below Triggers) ---
         const flowFolder = this.gui.addFolder('Game Flow');
         flowFolder.add(this.actions.godMode, 'handler').name(this.actions.godMode.name);
         flowFolder.add(this.actions.simpleStart, 'handler').name(this.actions.simpleStart.name);
@@ -37831,48 +39973,6 @@ ${logHistory}
         flowFolder.add(this.actions.phase2MissionTest, 'handler').name(this.actions.phase2MissionTest.name);
         flowFolder.add(this.actions.phase3MissionTest, 'handler').name(this.actions.phase3MissionTest.name);
         flowFolder.add(this.actions.phase4MissionTest, 'handler').name(this.actions.phase4MissionTest.name);
-
-        const triggerFolder = this.gui.addFolder('Triggers');
-        const storyEventOptions = DB.STORY_EVENTS ? Object.keys(DB.STORY_EVENTS).reduce((acc, key) => ({...acc, [DB.STORY_EVENTS[key].title || key]: key}), {}) : {};
-        triggerFolder.add(this.debugState, 'selectedStoryEvent', storyEventOptions).name('Story Event');
-        triggerFolder.add(this.actions.forceQueueStoryEvent, 'handler').name('Queue Story Event');
-
-        const randomEventOptions = DB.RANDOM_EVENTS.reduce((acc, event) => ({...acc, [event.template.title]: event.id }), {});
-        triggerFolder.add(this.debugState, 'selectedRandomEvent', randomEventOptions).name('Random Event');
-        triggerFolder.add(this.actions.triggerRandomEvent, 'handler').name('Force Trigger Event');
-        triggerFolder.add(this.actions.triggerHotIntel, 'handler').name(this.actions.triggerHotIntel.name);
-
-        triggerFolder.add(this.debugState, 'alwaysTriggerEvents')
-            .name('Always Trigger (100%)')
-            .onChange(val => {
-                if (this.simulationService && this.simulationService.travelService) {
-                    this.simulationService.travelService.debugAlwaysTriggerEvents = val;
-                }
-            });
-        
-        const sortedMissions = Object.values(DB.MISSIONS).map(m => {
-            const match = m.id.match(/\d+/);
-            const prefix = match ? `${match[0].padStart(2, '0')} ` : '';
-            let suffix = '';
-            if (m.id.endsWith('_guild')) suffix = ' (G)';
-            else if (m.id.endsWith('_syndicate')) suffix = ' (S)';
-            return { label: `${prefix}${m.name}${suffix}`, id: m.id };
-        }).sort((a, b) => a.label.localeCompare(b.label));
-
-        const missionOptions = {};
-        sortedMissions.forEach(m => missionOptions[m.label] = m.id);
-
-        triggerFolder.add(this.debugState, 'selectedMission', missionOptions).name('Mission');
-        triggerFolder.add(this.actions.forceAddTerminalMission, 'handler').name('Force to Terminal');
-        triggerFolder.add(this.actions.forceAcceptMission, 'handler').name('Force Accept');
-        triggerFolder.add(this.actions.forceCompleteMission, 'handler').name('Force Complete');
-
-        const toastFolder = triggerFolder.addFolder('Toasts');
-        toastFolder.add(this.actions.triggerSystemToast, 'handler').name(this.actions.triggerSystemToast.name);
-        toastFolder.add(this.actions.triggerFinanceToast, 'handler').name(this.actions.triggerFinanceToast.name);
-        toastFolder.add(this.actions.triggerIntelToast, 'handler').name(this.actions.triggerIntelToast.name);
-        toastFolder.add(this.actions.triggerMissionToast, 'handler').name(this.actions.triggerMissionToast.name);
-        toastFolder.add(this.actions.triggerSolToast, 'handler').name(this.actions.triggerSolToast.name);
 
         const uiFolder = this.gui.addFolder('UI Guides');
         const mainNavFolder = uiFolder.addFolder('Allowed Main Navs');
@@ -38007,9 +40107,11 @@ ${logHistory}
         automationFolder.add(this.debugState, 'botDaysToRun', 1, 10000, 1).name('Simulation Days');
         automationFolder.add(this.actions.startBot, 'handler').name(this.actions.startBot.name);
         automationFolder.add(this.actions.stopBot, 'handler').name(this.actions.stopBot.name);
-        automationFolder.add(this.debugState, 'botProgress').name('Progress').listen();
+        automationFolder.add(this.debugState, 'botProgress').name('Progress');
 
         this.gui.folders.forEach(folder => folder.close());
+        triggerFolder.open();
+        missionFolder.open();
     }
 }
 --- END OF FILE: ./js/services/DebugService.js ---
@@ -42179,6 +44281,7 @@ export class AssetService {
      */
     static LOCATION_FILENAME_MAP = {
         'loc_sun': 'Sol',
+        'loc_corona': 'Corona',
         'loc_mercury': 'Mercury',
         'loc_venus': 'Venus',
         'loc_earth': 'Earth',
@@ -42275,31 +44378,105 @@ export class AssetService {
         return `assets/images/commodities/${originalName}/${fileNamePrefix}_${variantLetter}.webp`;
     }
 
-    static _generateLocationPath(locationId) {
-        // 1. Resolve filename prefix (Folder & File Start)
-        let filePrefix = this.LOCATION_FILENAME_MAP[locationId];
-        
-        if (!filePrefix) {
-            // Safe fallback: Strip 'loc_', capitalize first letter
-            // Example: 'loc_unknown' -> 'Unknown'
-            const raw = locationId.replace('loc_', '');
-            filePrefix = raw.charAt(0).toUpperCase() + raw.slice(1);
+    /**
+     * Resolves the canonical folder and file prefix for a location.
+     * Supports declarative market.assetPrefix, dictionary mapping, ID matching, and clean fallbacks.
+     * @param {string|object} locationIdOrObj 
+     * @returns {string} The capitalized prefix (e.g. 'Corona', 'Sol', 'Earth').
+     */
+    static _resolveLocationPrefix(locationIdOrObj) {
+        if (!locationIdOrObj) return 'Unknown';
+
+        // 1. If an object is passed (e.g. market object)
+        if (typeof locationIdOrObj === 'object') {
+            if (locationIdOrObj.assetPrefix) return locationIdOrObj.assetPrefix;
+            locationIdOrObj = locationIdOrObj.id || locationIdOrObj.name || '';
         }
 
-        // 2. Determine Variant Count
-        // NOTE: assets_config.js keys must now match the Capitalized prefix (e.g. 'Sol')
-        const variantCount = LOCATION_VARIANT_COUNTS[filePrefix] !== undefined
-            ? LOCATION_VARIANT_COUNTS[filePrefix]
-            : DEFAULT_LOCATION_VARIANT_COUNT;
-            
-        // 3. Randomize Variant 
-        // Travel images are random each time, not seeded by player ID
-        const variantIndex = Math.floor(Math.random() * variantCount);
-        const variantLetter = this._getVariantSuffix(variantIndex); // A...Z, AA...
+        const locKey = String(locationIdOrObj).trim();
 
-        // 4. Construct Path
+        // 2. Check DB.MARKETS for declarative assetPrefix
+        const market = DB.MARKETS?.find(m => m.id === locKey || m.name?.toLowerCase() === locKey.toLowerCase());
+        if (market?.assetPrefix) {
+            return market.assetPrefix;
+        }
+
+        // 3. Check explicit dictionary mapping
+        if (this.LOCATION_FILENAME_MAP[locKey]) {
+            return this.LOCATION_FILENAME_MAP[locKey];
+        }
+
+        // Check dictionary mapping case-insensitively
+        const lowerLocKey = locKey.toLowerCase();
+        for (const [key, prefix] of Object.entries(this.LOCATION_FILENAME_MAP)) {
+            if (key.toLowerCase() === lowerLocKey) {
+                return prefix;
+            }
+        }
+
+        // 4. Safe fallback: Strip 'loc_', capitalize first letter
+        const raw = locKey.replace(/^loc_/, '');
+        return raw.charAt(0).toUpperCase() + raw.slice(1);
+    }
+
+    /**
+     * Determines the total visual variants available for a location.
+     * Checks market object, LOCATION_VARIANT_COUNTS (case-insensitively), and fallback defaults.
+     * @param {string|object} locationId 
+     * @returns {number}
+     */
+    static getLocationVariantCount(locationId) {
+        // Direct property check if an object was passed
+        if (typeof locationId === 'object' && locationId !== null) {
+            if (typeof locationId.variantCount === 'number' && locationId.variantCount > 0) {
+                return locationId.variantCount;
+            }
+            if (typeof locationId.imageVariants === 'number' && locationId.imageVariants > 0) {
+                return locationId.imageVariants;
+            }
+        }
+
+        const filePrefix = this._resolveLocationPrefix(locationId);
+
+        // Check DB.MARKETS for explicit variantCount
+        const market = DB.MARKETS?.find(m => m.id === locationId || m.name?.toLowerCase() === String(locationId).toLowerCase());
+        if (typeof market?.variantCount === 'number' && market.variantCount > 0) {
+            return market.variantCount;
+        }
+
+        // Exact match in LOCATION_VARIANT_COUNTS
+        if (LOCATION_VARIANT_COUNTS[filePrefix] !== undefined) {
+            return LOCATION_VARIANT_COUNTS[filePrefix];
+        }
+
+        // Case-insensitive match in LOCATION_VARIANT_COUNTS
+        const lowerPrefix = filePrefix.toLowerCase();
+        for (const [key, count] of Object.entries(LOCATION_VARIANT_COUNTS)) {
+            if (key.toLowerCase() === lowerPrefix) {
+                return count;
+            }
+        }
+
+        return DEFAULT_LOCATION_VARIANT_COUNT;
+    }
+
+    static _generateLocationPath(locationId, variantLetter = null) {
+        if (!locationId) return null;
+
+        // 1. Resolve filename prefix (Folder & File Start)
+        const filePrefix = this._resolveLocationPrefix(locationId);
+
+        // 2. Determine Variant Letter
+        let letter = variantLetter;
+        if (!letter) {
+            const variantCount = this.getLocationVariantCount(locationId);
+            const variantIndex = variantCount > 0 ? Math.floor(Math.random() * variantCount) : 0;
+            letter = this._getVariantSuffix(variantIndex); // A...Z, AA...
+        }
+
+        // 3. Construct Path
         // Pattern: assets/images/locations/[Capitalized]/[Capitalized]_[Letter].webp
-        return `assets/images/locations/${filePrefix}/${filePrefix}_${variantLetter}.webp`;
+        return `assets/images/locations/${filePrefix}/${filePrefix}_${letter}.webp`;
     }
 
     /**
@@ -42396,17 +44573,38 @@ export class AssetService {
     }
 
     /**
-     * Generates a random target image URL for a location.
-     * Used for the Travel Animation sequence.
+     * Generates a target image URL for a location.
+     * Used for the Travel Animation sequence and location visual displays.
+     * @param {string|object} locationId - Location ID or market object.
+     * @param {string} [specificVariant=null] - Optional specific variant letter (e.g. 'A').
+     * @returns {string} Image path or cached blob URL.
      */
-    static getLocationImage(locationId) {
-        const path = this._generateLocationPath(locationId);
+    static getLocationImage(locationId, specificVariant = null) {
+        const path = this._generateLocationPath(locationId, specificVariant);
         if (!path) return '';
 
         if (this.blobCache.has(path)) {
             return this.blobCache.get(path);
         }
         return path;
+    }
+
+    /**
+     * Retrieves all available variant image paths for a given location.
+     * Useful for codex entries, galleries, or pre-buffering.
+     * @param {string|object} locationId 
+     * @returns {string[]}
+     */
+    static getLocationAllImagePaths(locationId) {
+        const filePrefix = this._resolveLocationPrefix(locationId);
+        const count = this.getLocationVariantCount(locationId);
+        const paths = [];
+        for (let i = 0; i < count; i++) {
+            const letter = this._getVariantSuffix(i);
+            const path = `assets/images/locations/${filePrefix}/${filePrefix}_${letter}.webp`;
+            paths.push(this.blobCache.has(path) ? this.blobCache.get(path) : path);
+        }
+        return paths;
     }
 
     /**
@@ -46718,6 +48916,11 @@ export class MissionObjectiveEvaluator {
         let val = objective.quantity !== undefined ? objective.quantity : objective.value;
         let target = val !== undefined ? val : 1; 
 
+        // If mission or objective has been marked satisfied by debug tool, immediately satisfy
+        if (missionProgress?.satisfiedByDebug || objProgress?.satisfiedByDebug) {
+            return { current: target, target: target, isMet: true };
+        }
+
         let isMet = false;
         let comparator = objective.comparator || '>='; 
 
@@ -47929,7 +50132,7 @@ export class SimulationService {
                 case 'credits':
                     this.gameState.player.credits = Math.min(Number.MAX_SAFE_INTEGER, this.gameState.player.credits + reward.amount);
                     this._logTransaction('mission', reward.amount, `Reward: ${sourceName}`);
-                    this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399');
+                    this.uiManager.createFloatingText(`+${formatCredits(reward.amount, false)}`, window.innerWidth / 2, window.innerHeight / 2, '#34d399', null, false, 'mission');
                     break;
                 case 'item':
                 case 'commodity':
@@ -48035,7 +50238,7 @@ export class SimulationService {
                     });
                     this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REFUEL', `Fully refueled all ships in the fleet. Restored ${Math.round(totalFuelRestored)} fuel.`);
                     if (totalFuelRestored > 0 && this.uiManager) {
-                        this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', 2000);
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalFuelRestored)} FUEL`, window.innerWidth / 2, window.innerHeight / 2, '#60a5fa', null, false, 'mission');
                     }
                     break;
                 case 'fill_fleet_repair':
@@ -48055,7 +50258,7 @@ export class SimulationService {
                     });
                     this.logger.info.player(this.gameState.day, 'REWARD_FLEET_REPAIR', `Fully repaired all ships in the fleet. Restored ${Math.round(totalHullRestored)} hull.`);
                     if (totalHullRestored > 0 && this.uiManager) {
-                        this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', 2000);
+                        this.uiManager.createFloatingText(`+ ${Math.round(totalHullRestored)} HULL`, window.innerWidth / 2, window.innerHeight / 2 + 30, '#4ade80', null, false, 'mission');
                     }
                     break;
                 case 'upgrade':
@@ -48613,6 +50816,10 @@ export class EventManager {
             ACTION_IDS.INCREMENT,
             ACTION_IDS.DECREMENT
         ]);
+
+        // Secret sequence tracker for debug menu: Location x2 then Credits x2 in 4s
+        this.debugTapStage = 0;
+        this.debugTapTimeout = null;
     }
 
     /**
@@ -48743,6 +50950,10 @@ export class EventManager {
         // Always delegate to the tooltip handler for managing popups and cleanup
         this.tooltipHandler.handleClick(e);
 
+        // Check for secret debug tap sequence in the navigation context bar:
+        // Location twice, then Credits twice within 4 seconds.
+        this._checkDebugTapSequence(e);
+
         if (actionTarget) {
             const action = actionTarget.dataset.action;
 
@@ -48787,14 +50998,80 @@ export class EventManager {
     }
 
     /**
+     * Checks for the secret sequence: tap Location twice, then Credits twice within 4 seconds.
+     * @param {Event} e 
+     */
+    _checkDebugTapSequence(e) {
+        if (!this.debugService) return;
+
+        const isLocation = Boolean(e.target.closest && e.target.closest('.location-name-text'));
+        const isCredits = Boolean(e.target.closest && e.target.closest('.credit-text'));
+
+        if (!isLocation && !isCredits) {
+            // If user clicked outside the context bar while mid-sequence, cancel sequence
+            if (this.debugTapStage > 0 && !(e.target.closest && e.target.closest('.context-bar'))) {
+                this._resetDebugTapSequence();
+            }
+            return;
+        }
+
+        if (isLocation) {
+            if (this.debugTapStage === 0) {
+                this.debugTapStage = 1;
+                clearTimeout(this.debugTapTimeout);
+                this.debugTapTimeout = setTimeout(() => this._resetDebugTapSequence(), 4000);
+            } else if (this.debugTapStage === 1) {
+                // Second location tap
+                this.debugTapStage = 2;
+            } else if (this.debugTapStage === 2) {
+                // Extra tap on location, remain ready for credits
+            } else {
+                // Was waiting for credits tap 2, restart at stage 1
+                this.debugTapStage = 1;
+                clearTimeout(this.debugTapTimeout);
+                this.debugTapTimeout = setTimeout(() => this._resetDebugTapSequence(), 4000);
+            }
+        } else if (isCredits) {
+            if (this.debugTapStage === 2) {
+                // First credits tap
+                this.debugTapStage = 3;
+            } else if (this.debugTapStage === 3) {
+                // Second credits tap within 4 seconds! Success!
+                this._resetDebugTapSequence();
+                this.debugService.toggleVisibility();
+            } else {
+                // Credits tapped out of order
+                this._resetDebugTapSequence();
+            }
+        }
+    }
+
+    _resetDebugTapSequence() {
+        this.debugTapStage = 0;
+        if (this.debugTapTimeout) {
+            clearTimeout(this.debugTapTimeout);
+            this.debugTapTimeout = null;
+        }
+    }
+
+    /**
      * Handles keydown events, primarily for debug shortcuts.
      * @param {Event} e The keydown event object.
      * @private
      */
     _handleKeyDown(e) {
         if (this.gameState.isGameOver || e.ctrlKey || e.metaKey) return;
-        if ((e.key === '`' || e.key === '&') && this.debugService) {
-            this.debugService.toggleVisibility();
+        const isBackquote = e.key === '`' || e.key === '~' || e.code === 'Backquote';
+        if ((isBackquote || e.key === '&') && this.debugService) {
+            if (e.shiftKey && isBackquote) {
+                if (typeof this.debugService.resetPosition === 'function') {
+                    this.debugService.resetPosition(true);
+                } else {
+                    this.debugService.toggleVisibility();
+                }
+            } else {
+                this.debugService.toggleVisibility();
+            }
         }
     }
 }
@@ -51529,7 +53806,8 @@ export class UIManager {
     showMapDetailModal(...args) { this.eventControl.showMapDetailModal(...args); }
     hideMapDetailModal(...args) { this.eventControl.hideMapDetailModal(...args); }
     showCargoDetailModal(...args) { this.eventControl.showCargoDetailModal(...args); }
-    createFloatingText(...args) { this.eventControl.createFloatingText(...args); }
+    createFloatingText(...args) { return this.eventControl.createFloatingText(...args); }
+    spawnFloatingTransaction(...args) { return this.eventControl.spawnFloatingTransaction(...args); }
     showEventResultModal(...args) { this.eventControl.showEventResultModal(...args); }
 
     showEconWeatherModal(gameState = this.lastKnownState) {
@@ -58412,6 +60690,13 @@ export class PlayerActionService {
 # Changelog
 
 All notable changes to the Orbital Trading project will be documented in this file by the user, only. Gemini is never to modify or provide updates to this file, and must always treat this file as read-only. The user will always manually update this file.
+
+# [39.10] - 2026-9-9
+-  mission polish
+-  added solar corona location and art
+-  UI polish
+-  added act V
+-  modal and queuing polish
 
 # [39.05] - 2026-8-18
 -  mission polish
